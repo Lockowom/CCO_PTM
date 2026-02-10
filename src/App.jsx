@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RoutePlanning from './pages/TMS/RoutePlanning';
 import Stock from './pages/Inventory/Stock';
+import SalesOrders from './pages/Outbound/SalesOrders';
 import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
@@ -38,7 +39,7 @@ function App() {
           <Route path="inbound/entry" element={<Placeholder title="Ingreso" />} />
 
           {/* Outbound Modules */}
-          <Route path="outbound/sales-orders" element={<Placeholder title="Notas de Venta" />} />
+          <Route path="outbound/sales-orders" element={<SalesOrders />} />
           <Route path="outbound/picking" element={<Placeholder title="Picking" />} />
           <Route path="outbound/packing" element={<Placeholder title="Packing" />} />
           <Route path="outbound/shipping" element={<Placeholder title="Despachos" />} />
