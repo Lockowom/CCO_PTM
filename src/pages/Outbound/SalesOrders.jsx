@@ -6,6 +6,7 @@ const API_URL = 'https://cco-ptm.onrender.com/api';
 const SalesOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -15,11 +16,18 @@ const SalesOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch(`${API_URL}/notas-venta`);
+      
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
+
       const data = await res.json();
       setOrders(data);
     } catch (error) {
       console.error("Error cargando N.V:", error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -48,12 +56,22 @@ const SalesOrders = () => {
                     onChange={e => setSearchTerm(e.target.value)}
                 />
             </div>
-            <button className="bg-white border hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm">
+            <button 
+                onClick={fetchOrders}
+                className="bg-white border hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
+            >
                 <Filter size={16} />
-                Filtros
+                Recargar
             </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
+            <AlertCircle size={20} />
+            <span>No se pudieron cargar los datos: {error}</span>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
