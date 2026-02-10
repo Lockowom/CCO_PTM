@@ -114,21 +114,46 @@ const Picking = () => {
     try {
       setLoading(true);
       
-      // Update DB
-      // 1. Update items (if we had granular tracking, we'd update rows)
-      // 2. Update Order Status
-      // We move it to 'PENDIENTE_PACKING' (or just 'PACKING')
+      // 1. Guardar cambios de cantidades (Picking Parcial)
+      const updates = [];
       
+      // Recorrer items activos para ver si cambiaron
+      for (const item of activeItems) {
+          const state = pickedState[item.codigo_producto];
+          if (state && state.status === 'OK' && state.quantity !== item.cantidad) {
+              // Si la cantidad pickeada es diferente a la original, actualizamos
+              updates.push(
+                  supabase.from('tms_nv_diarias')
+                  .update({ cantidad: state.quantity })
+                  .eq('nv', activeOrder.nv)
+                  .eq('codigo_producto', item.codigo_producto)
+              );
+          } else if (state && state.status === 'NO_STOCK') {
+              // Si no hubo stock, ponemos cantidad a 0 (o podríamos marcar estado SIN_STOCK)
+              updates.push(
+                  supabase.from('tms_nv_diarias')
+                  .update({ cantidad: 0, estado: 'SIN_STOCK' })
+                  .eq('nv', activeOrder.nv)
+                  .eq('codigo_producto', item.codigo_producto)
+              );
+          }
+      }
+
+      // Ejecutar actualizaciones de cantidad en paralelo
+      if (updates.length > 0) await Promise.all(updates);
+
+      // 2. Mover toda la orden a PACKING (excepto los que quedaron SIN_STOCK)
       const { error } = await supabase
         .from('tms_nv_diarias')
-        .update({ estado: 'PACKING' }) // Using 'PACKING' as the standard next step
-        .eq('nv', activeOrder.nv);
+        .update({ estado: 'PACKING' })
+        .eq('nv', activeOrder.nv)
+        .neq('estado', 'SIN_STOCK'); // No mover los que marcamos sin stock
 
       if (error) throw error;
 
       alert(`Picking completado para N.V ${activeOrder.nv}`);
       setView('LIST');
-      fetchOrders(); // Refresh list
+      fetchOrders(); // Recargar lista
 
     } catch (err) {
       alert("Error completando picking: " + err.message);
