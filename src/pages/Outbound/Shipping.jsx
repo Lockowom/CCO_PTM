@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, Search, MapPin, Calendar, ExternalLink } from 'lucide-react';
-
-const API_URL = 'https://cco-ptm.onrender.com/api';
+import { supabase } from '../../supabase';
 
 const Shipping = () => {
   const [entregas, setEntregas] = useState([]);
@@ -14,9 +13,15 @@ const Shipping = () => {
   const fetchEntregas = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/entregas?estado=EN_RUTA&limit=50`);
-      const data = await res.json();
-      setEntregas(data);
+      
+      const { data, error } = await supabase
+        .from('tms_entregas')
+        .select('*')
+        .eq('estado', 'EN_RUTA')
+        .limit(50);
+
+      if (error) throw error;
+      setEntregas(data || []);
     } catch (error) {
       console.error("Error cargando despachos:", error);
     } finally {

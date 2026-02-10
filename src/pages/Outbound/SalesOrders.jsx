@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Search, Filter, Eye, AlertCircle } from 'lucide-react';
-
-const API_URL = 'https://cco-ptm.onrender.com/api';
+import { Hand, Search, Filter, Eye, AlertCircle } from 'lucide-react';
+import { supabase } from '../../supabase';
 
 const SalesOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -17,14 +16,17 @@ const SalesOrders = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${API_URL}/notas-venta`);
       
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}: ${res.statusText}`);
-      }
+      // Consulta directa a Supabase
+      const { data, error } = await supabase
+        .from('tms_nv_diarias')
+        .select('*')
+        .order('fecha_emision', { ascending: false })
+        .limit(100);
 
-      const data = await res.json();
-      setOrders(data);
+      if (error) throw error;
+
+      setOrders(data || []);
     } catch (error) {
       console.error("Error cargando N.V:", error);
       setError(error.message);

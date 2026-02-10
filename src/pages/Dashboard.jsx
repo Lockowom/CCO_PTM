@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Truck, AlertCircle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const API_URL = 'https://cco-ptm.onrender.com/api';
+import { supabase } from '../supabase';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ entregas: 0, pendientes: 0, enRuta: 0, entregados: 0 });
@@ -16,8 +15,14 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/entregas?limit=100`);
-      const data = await res.json();
+      
+      const { data, error } = await supabase
+        .from('tms_entregas')
+        .select('*')
+        .order('fecha_creacion', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
       
       const pendientes = data.filter(d => d.estado === 'PENDIENTE').length;
       const enRuta = data.filter(d => d.estado === 'EN_RUTA').length;

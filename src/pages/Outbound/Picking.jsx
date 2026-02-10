@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Hand, Search, CheckSquare, Square, ArrowRight, Package } from 'lucide-react';
-
-const API_URL = 'https://cco-ptm.onrender.com/api';
+import { supabase } from '../../supabase';
 
 const Picking = () => {
   const [items, setItems] = useState([]);
@@ -9,18 +8,21 @@ const Picking = () => {
   const [selectedItems, setSelectedItems] = useState([]);
 
   useEffect(() => {
-    // Simulamos cargar items pendientes de picking (usamos N.V pendientes por ahora)
     fetchPickingItems();
   }, []);
 
   const fetchPickingItems = async () => {
     try {
       setLoading(true);
-      // En realidad deberíamos tener un endpoint /api/picking, pero reusamos N.V por ahora
-      const res = await fetch(`${API_URL}/notas-venta?limit=50`);
-      const data = await res.json();
-      // Filtramos solo los pendientes
-      setItems(data.filter(d => d.estado === 'PENDIENTE'));
+      
+      const { data, error } = await supabase
+        .from('tms_nv_diarias')
+        .select('*')
+        .eq('estado', 'PENDIENTE')
+        .limit(50);
+
+      if (error) throw error;
+      setItems(data || []);
     } catch (error) {
       console.error("Error cargando picking:", error);
     } finally {

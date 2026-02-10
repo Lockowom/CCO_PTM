@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Search, Filter, AlertTriangle } from 'lucide-react';
-
-const API_URL = 'https://cco-ptm.onrender.com/api';
+import { supabase } from '../../supabase';
 
 const Stock = () => {
   const [items, setItems] = useState([]);
@@ -15,9 +14,13 @@ const Stock = () => {
   const fetchStock = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/inventario`);
-      const data = await res.json();
-      setItems(data);
+      
+      const { data, error } = await supabase
+        .from('tms_partidas')
+        .select('*');
+
+      if (error) throw error;
+      setItems(data || []);
     } catch (error) {
       console.error("Error cargando inventario:", error);
     } finally {
