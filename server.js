@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Serve Static Files (Frontend)
+app.use(express.static(path.join(__dirname, 'dist')));
+
 // Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -19,8 +23,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // ROUTES
 // ==================================================================
 
-// Health Check
-app.get('/', (req, res) => {
+// Health Check (API)
+app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'TMS CCO Backend Running 🚀' });
 });
 
@@ -128,6 +132,10 @@ app.post('/api/rutas', async (req, res) => {
 });
 
 // Start Server
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
