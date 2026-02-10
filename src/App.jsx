@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RoutePlanning from './pages/TMS/RoutePlanning';
+import Stock from './pages/Inventory/Stock';
 import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
@@ -26,9 +27,9 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           
           {/* TMS Modules */}
-          <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
+          <Route path="tms/dashboard" element={<Dashboard />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
-          <Route path="tms/control-tower" element={<Placeholder title="Torre de Control" />} />
+          <Route path="tms/control-tower" element={<Dashboard />} />
           <Route path="tms/drivers" element={<Placeholder title="Gestión de Conductores" />} />
           <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
 
@@ -44,7 +45,7 @@ function App() {
           <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
 
           {/* Inventory Modules */}
-          <Route path="inventory/stock" element={<Placeholder title="Stock Actual" />} />
+          <Route path="inventory/stock" element={<Stock />} />
           <Route path="inventory/layout" element={<Placeholder title="Layout Bodega" />} />
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
 
