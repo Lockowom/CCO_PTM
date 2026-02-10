@@ -9,6 +9,8 @@ import SalesOrders from './pages/Outbound/SalesOrders';
 import Picking from './pages/Outbound/Picking';
 import Packing from './pages/Outbound/Packing';
 import Shipping from './pages/Outbound/Shipping';
+import Reception from './pages/Inbound/Reception';
+import Entry from './pages/Inbound/Entry';
 import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
@@ -38,8 +40,8 @@ function App() {
           <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
 
           {/* Inbound Modules */}
-          <Route path="inbound/reception" element={<Placeholder title="Recepción" />} />
-          <Route path="inbound/entry" element={<Placeholder title="Ingreso" />} />
+          <Route path="inbound/reception" element={<Reception />} />
+          <Route path="inbound/entry" element={<Entry />} />
 
           {/* Outbound Modules */}
           <Route path="outbound/sales-orders" element={<SalesOrders />} />
