@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Map, Satellite, Users, Smartphone, 
-  ArrowDownToLine, Truck, DollyChart, 
+  ArrowDownToLine, Truck, PackagePlus, 
   ArrowUpFromLine, FileText, Hand, Package, Ship, 
   Warehouse, MapPin, ArrowLeftRight, 
   Search, Barcode, MapPinned, 
@@ -40,7 +40,7 @@ const Navbar = () => {
       icon: <ArrowDownToLine size={18} />,
       modules: [
         { label: 'Recepción', path: '/inbound/reception', icon: <Truck size={16} /> },
-        { label: 'Ingreso', path: '/inbound/entry', icon: <DollyChart size={16} /> }
+        { label: 'Ingreso', path: '/inbound/entry', icon: <PackagePlus size={16} /> }
       ]
     },
     {
