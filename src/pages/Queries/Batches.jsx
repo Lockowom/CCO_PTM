@@ -21,7 +21,6 @@ const Batches = () => {
     setLoading(true);
     setSearched(true);
     
-    // Reset data
     const newData = {
       partidas: [],
       series: [],
@@ -31,78 +30,67 @@ const Batches = () => {
     };
 
     try {
-      const term = `%${searchTerm}%`;
-      console.log("Buscando:", term);
+      const term = `%${searchTerm.trim()}%`; // Trim para evitar espacios accidentales
 
-      // DEBUG: Verificar si hay conexión básica
-      // const { count } = await supabase.from('tms_partidas').select('*', { count: 'exact', head: true });
-      // console.log("Total partidas en DB:", count);
+      // Función auxiliar para buscar de forma segura
+      const searchTable = async (table, columns) => {
+        try {
+            // Construir query OR dinámico
+            const orQuery = columns.map(col => `${col}.ilike.${term}`).join(',');
+            
+            const { data, error } = await supabase
+                .from(table)
+                .select('*')
+                .or(orQuery)
+                .limit(50);
+            
+            if (error) {
+                // Si falla (ej: columna no existe), intentamos una búsqueda más simple solo por código
+                // Esto es un fallback de seguridad
+                console.warn(`Error buscando en ${table} con columnas ${columns}:`, error.message);
+                const { data: retryData } = await supabase
+                    .from(table)
+                    .select('*')
+                    .ilike('codigo_producto', term)
+                    .limit(50);
+                return retryData || [];
+            }
+            return data || [];
+        } catch (e) {
+            return [];
+        }
+      };
 
       // 1. PARTIDAS
-      const { data: partidas, error: err1 } = await supabase
-        .from('tms_partidas')
-        .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term}`) // Volvemos a probar 'producto' (ya corregido en DB)
-        .limit(50);
-      
-      if (err1) {
-           console.warn("Error Partidas (posiblemente falta columna):", err1.message);
-      }
-      if (partidas) newData.partidas = partidas;
+      // Intentamos buscar por codigo y producto. Si 'producto' no existe, el fallback buscará solo por codigo.
+      newData.partidas = await searchTable('tms_partidas', ['codigo_producto', 'producto']);
 
       // 2. SERIES
-      const { data: series, error: err2 } = await supabase
-        .from('tms_series')
-        .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`)
-        .limit(50);
-      
-      if (err2) console.error("Error Series:", err2);
-      if (series) newData.series = series;
+      newData.series = await searchTable('tms_series', ['codigo_producto', 'producto', 'serie']);
 
       // 3. FARMAPACK
-      const { data: farmapack, error: err3 } = await supabase
-        .from('tms_farmapack')
-        .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`)
-        .limit(50);
-      
-      if (err3) console.error("Error Farmapack:", err3);
-      if (farmapack) newData.farmapack = farmapack;
+      newData.farmapack = await searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']);
 
       // 4. UBICACIONES
-      const { data: ubicaciones, error: err4 } = await supabase
-        .from('tms_ubicaciones_historial')
-        .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`) // Ojo: descripcion vs producto
-        .limit(20);
-
-      if (err4) console.error("Error Ubicaciones:", err4);
-      if (ubicaciones) newData.ubicaciones = ubicaciones.map(u => ({ nombre: u.ubicacion }));
+      // Aquí usamos 'descripcion' porque es lo que definimos en el SQL de ubicaciones
+      const ubicacionesData = await searchTable('tms_ubicaciones_historial', ['codigo_producto', 'descripcion', 'serie']);
+      newData.ubicaciones = ubicacionesData.map(u => ({ nombre: u.ubicacion }));
 
       // 5. PESO
-      const { data: pesos, error: err5 } = await supabase
-        .from('tms_pesos')
-        .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`) // Ojo: descripcion vs producto
-        .limit(1);
-
-      if (err5) console.error("Error Peso:", err5);
-      if (pesos && pesos.length > 0) {
+      const pesosData = await searchTable('tms_pesos', ['codigo_producto', 'descripcion']);
+      if (pesosData.length > 0) {
          newData.peso = { 
-             unitario: pesos[0].peso_unitario, 
+             unitario: pesosData[0].peso_unitario, 
              total: 'Calc...' 
          };
       } else {
          newData.peso = { unitario: 'N/A', total: 'N/A' };
       }
 
-      console.log("Resultados:", newData);
       setData(newData);
 
     } catch (err) {
-      console.error("Excepción General:", err);
-      alert("Error inesperado: " + err.message);
+      console.error("Error General:", err);
     } finally {
       setLoading(false);
     }
@@ -121,7 +109,7 @@ const Batches = () => {
           </span>
         )}
       </div>
-      <div className="flex-1 overflow-auto p-0">
+      <div className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         {children}
       </div>
     </div>
@@ -131,7 +119,9 @@ const Batches = () => {
   const DetailRow = ({ label, value, highlight = false }) => (
     <div className="flex justify-between text-xs py-1 border-b border-slate-50 last:border-0">
         <span className="text-slate-500 font-medium">{label}:</span>
-        <span className={`font-bold ${highlight ? 'text-indigo-600' : 'text-slate-700'}`}>{value || '-'}</span>
+        <span className={`font-bold text-right truncate ml-2 ${highlight ? 'text-indigo-600' : 'text-slate-700'}`} title={value}>
+            {value || '-'}
+        </span>
     </div>
   );
 
@@ -173,8 +163,8 @@ const Batches = () => {
             <DetailCard title="PARTIDAS" icon={Layers} color="bg-blue-500" count={data.partidas.length}>
                 <div className="p-2 space-y-2">
                     {data.partidas.length > 0 ? data.partidas.map((p, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <p className="font-bold text-xs text-blue-800 mb-1 truncate" title={p.producto}>{p.producto}</p>
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
+                            <p className="font-bold text-xs text-blue-800 mb-1 truncate" title={p.producto || p.descripcion}>{p.producto || p.descripcion}</p>
                             <DetailRow label="Código" value={p.codigo_producto} />
                             <DetailRow label="U. Medida" value={p.unidad_medida} />
                             <DetailRow label="Partida" value={p.partida} />
@@ -183,7 +173,7 @@ const Batches = () => {
                             <DetailRow label="Reserva" value={p.reserva} />
                             <DetailRow label="Stock Total" value={p.stock_total} />
                         </div>
-                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
                 </div>
             </DetailCard>
 
@@ -191,7 +181,7 @@ const Batches = () => {
             <DetailCard title="SERIES" icon={Barcode} color="bg-indigo-500" count={data.series.length}>
                 <div className="p-2 space-y-2">
                     {data.series.length > 0 ? data.series.map((s, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
                             <div className="flex justify-between mb-1">
                                 <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold">SN: {s.serie}</span>
                             </div>
@@ -201,7 +191,7 @@ const Batches = () => {
                             <DetailRow label="Disponible" value={s.disponible} />
                             <DetailRow label="Reserva" value={s.reserva} />
                         </div>
-                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
                 </div>
             </DetailCard>
 
@@ -209,7 +199,7 @@ const Batches = () => {
             <DetailCard title="FARMAPACK" icon={Package} color="bg-emerald-500" count={data.farmapack.length}>
                 <div className="p-2 space-y-2">
                     {data.farmapack.length > 0 ? data.farmapack.map((f, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
                             <div className="flex justify-between mb-1">
                                 <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold">Lote: {f.lote}</span>
                             </div>
@@ -219,7 +209,7 @@ const Batches = () => {
                             <DetailRow label="Disponible" value={f.disponible} highlight />
                             <DetailRow label="Stock Total" value={f.stock_total} />
                         </div>
-                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
                 </div>
             </DetailCard>
 
@@ -246,7 +236,7 @@ const Batches = () => {
                             <MapPin size={16} />
                             <span>{u.nombre}</span>
                         </div>
-                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
                 </div>
             </DetailCard>
 
