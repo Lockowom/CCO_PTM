@@ -21,6 +21,7 @@ const Reception = lazy(() => import('./pages/Inbound/Reception'));
 const Entry = lazy(() => import('./pages/Inbound/Entry'));
 const Users = lazy(() => import('./pages/Admin/Users'));
 const Roles = lazy(() => import('./pages/Admin/Roles'));
+const Views = lazy(() => import('./pages/Admin/Views'));
 const Placeholder = lazy(() => import('./components/Placeholder'));
 
 // Loading Component
@@ -83,7 +84,7 @@ function App() {
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
           <Route path="admin/roles" element={<Roles />} />
-          <Route path="admin/views" element={<Placeholder title="Configuración de Vistas" />} />
+          <Route path="admin/views" element={<Views />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
 
