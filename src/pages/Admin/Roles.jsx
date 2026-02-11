@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Shield, Plus, Edit, Trash2, Save, X, Check, 
   Lock, Users, LayoutDashboard, Truck, Package, 
-  Search, Settings, Database, AlertCircle, Loader2
+  Search, Settings, Database, AlertCircle, Loader2,
+  Warehouse, ArrowDownToLine, ArrowUpFromLine, FileText
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -32,16 +33,52 @@ const RolesPage = () => {
         { id: 'view_routes', label: 'Ver Rutas' },
         { id: 'create_routes', label: 'Planificar Rutas' },
         { id: 'assign_drivers', label: 'Asignar Conductores' },
-        { id: 'track_gps', label: 'Monitoreo GPS' }
+        { id: 'track_gps', label: 'Monitoreo GPS' },
+        { id: 'view_drivers', label: 'Ver Conductores' }
       ]
     },
     {
       id: 'inbound',
       label: 'Inbound (Entrada)',
-      icon: <Package size={16} />,
+      icon: <ArrowDownToLine size={16} />,
       permissions: [
         { id: 'view_reception', label: 'Ver Recepciones' },
         { id: 'process_entry', label: 'Procesar Ingresos' }
+      ]
+    },
+    {
+      id: 'outbound',
+      label: 'Outbound (Salida)',
+      icon: <ArrowUpFromLine size={16} />,
+      permissions: [
+        { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
+        { id: 'view_picking', label: 'Ver Picking' },
+        { id: 'process_picking', label: 'Procesar Picking' },
+        { id: 'view_packing', label: 'Ver Packing' },
+        { id: 'process_packing', label: 'Procesar Packing' },
+        { id: 'view_shipping', label: 'Ver Despachos' },
+        { id: 'process_shipping', label: 'Gestionar Despachos' }
+      ]
+    },
+    {
+      id: 'inventory',
+      label: 'Inventario',
+      icon: <Warehouse size={16} />,
+      permissions: [
+        { id: 'view_stock', label: 'Ver Stock' },
+        { id: 'manage_inventory', label: 'Gestionar Inventario' },
+        { id: 'view_layout', label: 'Ver Layout Bodega' },
+        { id: 'manage_transfers', label: 'Gestionar Transferencias' }
+      ]
+    },
+    {
+      id: 'queries',
+      label: 'Consultas',
+      icon: <Search size={16} />,
+      permissions: [
+        { id: 'view_batches', label: 'Ver Lotes/Series' },
+        { id: 'view_sales_status', label: 'Ver Estado N.V.' },
+        { id: 'view_addresses', label: 'Ver Direcciones' }
       ]
     },
     {
@@ -51,6 +88,8 @@ const RolesPage = () => {
       permissions: [
         { id: 'manage_users', label: 'Gestionar Usuarios' },
         { id: 'manage_roles', label: 'Gestionar Roles' },
+        { id: 'manage_views', label: 'Configurar Vistas' },
+        { id: 'view_reports', label: 'Ver Reportes' },
         { id: 'view_logs', label: 'Ver Auditoría' }
       ]
     }
