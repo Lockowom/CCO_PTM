@@ -122,52 +122,55 @@ const LayoutPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Layout de Bodega</h2>
-          <p className="text-slate-500 text-sm">Mapa 2D de ubicaciones, estados y productos</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex items-center bg-white border rounded-lg px-3">
-            <Search size={18} className="text-slate-400 mr-2" />
-            <input
-              className="h-10 outline-none text-sm"
-              placeholder="Buscar ubicación (A-01-01)"
-              value={searchText}
-              onChange={(e)=>setSearchText(e.target.value)}
-              onKeyDown={(e)=> e.key==='Enter' && buscarUbicacion()}
-            />
+      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-wider opacity-80">Inventario</div>
+            <h2 className="text-2xl font-extrabold">Layout de Bodega</h2>
+            <p className="text-sm opacity-90">Visualización 2D de pasillos, niveles y estados</p>
           </div>
-          <button onClick={cargarLayout} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700">
-            Actualizar
-          </button>
+          <div className="flex gap-2">
+            <div className="flex items-center bg-white/10 rounded-xl px-3 border border-white/20 backdrop-blur">
+              <Search size={18} className="text-white/80 mr-2" />
+              <input
+                className="h-10 outline-none text-sm bg-transparent text-white placeholder:text-white/70"
+                placeholder="Buscar ubicación (A-01-01)"
+                value={searchText}
+                onChange={(e)=>setSearchText(e.target.value)}
+                onKeyDown={(e)=> e.key==='Enter' && buscarUbicacion()}
+              />
+            </div>
+            <button onClick={cargarLayout} className="px-4 py-2 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 shadow">
+              Actualizar
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
           <div className="text-slate-400 text-xs">Total Ubicaciones</div>
-          <div className="text-2xl font-bold">{stats.total}</div>
+          <div className="text-2xl font-extrabold">{stats.total}</div>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
           <div className="text-slate-400 text-xs">Con Productos</div>
-          <div className="text-2xl font-bold text-indigo-600">{stats.ocupadas}</div>
+          <div className="text-2xl font-extrabold text-indigo-600">{stats.ocupadas}</div>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
           <div className="text-slate-400 text-xs">Vacías</div>
-          <div className="text-2xl font-bold">{stats.vacias}</div>
+          <div className="text-2xl font-extrabold">{stats.vacias}</div>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
           <div className="text-slate-400 text-xs">Ocupación</div>
-          <div className="text-2xl font-bold">{stats.ocupacion}%</div>
+          <div className="text-2xl font-extrabold">{stats.ocupacion}%</div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border">
-        <div className="p-4 border-b flex items-center justify-between">
+      <div className="bg-white rounded-2xl border shadow-sm">
+        <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
             <Layers size={18} className="text-indigo-600" />
-            <span className="font-bold text-slate-700">Seleccionar Pasillo</span>
+            <span className="font-extrabold text-slate-800">Seleccionar Pasillo</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={()=>filtrarPasillo('ALL')} className={`px-3 py-1 rounded-lg text-sm font-bold ${pasilloActual==='ALL'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}`}>Todos</button>
@@ -179,6 +182,24 @@ const LayoutPage = () => {
           </div>
         </div>
         <div className="p-4">
+          <div className="flex items-center justify-center gap-6 mb-4">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-4 h-4 rounded-md bg-emerald-500 border border-emerald-600 shadow-sm"></span>
+              <span className="text-slate-600 font-medium">Con productos</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-4 h-4 rounded-md bg-slate-400 border border-slate-500 shadow-sm"></span>
+              <span className="text-slate-600 font-medium">Vacía</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-4 h-4 rounded-md bg-red-500 border border-red-600 shadow-sm"></span>
+              <span className="text-slate-600 font-medium">No disponible</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-4 h-4 rounded-md bg-yellow-400 border border-yellow-500 shadow-sm"></span>
+              <span className="text-slate-600 font-medium">Ocupado</span>
+            </div>
+          </div>
           {loading ? (
             <div className="text-slate-400 flex items-center gap-2"><AlertTriangle size={18}/> Cargando...</div>
           ) : (
@@ -197,16 +218,16 @@ const LayoutPage = () => {
 
                 const nivelesOrden = Object.keys(pData.niveles).sort((a,b)=>parseInt(b)-parseInt(a));
                 return (
-                  <div key={letra} className="border rounded-xl">
-                    <div className="p-3 flex items-center justify-between border-b">
+                  <div key={letra} className="border rounded-2xl overflow-hidden">
+                    <div className="p-3 flex items-center justify-between border-b bg-slate-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500 text-white font-extrabold flex items-center justify-center">{letra}</div>
+                        <div className="w-10 h-10 rounded-lg bg-orange-500 text-white font-extrabold flex items-center justify-center shadow-sm">{letra}</div>
                         <div>
-                          <div className="font-bold text-slate-700">Pasillo {letra}</div>
+                          <div className="font-extrabold text-slate-800">Pasillo {letra}</div>
                           <div className="text-xs text-slate-500">{ocupadasPasillo} / {totalPasillo} ubicaciones ocupadas</div>
                         </div>
                       </div>
-                      <div className="text-sm font-bold">{porcentaje}%</div>
+                      <div className="text-sm font-extrabold">{porcentaje}%</div>
                     </div>
                     <div className="p-3 space-y-3">
                       {nivelesOrden.map(nivel => {
@@ -227,11 +248,11 @@ const LayoutPage = () => {
                                     key={ub.ubicacion}
                                     onClick={()=>abrirDetalle(ub.ubicacion)}
                                     title={`${ub.ubicacion}${ub.cantidad>0?` (${ub.cantidad})`:''}`}
-                                    className={`w-11 h-11 rounded-lg text-white text-xs font-bold flex items-center justify-center ${bg} hover:scale-110 transition-transform relative`}
+                                    className={`w-11 h-11 rounded-lg text-white text-xs font-extrabold flex items-center justify-center ${bg} hover:scale-110 transition-transform relative shadow-sm ring-1 ring-black/10`}
                                   >
                                     {ub.columna}
                                     {ub.cantidad>0 && (
-                                      <span className="absolute -top-1 -right-1 bg-indigo-600 text-white rounded-full text-[10px] px-1">{ub.cantidad>99?'99+':ub.cantidad}</span>
+                                      <span className="absolute -top-1 -right-1 bg-indigo-600 text-white rounded-full text-[10px] px-1 shadow">{ub.cantidad>99?'99+':ub.cantidad}</span>
                                     )}
                                   </button>
                                 );
@@ -255,7 +276,7 @@ const LayoutPage = () => {
             <div className="p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="text-indigo-600" size={18}/>
-                <span className="font-bold text-slate-700">Ubicación: {modal.ubicacion}</span>
+                <span className="font-extrabold text-slate-800">Ubicación: {modal.ubicacion}</span>
               </div>
               <div className="flex gap-2">
                 <button onClick={()=>cambiarEstado(modal.ubicacion,'DISPONIBLE')} className="px-3 py-1 rounded bg-emerald-600 text-white text-xs font-bold">Disponible</button>
@@ -271,7 +292,7 @@ const LayoutPage = () => {
                 <div className="text-slate-600 text-sm">Ubicación vacía</div>
               ) : (
                 <div>
-                  <div className="text-sm text-slate-600 mb-2">Cantidad total: <span className="font-bold">{modal.detalle.cantidadTotal}</span></div>
+                  <div className="text-sm text-slate-600 mb-2">Cantidad total: <span className="font-extrabold">{modal.detalle.cantidadTotal}</span></div>
                   <div className="max-h-60 overflow-y-auto">
                     <table className="w-full text-sm">
                       <thead>
