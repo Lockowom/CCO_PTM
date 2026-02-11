@@ -1,17 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight, Layers } from 'lucide-react';
+import { supabase } from '../../supabase';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const API_URL = 'https://cco-ptm.onrender.com/api';
+// Fix Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Custom Icons
+const iconPending = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+const iconSelected = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Componente para centrar el mapa en los puntos
+const MapBounds = ({ markers }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (markers.length > 0) {
+            const group = new L.FeatureGroup(markers.map(m => L.marker([m.lat, m.lng])));
+            map.fitBounds(group.getBounds().pad(0.2));
+        }
+    }, [markers, map]);
+    return null;
+};
 
 const RoutePlanning = () => {
   const [entregas, setEntregas] = useState([]);
-  const [conductores, setConductores] = useState([]); // En el futuro esto vendrá de API
+  const [conductores, setConductores] = useState([]);
   const [selectedEntregas, setSelectedEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
+  const [showMap, setShowMap] = useState(true);
 
   // Estado para creación de ruta
-  const [rutaNombre, setRutaNombre] = useState(`Ruta-${new Date().toLocaleDateString().replace(/\//g, '-')}`);
+  const [rutaNombre, setRutaNombre] = useState(`Ruta-${new Date().toLocaleDateString('es-CL').replace(/\//g, '-')}`);
   const [selectedConductor, setSelectedConductor] = useState('');
 
   useEffect(() => {
@@ -21,20 +63,28 @@ const RoutePlanning = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Cargar entregas pendientes
-      const res = await fetch(`${API_URL}/entregas?estado=PENDIENTE&limit=200`);
-      const data = await res.json();
-      setEntregas(data);
+      
+      const { data: entregasData, error: entError } = await supabase
+        .from('tms_entregas')
+        .select('*')
+        .is('ruta_id', null)
+        .in('estado', ['PENDIENTE', 'LISTO_DESPACHO'])
+        .order('fecha_creacion', { ascending: false });
 
-      // Mock conductores (En producción crear endpoint /api/conductores)
-      setConductores([
-        { id: '1', nombre: 'Juan Pérez', vehiculo: 'Camión A' },
-        { id: '2', nombre: 'Carlos Díaz', vehiculo: 'Van B' },
-        { id: '3', nombre: 'Roberto Gómez', vehiculo: 'Moto C' }
-      ]);
+      if (entError) throw entError;
+      setEntregas(entregasData || []);
+
+      const { data: conductoresData, error: condError } = await supabase
+        .from('tms_conductores')
+        .select('*')
+        .eq('estado', 'DISPONIBLE')
+        .order('nombre', { ascending: true });
+
+      if (condError) throw condError;
+      setConductores(conductoresData || []);
 
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error cargando datos:", error);
     } finally {
       setLoading(false);
     }
@@ -55,30 +105,54 @@ const RoutePlanning = () => {
     }
 
     try {
-      const payload = {
-        nombre: rutaNombre,
-        conductor_id: selectedConductor,
-        entregas_ids: selectedEntregas
-      };
+      setLoading(true);
 
-      const res = await fetch(`${API_URL}/rutas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const { data: ruta, error: rutaError } = await supabase
+        .from('tms_rutas')
+        .insert({
+            nombre: rutaNombre,
+            conductor_id: selectedConductor,
+            fecha_inicio: new Date(),
+            estado: 'PLANIFICADA',
+            total_entregas: selectedEntregas.length
+        })
+        .select()
+        .single();
 
-      const result = await res.json();
-      if (result.success) {
-        alert("¡Ruta creada con éxito!");
-        // Recargar datos para limpiar los ya asignados
-        fetchData();
-        setSelectedEntregas([]);
-      } else {
-        alert("Error creando ruta");
-      }
+      if (rutaError) throw rutaError;
+
+      const { error: updateError } = await supabase
+        .from('tms_entregas')
+        .update({
+            ruta_id: ruta.id,
+            estado: 'EN_RUTA',
+            conductor_id: selectedConductor,
+            fecha_asignacion: new Date()
+        })
+        .in('id', selectedEntregas);
+
+      if (updateError) throw updateError;
+
+      const entregasSeleccionadas = entregas.filter(e => selectedEntregas.includes(e.id));
+      const nvs = entregasSeleccionadas.map(e => e.nv);
+      
+      await supabase
+        .from('tms_nv_diarias')
+        .update({ estado: 'EN_RUTA' })
+        .in('nv', nvs);
+
+      alert(`¡Ruta "${rutaNombre}" creada con éxito!`);
+      
+      setSelectedEntregas([]);
+      setSelectedConductor('');
+      setRutaNombre(`Ruta-${new Date().toLocaleDateString('es-CL').replace(/\//g, '-')}`);
+      fetchData();
+
     } catch (e) {
       console.error(e);
-      alert("Error de conexión");
+      alert("Error creando ruta: " + e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,14 +161,23 @@ const RoutePlanning = () => {
     (e.cliente && e.cliente.toLowerCase().includes(filterText.toLowerCase()))
   );
 
+  // Filtrar entregas con coordenadas válidas para el mapa
+  const mapEntregas = filteredEntregas.filter(e => e.latitud && e.longitud);
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Planificador de Rutas</h2>
-          <p className="text-slate-500 text-sm">Asigna entregas pendientes a tus conductores</p>
+          <p className="text-slate-500 text-sm">Mapa interactivo y asignación de flota</p>
         </div>
         <div className="flex gap-3">
+            <button 
+                onClick={() => setShowMap(!showMap)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-colors ${showMap ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600'}`}
+            >
+                <Layers size={18} /> {showMap ? 'Ocultar Mapa' : 'Ver Mapa'}
+            </button>
             <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
                 <Search size={18} className="text-slate-400 mr-2" />
                 <input 
@@ -105,83 +188,116 @@ const RoutePlanning = () => {
                     onChange={e => setFilterText(e.target.value)}
                 />
             </div>
+            <button 
+                onClick={fetchData} 
+                className="bg-white border p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+                <ArrowRight size={18} className={loading ? 'animate-spin' : ''} />
+            </button>
         </div>
       </div>
 
-      <div className="flex gap-6 h-full overflow-hidden">
+      <div className="flex gap-4 h-full overflow-hidden">
         
         {/* Panel Izquierdo: Lista de Entregas */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-            <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-              <MapPin size={18} />
-              Pendientes ({filteredEntregas.length})
+        <div className="w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+              <Truck size={16} /> Entregas ({filteredEntregas.length})
             </h3>
-            <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
-               {selectedEntregas.length} seleccionados
+            <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+               {selectedEntregas.length} Sel.
             </span>
           </div>
           
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
-            {loading ? (
-                <div className="text-center py-10 text-slate-400">Cargando entregas...</div>
-            ) : filteredEntregas.length === 0 ? (
-                <div className="text-center py-10 text-slate-400">No hay entregas pendientes</div>
-            ) : (
-                filteredEntregas.map(entrega => (
-                    <div 
-                        key={entrega.id}
-                        onClick={() => toggleSelection(entrega.id)}
-                        className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 ${
-                            selectedEntregas.includes(entrega.id) 
-                            ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' 
-                            : 'bg-white border-slate-100 hover:border-indigo-200'
-                        }`}
-                    >
-                        <div className={`mt-1 ${selectedEntregas.includes(entrega.id) ? 'text-indigo-600' : 'text-slate-300'}`}>
-                            {selectedEntregas.includes(entrega.id) ? <CheckSquare size={20} /> : <Square size={20} />}
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                                <span className="font-bold text-slate-700 text-sm">NV: {entrega.nv}</span>
-                                <span className="text-xs text-slate-400">{new Date(entrega.fecha_creacion).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-sm font-medium text-slate-600 truncate">{entrega.cliente}</p>
-                            <p className="text-xs text-slate-400 truncate">{entrega.direccion || 'Sin dirección'}</p>
-                            <div className="mt-2 flex gap-2">
-                                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
-                                    {entrega.bultos} bultos
-                                </span>
-                            </div>
-                        </div>
+            {filteredEntregas.map(entrega => (
+                <div 
+                    key={entrega.id}
+                    onClick={() => toggleSelection(entrega.id)}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                        selectedEntregas.includes(entrega.id) 
+                        ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' 
+                        : 'bg-white border-slate-100 hover:border-indigo-200'
+                    }`}
+                >
+                    <div className={`mt-1 ${selectedEntregas.includes(entrega.id) ? 'text-indigo-600' : 'text-slate-300'}`}>
+                        {selectedEntregas.includes(entrega.id) ? <CheckSquare size={18} /> : <Square size={18} />}
                     </div>
-                ))
-            )}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between">
+                            <span className="font-bold text-slate-700 text-xs">NV: {entrega.nv}</span>
+                            {!entrega.latitud && <span className="text-[10px] text-red-500 font-bold">Sin GPS</span>}
+                        </div>
+                        <p className="text-xs font-medium text-slate-600 truncate">{entrega.cliente}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{entrega.direccion || 'Sin dirección'}</p>
+                    </div>
+                </div>
+            ))}
           </div>
         </div>
 
-        {/* Flecha Central */}
-        <div className="flex flex-col justify-center items-center text-slate-300">
-             <ArrowRight size={32} />
-        </div>
+        {/* Panel Central: Mapa */}
+        {showMap && (
+            <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative z-0">
+                {mapEntregas.length > 0 ? (
+                    <MapContainer center={[-33.4489, -70.6693]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <MapBounds markers={mapEntregas.map(e => ({ lat: e.latitud, lng: e.longitud }))} />
+                        
+                        {mapEntregas.map(entrega => (
+                            <Marker 
+                                key={entrega.id} 
+                                position={[entrega.latitud, entrega.longitud]}
+                                icon={selectedEntregas.includes(entrega.id) ? iconSelected : iconPending}
+                                eventHandlers={{
+                                    click: () => toggleSelection(entrega.id),
+                                }}
+                            >
+                                <Popup>
+                                    <div className="text-xs">
+                                        <strong className="block mb-1">NV: {entrega.nv}</strong>
+                                        <p>{entrega.cliente}</p>
+                                        <p>{entrega.direccion}</p>
+                                        <button 
+                                            className="mt-2 text-indigo-600 underline"
+                                            onClick={() => toggleSelection(entrega.id)}
+                                        >
+                                            {selectedEntregas.includes(entrega.id) ? 'Deseleccionar' : 'Seleccionar'}
+                                        </button>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        ))}
+                    </MapContainer>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                        <MapPin size={48} className="mb-2 opacity-20" />
+                        <p>No hay entregas geocodificadas para mostrar en el mapa</p>
+                    </div>
+                )}
+            </div>
+        )}
 
-        {/* Panel Derecho: Configuración de Ruta */}
-        <div className="w-96 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+        {/* Panel Derecho: Configuración */}
+        <div className="w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
             <div className="p-4 border-b border-slate-100 bg-slate-50">
-                <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-                    <Truck size={18} />
-                    Nueva Ruta
+                <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                    <Truck size={16} /> Configurar Ruta
                 </h3>
             </div>
             
-            <div className="p-6 space-y-6 flex-1">
+            <div className="p-4 space-y-4 flex-1 overflow-y-auto">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Nombre de Ruta</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Ruta</label>
                     <div className="relative">
-                        <Calendar className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                        <Calendar className="absolute left-2 top-2 text-slate-400" size={14} />
                         <input 
                             type="text" 
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            className="w-full pl-8 pr-3 py-1.5 border rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                             value={rutaNombre}
                             onChange={e => setRutaNombre(e.target.value)}
                         />
@@ -189,54 +305,48 @@ const RoutePlanning = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Asignar Conductor</label>
-                    <div className="space-y-2">
-                        {conductores.map(c => (
-                            <div 
-                                key={c.id}
-                                onClick={() => setSelectedConductor(c.id)}
-                                className={`p-3 rounded-lg border cursor-pointer flex justify-between items-center ${
-                                    selectedConductor === c.id 
-                                    ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' 
-                                    : 'hover:bg-slate-50 border-slate-200'
-                                }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <User size={16} className="text-slate-500" />
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Conductor</label>
+                    {conductores.length === 0 ? (
+                         <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                             Sin conductores disponibles.
+                         </div>
+                    ) : (
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                            {conductores.map(c => (
+                                <div 
+                                    key={c.id}
+                                    onClick={() => setSelectedConductor(c.id)}
+                                    className={`p-2 rounded border cursor-pointer flex justify-between items-center transition-all ${
+                                        selectedConductor === c.id 
+                                        ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' 
+                                        : 'hover:bg-slate-50 border-slate-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <div className="w-6 h-6 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center">
+                                            <User size={12} className="text-slate-500" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium text-slate-700 truncate">{c.nombre}</p>
+                                            <p className="text-[10px] text-slate-400 font-mono truncate">{c.vehiculo_patente}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-slate-700">{c.nombre}</p>
-                                        <p className="text-xs text-slate-400">{c.vehiculo}</p>
-                                    </div>
+                                    {selectedConductor === c.id && <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0"></div>}
                                 </div>
-                                {selectedConductor === c.id && <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Resumen</h4>
-                    <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-600">Entregas:</span>
-                        <span className="font-bold text-slate-800">{selectedEntregas.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Estado:</span>
-                        <span className="text-orange-600 font-medium">Borrador</span>
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="p-4 border-t border-slate-100">
                 <button 
                     onClick={handleCreateRoute}
-                    disabled={selectedEntregas.length === 0 || !selectedConductor}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-md"
+                    disabled={selectedEntregas.length === 0 || !selectedConductor || loading}
+                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md transition-all"
                 >
-                    <Save size={18} />
-                    Crear y Asignar Ruta
+                    <Save size={16} />
+                    Crear Ruta
                 </button>
             </div>
         </div>
