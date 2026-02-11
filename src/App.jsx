@@ -14,6 +14,7 @@ const SalesStatus = lazy(() => import('./pages/Queries/SalesStatus'));
 const Addresses = lazy(() => import('./pages/Queries/Addresses'));
 const Batches = lazy(() => import('./pages/Queries/Batches'));
 const Stock = lazy(() => import('./pages/Inventory/Stock'));
+const InventoryLayout = lazy(() => import('./pages/Inventory/Layout'));
 const SalesOrders = lazy(() => import('./pages/Outbound/SalesOrders'));
 const Picking = lazy(() => import('./pages/Outbound/Picking'));
 const Packing = lazy(() => import('./pages/Outbound/Packing'));
@@ -74,7 +75,7 @@ function App() {
 
           {/* Inventory Modules */}
           <Route path="inventory/stock" element={<Stock />} />
-          <Route path="inventory/layout" element={<Placeholder title="Layout Bodega" />} />
+          <Route path="inventory/layout" element={<InventoryLayout />} />
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
 
           {/* Queries Modules */}
