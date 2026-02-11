@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { Search, Barcode, Box, Calendar, AlertTriangle, CheckCircle, XCircle, Package } from 'lucide-react';
+import { Search, Barcode, Box, Calendar, MapPin, Scale, Package, Layers } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 const Batches = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState({ series: [], lotes: [] });
+  const [data, setData] = useState({
+    partidas: [],
+    series: [],
+    farmapack: [],
+    peso: null,
+    ubicaciones: []
+  });
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async (e) => {
@@ -14,27 +20,51 @@ const Batches = () => {
 
     setLoading(true);
     setSearched(true);
-    setResults({ series: [], lotes: [] });
+    
+    const newData = {
+      partidas: [],
+      series: [],
+      farmapack: [],
+      peso: { unitario: 0, total: 0 },
+      ubicaciones: []
+    };
 
     try {
-      // 1. Buscar en Series (Equipos)
-      const { data: seriesData } = await supabase
+      const term = `%${searchTerm}%`;
+
+      // 1. PARTIDAS (Todas las columnas)
+      const { data: partidas } = await supabase
+        .from('tms_partidas')
+        .select('*')
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term}`);
+      
+      if (partidas) newData.partidas = partidas;
+
+      // 2. SERIES (Todas las columnas)
+      const { data: series } = await supabase
         .from('tms_series')
         .select('*')
-        .ilike('serie', `%${searchTerm}%`)
-        .limit(20);
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`);
+      
+      if (series) newData.series = series;
 
-      // 2. Buscar en Farmapack (Lotes)
-      const { data: lotesData } = await supabase
+      // 3. FARMAPACK (Todas las columnas)
+      const { data: farmapack } = await supabase
         .from('tms_farmapack')
         .select('*')
-        .ilike('lote', `%${searchTerm}%`)
-        .limit(20);
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`);
+      
+      if (farmapack) newData.farmapack = farmapack;
 
-      setResults({
-        series: seriesData || [],
-        lotes: lotesData || []
-      });
+      // 4. UBICACIONES (Inferidas)
+      const locs = new Set();
+      newData.series.forEach(s => s.ubicacion_actual && locs.add(s.ubicacion_actual));
+      newData.ubicaciones = Array.from(locs).map(l => ({ nombre: l }));
+
+      // 5. PESO (Placeholder)
+      newData.peso = { unitario: 'N/A', total: 'N/A' }; 
+
+      setData(newData);
 
     } catch (err) {
       console.error(err);
@@ -43,153 +73,148 @@ const Batches = () => {
     }
   };
 
-  const getDaysUntilExpiration = (dateStr) => {
-    if (!dateStr) return null;
-    const today = new Date();
-    const expDate = new Date(dateStr);
-    const diffTime = expDate - today;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const ExpirationBadge = ({ date }) => {
-    if (!date) return <span className="text-gray-400 text-xs">Sin fecha</span>;
-    
-    const days = getDaysUntilExpiration(date);
-    let colorClass = 'bg-green-100 text-green-700 border-green-200';
-    let icon = <CheckCircle size={14} />;
-    let text = `${days} días`;
-
-    if (days < 0) {
-      colorClass = 'bg-red-100 text-red-700 border-red-200';
-      icon = <XCircle size={14} />;
-      text = 'VENCIDO';
-    } else if (days < 90) {
-      colorClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      icon = <AlertTriangle size={14} />;
-      text = `Vence en ${days} días`;
-    }
-
-    return (
-      <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold border ${colorClass}`}>
-        {icon}
-        <span>{text} ({new Date(date).toLocaleDateString()})</span>
+  // Componente de Tarjeta Expandida (Tabla)
+  const DetailCard = ({ title, icon: Icon, color, children, count }) => (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
+      <div className={`p-3 border-b border-slate-100 ${color} bg-opacity-10 flex justify-between items-center`}>
+        <h3 className={`font-bold text-sm flex items-center gap-2 ${color.replace('bg-', 'text-').replace('bg-opacity-10', '')}`}>
+          <Icon size={18} /> {title}
+        </h3>
+        {count !== undefined && (
+          <span className="bg-white px-2 py-0.5 rounded text-xs font-bold shadow-sm text-slate-600">
+            {count}
+          </span>
+        )}
       </div>
-    );
-  };
+      <div className="flex-1 overflow-auto p-0">
+        {children}
+      </div>
+    </div>
+  );
+
+  // Fila de Detalle Genérica
+  const DetailRow = ({ label, value, highlight = false }) => (
+    <div className="flex justify-between text-xs py-1 border-b border-slate-50 last:border-0">
+        <span className="text-slate-500 font-medium">{label}:</span>
+        <span className={`font-bold ${highlight ? 'text-indigo-600' : 'text-slate-700'}`}>{value || '-'}</span>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Consulta de Lotes y Series</h2>
-        <p className="text-slate-500 text-sm">Trazabilidad de productos serializados y lotes farmacéuticos</p>
+    <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+      <div className="flex-shrink-0">
+        <h2 className="text-2xl font-bold text-slate-800">Consulta Maestra</h2>
+        <p className="text-slate-500 text-sm">Vista detallada por Código o Descripción</p>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-            <Barcode className="absolute left-4 top-3.5 text-slate-400" size={20} />
-            <input 
-                type="text" 
-                placeholder="Escanea o escribe Lote / N° Serie..." 
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-lg transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-            />
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-shrink-0">
+        <form onSubmit={handleSearch} className="relative flex gap-2">
+            <div className="relative flex-1">
+                <Search className="absolute left-4 top-3 text-slate-400" size={20} />
+                <input 
+                    type="text" 
+                    placeholder="Ingrese Código o Descripción del Producto..." 
+                    className="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    autoFocus
+                />
+            </div>
             <button 
                 type="submit"
-                className="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg font-medium transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors"
                 disabled={loading}
             >
-                {loading ? 'Buscando...' : 'Buscar'}
+                {loading ? '...' : 'Buscar'}
             </button>
         </form>
       </div>
 
-      {/* Results */}
       {searched && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 flex-1 overflow-hidden min-h-0 pb-4">
             
-            {/* Sección Series */}
-            {(results.series.length > 0 || results.lotes.length === 0) && (
-                <div>
-                    <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                        <Box size={20} className="text-blue-500" /> 
-                        Equipos Serializados ({results.series.length})
-                    </h3>
-                    
-                    {results.series.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {results.series.map((item, idx) => (
-                                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="bg-blue-50 text-blue-700 text-xs font-mono font-bold px-2 py-1 rounded">
-                                            SN: {item.serie}
-                                        </span>
-                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${item.estado === 'DESPACHADO' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                                            {item.estado || 'EN BODEGA'}
-                                        </span>
-                                    </div>
-                                    <h4 className="font-bold text-slate-800 text-sm mb-1 truncate">{item.producto || 'Producto Desconocido'}</h4>
-                                    <p className="text-xs text-slate-500 mb-3">SKU: {item.codigo_producto}</p>
-                                    
-                                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
-                                        <div className="flex items-center gap-1 text-xs text-slate-400">
-                                            <Box size={14} />
-                                            <span>{item.ubicacion_actual || 'Bodega Central'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+            {/* 1. PARTIDAS */}
+            <DetailCard title="PARTIDAS" icon={Layers} color="bg-blue-500" count={data.partidas.length}>
+                <div className="p-2 space-y-2">
+                    {data.partidas.length > 0 ? data.partidas.map((p, i) => (
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="font-bold text-xs text-blue-800 mb-1 truncate" title={p.producto}>{p.producto}</p>
+                            <DetailRow label="Código" value={p.codigo_producto} />
+                            <DetailRow label="U. Medida" value={p.unidad_medida} />
+                            <DetailRow label="Partida" value={p.partida} />
+                            <DetailRow label="Vencimiento" value={p.fecha_venc ? new Date(p.fecha_venc).toLocaleDateString() : '-'} />
+                            <DetailRow label="Disponible" value={p.disponible} highlight />
+                            <DetailRow label="Reserva" value={p.reserva} />
+                            <DetailRow label="Stock Total" value={p.stock_total} />
                         </div>
-                    ) : (
-                        results.lotes.length === 0 && <p className="text-slate-400 text-sm italic">No se encontraron series.</p>
-                    )}
+                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
                 </div>
-            )}
+            </DetailCard>
 
-            {/* Sección Lotes */}
-            {(results.lotes.length > 0 || results.series.length === 0) && (
-                <div>
-                    <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                        <Package size={20} className="text-emerald-500" /> 
-                        Lotes Farmacéuticos ({results.lotes.length})
-                    </h3>
-                    
-                    {results.lotes.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {results.lotes.map((item, idx) => (
-                                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <span className="bg-emerald-50 text-emerald-700 text-xs font-mono font-bold px-2 py-1 rounded">
-                                            LOTE: {item.lote}
-                                        </span>
-                                        <span className="font-bold text-slate-800 text-lg">{item.cantidad} UN</span>
-                                    </div>
-                                    
-                                    <h4 className="font-bold text-slate-800 text-sm mb-1 truncate">{item.producto || 'Producto Desconocido'}</h4>
-                                    <p className="text-xs text-slate-500 mb-4">SKU: {item.codigo_producto}</p>
-                                    
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-slate-400 font-bold uppercase">Vencimiento</span>
-                                            <ExpirationBadge date={item.fecha_venc} />
-                                        </div>
-                                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                                            <span className="text-xs text-slate-400">Estado Calidad</span>
-                                            <span className={`text-xs font-bold ${item.estado_calidad === 'LIBERADO' ? 'text-green-600' : 'text-amber-600'}`}>
-                                                {item.estado_calidad || 'EN CUARENTENA'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+            {/* 2. SERIES */}
+            <DetailCard title="SERIES" icon={Barcode} color="bg-indigo-500" count={data.series.length}>
+                <div className="p-2 space-y-2">
+                    {data.series.length > 0 ? data.series.map((s, i) => (
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <div className="flex justify-between mb-1">
+                                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold">SN: {s.serie}</span>
+                            </div>
+                            <DetailRow label="Código" value={s.codigo_producto} />
+                            <DetailRow label="Ubicación" value={s.ubicacion_actual} />
+                            <DetailRow label="Estado" value={s.estado} highlight />
+                            <DetailRow label="Disponible" value={s.disponible} />
+                            <DetailRow label="Reserva" value={s.reserva} />
                         </div>
-                    ) : (
-                        results.series.length === 0 && <p className="text-slate-400 text-sm italic">No se encontraron lotes.</p>
-                    )}
+                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
                 </div>
-            )}
+            </DetailCard>
+
+            {/* 3. FARMAPACK */}
+            <DetailCard title="FARMAPACK" icon={Package} color="bg-emerald-500" count={data.farmapack.length}>
+                <div className="p-2 space-y-2">
+                    {data.farmapack.length > 0 ? data.farmapack.map((f, i) => (
+                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <div className="flex justify-between mb-1">
+                                <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold">Lote: {f.lote}</span>
+                            </div>
+                            <DetailRow label="Código" value={f.codigo_producto} />
+                            <DetailRow label="Vencimiento" value={f.fecha_venc ? new Date(f.fecha_venc).toLocaleDateString() : '-'} />
+                            <DetailRow label="Calidad" value={f.estado_calidad} />
+                            <DetailRow label="Disponible" value={f.disponible} highlight />
+                            <DetailRow label="Stock Total" value={f.stock_total} />
+                        </div>
+                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                </div>
+            </DetailCard>
+
+            {/* 4. PESO */}
+            <DetailCard title="PESO" icon={Scale} color="bg-amber-500">
+                <div className="p-4 flex flex-col items-center justify-center h-full text-slate-500">
+                    <p className="text-xs uppercase font-bold mb-2">Peso Unitario</p>
+                    <p className="text-3xl font-black text-amber-600">{data.peso?.unitario || '-'}</p>
+                    <p className="text-[10px]">kg</p>
+                    
+                    <div className="w-full h-px bg-slate-200 my-4"></div>
+                    
+                    <p className="text-xs uppercase font-bold mb-2">Peso Total</p>
+                    <p className="text-xl font-bold text-slate-700">{data.peso?.total || '-'}</p>
+                    <p className="text-[10px]">kg</p>
+                </div>
+            </DetailCard>
+
+            {/* 5. UBICACIONES */}
+            <DetailCard title="UBICACIONES" icon={MapPin} color="bg-rose-500" count={data.ubicaciones.length}>
+                <div className="p-2 space-y-2">
+                    {data.ubicaciones.length > 0 ? data.ubicaciones.map((u, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 bg-rose-50 rounded border border-rose-100 text-rose-800 font-bold text-sm">
+                            <MapPin size={16} />
+                            <span>{u.nombre}</span>
+                        </div>
+                    )) : <p className="text-center text-xs text-slate-400 py-4">Sin datos</p>}
+                </div>
+            </DetailCard>
+
         </div>
       )}
     </div>
