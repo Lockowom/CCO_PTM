@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
-import { Search, Barcode, Box, Package, Layers, Scale, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Barcode, Box, Package, Layers, Scale, MapPin, RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 const Batches = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('partidas');
   const [data, setData] = useState({
     partidas: [],
     series: [],
     farmapack: [],
-    peso: null,
+    peso: [],
     ubicaciones: []
   });
   const [searched, setSearched] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  // Definición de Vistas (Tabs)
+  const TABS = [
+    { id: 'partidas', label: 'PARTIDAS', icon: Layers, color: 'blue' },
+    { id: 'series', label: 'SERIES', icon: Barcode, color: 'indigo' },
+    { id: 'farmapack', label: 'FARMAPACK', icon: Package, color: 'emerald' },
+    { id: 'peso', label: 'PESO', icon: Scale, color: 'amber' },
+    { id: 'ubicaciones', label: 'UBICACIONES', icon: MapPin, color: 'rose' }
+  ];
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -22,206 +33,254 @@ const Batches = () => {
     setSearched(true);
     
     const term = `%${searchTerm.trim()}%`;
-    const newData = { partidas: [], series: [], farmapack: [], peso: { unitario: '-', total: '-' }, ubicaciones: [] };
+    const newData = { partidas: [], series: [], farmapack: [], peso: [], ubicaciones: [] };
 
     try {
-      // Función de búsqueda universal robusta
-      // Busca en 'codigo_producto' Y 'producto' (o 'descripcion')
-      const searchGeneric = async (table, cols) => {
+      // Función helper para buscar en Supabase con OR condition
+      const searchTable = async (table, cols) => {
         try {
-            // Intentar búsqueda compuesta
-            let query = supabase.from(table).select('*').limit(50);
-            
-            // Construir filtro OR manualmente para asegurar que cubra ambas columnas
-            // Sintaxis: columna.ilike.valor,columna2.ilike.valor
-            const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
-            query = query.or(orFilter);
-            
-            const { data, error } = await query;
-            if (error) throw error;
-            return data || [];
+          // 1. Intentar búsqueda con OR (Code OR Desc)
+          let query = supabase.from(table).select('*').limit(100);
+          const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
+          query = query.or(orFilter);
+          
+          const { data, error } = await query;
+          if (error) throw error;
+          return data || [];
         } catch (err) {
-            console.warn(`Fallback search for ${table}:`, err.message);
-            // Fallback: buscar solo por código si la descripción falla
-            const { data } = await supabase.from(table).select('*').ilike(cols[0], term).limit(50);
-            return data || [];
+          console.warn(`Error buscando en ${table}, reintentando solo por código:`, err);
+          // 2. Fallback: Buscar solo por primera columna (usualmente código)
+          const { data } = await supabase.from(table).select('*').ilike(cols[0], term).limit(100);
+          return data || [];
         }
       };
 
-      // 1. PARTIDAS
-      newData.partidas = await searchGeneric('tms_partidas', ['codigo_producto', 'producto']);
+      // Ejecutar búsquedas en paralelo
+      const [p, s, f, w, u] = await Promise.all([
+        searchTable('tms_partidas', ['codigo_producto', 'producto']),
+        searchTable('tms_series', ['codigo_producto', 'producto', 'serie']),
+        searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']),
+        searchTable('tms_pesos', ['codigo_producto', 'descripcion']),
+        searchTable('tms_ubicaciones_historial', ['codigo_producto', 'descripcion', 'ubicacion'])
+      ]);
 
-      // 2. SERIES
-      newData.series = await searchGeneric('tms_series', ['codigo_producto', 'producto', 'serie']);
-
-      // 3. FARMAPACK
-      newData.farmapack = await searchGeneric('tms_farmapack', ['codigo_producto', 'producto', 'lote']);
-
-      // 4. UBICACIONES
-      const ubiData = await searchGeneric('tms_ubicaciones_historial', ['codigo_producto', 'descripcion']);
-      newData.ubicaciones = ubiData;
-
-      // 5. PESO
-      const pesoData = await searchGeneric('tms_pesos', ['codigo_producto', 'descripcion']);
-      if (pesoData.length > 0) {
-          newData.peso = {
-              unitario: pesoData[0].peso_unitario || '-',
-              total: pesoData[0].peso_unitario ? (pesoData[0].peso_unitario * (newData.partidas[0]?.stock_total || 0)).toFixed(2) : '-'
-          };
-      }
+      newData.partidas = p;
+      newData.series = s;
+      newData.farmapack = f;
+      newData.peso = w; // Peso ahora es array para tabla
+      newData.ubicaciones = u;
 
       setData(newData);
+      setLastUpdated(new Date());
+
+      // Auto-seleccionar tab con resultados si el actual está vacío
+      if (newData[activeTab].length === 0) {
+        const firstWithData = TABS.find(t => newData[t.id].length > 0);
+        if (firstWithData) setActiveTab(firstWithData.id);
+      }
 
     } catch (err) {
-      console.error(err);
+      console.error("Error en búsqueda global:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Componente de Panel Estilo "Legacy/Data"
-  const DataPanel = ({ title, icon: Icon, color, count, children }) => (
-    <div className="flex flex-col h-full border border-slate-300 rounded bg-white shadow-sm overflow-hidden">
-      {/* Encabezado Sólido */}
-      <div className={`px-3 py-2 ${color} text-white flex justify-between items-center`}>
-        <h3 className="font-bold text-sm uppercase flex items-center gap-2">
-          <Icon size={16} /> {title}
-        </h3>
-        <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-mono">
-          {count !== undefined ? count : ''}
-        </span>
-      </div>
-      {/* Cuerpo con Scroll */}
-      <div className="flex-1 overflow-y-auto p-0 bg-slate-50">
-        {children}
-      </div>
-    </div>
-  );
+  // Componente de Tabla Genérica
+  const ResultTable = ({ columns, rows, color }) => {
+    if (rows.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
+          <Search size={48} className="mb-4 opacity-20" />
+          <p>Sin resultados en esta vista</p>
+        </div>
+      );
+    }
 
-  // Fila de Datos Compacta
-  const DataRow = ({ label, value, isHeader = false }) => (
-    <div className={`flex justify-between text-xs py-1 px-2 border-b border-slate-200 ${isHeader ? 'bg-slate-100 font-bold' : ''}`}>
-      <span className="text-slate-600">{label}</span>
-      <span className="text-slate-900 font-medium text-right truncate max-w-[60%]">{value}</span>
-    </div>
-  );
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-sm bg-white">
+        <table className="w-full text-sm text-left">
+          <thead className={`text-xs text-white uppercase bg-${color}-600`}>
+            <tr>
+              {columns.map((col, i) => (
+                <th key={i} className="px-4 py-3 font-bold whitespace-nowrap">
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row, idx) => (
+              <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                {columns.map((col, cIdx) => (
+                  <td key={cIdx} className="px-4 py-3 whitespace-nowrap text-slate-700">
+                    {col.render ? col.render(row) : (row[col.accessor] || '-')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Configuraciones de Columnas por Tab
+  const TABLE_CONFIG = {
+    partidas: [
+      { header: 'Código', accessor: 'codigo_producto' },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800">{r.producto || r.descripcion}</span> },
+      { header: 'Lote / Partida', accessor: 'partida', render: r => <span className="font-mono bg-slate-100 px-1 rounded">{r.partida}</span> },
+      { header: 'Vencimiento', accessor: 'fecha_venc', render: r => r.fecha_venc ? new Date(r.fecha_venc).toLocaleDateString() : '-' },
+      { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-mono">{r.stock_total}</span> },
+      { header: 'Disponible', accessor: 'cantidad_actual', render: r => <span className="font-bold text-green-600">{r.cantidad_actual || r.disponible}</span> }
+    ],
+    series: [
+      { header: 'Código', accessor: 'codigo_producto' },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800">{r.producto}</span> },
+      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">{r.serie}</span> },
+      { header: 'Estado', accessor: 'estado', render: r => <span className={`text-xs px-2 py-1 rounded-full ${r.estado === 'DISPONIBLE' || r.estado === 'EN_BODEGA' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.estado}</span> },
+      { header: 'Ubicación', accessor: 'ubicacion_actual' },
+      { header: 'Disponible', accessor: 'disponible' }
+    ],
+    farmapack: [
+      { header: 'Código', accessor: 'codigo_producto' },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800">{r.producto}</span> },
+      { header: 'Lote', accessor: 'lote', render: r => <span className="font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">{r.lote}</span> },
+      { header: 'Vencimiento', accessor: 'fecha_venc', render: r => r.fecha_venc ? new Date(r.fecha_venc).toLocaleDateString() : '-' },
+      { header: 'Calidad', accessor: 'estado_calidad' },
+      { header: 'Disponible', accessor: 'cantidad', render: r => <span className="font-bold text-emerald-600">{r.cantidad || r.disponible}</span> }
+    ],
+    peso: [
+      { header: 'Código', accessor: 'codigo_producto' },
+      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800">{r.descripcion}</span> },
+      { header: 'Peso Unitario (Kg)', accessor: 'peso_unitario', render: r => <span className="font-mono">{r.peso_unitario}</span> },
+      { header: 'Largo', accessor: 'largo' },
+      { header: 'Ancho', accessor: 'ancho' },
+      { header: 'Alto', accessor: 'alto' }
+    ],
+    ubicaciones: [
+      { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded">{r.ubicacion}</span> },
+      { header: 'Código', accessor: 'codigo_producto' },
+      { header: 'Descripción', accessor: 'descripcion' },
+      { header: 'Cantidad', accessor: 'cantidad', render: r => <span className="font-bold">{r.cantidad}</span> },
+      { header: 'Serie/Lote', accessor: 'serie', render: r => r.serie || r.partida || '-' },
+      { header: 'Usuario', accessor: 'usuario' },
+      { header: 'Fecha', accessor: 'fecha_registro', render: r => new Date(r.fecha_registro).toLocaleDateString() + ' ' + new Date(r.fecha_registro).toLocaleTimeString() }
+    ]
+  };
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col space-y-4">
-      {/* Header & Search */}
-      <div className="flex-shrink-0 bg-white p-4 rounded border border-slate-200 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Consulta Maestra</h2>
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
-              placeholder="BUSCAR POR CÓDIGO O DESCRIPCIÓN..."
+    <div className="h-full flex flex-col bg-slate-50">
+      {/* 1. Header de Búsqueda */}
+      <div className="bg-white border-b border-slate-200 p-4 shadow-sm z-10">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex justify-between items-center mb-4">
+             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+               <Layers className="text-blue-600" />
+               CONSULTA MAESTRA
+             </h1>
+             {searched && (
+               <div className="text-xs text-slate-400 flex items-center gap-1">
+                 <RefreshCw size={12} />
+                 Actualizado: {lastUpdated.toLocaleTimeString()}
+               </div>
+             )}
+          </div>
+          
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              className="w-full pl-12 pr-4 py-4 text-lg bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 outline-none transition-all shadow-inner uppercase font-mono text-slate-700 placeholder:text-slate-400"
+              placeholder="BUSCAR POR CÓDIGO, DESCRIPCIÓN, LOTE O SERIE..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               autoFocus
             />
-          </div>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold transition-colors">
-            BUSCAR
-          </button>
-        </form>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={24} />
+            <button 
+              type="submit"
+              disabled={loading}
+              className="absolute right-2 top-2 bottom-2 bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg font-bold transition-colors disabled:opacity-50"
+            >
+              {loading ? <RefreshCw className="animate-spin" /> : 'BUSCAR'}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* Grid de Resultados */}
-      {searched && (
-        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          
-          {/* 1. PARTIDAS */}
-          <DataPanel title="Partidas" icon={Layers} color="bg-blue-600" count={data.partidas.length}>
-            {data.partidas.length > 0 ? data.partidas.map((p, i) => (
-              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
-                <div className="p-2 bg-blue-50 text-blue-900 font-bold text-xs truncate" title={p.producto || p.descripcion}>
-                  {p.producto || p.descripcion}
-                </div>
-                <DataRow label="CÓDIGO" value={p.codigo_producto} />
-                <DataRow label="U.MEDIDA" value={p.unidad_medida} />
-                <DataRow label="PARTIDA" value={p.partida} />
-                <DataRow label="VENCIMIENTO" value={p.fecha_venc} />
-                <DataRow label="DISPONIBLE" value={p.disponible} />
-                <DataRow label="STOCK TOTAL" value={p.stock_total} />
-              </div>
-            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
-          </DataPanel>
+      {/* 2. Tabs de Navegación (Estilo Dashboard) */}
+      <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-0">
+        <div className="max-w-7xl mx-auto w-full px-4">
+          <div className="flex space-x-1 overflow-x-auto py-2 no-scrollbar">
+            {TABS.map(tab => {
+              const isActive = activeTab === tab.id;
+              const count = data[tab.id].length;
+              const Icon = tab.icon;
+              
+              // Clases dinámicas según color
+              const activeClasses = {
+                blue: 'bg-blue-50 border-blue-200 text-blue-700',
+                indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+                emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+                amber: 'bg-amber-50 border-amber-200 text-amber-700',
+                rose: 'bg-rose-50 border-rose-200 text-rose-700',
+              };
 
-          {/* 2. SERIES */}
-          <DataPanel title="Series" icon={Barcode} color="bg-indigo-600" count={data.series.length}>
-            {data.series.length > 0 ? data.series.map((s, i) => (
-              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
-                <div className="p-2 bg-indigo-50 text-indigo-900 font-bold text-xs truncate" title={s.producto}>
-                  {s.producto || '-'}
-                </div>
-                <div className="px-2 pt-1 flex justify-between items-center">
-                  <span className="font-mono font-bold text-xs text-slate-700">SN: {s.serie}</span>
-                  <span className="bg-white px-1 rounded border border-indigo-200 text-[10px] text-indigo-600">{s.estado}</span>
-                </div>
-                <DataRow label="CÓDIGO" value={s.codigo_producto} />
-                <DataRow label="UBICACIÓN" value={s.ubicacion_actual} />
-                <DataRow label="DISPONIBLE" value={s.disponible} />
-              </div>
-            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
-          </DataPanel>
+              const badgeClasses = {
+                blue: 'bg-blue-600 text-white',
+                indigo: 'bg-indigo-600 text-white',
+                emerald: 'bg-emerald-600 text-white',
+                amber: 'bg-amber-600 text-white',
+                rose: 'bg-rose-600 text-white',
+              };
 
-          {/* 3. FARMAPACK */}
-          <DataPanel title="Farmapack" icon={Package} color="bg-emerald-600" count={data.farmapack.length}>
-            {data.farmapack.length > 0 ? data.farmapack.map((f, i) => (
-              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
-                <div className="p-2 bg-emerald-50 text-emerald-900 font-bold text-xs truncate" title={f.producto}>
-                  {f.producto || '-'}
-                </div>
-                <div className="px-2 pt-1 font-mono font-bold text-xs text-slate-700">
-                  LOTE: {f.lote}
-                </div>
-                <DataRow label="CÓDIGO" value={f.codigo_producto} />
-                <DataRow label="VENCIMIENTO" value={f.fecha_venc} />
-                <DataRow label="CALIDAD" value={f.estado_calidad} />
-                <DataRow label="DISPONIBLE" value={f.disponible} />
-              </div>
-            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
-          </DataPanel>
-
-          {/* 4. PESO */}
-          <DataPanel title="Peso" icon={Scale} color="bg-amber-600">
-            <div className="p-4 flex flex-col items-center justify-center h-full text-slate-600">
-              <div className="text-center mb-6">
-                <p className="text-xs font-bold uppercase mb-1">Peso Unitario</p>
-                <p className="text-3xl font-black text-slate-800">{data.peso?.unitario}</p>
-                <p className="text-[10px]">KG</p>
-              </div>
-              <div className="w-full border-t border-slate-200 my-2"></div>
-              <div className="text-center mt-4">
-                <p className="text-xs font-bold uppercase mb-1">Peso Total (Est.)</p>
-                <p className="text-xl font-bold text-slate-800">{data.peso?.total}</p>
-                <p className="text-[10px]">KG</p>
-              </div>
-            </div>
-          </DataPanel>
-
-          {/* 5. UBICACIONES */}
-          <DataPanel title="Ubicaciones" icon={MapPin} color="bg-rose-600" count={data.ubicaciones.length}>
-            {data.ubicaciones.length > 0 ? data.ubicaciones.map((u, i) => (
-              <div key={i} className="p-2 border-b border-slate-200 bg-white hover:bg-rose-50 transition-colors">
-                <div className="flex items-center gap-2 font-mono font-bold text-sm text-rose-700">
-                  <MapPin size={14} /> {u.ubicacion}
-                </div>
-                <div className="text-[10px] text-slate-500 mt-1 pl-6">
-                  {u.codigo_producto} - {u.cantidad} UN
-                </div>
-                <div className="text-[10px] text-slate-400 pl-6">
-                  {new Date(u.fecha_registro).toLocaleDateString()}
-                </div>
-              </div>
-            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
-          </DataPanel>
-
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg border-b-4 transition-all min-w-[140px]
+                    ${isActive 
+                      ? `${activeClasses[tab.color]} border-${tab.color}-500 shadow-sm` 
+                      : 'bg-white border-transparent text-slate-500 hover:bg-slate-50'
+                    }
+                  `}
+                >
+                  <Icon size={20} className={isActive ? '' : 'opacity-50'} />
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs font-bold uppercase tracking-wider">{tab.label}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold mt-1 ${isActive ? badgeClasses[tab.color] : 'bg-slate-100 text-slate-500'}`}>
+                      {count}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* 3. Área de Contenido */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-7xl mx-auto w-full">
+          {searched ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <ResultTable 
+                 columns={TABLE_CONFIG[activeTab]} 
+                 rows={data[activeTab]} 
+                 color={TABS.find(t => t.id === activeTab).color} 
+               />
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 mt-20">
+              <Layers size={64} className="mb-4 opacity-20" />
+              <p className="text-lg font-medium">Ingrese un término para comenzar la búsqueda</p>
+              <p className="text-sm">Puede buscar en todas las tablas simultáneamente</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
