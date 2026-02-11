@@ -19,14 +19,13 @@ const Addresses = () => {
     const startTime = performance.now();
     
     try {
-      // Búsqueda en múltiples columnas usando 'ilike' (case insensitive)
-      // Nota: Supabase postgrest no tiene un 'OR' global simple para todas las columnas sin sintaxis específica,
-      // pero podemos usar el filtro .or()
+      // Búsqueda ajustada a los campos permitidos: Razón Social (B), Nombre (C), RUT (F)
+      // Se muestran: Región, Ciudad, Comuna, Dirección, Teléfono 1
       
       const { data, error } = await supabase
         .from('tms_direcciones')
         .select('*')
-        .or(`razon_social.ilike.%${searchTerm}%,nombre_fantasia.ilike.%${searchTerm}%,rut.ilike.%${searchTerm}%,direccion.ilike.%${searchTerm}%`)
+        .or(`razon_social.ilike.%${searchTerm}%,nombre.ilike.%${searchTerm}%,rut.ilike.%${searchTerm}%`)
         .limit(50);
 
       if (error) throw error;
@@ -100,11 +99,11 @@ const Addresses = () => {
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50 border-b border-slate-100">
                       <tr>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase w-1/3">Cliente / Razón Social</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase w-1/3">Razón Social / Nombre</th>
                         <th className="p-4 text-xs font-bold text-slate-500 uppercase w-32">RUT</th>
                         <th className="p-4 text-xs font-bold text-slate-500 uppercase">Ubicación</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Dirección Exacta</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contacto</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Dirección</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Teléfono</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -112,13 +111,8 @@ const Addresses = () => {
                         <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
                           <td className="p-4 align-top">
                             <div className="font-bold text-slate-800 text-sm">{item.razon_social}</div>
-                            {item.nombre_fantasia && item.nombre_fantasia !== item.razon_social && (
-                              <div className="text-xs text-slate-500 mt-1">{item.nombre_fantasia}</div>
-                            )}
-                            {item.tipo_transporte && (
-                              <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
-                                {item.tipo_transporte}
-                              </span>
+                            {item.nombre && item.nombre !== item.razon_social && (
+                              <div className="text-xs text-slate-500 mt-1">{item.nombre}</div>
                             )}
                           </td>
                           <td className="p-4 align-top">
@@ -133,17 +127,10 @@ const Addresses = () => {
                           <td className="p-4 align-top">
                             <div className="flex items-start gap-2 text-sm text-slate-600">
                               <MapPin size={16} className="text-slate-400 mt-0.5 flex-shrink-0" />
-                              <span>
-                                {item.direccion} {item.numero_direccion ? '#' + item.numero_direccion : ''}
-                              </span>
+                              <span>{item.direccion}</span>
                             </div>
                           </td>
                           <td className="p-4 align-top space-y-1">
-                            {item.email && (
-                              <div className="flex items-center gap-2 text-xs text-indigo-600 hover:underline cursor-pointer">
-                                <Mail size={14} /> {item.email}
-                              </div>
-                            )}
                             {item.telefono_1 && (
                               <div className="flex items-center gap-2 text-xs text-slate-600">
                                 <Phone size={14} /> {item.telefono_1}
