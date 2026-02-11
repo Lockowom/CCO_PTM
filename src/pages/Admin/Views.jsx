@@ -19,17 +19,40 @@ const ViewsPage = () => {
   // Available Routes for Landing Page
   const availableRoutes = [
     { value: '/dashboard', label: 'Dashboard General' },
+    
+    // TMS
+    { value: '/tms/dashboard', label: 'TMS - Dashboard' },
     { value: '/tms/planning', label: 'TMS - Planificación' },
     { value: '/tms/control-tower', label: 'TMS - Torre de Control' },
     { value: '/tms/drivers', label: 'TMS - Conductores' },
     { value: '/tms/mobile', label: 'TMS - App Móvil' },
+    
+    // Inbound
     { value: '/inbound/reception', label: 'Inbound - Recepción' },
     { value: '/inbound/entry', label: 'Inbound - Ingreso' },
+    
+    // Outbound
+    { value: '/outbound/sales-orders', label: 'Outbound - Notas de Venta' },
     { value: '/outbound/picking', label: 'Outbound - Picking' },
     { value: '/outbound/packing', label: 'Outbound - Packing' },
     { value: '/outbound/shipping', label: 'Outbound - Despachos' },
+    { value: '/outbound/deliveries', label: 'Outbound - Entregas' },
+    
+    // Inventario
     { value: '/inventory/stock', label: 'Inventario - Stock' },
+    { value: '/inventory/layout', label: 'Inventario - Layout' },
+    { value: '/inventory/transfers', label: 'Inventario - Transferencias' },
+    
+    // Consultas
+    { value: '/queries/batches', label: 'Consultas - Lotes/Series' },
+    { value: '/queries/sales-status', label: 'Consultas - Estado N.V.' },
+    { value: '/queries/addresses', label: 'Consultas - Direcciones' },
+    
+    // Admin
     { value: '/admin/users', label: 'Admin - Usuarios' },
+    { value: '/admin/roles', label: 'Admin - Roles' },
+    { value: '/admin/views', label: 'Admin - Vistas' },
+    { value: '/admin/reports', label: 'Admin - Reportes' }
   ];
 
   useEffect(() => {
