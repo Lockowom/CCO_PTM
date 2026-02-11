@@ -54,24 +54,30 @@ const Shipping = () => {
     try {
       setLoading(true);
       
+      const now = new Date().toISOString();
+      
       const { error } = await supabase
         .from('tms_entregas')
         .update({
-            facturas: editForm.facturas,
-            guia: editForm.guia,
-            empresa_transporte: editForm.empresa_transporte,
-            transportista: editForm.transportista,
-            division: editForm.division,
-            valor_flete: editForm.valor_flete,
-            num_envio_ot: editForm.num_envio_ot,
-            fecha_despacho: new Date() // Se llena automáticamente al guardar
+            facturas: editForm.facturas || '',
+            guia: editForm.guia || '',
+            empresa_transporte: editForm.empresa_transporte || 'PROPIO',
+            transportista: editForm.transportista || '',
+            division: editForm.division || '',
+            valor_flete: editForm.valor_flete || 0,
+            num_envio_ot: editForm.num_envio_ot || '',
+            fecha_despacho: now // Usar string ISO
         })
         .eq('id', id);
 
       if (error) throw error;
 
-      setDeliveries(deliveries.map(d => 
-        d.id === id ? { ...d, ...editForm, fecha_despacho: new Date() } : d
+      setDeliveries(prev => prev.map(d => 
+        d.id === id ? { 
+            ...d, 
+            ...editForm, 
+            fecha_despacho: now 
+        } : d
       ));
       
       setEditingId(null);
