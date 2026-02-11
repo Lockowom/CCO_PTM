@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RoutePlanning from './pages/TMS/RoutePlanning';
+import Drivers from './pages/TMS/Drivers'; // Importar Drivers
 import Stock from './pages/Inventory/Stock';
 import SalesOrders from './pages/Outbound/SalesOrders';
 import Picking from './pages/Outbound/Picking';
@@ -36,7 +37,7 @@ function App() {
           <Route path="tms/dashboard" element={<Dashboard />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
           <Route path="tms/control-tower" element={<Dashboard />} />
-          <Route path="tms/drivers" element={<Placeholder title="Gestión de Conductores" />} />
+          <Route path="tms/drivers" element={<Drivers />} />
           <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
 
           {/* Inbound Modules */}
