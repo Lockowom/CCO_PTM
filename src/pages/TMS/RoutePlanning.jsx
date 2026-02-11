@@ -63,12 +63,15 @@ const RoutePlanning = () => {
   }, []);
 
   useEffect(() => {
-    const points = entregas
+    const defaultPoints = entregas
       .filter(e => selectedEntregas.includes(e.id) && e.latitud && e.longitud)
       .map(e => [e.latitud, e.longitud]);
-    setRoutePolyline(points);
+    if (routePolyline.length === 0) {
+      setRoutePolyline(defaultPoints);
+    }
     const geocoded = entregas.filter(e => e.latitud && e.longitud).length;
-    const distance = points.reduce((acc, cur, idx, arr) => {
+    const seq = routePolyline.length > 1 ? routePolyline : defaultPoints;
+    const distance = seq.reduce((acc, cur, idx, arr) => {
       if (idx === 0) return 0;
       const [lat1, lon1] = arr[idx - 1];
       const [lat2, lon2] = cur;
@@ -84,10 +87,61 @@ const RoutePlanning = () => {
     setStats({
       total: entregas.length,
       geocoded,
-      selected: points.length,
+      selected: seq.length,
       distanceKm: Math.round(distance * 10) / 10
     });
-  }, [entregas, selectedEntregas]);
+  }, [entregas, selectedEntregas, routePolyline]);
+
+  const optimizeRoute = () => {
+    const pts = entregas
+      .filter(e => selectedEntregas.includes(e.id) && e.latitud && e.longitud)
+      .map(e => ({ id: e.id, lat: e.latitud, lng: e.longitud }));
+    if (pts.length < 2) return;
+    const remaining = [...pts];
+    const start = remaining.shift();
+    const route = [start];
+    const dist = (a, b) => {
+      const R = 6371;
+      const dLat = (b.lat - a.lat) * Math.PI / 180;
+      const dLon = (b.lng - a.lng) * Math.PI / 180;
+      const la1 = a.lat * Math.PI / 180;
+      const la2 = b.lat * Math.PI / 180;
+      const x = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)));
+    };
+    while (remaining.length) {
+      let bestIdx = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const dcur = dist(route[route.length - 1], remaining[i]);
+        if (dcur < bestD) {
+          bestD = dcur;
+          bestIdx = i;
+        }
+      }
+      route.push(remaining.splice(bestIdx, 1)[0]);
+    }
+    const twoOpt = (r) => {
+      let improved = true;
+      while (improved) {
+        improved = false;
+        for (let i = 1; i < r.length - 2; i++) {
+          for (let k = i + 1; k < r.length - 1; k++) {
+            const d1 = dist(r[i - 1], r[i]) + dist(r[k], r[k + 1]);
+            const d2 = dist(r[i - 1], r[k]) + dist(r[i], r[k + 1]);
+            if (d2 < d1) {
+              const nr = r.slice(0, i).concat(r.slice(i, k + 1).reverse(), r.slice(k + 1));
+              r = nr;
+              improved = true;
+            }
+          }
+        }
+      }
+      return r;
+    };
+    const optimized = twoOpt(route);
+    setRoutePolyline(optimized.map(p => [p.lat, p.lng]));
+  };
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -269,6 +323,13 @@ const RoutePlanning = () => {
               <div className="font-bold text-slate-800">{stats.distanceKm} km</div>
             </div>
           </div>
+          <button
+            onClick={optimizeRoute}
+            disabled={stats.selected < 2}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:bg-slate-300"
+          >
+            Optimizar Ruta (IA)
+          </button>
         </div>
         <div className="flex gap-3 items-center">
             <button 
