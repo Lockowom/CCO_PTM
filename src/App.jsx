@@ -14,7 +14,7 @@ import Packing from './pages/Outbound/Packing';
 import Shipping from './pages/Outbound/Shipping';
 import Reception from './pages/Inbound/Reception';
 import Entry from './pages/Inbound/Entry';
-import Placeholder from './components/Placeholder';
+import Users from './pages/Admin/Users';
 
 // Layout Wrapper to apply Sidebar to internal pages
 const AppLayout = () => (
@@ -64,7 +64,7 @@ function App() {
           <Route path="queries/addresses" element={<Placeholder title="Direcciones" />} />
 
           {/* Admin Modules */}
-          <Route path="admin/users" element={<Placeholder title="Usuarios" />} />
+          <Route path="admin/users" element={<Users />} />
           <Route path="admin/roles" element={<Placeholder title="Roles y Permisos" />} />
           <Route path="admin/views" element={<Placeholder title="Configuración de Vistas" />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
