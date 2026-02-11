@@ -64,6 +64,7 @@ const RoutePlanning = () => {
     try {
       setLoading(true);
       
+      // 1. Obtener Entregas Pendientes
       const { data: entregasData, error: entError } = await supabase
         .from('tms_entregas')
         .select('*')
@@ -72,8 +73,8 @@ const RoutePlanning = () => {
         .order('fecha_creacion', { ascending: false });
 
       if (entError) throw entError;
-      setEntregas(entregasData || []);
 
+      // 2. Obtener Conductores Disponibles
       const { data: conductoresData, error: condError } = await supabase
         .from('tms_conductores')
         .select('*')
@@ -82,6 +83,56 @@ const RoutePlanning = () => {
 
       if (condError) throw condError;
       setConductores(conductoresData || []);
+
+      // 3. MATCHING INTELIGENTE CON DIRECCIONES (Nuevo)
+      // Buscamos direcciones para completar lat/lng faltantes en las entregas
+      if (entregasData && entregasData.length > 0) {
+        // Extraer RUTs y Nombres de clientes de las entregas
+        // Nota: Asumimos que 'cliente' en tms_entregas puede ser el Nombre o Razón Social
+        const clientesNombres = [...new Set(entregasData.map(e => e.cliente).filter(Boolean))];
+        
+        // Buscar en tms_direcciones coincidencias
+        // Usamos 'ilike' para búsqueda flexible. Como no podemos hacer un "IN" con ilike masivo eficiente,
+        // traemos un set amplio o hacemos búsquedas puntuales. 
+        // Para optimizar, traemos direcciones que coincidan con los nombres exactos primero.
+        
+        const { data: direccionesData, error: dirError } = await supabase
+            .from('tms_direcciones')
+            .select('razon_social, nombre, rut, direccion, comuna, ciudad, region, latitud, longitud')
+            .not('direccion', 'is', null); // Solo nos sirven las que tienen dirección física
+            
+        if (!dirError && direccionesData) {
+            // Algoritmo de cruce en memoria (Frontend Matching)
+            const enrichedEntregas = entregasData.map(entrega => {
+                // Si ya tiene lat/lng, no hacemos nada
+                if (entrega.latitud && entrega.longitud) return entrega;
+
+                // Intentar encontrar match
+                const match = direccionesData.find(d => 
+                    (d.rut && entrega.cliente && entrega.cliente.includes(d.rut)) || // Match por RUT si el nombre incluye RUT
+                    (d.razon_social && entrega.cliente && d.razon_social.toLowerCase().includes(entrega.cliente.toLowerCase())) ||
+                    (d.nombre && entrega.cliente && d.nombre.toLowerCase().includes(entrega.cliente.toLowerCase())) ||
+                    (entrega.cliente && d.razon_social && entrega.cliente.toLowerCase().includes(d.razon_social.toLowerCase()))
+                );
+
+                if (match) {
+                    return {
+                        ...entrega,
+                        direccion: match.direccion + ', ' + match.comuna, // Enriquecer dirección
+                        latitud: match.latitud || -33.4489, // Fallback temporal si la dirección no tiene geocodificación exacta
+                        longitud: match.longitud || -70.6693,
+                        match_found: true // Flag visual
+                    };
+                }
+                return entrega;
+            });
+            setEntregas(enrichedEntregas);
+        } else {
+            setEntregas(entregasData || []);
+        }
+      } else {
+          setEntregas([]);
+      }
 
     } catch (error) {
       console.error("Error cargando datos:", error);
