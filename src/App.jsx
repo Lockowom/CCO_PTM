@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const RoutePlanning = lazy(() => import('./pages/TMS/RoutePlanning'));
 const Drivers = lazy(() => import('./pages/TMS/Drivers'));
 const SalesStatus = lazy(() => import('./pages/Queries/SalesStatus'));
+const Addresses = lazy(() => import('./pages/Queries/Addresses'));
 const Batches = lazy(() => import('./pages/Queries/Batches'));
 const Stock = lazy(() => import('./pages/Inventory/Stock'));
 const SalesOrders = lazy(() => import('./pages/Outbound/SalesOrders'));
@@ -79,7 +80,7 @@ function App() {
           {/* Queries Modules */}
           <Route path="queries/batches" element={<Batches />} />
           <Route path="queries/sales-status" element={<SalesStatus />} />
-          <Route path="queries/addresses" element={<Placeholder title="Direcciones" />} />
+          <Route path="queries/addresses" element={<Addresses />} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />

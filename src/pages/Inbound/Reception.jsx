@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Box, ClipboardCheck, AlertTriangle, Clock, Save, History, CheckCircle, Package } from 'lucide-react';
+import { Truck, Box, ClipboardCheck, AlertTriangle, Clock, Save, History, CheckCircle, Package, Loader2 } from 'lucide-react';
+import { supabase } from '../../supabase';
 
 const Reception = () => {
   const [stats, setStats] = useState({
-    pending: 5,
-    verified: 12,
-    items: 156,
-    discrepancies: 1
+    pending: 0,
+    verified: 0,
+    items: 0,
+    discrepancies: 0
   });
 
   const [form, setForm] = useState({
@@ -16,17 +17,72 @@ const Reception = () => {
     notas: ''
   });
 
-  const [history, setHistory] = useState([
-    { id: 1, fecha: '2024-02-10', proveedor: 'Proveedor A', estado: 'VERIFICADA', items: 12 },
-    { id: 2, fecha: '2024-02-09', proveedor: 'Proveedor B', estado: 'PENDIENTE', items: 5 },
-    { id: 3, fecha: '2024-02-09', proveedor: 'Importadora X', estado: 'VERIFICADA', items: 150 },
-  ]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    fetchReceptions();
+  }, []);
+
+  const fetchReceptions = async () => {
+    try {
+      setLoadingData(true);
+      const { data, error } = await supabase
+        .from('tms_recepciones')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setHistory(data || []);
+
+      // Calcular Stats
+      const pending = data.filter(r => r.estado === 'PENDIENTE').length;
+      const verified = data.filter(r => r.estado === 'VERIFICADA' && new Date(r.created_at).toDateString() === new Date().toDateString()).length;
+      const items = data.reduce((acc, curr) => acc + (curr.items_count || 0), 0);
+      const discrepancies = data.filter(r => r.estado === 'CON_DISCREPANCIAS').length;
+
+      setStats({ pending, verified, items, discrepancies });
+
+    } catch (err) {
+      console.error('Error fetching receptions:', err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Recepción guardada (Simulación)');
-    // Aquí iría la llamada al backend POST /api/reception
-    setForm({ proveedor: '', productos: '', cantidades: '', notas: '' });
+    setLoading(true);
+
+    try {
+      // Calcular total items simple (suma de cantidades separadas por coma)
+      const cantidadesArr = form.cantidades.split(',').map(n => parseInt(n.trim()) || 0);
+      const totalItems = cantidadesArr.reduce((a, b) => a + b, 0);
+
+      const { error } = await supabase
+        .from('tms_recepciones')
+        .insert({
+          proveedor: form.proveedor,
+          productos: form.productos,
+          cantidades: form.cantidades,
+          notas: form.notas,
+          items_count: totalItems,
+          estado: 'PENDIENTE'
+        });
+
+      if (error) throw error;
+
+      alert('Recepción registrada exitosamente');
+      setForm({ proveedor: '', productos: '', cantidades: '', notas: '' });
+      fetchReceptions();
+
+    } catch (err) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -104,8 +160,12 @@ const Reception = () => {
                 onChange={e => setForm({...form, notas: e.target.value})}
               ></textarea>
             </div>
-            <button className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
-              <Save size={18} /> Registrar Recepción
+            <button 
+              disabled={loading}
+              className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              {loading ? 'Registrando...' : 'Registrar Recepción'}
             </button>
           </form>
         </div>
@@ -129,20 +189,28 @@ const Reception = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {history.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-3 text-slate-600">{item.fecha}</td>
-                      <td className="px-6 py-3 font-medium text-slate-800">{item.proveedor}</td>
-                      <td className="px-6 py-3 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          item.estado === 'VERIFICADA' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                        }`}>
-                          {item.estado}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-right text-slate-600">{item.items}</td>
-                    </tr>
-                  ))}
+                  {loadingData ? (
+                    <tr><td colSpan="4" className="p-4 text-center">Cargando...</td></tr>
+                  ) : history.length === 0 ? (
+                    <tr><td colSpan="4" className="p-4 text-center text-slate-400">No hay recepciones registradas</td></tr>
+                  ) : (
+                    history.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-3 text-slate-600">{new Date(item.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-3 font-medium text-slate-800">{item.proveedor}</td>
+                        <td className="px-6 py-3 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            item.estado === 'VERIFICADA' ? 'bg-green-100 text-green-700' : 
+                            item.estado === 'PENDIENTE' ? 'bg-orange-100 text-orange-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {item.estado}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-right text-slate-600">{item.items_count}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
