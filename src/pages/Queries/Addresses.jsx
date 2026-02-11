@@ -48,8 +48,8 @@ const Addresses = () => {
       {/* Header Corporativo */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Maestro de Direcciones</h2>
-          <p className="text-slate-500 text-sm">Consulta corporativa de clientes y puntos de entrega</p>
+          <h2 className="text-2xl font-bold text-slate-800">Maestro de Direcciones Corporativo</h2>
+          <p className="text-slate-500 text-sm">Consulta de clientes y puntos de entrega</p>
         </div>
       </div>
 
