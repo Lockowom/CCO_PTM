@@ -56,13 +56,31 @@ const Batches = () => {
       
       if (farmapack) newData.farmapack = farmapack;
 
-      // 4. UBICACIONES (Inferidas)
-      const locs = new Set();
-      newData.series.forEach(s => s.ubicacion_actual && locs.add(s.ubicacion_actual));
-      newData.ubicaciones = Array.from(locs).map(l => ({ nombre: l }));
+      // 4. UBICACIONES (Desde tabla real)
+      const { data: ubicaciones } = await supabase
+        .from('tms_ubicaciones_historial')
+        .select('*')
+        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`)
+        .order('fecha_registro', { ascending: false })
+        .limit(20);
 
-      // 5. PESO (Placeholder)
-      newData.peso = { unitario: 'N/A', total: 'N/A' }; 
+      if (ubicaciones) newData.ubicaciones = ubicaciones.map(u => ({ nombre: u.ubicacion }));
+
+      // 5. PESO (Desde tabla real)
+      const { data: pesos } = await supabase
+        .from('tms_pesos')
+        .select('*')
+        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`)
+        .single(); // Asumimos un solo registro maestro por producto
+
+      if (pesos) {
+         newData.peso = { 
+             unitario: pesos.peso_unitario, 
+             total: 'Calc...' // Podríamos multiplicar por stock si quisiéramos
+         };
+      } else {
+         newData.peso = { unitario: 'N/A', total: 'N/A' };
+      }
 
       setData(newData);
 
