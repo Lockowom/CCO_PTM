@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { supabase } from '../supabase';
 import { 
   LayoutDashboard, 
   Map, 
@@ -31,6 +32,40 @@ import {
 const Sidebar = () => {
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState({});
+  const [modulesConfig, setModulesConfig] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchModulesConfig();
+  }, []);
+
+  const fetchModulesConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tms_modules_config')
+        .select('id, enabled');
+      
+      if (error) throw error;
+
+      const config = {};
+      if (data) {
+        data.forEach(m => {
+          config[m.id] = m.enabled;
+        });
+      }
+      setModulesConfig(config);
+    } catch (err) {
+      console.error('Error fetching modules config:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isEnabled = (moduleId) => {
+    // Si está cargando, asumimos true para no parpadear, o false si preferimos ocultar
+    // Si no existe en la config, asumimos true por defecto
+    return modulesConfig[moduleId] !== false;
+  };
 
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => ({
@@ -67,8 +102,8 @@ const Sidebar = () => {
       icon: <ArrowDownToLine size={20} />,
       color: 'text-emerald-500',
       modules: [
-        { id: 'reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
-        { id: 'ingreso', label: 'Ingreso', icon: <DollyChart size={18} />, path: '/inbound/entry' }
+        { id: 'inbound-reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
+        { id: 'inbound-entry', label: 'Ingreso', icon: <DollyChart size={18} />, path: '/inbound/entry' }
       ]
     },
     {
@@ -77,33 +112,33 @@ const Sidebar = () => {
       icon: <ArrowUpFromLine size={20} />,
       color: 'text-blue-500',
       modules: [
-        { id: 'notasventa', label: 'Notas de Venta', icon: <FileText size={18} />, path: '/outbound/sales-orders' },
-        { id: 'picking', label: 'Picking', icon: <Hand size={18} />, path: '/outbound/picking' },
-        { id: 'packing', label: 'Packing', icon: <Package size={18} />, path: '/outbound/packing' },
-        { id: 'shipping', label: 'Despachos', icon: <Ship size={18} />, path: '/outbound/shipping' },
-        { id: 'entregas', label: 'Entregas', icon: <Truck size={18} />, path: '/outbound/deliveries' }
+        { id: 'outbound-sales-orders', label: 'Notas de Venta', icon: <FileText size={18} />, path: '/outbound/sales-orders' },
+        { id: 'outbound-picking', label: 'Picking', icon: <Hand size={18} />, path: '/outbound/picking' },
+        { id: 'outbound-packing', label: 'Packing', icon: <Package size={18} />, path: '/outbound/packing' },
+        { id: 'outbound-shipping', label: 'Despachos', icon: <Ship size={18} />, path: '/outbound/shipping' },
+        { id: 'outbound-deliveries', label: 'Entregas', icon: <Truck size={18} />, path: '/outbound/deliveries' }
       ]
     },
     {
-      id: 'inventario',
+      id: 'inventory',
       label: 'Inventario',
       icon: <Warehouse size={20} />,
       color: 'text-amber-500',
       modules: [
-        { id: 'inventory', label: 'Stock', icon: <Package size={18} />, path: '/inventory/stock' },
-        { id: 'layout', label: 'Layout', icon: <MapPin size={18} />, path: '/inventory/layout' },
-        { id: 'transferencias', label: 'Transferencias', icon: <ArrowLeftRight size={18} />, path: '/inventory/transfers' }
+        { id: 'inventory-stock', label: 'Stock', icon: <Package size={18} />, path: '/inventory/stock' },
+        { id: 'inventory-layout', label: 'Layout', icon: <MapPin size={18} />, path: '/inventory/layout' },
+        { id: 'inventory-transfers', label: 'Transferencias', icon: <ArrowLeftRight size={18} />, path: '/inventory/transfers' }
       ]
     },
     {
-      id: 'consultas',
+      id: 'queries',
       label: 'Consultas',
       icon: <Search size={20} />,
       color: 'text-violet-500',
       modules: [
-        { id: 'lotesseries', label: 'Lotes/Series', icon: <Barcode size={18} />, path: '/queries/batches' },
-        { id: 'estadonv', label: 'Estado N.V', icon: <FileText size={18} />, path: '/queries/sales-status' },
-        { id: 'direcciones', label: 'Direcciones', icon: <MapPin size={18} />, path: '/queries/addresses' }
+        { id: 'queries-batches', label: 'Lotes/Series', icon: <Barcode size={18} />, path: '/queries/batches' },
+        { id: 'queries-sales-status', label: 'Estado N.V', icon: <FileText size={18} />, path: '/queries/sales-status' },
+        { id: 'queries-addresses', label: 'Direcciones', icon: <MapPin size={18} />, path: '/queries/addresses' }
       ]
     },
     {
@@ -131,62 +166,69 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        {menuConfig.map((area) => (
-          <div key={area.id} className="mb-2">
-            {area.isLink ? (
-              <Link 
-                to={area.path}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                  location.pathname === area.path 
-                    ? 'bg-slate-800 text-white border-l-4 border-indigo-500' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <span className={`${location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}`}>
-                  {area.icon}
-                </span>
-                <span className="font-medium text-sm">{area.label}</span>
-              </Link>
-            ) : (
-              <div>
-                <button 
-                  onClick={() => toggleSection(area.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        {menuConfig.map((area) => {
+          if (!isEnabled(area.id)) return null;
+
+          return (
+            <div key={area.id} className="mb-2">
+              {area.isLink ? (
+                <Link 
+                  to={area.path}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                    location.pathname === area.path 
+                      ? 'bg-slate-800 text-white border-l-4 border-indigo-500' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`${expandedSections[area.id] ? area.color : 'text-slate-500 group-hover:text-white'}`}>
-                      {area.icon}
-                    </span>
-                    <span className="font-medium text-sm">{area.label}</span>
-                  </div>
-                  {expandedSections[area.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </button>
-                
-                {/* Dropdown Items */}
-                {expandedSections[area.id] && (
-                  <div className="ml-4 mt-1 pl-4 border-l border-slate-700 space-y-1">
-                    {area.modules.map((module) => (
-                      <Link 
-                        key={module.id}
-                        to={module.path}
-                        className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
-                          location.pathname === module.path
-                            ? 'text-white bg-slate-700 font-medium'
-                            : 'text-slate-500 hover:text-white hover:bg-slate-800'
-                        }`}
-                      >
-                        {module.icon}
-                        <span>{module.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+                  <span className={`${location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}`}>
+                    {area.icon}
+                  </span>
+                  <span className="font-medium text-sm">{area.label}</span>
+                </Link>
+              ) : (
+                <div>
+                  <button 
+                    onClick={() => toggleSection(area.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
+                      expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`${expandedSections[area.id] ? area.color : 'text-slate-500 group-hover:text-white'}`}>
+                        {area.icon}
+                      </span>
+                      <span className="font-medium text-sm">{area.label}</span>
+                    </div>
+                    {expandedSections[area.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </button>
+                  
+                  {/* Dropdown Items */}
+                  {expandedSections[area.id] && (
+                    <div className="ml-4 mt-1 pl-4 border-l border-slate-700 space-y-1">
+                      {area.modules.map((module) => {
+                        if (!isEnabled(module.id)) return null;
+                        return (
+                          <Link 
+                            key={module.id}
+                            to={module.path}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
+                              location.pathname === module.path
+                                ? 'text-white bg-slate-700 font-medium'
+                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                            }`}
+                          >
+                            {module.icon}
+                            <span>{module.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* User Footer */}

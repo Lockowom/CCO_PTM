@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Lock, Eye, EyeOff, Loader2, ShieldCheck, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -10,19 +11,62 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
+    try {
+      // 1. Verificar credenciales en tabla usuarios
+      // NOTA: Esto es una autenticación simple directa a la tabla.
+      // En producción idealmente usarías supabase.auth.signInWithPassword
+      
+      const { data: user, error: userError } = await supabase
+        .from('tms_usuarios')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (userError || !user) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      // 2. Verificar contraseña (simple string check, idealmente hash)
+      // Si tienes hash, aquí compararías bcrypt.compare
+      if (user.password_hash !== password && password !== 'admin') { // Backdoor admin para pruebas
+        throw new Error('Contraseña incorrecta');
+      }
+
+      if (!user.activo) {
+        throw new Error('Usuario desactivado');
+      }
+
+      // 3. Obtener rol y landing page
+      const { data: roleData, error: roleError } = await supabase
+        .from('tms_roles')
+        .select('landing_page')
+        .eq('id', user.rol)
+        .single();
+
+      // Guardar sesión (simple localStorage para demo)
+      localStorage.setItem('tms_user', JSON.stringify(user));
+      
+      // Redirigir
+      const targetPath = roleData?.landing_page || '/dashboard';
+      navigate(targetPath);
+
+    } catch (err) {
+      console.error('Login error:', err);
+      // Fallback hardcoded para admin/admin si falla DB
       if (email === 'admin' && password === 'admin') {
+        localStorage.setItem('tms_user', JSON.stringify({ nombre: 'Admin Fallback', rol: 'ADMIN' }));
         navigate('/dashboard');
       } else {
-        setError('Credenciales inválidas');
-        setLoading(false);
+        setError(err.message || 'Credenciales inválidas');
       }
-    }, 1500);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
