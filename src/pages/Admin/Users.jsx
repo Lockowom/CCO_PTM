@@ -75,6 +75,29 @@ const UsersPage = () => {
     }
   };
 
+  const handleOpenModal = (user = null) => {
+    setEditingUser(user);
+    setShowPassword(false);
+    if (user) {
+      setFormData({
+        nombre: user.nombre,
+        email: user.email,
+        password: '',
+        rol: user.rol,
+        activo: user.activo
+      });
+    } else {
+      setFormData({
+        nombre: '',
+        email: '',
+        password: '',
+        rol: '',
+        activo: true
+      });
+    }
+    setIsModalOpen(true);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -108,7 +131,7 @@ const UsersPage = () => {
             id_usuario: legacyId,
             nombre: formData.nombre,
             email: formData.email,
-            password_hash: formData.password, // En producción usar bcrypt
+            password_hash: formData.password || '123456', // Default password si no se provee
             rol: formData.rol,
             activo: formData.activo
           }]);
@@ -117,10 +140,12 @@ const UsersPage = () => {
       }
       
       setIsModalOpen(false);
-      fetchUsers();
+      // Recargar la lista para mostrar el nuevo usuario inmediatamente
+      await fetchUsers();
+      
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Error al guardar usuario');
+      alert('Error al guardar usuario: ' + error.message);
     } finally {
       setSaving(false);
     }
