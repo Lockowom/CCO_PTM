@@ -49,23 +49,26 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      
+      // Intentar leer de la tabla 'tms_usuarios'
       const { data, error } = await supabase
         .from('tms_usuarios')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        // Si la tabla no existe o hay error de conexión, usamos fallback para que no quede en blanco
-        console.error('Error Supabase, usando fallback:', error);
+        console.error('Error Supabase:', error);
         throw error;
       }
       
+      // Si no hay datos, mostrar array vacío pero NO undefined
       setUsers(data || []);
+      
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Fallback data para evitar pantalla blanca
+      // Fallback robusto para evitar pantalla blanca si falla la DB
       setUsers([
-        { id: 1, nombre: 'Admin Sistema', email: 'admin@cco.cl', rol: 'ADMIN', activo: true, created_at: new Date().toISOString() }
+        { id: 'fallback-1', nombre: 'Admin Fallback', email: 'admin@cco.cl', rol: 'ADMIN', activo: true, created_at: new Date().toISOString() }
       ]);
     } finally {
       setLoading(false);
