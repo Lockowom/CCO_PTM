@@ -42,48 +42,43 @@ const Shipping = () => {
     setEditForm({
       facturas: delivery.facturas || '',
       guia: delivery.guia || '',
+      empresa_transporte: delivery.empresa_transporte || 'PROPIO',
       transportista: delivery.transportista || '',
       division: delivery.division || '',
-      num_envio: delivery.num_envio || ''
+      valor_flete: delivery.valor_flete || 0,
+      num_envio_ot: delivery.num_envio_ot || ''
     });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditForm({});
   };
 
   const handleSave = async (id) => {
     try {
       setLoading(true);
       
-      // Actualizar en Supabase
-      // NOTA: Asegúrate de que estas columnas existan en tu tabla 'tms_entregas'
-      // Si no existen, el update fallará o las ignorará.
       const { error } = await supabase
         .from('tms_entregas')
         .update({
             facturas: editForm.facturas,
             guia: editForm.guia,
+            empresa_transporte: editForm.empresa_transporte,
             transportista: editForm.transportista,
-            // Guardamos campos extra en columnas si existen, o en observaciones si no
-            // Asumiremos que vamos a crear estas columnas en Supabase si no están
-            observaciones: `DIV:${editForm.division} ENV:${editForm.num_envio}` 
+            division: editForm.division,
+            valor_flete: editForm.valor_flete,
+            num_envio_ot: editForm.num_envio_ot,
+            fecha_despacho: new Date() // Se llena automáticamente al guardar
         })
         .eq('id', id);
 
       if (error) throw error;
 
-      // Actualizar estado local
       setDeliveries(deliveries.map(d => 
-        d.id === id ? { ...d, ...editForm } : d
+        d.id === id ? { ...d, ...editForm, fecha_despacho: new Date() } : d
       ));
       
       setEditingId(null);
-      alert("Datos actualizados. Se sincronizarán con Sheets en breve.");
+      alert("Despacho guardado. Sincronizando con Excel...");
 
     } catch (err) {
-      alert("Error guardando: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -131,10 +126,12 @@ const Shipping = () => {
                     <tr>
                         <th className="px-4 py-4">N.V</th>
                         <th className="px-4 py-4">Cliente</th>
-                        <th className="px-4 py-4 w-32">Facturas</th>
-                        <th className="px-4 py-4 w-32">Guía</th>
-                        <th className="px-4 py-4 w-40">Transportista</th>
-                        <th className="px-4 py-4 text-center">Bultos</th>
+                        <th className="px-4 py-4 w-24">Facturas</th>
+                        <th className="px-4 py-4 w-24">Guía</th>
+                        <th className="px-4 py-4 w-32">Empresa</th>
+                        <th className="px-4 py-4 w-32">Transportista</th>
+                        <th className="px-4 py-4 w-24">Flete ($)</th>
+                        <th className="px-4 py-4 w-24">N° Envío</th>
                         <th className="px-4 py-4 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -142,7 +139,7 @@ const Shipping = () => {
                     {filteredDeliveries.map((delivery) => (
                         <tr key={delivery.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-4 py-3 font-black text-slate-700">{delivery.nv}</td>
-                            <td className="px-4 py-3 font-medium text-slate-600 truncate max-w-[200px]" title={delivery.cliente}>
+                            <td className="px-4 py-3 font-medium text-slate-600 truncate max-w-[150px]" title={delivery.cliente}>
                                 {delivery.cliente}
                             </td>
                             
@@ -150,44 +147,34 @@ const Shipping = () => {
                             {editingId === delivery.id ? (
                                 <>
                                     <td className="px-4 py-3">
-                                        <input 
-                                            type="text" 
-                                            className="w-full border rounded p-1 text-xs"
-                                            value={editForm.facturas}
-                                            onChange={e => setEditForm({...editForm, facturas: e.target.value})}
-                                            placeholder="Ej: 1234, 5678"
-                                        />
+                                        <input type="text" className="w-full border rounded p-1 text-xs" value={editForm.facturas} onChange={e => setEditForm({...editForm, facturas: e.target.value})} placeholder="Facturas" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input 
-                                            type="text" 
-                                            className="w-full border rounded p-1 text-xs"
-                                            value={editForm.guia}
-                                            onChange={e => setEditForm({...editForm, guia: e.target.value})}
-                                            placeholder="Ej: 998877"
-                                        />
+                                        <input type="text" className="w-full border rounded p-1 text-xs" value={editForm.guia} onChange={e => setEditForm({...editForm, guia: e.target.value})} placeholder="Guía" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input 
-                                            type="text" 
-                                            className="w-full border rounded p-1 text-xs"
-                                            value={editForm.transportista}
-                                            onChange={e => setEditForm({...editForm, transportista: e.target.value})}
-                                            placeholder="Nombre Chofer"
-                                        />
+                                        <input type="text" className="w-full border rounded p-1 text-xs" value={editForm.empresa_transporte} onChange={e => setEditForm({...editForm, empresa_transporte: e.target.value})} placeholder="Empresa" />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <input type="text" className="w-full border rounded p-1 text-xs" value={editForm.transportista} onChange={e => setEditForm({...editForm, transportista: e.target.value})} placeholder="Chofer" />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <input type="number" className="w-full border rounded p-1 text-xs" value={editForm.valor_flete} onChange={e => setEditForm({...editForm, valor_flete: e.target.value})} placeholder="$" />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <input type="text" className="w-full border rounded p-1 text-xs" value={editForm.num_envio_ot} onChange={e => setEditForm({...editForm, num_envio_ot: e.target.value})} placeholder="OT" />
                                     </td>
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-3 text-slate-500">{delivery.facturas || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500">{delivery.guia || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500">{delivery.transportista || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.facturas || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.guia || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.empresa_transporte || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.transportista || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.valor_flete || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.num_envio_ot || '-'}</td>
                                 </>
                             )}
-
-                            <td className="px-4 py-3 text-center">
-                                <span className="bg-slate-100 px-2 py-1 rounded font-bold text-xs">{delivery.bultos}</span>
-                            </td>
 
                             <td className="px-4 py-3 text-center">
                                 {editingId === delivery.id ? (
