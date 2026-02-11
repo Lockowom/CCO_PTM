@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight, Layers } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -51,6 +51,8 @@ const RoutePlanning = () => {
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
   const [showMap, setShowMap] = useState(true);
+  const [routePolyline, setRoutePolyline] = useState([]);
+  const [stats, setStats] = useState({ total: 0, geocoded: 0, selected: 0, distanceKm: 0 });
 
   // Estado para creación de ruta
   const [rutaNombre, setRutaNombre] = useState(`Ruta-${new Date().toLocaleDateString('es-CL').replace(/\//g, '-')}`);
@@ -60,6 +62,32 @@ const RoutePlanning = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const points = entregas
+      .filter(e => selectedEntregas.includes(e.id) && e.latitud && e.longitud)
+      .map(e => [e.latitud, e.longitud]);
+    setRoutePolyline(points);
+    const geocoded = entregas.filter(e => e.latitud && e.longitud).length;
+    const distance = points.reduce((acc, cur, idx, arr) => {
+      if (idx === 0) return 0;
+      const [lat1, lon1] = arr[idx - 1];
+      const [lat2, lon2] = cur;
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return acc + R * c;
+    }, 0);
+    setStats({
+      total: entregas.length,
+      geocoded,
+      selected: points.length,
+      distanceKm: Math.round(distance * 10) / 10
+    });
+  }, [entregas, selectedEntregas]);
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -217,12 +245,32 @@ const RoutePlanning = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Planificador de Rutas</h2>
-          <p className="text-slate-500 text-sm">Mapa interactivo y asignación de flota</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl p-4 text-white shadow-md">
+          <div className="text-xs uppercase tracking-wide">Planificador de Rutas</div>
+          <div className="mt-1 text-sm opacity-90">Mapa interactivo y asignación de flota</div>
         </div>
-        <div className="flex gap-3">
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="flex gap-6 text-sm">
+            <div>
+              <div className="text-slate-400">Entregas</div>
+              <div className="font-bold text-slate-800">{stats.total}</div>
+            </div>
+            <div>
+              <div className="text-slate-400">Geocodificadas</div>
+              <div className="font-bold text-indigo-600">{stats.geocoded}</div>
+            </div>
+            <div>
+              <div className="text-slate-400">Seleccionadas</div>
+              <div className="font-bold text-emerald-600">{stats.selected}</div>
+            </div>
+            <div>
+              <div className="text-slate-400">Distancia</div>
+              <div className="font-bold text-slate-800">{stats.distanceKm} km</div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 items-center">
             <button 
                 onClick={() => setShowMap(!showMap)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-colors ${showMap ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600'}`}
@@ -251,7 +299,7 @@ const RoutePlanning = () => {
       <div className="flex gap-4 h-full overflow-hidden">
         
         {/* Panel Izquierdo: Lista de Entregas */}
-        <div className="w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+        <div className="w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
           <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
             <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
               <Truck size={16} /> Entregas ({filteredEntregas.length})
@@ -278,7 +326,13 @@ const RoutePlanning = () => {
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between">
                             <span className="font-bold text-slate-700 text-xs">NV: {entrega.nv}</span>
-                            {!entrega.latitud && <span className="text-[10px] text-red-500 font-bold">Sin GPS</span>}
+                            {entrega.match_found ? (
+                                <span className="text-[10px] text-green-600 font-bold flex items-center gap-1">
+                                    <MapPin size={10} /> Match
+                                </span>
+                            ) : !entrega.latitud && (
+                                <span className="text-[10px] text-red-500 font-bold">Sin GPS</span>
+                            )}
                         </div>
                         <p className="text-xs font-medium text-slate-600 truncate">{entrega.cliente}</p>
                         <p className="text-[10px] text-slate-400 truncate">{entrega.direccion || 'Sin dirección'}</p>
@@ -298,6 +352,9 @@ const RoutePlanning = () => {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
                         <MapBounds markers={mapEntregas.map(e => ({ lat: e.latitud, lng: e.longitud }))} />
+                        {routePolyline.length > 1 && (
+                          <Polyline positions={routePolyline} color="#6366f1" weight={4} />
+                        )}
                         
                         {mapEntregas.map(entrega => (
                             <Marker 
@@ -334,7 +391,7 @@ const RoutePlanning = () => {
         )}
 
         {/* Panel Derecho: Configuración */}
-        <div className="w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
+        <div className="w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
             <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
                     <Truck size={16} /> Configurar Ruta
