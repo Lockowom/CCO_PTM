@@ -16,6 +16,14 @@ import Reception from './pages/Inbound/Reception';
 import Entry from './pages/Inbound/Entry';
 import Users from './pages/Admin/Users';
 
+// Componente Placeholder para rutas en construcción
+const Placeholder = ({ title }) => (
+  <div className="flex flex-col items-center justify-center h-full p-8">
+    <h2 className="text-2xl font-bold text-gray-700 mb-2">{title}</h2>
+    <p className="text-gray-500">Esta funcionalidad está actualmente en desarrollo.</p>
+  </div>
+);
+
 // Layout Wrapper to apply Sidebar to internal pages
 const AppLayout = () => (
   <Layout>
