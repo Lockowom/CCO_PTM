@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Layers, Box, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../supabase';
 
-const pasillosLista = ['A','B','C','D','E','F','G','H','I'];
-
 const LayoutPage = () => {
   const [pasillos, setPasillos] = useState({});
   const [stats, setStats] = useState({ total: 0, ocupadas: 0, vacias: 0, ocupacion: 0 });
@@ -173,7 +171,7 @@ const LayoutPage = () => {
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={()=>filtrarPasillo('ALL')} className={`px-3 py-1 rounded-lg text-sm font-bold ${pasilloActual==='ALL'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}`}>Todos</button>
-            {pasillosLista.map(p => (
+            {Object.keys(pasillos).sort().map(p => (
               <button key={p} onClick={()=>filtrarPasillo(p)} className={`px-3 py-1 rounded-lg text-sm font-bold ${pasilloActual===p?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}`}>
                 Pasillo {p}
               </button>
@@ -185,7 +183,7 @@ const LayoutPage = () => {
             <div className="text-slate-400 flex items-center gap-2"><AlertTriangle size={18}/> Cargando...</div>
           ) : (
             <div className="space-y-6">
-              {pasillosLista.map((letra) => {
+              {Object.keys(pasillos).sort().map((letra) => {
                 const pData = pasillos[letra];
                 if (!pData) return null;
                 if (!(pasilloActual==='ALL' || pasilloActual===letra)) return null;
