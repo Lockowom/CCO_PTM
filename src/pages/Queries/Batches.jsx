@@ -39,27 +39,22 @@ const Batches = () => {
       // console.log("Total partidas en DB:", count);
 
       // 1. PARTIDAS
-      // Intento con 'descripcion' si 'producto' falló. O 'descripcion_producto'
-      // Si el error dice que 'producto' no existe, probemos con 'descripcion' que es más estándar
-      // Ojo: En el script mapPartidas se usaba 'producto', pero tal vez la tabla se creó distinta.
       const { data: partidas, error: err1 } = await supabase
         .from('tms_partidas')
         .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`) // Cambio: producto -> descripcion
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term}`) // Volvemos a probar 'producto' (ya corregido en DB)
         .limit(50);
       
       if (err1) {
-          // Fallback: Si falla 'descripcion', intentamos 'descripcion_producto' o 'nombre'
-          console.warn("Fallo búsqueda por descripcion, intentando fallback...", err1.message);
+           console.warn("Error Partidas (posiblemente falta columna):", err1.message);
       }
-      
       if (partidas) newData.partidas = partidas;
 
       // 2. SERIES
       const { data: series, error: err2 } = await supabase
         .from('tms_series')
         .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`) // Cambio: producto -> descripcion
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`)
         .limit(50);
       
       if (err2) console.error("Error Series:", err2);
@@ -69,7 +64,7 @@ const Batches = () => {
       const { data: farmapack, error: err3 } = await supabase
         .from('tms_farmapack')
         .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},lote.ilike.${term}`) // Cambio: producto -> descripcion
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`)
         .limit(50);
       
       if (err3) console.error("Error Farmapack:", err3);
