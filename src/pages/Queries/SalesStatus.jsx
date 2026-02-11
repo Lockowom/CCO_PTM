@@ -42,6 +42,12 @@ const SalesStatus = () => {
     }
   };
 
+  const handleClear = () => {
+    setSearchTerm('');
+    setResults([]);
+    setSelectedNV(null);
+  };
+
   const fetchDetails = async (nv) => {
     try {
       setLoading(true);
@@ -166,16 +172,27 @@ const SalesStatus = () => {
             <input 
                 type="text" 
                 placeholder="Ingrese N.V, Cliente o Producto..." 
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-lg transition-all"
+                className="w-full pl-12 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-lg transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
-            {loading && (
-                <div className="absolute right-4 top-3.5">
+            
+            {/* Actions Right */}
+            <div className="absolute right-4 top-3.5 flex items-center gap-2">
+                {searchTerm && (
+                    <button 
+                        onClick={handleClear}
+                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                        title="Limpiar búsqueda"
+                    >
+                        <AlertCircle size={20} className="transform rotate-45" /> {/* Usando AlertCircle como 'X' estilizada o cambiar icon */}
+                    </button>
+                )}
+                {loading && (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
       </div>
 
