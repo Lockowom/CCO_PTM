@@ -21,6 +21,7 @@ const Batches = () => {
     setLoading(true);
     setSearched(true);
     
+    // Reset data
     const newData = {
       partidas: [],
       series: [],
@@ -31,67 +32,63 @@ const Batches = () => {
 
     try {
       const term = `%${searchTerm}%`;
-      console.log("Buscando término:", term);
+      console.log("Buscando:", term);
 
-      // 1. PARTIDAS (Todas las columnas)
-      const { data: partidas, error: errPartidas } = await supabase
+      // DEBUG: Verificar si hay conexión básica
+      // const { count } = await supabase.from('tms_partidas').select('*', { count: 'exact', head: true });
+      // console.log("Total partidas en DB:", count);
+
+      // 1. PARTIDAS
+      const { data: partidas, error: err1 } = await supabase
         .from('tms_partidas')
         .select('*')
         .or(`codigo_producto.ilike.${term},producto.ilike.${term}`)
         .limit(50);
       
-      if (errPartidas) console.error("Error Partidas:", errPartidas);
-      else console.log("Partidas encontradas:", partidas?.length);
-      
+      if (err1) {
+          console.error("Error Partidas:", err1);
+          alert("Error consultando Partidas: " + err1.message);
+      }
       if (partidas) newData.partidas = partidas;
 
-      // 2. SERIES (Todas las columnas)
-      const { data: series, error: errSeries } = await supabase
+      // 2. SERIES
+      const { data: series, error: err2 } = await supabase
         .from('tms_series')
         .select('*')
         .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`)
         .limit(50);
-
-      if (errSeries) console.error("Error Series:", errSeries);
-      else console.log("Series encontradas:", series?.length);
       
+      if (err2) console.error("Error Series:", err2);
       if (series) newData.series = series;
 
-      // 3. FARMAPACK (Todas las columnas)
-      const { data: farmapack, error: errFarma } = await supabase
+      // 3. FARMAPACK
+      const { data: farmapack, error: err3 } = await supabase
         .from('tms_farmapack')
         .select('*')
         .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`)
         .limit(50);
-
-      if (errFarma) console.error("Error Farmapack:", errFarma);
-      else console.log("Farmapack encontrados:", farmapack?.length);
       
+      if (err3) console.error("Error Farmapack:", err3);
       if (farmapack) newData.farmapack = farmapack;
 
-      // 4. UBICACIONES (Desde tabla real)
-      const { data: ubicaciones, error: errUbic } = await supabase
+      // 4. UBICACIONES
+      const { data: ubicaciones, error: err4 } = await supabase
         .from('tms_ubicaciones_historial')
         .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`)
-        .order('fecha_registro', { ascending: false })
+        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`) // Ojo: descripcion vs producto
         .limit(20);
 
-      if (errUbic) console.error("Error Ubicaciones:", errUbic);
-      else console.log("Ubicaciones encontradas:", ubicaciones?.length);
-
+      if (err4) console.error("Error Ubicaciones:", err4);
       if (ubicaciones) newData.ubicaciones = ubicaciones.map(u => ({ nombre: u.ubicacion }));
 
-      // 5. PESO (Desde tabla real)
-      const { data: pesos, error: errPeso } = await supabase
+      // 5. PESO
+      const { data: pesos, error: err5 } = await supabase
         .from('tms_pesos')
         .select('*')
-        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`)
+        .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`) // Ojo: descripcion vs producto
         .limit(1);
 
-      if (errPeso) console.error("Error Peso:", errPeso);
-      else console.log("Peso encontrado:", pesos?.length > 0);
-
+      if (err5) console.error("Error Peso:", err5);
       if (pesos && pesos.length > 0) {
          newData.peso = { 
              unitario: pesos[0].peso_unitario, 
@@ -101,10 +98,12 @@ const Batches = () => {
          newData.peso = { unitario: 'N/A', total: 'N/A' };
       }
 
+      console.log("Resultados:", newData);
       setData(newData);
 
     } catch (err) {
-      console.error("Error General:", err);
+      console.error("Excepción General:", err);
+      alert("Error inesperado: " + err.message);
     } finally {
       setLoading(false);
     }
