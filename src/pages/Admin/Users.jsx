@@ -173,6 +173,15 @@ const UsersPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <Loader2 size={48} className="animate-spin text-blue-500" />
+        <p className="text-slate-500 font-medium animate-pulse">Cargando usuarios...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
