@@ -37,14 +37,29 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchUsers();
-    // Simular roles por ahora, idealmente vendrían de una tabla 'roles'
-    setRoles([
-      { id: 'ADMIN', nombre: 'Administrador' },
-      { id: 'SUPERVISOR', nombre: 'Supervisor' },
-      { id: 'OPERADOR', nombre: 'Operador' },
-      { id: 'CONDUCTOR', nombre: 'Conductor' }
-    ]);
+    fetchRoles();
   }, []);
+
+  const fetchRoles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tms_roles')
+        .select('id, nombre')
+        .order('nombre');
+
+      if (error) throw error;
+      setRoles(data || []);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      // Fallback a roles básicos si falla la DB o no existen
+      setRoles([
+        { id: 'ADMIN', nombre: 'Administrador' },
+        { id: 'SUPERVISOR', nombre: 'Supervisor' },
+        { id: 'OPERADOR', nombre: 'Operador' },
+        { id: 'CONDUCTOR', nombre: 'Conductor' }
+      ]);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
