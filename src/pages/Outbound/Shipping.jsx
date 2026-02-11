@@ -50,6 +50,11 @@ const Shipping = () => {
     });
   };
 
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
   const handleSave = async (id) => {
     try {
       setLoading(true);
@@ -64,7 +69,7 @@ const Shipping = () => {
             empresa_transporte: editForm.empresa_transporte || 'PROPIO',
             transportista: editForm.transportista || '',
             division: editForm.division || '',
-            valor_flete: editForm.valor_flete || 0,
+            valor_flete: parseFloat(editForm.valor_flete) || 0,
             num_envio_ot: editForm.num_envio_ot || '',
             fecha_despacho: now // Usar string ISO
         })
