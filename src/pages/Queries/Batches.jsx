@@ -31,52 +31,71 @@ const Batches = () => {
 
     try {
       const term = `%${searchTerm}%`;
+      console.log("Buscando término:", term);
 
       // 1. PARTIDAS (Todas las columnas)
-      const { data: partidas } = await supabase
+      const { data: partidas, error: errPartidas } = await supabase
         .from('tms_partidas')
         .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term}`);
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term}`)
+        .limit(50);
+      
+      if (errPartidas) console.error("Error Partidas:", errPartidas);
+      else console.log("Partidas encontradas:", partidas?.length);
       
       if (partidas) newData.partidas = partidas;
 
       // 2. SERIES (Todas las columnas)
-      const { data: series } = await supabase
+      const { data: series, error: errSeries } = await supabase
         .from('tms_series')
         .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`);
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},serie.ilike.${term}`)
+        .limit(50);
+
+      if (errSeries) console.error("Error Series:", errSeries);
+      else console.log("Series encontradas:", series?.length);
       
       if (series) newData.series = series;
 
       // 3. FARMAPACK (Todas las columnas)
-      const { data: farmapack } = await supabase
+      const { data: farmapack, error: errFarma } = await supabase
         .from('tms_farmapack')
         .select('*')
-        .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`);
+        .or(`codigo_producto.ilike.${term},producto.ilike.${term},lote.ilike.${term}`)
+        .limit(50);
+
+      if (errFarma) console.error("Error Farmapack:", errFarma);
+      else console.log("Farmapack encontrados:", farmapack?.length);
       
       if (farmapack) newData.farmapack = farmapack;
 
       // 4. UBICACIONES (Desde tabla real)
-      const { data: ubicaciones } = await supabase
+      const { data: ubicaciones, error: errUbic } = await supabase
         .from('tms_ubicaciones_historial')
         .select('*')
         .or(`codigo_producto.ilike.${term},descripcion.ilike.${term},serie.ilike.${term}`)
         .order('fecha_registro', { ascending: false })
         .limit(20);
 
+      if (errUbic) console.error("Error Ubicaciones:", errUbic);
+      else console.log("Ubicaciones encontradas:", ubicaciones?.length);
+
       if (ubicaciones) newData.ubicaciones = ubicaciones.map(u => ({ nombre: u.ubicacion }));
 
       // 5. PESO (Desde tabla real)
-      const { data: pesos } = await supabase
+      const { data: pesos, error: errPeso } = await supabase
         .from('tms_pesos')
         .select('*')
         .or(`codigo_producto.ilike.${term},descripcion.ilike.${term}`)
-        .single(); // Asumimos un solo registro maestro por producto
+        .limit(1);
 
-      if (pesos) {
+      if (errPeso) console.error("Error Peso:", errPeso);
+      else console.log("Peso encontrado:", pesos?.length > 0);
+
+      if (pesos && pesos.length > 0) {
          newData.peso = { 
-             unitario: pesos.peso_unitario, 
-             total: 'Calc...' // Podríamos multiplicar por stock si quisiéramos
+             unitario: pesos[0].peso_unitario, 
+             total: 'Calc...' 
          };
       } else {
          newData.peso = { unitario: 'N/A', total: 'N/A' };
@@ -85,7 +104,7 @@ const Batches = () => {
       setData(newData);
 
     } catch (err) {
-      console.error(err);
+      console.error("Error General:", err);
     } finally {
       setLoading(false);
     }
