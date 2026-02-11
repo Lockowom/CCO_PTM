@@ -24,9 +24,13 @@ const Dashboard = () => {
 
       if (error) throw error;
       
-      const pendientes = data.filter(d => d.estado === 'PENDIENTE').length;
-      const enRuta = data.filter(d => d.estado === 'EN_RUTA').length;
-      const entregados = data.filter(d => d.estado === 'ENTREGADO').length;
+      const pieData = [
+        { name: 'Entregados', value: entregados, color: '#10b981' }, // A Tiempo (Simulado)
+        { name: 'Pendientes', value: pendientes, color: '#f97316' }, // Retrasados (Simulado)
+        { name: 'En Ruta', value: enRuta, color: '#3b82f6' }, // En Proceso
+      ];
+
+      setPieData(pieData);
       
       setStats({
         entregas: data.length,
@@ -48,11 +52,12 @@ const Dashboard = () => {
     { name: 'Entregados', valor: stats.entregados, color: '#10b981' }
   ];
 
-  const pieData = [
-    { name: 'A Tiempo', value: 400, color: '#10b981' },
-    { name: 'Retrasados', value: 30, color: '#ef4444' },
-    { name: 'En Proceso', value: 300, color: '#3b82f6' },
-  ];
+  // Estado local para el gráfico de torta (inicializado con 0)
+  const [pieData, setPieData] = useState([
+    { name: 'Entregados', value: 0, color: '#10b981' },
+    { name: 'Pendientes', value: 0, color: '#f97316' },
+    { name: 'En Ruta', value: 0, color: '#3b82f6' },
+  ]);
 
   return (
     <div className="space-y-6">
@@ -159,8 +164,10 @@ const Dashboard = () => {
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-              <span className="text-3xl font-bold text-slate-800">92%</span>
-              <span className="text-xs text-slate-400">On Time</span>
+              <span className="text-3xl font-bold text-slate-800">
+                {stats.entregas > 0 ? Math.round((stats.entregados / stats.entregas) * 100) : 0}%
+              </span>
+              <span className="text-xs text-slate-400">Completado</span>
             </div>
           </div>
           
