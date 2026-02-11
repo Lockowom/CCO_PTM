@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Layers, Box, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../supabase';
+import gsap from 'gsap';
 
 const LayoutPage = () => {
   const [pasillos, setPasillos] = useState({});
@@ -9,10 +10,27 @@ const LayoutPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [modal, setModal] = useState({ open: false, ubicacion: '', detalle: null });
+  const pageRef = useRef(null);
+  const headerRef = useRef(null);
 
   useEffect(() => {
     cargarLayout();
   }, []);
+
+  useEffect(() => {
+    if (headerRef.current) {
+      gsap.from(headerRef.current, { y: -20, opacity: 0, duration: 0.6, ease: 'power3.out' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loading && pageRef.current) {
+      const cards = pageRef.current.querySelectorAll('.pasillo-card');
+      const cells = pageRef.current.querySelectorAll('.loc-cell');
+      gsap.from(cards, { y: 16, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.06 });
+      gsap.from(cells, { scale: 0.9, opacity: 0, duration: 0.25, ease: 'power2.out', stagger: 0.005 });
+    }
+  }, [loading, pasillos, pasilloActual]);
 
   const cargarLayout = async () => {
     try {
@@ -121,8 +139,8 @@ const LayoutPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 rounded-2xl p-6 text-white shadow-lg">
+    <div ref={pageRef} className="space-y-6">
+      <div ref={headerRef} className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-end justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider opacity-80">Inventario</div>
@@ -218,7 +236,7 @@ const LayoutPage = () => {
 
                 const nivelesOrden = Object.keys(pData.niveles).sort((a,b)=>parseInt(b)-parseInt(a));
                 return (
-                  <div key={letra} className="border rounded-2xl overflow-hidden">
+                  <div key={letra} className="border rounded-2xl overflow-hidden pasillo-card">
                     <div className="p-3 flex items-center justify-between border-b bg-slate-50">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-orange-500 text-white font-extrabold flex items-center justify-center shadow-sm">{letra}</div>
@@ -248,7 +266,7 @@ const LayoutPage = () => {
                                     key={ub.ubicacion}
                                     onClick={()=>abrirDetalle(ub.ubicacion)}
                                     title={`${ub.ubicacion}${ub.cantidad>0?` (${ub.cantidad})`:''}`}
-                                    className={`w-11 h-11 rounded-lg text-white text-xs font-extrabold flex items-center justify-center ${bg} hover:scale-110 transition-transform relative shadow-sm ring-1 ring-black/10`}
+                                    className={`w-11 h-11 rounded-lg text-white text-xs font-extrabold flex items-center justify-center ${bg} hover:scale-110 transition-transform relative shadow-sm ring-1 ring-black/10 loc-cell`}
                                   >
                                     {ub.columna}
                                     {ub.cantidad>0 && (
