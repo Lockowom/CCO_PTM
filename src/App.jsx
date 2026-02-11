@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import RoutePlanning from './pages/TMS/RoutePlanning';
 import Drivers from './pages/TMS/Drivers'; // Importar Drivers
 import SalesStatus from './pages/Queries/SalesStatus'; // Importar SalesStatus
+import Batches from './pages/Queries/Batches';
 import Stock from './pages/Inventory/Stock';
 import SalesOrders from './pages/Outbound/SalesOrders';
 import Picking from './pages/Outbound/Picking';
@@ -58,7 +59,7 @@ function App() {
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
 
           {/* Queries Modules */}
-          <Route path="queries/batches" element={<Placeholder title="Consulta Lotes/Series" />} />
+          <Route path="queries/batches" element={<Batches />} />
           <Route path="queries/sales-status" element={<SalesStatus />} />
           <Route path="queries/addresses" element={<Placeholder title="Direcciones" />} />
 
