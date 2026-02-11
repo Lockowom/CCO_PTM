@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Barcode, Box, Calendar, MapPin, Scale, Package, Layers } from 'lucide-react';
+import { Search, Barcode, Box, Package, Layers, Scale, MapPin } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 const Batches = () => {
@@ -21,224 +21,204 @@ const Batches = () => {
     setLoading(true);
     setSearched(true);
     
-    const newData = {
-      partidas: [],
-      series: [],
-      farmapack: [],
-      peso: { unitario: 0, total: 0 },
-      ubicaciones: []
-    };
+    const term = `%${searchTerm.trim()}%`;
+    const newData = { partidas: [], series: [], farmapack: [], peso: { unitario: '-', total: '-' }, ubicaciones: [] };
 
     try {
-      const term = `%${searchTerm.trim()}%`; // Trim para evitar espacios accidentales
-
-      // Función auxiliar para buscar de forma segura
-      const searchTable = async (table, columns) => {
+      // Función de búsqueda universal robusta
+      // Busca en 'codigo_producto' Y 'producto' (o 'descripcion')
+      const searchGeneric = async (table, cols) => {
         try {
-            // Construir query OR dinámico
-            const orQuery = columns.map(col => `${col}.ilike.${term}`).join(',');
+            // Intentar búsqueda compuesta
+            let query = supabase.from(table).select('*').limit(50);
             
-            const { data, error } = await supabase
-                .from(table)
-                .select('*')
-                .or(orQuery)
-                .limit(50);
+            // Construir filtro OR manualmente para asegurar que cubra ambas columnas
+            // Sintaxis: columna.ilike.valor,columna2.ilike.valor
+            const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
+            query = query.or(orFilter);
             
-            if (error) {
-                // Si falla (ej: columna no existe), intentamos una búsqueda más simple solo por código
-                // Esto es un fallback de seguridad
-                console.warn(`Error buscando en ${table} con columnas ${columns}:`, error.message);
-                const { data: retryData } = await supabase
-                    .from(table)
-                    .select('*')
-                    .ilike('codigo_producto', term)
-                    .limit(50);
-                return retryData || [];
-            }
+            const { data, error } = await query;
+            if (error) throw error;
             return data || [];
-        } catch (e) {
-            return [];
+        } catch (err) {
+            console.warn(`Fallback search for ${table}:`, err.message);
+            // Fallback: buscar solo por código si la descripción falla
+            const { data } = await supabase.from(table).select('*').ilike(cols[0], term).limit(50);
+            return data || [];
         }
       };
 
       // 1. PARTIDAS
-      // Intentamos buscar por codigo y producto. Si 'producto' no existe, el fallback buscará solo por codigo.
-      newData.partidas = await searchTable('tms_partidas', ['codigo_producto', 'producto']);
+      newData.partidas = await searchGeneric('tms_partidas', ['codigo_producto', 'producto']);
 
       // 2. SERIES
-      newData.series = await searchTable('tms_series', ['codigo_producto', 'producto', 'serie']);
+      newData.series = await searchGeneric('tms_series', ['codigo_producto', 'producto', 'serie']);
 
       // 3. FARMAPACK
-      newData.farmapack = await searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']);
+      newData.farmapack = await searchGeneric('tms_farmapack', ['codigo_producto', 'producto', 'lote']);
 
       // 4. UBICACIONES
-      // Aquí usamos 'descripcion' porque es lo que definimos en el SQL de ubicaciones
-      const ubicacionesData = await searchTable('tms_ubicaciones_historial', ['codigo_producto', 'descripcion', 'serie']);
-      newData.ubicaciones = ubicacionesData.map(u => ({ nombre: u.ubicacion }));
+      const ubiData = await searchGeneric('tms_ubicaciones_historial', ['codigo_producto', 'descripcion']);
+      newData.ubicaciones = ubiData;
 
       // 5. PESO
-      const pesosData = await searchTable('tms_pesos', ['codigo_producto', 'descripcion']);
-      if (pesosData.length > 0) {
-         newData.peso = { 
-             unitario: pesosData[0].peso_unitario, 
-             total: 'Calc...' 
-         };
-      } else {
-         newData.peso = { unitario: 'N/A', total: 'N/A' };
+      const pesoData = await searchGeneric('tms_pesos', ['codigo_producto', 'descripcion']);
+      if (pesoData.length > 0) {
+          newData.peso = {
+              unitario: pesoData[0].peso_unitario || '-',
+              total: pesoData[0].peso_unitario ? (pesoData[0].peso_unitario * (newData.partidas[0]?.stock_total || 0)).toFixed(2) : '-'
+          };
       }
 
       setData(newData);
 
     } catch (err) {
-      console.error("Error General:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Componente de Tarjeta Expandida (Tabla)
-  const DetailCard = ({ title, icon: Icon, color, children, count }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
-      <div className={`p-3 border-b border-slate-100 ${color} bg-opacity-10 flex justify-between items-center`}>
-        <h3 className={`font-bold text-sm flex items-center gap-2 ${color.replace('bg-', 'text-').replace('bg-opacity-10', '')}`}>
-          <Icon size={18} /> {title}
+  // Componente de Panel Estilo "Legacy/Data"
+  const DataPanel = ({ title, icon: Icon, color, count, children }) => (
+    <div className="flex flex-col h-full border border-slate-300 rounded bg-white shadow-sm overflow-hidden">
+      {/* Encabezado Sólido */}
+      <div className={`px-3 py-2 ${color} text-white flex justify-between items-center`}>
+        <h3 className="font-bold text-sm uppercase flex items-center gap-2">
+          <Icon size={16} /> {title}
         </h3>
-        {count !== undefined && (
-          <span className="bg-white px-2 py-0.5 rounded text-xs font-bold shadow-sm text-slate-600">
-            {count}
-          </span>
-        )}
+        <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-mono">
+          {count !== undefined ? count : ''}
+        </span>
       </div>
-      <div className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+      {/* Cuerpo con Scroll */}
+      <div className="flex-1 overflow-y-auto p-0 bg-slate-50">
         {children}
       </div>
     </div>
   );
 
-  // Fila de Detalle Genérica
-  const DetailRow = ({ label, value, highlight = false }) => (
-    <div className="flex justify-between text-xs py-1 border-b border-slate-50 last:border-0">
-        <span className="text-slate-500 font-medium">{label}:</span>
-        <span className={`font-bold text-right truncate ml-2 ${highlight ? 'text-indigo-600' : 'text-slate-700'}`} title={value}>
-            {value || '-'}
-        </span>
+  // Fila de Datos Compacta
+  const DataRow = ({ label, value, isHeader = false }) => (
+    <div className={`flex justify-between text-xs py-1 px-2 border-b border-slate-200 ${isHeader ? 'bg-slate-100 font-bold' : ''}`}>
+      <span className="text-slate-600">{label}</span>
+      <span className="text-slate-900 font-medium text-right truncate max-w-[60%]">{value}</span>
     </div>
   );
 
   return (
-    <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
-      <div className="flex-shrink-0">
-        <h2 className="text-2xl font-bold text-slate-800">Consulta Maestra</h2>
-        <p className="text-slate-500 text-sm">Vista detallada por Código o Descripción</p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-shrink-0">
-        <form onSubmit={handleSearch} className="relative flex gap-2">
-            <div className="relative flex-1">
-                <Search className="absolute left-4 top-3 text-slate-400" size={20} />
-                <input 
-                    type="text" 
-                    placeholder="Ingrese Código o Descripción del Producto..." 
-                    className="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    autoFocus
-                />
-            </div>
-            <button 
-                type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors"
-                disabled={loading}
-            >
-                {loading ? '...' : 'Buscar'}
-            </button>
+    <div className="h-[calc(100vh-100px)] flex flex-col space-y-4">
+      {/* Header & Search */}
+      <div className="flex-shrink-0 bg-white p-4 rounded border border-slate-200 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Consulta Maestra</h2>
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
+            <input 
+              type="text" 
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
+              placeholder="BUSCAR POR CÓDIGO O DESCRIPCIÓN..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold transition-colors">
+            BUSCAR
+          </button>
         </form>
       </div>
 
+      {/* Grid de Resultados */}
       {searched && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 flex-1 overflow-hidden min-h-0 pb-4">
-            
-            {/* 1. PARTIDAS */}
-            <DetailCard title="PARTIDAS" icon={Layers} color="bg-blue-500" count={data.partidas.length}>
-                <div className="p-2 space-y-2">
-                    {data.partidas.length > 0 ? data.partidas.map((p, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
-                            <p className="font-bold text-xs text-blue-800 mb-1 truncate" title={p.producto || p.descripcion}>{p.producto || p.descripcion}</p>
-                            <DetailRow label="Código" value={p.codigo_producto} />
-                            <DetailRow label="U. Medida" value={p.unidad_medida} />
-                            <DetailRow label="Partida" value={p.partida} />
-                            <DetailRow label="Vencimiento" value={p.fecha_venc ? new Date(p.fecha_venc).toLocaleDateString() : '-'} />
-                            <DetailRow label="Disponible" value={p.disponible} highlight />
-                            <DetailRow label="Reserva" value={p.reserva} />
-                            <DetailRow label="Stock Total" value={p.stock_total} />
-                        </div>
-                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          
+          {/* 1. PARTIDAS */}
+          <DataPanel title="Partidas" icon={Layers} color="bg-blue-600" count={data.partidas.length}>
+            {data.partidas.length > 0 ? data.partidas.map((p, i) => (
+              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
+                <div className="p-2 bg-blue-50 text-blue-900 font-bold text-xs truncate" title={p.producto || p.descripcion}>
+                  {p.producto || p.descripcion}
                 </div>
-            </DetailCard>
+                <DataRow label="CÓDIGO" value={p.codigo_producto} />
+                <DataRow label="U.MEDIDA" value={p.unidad_medida} />
+                <DataRow label="PARTIDA" value={p.partida} />
+                <DataRow label="VENCIMIENTO" value={p.fecha_venc} />
+                <DataRow label="DISPONIBLE" value={p.disponible} />
+                <DataRow label="STOCK TOTAL" value={p.stock_total} />
+              </div>
+            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
+          </DataPanel>
 
-            {/* 2. SERIES */}
-            <DetailCard title="SERIES" icon={Barcode} color="bg-indigo-500" count={data.series.length}>
-                <div className="p-2 space-y-2">
-                    {data.series.length > 0 ? data.series.map((s, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
-                            <div className="flex justify-between mb-1">
-                                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold">SN: {s.serie}</span>
-                            </div>
-                            <DetailRow label="Código" value={s.codigo_producto} />
-                            <DetailRow label="Ubicación" value={s.ubicacion_actual} />
-                            <DetailRow label="Estado" value={s.estado} highlight />
-                            <DetailRow label="Disponible" value={s.disponible} />
-                            <DetailRow label="Reserva" value={s.reserva} />
-                        </div>
-                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
+          {/* 2. SERIES */}
+          <DataPanel title="Series" icon={Barcode} color="bg-indigo-600" count={data.series.length}>
+            {data.series.length > 0 ? data.series.map((s, i) => (
+              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
+                <div className="p-2 bg-indigo-50 text-indigo-900 font-bold text-xs truncate" title={s.producto}>
+                  {s.producto || '-'}
                 </div>
-            </DetailCard>
+                <div className="px-2 pt-1 flex justify-between items-center">
+                  <span className="font-mono font-bold text-xs text-slate-700">SN: {s.serie}</span>
+                  <span className="bg-white px-1 rounded border border-indigo-200 text-[10px] text-indigo-600">{s.estado}</span>
+                </div>
+                <DataRow label="CÓDIGO" value={s.codigo_producto} />
+                <DataRow label="UBICACIÓN" value={s.ubicacion_actual} />
+                <DataRow label="DISPONIBLE" value={s.disponible} />
+              </div>
+            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
+          </DataPanel>
 
-            {/* 3. FARMAPACK */}
-            <DetailCard title="FARMAPACK" icon={Package} color="bg-emerald-500" count={data.farmapack.length}>
-                <div className="p-2 space-y-2">
-                    {data.farmapack.length > 0 ? data.farmapack.map((f, i) => (
-                        <div key={i} className="bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition-colors">
-                            <div className="flex justify-between mb-1">
-                                <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold">Lote: {f.lote}</span>
-                            </div>
-                            <DetailRow label="Código" value={f.codigo_producto} />
-                            <DetailRow label="Vencimiento" value={f.fecha_venc ? new Date(f.fecha_venc).toLocaleDateString() : '-'} />
-                            <DetailRow label="Calidad" value={f.estado_calidad} />
-                            <DetailRow label="Disponible" value={f.disponible} highlight />
-                            <DetailRow label="Stock Total" value={f.stock_total} />
-                        </div>
-                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
+          {/* 3. FARMAPACK */}
+          <DataPanel title="Farmapack" icon={Package} color="bg-emerald-600" count={data.farmapack.length}>
+            {data.farmapack.length > 0 ? data.farmapack.map((f, i) => (
+              <div key={i} className="mb-2 bg-white border-b border-slate-200 last:border-0">
+                <div className="p-2 bg-emerald-50 text-emerald-900 font-bold text-xs truncate" title={f.producto}>
+                  {f.producto || '-'}
                 </div>
-            </DetailCard>
+                <div className="px-2 pt-1 font-mono font-bold text-xs text-slate-700">
+                  LOTE: {f.lote}
+                </div>
+                <DataRow label="CÓDIGO" value={f.codigo_producto} />
+                <DataRow label="VENCIMIENTO" value={f.fecha_venc} />
+                <DataRow label="CALIDAD" value={f.estado_calidad} />
+                <DataRow label="DISPONIBLE" value={f.disponible} />
+              </div>
+            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
+          </DataPanel>
 
-            {/* 4. PESO */}
-            <DetailCard title="PESO" icon={Scale} color="bg-amber-500">
-                <div className="p-4 flex flex-col items-center justify-center h-full text-slate-500">
-                    <p className="text-xs uppercase font-bold mb-2">Peso Unitario</p>
-                    <p className="text-3xl font-black text-amber-600">{data.peso?.unitario || '-'}</p>
-                    <p className="text-[10px]">kg</p>
-                    
-                    <div className="w-full h-px bg-slate-200 my-4"></div>
-                    
-                    <p className="text-xs uppercase font-bold mb-2">Peso Total</p>
-                    <p className="text-xl font-bold text-slate-700">{data.peso?.total || '-'}</p>
-                    <p className="text-[10px]">kg</p>
-                </div>
-            </DetailCard>
+          {/* 4. PESO */}
+          <DataPanel title="Peso" icon={Scale} color="bg-amber-600">
+            <div className="p-4 flex flex-col items-center justify-center h-full text-slate-600">
+              <div className="text-center mb-6">
+                <p className="text-xs font-bold uppercase mb-1">Peso Unitario</p>
+                <p className="text-3xl font-black text-slate-800">{data.peso?.unitario}</p>
+                <p className="text-[10px]">KG</p>
+              </div>
+              <div className="w-full border-t border-slate-200 my-2"></div>
+              <div className="text-center mt-4">
+                <p className="text-xs font-bold uppercase mb-1">Peso Total (Est.)</p>
+                <p className="text-xl font-bold text-slate-800">{data.peso?.total}</p>
+                <p className="text-[10px]">KG</p>
+              </div>
+            </div>
+          </DataPanel>
 
-            {/* 5. UBICACIONES */}
-            <DetailCard title="UBICACIONES" icon={MapPin} color="bg-rose-500" count={data.ubicaciones.length}>
-                <div className="p-2 space-y-2">
-                    {data.ubicaciones.length > 0 ? data.ubicaciones.map((u, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 bg-rose-50 rounded border border-rose-100 text-rose-800 font-bold text-sm">
-                            <MapPin size={16} />
-                            <span>{u.nombre}</span>
-                        </div>
-                    )) : <div className="h-full flex items-center justify-center text-slate-400 text-xs italic">Sin datos</div>}
+          {/* 5. UBICACIONES */}
+          <DataPanel title="Ubicaciones" icon={MapPin} color="bg-rose-600" count={data.ubicaciones.length}>
+            {data.ubicaciones.length > 0 ? data.ubicaciones.map((u, i) => (
+              <div key={i} className="p-2 border-b border-slate-200 bg-white hover:bg-rose-50 transition-colors">
+                <div className="flex items-center gap-2 font-mono font-bold text-sm text-rose-700">
+                  <MapPin size={14} /> {u.ubicacion}
                 </div>
-            </DetailCard>
+                <div className="text-[10px] text-slate-500 mt-1 pl-6">
+                  {u.codigo_producto} - {u.cantidad} UN
+                </div>
+                <div className="text-[10px] text-slate-400 pl-6">
+                  {new Date(u.fecha_registro).toLocaleDateString()}
+                </div>
+              </div>
+            )) : <div className="p-4 text-center text-xs text-slate-400">Sin datos</div>}
+          </DataPanel>
 
         </div>
       )}
