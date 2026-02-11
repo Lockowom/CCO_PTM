@@ -15,6 +15,7 @@ import Shipping from './pages/Outbound/Shipping';
 import Reception from './pages/Inbound/Reception';
 import Entry from './pages/Inbound/Entry';
 import Users from './pages/Admin/Users';
+import Roles from './pages/Admin/Roles';
 import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
@@ -66,7 +67,7 @@ function App() {
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
-          <Route path="admin/roles" element={<Placeholder title="Roles y Permisos" />} />
+          <Route path="admin/roles" element={<Roles />} />
           <Route path="admin/views" element={<Placeholder title="Configuración de Vistas" />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
