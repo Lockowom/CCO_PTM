@@ -244,19 +244,21 @@ const SalesStatus = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
                     {/* Header Detalle */}
                     <div className="bg-slate-900 text-white p-6">
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h2 className="text-3xl font-black tracking-tight">N.V {selectedNV.nv}</h2>
-                                    <span className={`text-xs font-bold px-3 py-1 rounded-full text-slate-900 ${getStatusColor(selectedNV.estado).replace('text-', 'bg-').replace('bg-', 'text-white ')} bg-white`}>
+                                <div className="flex items-center gap-4 mb-2">
+                                    <h2 className="text-4xl font-black tracking-tight text-white">N.V {selectedNV.nv}</h2>
+                                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide shadow-sm ${getStatusColor(selectedNV.estado).replace('text-', 'bg-').replace('bg-', 'text-white ')} bg-white border-2 border-transparent`}>
                                         {selectedNV.estado}
                                     </span>
                                 </div>
-                                <p className="text-slate-300 font-medium text-lg">{selectedNV.cliente}</p>
+                                <p className="text-slate-300 font-medium text-xl">{selectedNV.cliente}</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-xs text-slate-400 uppercase font-bold mb-1">Fecha Emisión</p>
-                                <p className="text-xl font-bold">{new Date(selectedNV.fecha_emision).toLocaleDateString()}</p>
+                            <div className="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                <p className="text-xs text-slate-400 uppercase font-bold mb-1 flex items-center gap-2 md:justify-end">
+                                    <Calendar size={14} /> Fecha Emisión
+                                </p>
+                                <p className="text-xl font-bold text-white">{new Date(selectedNV.fecha_emision).toLocaleDateString()}</p>
                             </div>
                         </div>
                     </div>
