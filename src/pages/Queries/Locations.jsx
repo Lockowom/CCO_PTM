@@ -23,7 +23,7 @@ const LocationsQuery = () => {
       if (e1) throw e1;
       const { data: ubicaciones, error: e2 } = await supabase
         .from('wms_ubicaciones')
-        .select('ubicacion,codigo,descripcion,cantidad,talla,color');
+        .select('ubicacion,codigo,descripcion,cantidad,talla,color,serie,partida,fecha_vencimiento');
       if (e2) throw e2;
       const mapCantidad = {};
       const detalles = {};
@@ -53,7 +53,9 @@ const LocationsQuery = () => {
     const passPasillo = pasillo === 'ALL' || r.pasillo === pasillo;
     const passEstado = estado === 'ALL' || r.estado === estado;
     const txt = search.trim().toLowerCase();
-    const passText = !txt || r.ubicacion.toLowerCase().includes(txt) || (r.detalles.some(d => (d.codigo || '').toLowerCase().includes(txt)));
+    const passText = !txt 
+      || r.ubicacion.toLowerCase().includes(txt) 
+      || r.detalles.some(d => (d.codigo || '').toLowerCase().includes(txt));
     return passPasillo && passEstado && passText;
   });
 
@@ -153,8 +155,15 @@ const LocationsQuery = () => {
                         ) : (
                           <div className="flex flex-wrap gap-2">
                             {r.detalles.slice(0, 4).map(d => (
-                              <span key={`${r.ubicacion}-${d.codigo}`} className="px-2 py-1 rounded bg-slate-100 text-slate-700 border text-xs">
-                                <Box size={12} className="inline mr-1"/>{d.codigo} · {d.cantidad}
+                              <span key={`${r.ubicacion}-${d.codigo}-${d.serie}-${d.partida}`} className="px-2 py-1 rounded bg-slate-100 text-slate-700 border text-xs">
+                                <Box size={12} className="inline mr-1"/>
+                                {d.codigo}
+                                {d.serie ? ` · SN ${d.serie}` : ''}
+                                {d.partida ? ` · Lote ${d.partida}` : ''}
+                                {d.talla ? ` · ${d.talla}` : ''}
+                                {d.color ? ` · ${d.color}` : ''}
+                                {d.cantidad !== undefined ? ` · ${d.cantidad}` : ''}
+                                {d.fecha_vencimiento ? ` · Vence ${new Date(d.fecha_vencimiento).toLocaleDateString()}` : ''}
                               </span>
                             ))}
                             {r.detalles.length > 4 && (
