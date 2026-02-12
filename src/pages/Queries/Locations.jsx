@@ -55,7 +55,11 @@ const LocationsQuery = () => {
     const txt = search.trim().toLowerCase();
     const passText = !txt 
       || r.ubicacion.toLowerCase().includes(txt) 
-      || r.detalles.some(d => (d.codigo || '').toLowerCase().includes(txt));
+      || r.detalles.some(d => 
+        (d.codigo || '').toLowerCase().includes(txt) ||
+        (d.serie || '').toLowerCase().includes(txt) ||
+        (d.partida || '').toLowerCase().includes(txt)
+      );
     return passPasillo && passEstado && passText;
   });
 
