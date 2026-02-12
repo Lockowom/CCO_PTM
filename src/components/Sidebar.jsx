@@ -139,7 +139,8 @@ const Sidebar = () => {
         { id: 'queries-batches', label: 'Lotes/Series', icon: <Barcode size={18} />, path: '/queries/batches' },
         { id: 'queries-sales-status', label: 'Estado N.V', icon: <FileText size={18} />, path: '/queries/sales-status' },
         { id: 'queries-addresses', label: 'Direcciones', icon: <MapPin size={18} />, path: '/queries/addresses' },
-        { id: 'queries-locations', label: 'Ubicaciones', icon: <MapPinned size={18} />, path: '/queries/locations' }
+        { id: 'queries-locations', label: 'Ubicaciones', icon: <MapPinned size={18} />, path: '/queries/locations' },
+        { id: 'queries-locations-sheet', label: 'Ubicaciones (Sheet)', icon: <MapPinned size={18} />, path: '/queries/locations-sheet' }
       ]
     },
     {
