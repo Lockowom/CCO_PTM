@@ -29,7 +29,8 @@ import {
   ChevronDown,
   ChevronRight,
   History,
-  Timer
+  Timer,
+  Upload
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -244,6 +245,7 @@ const Sidebar = () => {
         { id: 'users', label: 'Usuarios', icon: <Users size={18} />, path: '/admin/users' },
         { id: 'roles', label: 'Roles', icon: <Shield size={18} />, path: '/admin/roles' },
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
+        { id: 'admin-data-import', label: 'Carga Datos', icon: <Upload size={18} />, path: '/admin/data-import' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' }
       ]
     }

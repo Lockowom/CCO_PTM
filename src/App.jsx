@@ -41,6 +41,7 @@ import Users from './pages/Admin/Users';
 import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
 import Mediciones from './pages/Admin/Mediciones';
+import DataImport from './pages/Admin/DataImport';
 
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
@@ -81,7 +82,8 @@ const ROUTE_PERMISSIONS = {
   '/admin/roles': ['manage_roles'],
   '/admin/views': ['manage_views'],
   '/admin/mediciones': ['manage_mediciones'],
-  '/admin/reports': ['view_reports']
+  '/admin/reports': ['view_reports'],
+  '/admin/data-import': ['manage_data_import']
 };
 
 // Orden de prioridad para la primera ruta disponible
@@ -265,6 +267,7 @@ function AppContent() {
           <Route path="admin/roles" element={<Roles />} />
           <Route path="admin/views" element={<Views />} />
           <Route path="admin/mediciones" element={<Mediciones />} />
+          <Route path="admin/data-import" element={<DataImport />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
 

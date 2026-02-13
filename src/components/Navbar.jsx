@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabase';
-import { 
+import {
   LayoutDashboard, Map, Satellite, Users, Smartphone, Loader2,
-  ArrowDownToLine, Truck, PackagePlus, 
-  ArrowUpFromLine, FileText, Hand, Package, Ship, 
-  Warehouse, MapPin, ArrowLeftRight, 
-  Search, Barcode, MapPinned, 
+  ArrowDownToLine, Truck, PackagePlus,
+  ArrowUpFromLine, FileText, Hand, Package, Ship,
+  Warehouse, MapPin, ArrowLeftRight,
+  Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
-  LogOut, ChevronDown, Clock, Menu, X, Lock
+  LogOut, ChevronDown, Clock, Menu, X, Lock, Upload
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -88,7 +88,7 @@ const Navbar = () => {
       const { data, error } = await supabase
         .from('tms_modules_config')
         .select('id, enabled');
-      
+
       if (error) throw error;
 
       const config = {};
@@ -121,14 +121,14 @@ const Navbar = () => {
     // 1. Verificar que el módulo esté habilitado en la configuración
     const configEnabled = modulesConfig[moduleId] !== false;
     if (!configEnabled) return false;
-    
+
     // 2. ADMIN rol tiene acceso a todo
     if (user?.rol === 'ADMIN') return true;
-    
+
     // 3. Para otros roles, verificar que tengan AL MENOS UN permiso para esta sección
     const requiredPermissions = MODULE_PERMISSIONS[moduleId] || [];
     if (requiredPermissions.length === 0) return true; // Si no hay requisitos, mostrar
-    
+
     // Verificar que el usuario tenga AL MENOS UN permiso de esta sección
     const hasAccess = requiredPermissions.some(perm => hasPermission(perm));
     return hasAccess;
@@ -140,10 +140,10 @@ const Navbar = () => {
     if (sectionId === 'admin') {
       return user?.rol === 'ADMIN';
     }
-    
+
     // ADMIN rol puede acceder a todo
     if (user?.rol === 'ADMIN') return true;
-    
+
     // Mapeo detallado de rutas a permisos específicos
     const pathPermissions = {
       '/dashboard': 'view_dashboard',
@@ -172,10 +172,10 @@ const Navbar = () => {
       '/admin/views': 'manage_views',
       '/admin/reports': 'manage_reports'
     };
-    
+
     const requiredPermission = pathPermissions[modulePath];
     if (!requiredPermission) return true; // Si no tiene requisito específico, permitir
-    
+
     return hasPermission(requiredPermission);
   };
 
@@ -250,6 +250,7 @@ const Navbar = () => {
         { label: 'Usuarios', path: '/admin/users', icon: <Users size={16} /> },
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
         { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
+        { label: 'Carga Datos', path: '/admin/data-import', icon: <Upload size={16} /> },
         { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> }
       ]
     }
@@ -258,7 +259,7 @@ const Navbar = () => {
   return (
     <header className="bg-white border-b-2 border-orange-200 sticky top-0 z-50 shadow-md font-poppins">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        
+
         {/* Left: Logo */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-fit">
           <div className="flex flex-col leading-tight">
@@ -278,18 +279,18 @@ const Navbar = () => {
             if (!isEnabled(item.id)) return null;
 
             return (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="relative group"
                 onMouseEnter={() => setActiveDropdown(item.id)}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 {item.isLink ? (
-                  <Link 
+                  <Link
                     to={item.path}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150
-                      ${location.pathname === item.path 
-                        ? 'bg-orange-500 text-white shadow-lg' 
+                      ${location.pathname === item.path
+                        ? 'bg-orange-500 text-white shadow-lg'
                         : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
@@ -297,10 +298,10 @@ const Navbar = () => {
                     <span className="hidden sm:inline">{item.label}</span>
                   </Link>
                 ) : (
-                  <button 
+                  <button
                     className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer group
-                      ${activeDropdown === item.id 
-                        ? 'bg-orange-500 text-white shadow-lg' 
+                      ${activeDropdown === item.id
+                        ? 'bg-orange-500 text-white shadow-lg'
                         : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
@@ -368,7 +369,7 @@ const Navbar = () => {
           </button>
 
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 hover:bg-orange-50 rounded-lg transition-colors duration-150"
           >
