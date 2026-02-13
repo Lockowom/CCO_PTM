@@ -359,10 +359,31 @@ const Navbar = () => {
             </div>
           )}
 
-          <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-full text-blue-600 text-xs font-bold border border-blue-100">
-            <Clock size={12} />
-            <span className="hidden sm:inline">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}</span>
-          </div>
+          {/* WMS Clock - Live */}
+          {(() => {
+            const [now, setNow] = React.useState(new Date());
+            React.useEffect(() => {
+              const timer = setInterval(() => setNow(new Date()), 1000);
+              return () => clearInterval(timer);
+            }, []);
+            const h = now.getHours();
+            const m = now.getMinutes().toString().padStart(2, '0');
+            const s = now.getSeconds().toString().padStart(2, '0');
+            const h24 = h.toString().padStart(2, '0');
+            const ampm = h < 12 ? 'AM' : 'PM';
+            const day = now.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).toUpperCase();
+            return (
+              <div className="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
+                <div className="flex items-baseline gap-0.5">
+                  <span className="font-mono text-sm font-black text-emerald-400 tracking-wider">{h24}:{m}</span>
+                  <span className="font-mono text-[10px] text-emerald-400/60">{s}</span>
+                </div>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ampm === 'AM' ? 'bg-sky-500/20 text-sky-400' : 'bg-amber-500/20 text-amber-400'}`}>{ampm}</span>
+                <div className="w-px h-4 bg-slate-700" />
+                <span className="text-[10px] font-bold text-slate-400 tracking-wide">{day}</span>
+              </div>
+            );
+          })()}
 
           <button onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-150 active:scale-95">
             <LogOut size={16} />
