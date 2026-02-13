@@ -24,6 +24,18 @@ const Drivers = () => {
 
   useEffect(() => {
     fetchDrivers();
+
+    // Habilitar Realtime para actualizar estados en vivo
+    const subscription = supabase
+      .channel('public:tms_conductores')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, (payload) => {
+        fetchDrivers();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const fetchDrivers = async () => {
@@ -91,17 +103,37 @@ const Drivers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este conductor?")) return;
+    if (!window.confirm("¿Estás seguro de eliminar este conductor? Esta acción no se puede deshacer y podría afectar rutas históricas.")) return;
     try {
+      setLoading(true);
+      // 1. Desvincular entregas asociadas (setear conductor_id a null)
+      // Esto evita errores de clave foránea
+      await supabase
+        .from('tms_entregas')
+        .update({ conductor_id: null })
+        .eq('conductor_id', id);
+
+      // 2. Desvincular rutas asociadas
+      await supabase
+        .from('tms_rutas')
+        .update({ conductor_id: null })
+        .eq('conductor_id', id);
+
+      // 3. Eliminar conductor
       const { error } = await supabase
         .from('tms_conductores')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
-      fetchDrivers();
+      
+      // Actualización optimista inmediata
+      setDrivers(prev => prev.filter(d => d.id !== id));
+      
     } catch (err) {
       alert("Error eliminando: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
