@@ -1,124 +1,369 @@
-import React, { useState, useEffect } from 'react';
-import { Package, Truck, AlertCircle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+// Dashboard.jsx - Dashboard Principal con datos REALES de Supabase
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Package, 
+  Truck, 
+  AlertCircle, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle,
+  RefreshCw,
+  FileText,
+  Hand,
+  Box,
+  Send,
+  Ship,
+  ThumbsUp,
+  Hourglass,
+  RotateCcw,
+  Users,
+  BarChart3,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart
+} from 'recharts';
+import { supabase } from '../supabase';
 
-const API_URL = 'https://cco-ptm.onrender.com/api';
+// Configuración de estados
+const ESTADOS_NV = [
+  { key: 'Pendiente', label: 'Pendiente', color: '#64748b', icon: Hourglass },
+  { key: 'Aprobada', label: 'Aprobada', color: '#f59e0b', icon: ThumbsUp },
+  { key: 'Pendiente Picking', label: 'Picking', color: '#06b6d4', icon: Hand },
+  { key: 'PACKING', label: 'Packing', color: '#6366f1', icon: Box },
+  { key: 'LISTO_DESPACHO', label: 'Listo Despacho', color: '#a855f7', icon: Send },
+  { key: 'Pendiente Shipping', label: 'Shipping', color: '#3b82f6', icon: Ship },
+  { key: 'Despachado', label: 'Despachado', color: '#10b981', icon: Truck },
+  { key: 'Refacturacion', label: 'Refacturación', color: '#f97316', icon: RotateCcw },
+];
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ entregas: 0, pendientes: 0, enRuta: 0, entregados: 0 });
-  const [recentEntregas, setRecentEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  
+  // Stats de N.V.
+  const [nvStats, setNvStats] = useState({
+    total: 0,
+    pendiente: 0,
+    aprobada: 0,
+    picking: 0,
+    packing: 0,
+    listoDespacho: 0,
+    shipping: 0,
+    despachado: 0,
+    refacturacion: 0
+  });
+  
+  // Stats de conductores
+  const [conductoresStats, setConductoresStats] = useState({
+    total: 0,
+    enRuta: 0,
+    disponibles: 0
+  });
+  
+  // Stats de entregas
+  const [entregasStats, setEntregasStats] = useState({
+    total: 0,
+    entregadas: 0,
+    pendientes: 0,
+    rechazadas: 0
+  });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  // Datos para gráficos
+  const [chartData, setChartData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+  const [recentNV, setRecentNV] = useState([]);
 
-  const fetchDashboardData = async () => {
+  // Fetch de todos los datos
+  const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/entregas?limit=100`);
-      const data = await res.json();
+
+      // 1. Cargar N.V.
+      const { data: nvData } = await supabase
+        .from('tms_nv_diarias')
+        .select('*')
+        .order('fecha_emision', { ascending: false });
+
+      const nv = nvData || [];
       
-      const pendientes = data.filter(d => d.estado === 'PENDIENTE').length;
-      const enRuta = data.filter(d => d.estado === 'EN_RUTA').length;
-      const entregados = data.filter(d => d.estado === 'ENTREGADO').length;
-      
-      setStats({
-        entregas: data.length,
-        pendientes,
-        enRuta,
-        entregados
+      // Contar por estado (incluir PENDIENTE mayúsculas)
+      const pendiente = nv.filter(n => n.estado === 'Pendiente' || n.estado === 'PENDIENTE').length;
+      const aprobada = nv.filter(n => n.estado === 'Aprobada').length;
+      const picking = nv.filter(n => n.estado === 'Pendiente Picking').length;
+      const packing = nv.filter(n => n.estado === 'PACKING').length;
+      const listoDespacho = nv.filter(n => n.estado === 'LISTO_DESPACHO').length;
+      const shipping = nv.filter(n => n.estado === 'Pendiente Shipping').length;
+      const despachado = nv.filter(n => n.estado === 'Despachado').length;
+      const refacturacion = nv.filter(n => n.estado === 'Refacturacion').length;
+
+      setNvStats({
+        total: nv.length,
+        pendiente,
+        aprobada,
+        picking,
+        packing,
+        listoDespacho,
+        shipping,
+        despachado,
+        refacturacion
       });
-      setRecentEntregas(data.slice(0, 8)); 
+
+      // Datos para gráfico de barras (flujo operativo)
+      setChartData([
+        { name: 'Pendiente', valor: pendiente, color: '#64748b' },
+        { name: 'Aprobada', valor: aprobada, color: '#f59e0b' },
+        { name: 'Picking', valor: picking, color: '#06b6d4' },
+        { name: 'Packing', valor: packing, color: '#6366f1' },
+        { name: 'Despacho', valor: listoDespacho, color: '#a855f7' },
+        { name: 'Shipping', valor: shipping, color: '#3b82f6' },
+        { name: 'Despachado', valor: despachado, color: '#10b981' },
+      ]);
+
+      // Datos para pie (distribución)
+      const enProceso = pendiente + aprobada + picking + packing + listoDespacho + shipping;
+      setPieData([
+        { name: 'En Proceso', value: enProceso, color: '#3b82f6' },
+        { name: 'Despachados', value: despachado, color: '#10b981' },
+        { name: 'Refacturación', value: refacturacion, color: '#f97316' },
+      ]);
+
+      // N.V. recientes
+      setRecentNV(nv.slice(0, 8));
+
+      // 2. Cargar Conductores
+      const { data: conductoresData } = await supabase
+        .from('tms_conductores')
+        .select('*');
+
+      const conductores = conductoresData || [];
+      setConductoresStats({
+        total: conductores.length,
+        enRuta: conductores.filter(c => c.estado === 'EN_RUTA').length,
+        disponibles: conductores.filter(c => c.estado === 'DISPONIBLE').length
+      });
+
+      // 3. Cargar Entregas
+      const { data: entregasData } = await supabase
+        .from('tms_entregas')
+        .select('*');
+
+      const entregas = entregasData || [];
+      setEntregasStats({
+        total: entregas.length,
+        entregadas: entregas.filter(e => e.estado === 'ENTREGADO').length,
+        pendientes: entregas.filter(e => e.estado === 'PENDIENTE' || e.estado === 'EN_RUTA').length,
+        rechazadas: entregas.filter(e => e.estado === 'RECHAZADO').length
+      });
+
+      setLastUpdate(new Date());
     } catch (error) {
-      console.error("Error cargando datos:", error);
+      console.error('Error cargando dashboard:', error);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Cargar datos y suscribirse a cambios
+  useEffect(() => {
+    fetchAllData();
+
+    // Auto-refresh cada 30 segundos
+    const interval = setInterval(fetchAllData, 30000);
+
+    // Suscripción Realtime
+    const channel = supabase
+      .channel('dashboard_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
+        console.log('📊 Dashboard: N.V. actualizada');
+        fetchAllData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, () => {
+        fetchAllData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
+        fetchAllData();
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAllData]);
+
+  // Calcular porcentaje de efectividad
+  const efectividad = nvStats.total > 0 
+    ? Math.round((nvStats.despachado / nvStats.total) * 100) 
+    : 0;
+
+  // Obtener config de estado
+  const getEstadoConfig = (estado) => {
+    const normalized = estado === 'PENDIENTE' ? 'Pendiente' : estado;
+    return ESTADOS_NV.find(e => e.key === normalized) || ESTADOS_NV[0];
   };
-
-  const chartData = [
-    { name: 'Pendientes', valor: stats.pendientes, color: '#f97316' },
-    { name: 'En Ruta', valor: stats.enRuta, color: '#3b82f6' },
-    { name: 'Entregados', valor: stats.entregados, color: '#10b981' }
-  ];
-
-  const pieData = [
-    { name: 'A Tiempo', value: 400, color: '#10b981' },
-    { name: 'Retrasados', value: 30, color: '#ef4444' },
-    { name: 'En Proceso', value: 300, color: '#3b82f6' },
-  ];
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Torre de Control</h2>
-          <p className="text-slate-500 text-sm">Resumen operativo en tiempo real</p>
+          <h2 className="text-2xl font-bold text-slate-800">Dashboard Operacional</h2>
+          <p className="text-slate-500 text-sm">Resumen en tiempo real de la operación</p>
         </div>
-        <div className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border shadow-sm flex items-center gap-2">
-           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-           Actualizado: {new Date().toLocaleTimeString()}
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border shadow-sm flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            {lastUpdate.toLocaleTimeString()}
+          </div>
+          <button 
+            onClick={fetchAllData}
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            Actualizar
+          </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="Total Entregas" 
-          value={stats.entregas} 
-          icon={<Package className="text-blue-600" />} 
-          trend="+12% vs ayer" 
-          trendUp={true}
-          bg="bg-blue-50"
-          border="border-blue-100"
+      {/* KPI Cards - Fila Principal */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <KPICard 
+          title="Total N.V." 
+          value={nvStats.total}
+          icon={<FileText className="text-slate-600" size={20} />}
+          color="slate"
         />
-        <StatCard 
+        <KPICard 
           title="Pendientes" 
-          value={stats.pendientes} 
-          icon={<AlertCircle className="text-orange-600" />} 
-          trend="-5% vs ayer" 
-          trendUp={true} // Less pending is good
-          bg="bg-orange-50"
-          border="border-orange-100"
+          value={nvStats.pendiente}
+          icon={<Hourglass className="text-slate-600" size={20} />}
+          color="slate"
+          subtitle="Por aprobar"
         />
-        <StatCard 
-          title="En Ruta" 
-          value={stats.enRuta} 
-          icon={<Truck className="text-indigo-600" />} 
-          trend="8 camiones activos"
-          bg="bg-indigo-50"
-          border="border-indigo-100"
+        <KPICard 
+          title="En Picking" 
+          value={nvStats.picking}
+          icon={<Hand className="text-cyan-600" size={20} />}
+          color="cyan"
         />
-        <StatCard 
-          title="Completados" 
-          value={stats.entregados} 
-          icon={<CheckCircle className="text-emerald-600" />} 
-          trend="98% efectividad"
-          bg="bg-emerald-50"
-          border="border-emerald-100"
+        <KPICard 
+          title="En Packing" 
+          value={nvStats.packing}
+          icon={<Box className="text-indigo-600" size={20} />}
+          color="indigo"
         />
+        <KPICard 
+          title="Listo Despacho" 
+          value={nvStats.listoDespacho + nvStats.shipping}
+          icon={<Send className="text-purple-600" size={20} />}
+          color="purple"
+        />
+        <KPICard 
+          title="Despachados" 
+          value={nvStats.despachado}
+          icon={<Truck className="text-emerald-600" size={20} />}
+          color="emerald"
+          trend={`${efectividad}%`}
+          trendUp={efectividad > 50}
+        />
+      </div>
+
+      {/* Segunda fila de KPIs - Entregas y Conductores */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-xl text-white shadow-lg">
+          <div className="flex justify-between items-start mb-3">
+            <Users size={24} className="opacity-80" />
+            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{conductoresStats.enRuta} en ruta</span>
+          </div>
+          <p className="text-3xl font-bold">{conductoresStats.total}</p>
+          <p className="text-sm opacity-80">Conductores</p>
+        </div>
+        
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-xl text-white shadow-lg">
+          <div className="flex justify-between items-start mb-3">
+            <CheckCircle size={24} className="opacity-80" />
+            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <ArrowUpRight size={12} /> {entregasStats.total > 0 ? Math.round((entregasStats.entregadas / entregasStats.total) * 100) : 0}%
+            </span>
+          </div>
+          <p className="text-3xl font-bold">{entregasStats.entregadas}</p>
+          <p className="text-sm opacity-80">Entregas Completadas</p>
+        </div>
+        
+        <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-5 rounded-xl text-white shadow-lg">
+          <div className="flex justify-between items-start mb-3">
+            <Clock size={24} className="opacity-80" />
+          </div>
+          <p className="text-3xl font-bold">{entregasStats.pendientes}</p>
+          <p className="text-sm opacity-80">Entregas Pendientes</p>
+        </div>
+        
+        <div className="bg-gradient-to-br from-red-500 to-red-600 p-5 rounded-xl text-white shadow-lg">
+          <div className="flex justify-between items-start mb-3">
+            <AlertCircle size={24} className="opacity-80" />
+          </div>
+          <p className="text-3xl font-bold">{nvStats.refacturacion}</p>
+          <p className="text-sm opacity-80">Refacturación</p>
+        </div>
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Bar Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-semibold text-slate-800 mb-6 flex items-center gap-2">
-            <TrendingUp size={20} className="text-slate-400" />
-            Flujo de Entregas
-          </h3>
+        {/* Gráfico de Barras - Flujo Operativo */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <BarChart3 size={20} className="text-indigo-500" />
+                Flujo de Notas de Venta
+              </h3>
+              <p className="text-sm text-slate-500">Distribución por estado en el proceso</p>
+            </div>
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <BarChart data={chartData} barSize={40}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  cursor={{fill: '#f8fafc'}}
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 11 }} 
+                  dy={10}
                 />
-                <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 12 }} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2)',
+                    padding: '12px 16px'
+                  }}
+                  cursor={{ fill: '#f8fafc' }}
+                  formatter={(value) => [`${value} N.V.`, 'Cantidad']}
+                />
+                <Bar dataKey="valor" radius={[8, 8, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -128,100 +373,118 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Pie Chart / Side Panel */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">Efectividad</h3>
-          <p className="text-sm text-slate-500 mb-6">Cumplimiento de ventanas horarias</p>
+        {/* Gráfico Pie - Distribución */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Distribución General</h3>
+          <p className="text-sm text-slate-500 mb-4">Estado actual de todas las N.V.</p>
           
-          <div className="flex-1 min-h-[200px] relative">
+          <div className="h-48 relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={3}
                   dataKey="value"
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value) => [`${value} N.V.`, '']}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
               </PieChart>
             </ResponsiveContainer>
-            {/* Center Text */}
             <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-              <span className="text-3xl font-bold text-slate-800">92%</span>
-              <span className="text-xs text-slate-400">On Time</span>
+              <span className="text-2xl font-bold text-slate-800">{nvStats.total}</span>
+              <span className="text-xs text-slate-400">Total</span>
             </div>
           </div>
           
-          <div className="space-y-3 mt-4">
-             {pieData.map((item, i) => (
-               <div key={i} className="flex items-center justify-between text-sm">
-                 <div className="flex items-center gap-2">
-                   <span className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></span>
-                   <span className="text-slate-600">{item.name}</span>
-                 </div>
-                 <span className="font-semibold text-slate-800">{item.value}</span>
-               </div>
-             ))}
+          <div className="space-y-2 mt-4">
+            {pieData.map((item, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+                  <span className="text-slate-600">{item.name}</span>
+                </div>
+                <span className="font-bold text-slate-800">{item.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Recent Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-800">Actividad Reciente</h3>
-          <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Ver todo</button>
+      {/* Tabla de Actividad Reciente */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-3">
+            <Activity size={20} className="text-indigo-500" />
+            <div>
+              <h3 className="font-bold text-slate-800">Notas de Venta Recientes</h3>
+              <p className="text-xs text-slate-500">Últimas N.V. en el sistema</p>
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider">
               <tr>
-                <th className="px-6 py-4 font-medium">N.V. / ID</th>
-                <th className="px-6 py-4 font-medium">Cliente</th>
-                <th className="px-6 py-4 font-medium">Fecha</th>
-                <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium text-right">Acción</th>
+                <th className="px-5 py-3 text-left font-medium">N.V.</th>
+                <th className="px-5 py-3 text-left font-medium">Fecha</th>
+                <th className="px-5 py-3 text-left font-medium">Cliente</th>
+                <th className="px-5 py-3 text-left font-medium">Producto</th>
+                <th className="px-5 py-3 text-right font-medium">Cantidad</th>
+                <th className="px-5 py-3 text-center font-medium">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {recentEntregas.map((e) => (
-                <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-slate-900">{e.nv}</td>
-                  <td className="px-6 py-4 text-slate-600">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-slate-700">{e.cliente}</span>
-                      <span className="text-xs text-slate-400">{e.direccion || 'Sin dirección'}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} />
-                      {new Date(e.fecha_creacion).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={e.estado} />
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-indigo-600">
-                      Ver detalle
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {recentEntregas.length === 0 && (
+              {recentNV.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-400">
-                    No hay datos recientes disponibles.
+                  <td colSpan="6" className="px-5 py-8 text-center text-slate-400">
+                    <Package size={32} className="mx-auto mb-2 opacity-40" />
+                    No hay datos disponibles
                   </td>
                 </tr>
+              ) : (
+                recentNV.map((nv, index) => {
+                  const config = getEstadoConfig(nv.estado);
+                  return (
+                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-3 font-bold text-indigo-600">#{nv.nv}</td>
+                      <td className="px-5 py-3 text-slate-500 text-xs">
+                        {nv.fecha_emision ? new Date(nv.fecha_emision).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="font-medium text-slate-700 truncate max-w-[150px]">{nv.cliente}</p>
+                        <p className="text-xs text-slate-400">{nv.vendedor}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="font-mono text-xs text-slate-600">{nv.codigo_producto}</p>
+                      </td>
+                      <td className="px-5 py-3 text-right font-bold text-slate-800">
+                        {nv.cantidad} <span className="text-slate-400 font-normal text-xs">{nv.unidad}</span>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <span 
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+                          style={{ 
+                            backgroundColor: `${config.color}15`,
+                            color: config.color,
+                            border: `1px solid ${config.color}30`
+                          }}
+                        >
+                          {config.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -231,40 +494,37 @@ const Dashboard = () => {
   );
 };
 
-// Helper Components
-function StatCard({ title, value, icon, trend, trendUp, bg, border }) {
+// Componente KPI Card
+function KPICard({ title, value, icon, color, subtitle, trend, trendUp }) {
+  const colorClasses = {
+    slate: 'bg-slate-50 border-slate-200',
+    cyan: 'bg-cyan-50 border-cyan-200',
+    indigo: 'bg-indigo-50 border-indigo-200',
+    purple: 'bg-purple-50 border-purple-200',
+    emerald: 'bg-emerald-50 border-emerald-200',
+    amber: 'bg-amber-50 border-amber-200',
+    red: 'bg-red-50 border-red-200',
+  };
+
   return (
-    <div className={`p-6 rounded-xl border ${bg} ${border} transition-all hover:shadow-md`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
+    <div className={`p-4 rounded-xl border-2 ${colorClasses[color]} transition-all hover:shadow-md`}>
+      <div className="flex justify-between items-start mb-2">
+        <div className="p-2 bg-white rounded-lg shadow-sm">
           {icon}
         </div>
         {trend && (
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+            trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+          }`}>
+            {trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {trend}
           </span>
         )}
       </div>
-      <h3 className="text-3xl font-bold text-slate-800 mb-1">{value}</h3>
-      <p className="text-sm text-slate-500 font-medium">{title}</p>
+      <p className="text-2xl font-bold text-slate-800">{value}</p>
+      <p className="text-xs text-slate-500 font-medium">{title}</p>
+      {subtitle && <p className="text-[10px] text-slate-400">{subtitle}</p>}
     </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const styles = {
-    'PENDIENTE': 'bg-orange-100 text-orange-700 border-orange-200',
-    'EN_RUTA': 'bg-blue-100 text-blue-700 border-blue-200',
-    'ENTREGADO': 'bg-green-100 text-green-700 border-green-200',
-    'FALLIDO': 'bg-red-100 text-red-700 border-red-200'
-  };
-  
-  const config = styles[status] || 'bg-gray-100 text-gray-700 border-gray-200';
-  
-  return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${config}`}>
-      {status}
-    </span>
   );
 }
 
