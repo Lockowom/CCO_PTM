@@ -157,7 +157,7 @@ const Drivers = () => {
         .from('tms_entregas')
         .select('*')
         .eq('conductor_id', driverId)
-        .order('created_at', { ascending: false });
+        .order('fecha_creacion', { ascending: false });
 
       if (error) throw error;
       
