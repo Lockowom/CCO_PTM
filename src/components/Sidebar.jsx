@@ -9,7 +9,7 @@ import {
   Smartphone, 
   ArrowDownToLine, 
   Truck, 
-  DollyChart, // Replacing fa-dolly-flatbed
+  PackagePlus, // Reemplazo de DollyChart (no existe en lucide-react)
   ArrowUpFromLine, 
   FileText, 
   Hand, 
@@ -130,7 +130,7 @@ const Sidebar = () => {
       color: 'text-emerald-500',
       modules: [
         { id: 'inbound-reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
-        { id: 'inbound-entry', label: 'Ingreso', icon: <DollyChart size={18} />, path: '/inbound/entry' }
+        { id: 'inbound-entry', label: 'Ingreso', icon: <PackagePlus size={18} />, path: '/inbound/entry' }
       ]
     },
     {

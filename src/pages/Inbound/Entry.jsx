@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollyChart, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box } from 'lucide-react';
+import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box } from 'lucide-react';
 
 const Entry = () => {
   const [queue, setQueue] = useState([]);
