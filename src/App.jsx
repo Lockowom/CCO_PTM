@@ -1,13 +1,42 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Layout from './components/Layout';
+import Placeholder from './components/Placeholder';
+
+// Login & Dashboard
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+
+// TMS Modules
 import RoutePlanning from './pages/TMS/RoutePlanning';
 import Drivers from './pages/TMS/Drivers';
 import ControlTower from './pages/TMS/ControlTower';
 import MobileApp from './pages/TMS/MobileApp';
-import Placeholder from './components/Placeholder';
+
+// Inbound Modules
+import Reception from './pages/Inbound/Reception';
+import Entry from './pages/Inbound/Entry';
+
+// Outbound Modules
+import SalesOrders from './pages/Outbound/SalesOrders';
+import Picking from './pages/Outbound/Picking';
+import Packing from './pages/Outbound/Packing';
+import Shipping from './pages/Outbound/Shipping';
+
+// Inventory Modules
+import Stock from './pages/Inventory/Stock';
+import InventoryLayout from './pages/Inventory/Layout';
+
+// Queries Modules
+import Batches from './pages/Queries/Batches';
+import SalesStatus from './pages/Queries/SalesStatus';
+import Addresses from './pages/Queries/Addresses';
+import Locations from './pages/Queries/Locations';
+
+// Admin Modules
+import Users from './pages/Admin/Users';
+import Roles from './pages/Admin/Roles';
+import Views from './pages/Admin/Views';
 
 // Layout Wrapper to apply Sidebar to internal pages
 const AppLayout = () => (
@@ -36,30 +65,31 @@ function App() {
           <Route path="tms/mobile" element={<MobileApp />} />
 
           {/* Inbound Modules */}
-          <Route path="inbound/reception" element={<Placeholder title="Recepción" />} />
-          <Route path="inbound/entry" element={<Placeholder title="Ingreso" />} />
+          <Route path="inbound/reception" element={<Reception />} />
+          <Route path="inbound/entry" element={<Entry />} />
 
           {/* Outbound Modules */}
-          <Route path="outbound/sales-orders" element={<Placeholder title="Notas de Venta" />} />
-          <Route path="outbound/picking" element={<Placeholder title="Picking" />} />
-          <Route path="outbound/packing" element={<Placeholder title="Packing" />} />
-          <Route path="outbound/shipping" element={<Placeholder title="Despachos" />} />
+          <Route path="outbound/sales-orders" element={<SalesOrders />} />
+          <Route path="outbound/picking" element={<Picking />} />
+          <Route path="outbound/packing" element={<Packing />} />
+          <Route path="outbound/shipping" element={<Shipping />} />
           <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
 
           {/* Inventory Modules */}
-          <Route path="inventory/stock" element={<Placeholder title="Stock Actual" />} />
-          <Route path="inventory/layout" element={<Placeholder title="Layout Bodega" />} />
+          <Route path="inventory/stock" element={<Stock />} />
+          <Route path="inventory/layout" element={<InventoryLayout />} />
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
 
           {/* Queries Modules */}
-          <Route path="queries/batches" element={<Placeholder title="Consulta Lotes/Series" />} />
-          <Route path="queries/sales-status" element={<Placeholder title="Estado N.V." />} />
-          <Route path="queries/addresses" element={<Placeholder title="Direcciones" />} />
+          <Route path="queries/batches" element={<Batches />} />
+          <Route path="queries/sales-status" element={<SalesStatus />} />
+          <Route path="queries/addresses" element={<Addresses />} />
+          <Route path="queries/locations" element={<Locations />} />
 
           {/* Admin Modules */}
-          <Route path="admin/users" element={<Placeholder title="Usuarios" />} />
-          <Route path="admin/roles" element={<Placeholder title="Roles y Permisos" />} />
-          <Route path="admin/views" element={<Placeholder title="Configuración de Vistas" />} />
+          <Route path="admin/users" element={<Users />} />
+          <Route path="admin/roles" element={<Roles />} />
+          <Route path="admin/views" element={<Views />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
 
