@@ -110,6 +110,34 @@ const Drivers = () => {
     (d.apellido && d.apellido.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // NVs asignadas state
+  const [showNvs, setShowNvs] = useState(false);
+  const [selectedDriverNvs, setSelectedDriverNvs] = useState([]);
+  const [selectedDriverName, setSelectedDriverName] = useState('');
+
+  // Fetch NVs for a specific driver
+  const fetchDriverNvs = async (driverId, driverName) => {
+    try {
+      setLoading(true);
+      setSelectedDriverName(driverName);
+      
+      const { data, error } = await supabase
+        .from('tms_entregas')
+        .select('*')
+        .eq('conductor_id', driverId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setSelectedDriverNvs(data || []);
+      setShowNvs(true);
+    } catch (err) {
+      alert("Error cargando NVs: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">
@@ -146,6 +174,7 @@ const Drivers = () => {
         {filteredDrivers.map(driver => (
           <div key={driver.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow relative group">
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => fetchDriverNvs(driver.id, `${driver.nombre} ${driver.apellido}`)} className="text-slate-400 hover:text-blue-600 bg-slate-50 p-1.5 rounded-lg" title="Ver NVs asignadas"><Truck size={16} /></button>
               <button onClick={() => handleEdit(driver)} className="text-slate-400 hover:text-indigo-600 bg-slate-50 p-1.5 rounded-lg"><Edit2 size={16} /></button>
               <button onClick={() => handleDelete(driver.id)} className="text-slate-400 hover:text-red-600 bg-slate-50 p-1.5 rounded-lg"><Trash2 size={16} /></button>
             </div>
@@ -180,7 +209,52 @@ const Drivers = () => {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Modal NVs */}
+      {showNvs && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-lg text-slate-800">Cargas Asignadas</h3>
+                <p className="text-sm text-slate-500">Conductor: {selectedDriverName}</p>
+              </div>
+              <button onClick={() => setShowNvs(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              {selectedDriverNvs.length === 0 ? (
+                <div className="text-center text-slate-400 py-8">No hay NVs asignadas actualmente.</div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedDriverNvs.map(nv => (
+                    <div key={nv.id} className="border rounded-lg p-4 flex justify-between items-center">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-slate-800">{nv.nv}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            nv.estado === 'ENTREGADO' ? 'bg-green-100 text-green-700' :
+                            nv.estado === 'FALLIDO' ? 'bg-red-100 text-red-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {nv.estado}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600">{nv.cliente}</p>
+                        <p className="text-xs text-slate-400">{nv.direccion}</p>
+                      </div>
+                      <div className="text-right text-xs text-slate-500">
+                        <div>{nv.bultos} Bultos</div>
+                        {nv.fecha_entrega && <div>Entregado: {new Date(nv.fecha_entrega).toLocaleTimeString()}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Crear/Editar */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
