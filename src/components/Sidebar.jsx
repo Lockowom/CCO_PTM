@@ -26,7 +26,8 @@ import {
   Layers, 
   FileBarChart,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  History
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -136,6 +137,7 @@ const Sidebar = () => {
       icon: <Search size={20} />,
       color: 'text-violet-500',
       modules: [
+        { id: 'queries-historial-nv', label: 'Historial N.V.', icon: <History size={18} />, path: '/queries/historial-nv' },
         { id: 'queries-batches', label: 'Lotes/Series', icon: <Barcode size={18} />, path: '/queries/batches' },
         { id: 'queries-sales-status', label: 'Estado N.V', icon: <FileText size={18} />, path: '/queries/sales-status' },
         { id: 'queries-addresses', label: 'Direcciones', icon: <MapPin size={18} />, path: '/queries/addresses' },

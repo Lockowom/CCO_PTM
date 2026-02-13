@@ -32,6 +32,7 @@ import Batches from './pages/Queries/Batches';
 import SalesStatus from './pages/Queries/SalesStatus';
 import Addresses from './pages/Queries/Addresses';
 import Locations from './pages/Queries/Locations';
+import HistorialNV from './pages/Queries/HistorialNV';
 
 // Admin Modules
 import Users from './pages/Admin/Users';
@@ -85,6 +86,7 @@ function App() {
           <Route path="queries/sales-status" element={<SalesStatus />} />
           <Route path="queries/addresses" element={<Addresses />} />
           <Route path="queries/locations" element={<Locations />} />
+          <Route path="queries/historial-nv" element={<HistorialNV />} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
