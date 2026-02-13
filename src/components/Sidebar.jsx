@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
-import { 
-  LayoutDashboard, 
-  Map, 
-  Satellite, 
-  Users, 
-  Smartphone, 
-  ArrowDownToLine, 
-  Truck, 
+import { useAuth } from '../context/AuthContext';
+import {
+  LayoutDashboard,
+  Map,
+  Satellite,
+  Users,
+  Smartphone,
+  ArrowDownToLine,
+  Truck,
   PackagePlus, // Reemplazo de DollyChart (no existe en lucide-react)
-  ArrowUpFromLine, 
-  FileText, 
-  Hand, 
-  Package, 
-  Ship, 
-  Warehouse, 
-  MapPin, 
-  ArrowLeftRight, 
-  Search, 
-  Barcode, 
-  MapPinned, 
-  Settings, 
-  Shield, 
-  Layers, 
+  ArrowUpFromLine,
+  FileText,
+  Hand,
+  Package,
+  Ship,
+  Warehouse,
+  MapPin,
+  ArrowLeftRight,
+  Search,
+  Barcode,
+  MapPinned,
+  Settings,
+  Shield,
+  Layers,
   FileBarChart,
   ChevronDown,
   ChevronRight,
@@ -33,6 +34,7 @@ import {
 
 const Sidebar = () => {
   const location = useLocation();
+  const { user, hasPermission } = useAuth();
   const [expandedSections, setExpandedSections] = useState({});
   const [modulesConfig, setModulesConfig] = useState({});
   const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ const Sidebar = () => {
       const { data, error } = await supabase
         .from('tms_modules_config')
         .select('id, enabled');
-      
+
       if (error) throw error;
 
       const config = {};
@@ -84,14 +86,75 @@ const Sidebar = () => {
     }
   };
 
+  // Mapeo de secciones a permisos requeridos
+  const MODULE_PERMISSIONS = {
+    'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
+    'dashboard': ['view_dashboard'],
+    'inbound': ['view_reception', 'view_entry'],
+    'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
+    'inventory': ['view_stock', 'view_layout', 'view_transfers'],
+    'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
+  };
+
+  // Mapeo de rutas a permisos específicos
+  const PATH_PERMISSIONS = {
+    '/dashboard': 'view_dashboard',
+    '/tms/dashboard': 'view_tms_dashboard',
+    '/tms/planning': 'view_routes',
+    '/tms/control-tower': 'view_control_tower',
+    '/tms/drivers': 'view_drivers',
+    '/tms/mobile': 'view_mobile_app',
+    '/inbound/reception': 'view_reception',
+    '/inbound/entry': 'view_entry',
+    '/outbound/sales-orders': 'view_sales_orders',
+    '/outbound/picking': 'view_picking',
+    '/outbound/packing': 'view_packing',
+    '/outbound/shipping': 'view_shipping',
+    '/outbound/deliveries': 'view_deliveries',
+    '/inventory/stock': 'view_stock',
+    '/inventory/layout': 'view_layout',
+    '/inventory/transfers': 'view_transfers',
+    '/queries/batches': 'view_batches',
+    '/queries/sales-status': 'view_sales_status',
+    '/queries/addresses': 'view_addresses',
+    '/queries/locations': 'view_locations',
+    '/queries/historial-nv': 'view_historial_nv',
+    '/admin/users': 'manage_users',
+    '/admin/roles': 'manage_roles',
+    '/admin/views': 'manage_views',
+    '/admin/reports': 'manage_reports',
+    '/admin/mediciones': 'manage_mediciones'
+  };
+
   const isEnabled = (moduleId) => {
-    // Para módulos individuales (ej: 'tms-dashboard'), verificar su sección padre
+    // 1. Verificar configuración de módulos
     if (moduleId.includes('-')) {
-      const parentSection = moduleId.split('-')[0]; // 'tms' de 'tms-dashboard'
-      return modulesConfig[parentSection] !== false;
+      const parentSection = moduleId.split('-')[0];
+      if (modulesConfig[parentSection] === false) return false;
+    } else {
+      if (modulesConfig[moduleId] === false) return false;
     }
-    // Para secciones principales, permitir por defecto si no está explícitamente deshabilitada
-    return modulesConfig[moduleId] !== false;
+
+    // 2. ADMIN rol tiene acceso a todo
+    if (user?.rol === 'ADMIN') return true;
+
+    // 3. Para secciones principales, verificar que tenga AL MENOS UN permiso
+    const requiredPermissions = MODULE_PERMISSIONS[moduleId] || [];
+    if (requiredPermissions.length === 0) return true;
+
+    return requiredPermissions.some(perm => hasPermission(perm));
+  };
+
+  const canAccessModule = (modulePath, sectionId) => {
+    // Admin sección solo accede si es rol ADMIN
+    if (sectionId === 'admin') return user?.rol === 'ADMIN';
+    // ADMIN rol puede acceder a todo
+    if (user?.rol === 'ADMIN') return true;
+
+    const requiredPermission = PATH_PERMISSIONS[modulePath];
+    if (!requiredPermission) return true;
+    return hasPermission(requiredPermission);
   };
 
   const toggleSection = (sectionId) => {
@@ -190,7 +253,7 @@ const Sidebar = () => {
     <aside className="bg-slate-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col h-screen overflow-y-auto border-r border-slate-700">
       <div className="p-6 border-b border-slate-700 flex flex-col items-center">
         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg border-2 border-slate-600">
-           <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-10 h-10 object-contain" />
+          <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-10 h-10 object-contain" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-white">TMS CCO</h1>
         <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Control Logístico</p>
@@ -203,13 +266,12 @@ const Sidebar = () => {
           return (
             <div key={area.id} className="mb-2">
               {area.isLink ? (
-                <Link 
+                <Link
                   to={area.path}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    location.pathname === area.path 
-                      ? 'bg-slate-800 text-white border-l-4 border-indigo-500' 
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${location.pathname === area.path
+                    ? 'bg-slate-800 text-white border-l-4 border-indigo-500'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
                 >
                   <span className={`${location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}`}>
                     {area.icon}
@@ -218,11 +280,10 @@ const Sidebar = () => {
                 </Link>
               ) : (
                 <div>
-                  <button 
+                  <button
                     onClick={() => toggleSection(area.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
-                      expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className={`${expandedSections[area.id] ? area.color : 'text-slate-500 group-hover:text-white'}`}>
@@ -232,21 +293,20 @@ const Sidebar = () => {
                     </div>
                     {expandedSections[area.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </button>
-                  
+
                   {/* Dropdown Items */}
                   {expandedSections[area.id] && (
                     <div className="ml-4 mt-1 pl-4 border-l border-slate-700 space-y-1">
-                      {area.modules.map((module) => {
+                      {area.modules.filter(module => canAccessModule(module.path, area.id)).map((module) => {
                         if (!isEnabled(module.id)) return null;
                         return (
-                          <Link 
+                          <Link
                             key={module.id}
                             to={module.path}
-                            className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
-                              location.pathname === module.path
-                                ? 'text-white bg-slate-700 font-medium'
-                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
-                            }`}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${location.pathname === module.path
+                              ? 'text-white bg-slate-700 font-medium'
+                              : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                              }`}
                           >
                             {module.icon}
                             <span>{module.label}</span>
@@ -266,11 +326,11 @@ const Sidebar = () => {
       <div className="p-4 border-t border-slate-700 bg-slate-900">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-sm border border-slate-600">
-            AD
+            {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">Admin Usuario</p>
-            <p className="text-xs text-slate-400 truncate">Administrador</p>
+            <p className="text-sm font-medium text-white truncate capitalize">{user?.nombre || 'Usuario'}</p>
+            <p className="text-xs text-slate-400 truncate uppercase">{user?.rol || 'Sin rol'}</p>
           </div>
         </div>
       </div>

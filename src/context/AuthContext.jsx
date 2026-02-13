@@ -63,8 +63,10 @@ export const AuthProvider = ({ children }) => {
       setPermissions([]);
     } finally {
       setIsSyncing(false);
+      setLoading(false);
     }
   };
+
 
   // Configurar listeners de Realtime para cambios en roles
   const setupRealtimeListeners = (rolId) => {
@@ -166,13 +168,13 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
+    <AuthContext.Provider value={{
+      user,
       permissions,
-      loading, 
-      error, 
-      login, 
-      logout, 
+      loading,
+      error,
+      login,
+      logout,
       isAuthenticated,
       hasPermission,
       isSyncing
