@@ -28,12 +28,12 @@ const Navbar = () => {
   };
 
 
-  // Cargar configuración de módulos desde BD
+  // Cargar configuración de módulos desde BD y escuchar cambios
   useEffect(() => {
     fetchModulesConfig();
 
     // REALTIME: Escuchar cambios en tms_modules_config
-    const channel = supabase
+    const modulesChannel = supabase
       .channel('tms_modules_config_navbar')
       .on(
         'postgres_changes',
@@ -43,7 +43,7 @@ const Navbar = () => {
           table: 'tms_modules_config'
         },
         (payload) => {
-          console.log('🔄 Cambio en módulos del navbar (Realtime):', payload);
+          console.log('🔄 Cambio en módulos (Navbar Realtime):', payload);
           setIsSyncing(true);
           fetchModulesConfig();
           setTimeout(() => setIsSyncing(false), 300);
@@ -52,9 +52,36 @@ const Navbar = () => {
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      modulesChannel.unsubscribe();
     };
   }, []);
+
+  // Escuchar cambios en permisos del usuario en tiempo real
+  useEffect(() => {
+    if (!user?.rol) return;
+
+    const rolesChannel = supabase
+      .channel(`role_changes_navbar_${user.rol}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tms_roles',
+          filter: `id=eq.${user.rol}`
+        },
+        (payload) => {
+          console.log('🔄 Cambios en permisos (Navbar Realtime):', payload);
+          setIsSyncing(true);
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      rolesChannel.unsubscribe();
+    };
+  }, [user?.rol]);
 
   const fetchModulesConfig = async () => {
     try {
@@ -71,6 +98,7 @@ const Navbar = () => {
         });
       }
       setModulesConfig(config);
+      console.log('✓ Módulos cargados:', config);
     } catch (err) {
       console.error('Error fetching modules config:', err);
     } finally {
@@ -78,30 +106,77 @@ const Navbar = () => {
     }
   };
 
+  // Mapeo de módulos a permisos requeridos para acceso
+  const MODULE_PERMISSIONS = {
+    'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
+    'dashboard': ['view_dashboard'],
+    'inbound': ['view_reception', 'view_entry'],
+    'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
+    'inventory': ['view_stock', 'view_layout', 'view_transfers'],
+    'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
+  };
+
   const isEnabled = (moduleId) => {
     // 1. Verificar que el módulo esté habilitado en la configuración
     const configEnabled = modulesConfig[moduleId] !== false;
+    if (!configEnabled) return false;
     
-    // 2. Para admin, solo se muestra si tiene permiso view_admin o es ADMIN
-    if (moduleId === 'admin') {
-      return configEnabled && (user?.rol === 'ADMIN' || hasPermission('view_admin'));
-    }
+    // 2. ADMIN rol tiene acceso a todo
+    if (user?.rol === 'ADMIN') return true;
     
-    // 3. Para otros módulos, se muestran si está habilitado
-    // Los permisos específicos se validan a nivel de sub-módulos
-    return configEnabled;
+    // 3. Para otros roles, verificar que tengan AL MENOS UN permiso para esta sección
+    const requiredPermissions = MODULE_PERMISSIONS[moduleId] || [];
+    if (requiredPermissions.length === 0) return true; // Si no hay requisitos, mostrar
+    
+    // Verificar que el usuario tenga AL MENOS UN permiso de esta sección
+    const hasAccess = requiredPermissions.some(perm => hasPermission(perm));
+    return hasAccess;
   };
 
-  // Verificar si el usuario puede ver un module específico dentro de una sección
-  const canAccessModule = (moduleId, sectionId) => {
+  // Verificar si el usuario puede ver un módulo específico dentro de una sección
+  const canAccessModule = (modulePath, sectionId) => {
     // Admin solo accede si es rol ADMIN
     if (sectionId === 'admin') {
       return user?.rol === 'ADMIN';
     }
     
-    // Por ahora, si el módulo está habilitado, se puede acceder
-    // En el futuro, aquí se agregaría lógica más granular de permisos
-    return true;
+    // ADMIN rol puede acceder a todo
+    if (user?.rol === 'ADMIN') return true;
+    
+    // Mapeo detallado de rutas a permisos específicos
+    const pathPermissions = {
+      '/dashboard': 'view_dashboard',
+      '/tms/dashboard': 'view_tms_dashboard',
+      '/tms/planning': 'view_routes',
+      '/tms/control-tower': 'view_control_tower',
+      '/tms/drivers': 'view_drivers',
+      '/tms/mobile': 'view_mobile_app',
+      '/inbound/reception': 'view_reception',
+      '/inbound/entry': 'view_entry',
+      '/outbound/sales-orders': 'view_sales_orders',
+      '/outbound/picking': 'view_picking',
+      '/outbound/packing': 'view_packing',
+      '/outbound/shipping': 'view_shipping',
+      '/outbound/deliveries': 'view_deliveries',
+      '/inventory/stock': 'view_stock',
+      '/inventory/layout': 'view_layout',
+      '/inventory/transfers': 'view_transfers',
+      '/queries/batches': 'view_batches',
+      '/queries/sales-status': 'view_sales_status',
+      '/queries/addresses': 'view_addresses',
+      '/queries/locations': 'view_locations',
+      '/queries/historial-nv': 'view_historial_nv',
+      '/admin/users': 'manage_users',
+      '/admin/roles': 'manage_roles',
+      '/admin/views': 'manage_views',
+      '/admin/reports': 'manage_reports'
+    };
+    
+    const requiredPermission = pathPermissions[modulePath];
+    if (!requiredPermission) return true; // Si no tiene requisito específico, permitir
+    
+    return hasPermission(requiredPermission);
   };
 
   const menuConfig = [

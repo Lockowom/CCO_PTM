@@ -144,7 +144,7 @@ const ViewsPage = () => {
 
   const handleToggleModule = async (id, currentStatus) => {
     try {
-      setLoading(true);
+      setIsSyncing(true);
       
       // Actualizar el estado local inmediatamente (optimistic update)
       const newStatus = !currentStatus;
@@ -152,7 +152,7 @@ const ViewsPage = () => {
 
       const { data, error } = await supabase
         .from('tms_modules_config')
-        .update({ enabled: newStatus })
+        .update({ enabled: newStatus, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select();
 
@@ -164,6 +164,7 @@ const ViewsPage = () => {
       // Confirmar el cambio
       if (data && data.length > 0) {
         setModulesConfig(prev => prev.map(m => m.id === id ? data[0] : m));
+        console.log(`✓ Módulo ${id} actualizado: ${newStatus}`);
       }
 
     } catch (error) {
@@ -171,7 +172,7 @@ const ViewsPage = () => {
       alert('❌ Error al actualizar módulo: ' + error.message);
       await fetchData(); // Revert on error
     } finally {
-      setLoading(false);
+      setIsSyncing(false);
     }
   };
 
