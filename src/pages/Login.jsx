@@ -8,43 +8,43 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  
+
   const { login, loading, error, isAuthenticated } = useAuth();
 
   // Redirigir si ya está autenticado
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       return;
     }
 
     const success = await login(email, password);
     if (success) {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white font-poppins p-4">
       <div className="bg-white p-8 sm:p-12 rounded-2xl shadow-2xl w-full max-w-sm border-2 border-orange-100 relative">
-        
+
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 shadow-lg text-white font-black text-3xl">
             C
           </div>
-          
+
           <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest mb-3 border-2 border-orange-200">
             SISTEMA WMS
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-1">C.C.O</h1>
           <p className="text-sm text-orange-500 font-bold uppercase tracking-wider">Centro Control Operacional</p>
         </div>
@@ -60,8 +60,8 @@ const Login = () => {
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <User className="text-orange-500" size={18} />
             </div>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
@@ -75,8 +75,8 @@ const Login = () => {
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Lock className="text-orange-500" size={18} />
             </div>
-            <input 
-              type={showPassword ? "text" : "password"} 
+            <input
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -84,7 +84,7 @@ const Login = () => {
               placeholder="Contraseña de acceso"
               required
             />
-            <button 
+            <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               disabled={loading}
@@ -94,8 +94,8 @@ const Login = () => {
             </button>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-orange-400 disabled:to-orange-400 text-white py-3 sm:py-3.5 rounded-lg font-bold text-sm shadow-lg shadow-orange-500/30 hover:shadow-xl transition-all flex items-center justify-center gap-2 mt-6 disabled:cursor-not-allowed active:scale-95"
           >

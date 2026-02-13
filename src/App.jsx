@@ -42,40 +42,40 @@ import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
 import Mediciones from './pages/Admin/Mediciones';
 
-// Mapeo de rutas a permisos requeridos
+// Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
   '/dashboard': ['view_dashboard'],
-  
+
   // TMS
   '/tms/dashboard': ['view_tms_dashboard'],
   '/tms/planning': ['view_routes', 'create_routes'],
   '/tms/control-tower': ['view_control_tower', 'manage_control_tower'],
   '/tms/drivers': ['view_drivers', 'manage_drivers'],
   '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
-  
+
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
-  
+
   // Outbound
   '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
   '/outbound/picking': ['view_picking', 'process_picking'],
   '/outbound/packing': ['view_packing', 'process_packing'],
   '/outbound/shipping': ['view_shipping', 'process_shipping'],
   '/outbound/deliveries': ['view_deliveries', 'process_deliveries'],
-  
+
   // Inventory
   '/inventory/stock': ['view_stock', 'manage_stock'],
   '/inventory/layout': ['view_layout', 'manage_layout'],
   '/inventory/transfers': ['view_transfers', 'manage_transfers'],
-  
+
   // Queries
   '/queries/batches': ['view_batches'],
   '/queries/sales-status': ['view_sales_status'],
   '/queries/addresses': ['view_addresses'],
   '/queries/locations': ['view_locations'],
   '/queries/historial-nv': ['view_historial_nv'],
-  
+
   // Admin (solo ADMIN)
   '/admin/users': ['manage_users'],
   '/admin/roles': ['manage_roles'],
@@ -83,6 +83,34 @@ const ROUTE_PERMISSIONS = {
   '/admin/mediciones': ['manage_mediciones'],
   '/admin/reports': ['view_reports']
 };
+
+// Orden de prioridad para la primera ruta disponible
+const ROUTE_PRIORITY = [
+  '/dashboard',
+  '/outbound/sales-orders',
+  '/outbound/picking',
+  '/outbound/packing',
+  '/outbound/shipping',
+  '/inbound/reception',
+  '/inbound/entry',
+  '/inventory/stock',
+  '/inventory/layout',
+  '/queries/batches',
+  '/queries/sales-status',
+  '/queries/historial-nv',
+  '/queries/addresses',
+  '/queries/locations',
+  '/tms/dashboard',
+  '/tms/planning',
+  '/tms/control-tower',
+  '/tms/drivers',
+  '/tms/mobile',
+  '/admin/users',
+  '/admin/roles',
+  '/admin/views',
+  '/admin/mediciones',
+  '/admin/reports',
+];
 
 // Componente de Acceso Denegado
 const AccessDenied = ({ requiredPermissions, route }) => {
@@ -94,7 +122,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
             <Lock size={48} className="mx-auto text-red-500 mb-4" />
             <h1 className="text-2xl font-black text-slate-900 mb-2">Acceso Denegado</h1>
             <p className="text-slate-600 mb-4">No tienes permisos para acceder a esta sección.</p>
-            
+
             <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-6 text-left text-sm">
               <p className="font-bold text-red-900 mb-2">Ruta:</p>
               <p className="font-mono text-red-700 break-all mb-3">{route}</p>
@@ -119,6 +147,40 @@ const AccessDenied = ({ requiredPermissions, route }) => {
   );
 };
 
+// Componente que determina la primera ruta disponible para el usuario
+const SmartRedirect = () => {
+  const { user, hasPermission, loading, permissions } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-slate-500 font-medium">Cargando...</div>
+      </div>
+    );
+  }
+
+  // ADMIN tiene acceso a todo → ir al dashboard
+  if (user?.rol === 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Para otros roles, buscar la primera ruta a la que tienen acceso
+  for (const route of ROUTE_PRIORITY) {
+    const requiredPerms = ROUTE_PERMISSIONS[route] || [];
+    if (requiredPerms.length === 0) {
+      return <Navigate to={route} replace />;
+    }
+    const hasAccess = requiredPerms.some(perm => hasPermission(perm));
+    if (hasAccess) {
+      console.log('✓ Redirigiendo a primera ruta disponible:', route);
+      return <Navigate to={route} replace />;
+    }
+  }
+
+  // Si no tiene acceso a nada, ir al dashboard (mostrará acceso denegado)
+  return <Navigate to="/dashboard" replace />;
+};
+
 // Ruta Protegida con validación de permisos
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, user, hasPermission } = useAuth();
@@ -141,8 +203,8 @@ const ProtectedRoute = () => {
 
   // Validar permisos
   // Si es ADMIN o tiene al menos un permiso requerido, puede acceder
-  const hasAccess = user?.rol === 'ADMIN' || requiredPermissions.length === 0 || 
-                    requiredPermissions.some(perm => hasPermission(perm));
+  const hasAccess = user?.rol === 'ADMIN' || requiredPermissions.length === 0 ||
+    requiredPermissions.some(perm => hasPermission(perm));
 
   if (!hasAccess) {
     return <AccessDenied requiredPermissions={requiredPermissions} route={location.pathname} />;
@@ -161,12 +223,13 @@ function AppContent() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
-        
+
         {/* Protected Routes (Wrapped in ProtectedRoute) */}
         <Route path="/" element={<ProtectedRoute />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
+          <Route index element={<SmartRedirect />} />
           <Route path="dashboard" element={<Dashboard />} />
-          
+
           {/* TMS Modules */}
           <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
