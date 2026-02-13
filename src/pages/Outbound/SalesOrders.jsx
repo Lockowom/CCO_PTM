@@ -1,4 +1,4 @@
-// SalesOrders.jsx - Notas de Venta con Pipeline de Estados
+// SalesOrders.jsx - Notas de Venta con estados REALES
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search, 
@@ -19,28 +19,28 @@ import {
   ChevronRight,
   ArrowRight,
   ThumbsUp,
-  Hourglass
+  Hourglass,
+  RotateCcw,
+  Ship
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
-// Configuración del Pipeline de Estados (ORDEN CORRECTO)
+// Estados REALES de la base de datos (en orden del flujo)
 const PIPELINE_ESTADOS = [
   { 
-    key: 'PENDIENTE', 
+    key: 'Pendiente', 
     label: 'Pendiente', 
     icon: Hourglass, 
-    color: 'slate',
     bgColor: 'bg-slate-500',
     lightBg: 'bg-slate-50',
     textColor: 'text-slate-700',
     borderColor: 'border-slate-300',
-    description: 'Pendiente de aprobación'
+    description: 'Esperando aprobación'
   },
   { 
-    key: 'APROBADA', 
+    key: 'Aprobada', 
     label: 'Aprobada', 
     icon: ThumbsUp, 
-    color: 'amber',
     bgColor: 'bg-amber-500',
     lightBg: 'bg-amber-50',
     textColor: 'text-amber-700',
@@ -48,10 +48,9 @@ const PIPELINE_ESTADOS = [
     description: 'Lista para Picking'
   },
   { 
-    key: 'PICKING', 
+    key: 'Pendiente Picking', 
     label: 'En Picking', 
     icon: Hand, 
-    color: 'cyan',
     bgColor: 'bg-cyan-500',
     lightBg: 'bg-cyan-50',
     textColor: 'text-cyan-700',
@@ -60,9 +59,8 @@ const PIPELINE_ESTADOS = [
   },
   { 
     key: 'PACKING', 
-    label: 'En Packing', 
+    label: 'Packing', 
     icon: Box, 
-    color: 'indigo',
     bgColor: 'bg-indigo-500',
     lightBg: 'bg-indigo-50',
     textColor: 'text-indigo-700',
@@ -70,51 +68,58 @@ const PIPELINE_ESTADOS = [
     description: 'Empacando pedido'
   },
   { 
-    key: 'DESPACHO', 
+    key: 'LISTO_DESPACHO', 
     label: 'Listo Despacho', 
     icon: Send, 
-    color: 'purple',
     bgColor: 'bg-purple-500',
     lightBg: 'bg-purple-50',
     textColor: 'text-purple-700',
     borderColor: 'border-purple-200',
     description: 'Listo para enviar'
   },
-  // Estos estados NO aparecen en el pipeline visual pero existen
   { 
-    key: 'DESPACHADO', 
-    label: 'Despachado', 
-    icon: Truck, 
-    color: 'blue',
+    key: 'Pendiente Shipping', 
+    label: 'Pend. Shipping', 
+    icon: Ship, 
     bgColor: 'bg-blue-500',
     lightBg: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
-    description: 'En camino'
+    description: 'Pendiente de envío'
   },
   { 
-    key: 'ENTREGADO', 
-    label: 'Entregado', 
-    icon: CheckCircle, 
-    color: 'emerald',
+    key: 'Despachado', 
+    label: 'Despachado', 
+    icon: Truck, 
     bgColor: 'bg-emerald-500',
     lightBg: 'bg-emerald-50',
     textColor: 'text-emerald-700',
     borderColor: 'border-emerald-200',
-    description: 'Completado'
+    description: 'En camino'
+  },
+  { 
+    key: 'Refacturacion', 
+    label: 'Refacturación', 
+    icon: RotateCcw, 
+    bgColor: 'bg-orange-500',
+    lightBg: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-200',
+    description: 'Requiere refacturación'
   },
 ];
 
-// Estados que se muestran en el módulo de N.V. (antes de despachar)
-const ESTADOS_VISIBLES = ['PENDIENTE', 'APROBADA', 'PICKING', 'PACKING', 'DESPACHO'];
+// Estados que se muestran en el pipeline (antes de despachar)
+const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping'];
 
-// Acciones por estado
-const ACCIONES_POR_ESTADO = {
-  'PENDIENTE': { nextState: 'APROBADA', label: 'Aprobar', icon: ThumbsUp },
-  'APROBADA': { nextState: 'PICKING', label: 'Enviar a Picking', icon: Hand },
-  'PICKING': { nextState: 'PACKING', label: 'Enviar a Packing', icon: Box },
-  'PACKING': { nextState: 'DESPACHO', label: 'Listo Despacho', icon: Send },
-  'DESPACHO': { nextState: 'DESPACHADO', label: 'Despachar', icon: Truck },
+// Acciones: desde qué estado a cuál
+const ACCIONES_ESTADO = {
+  'Pendiente': { next: 'Aprobada', label: 'Aprobar', icon: ThumbsUp },
+  'Aprobada': { next: 'Pendiente Picking', label: 'Enviar a Picking', icon: Hand },
+  'Pendiente Picking': { next: 'PACKING', label: 'Enviar a Packing', icon: Box },
+  'PACKING': { next: 'LISTO_DESPACHO', label: 'Listo Despacho', icon: Send },
+  'LISTO_DESPACHO': { next: 'Pendiente Shipping', label: 'A Shipping', icon: Ship },
+  'Pendiente Shipping': { next: 'Despachado', label: 'Despachar', icon: Truck },
 };
 
 const SalesOrders = () => {
@@ -122,12 +127,8 @@ const SalesOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEstado, setSelectedEstado] = useState('APROBADA'); // Por defecto APROBADA (listas para procesar)
-  
-  // Contadores por estado
+  const [selectedEstado, setSelectedEstado] = useState('Pendiente');
   const [contadores, setContadores] = useState({});
-  
-  // Modal
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -137,22 +138,24 @@ const SalesOrders = () => {
       setLoading(true);
       setError(null);
       
-      // Cargar solo las N.V. que están en proceso (NO despachadas ni entregadas)
+      // Cargar N.V. que NO están despachadas (en proceso)
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
-        .in('estado', ESTADOS_VISIBLES)
+        .not('estado', 'eq', 'Despachado')
         .order('fecha_emision', { ascending: false });
 
       if (error) throw error;
 
       setOrders(data || []);
       
-      // Calcular contadores para estados visibles
+      // Calcular contadores
       const counts = {};
-      ESTADOS_VISIBLES.forEach(estado => {
-        counts[estado] = (data || []).filter(o => o.estado === estado).length;
+      PIPELINE_ESTADOS.forEach(e => {
+        counts[e.key] = (data || []).filter(o => o.estado === e.key).length;
       });
+      // También contar PENDIENTE en mayúsculas (datos legacy)
+      counts['Pendiente'] = (counts['Pendiente'] || 0) + (data || []).filter(o => o.estado === 'PENDIENTE').length;
       setContadores(counts);
       
     } catch (error) {
@@ -166,69 +169,59 @@ const SalesOrders = () => {
   useEffect(() => {
     fetchOrders();
     
-    // Suscripción Realtime
     const channel = supabase
-      .channel('nv_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tms_nv_diarias' },
-        () => {
-          console.log('📦 N.V. actualizada');
-          fetchOrders();
-        }
-      )
+      .channel('nv_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
+        fetchOrders();
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, [fetchOrders]);
 
-  // Actualizar estado de una N.V.
+  // Actualizar estado
   const handleUpdateStatus = async (nv, newStatus) => {
     try {
       setModalLoading(true);
       
       const { error } = await supabase
         .from('tms_nv_diarias')
-        .update({ 
-          estado: newStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update({ estado: newStatus })
         .eq('nv', nv);
 
       if (error) throw error;
 
-      // Refrescar datos
       await fetchOrders();
       
-      // Si el nuevo estado no está en los visibles, cerrar modal (ya se despachó)
-      if (!ESTADOS_VISIBLES.includes(newStatus)) {
+      if (newStatus === 'Despachado') {
         setSelectedOrder(null);
       } else {
-        // Actualizar el order seleccionado
         setSelectedOrder(prev => prev ? { ...prev, estado: newStatus } : null);
       }
       
     } catch (e) {
-      alert('Error actualizando estado: ' + e.message);
+      alert('Error: ' + e.message);
     } finally {
       setModalLoading(false);
     }
   };
 
-  // Filtrar órdenes
+  // Filtrar órdenes (incluir PENDIENTE mayúsculas como Pendiente)
   const filteredOrders = orders.filter(order => {
-    const matchEstado = order.estado === selectedEstado;
+    const estadoNormalizado = order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado;
+    const matchEstado = estadoNormalizado === selectedEstado;
     const matchSearch = !searchTerm || 
-      order.nv?.toString().includes(searchTerm) ||
+      order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase());
+      order.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.vendedor?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchEstado && matchSearch;
   });
 
   // Obtener config del estado
   const getEstadoConfig = (estado) => {
-    return PIPELINE_ESTADOS.find(e => e.key === estado) || PIPELINE_ESTADOS[0];
+    const normalized = estado === 'PENDIENTE' ? 'Pendiente' : estado;
+    return PIPELINE_ESTADOS.find(e => e.key === normalized) || PIPELINE_ESTADOS[0];
   };
 
   return (
@@ -237,7 +230,7 @@ const SalesOrders = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Notas de Venta</h2>
-          <p className="text-slate-500 text-sm">Gestión de pedidos pendientes de despacho</p>
+          <p className="text-slate-500 text-sm">Gestión de pedidos en proceso</p>
         </div>
         <div className="flex gap-3">
           <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
@@ -262,9 +255,9 @@ const SalesOrders = () => {
       </div>
 
       {/* PIPELINE VISUAL */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between">
-          {ESTADOS_VISIBLES.map((estadoKey, index) => {
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {ESTADOS_PIPELINE.map((estadoKey, index) => {
             const config = getEstadoConfig(estadoKey);
             const Icon = config.icon;
             const isSelected = selectedEstado === estadoKey;
@@ -272,82 +265,52 @@ const SalesOrders = () => {
             
             return (
               <React.Fragment key={estadoKey}>
-                {/* Botón de Estado */}
                 <button
                   onClick={() => setSelectedEstado(estadoKey)}
-                  className={`flex-1 relative group transition-all duration-300 ${
-                    isSelected ? 'scale-105' : 'hover:scale-102'
-                  }`}
+                  className={`flex-shrink-0 relative group transition-all duration-200 ${isSelected ? 'scale-105' : 'hover:scale-102'}`}
                 >
                   <div className={`
-                    p-4 rounded-2xl border-2 transition-all duration-300 text-center
+                    px-4 py-3 rounded-xl border-2 transition-all text-center min-w-[120px]
                     ${isSelected 
                       ? `${config.lightBg} ${config.borderColor} shadow-lg` 
                       : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }
                   `}>
-                    {/* Icono */}
                     <div className={`
-                      w-14 h-14 rounded-xl mx-auto mb-3 flex items-center justify-center transition-all
-                      ${isSelected 
-                        ? `${config.bgColor} text-white shadow-lg` 
-                        : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
-                      }
+                      w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center transition-all
+                      ${isSelected ? `${config.bgColor} text-white shadow-md` : 'bg-slate-200 text-slate-500'}
                     `}>
-                      <Icon size={28} />
+                      <Icon size={20} />
                     </div>
-                    
-                    {/* Label */}
-                    <p className={`font-bold text-sm mb-1 ${isSelected ? config.textColor : 'text-slate-600'}`}>
+                    <p className={`font-semibold text-xs mb-1 ${isSelected ? config.textColor : 'text-slate-600'}`}>
                       {config.label}
                     </p>
-                    
-                    {/* Contador */}
                     <div className={`
-                      inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold
-                      ${isSelected 
-                        ? `${config.bgColor} text-white` 
-                        : 'bg-slate-200 text-slate-600'
-                      }
+                      inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold
+                      ${isSelected ? `${config.bgColor} text-white` : 'bg-slate-200 text-slate-600'}
                     `}>
                       {count}
                     </div>
-                    
-                    {/* Descripción */}
-                    <p className={`text-xs mt-2 ${isSelected ? config.textColor : 'text-slate-400'}`}>
-                      {config.description}
-                    </p>
                   </div>
-                  
-                  {/* Indicador de selección */}
-                  {isSelected && (
-                    <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 ${config.bgColor} rotate-45`}></div>
-                  )}
                 </button>
                 
-                {/* Flecha entre estados */}
-                {index < ESTADOS_VISIBLES.length - 1 && (
-                  <div className="flex-shrink-0 px-2">
-                    <ChevronRight size={24} className="text-slate-300" />
-                  </div>
+                {index < ESTADOS_PIPELINE.length - 1 && (
+                  <ChevronRight size={20} className="text-slate-300 flex-shrink-0" />
                 )}
               </React.Fragment>
             );
           })}
         </div>
         
-        {/* Leyenda */}
-        <div className="mt-4 pt-4 border-t border-slate-100 text-center">
-          <p className="text-xs text-slate-400">
-            💡 Las N.V. <strong>DESPACHADAS</strong> y <strong>ENTREGADAS</strong> no aparecen aquí (ya finalizaron el proceso)
-          </p>
-        </div>
+        <p className="text-xs text-slate-400 text-center mt-3 pt-3 border-t border-slate-100">
+          💡 Las N.V. <strong>Despachadas</strong> se mueven al <strong>Historial</strong> (Consultas → Historial N.V.)
+        </p>
       </div>
 
-      {/* Info del estado seleccionado */}
+      {/* Info estado actual */}
       {(() => {
         const config = getEstadoConfig(selectedEstado);
-        const accion = ACCIONES_POR_ESTADO[selectedEstado];
+        const accion = ACCIONES_ESTADO[selectedEstado];
         return (
           <div className={`${config.lightBg} rounded-xl p-4 border ${config.borderColor} flex items-center justify-between`}>
             <div className="flex items-center gap-3">
@@ -356,15 +319,12 @@ const SalesOrders = () => {
                 <p className={`font-bold ${config.textColor}`}>
                   {config.label}: {filteredOrders.length} notas de venta
                 </p>
-                <p className={`text-sm ${config.textColor} opacity-70`}>
-                  {config.description}
-                </p>
+                <p className={`text-sm ${config.textColor} opacity-70`}>{config.description}</p>
               </div>
             </div>
             {accion && (
               <div className={`text-xs ${config.textColor} flex items-center gap-1`}>
-                <ArrowRight size={14} />
-                Siguiente: <strong>{accion.label}</strong>
+                <ArrowRight size={14} /> Siguiente: <strong>{accion.label}</strong>
               </div>
             )}
           </div>
@@ -375,88 +335,92 @@ const SalesOrders = () => {
       {error && (
         <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
           <AlertCircle size={20} />
-          <span>No se pudieron cargar los datos: {error}</span>
+          <span>Error: {error}</span>
         </div>
       )}
 
-      {/* Tabla de N.V. */}
+      {/* Tabla */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider">
               <tr>
-                <th className="px-6 py-4 font-medium">N.V</th>
-                <th className="px-6 py-4 font-medium">Fecha</th>
-                <th className="px-6 py-4 font-medium">Cliente</th>
-                <th className="px-6 py-4 font-medium">Producto</th>
-                <th className="px-6 py-4 font-medium text-right">Cantidad</th>
-                <th className="px-6 py-4 font-medium text-center">Estado</th>
-                <th className="px-6 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">N.V</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Vendedor</th>
+                <th className="px-4 py-3 font-medium">Producto</th>
+                <th className="px-4 py-3 font-medium text-right">Cant.</th>
+                <th className="px-4 py-3 font-medium text-center">Estado</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center">
+                  <td colSpan="8" className="px-4 py-12 text-center">
                     <RefreshCw className="animate-spin mx-auto text-slate-400 mb-2" size={24} />
-                    <p className="text-slate-400">Cargando notas de venta...</p>
+                    <p className="text-slate-400">Cargando...</p>
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan="8" className="px-4 py-12 text-center text-slate-400">
                     <Package size={32} className="mx-auto mb-2 opacity-40" />
-                    <p>No hay notas de venta en estado "{getEstadoConfig(selectedEstado).label}"</p>
+                    <p>No hay N.V. en estado "{getEstadoConfig(selectedEstado).label}"</p>
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order, index) => {
                   const config = getEstadoConfig(order.estado);
-                  const accion = ACCIONES_POR_ESTADO[order.estado];
+                  const accion = ACCIONES_ESTADO[order.estado] || ACCIONES_ESTADO[order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado];
                   
                   return (
                     <tr key={index} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <span className="font-bold text-indigo-600">#{order.nv}</span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500 text-xs">
+                      <td className="px-4 py-3 text-slate-500 text-xs">
                         {order.fecha_emision ? new Date(order.fecha_emision).toLocaleDateString() : '-'}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-700">{order.cliente}</div>
-                        <div className="text-xs text-slate-400">{order.vendedor}</div>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-700 truncate max-w-[150px]" title={order.cliente}>
+                          {order.cliente}
+                        </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 text-slate-500 text-xs truncate max-w-[100px]">
+                        {order.vendedor}
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="font-mono text-xs text-slate-600">{order.codigo_producto}</div>
-                        <div className="text-xs text-slate-400 truncate max-w-[200px]">{order.descripcion_producto}</div>
+                        <div className="text-xs text-slate-400 truncate max-w-[150px]">{order.descripcion_producto}</div>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3 text-right">
                         <span className="font-bold text-slate-800">{order.cantidad}</span>
                         <span className="text-xs text-slate-400 ml-1">{order.unidad}</span>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
                           {config.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          {/* Botón de acción principal */}
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-1">
                           {accion && (
                             <button 
-                              onClick={() => handleUpdateStatus(order.nv, accion.nextState)}
-                              className={`${getEstadoConfig(accion.nextState).bgColor} hover:opacity-90 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1`}
+                              onClick={() => handleUpdateStatus(order.nv, accion.next)}
+                              className={`${getEstadoConfig(accion.next).bgColor} hover:opacity-90 text-white px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1`}
                               title={accion.label}
                             >
-                              <accion.icon size={14} />
+                              <accion.icon size={12} />
                               {accion.label}
                             </button>
                           )}
                           <button 
                             onClick={() => setSelectedOrder(order)}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1"
                           >
-                            <Eye size={14} /> Ver
+                            <Eye size={12} />
                           </button>
                         </div>
                       </td>
@@ -469,176 +433,111 @@ const SalesOrders = () => {
         </div>
       </div>
 
-      {/* MODAL DETALLE N.V */}
+      {/* MODAL */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header Modal */}
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden">
             {(() => {
               const config = getEstadoConfig(selectedOrder.estado);
               return (
-                <div className={`${config.lightBg} p-6 flex justify-between items-start border-b ${config.borderColor}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`${config.bgColor} p-3 rounded-xl text-white shadow-lg`}>
-                      <FileText size={28} />
+                <div className={`${config.lightBg} p-5 flex justify-between items-start border-b ${config.borderColor}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`${config.bgColor} p-2.5 rounded-xl text-white shadow-lg`}>
+                      <FileText size={24} />
                     </div>
                     <div>
-                      <p className={`${config.textColor} text-sm font-bold uppercase tracking-wide`}>Nota de Venta</p>
-                      <h2 className="text-3xl font-black text-slate-900">{selectedOrder.nv}</h2>
+                      <p className={`${config.textColor} text-xs font-bold uppercase`}>Nota de Venta</p>
+                      <h2 className="text-2xl font-black text-slate-900">{selectedOrder.nv}</h2>
                     </div>
                   </div>
                   <button 
                     onClick={() => setSelectedOrder(null)}
-                    className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 transition-all flex items-center gap-2"
+                    className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
                   >
-                    <X size={16} /> Cerrar
+                    <X size={18} />
                   </button>
                 </div>
               );
             })()}
 
-            <div className="p-8 bg-slate-50/50 max-h-[70vh] overflow-y-auto">
-              {/* Pipeline Mini en Modal */}
-              <div className="flex items-center justify-center gap-2 mb-6 p-4 bg-white rounded-xl border border-slate-200">
-                {ESTADOS_VISIBLES.map((estadoKey, index) => {
-                  const estado = getEstadoConfig(estadoKey);
-                  const isCurrent = selectedOrder.estado === estadoKey;
-                  const currentIndex = ESTADOS_VISIBLES.indexOf(selectedOrder.estado);
-                  const isPast = index < currentIndex;
-                  
-                  return (
-                    <React.Fragment key={estadoKey}>
-                      <div 
-                        className={`
-                          w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer
-                          ${isCurrent ? `${estado.bgColor} text-white scale-125 shadow-lg` : 
-                            isPast ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}
-                        `}
-                        title={estado.label}
-                      >
-                        {isPast ? <CheckCircle size={18} /> : <estado.icon size={18} />}
-                      </div>
-                      {index < ESTADOS_VISIBLES.length - 1 && (
-                        <div className={`w-8 h-1 rounded ${isPast ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-
+            <div className="p-5 bg-slate-50/50 max-h-[65vh] overflow-y-auto space-y-4">
               {/* Info Cards */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs font-bold uppercase">
-                    <AlertCircle size={14} /> Estado
-                  </div>
-                  {(() => {
-                    const config = getEstadoConfig(selectedOrder.estado);
-                    return (
-                      <span className={`px-3 py-1 rounded-full text-sm font-bold border ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
-                        {config.label}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs font-bold uppercase">
-                    <Calendar size={14} /> Fecha
-                  </div>
-                  <p className="font-bold text-slate-800">
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-white p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Fecha</p>
+                  <p className="font-bold text-slate-800 text-sm">
                     {selectedOrder.fecha_emision ? new Date(selectedOrder.fecha_emision).toLocaleDateString() : '-'}
                   </p>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs font-bold uppercase">
-                    <User size={14} /> Cliente
-                  </div>
-                  <p className="font-bold text-slate-800 text-sm leading-tight">{selectedOrder.cliente}</p>
+                <div className="bg-white p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Cliente</p>
+                  <p className="font-bold text-slate-800 text-sm truncate">{selectedOrder.cliente}</p>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs font-bold uppercase">
-                    <User size={14} /> Vendedor
-                  </div>
-                  <p className="font-bold text-slate-800 text-sm">{selectedOrder.vendedor}</p>
+                <div className="bg-white p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Vendedor</p>
+                  <p className="font-bold text-slate-800 text-sm">{selectedOrder.vendedor || '-'}</p>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">Estado</p>
+                  {(() => {
+                    const c = getEstadoConfig(selectedOrder.estado);
+                    return <span className={`px-2 py-0.5 rounded text-xs font-bold ${c.lightBg} ${c.textColor}`}>{c.label}</span>;
+                  })()}
                 </div>
               </div>
 
-              {/* Acciones de Estado */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Truck size={18} className="text-slate-400" /> Cambiar Estado
+              {/* Producto */}
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                  <Package size={14} /> Producto
                 </h3>
-                <div className="flex flex-wrap gap-3">
-                  {ESTADOS_VISIBLES.map((estadoKey) => {
-                    const estado = getEstadoConfig(estadoKey);
-                    const isCurrent = selectedOrder.estado === estadoKey;
-                    const accion = ACCIONES_POR_ESTADO[selectedOrder.estado];
-                    const isNext = accion?.nextState === estadoKey;
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <Package size={28} className="text-indigo-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-mono text-indigo-600 font-bold">{selectedOrder.codigo_producto}</p>
+                    <p className="text-slate-600 text-sm">{selectedOrder.descripcion_producto}</p>
+                  </div>
+                  <div className="text-right bg-emerald-50 px-4 py-2 rounded-xl">
+                    <p className="text-2xl font-black text-emerald-600">{selectedOrder.cantidad}</p>
+                    <p className="text-xs text-emerald-700">{selectedOrder.unidad}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones */}
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Cambiar Estado</h3>
+                <div className="flex flex-wrap gap-2">
+                  {PIPELINE_ESTADOS.filter(e => e.key !== 'Refacturacion').map((estado) => {
+                    const isCurrent = selectedOrder.estado === estado.key || 
+                                     (selectedOrder.estado === 'PENDIENTE' && estado.key === 'Pendiente');
+                    const accion = ACCIONES_ESTADO[selectedOrder.estado] || 
+                                   ACCIONES_ESTADO[selectedOrder.estado === 'PENDIENTE' ? 'Pendiente' : selectedOrder.estado];
+                    const isNext = accion?.next === estado.key;
                     
                     return (
                       <button 
-                        key={estadoKey}
-                        onClick={() => handleUpdateStatus(selectedOrder.nv, estadoKey)}
+                        key={estado.key}
+                        onClick={() => handleUpdateStatus(selectedOrder.nv, estado.key)}
                         disabled={modalLoading || isCurrent}
                         className={`
-                          px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2
+                          px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5
                           ${isCurrent 
-                            ? `${estado.bgColor} text-white cursor-not-allowed opacity-50` 
+                            ? `${estado.bgColor} text-white opacity-50 cursor-not-allowed` 
                             : isNext
-                              ? `${estado.bgColor} text-white shadow-lg hover:opacity-90 ring-2 ring-offset-2 ring-${estado.color}-300`
-                              : `${estado.lightBg} ${estado.textColor} border ${estado.borderColor} hover:shadow-md`
+                              ? `${estado.bgColor} text-white shadow-md hover:opacity-90`
+                              : `${estado.lightBg} ${estado.textColor} border ${estado.borderColor} hover:shadow`
                           }
                         `}
                       >
-                        <estado.icon size={16} />
+                        <estado.icon size={14} />
                         {estado.label}
-                        {isCurrent && <span className="text-xs">(actual)</span>}
-                        {isNext && <span className="text-xs">→</span>}
+                        {isCurrent && <span className="text-[10px]">(actual)</span>}
                       </button>
                     );
                   })}
-                  
-                  {/* Botón despachar si está en DESPACHO */}
-                  {selectedOrder.estado === 'DESPACHO' && (
-                    <button 
-                      onClick={() => handleUpdateStatus(selectedOrder.nv, 'DESPACHADO')}
-                      disabled={modalLoading}
-                      className="px-4 py-2.5 rounded-xl font-bold text-sm bg-blue-500 hover:bg-blue-600 text-white transition-all flex items-center gap-2 shadow-lg"
-                    >
-                      <Truck size={16} /> Despachar (saldrá del módulo)
-                    </button>
-                  )}
-                  
-                  <button 
-                    onClick={() => handleUpdateStatus(selectedOrder.nv, 'ANULADA')}
-                    disabled={modalLoading}
-                    className="px-4 py-2.5 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white transition-all flex items-center gap-2 ml-auto"
-                  >
-                    <X size={16} /> Anular N.V
-                  </button>
-                </div>
-              </div>
-
-              {/* Productos */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                  <Package size={18} className="text-slate-500" />
-                  <h3 className="font-bold text-slate-800">Producto</h3>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center">
-                      <Package size={32} className="text-slate-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-mono text-indigo-600 font-bold">{selectedOrder.codigo_producto}</p>
-                      <p className="text-slate-700">{selectedOrder.descripcion_producto}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-black text-emerald-600">{selectedOrder.cantidad}</p>
-                      <p className="text-sm text-slate-400">{selectedOrder.unidad}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
