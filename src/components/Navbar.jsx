@@ -9,7 +9,7 @@ import {
   Warehouse, MapPin, ArrowLeftRight, 
   Search, Barcode, MapPinned, 
   Settings, Shield, Layers, FileBarChart,
-  LogOut, ChevronDown, Clock
+  LogOut, ChevronDown, Clock, Menu, X
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -20,6 +20,7 @@ const Navbar = () => {
   const [modulesConfig, setModulesConfig] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -159,23 +160,23 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm font-sans">
-      <div className="max-w-[1920px] mx-auto px-4 h-16 flex items-center justify-between">
+    <header className="bg-white border-b-2 border-orange-200 sticky top-0 z-50 shadow-md font-poppins">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
         {/* Left: Logo */}
-        <div className="flex items-center gap-4 min-w-fit">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-fit">
           <div className="flex flex-col leading-tight">
-            <span className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span className="text-lg sm:text-2xl font-black text-orange-600 tracking-tighter flex items-center gap-2">
               C.C.O
               {isSyncing && <Loader2 size={14} className="animate-spin text-green-500" />}
-              {!isSyncing && !loading && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización en tiempo real activa"></span>}
+              {!isSyncing && !loading && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización activa"></span>}
             </span>
-            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Centro Control Operacional</span>
+            <span className="text-[9px] sm:text-[10px] font-bold text-orange-500 uppercase tracking-widest">WMS</span>
           </div>
         </div>
 
-        {/* Center: Navigation */}
-        <nav className="hidden lg:flex items-center gap-1 mx-4">
+        {/* Center: Navigation - Desktop */}
+        <nav className="hidden lg:flex items-center gap-0.5 mx-2">
           {menuConfig.map((item) => {
             // Filtrar por módulos habilitados
             if (!isEnabled(item.id)) return null;
@@ -190,45 +191,44 @@ const Navbar = () => {
                 {item.isLink ? (
                   <Link 
                     to={item.path}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150
                       ${location.pathname === item.path 
-                        ? 'bg-slate-100 text-slate-900' 
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'bg-orange-500 text-white shadow-lg' 
+                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
-                    {item.label}
+                    <span className="hidden sm:inline">{item.label}</span>
                   </Link>
                 ) : (
                   <button 
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-default
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer group
                       ${activeDropdown === item.id 
-                        ? 'bg-slate-100 text-slate-900' 
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'bg-orange-500 text-white shadow-lg' 
+                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
-                    {item.label}
-                    <ChevronDown size={14} className="opacity-50" />
+                    <span className="hidden sm:inline">{item.label}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-150 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                   </button>
                 )}
 
                 {/* Dropdown Menu */}
                 {!item.isLink && activeDropdown === item.id && (
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 animate-in fade-in slide-in-from-top-1 duration-100 z-50">
                     {item.modules.map((module) => (
                       <Link
                         key={module.path}
                         to={module.path}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                        onClick={() => setActiveDropdown(null)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150
                           ${location.pathname === module.path
-                            ? 'bg-orange-50 text-orange-700 font-medium'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            ? 'bg-orange-500 text-white shadow-md'
+                            : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
                           }`}
                       >
-                        <span className={location.pathname === module.path ? 'text-orange-500' : 'text-slate-400'}>
-                          {module.icon}
-                        </span>
+                        <span>{module.icon}</span>
                         {module.label}
                       </Link>
                     ))}
@@ -240,32 +240,92 @@ const Navbar = () => {
         </nav>
 
         {/* Right: User Profile & Actions */}
-        <div className="flex items-center gap-4 min-w-fit">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-fit">
           {/* User Profile */}
           {user && (
-            <div className="hidden xl:flex items-center gap-3 pl-4 border-l border-slate-200">
-              <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 pl-3 lg:pl-4 border-l-2 border-orange-200">
+              <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs lg:text-sm shadow-lg">
                 {user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col hidden lg:block">
                 <span className="text-sm font-bold text-slate-800 leading-none capitalize">{user.nombre}</span>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">{user.rol}</span>
+                <span className="text-[10px] font-semibold text-orange-500 uppercase mt-0.5">{user.rol}</span>
               </div>
             </div>
           )}
 
-          <div className="hidden md:flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-blue-600 text-xs font-bold border border-blue-100">
-            <Clock size={14} />
-            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}
+          <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-full text-blue-600 text-xs font-bold border border-blue-100">
+            <Clock size={12} />
+            <span className="hidden sm:inline">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}</span>
           </div>
 
-          <button onClick={handleLogout} className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-red-200 transition-colors">
+          <button onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-150 active:scale-95">
             <LogOut size={16} />
-            Salir
+            <span className="hidden xs:inline">Salir</span>
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 hover:bg-orange-50 rounded-lg transition-colors duration-150"
+          >
+            {mobileMenuOpen ? (
+              <X size={20} className="text-slate-700" />
+            ) : (
+              <Menu size={20} className="text-slate-700" />
+            )}
           </button>
         </div>
-
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {mobileMenuOpen && (
+        <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-150">
+          {menuConfig.map((item) => {
+            if (!isEnabled(item.id)) return null;
+            return item.isLink ? (
+              <Link
+                key={item.id}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100 hover:text-orange-700 transition-colors"
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            ) : (
+              <div key={item.id} className="space-y-1">
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100 hover:text-orange-700 transition-colors"
+                >
+                  {item.icon}
+                  {item.label}
+                  <ChevronDown size={14} className={`ml-auto transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                </button>
+                {activeDropdown === item.id && (
+                  <div className="ml-2 space-y-1 animate-in fade-in duration-100">
+                    {item.modules.map((module) => (
+                      <Link
+                        key={module.path}
+                        to={module.path}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setActiveDropdown(null);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-orange-500 hover:text-white transition-colors"
+                      >
+                        {module.icon}
+                        {module.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      )}
     </header>
   );
 };
