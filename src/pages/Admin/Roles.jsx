@@ -189,9 +189,14 @@ const RolesPage = () => {
   const handleSaveRole = async () => {
     try {
       setLoading(true);
+      
+      // Si es ADMIN, siempre usar el ID 'ADMIN'
       const roleId = isCreating 
         ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_') 
         : selectedRole.id;
+
+      // Si es ADMIN, siempre usar el nombre original 'Administrador'
+      const roleName = selectedRole.id === 'ADMIN' ? 'Administrador' : selectedRole.nombre;
 
       // PASO 1: Guardar o actualizar rol
       const { error: roleError } = await supabase
@@ -199,7 +204,7 @@ const RolesPage = () => {
         .upsert(
           {
             id: roleId,
-            nombre: selectedRole.nombre,
+            nombre: roleName,
             descripcion: selectedRole.descripcion
           },
           { onConflict: 'id' }
@@ -242,7 +247,9 @@ const RolesPage = () => {
       await fetchRolesAndPermissions();
       setIsEditing(false);
       setIsCreating(false);
-      alert('✓ Rol guardado exitosamente');
+      
+      const actionText = selectedRole.id === 'ADMIN' ? 'actualizado' : 'guardado';
+      alert(`✓ Rol ${actionText} exitosamente`);
       
     } catch (error) {
       console.error('Error saving role:', error);
@@ -369,8 +376,12 @@ const RolesPage = () => {
                           type="text" 
                           value={selectedRole.nombre} 
                           onChange={e => setSelectedRole({...selectedRole, nombre: e.target.value})}
-                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1 focus:border-indigo-500 outline-none"
+                          disabled={selectedRole.id === 'ADMIN'}
+                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1 focus:border-indigo-500 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
+                        {selectedRole.id === 'ADMIN' && (
+                          <p className="text-xs text-amber-600 mt-1">🔒 El nombre del rol ADMIN no puede cambiar</p>
+                        )}
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-500 uppercase">Descripción</label>
@@ -411,8 +422,7 @@ const RolesPage = () => {
                     <>
                       <button 
                         onClick={() => setIsEditing(true)}
-                        disabled={selectedRole.id === 'ADMIN'}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-2"
                       >
                         <Edit size={16} /> Editar
                       </button>
@@ -420,6 +430,7 @@ const RolesPage = () => {
                         onClick={() => handleDeleteRole(selectedRole.id)}
                         disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-30"
+                        title={selectedRole.id === 'ADMIN' ? 'No se puede eliminar el rol ADMIN' : selectedRole.usuarios > 0 ? 'No se puede eliminar roles con usuarios' : 'Eliminar rol'}
                       >
                         <Trash2 size={20} />
                       </button>
