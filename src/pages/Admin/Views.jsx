@@ -11,6 +11,7 @@ const ViewsPage = () => {
   const [activeTab, setActiveTab] = useState('modules'); // 'modules' | 'landing'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
   
   // Data
   const [modulesConfig, setModulesConfig] = useState([]);
@@ -60,6 +61,50 @@ const ViewsPage = () => {
 
   useEffect(() => {
     fetchData();
+
+    // REALTIME: Escuchar cambios en tms_modules_config
+    const modulesChannel = supabase
+      .channel('tms_modules_config_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tms_modules_config'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en módulos (Realtime):', payload);
+          setIsSyncing(true);
+          fetchData();
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    // REALTIME: Escuchar cambios en tms_roles (para landing pages)
+    const rolesChannel = supabase
+      .channel('tms_roles_landing_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tms_roles'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en landing pages (Realtime):', payload);
+          setIsSyncing(true);
+          fetchData();
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    // Limpiar listeners al desmontar
+    return () => {
+      modulesChannel.unsubscribe();
+      rolesChannel.unsubscribe();
+    };
   }, []);
 
   const fetchData = async () => {
@@ -177,6 +222,8 @@ const ViewsPage = () => {
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
             <Layout className="text-indigo-600" />
             Configuración de Vistas
+            {isSyncing && <Loader2 size={18} className="animate-spin text-green-500" />}
+            {!isSyncing && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización en tiempo real activa"></span>}
           </h1>
           <p className="text-slate-500 text-sm mt-1">Gestiona módulos globales y páginas de inicio por rol</p>
         </div>

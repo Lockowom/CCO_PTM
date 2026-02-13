@@ -35,9 +35,55 @@ const UsersPage = () => {
     supervisors: users.filter(u => u.rol?.toUpperCase().includes('SUPERVISOR')).length
   };
 
+  const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
+
   useEffect(() => {
     fetchUsers();
     fetchRoles();
+
+    // REALTIME: Escuchar cambios en tms_usuarios
+    const usersChannel = supabase
+      .channel('tms_usuarios_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tms_usuarios'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en usuarios (Realtime):', payload);
+          setIsSyncing(true);
+          fetchUsers();
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    // REALTIME: Escuchar cambios en tms_roles
+    const rolesChannel = supabase
+      .channel('tms_roles_users_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tms_roles'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en roles (Realtime):', payload);
+          setIsSyncing(true);
+          fetchRoles();
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    // Limpiar listeners al desmontar
+    return () => {
+      usersChannel.unsubscribe();
+      rolesChannel.unsubscribe();
+    };
   }, []);
 
   const fetchRoles = async () => {
@@ -286,6 +332,8 @@ const UsersPage = () => {
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
             <Users className="text-blue-600" />
             Gestión de Usuarios
+            {isSyncing && <Loader2 size={18} className="animate-spin text-green-500" />}
+            {!isSyncing && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización en tiempo real activa"></span>}
           </h1>
           <p className="text-slate-500 text-sm mt-1">Administración de accesos y credenciales</p>
         </div>

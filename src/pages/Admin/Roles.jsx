@@ -15,6 +15,7 @@ const RolesPage = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
 
   // Definición COMPLETA de Módulos y Permisos del Sistema
   const modules = [
@@ -118,6 +119,32 @@ const RolesPage = () => {
 
   useEffect(() => {
     fetchRolesAndPermissions();
+
+    // REALTIME: Escuchar cambios en la tabla tms_roles
+    const channel = supabase
+      .channel('tms_roles_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Todos los eventos: INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'tms_roles'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en roles (Realtime):', payload);
+          setIsSyncing(true);
+          // Refresco automático cuando hay cambios
+          fetchRolesAndPermissions();
+          // Mostrar indicador de sincronización brevemente
+          setTimeout(() => setIsSyncing(false), 300);
+        }
+      )
+      .subscribe();
+
+    // Limpiar listener al desmontar
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   const fetchRolesAndPermissions = async () => {
@@ -290,6 +317,8 @@ const RolesPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <Shield className="text-indigo-500" /> Roles y Permisos
+            {isSyncing && <Loader2 size={18} className="animate-spin text-green-500" />}
+            {!isSyncing && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización en tiempo real activa"></span>}
           </h1>
           <p className="text-slate-500 text-sm mt-1">Define qué pueden hacer los usuarios en el sistema</p>
         </div>
