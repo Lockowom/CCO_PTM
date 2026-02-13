@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Placeholder from './components/Placeholder';
+import { Lock } from 'lucide-react';
 
 // Login & Dashboard
 import Login from './pages/Login';
@@ -41,14 +42,92 @@ import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
 import Mediciones from './pages/Admin/Mediciones';
 
-// Ruta Protegida - Solo si está autenticado
+// Mapeo de rutas a permisos requeridos
+const ROUTE_PERMISSIONS = {
+  '/dashboard': ['view_dashboard'],
+  
+  // TMS
+  '/tms/dashboard': ['view_tms_dashboard'],
+  '/tms/planning': ['view_routes', 'create_routes'],
+  '/tms/control-tower': ['view_control_tower', 'manage_control_tower'],
+  '/tms/drivers': ['view_drivers', 'manage_drivers'],
+  '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
+  
+  // Inbound
+  '/inbound/reception': ['view_reception', 'process_reception'],
+  '/inbound/entry': ['view_entry', 'process_entry'],
+  
+  // Outbound
+  '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
+  '/outbound/picking': ['view_picking', 'process_picking'],
+  '/outbound/packing': ['view_packing', 'process_packing'],
+  '/outbound/shipping': ['view_shipping', 'process_shipping'],
+  '/outbound/deliveries': ['view_deliveries', 'process_deliveries'],
+  
+  // Inventory
+  '/inventory/stock': ['view_stock', 'manage_stock'],
+  '/inventory/layout': ['view_layout', 'manage_layout'],
+  '/inventory/transfers': ['view_transfers', 'manage_transfers'],
+  
+  // Queries
+  '/queries/batches': ['view_batches'],
+  '/queries/sales-status': ['view_sales_status'],
+  '/queries/addresses': ['view_addresses'],
+  '/queries/locations': ['view_locations'],
+  '/queries/historial-nv': ['view_historial_nv'],
+  
+  // Admin (solo ADMIN)
+  '/admin/users': ['manage_users'],
+  '/admin/roles': ['manage_roles'],
+  '/admin/views': ['manage_views'],
+  '/admin/mediciones': ['manage_mediciones'],
+  '/admin/reports': ['view_reports']
+};
+
+// Componente de Acceso Denegado
+const AccessDenied = ({ requiredPermissions, route }) => {
+  return (
+    <Layout>
+      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 shadow-lg">
+            <Lock size={48} className="mx-auto text-red-500 mb-4" />
+            <h1 className="text-2xl font-black text-slate-900 mb-2">Acceso Denegado</h1>
+            <p className="text-slate-600 mb-4">No tienes permisos para acceder a esta sección.</p>
+            
+            <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-6 text-left text-sm">
+              <p className="font-bold text-red-900 mb-2">Ruta:</p>
+              <p className="font-mono text-red-700 break-all mb-3">{route}</p>
+              <p className="font-bold text-red-900 mb-2">Permisos requeridos:</p>
+              <div className="space-y-1">
+                {requiredPermissions.map(perm => (
+                  <div key={perm} className="text-red-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    {perm}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <a href="/dashboard" className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-colors">
+              Volver al Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+// Ruta Protegida con validación de permisos
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user, hasPermission } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500">Cargando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-slate-500 font-medium">Cargando...</div>
       </div>
     );
   }
@@ -57,19 +136,24 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
+  // Obtener los permisos requeridos para esta ruta
+  const requiredPermissions = ROUTE_PERMISSIONS[location.pathname] || [];
+
+  // Validar permisos
+  // Si es ADMIN o tiene al menos un permiso requerido, puede acceder
+  const hasAccess = user?.rol === 'ADMIN' || requiredPermissions.length === 0 || 
+                    requiredPermissions.some(perm => hasPermission(perm));
+
+  if (!hasAccess) {
+    return <AccessDenied requiredPermissions={requiredPermissions} route={location.pathname} />;
+  }
+
   return (
     <Layout>
       <Outlet />
     </Layout>
   );
 };
-
-// Layout Wrapper para rutas protegidas
-const AppLayout = () => (
-  <Layout>
-    <Outlet />
-  </Layout>
-);
 
 function AppContent() {
   return (

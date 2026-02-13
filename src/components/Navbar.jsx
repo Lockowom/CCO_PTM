@@ -9,13 +9,13 @@ import {
   Warehouse, MapPin, ArrowLeftRight, 
   Search, Barcode, MapPinned, 
   Settings, Shield, Layers, FileBarChart,
-  LogOut, ChevronDown, Clock, Menu, X
+  LogOut, ChevronDown, Clock, Menu, X, Lock
 } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission, permissions, isSyncing: authSyncing } = useAuth();
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [modulesConfig, setModulesConfig] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
@@ -79,8 +79,29 @@ const Navbar = () => {
   };
 
   const isEnabled = (moduleId) => {
-    // Si no existe en la config, asumimos true por defecto
-    return modulesConfig[moduleId] !== false;
+    // 1. Verificar que el módulo esté habilitado en la configuración
+    const configEnabled = modulesConfig[moduleId] !== false;
+    
+    // 2. Para admin, solo se muestra si tiene permiso view_admin o es ADMIN
+    if (moduleId === 'admin') {
+      return configEnabled && (user?.rol === 'ADMIN' || hasPermission('view_admin'));
+    }
+    
+    // 3. Para otros módulos, se muestran si está habilitado
+    // Los permisos específicos se validan a nivel de sub-módulos
+    return configEnabled;
+  };
+
+  // Verificar si el usuario puede ver un module específico dentro de una sección
+  const canAccessModule = (moduleId, sectionId) => {
+    // Admin solo accede si es rol ADMIN
+    if (sectionId === 'admin') {
+      return user?.rol === 'ADMIN';
+    }
+    
+    // Por ahora, si el módulo está habilitado, se puede acceder
+    // En el futuro, aquí se agregaría lógica más granular de permisos
+    return true;
   };
 
   const menuConfig = [
@@ -168,8 +189,8 @@ const Navbar = () => {
           <div className="flex flex-col leading-tight">
             <span className="text-lg sm:text-2xl font-black text-orange-600 tracking-tighter flex items-center gap-2">
               C.C.O
-              {isSyncing && <Loader2 size={14} className="animate-spin text-green-500" />}
-              {!isSyncing && !loading && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización activa"></span>}
+              {(isSyncing || authSyncing) && <Loader2 size={14} className="animate-spin text-green-500" />}
+              {!isSyncing && !authSyncing && !loading && <span className="w-2 h-2 bg-green-500 rounded-full" title="Permisos y módulos sincronizados"></span>}
             </span>
             <span className="text-[9px] sm:text-[10px] font-bold text-orange-500 uppercase tracking-widest">WMS</span>
           </div>
@@ -217,21 +238,28 @@ const Navbar = () => {
                 {/* Dropdown Menu */}
                 {!item.isLink && activeDropdown === item.id && (
                   <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 animate-in fade-in slide-in-from-top-1 duration-100 z-50">
-                    {item.modules.map((module) => (
-                      <Link
-                        key={module.path}
-                        to={module.path}
-                        onClick={() => setActiveDropdown(null)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150
-                          ${location.pathname === module.path
-                            ? 'bg-orange-500 text-white shadow-md'
-                            : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
-                          }`}
-                      >
-                        <span>{module.icon}</span>
-                        {module.label}
-                      </Link>
-                    ))}
+                    {item.modules.filter(module => canAccessModule(module.path, item.id)).length === 0 ? (
+                      <div className="px-3 py-4 text-center text-slate-400 text-xs">
+                        <Lock size={14} className="mx-auto mb-1" />
+                        Sin acceso
+                      </div>
+                    ) : (
+                      item.modules.filter(module => canAccessModule(module.path, item.id)).map((module) => (
+                        <Link
+                          key={module.path}
+                          to={module.path}
+                          onClick={() => setActiveDropdown(null)}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150
+                            ${location.pathname === module.path
+                              ? 'bg-orange-500 text-white shadow-md'
+                              : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
+                            }`}
+                        >
+                          <span>{module.icon}</span>
+                          {module.label}
+                        </Link>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
@@ -305,20 +333,27 @@ const Navbar = () => {
                 </button>
                 {activeDropdown === item.id && (
                   <div className="ml-2 space-y-1 animate-in fade-in duration-100">
-                    {item.modules.map((module) => (
-                      <Link
-                        key={module.path}
-                        to={module.path}
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setActiveDropdown(null);
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-orange-500 hover:text-white transition-colors"
-                      >
-                        {module.icon}
-                        {module.label}
-                      </Link>
-                    ))}
+                    {item.modules.filter(module => canAccessModule(module.path, item.id)).length === 0 ? (
+                      <div className="px-3 py-2 text-center text-slate-400 text-xs flex items-center justify-center gap-1">
+                        <Lock size={12} />
+                        Sin acceso
+                      </div>
+                    ) : (
+                      item.modules.filter(module => canAccessModule(module.path, item.id)).map((module) => (
+                        <Link
+                          key={module.path}
+                          to={module.path}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setActiveDropdown(null);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-orange-500 hover:text-white transition-colors"
+                        >
+                          {module.icon}
+                          {module.label}
+                        </Link>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
