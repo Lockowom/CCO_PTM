@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Shield, Plus, Edit, Trash2, Save, X, Check, 
   Lock, Users, LayoutDashboard, Truck, Package, 
-  Search, Settings, Database, AlertCircle, Loader2,
-  Warehouse, ArrowDownToLine, ArrowUpFromLine, FileText
+  Search, Settings, AlertCircle, Loader2,
+  Warehouse, ArrowDownToLine, ArrowUpFromLine, FileText,
+  Hand, Box, Ship, MapPin, Barcode, History, Timer,
+  Satellite, Smartphone, MapPinned, Layers, FileBarChart
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -14,15 +16,15 @@ const RolesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Definición de Módulos y Permisos del Sistema
+  // Definición COMPLETA de Módulos y Permisos del Sistema
   const modules = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard size={16} />,
       permissions: [
-        { id: 'view_dashboard', label: 'Ver Dashboard' },
-        { id: 'view_kpis', label: 'Ver KPIs Financieros' }
+        { id: 'view_dashboard', label: 'Ver Dashboard Principal' },
+        { id: 'view_kpis', label: 'Ver KPIs y Estadísticas' }
       ]
     },
     {
@@ -30,11 +32,15 @@ const RolesPage = () => {
       label: 'TMS (Transporte)',
       icon: <Truck size={16} />,
       permissions: [
+        { id: 'view_tms_dashboard', label: 'Ver Dashboard TMS' },
         { id: 'view_routes', label: 'Ver Rutas' },
         { id: 'create_routes', label: 'Planificar Rutas' },
-        { id: 'assign_drivers', label: 'Asignar Conductores' },
-        { id: 'track_gps', label: 'Monitoreo GPS' },
-        { id: 'view_drivers', label: 'Ver Conductores' }
+        { id: 'view_control_tower', label: 'Ver Torre de Control' },
+        { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
+        { id: 'view_drivers', label: 'Ver Conductores' },
+        { id: 'manage_drivers', label: 'Gestionar Conductores' },
+        { id: 'view_mobile_app', label: 'Acceder App Móvil' },
+        { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' }
       ]
     },
     {
@@ -43,6 +49,8 @@ const RolesPage = () => {
       icon: <ArrowDownToLine size={16} />,
       permissions: [
         { id: 'view_reception', label: 'Ver Recepciones' },
+        { id: 'process_reception', label: 'Procesar Recepciones' },
+        { id: 'view_entry', label: 'Ver Ingresos' },
         { id: 'process_entry', label: 'Procesar Ingresos' }
       ]
     },
@@ -52,12 +60,15 @@ const RolesPage = () => {
       icon: <ArrowUpFromLine size={16} />,
       permissions: [
         { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
+        { id: 'manage_sales_orders', label: 'Gestionar N.V. (Aprobar/Cambiar Estado)' },
         { id: 'view_picking', label: 'Ver Picking' },
         { id: 'process_picking', label: 'Procesar Picking' },
         { id: 'view_packing', label: 'Ver Packing' },
         { id: 'process_packing', label: 'Procesar Packing' },
         { id: 'view_shipping', label: 'Ver Despachos' },
-        { id: 'process_shipping', label: 'Gestionar Despachos' }
+        { id: 'process_shipping', label: 'Gestionar Despachos' },
+        { id: 'view_deliveries', label: 'Ver Entregas' },
+        { id: 'manage_deliveries', label: 'Gestionar Entregas' }
       ]
     },
     {
@@ -66,8 +77,10 @@ const RolesPage = () => {
       icon: <Warehouse size={16} />,
       permissions: [
         { id: 'view_stock', label: 'Ver Stock' },
-        { id: 'manage_inventory', label: 'Gestionar Inventario' },
+        { id: 'manage_stock', label: 'Gestionar Inventario' },
         { id: 'view_layout', label: 'Ver Layout Bodega' },
+        { id: 'manage_layout', label: 'Editar Layout' },
+        { id: 'view_transfers', label: 'Ver Transferencias' },
         { id: 'manage_transfers', label: 'Gestionar Transferencias' }
       ]
     },
@@ -76,9 +89,12 @@ const RolesPage = () => {
       label: 'Consultas',
       icon: <Search size={16} />,
       permissions: [
+        { id: 'view_historial_nv', label: 'Ver Historial N.V.' },
         { id: 'view_batches', label: 'Ver Lotes/Series' },
         { id: 'view_sales_status', label: 'Ver Estado N.V.' },
-        { id: 'view_addresses', label: 'Ver Direcciones' }
+        { id: 'view_addresses', label: 'Ver Direcciones' },
+        { id: 'view_locations', label: 'Ver Ubicaciones' },
+        { id: 'export_data', label: 'Exportar Datos (CSV)' }
       ]
     },
     {
@@ -86,11 +102,16 @@ const RolesPage = () => {
       label: 'Administración',
       icon: <Settings size={16} />,
       permissions: [
+        { id: 'view_mediciones', label: 'Ver Mediciones de Tiempo' },
+        { id: 'manage_mediciones', label: 'Gestionar Mediciones' },
+        { id: 'view_users', label: 'Ver Usuarios' },
         { id: 'manage_users', label: 'Gestionar Usuarios' },
+        { id: 'view_roles', label: 'Ver Roles' },
         { id: 'manage_roles', label: 'Gestionar Roles' },
-        { id: 'manage_views', label: 'Configurar Vistas' },
+        { id: 'view_views', label: 'Ver Configuración Vistas' },
+        { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
         { id: 'view_reports', label: 'Ver Reportes' },
-        { id: 'view_logs', label: 'Ver Auditoría' }
+        { id: 'view_audit', label: 'Ver Auditoría' }
       ]
     }
   ];
@@ -103,7 +124,6 @@ const RolesPage = () => {
     try {
       setLoading(true);
       
-      // 1. Fetch Roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('tms_roles')
         .select('*')
@@ -111,19 +131,16 @@ const RolesPage = () => {
 
       if (rolesError) throw rolesError;
 
-      // 2. Fetch Permissions Map (Rol -> Permisos)
       const { data: permsData, error: permsError } = await supabase
         .from('tms_roles_permisos')
         .select('rol_id, permiso_id');
 
       if (permsError) throw permsError;
 
-      // 3. Count Users per Role
-      const { data: usersData, error: usersError } = await supabase
+      const { data: usersData } = await supabase
         .from('tms_usuarios')
         .select('rol');
       
-      // Agrupar usuarios por rol
       const userCounts = {};
       if (usersData) {
         usersData.forEach(u => {
@@ -131,7 +148,6 @@ const RolesPage = () => {
         });
       }
 
-      // Combinar todo
       const formattedRoles = rolesData.map(rol => ({
         ...rol,
         usuarios: userCounts[rol.id] || 0,
@@ -144,14 +160,13 @@ const RolesPage = () => {
 
     } catch (error) {
       console.error('Error fetching roles:', error);
-      // Fallback a datos mock si no hay tablas
       setRoles([
         {
           id: 'ADMIN',
-          nombre: 'Administrador (Demo)',
-          descripcion: 'Acceso total (Datos Mock)',
+          nombre: 'Administrador',
+          descripcion: 'Acceso total al sistema',
           usuarios: 1,
-          permisos: ['view_dashboard', 'manage_users']
+          permisos: modules.flatMap(m => m.permissions.map(p => p.id))
         }
       ]);
     } finally {
@@ -160,14 +175,13 @@ const RolesPage = () => {
   };
 
   const handleCreateRole = () => {
-    const newRole = {
-      id: '', // Se definirá al guardar
+    setSelectedRole({
+      id: '',
       nombre: 'Nuevo Rol',
       descripcion: 'Descripción del rol',
       usuarios: 0,
       permisos: []
-    };
-    setSelectedRole(newRole);
+    });
     setIsCreating(true);
     setIsEditing(true);
   };
@@ -178,7 +192,6 @@ const RolesPage = () => {
         ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_') 
         : selectedRole.id;
 
-      // 1. Upsert Role
       const { error: roleError } = await supabase
         .from('tms_roles')
         .upsert({
@@ -189,97 +202,94 @@ const RolesPage = () => {
 
       if (roleError) throw roleError;
 
-      // 2. Update Permissions (Delete all + Insert new)
-      // Primero borrar existentes para este rol
       await supabase.from('tms_roles_permisos').delete().eq('rol_id', roleId);
 
-      // Insertar nuevos
       if (selectedRole.permisos && selectedRole.permisos.length > 0) {
         const permsToInsert = selectedRole.permisos.map(p => ({
           rol_id: roleId,
           permiso_id: p
         }));
-        
-        const { error: permsError } = await supabase
-          .from('tms_roles_permisos')
-          .insert(permsToInsert);
-          
-        if (permsError) throw permsError;
+        await supabase.from('tms_roles_permisos').insert(permsToInsert);
       }
 
-      // Refresh UI
       await fetchRolesAndPermissions();
       setIsEditing(false);
       setIsCreating(false);
-      if (isCreating) setSelectedRole(null); // Reset selection after create
       
     } catch (error) {
       console.error('Error saving role:', error);
-      alert('Error al guardar rol: ' + error.message);
+      alert('Error al guardar: ' + error.message);
+    }
+  };
+
+  const handleDeleteRole = async (roleId) => {
+    if (!confirm('¿Eliminar este rol?')) return;
+    
+    try {
+      await supabase.from('tms_roles_permisos').delete().eq('rol_id', roleId);
+      await supabase.from('tms_roles').delete().eq('id', roleId);
+      
+      await fetchRolesAndPermissions();
+      setSelectedRole(null);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al eliminar');
     }
   };
 
   const togglePermission = (permId) => {
     if (!isEditing) return;
-    
-    const currentPerms = selectedRole.permisos || [];
-    const newPerms = currentPerms.includes(permId)
-      ? currentPerms.filter(p => p !== permId)
-      : [...currentPerms, permId];
-      
-    setSelectedRole({ ...selectedRole, permisos: newPerms });
+    const perms = selectedRole.permisos || [];
+    const newPerms = perms.includes(permId)
+      ? perms.filter(p => p !== permId)
+      : [...perms, permId];
+    setSelectedRole({...selectedRole, permisos: newPerms});
   };
 
-  const handleDeleteRole = async (roleId) => {
-    if (confirm('¿Estás seguro de eliminar este rol?')) {
-      try {
-        const { error } = await supabase
-          .from('tms_roles')
-          .delete()
-          .eq('id', roleId);
-          
-        if (error) throw error;
-        
-        setRoles(roles.filter(r => r.id !== roleId));
-        if (selectedRole?.id === roleId) setSelectedRole(null);
-      } catch (error) {
-        console.error('Error deleting role:', error);
-        alert('Error al eliminar: ' + error.message);
-      }
+  const selectAllModule = (moduleId) => {
+    if (!isEditing) return;
+    const module = modules.find(m => m.id === moduleId);
+    const allPerms = module.permissions.map(p => p.id);
+    const currentPerms = selectedRole.permisos || [];
+    const hasAll = allPerms.every(p => currentPerms.includes(p));
+    
+    let newPerms;
+    if (hasAll) {
+      newPerms = currentPerms.filter(p => !allPerms.includes(p));
+    } else {
+      newPerms = [...new Set([...currentPerms, ...allPerms])];
     }
+    setSelectedRole({...selectedRole, permisos: newPerms});
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <Loader2 size={48} className="animate-spin text-blue-500" />
-        <p className="text-slate-500 font-medium animate-pulse">Cargando roles y permisos...</p>
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="animate-spin text-indigo-500" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+    <div className="h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center flex-shrink-0">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <Shield className="text-indigo-600" />
-            Roles y Permisos
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <Shield className="text-indigo-500" /> Roles y Permisos
           </h1>
           <p className="text-slate-500 text-sm mt-1">Define qué pueden hacer los usuarios en el sistema</p>
         </div>
         <button 
           onClick={handleCreateRole}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all"
         >
-          <Plus size={18} />
-          Nuevo Rol
+          <Plus size={18} /> Nuevo Rol
         </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
-        {/* Roles List (Sidebar) */}
+        {/* Roles List */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50">
             <h3 className="font-bold text-slate-700">Roles Definidos ({roles.length})</h3>
@@ -288,9 +298,7 @@ const RolesPage = () => {
             {roles.map(role => (
               <div 
                 key={role.id}
-                onClick={() => {
-                  if (!isEditing) setSelectedRole(role);
-                }}
+                onClick={() => { if (!isEditing) setSelectedRole(role); }}
                 className={`p-4 rounded-lg cursor-pointer border transition-all ${
                   selectedRole?.id === role.id 
                     ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
@@ -308,8 +316,7 @@ const RolesPage = () => {
                     <Lock size={14} className="text-amber-500 mt-1" title="Rol protegido" />
                   ) : (
                     <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Users size={10} />
-                      {role.usuarios}
+                      <Users size={10} /> {role.usuarios}
                     </span>
                   )}
                 </div>
@@ -318,17 +325,16 @@ const RolesPage = () => {
           </div>
         </div>
 
-        {/* Role Details & Permissions (Main Area) */}
+        {/* Role Details */}
         <div className="w-full lg:w-2/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           {selectedRole ? (
             <>
-              {/* Detail Header */}
-              <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50">
                 <div className="flex-1 mr-4">
                   {isEditing ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase">Nombre del Rol</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Nombre</label>
                         <input 
                           type="text" 
                           value={selectedRole.nombre} 
@@ -350,6 +356,7 @@ const RolesPage = () => {
                     <>
                       <h2 className="text-2xl font-bold text-slate-800">{selectedRole.nombre}</h2>
                       <p className="text-slate-500 mt-1">{selectedRole.descripcion}</p>
+                      <p className="text-xs text-indigo-600 mt-2">{selectedRole.permisos?.length || 0} permisos asignados</p>
                     </>
                   )}
                 </div>
@@ -358,22 +365,16 @@ const RolesPage = () => {
                   {isEditing ? (
                     <>
                       <button 
-                        onClick={() => {
-                          setIsEditing(false);
-                          setIsCreating(false);
-                          if (isCreating) setSelectedRole(null);
-                        }}
-                        className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
-                        title="Cancelar"
+                        onClick={() => { setIsEditing(false); setIsCreating(false); if (isCreating) setSelectedRole(null); }}
+                        className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg"
                       >
                         <X size={20} />
                       </button>
                       <button 
                         onClick={handleSaveRole}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold flex items-center gap-2 shadow-sm"
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold flex items-center gap-2"
                       >
-                        <Save size={18} />
-                        Guardar
+                        <Save size={18} /> Guardar
                       </button>
                     </>
                   ) : (
@@ -381,16 +382,14 @@ const RolesPage = () => {
                       <button 
                         onClick={() => setIsEditing(true)}
                         disabled={selectedRole.id === 'ADMIN'}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
                       >
-                        <Edit size={16} />
-                        Editar
+                        <Edit size={16} /> Editar
                       </button>
                       <button 
                         onClick={() => handleDeleteRole(selectedRole.id)}
                         disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Eliminar Rol"
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-30"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -400,62 +399,76 @@ const RolesPage = () => {
               </div>
 
               {/* Permissions Grid */}
-              <div className="flex-1 overflow-y-auto p-6 bg-white">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Lock size={14} />
-                  Permisos de Acceso
+              <div className="flex-1 overflow-y-auto p-5">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Lock size={14} /> Permisos de Acceso
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {modules.map(module => (
-                    <div key={module.id} className="border border-slate-100 rounded-xl p-4 hover:border-slate-200 transition-colors">
-                      <div className="flex items-center gap-2 mb-3 text-slate-800 font-bold border-b border-slate-50 pb-2">
-                        <span className="text-indigo-500">{module.icon}</span>
-                        {module.label}
-                      </div>
-                      <div className="space-y-2">
-                        {module.permissions.map(perm => {
-                          const isEnabled = selectedRole.permisos?.includes(perm.id);
-                          return (
-                            <label 
-                              key={perm.id} 
-                              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                                isEditing ? 'cursor-pointer hover:bg-slate-50' : 'cursor-default'
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {modules.map(module => {
+                    const allPerms = module.permissions.map(p => p.id);
+                    const enabledCount = allPerms.filter(p => selectedRole.permisos?.includes(p)).length;
+                    const hasAll = enabledCount === allPerms.length;
+                    
+                    return (
+                      <div key={module.id} className="border border-slate-100 rounded-xl p-4 hover:border-slate-200">
+                        <div className="flex items-center justify-between mb-3 border-b border-slate-50 pb-2">
+                          <div className="flex items-center gap-2 text-slate-800 font-bold">
+                            <span className="text-indigo-500">{module.icon}</span>
+                            {module.label}
+                          </div>
+                          {isEditing && (
+                            <button
+                              onClick={() => selectAllModule(module.id)}
+                              className={`text-xs px-2 py-1 rounded-full font-medium transition-colors ${
+                                hasAll 
+                                  ? 'bg-indigo-100 text-indigo-700' 
+                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                               }`}
                             >
-                              <div 
-                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                              {hasAll ? 'Quitar todos' : 'Todos'}
+                            </button>
+                          )}
+                          {!isEditing && (
+                            <span className="text-xs text-slate-400">{enabledCount}/{allPerms.length}</span>
+                          )}
+                        </div>
+                        <div className="space-y-1.5">
+                          {module.permissions.map(perm => {
+                            const isEnabled = selectedRole.permisos?.includes(perm.id);
+                            return (
+                              <label 
+                                key={perm.id} 
+                                className={`flex items-center gap-2 p-1.5 rounded-lg transition-colors ${
+                                  isEditing ? 'cursor-pointer hover:bg-slate-50' : 'cursor-default'
+                                }`}
+                                onClick={() => togglePermission(perm.id)}
+                              >
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                                   isEnabled 
                                     ? 'bg-indigo-600 border-indigo-600 text-white' 
                                     : 'bg-white border-slate-300'
-                                }`}
-                                onClick={(e) => {
-                                  if(!isEditing) return;
-                                  e.preventDefault();
-                                  togglePermission(perm.id);
-                                }}
-                              >
-                                {isEnabled && <Check size={12} strokeWidth={4} />}
-                              </div>
-                              <span className={`text-sm ${isEnabled ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
-                                {perm.label}
-                              </span>
-                            </label>
-                          );
-                        })}
+                                }`}>
+                                  {isEnabled && <Check size={10} strokeWidth={4} />}
+                                </div>
+                                <span className={`text-sm ${isEnabled ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
+                                  {perm.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                <Shield size={40} className="opacity-20" />
-              </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+              <Shield size={48} className="opacity-20 mb-4" />
               <h3 className="text-lg font-bold text-slate-600 mb-1">Selecciona un Rol</h3>
-              <p className="max-w-xs mx-auto">Elige un rol de la lista para ver o editar sus permisos, o crea uno nuevo.</p>
+              <p className="text-center max-w-xs">Elige un rol para ver o editar sus permisos</p>
             </div>
           )}
         </div>

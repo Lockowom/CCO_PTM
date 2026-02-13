@@ -44,11 +44,14 @@ const ViewsPage = () => {
     { value: '/inventory/transfers', label: 'Inventario - Transferencias' },
     
     // Consultas
+    { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.' },
     { value: '/queries/batches', label: 'Consultas - Lotes/Series' },
     { value: '/queries/sales-status', label: 'Consultas - Estado N.V.' },
     { value: '/queries/addresses', label: 'Consultas - Direcciones' },
+    { value: '/queries/locations', label: 'Consultas - Ubicaciones' },
     
     // Admin
+    { value: '/admin/mediciones', label: 'Admin - Mediciones de Tiempo' },
     { value: '/admin/users', label: 'Admin - Usuarios' },
     { value: '/admin/roles', label: 'Admin - Roles' },
     { value: '/admin/views', label: 'Admin - Vistas' },
