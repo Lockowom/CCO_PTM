@@ -188,37 +188,67 @@ const RolesPage = () => {
 
   const handleSaveRole = async () => {
     try {
+      setLoading(true);
       const roleId = isCreating 
         ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_') 
         : selectedRole.id;
 
+      // PASO 1: Guardar o actualizar rol
       const { error: roleError } = await supabase
         .from('tms_roles')
-        .upsert({
-          id: roleId,
-          nombre: selectedRole.nombre,
-          descripcion: selectedRole.descripcion
-        });
+        .upsert(
+          {
+            id: roleId,
+            nombre: selectedRole.nombre,
+            descripcion: selectedRole.descripcion
+          },
+          { onConflict: 'id' }
+        );
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error saving role:', roleError);
+        throw new Error(`Error al guardar rol: ${roleError.message}`);
+      }
 
-      await supabase.from('tms_roles_permisos').delete().eq('rol_id', roleId);
+      // PASO 2: Eliminar todos los permisos existentes del rol
+      const { error: deleteError } = await supabase
+        .from('tms_roles_permisos')
+        .delete()
+        .eq('rol_id', roleId);
 
+      if (deleteError) {
+        console.error('Error deleting permissions:', deleteError);
+        throw new Error(`Error al eliminar permisos: ${deleteError.message}`);
+      }
+
+      // PASO 3: Insertar los nuevos permisos
       if (selectedRole.permisos && selectedRole.permisos.length > 0) {
         const permsToInsert = selectedRole.permisos.map(p => ({
           rol_id: roleId,
           permiso_id: p
         }));
-        await supabase.from('tms_roles_permisos').insert(permsToInsert);
+        
+        const { error: insertError } = await supabase
+          .from('tms_roles_permisos')
+          .insert(permsToInsert);
+
+        if (insertError) {
+          console.error('Error inserting permissions:', insertError);
+          throw new Error(`Error al guardar permisos: ${insertError.message}`);
+        }
       }
 
+      // PASO 4: Recargar datos
       await fetchRolesAndPermissions();
       setIsEditing(false);
       setIsCreating(false);
+      alert('✓ Rol guardado exitosamente');
       
     } catch (error) {
       console.error('Error saving role:', error);
-      alert('Error al guardar: ' + error.message);
+      alert('❌ Error al guardar: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -72,18 +72,31 @@ const UsersPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error Supabase:', error);
+        console.error('Error Supabase fetching users:', error);
         throw error;
       }
       
-      // Si no hay datos, mostrar array vacío pero NO undefined
-      setUsers(data || []);
+      // Validar y establecer usuarios
+      if (data && Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        setUsers([]);
+      }
       
     } catch (error) {
       console.error('Error fetching users:', error);
+      alert('⚠ Error al cargar usuarios: ' + error.message);
       // Fallback robusto para evitar pantalla blanca si falla la DB
       setUsers([
-        { id: 'fallback-1', nombre: 'Admin Fallback', email: 'admin@cco.cl', rol: 'ADMIN', activo: true, created_at: new Date().toISOString() }
+        { 
+          id: 'fallback-1', 
+          id_usuario: 'USR-FALLBACK-001',
+          nombre: 'Admin Fallback', 
+          email: 'admin@cco.cl', 
+          rol: 'ADMIN', 
+          activo: true, 
+          created_at: new Date().toISOString() 
+        }
       ]);
     } finally {
       setLoading(false);
@@ -117,50 +130,87 @@ const UsersPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      // Validar campos requeridos
+      if (!formData.nombre || !formData.email || !formData.rol) {
+        alert('⚠ Por favor completa todos los campos requeridos');
+        setSaving(false);
+        return;
+      }
+
       if (editingUser) {
-        // Update
+        // UPDATE: Actualizar usuario existente
         const updates = {
           nombre: formData.nombre,
           email: formData.email,
           rol: formData.rol,
           activo: formData.activo
         };
-        // Nota: En un sistema real, el hash se haría en el backend o Edge Function.
-        // Aquí simulamos guardando el hash directamente si se provee.
-        if (formData.password) updates.password_hash = formData.password; 
 
-        const { error } = await supabase
+        // Incluir contraseña solo si se cambió
+        if (formData.password && formData.password.trim() !== '') {
+          updates.password_hash = formData.password;
+        }
+
+        const { data, error } = await supabase
           .from('tms_usuarios')
           .update(updates)
-          .eq('id', editingUser.id);
+          .eq('id', editingUser.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating user:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error('No se pudo actualizar el usuario');
+        }
+
+        alert('✓ Usuario actualizado exitosamente');
       } else {
-        // Create
-        // Generar ID estilo legacy USR-...
+        // CREATE: Crear nuevo usuario
         const legacyId = `USR-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
         
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('tms_usuarios')
           .insert([{ 
             id_usuario: legacyId,
             nombre: formData.nombre,
             email: formData.email,
-            password_hash: formData.password || '123456', // Default password si no se provee
+            password_hash: formData.password || '123456',
             rol: formData.rol,
             activo: formData.activo
-          }]);
+          }])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating user:', error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error('No se pudo crear el usuario');
+        }
+
+        alert('✓ Nuevo usuario creado exitosamente');
       }
       
       setIsModalOpen(false);
-      // Recargar la lista para mostrar el nuevo usuario inmediatamente
+      setEditingUser(null);
+      setFormData({
+        nombre: '',
+        email: '',
+        password: '',
+        rol: '',
+        activo: true
+      });
+      
+      // Recargar la lista
       await fetchUsers();
       
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Error al guardar usuario: ' + error.message);
+      alert('❌ Error al guardar usuario: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -174,10 +224,16 @@ const UsersPage = () => {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
-      fetchUsers();
+      if (error) {
+        console.error('Error deleting user:', error);
+        throw error;
+      }
+
+      alert('✓ Usuario eliminado exitosamente');
+      await fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      alert('❌ Error al eliminar usuario: ' + error.message);
     }
   };
 

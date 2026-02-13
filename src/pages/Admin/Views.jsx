@@ -99,39 +99,63 @@ const ViewsPage = () => {
 
   const handleToggleModule = async (id, currentStatus) => {
     try {
-      // Optimistic update
+      setLoading(true);
+      
+      // Actualizar el estado local inmediatamente (optimistic update)
       const newStatus = !currentStatus;
       setModulesConfig(prev => prev.map(m => m.id === id ? { ...m, enabled: newStatus } : m));
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tms_modules_config')
-        .update({ enabled: newStatus, updated_at: new Date() })
-        .eq('id', id);
+        .update({ enabled: newStatus })
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error toggling module:', error);
+        throw error;
+      }
+
+      // Confirmar el cambio
+      if (data && data.length > 0) {
+        setModulesConfig(prev => prev.map(m => m.id === id ? data[0] : m));
+      }
 
     } catch (error) {
       console.error('Error toggling module:', error);
-      fetchData(); // Revert on error
+      alert('❌ Error al actualizar módulo: ' + error.message);
+      await fetchData(); // Revert on error
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdateLandingPage = async (roleId, newPath) => {
     try {
       setSaving(true);
-      // Optimistic
+      
+      // Optimistic update
       setRoles(prev => prev.map(r => r.id === roleId ? { ...r, landing_page: newPath } : r));
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tms_roles')
         .update({ landing_page: newPath })
-        .eq('id', roleId);
+        .eq('id', roleId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating landing page:', error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        setRoles(prev => prev.map(r => r.id === roleId ? data[0] : r));
+      }
 
     } catch (error) {
       console.error('Error updating landing page:', error);
-      alert('Error al actualizar: ' + error.message);
+      alert('❌ Error al actualizar: ' + error.message);
+      await fetchData(); // Revert on error
     } finally {
       setSaving(false);
     }
