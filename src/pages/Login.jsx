@@ -109,17 +109,19 @@ const Login = () => {
         </form>
 
         {/* Demo Users Info */}
-        <div className="mt-8 bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-          <p className="text-xs font-bold text-blue-900 mb-3 flex items-center gap-2">📝 <span>Usuarios de Prueba:</span></p>
-          <div className="space-y-2 text-[11px] text-blue-800 font-mono bg-white p-3 rounded border border-blue-100">
-            <p><span className="font-bold text-blue-900">Email:</span> admin@cco.cl</p>
-            <p><span className="font-bold text-blue-900">Contraseña:</span> 123456</p>
-            <p className="pt-2 border-t border-blue-100 mt-2">
-              <span className="font-bold text-blue-900">Email:</span> operador@cco.cl
-            </p>
-            <p><span className="font-bold text-blue-900">Contraseña:</span> 123456</p>
+        {false && (
+          <div className="mt-8 bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+            <p className="text-xs font-bold text-blue-900 mb-3 flex items-center gap-2">📝 <span>Usuarios de Prueba:</span></p>
+            <div className="space-y-2 text-[11px] text-blue-800 font-mono bg-white p-3 rounded border border-blue-100">
+              <p><span className="font-bold text-blue-900">Email:</span> admin@cco.cl</p>
+              <p><span className="font-bold text-blue-900">Contraseña:</span> 123456</p>
+              <p className="pt-2 border-t border-blue-100 mt-2">
+                <span className="font-bold text-blue-900">Email:</span> operador@cco.cl
+              </p>
+              <p><span className="font-bold text-blue-900">Contraseña:</span> 123456</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Footer Security */}
         <div className="mt-6 bg-emerald-50 rounded-lg p-4 flex items-center gap-3 border-2 border-emerald-200 shadow-sm">
@@ -130,7 +132,10 @@ const Login = () => {
             <p className="text-xs font-bold text-emerald-900">✓ Conexión Segura</p>
             <p className="text-[10px] text-emerald-700 font-medium">SSL 256-bit • © 2026 CCO</p>
           </div>
-        </div>\n      </div>\n    </div>\n  );
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;
