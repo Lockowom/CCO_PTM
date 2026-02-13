@@ -60,6 +60,27 @@ const RoutePlanning = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Habilitar Realtime para Conductores (para ver cuando se liberan/ocupan)
+    const subDrivers = supabase
+      .channel('public:tms_conductores_planning')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, () => {
+        fetchData(); // Recargar todo
+      })
+      .subscribe();
+
+    // Habilitar Realtime para Entregas (si llegan nuevas NVs)
+    const subEntregas = supabase
+      .channel('public:tms_entregas_planning')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subDrivers);
+      supabase.removeChannel(subEntregas);
+    };
   }, []);
 
   useEffect(() => {
