@@ -38,6 +38,7 @@ import HistorialNV from './pages/Queries/HistorialNV';
 import Users from './pages/Admin/Users';
 import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
+import Mediciones from './pages/Admin/Mediciones';
 
 // Layout Wrapper to apply Sidebar to internal pages
 const AppLayout = () => (
@@ -92,6 +93,7 @@ function App() {
           <Route path="admin/users" element={<Users />} />
           <Route path="admin/roles" element={<Roles />} />
           <Route path="admin/views" element={<Views />} />
+          <Route path="admin/mediciones" element={<Mediciones />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
 

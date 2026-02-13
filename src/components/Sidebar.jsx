@@ -27,7 +27,8 @@ import {
   FileBarChart,
   ChevronDown,
   ChevronRight,
-  History
+  History,
+  Timer
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -151,6 +152,7 @@ const Sidebar = () => {
       icon: <Settings size={20} />,
       color: 'text-red-500',
       modules: [
+        { id: 'admin-mediciones', label: 'Mediciones', icon: <Timer size={18} />, path: '/admin/mediciones' },
         { id: 'users', label: 'Usuarios', icon: <Users size={18} />, path: '/admin/users' },
         { id: 'roles', label: 'Roles', icon: <Shield size={18} />, path: '/admin/roles' },
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },

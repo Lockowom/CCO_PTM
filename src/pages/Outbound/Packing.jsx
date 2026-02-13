@@ -1,368 +1,540 @@
-import React, { useState, useEffect } from 'react';
+// Packing.jsx - Módulo de Packing con 2 vistas y medición de tiempos
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  Package, Search, Filter, Play, ArrowLeft, 
-  CheckCircle, Truck, Box, User, Calendar 
+  Box, 
+  Package, 
+  User, 
+  Clock, 
+  CheckCircle, 
+  Play, 
+  Pause, 
+  Square,
+  RefreshCw, 
+  Search,
+  Eye,
+  ChevronRight,
+  Timer,
+  Users,
+  FileText,
+  ArrowLeft,
+  Send,
+  LayoutGrid,
+  List,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 const Packing = () => {
-  // Views: 'LIST' | 'ACTIVE'
-  const [view, setView] = useState('LIST');
-  const [loading, setLoading] = useState(false);
-  const [orders, setOrders] = useState([]);
+  // Vista actual: 'clientes' o 'packing'
+  const [vista, setVista] = useState('clientes');
+  
+  // Datos
+  const [nvData, setNvData] = useState([]);
+  const [clientesAgrupados, setClientesAgrupados] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Active Packing State
-  const [activeOrder, setActiveOrder] = useState(null);
-  const [activeItems, setActiveItems] = useState([]);
+  // Packing activo
+  const [nvActiva, setNvActiva] = useState(null);
+  const [tiempoInicio, setTiempoInicio] = useState(null);
+  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
+  const [enPausa, setEnPausa] = useState(false);
+  const [tiempoOcio, setTiempoOcio] = useState(0);
+  const [pausaInicio, setPausaInicio] = useState(null);
   
-  // Form State
-  const [packingData, setPackingData] = useState({
-    bultos: 1,
-    pallets: 0,
-    pesoBulto: 0,
-    pesoPallet: 0,
-    observaciones: ''
-  });
+  // Usuario simulado (en producción vendría del auth)
+  const [usuario] = useState({ id: 'user-packing-001', nombre: 'Operador Packing' });
+  
+  // Timer ref
+  const timerRef = useRef(null);
+  const ocioRef = useRef(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  // Cargar N.V. en estado PACKING
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
-        .in('estado', ['PACKING', 'PENDIENTE PACKING', 'EN_PACKING'])
-        .order('fecha_emision', { ascending: true });
+        .eq('estado', 'PACKING')
+        .order('cliente', { ascending: true });
 
       if (error) throw error;
 
-      // Group by NV
+      setNvData(data || []);
+      
+      // Agrupar por cliente
       const grouped = {};
-      data.forEach(row => {
-        if (!grouped[row.nv]) {
-          grouped[row.nv] = {
-            nv: row.nv,
-            cliente: row.cliente,
-            fecha_emision: row.fecha_emision,
-            vendedor: row.vendedor,
-            estado: row.estado,
-            items: [],
-            total_items: 0
+      (data || []).forEach(nv => {
+        const cliente = nv.cliente || 'Sin Cliente';
+        if (!grouped[cliente]) {
+          grouped[cliente] = {
+            cliente,
+            nvList: [],
+            totalBultos: 0,
+            totalItems: 0
           };
         }
-        grouped[row.nv].items.push(row);
-        grouped[row.nv].total_items += 1;
+        grouped[cliente].nvList.push(nv);
+        grouped[cliente].totalItems++;
+        grouped[cliente].totalBultos += parseInt(nv.cantidad) || 1;
       });
-
-      setOrders(Object.values(grouped));
-    } catch (err) {
-      console.error("Error fetching orders:", err);
+      
+      setClientesAgrupados(Object.values(grouped));
+      
+    } catch (error) {
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const startPacking = (order) => {
-    setActiveOrder(order);
-    setActiveItems(order.items);
-    setPackingData({
-      bultos: 1,
-      pallets: 0,
-      pesoBulto: 0,
-      pesoPallet: 0,
-      observaciones: ''
+  useEffect(() => {
+    fetchData();
+    
+    // Realtime
+    const channel = supabase
+      .channel('packing_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (ocioRef.current) clearInterval(ocioRef.current);
+    };
+  }, [fetchData]);
+
+  // Timer de trabajo
+  useEffect(() => {
+    if (tiempoInicio && !enPausa) {
+      timerRef.current = setInterval(() => {
+        setTiempoTranscurrido(Math.floor((Date.now() - tiempoInicio) / 1000) - tiempoOcio);
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [tiempoInicio, enPausa, tiempoOcio]);
+
+  // Timer de ocio (cuando está en pausa)
+  useEffect(() => {
+    if (enPausa && pausaInicio) {
+      ocioRef.current = setInterval(() => {
+        setTiempoOcio(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (ocioRef.current) clearInterval(ocioRef.current);
+    }
+    
+    return () => {
+      if (ocioRef.current) clearInterval(ocioRef.current);
+    };
+  }, [enPausa, pausaInicio]);
+
+  // Iniciar packing de una N.V.
+  const iniciarPacking = async (nv) => {
+    setNvActiva(nv);
+    setTiempoInicio(Date.now());
+    setTiempoTranscurrido(0);
+    setTiempoOcio(0);
+    setEnPausa(false);
+    setVista('packing');
+    
+    // Registrar inicio en mediciones
+    await supabase.from('tms_mediciones_tiempos').insert({
+      nv: nv.nv,
+      proceso: 'PACKING',
+      usuario_id: usuario.id,
+      usuario_nombre: usuario.nombre,
+      inicio_at: new Date().toISOString(),
+      estado: 'EN_PROCESO'
     });
-    setView('ACTIVE');
   };
 
-  const completePacking = async () => {
-    if (packingData.bultos < 1) {
-      alert("Debe ingresar al menos 1 bulto.");
-      return;
+  // Pausar/Reanudar
+  const togglePausa = () => {
+    if (!enPausa) {
+      setPausaInicio(Date.now());
+    } else {
+      setPausaInicio(null);
     }
+    setEnPausa(!enPausa);
+  };
 
+  // Finalizar packing
+  const finalizarPacking = async () => {
+    if (!nvActiva) return;
+    
+    const tiempoFinal = tiempoTranscurrido;
+    const ocioFinal = tiempoOcio;
+    
     try {
-      setLoading(true);
-
-      // 1. Update Order Status to 'LISTO_DESPACHO'
-      const { error } = await supabase
+      // Actualizar N.V. a LISTO_DESPACHO
+      await supabase
         .from('tms_nv_diarias')
-        .update({ 
-            estado: 'LISTO_DESPACHO'
-        }) 
-        .eq('nv', activeOrder.nv);
-
-      if (error) throw error;
-
-      // 2. Insert/Update 'Entregas' table (Copy to Despacho)
-      const { data: existing } = await supabase
-        .from('tms_entregas')
-        .select('nv')
-        .eq('nv', activeOrder.nv)
-        .single();
-
-      if (!existing) {
-        const { error: insertError } = await supabase
-            .from('tms_entregas')
-            .insert({
-                nv: activeOrder.nv,
-                cliente: activeOrder.cliente,
-                direccion: '', 
-                bultos: packingData.bultos,
-                peso_kg: packingData.pesoBulto,
-                estado: 'PENDIENTE', 
-                observaciones: packingData.observaciones
-            });
-            
-        if (insertError) console.error("Error creating delivery:", insertError);
-      } else {
-        await supabase
-            .from('tms_entregas')
-            .update({
-                bultos: packingData.bultos,
-                peso_kg: packingData.pesoBulto,
-                observaciones: packingData.observaciones
-            })
-            .eq('nv', activeOrder.nv);
-      }
-
-      alert(`Packing completado para N.V ${activeOrder.nv}. Lista para despacho.`);
-      setView('LIST');
-      fetchOrders(); 
-
-    } catch (err) {
-      alert("Error completando packing: " + err.message);
-    } finally {
-      setLoading(false);
+        .update({ estado: 'LISTO_DESPACHO' })
+        .eq('nv', nvActiva.nv);
+      
+      // Actualizar medición
+      await supabase
+        .from('tms_mediciones_tiempos')
+        .update({
+          fin_at: new Date().toISOString(),
+          tiempo_activo: tiempoFinal,
+          tiempo_ocio: ocioFinal,
+          estado: 'COMPLETADO',
+          updated_at: new Date().toISOString()
+        })
+        .eq('nv', nvActiva.nv)
+        .eq('proceso', 'PACKING')
+        .eq('estado', 'EN_PROCESO');
+      
+      // Reset
+      setNvActiva(null);
+      setTiempoInicio(null);
+      setTiempoTranscurrido(0);
+      setTiempoOcio(0);
+      setEnPausa(false);
+      setVista('clientes');
+      
+      await fetchData();
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al finalizar packing');
     }
   };
 
-  const renderStatusBadge = (status) => {
-    return (
-      <span className="px-2 py-1 rounded-full text-xs font-bold border bg-blue-100 text-blue-800 border-blue-200">
-        {status}
-      </span>
-    );
+  // Cancelar packing
+  const cancelarPacking = async () => {
+    if (nvActiva) {
+      await supabase
+        .from('tms_mediciones_tiempos')
+        .update({ estado: 'ABANDONADO', updated_at: new Date().toISOString() })
+        .eq('nv', nvActiva.nv)
+        .eq('proceso', 'PACKING')
+        .eq('estado', 'EN_PROCESO');
+    }
+    
+    setNvActiva(null);
+    setTiempoInicio(null);
+    setTiempoTranscurrido(0);
+    setTiempoOcio(0);
+    setEnPausa(false);
+    setVista('clientes');
   };
 
-  const filteredOrders = orders.filter(o => 
-    o.nv.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (o.cliente && o.cliente.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Formatear tiempo
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Filtrar clientes
+  const clientesFiltrados = clientesAgrupados.filter(c =>
+    c.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.nvList.some(nv => nv.nv.toString().includes(searchTerm))
   );
 
-  if (view === 'ACTIVE' && activeOrder) {
+  // ==================== VISTA: CLIENTES ====================
+  if (vista === 'clientes') {
     return (
-      <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-slate-500 text-sm font-bold uppercase tracking-wider">Packing Activo</span>
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-800">N.V {activeOrder.nv}</h2>
-                        <p className="text-slate-500 font-medium">{activeOrder.cliente}</p>
-                    </div>
-                    <button 
-                        onClick={() => setView('LIST')}
-                        className="text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2"
-                    >
-                        <ArrowLeft size={18} /> Volver
-                    </button>
-                </div>
-
-                {/* Formulario de Datos */}
-                <div className="space-y-4">
-                    <div className="bg-amber-50 p-6 rounded-lg border border-amber-100">
-                        <h4 className="font-bold text-amber-800 flex items-center gap-2 mb-4">
-                            <Box size={20} /> Datos de Empaque
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-bold text-amber-700 uppercase mb-2">Cantidad de Bultos</label>
-                                <input 
-                                    type="number" 
-                                    min="1"
-                                    value={packingData.bultos}
-                                    onChange={(e) => setPackingData({...packingData, bultos: parseInt(e.target.value) || 0})}
-                                    className="w-full text-center text-3xl font-black p-3 rounded-lg border border-amber-200 focus:ring-4 focus:ring-amber-200 focus:border-amber-400 outline-none transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-amber-700 uppercase mb-2">Cantidad de Pallets</label>
-                                <input 
-                                    type="number" 
-                                    min="0"
-                                    value={packingData.pallets}
-                                    onChange={(e) => setPackingData({...packingData, pallets: parseInt(e.target.value) || 0})}
-                                    className="w-full text-center text-3xl font-black p-3 rounded-lg border border-amber-200 focus:ring-4 focus:ring-amber-200 focus:border-amber-400 outline-none transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-amber-700 uppercase mb-2">Peso Total Bultos (kg)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.1"
-                                    value={packingData.pesoBulto}
-                                    onChange={(e) => setPackingData({...packingData, pesoBulto: parseFloat(e.target.value) || 0})}
-                                    className="w-full text-center font-bold p-3 rounded-lg border border-amber-200 focus:ring-4 focus:ring-amber-200 focus:border-amber-400 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-amber-700 uppercase mb-2">Peso Total c/Pallet (kg)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.1"
-                                    value={packingData.pesoPallet}
-                                    onChange={(e) => setPackingData({...packingData, pesoPallet: parseFloat(e.target.value) || 0})}
-                                    className="w-full text-center font-bold p-3 rounded-lg border border-amber-200 focus:ring-4 focus:ring-amber-200 focus:border-amber-400 outline-none"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-6">
-                            <label className="block text-xs font-bold text-amber-700 uppercase mb-2">Observaciones Adicionales</label>
-                            <textarea 
-                                value={packingData.observaciones}
-                                onChange={(e) => setPackingData({...packingData, observaciones: e.target.value})}
-                                className="w-full p-3 rounded-lg border border-amber-200 focus:ring-4 focus:ring-amber-200 focus:border-amber-400 outline-none text-sm resize-none"
-                                rows="3"
-                                placeholder="Ej: Frágil, Mantener vertical, etc..."
-                            />
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={completePacking}
-                        disabled={loading}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-200 flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1 text-lg"
-                    >
-                        <Truck size={24} /> {loading ? 'Procesando...' : 'Finalizar y Pasar a Despacho'}
-                    </button>
-                </div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-end">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Box className="text-white" size={24} />
             </div>
-            
-            {/* Items List Summary */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100 bg-slate-50">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <Package size={18} className="text-indigo-600" /> Contenido del Pedido ({activeItems.length} items)
-                    </h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
-                            <tr>
-                                <th className="px-4 py-3">Código</th>
-                                <th className="px-4 py-3">Descripción</th>
-                                <th className="px-4 py-3 text-right">Cant.</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {activeItems.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td className="px-4 py-3 font-mono font-bold text-slate-600">{item.codigo_producto}</td>
-                                    <td className="px-4 py-3 text-slate-600">{item.descripcion_producto}</td>
-                                    <td className="px-4 py-3 text-right font-bold">{item.cantidad} {item.unidad}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">Packing</h2>
+              <p className="text-slate-500 text-sm">Empaque de notas de venta por cliente</p>
             </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
+              <Search size={18} className="text-slate-400 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Buscar cliente o N.V..." 
+                className="outline-none text-sm w-48"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={fetchData}
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Actualizar
+            </button>
+          </div>
         </div>
+
+        {/* Tabs de vista */}
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setVista('clientes')}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium flex items-center gap-2"
+          >
+            <LayoutGrid size={18} /> Por Cliente
+          </button>
+          <button 
+            className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <List size={18} /> Lista N.V.
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase mb-2">
+              <Users size={14} /> Clientes
+            </div>
+            <p className="text-2xl font-bold text-slate-800">{clientesAgrupados.length}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-indigo-200 shadow-sm">
+            <div className="flex items-center gap-2 text-indigo-500 text-xs font-semibold uppercase mb-2">
+              <FileText size={14} /> N.V. en Packing
+            </div>
+            <p className="text-2xl font-bold text-indigo-600">{nvData.length}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+            <div className="flex items-center gap-2 text-amber-500 text-xs font-semibold uppercase mb-2">
+              <Package size={14} /> Total Bultos
+            </div>
+            <p className="text-2xl font-bold text-amber-600">
+              {nvData.reduce((sum, nv) => sum + (parseInt(nv.cantidad) || 0), 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+            <div className="flex items-center gap-2 text-emerald-500 text-xs font-semibold uppercase mb-2">
+              <Timer size={14} /> Operador
+            </div>
+            <p className="text-sm font-bold text-emerald-600">{usuario.nombre}</p>
+          </div>
+        </div>
+
+        {/* Grid de Clientes */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <RefreshCw className="animate-spin text-indigo-500" size={32} />
+          </div>
+        ) : clientesFiltrados.length === 0 ? (
+          <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+            <Package size={48} className="mx-auto text-slate-300 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-600">No hay N.V. en Packing</h3>
+            <p className="text-sm text-slate-400">Las notas de venta aparecerán aquí cuando lleguen del Picking</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {clientesFiltrados.map((grupo, index) => (
+              <div 
+                key={index}
+                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+              >
+                {/* Header del cliente */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <User size={20} className="text-indigo-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-sm truncate max-w-[180px]" title={grupo.cliente}>
+                          {grupo.cliente}
+                        </h3>
+                        <p className="text-xs text-slate-500">{grupo.totalItems} N.V.</p>
+                      </div>
+                    </div>
+                    <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">
+                      {grupo.totalBultos} items
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Lista de N.V. */}
+                <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                  {grupo.nvList.map((nv, i) => (
+                    <div 
+                      key={i}
+                      className="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div>
+                        <p className="font-mono text-sm font-bold text-indigo-600">#{nv.nv}</p>
+                        <p className="text-xs text-slate-500 truncate max-w-[120px]">{nv.codigo_producto}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-700">{nv.cantidad}</span>
+                        <button
+                          onClick={() => iniciarPacking(nv)}
+                          className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                          title="Iniciar Packing"
+                        >
+                          <Play size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
-  // --- LIST VIEW ---
+  // ==================== VISTA: PACKING ACTIVO ====================
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Packing</h2>
-          <p className="text-slate-500 text-sm">Registro de bultos y preparación para despacho</p>
+      {/* Header con timer */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
+        <div className="flex justify-between items-start mb-6">
+          <button 
+            onClick={cancelarPacking}
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={20} /> Cancelar
+          </button>
+          <div className="text-right">
+            <p className="text-white/70 text-sm">Operador</p>
+            <p className="font-bold">{usuario.nombre}</p>
+          </div>
         </div>
-      </div>
-
-      <div className="flex gap-3">
-        <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm flex-1 max-w-md">
-            <Search size={18} className="text-slate-400 mr-2" />
-            <input 
-                type="text" 
-                placeholder="Buscar N.V..." 
-                className="outline-none text-sm w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
-        <button 
-            onClick={fetchOrders}
-            className="bg-white border hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
-        >
-            <Filter size={16} /> Recargar
-        </button>
-      </div>
-
-      {loading && orders.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">Cargando órdenes para packing...</div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
-            <Package size={48} className="mx-auto mb-4 opacity-20" />
-            <p>No hay órdenes pendientes de empaque</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredOrders.map((order) => (
-                <div key={order.nv} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow group">
-                    <div className="p-5">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="bg-blue-100 text-blue-700 p-2 rounded-lg font-bold text-xs">
-                                    NV
-                                </div>
-                                <span className="text-xl font-black text-slate-800">{order.nv}</span>
-                            </div>
-                            {renderStatusBadge(order.estado)}
-                        </div>
-                        
-                        <div className="space-y-3 mb-6">
-                            <div className="flex items-start gap-3">
-                                <User size={18} className="text-slate-400 mt-0.5" />
-                                <div>
-                                    <p className="text-sm font-bold text-slate-700">{order.cliente}</p>
-                                    <p className="text-xs text-slate-400">{order.vendedor}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Calendar size={18} className="text-slate-400" />
-                                <p className="text-sm text-slate-600">
-                                    {new Date(order.fecha_emision).toLocaleDateString()}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Box size={18} className="text-slate-400" />
-                                <p className="text-sm text-slate-600 font-medium">
-                                    {order.total_items} items
-                                </p>
-                            </div>
-                        </div>
-
-                        <button 
-                            onClick={() => startPacking(order)}
-                            className="w-full bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all"
-                        >
-                            <Package size={18} /> Iniciar Packing
-                        </button>
-                    </div>
+        
+        <div className="text-center">
+          <p className="text-white/70 text-sm mb-1">Empacando N.V.</p>
+          <h1 className="text-4xl font-black mb-4">#{nvActiva?.nv}</h1>
+          
+          {/* Timer principal */}
+          <div className="flex justify-center gap-8">
+            <div className="text-center">
+              <div className={`text-5xl font-mono font-bold ${enPausa ? 'text-amber-300' : ''}`}>
+                {formatTime(tiempoTranscurrido)}
+              </div>
+              <p className="text-white/70 text-sm mt-1">Tiempo Activo</p>
+            </div>
+            
+            {tiempoOcio > 0 && (
+              <div className="text-center">
+                <div className="text-3xl font-mono font-bold text-red-300">
+                  {formatTime(tiempoOcio)}
                 </div>
-            ))}
+                <p className="text-white/70 text-sm mt-1">Tiempo Ocio</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Controles */}
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              onClick={togglePausa}
+              className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                enPausa 
+                  ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              {enPausa ? <Play size={20} /> : <Pause size={20} />}
+              {enPausa ? 'Reanudar' : 'Pausar'}
+            </button>
+            
+            <button
+              onClick={finalizarPacking}
+              className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg"
+            >
+              <CheckCircle size={20} />
+              Finalizar Packing
+            </button>
+          </div>
+          
+          {enPausa && (
+            <div className="mt-4 bg-amber-500/30 border border-amber-400 rounded-lg px-4 py-2 inline-flex items-center gap-2">
+              <AlertCircle size={16} />
+              <span className="text-sm font-medium">En pausa - El tiempo de ocio se está contando</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Detalle de la N.V. */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Info del producto */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <Package size={18} className="text-indigo-500" />
+            Detalle del Producto
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+              <p className="text-xs text-indigo-500 font-semibold uppercase">Código</p>
+              <p className="text-xl font-mono font-bold text-indigo-700">{nvActiva?.codigo_producto}</p>
+            </div>
+            
+            <div>
+              <p className="text-xs text-slate-400 font-semibold uppercase">Descripción</p>
+              <p className="text-slate-700">{nvActiva?.descripcion_producto}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100">
+                <p className="text-3xl font-black text-emerald-600">{nvActiva?.cantidad}</p>
+                <p className="text-xs text-emerald-700">{nvActiva?.unidad || 'UNI'}</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+                <p className="text-xl font-bold text-slate-600">{nvActiva?.fecha_emision ? new Date(nvActiva.fecha_emision).toLocaleDateString() : '-'}</p>
+                <p className="text-xs text-slate-500">Fecha</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Info del cliente */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <User size={18} className="text-indigo-500" />
+            Información del Cliente
+          </h3>
+          
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-slate-400 font-semibold uppercase">Cliente</p>
+              <p className="text-lg font-bold text-slate-800">{nvActiva?.cliente}</p>
+            </div>
+            
+            <div>
+              <p className="text-xs text-slate-400 font-semibold uppercase">Vendedor</p>
+              <p className="text-slate-700">{nvActiva?.vendedor || '-'}</p>
+            </div>
+            
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+              <p className="text-xs text-amber-600 font-semibold uppercase mb-1">Siguiente Paso</p>
+              <div className="flex items-center gap-2 text-amber-700">
+                <Send size={18} />
+                <span className="font-bold">LISTO DESPACHO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
