@@ -1,28 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Lock, Eye, EyeOff, Loader2, ShieldCheck, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
+  
+  const { login, loading, error, isAuthenticated } = useAuth();
 
-  const handleLogin = (e) => {
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    
+    if (!email || !password) {
+      return;
+    }
 
-    setTimeout(() => {
-      if (email === 'admin' && password === 'admin') {
-        navigate('/dashboard');
-      } else {
-        setError('Credenciales inválidas');
-        setLoading(false);
-      }
-    }, 1500);
+    const success = await login(email, password);
+    if (success) {
+      navigate('/dashboard', { replace: true });
+    }
   };
 
   return (
@@ -47,7 +53,7 @@ const Login = () => {
         </div>
 
         {error && (
-          <div className="mb-4 text-center text-red-500 text-sm font-medium">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-center text-red-600 text-sm font-medium">
             {error}
           </div>
         )}
@@ -58,10 +64,11 @@ const Login = () => {
               <User className="text-slate-400" size={18} />
             </div>
             <input 
-              type="text" 
+              type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:bg-white transition-all text-sm text-slate-700 font-medium placeholder:text-slate-400"
+              disabled={loading}
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:bg-white transition-all text-sm text-slate-700 font-medium placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Correo corporativo"
               required
             />
@@ -75,14 +82,16 @@ const Login = () => {
               type={showPassword ? "text" : "password"} 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:bg-white transition-all text-sm text-slate-700 font-medium placeholder:text-slate-400"
+              disabled={loading}
+              className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:bg-white transition-all text-sm text-slate-700 font-medium placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Contraseña de acceso"
               required
             />
             <button 
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+              disabled={loading}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 disabled:cursor-not-allowed"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -91,7 +100,7 @@ const Login = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-[#EA580C] hover:bg-orange-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center gap-2 mt-2"
+            className="w-full bg-[#EA580C] hover:bg-orange-700 disabled:bg-orange-400 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center gap-2 mt-2 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : (
               <>
@@ -102,8 +111,17 @@ const Login = () => {
           </button>
         </form>
 
+        {/* Demo Users Info */}
+        <div className="mt-8 bg-blue-50 rounded-xl p-3 border border-blue-200">
+          <p className="text-xs font-bold text-blue-800 mb-2">📝 Usuarios de Prueba:</p>
+          <div className="space-y-1 text-[10px] text-blue-700 font-mono">
+            <p>Email: admin@cco.cl | Pass: 123456</p>
+            <p>Email: operador@cco.cl | Pass: 123456</p>
+          </div>
+        </div>
+
         {/* Footer Seguro */}
-        <div className="mt-8 bg-emerald-50 rounded-xl p-3 flex items-center gap-3 border border-emerald-100">
+        <div className="mt-4 bg-emerald-50 rounded-xl p-3 flex items-center gap-3 border border-emerald-100">
           <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
             <ShieldCheck size={20} />
           </div>

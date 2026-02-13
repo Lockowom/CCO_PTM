@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Placeholder from './components/Placeholder';
 
@@ -40,22 +41,45 @@ import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
 import Mediciones from './pages/Admin/Mediciones';
 
-// Layout Wrapper to apply Sidebar to internal pages
+// Ruta Protegida - Solo si está autenticado
+const ProtectedRoute = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-slate-500">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+};
+
+// Layout Wrapper para rutas protegidas
 const AppLayout = () => (
   <Layout>
     <Outlet />
   </Layout>
 );
 
-function App() {
+function AppContent() {
   return (
     <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         
-        {/* Protected Routes (Wrapped in Layout) */}
-        <Route path="/" element={<AppLayout />}>
+        {/* Protected Routes (Wrapped in ProtectedRoute) */}
+        <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           
@@ -101,6 +125,14 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

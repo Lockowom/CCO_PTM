@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabase';
 import { 
   LayoutDashboard, Map, Satellite, Users, Smartphone, Loader2,
@@ -13,10 +14,18 @@ import {
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [modulesConfig, setModulesConfig] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
 
   // Cargar configuración de módulos desde BD
   useEffect(() => {
@@ -232,22 +241,25 @@ const Navbar = () => {
 
         {/* Right: User Profile & Actions */}
         <div className="flex items-center gap-4 min-w-fit">
-          <div className="hidden xl:flex items-center gap-3 pl-4 border-l border-slate-200">
-            <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
-              A
+          {/* User Profile */}
+          {user && (
+            <div className="hidden xl:flex items-center gap-3 pl-4 border-l border-slate-200">
+              <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
+                {user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-800 leading-none capitalize">{user.nombre}</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">{user.rol}</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-slate-800 leading-none">Administrador</span>
-              <span className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ADMIN</span>
-            </div>
-          </div>
+          )}
 
           <div className="hidden md:flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-blue-600 text-xs font-bold border border-blue-100">
             <Clock size={14} />
             {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}
           </div>
 
-          <Link to="/login" className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-red-200 transition-colors">
+          <button onClick={handleLogout} className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-red-200 transition-colors">
             <LogOut size={16} />
             Salir
           </Link>
