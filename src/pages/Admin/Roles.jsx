@@ -131,12 +131,6 @@ const RolesPage = () => {
 
       if (rolesError) throw rolesError;
 
-      const { data: permsData, error: permsError } = await supabase
-        .from('tms_roles_permisos')
-        .select('rol_id, permiso_id');
-
-      if (permsError) throw permsError;
-
       const { data: usersData } = await supabase
         .from('tms_usuarios')
         .select('rol');
@@ -148,12 +142,12 @@ const RolesPage = () => {
         });
       }
 
+      // Formatear roles - ahora usando permisos como JSON en la tabla
       const formattedRoles = rolesData.map(rol => ({
         ...rol,
         usuarios: userCounts[rol.id] || 0,
-        permisos: permsData
-          .filter(p => p.rol_id === rol.id)
-          .map(p => p.permiso_id)
+        // Los permisos están en permisos_json (JSONB) o en un array
+        permisos: rol.permisos_json || rol.permisos || []
       }));
 
       setRoles(formattedRoles);
@@ -198,14 +192,15 @@ const RolesPage = () => {
       // Si es ADMIN, siempre usar el nombre original 'Administrador'
       const roleName = selectedRole.id === 'ADMIN' ? 'Administrador' : selectedRole.nombre;
 
-      // PASO 1: Guardar o actualizar rol
+      // SOLUCIÓN DEFINITIVA: Guardar permisos como JSON en la tabla tms_roles
       const { error: roleError } = await supabase
         .from('tms_roles')
         .upsert(
           {
             id: roleId,
             nombre: roleName,
-            descripcion: selectedRole.descripcion
+            descripcion: selectedRole.descripcion,
+            permisos_json: selectedRole.permisos || []  // Guardar permisos como JSON
           },
           { onConflict: 'id' }
         );
@@ -215,35 +210,7 @@ const RolesPage = () => {
         throw new Error(`Error al guardar rol: ${roleError.message}`);
       }
 
-      // PASO 2: Eliminar todos los permisos existentes del rol
-      const { error: deleteError } = await supabase
-        .from('tms_roles_permisos')
-        .delete()
-        .eq('rol_id', roleId);
-
-      if (deleteError) {
-        console.error('Error deleting permissions:', deleteError);
-        throw new Error(`Error al eliminar permisos: ${deleteError.message}`);
-      }
-
-      // PASO 3: Insertar los nuevos permisos
-      if (selectedRole.permisos && selectedRole.permisos.length > 0) {
-        const permsToInsert = selectedRole.permisos.map(p => ({
-          rol_id: roleId,
-          permiso_id: p
-        }));
-        
-        const { error: insertError } = await supabase
-          .from('tms_roles_permisos')
-          .insert(permsToInsert);
-
-        if (insertError) {
-          console.error('Error inserting permissions:', insertError);
-          throw new Error(`Error al guardar permisos: ${insertError.message}`);
-        }
-      }
-
-      // PASO 4: Recargar datos
+      // PASO 2: Recargar datos
       await fetchRolesAndPermissions();
       setIsEditing(false);
       setIsCreating(false);
@@ -263,14 +230,23 @@ const RolesPage = () => {
     if (!confirm('¿Eliminar este rol?')) return;
     
     try {
-      await supabase.from('tms_roles_permisos').delete().eq('rol_id', roleId);
-      await supabase.from('tms_roles').delete().eq('id', roleId);
+      setLoading(true);
+      // SOLUCIÓN DEFINITIVA: Solo eliminar de tms_roles (permisos están como JSON)
+      const { error } = await supabase
+        .from('tms_roles')
+        .delete()
+        .eq('id', roleId);
+      
+      if (error) throw error;
       
       await fetchRolesAndPermissions();
       setSelectedRole(null);
+      alert('✓ Rol eliminado exitosamente');
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al eliminar');
+      alert('❌ Error al eliminar: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
