@@ -95,7 +95,7 @@ const Sidebar = () => {
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import']
   };
 
   // Mapeo de rutas a permisos específicos
@@ -125,7 +125,8 @@ const Sidebar = () => {
     '/admin/roles': 'manage_roles',
     '/admin/views': 'manage_views',
     '/admin/reports': 'manage_reports',
-    '/admin/mediciones': 'manage_mediciones'
+    '/admin/mediciones': 'manage_mediciones',
+    '/admin/data-import': 'manage_data_import'
   };
 
   const isEnabled = (moduleId) => {

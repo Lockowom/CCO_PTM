@@ -170,7 +170,8 @@ const Navbar = () => {
       '/admin/users': 'manage_users',
       '/admin/roles': 'manage_roles',
       '/admin/views': 'manage_views',
-      '/admin/reports': 'manage_reports'
+      '/admin/reports': 'manage_reports',
+      '/admin/data-import': 'manage_data_import'
     };
 
     const requiredPermission = pathPermissions[modulePath];
