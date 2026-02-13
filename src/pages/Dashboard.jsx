@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Truck, AlertCircle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { supabase } from '../supabase';
+
+const API_URL = 'https://cco-ptm.onrender.com/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ entregas: 0, pendientes: 0, enRuta: 0, entregados: 0 });
@@ -15,22 +16,12 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const res = await fetch(`${API_URL}/entregas?limit=100`);
+      const data = await res.json();
       
-      const { data, error } = await supabase
-        .from('tms_entregas')
-        .select('*')
-        .order('fecha_creacion', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      
-      const pieData = [
-        { name: 'Entregados', value: entregados, color: '#10b981' }, // A Tiempo (Simulado)
-        { name: 'Pendientes', value: pendientes, color: '#f97316' }, // Retrasados (Simulado)
-        { name: 'En Ruta', value: enRuta, color: '#3b82f6' }, // En Proceso
-      ];
-
-      setPieData(pieData);
+      const pendientes = data.filter(d => d.estado === 'PENDIENTE').length;
+      const enRuta = data.filter(d => d.estado === 'EN_RUTA').length;
+      const entregados = data.filter(d => d.estado === 'ENTREGADO').length;
       
       setStats({
         entregas: data.length,
@@ -52,12 +43,11 @@ const Dashboard = () => {
     { name: 'Entregados', valor: stats.entregados, color: '#10b981' }
   ];
 
-  // Estado local para el gráfico de torta (inicializado con 0)
-  const [pieData, setPieData] = useState([
-    { name: 'Entregados', value: 0, color: '#10b981' },
-    { name: 'Pendientes', value: 0, color: '#f97316' },
-    { name: 'En Ruta', value: 0, color: '#3b82f6' },
-  ]);
+  const pieData = [
+    { name: 'A Tiempo', value: 400, color: '#10b981' },
+    { name: 'Retrasados', value: 30, color: '#ef4444' },
+    { name: 'En Proceso', value: 300, color: '#3b82f6' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -164,10 +154,8 @@ const Dashboard = () => {
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-              <span className="text-3xl font-bold text-slate-800">
-                {stats.entregas > 0 ? Math.round((stats.entregados / stats.entregas) * 100) : 0}%
-              </span>
-              <span className="text-xs text-slate-400">Completado</span>
+              <span className="text-3xl font-bold text-slate-800">92%</span>
+              <span className="text-xs text-slate-400">On Time</span>
             </div>
           </div>
           

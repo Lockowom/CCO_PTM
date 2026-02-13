@@ -1,336 +1,407 @@
-import React, { useState, useEffect } from 'react';
+// Drivers.jsx - Gestión de Conductores con Realtime
+import React, { useState } from 'react';
+import { useConductores } from '../../hooks/useConductores';
 import { 
-  User, Search, Plus, Edit2, Trash2, 
-  Phone, Truck, CheckCircle, XCircle 
+  User, 
+  Phone, 
+  Car, 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  X, 
+  Check,
+  Search,
+  RefreshCw
 } from 'lucide-react';
-import { supabase } from '../../supabase';
 
 const Drivers = () => {
-  const [loading, setLoading] = useState(false);
-  const [drivers, setDrivers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    conductores,
+    loading,
+    error,
+    crearConductor,
+    actualizarConductor,
+    eliminarConductor,
+  } = useConductores();
+
+  const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [filterText, setFilterText] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
     rut: '',
     telefono: '',
     vehiculo_patente: '',
-    estado: 'DISPONIBLE'
+    estado: 'DISPONIBLE',
   });
 
-  useEffect(() => {
-    fetchDrivers();
-
-    // Habilitar Realtime para actualizar estados en vivo
-    const subscription = supabase
-      .channel('public:tms_conductores')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, (payload) => {
-        fetchDrivers();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
-
-  const fetchDrivers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('tms_conductores')
-        .select('*')
-        .order('nombre', { ascending: true });
-
-      if (error) throw error;
-      setDrivers(data || []);
-    } catch (err) {
-      console.error("Error fetching drivers:", err);
-    } finally {
-      setLoading(false);
-    }
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      apellido: '',
+      rut: '',
+      telefono: '',
+      vehiculo_patente: '',
+      estado: 'DISPONIBLE',
+    });
+    setEditingId(null);
   };
 
-  const handleSubmit = async (e) => {
+  // Abrir modal para crear
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  // Abrir modal para editar
+  const handleOpenEdit = (conductor) => {
+    setFormData({
+      nombre: conductor.nombre || '',
+      apellido: conductor.apellido || '',
+      rut: conductor.rut || '',
+      telefono: conductor.telefono || '',
+      vehiculo_patente: conductor.vehiculo_patente || '',
+      estado: conductor.estado || 'DISPONIBLE',
+    });
+    setEditingId(conductor.id);
+    setShowModal(true);
+  };
+
+  // Guardar (crear o actualizar)
+  const handleSave = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      
       if (editingId) {
-        // Update
-        const { error } = await supabase
-          .from('tms_conductores')
-          .update(formData)
-          .eq('id', editingId);
-        if (error) throw error;
+        await actualizarConductor(editingId, formData);
       } else {
-        // Insert
-        const { error } = await supabase
-          .from('tms_conductores')
-          .insert(formData);
-        if (error) throw error;
+        await crearConductor(formData);
       }
-
-      setIsModalOpen(false);
-      setEditingId(null);
-      setFormData({
-        nombre: '', apellido: '', rut: '', telefono: '', vehiculo_patente: '', estado: 'DISPONIBLE'
-      });
-      fetchDrivers();
-
+      setShowModal(false);
+      resetForm();
     } catch (err) {
-      alert("Error guardando conductor: " + err.message);
-    } finally {
-      setLoading(false);
+      alert('Error: ' + err.message);
     }
   };
 
-  const handleEdit = (driver) => {
-    setEditingId(driver.id);
-    setFormData({
-      nombre: driver.nombre || '',
-      apellido: driver.apellido || '',
-      rut: driver.rut || '',
-      telefono: driver.telefono || '',
-      vehiculo_patente: driver.vehiculo_patente || '',
-      estado: driver.estado || 'DISPONIBLE'
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este conductor? Esta acción no se puede deshacer y podría afectar rutas históricas.")) return;
+  // Eliminar
+  const handleDelete = async (id, nombre) => {
+    if (!confirm(`¿Eliminar a ${nombre}?`)) return;
     try {
-      setLoading(true);
-      // 1. Desvincular entregas asociadas (setear conductor_id a null)
-      // Esto evita errores de clave foránea
-      await supabase
-        .from('tms_entregas')
-        .update({ conductor_id: null })
-        .eq('conductor_id', id);
-
-      // 2. Desvincular rutas asociadas
-      await supabase
-        .from('tms_rutas')
-        .update({ conductor_id: null })
-        .eq('conductor_id', id);
-
-      // 3. Eliminar conductor
-      const { error } = await supabase
-        .from('tms_conductores')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Actualización optimista inmediata
-      setDrivers(prev => prev.filter(d => d.id !== id));
-      
+      await eliminarConductor(id);
     } catch (err) {
-      alert("Error eliminando: " + err.message);
-    } finally {
-      setLoading(false);
+      alert('Error al eliminar: ' + err.message);
     }
   };
 
-  const filteredDrivers = drivers.filter(d => 
-    d.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (d.apellido && d.apellido.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Cambiar estado rápido
+  const handleEstadoChange = async (id, nuevoEstado) => {
+    try {
+      await actualizarConductor(id, { estado: nuevoEstado });
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  // Filtrar conductores
+  const filteredConductores = conductores.filter(c =>
+    c.nombre?.toLowerCase().includes(filterText.toLowerCase()) ||
+    c.apellido?.toLowerCase().includes(filterText.toLowerCase()) ||
+    c.rut?.toLowerCase().includes(filterText.toLowerCase()) ||
+    c.vehiculo_patente?.toLowerCase().includes(filterText.toLowerCase())
   );
 
-  // NVs asignadas state
-  const [showNvs, setShowNvs] = useState(false);
-  const [selectedDriverNvs, setSelectedDriverNvs] = useState([]);
-  const [selectedDriverName, setSelectedDriverName] = useState('');
-
-  // Fetch NVs for a specific driver
-  const fetchDriverNvs = async (driverId, driverName) => {
-    try {
-      setLoading(true);
-      setSelectedDriverName(driverName);
-      
-      const { data, error } = await supabase
-        .from('tms_entregas')
-        .select('*')
-        .eq('conductor_id', driverId)
-        .order('fecha_creacion', { ascending: false });
-
-      if (error) throw error;
-      
-      setSelectedDriverNvs(data || []);
-      setShowNvs(true);
-    } catch (err) {
-      alert("Error cargando NVs: " + err.message);
-    } finally {
-      setLoading(false);
+  // Colores de estado
+  const getEstadoStyle = (estado) => {
+    switch (estado) {
+      case 'DISPONIBLE':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'OCUPADO':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'EN_RUTA':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'INACTIVO':
+        return 'bg-slate-100 text-slate-500 border-slate-200';
+      default:
+        return 'bg-slate-100 text-slate-600 border-slate-200';
     }
   };
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+    <div className="flex flex-col h-[calc(100vh-140px)]">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Gestión de Conductores</h2>
-          <p className="text-slate-500 text-sm">Administración de flota y personal de transporte</p>
+          <p className="text-slate-500 text-sm">
+            {conductores.length} conductores registrados • 
+            <span className="text-emerald-600 ml-1">
+              {conductores.filter(c => c.estado === 'DISPONIBLE').length} disponibles
+            </span>
+          </p>
         </div>
-        <button 
-          onClick={() => {
-            setEditingId(null);
-            setFormData({ nombre: '', apellido: '', rut: '', telefono: '', vehiculo_patente: '', estado: 'DISPONIBLE' });
-            setIsModalOpen(true);
-          }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all"
-        >
-          <Plus size={18} /> Nuevo Conductor
-        </button>
-      </div>
-
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div className="bg-slate-50 border rounded-lg flex items-center px-3 py-2 max-w-md">
+        <div className="flex gap-3">
+          <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
             <Search size={18} className="text-slate-400 mr-2" />
-            <input 
-                type="text" 
-                placeholder="Buscar por nombre..." 
-                className="bg-transparent outline-none text-sm w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+            <input
+              type="text"
+              placeholder="Buscar conductor..."
+              className="outline-none text-sm w-48"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
             />
+          </div>
+          <button
+            onClick={handleOpenCreate}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-md transition-all"
+          >
+            <Plus size={18} />
+            Nuevo Conductor
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDrivers.map(driver => (
-          <div key={driver.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow relative group">
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => fetchDriverNvs(driver.id, `${driver.nombre} ${driver.apellido}`)} className="text-slate-400 hover:text-blue-600 bg-slate-50 p-1.5 rounded-lg" title="Ver NVs asignadas"><Truck size={16} /></button>
-              <button onClick={() => handleEdit(driver)} className="text-slate-400 hover:text-indigo-600 bg-slate-50 p-1.5 rounded-lg"><Edit2 size={16} /></button>
-              <button onClick={() => handleDelete(driver.id)} className="text-slate-400 hover:text-red-600 bg-slate-50 p-1.5 rounded-lg"><Trash2 size={16} /></button>
-            </div>
-            
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xl">
-                {driver.nombre.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800">{driver.nombre} {driver.apellido}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${driver.estado === 'DISPONIBLE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                  {driver.estado}
-                </span>
-              </div>
-            </div>
-            
-            <div className="space-y-2 text-sm text-slate-600">
-              <div className="flex items-center gap-2">
-                <Truck size={16} className="text-slate-400" />
-                <span className="font-mono bg-slate-50 px-1 rounded">{driver.vehiculo_patente || 'Sin Vehículo'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-slate-400" />
-                <span>{driver.telefono || 'Sin Teléfono'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <User size={16} className="text-slate-400" />
-                <span>RUT: {driver.rut || '-'}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Modal NVs */}
-      {showNvs && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg text-slate-800">Cargas Asignadas</h3>
-                <p className="text-sm text-slate-500">Conductor: {selectedDriverName}</p>
-              </div>
-              <button onClick={() => setShowNvs(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
-            </div>
-            <div className="p-6 overflow-y-auto">
-              {selectedDriverNvs.length === 0 ? (
-                <div className="text-center text-slate-400 py-8">No hay NVs asignadas actualmente.</div>
+      {/* Tabla */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
+        <div className="overflow-auto flex-1">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50 sticky top-0">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Conductor
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  RUT
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Vehículo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <RefreshCw className="animate-spin mx-auto text-slate-400 mb-2" size={24} />
+                    <p className="text-slate-400">Cargando conductores...</p>
+                  </td>
+                </tr>
+              ) : filteredConductores.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                    No se encontraron conductores
+                  </td>
+                </tr>
               ) : (
-                <div className="space-y-3">
-                  {selectedDriverNvs.map(nv => (
-                    <div key={nv.id} className="border rounded-lg p-4 flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-slate-800">{nv.nv}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                            nv.estado === 'ENTREGADO' ? 'bg-green-100 text-green-700' :
-                            nv.estado === 'FALLIDO' ? 'bg-red-100 text-red-700' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>
-                            {nv.estado}
-                          </span>
+                filteredConductores.map((conductor) => (
+                  <tr key={conductor.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <User size={18} className="text-indigo-600" />
                         </div>
-                        <p className="text-sm text-slate-600">{nv.cliente}</p>
-                        <p className="text-xs text-slate-400">{nv.direccion}</p>
+                        <div>
+                          <p className="font-medium text-slate-800">
+                            {conductor.nombre} {conductor.apellido}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            ID: {conductor.id.slice(0, 8)}...
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right text-xs text-slate-500">
-                        <div>{nv.bultos} Bultos</div>
-                        {nv.fecha_entrega && <div>Entregado: {new Date(nv.fecha_entrega).toLocaleTimeString()}</div>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {conductor.rut || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Phone size={14} className="text-slate-400" />
+                        {conductor.telefono || '-'}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Car size={14} className="text-slate-400" />
+                        {conductor.vehiculo_patente || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select
+                        value={conductor.estado}
+                        onChange={(e) => handleEstadoChange(conductor.id, e.target.value)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all ${getEstadoStyle(conductor.estado)}`}
+                      >
+                        <option value="DISPONIBLE">Disponible</option>
+                        <option value="OCUPADO">Ocupado</option>
+                        <option value="EN_RUTA">En Ruta</option>
+                        <option value="INACTIVO">Inactivo</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleOpenEdit(conductor)}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                          title="Editar"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(conductor.id, conductor.nombre)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* Modal Crear/Editar */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-slate-800">{editingId ? 'Editar Conductor' : 'Nuevo Conductor'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle size={24} /></button>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Header Modal */}
+            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-800">
+                {editingId ? 'Editar Conductor' : 'Nuevo Conductor'}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
-                  <input required type="text" className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} />
+
+            {/* Form */}
+            <form onSubmit={handleSave} className="p-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Nombre *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.nombre}
+                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="Juan"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Apellido
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.apellido}
+                      onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="Pérez"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Apellido</label>
-                  <input type="text" className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200" value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    RUT
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.rut}
+                    onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="12.345.678-9"
+                  />
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">RUT</label>
-                <input type="text" className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200" value={formData.rut} onChange={e => setFormData({...formData, rut: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Teléfono</label>
-                <input type="text" className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Patente Vehículo</label>
-                  <input type="text" className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 font-mono" value={formData.vehiculo_patente} onChange={e => setFormData({...formData, vehiculo_patente: e.target.value.toUpperCase()})} />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="+56 9 1234 5678"
+                  />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
-                  <select className="w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200" value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value})}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Patente Vehículo
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.vehiculo_patente}
+                    onChange={(e) => setFormData({ ...formData, vehiculo_patente: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="ABCD-12"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Estado
+                  </label>
+                  <select
+                    value={formData.estado}
+                    onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  >
                     <option value="DISPONIBLE">Disponible</option>
                     <option value="OCUPADO">Ocupado</option>
-                    <option value="FUERA_SERVICIO">Fuera de Servicio</option>
+                    <option value="EN_RUTA">En Ruta</option>
+                    <option value="INACTIVO">Inactivo</option>
                   </select>
                 </div>
               </div>
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 border border-slate-300 text-slate-600 py-2 rounded-lg font-bold hover:bg-slate-50">Cancelar</button>
-                <button type="submit" className="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200" disabled={loading}>
-                  {loading ? 'Guardando...' : 'Guardar'}
+
+              {/* Botones */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check size={18} />
+                  {editingId ? 'Guardar Cambios' : 'Crear Conductor'}
                 </button>
               </div>
             </form>

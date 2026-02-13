@@ -1,51 +1,18 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import Layout from './components/Layout';
-
-// Eager load critical pages
 import Login from './pages/Login';
-
-// Lazy load all other pages to improve initial load time
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const RoutePlanning = lazy(() => import('./pages/TMS/RoutePlanning'));
-const Drivers = lazy(() => import('./pages/TMS/Drivers'));
-const SalesStatus = lazy(() => import('./pages/Queries/SalesStatus'));
-const Addresses = lazy(() => import('./pages/Queries/Addresses'));
-const LocationsQuery = lazy(() => import('./pages/Queries/Locations'));
-const LocationsSheet = lazy(() => import('./pages/Queries/LocationsSheet'));
-const Batches = lazy(() => import('./pages/Queries/Batches'));
-const Stock = lazy(() => import('./pages/Inventory/Stock'));
-const InventoryLayout = lazy(() => import('./pages/Inventory/Layout'));
-const SalesOrders = lazy(() => import('./pages/Outbound/SalesOrders'));
-const Picking = lazy(() => import('./pages/Outbound/Picking'));
-const Packing = lazy(() => import('./pages/Outbound/Packing'));
-const Shipping = lazy(() => import('./pages/Outbound/Shipping'));
-const Reception = lazy(() => import('./pages/Inbound/Reception'));
-const Entry = lazy(() => import('./pages/Inbound/Entry'));
-const Users = lazy(() => import('./pages/Admin/Users'));
-const Roles = lazy(() => import('./pages/Admin/Roles'));
-const Views = lazy(() => import('./pages/Admin/Views'));
-const Placeholder = lazy(() => import('./components/Placeholder'));
-
-// Loading Component
-const PageLoader = () => (
-  <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-    <Loader2 size={48} className="animate-spin text-indigo-500 mb-4" />
-    <p className="text-slate-500 font-medium animate-pulse">Cargando módulo...</p>
-  </div>
-);
+import Dashboard from './pages/Dashboard';
+import RoutePlanning from './pages/TMS/RoutePlanning';
+import Drivers from './pages/TMS/Drivers';
+import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
 const AppLayout = () => (
   <Layout>
-    <Suspense fallback={<PageLoader />}>
-      <Outlet />
-    </Suspense>
+    <Outlet />
   </Layout>
 );
-
-import MobileApp from './pages/TMS/MobileApp';
 
 function App() {
   return (
@@ -60,39 +27,37 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           
           {/* TMS Modules */}
-          <Route path="tms/dashboard" element={<Dashboard />} />
+          <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
-          <Route path="tms/control-tower" element={<Dashboard />} />
+          <Route path="tms/control-tower" element={<Placeholder title="Torre de Control" />} />
           <Route path="tms/drivers" element={<Drivers />} />
-          <Route path="tms/mobile" element={<MobileApp />} />
+          <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
 
           {/* Inbound Modules */}
-          <Route path="inbound/reception" element={<Reception />} />
-          <Route path="inbound/entry" element={<Entry />} />
+          <Route path="inbound/reception" element={<Placeholder title="Recepción" />} />
+          <Route path="inbound/entry" element={<Placeholder title="Ingreso" />} />
 
           {/* Outbound Modules */}
-          <Route path="outbound/sales-orders" element={<SalesOrders />} />
-          <Route path="outbound/picking" element={<Picking />} />
-          <Route path="outbound/packing" element={<Packing />} />
-          <Route path="outbound/shipping" element={<Shipping />} />
+          <Route path="outbound/sales-orders" element={<Placeholder title="Notas de Venta" />} />
+          <Route path="outbound/picking" element={<Placeholder title="Picking" />} />
+          <Route path="outbound/packing" element={<Placeholder title="Packing" />} />
+          <Route path="outbound/shipping" element={<Placeholder title="Despachos" />} />
           <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
 
           {/* Inventory Modules */}
-          <Route path="inventory/stock" element={<Stock />} />
-          <Route path="inventory/layout" element={<InventoryLayout />} />
+          <Route path="inventory/stock" element={<Placeholder title="Stock Actual" />} />
+          <Route path="inventory/layout" element={<Placeholder title="Layout Bodega" />} />
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
 
           {/* Queries Modules */}
-          <Route path="queries/batches" element={<Batches />} />
-          <Route path="queries/sales-status" element={<SalesStatus />} />
-          <Route path="queries/addresses" element={<Addresses />} />
-          <Route path="queries/locations" element={<LocationsQuery />} />
-          <Route path="queries/locations-sheet" element={<LocationsSheet />} />
+          <Route path="queries/batches" element={<Placeholder title="Consulta Lotes/Series" />} />
+          <Route path="queries/sales-status" element={<Placeholder title="Estado N.V." />} />
+          <Route path="queries/addresses" element={<Placeholder title="Direcciones" />} />
 
           {/* Admin Modules */}
-          <Route path="admin/users" element={<Users />} />
-          <Route path="admin/roles" element={<Roles />} />
-          <Route path="admin/views" element={<Views />} />
+          <Route path="admin/users" element={<Placeholder title="Usuarios" />} />
+          <Route path="admin/roles" element={<Placeholder title="Roles y Permisos" />} />
+          <Route path="admin/views" element={<Placeholder title="Configuración de Vistas" />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes" />} />
         </Route>
 
