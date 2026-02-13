@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RoutePlanning from './pages/TMS/RoutePlanning';
 import Drivers from './pages/TMS/Drivers';
+import ControlTower from './pages/TMS/ControlTower';
+import MobileApp from './pages/TMS/MobileApp';
 import Placeholder from './components/Placeholder';
 
 // Layout Wrapper to apply Sidebar to internal pages
@@ -29,9 +31,9 @@ function App() {
           {/* TMS Modules */}
           <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
-          <Route path="tms/control-tower" element={<Placeholder title="Torre de Control" />} />
+          <Route path="tms/control-tower" element={<ControlTower />} />
           <Route path="tms/drivers" element={<Drivers />} />
-          <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
+          <Route path="tms/mobile" element={<MobileApp />} />
 
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<Placeholder title="Recepción" />} />
