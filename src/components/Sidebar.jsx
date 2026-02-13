@@ -39,6 +39,27 @@ const Sidebar = () => {
 
   useEffect(() => {
     fetchModulesConfig();
+
+    // REALTIME: Escuchar cambios en tms_modules_config
+    const channel = supabase
+      .channel('tms_modules_config_sidebar')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tms_modules_config'
+        },
+        (payload) => {
+          console.log('🔄 Cambio en módulos del sidebar (Realtime):', payload);
+          fetchModulesConfig();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   const fetchModulesConfig = async () => {
@@ -64,8 +85,12 @@ const Sidebar = () => {
   };
 
   const isEnabled = (moduleId) => {
-    // Si está cargando, asumimos true para no parpadear, o false si preferimos ocultar
-    // Si no existe en la config, asumimos true por defecto
+    // Para módulos individuales (ej: 'tms-dashboard'), verificar su sección padre
+    if (moduleId.includes('-')) {
+      const parentSection = moduleId.split('-')[0]; // 'tms' de 'tms-dashboard'
+      return modulesConfig[parentSection] !== false;
+    }
+    // Para secciones principales, permitir por defecto si no está explícitamente deshabilitada
     return modulesConfig[moduleId] !== false;
   };
 
