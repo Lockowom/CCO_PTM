@@ -45,6 +45,8 @@ const AppLayout = () => (
   </Layout>
 );
 
+import MobileApp from './pages/TMS/MobileApp';
+
 function App() {
   return (
     <Router>
@@ -62,7 +64,7 @@ function App() {
           <Route path="tms/planning" element={<RoutePlanning />} />
           <Route path="tms/control-tower" element={<Dashboard />} />
           <Route path="tms/drivers" element={<Drivers />} />
-          <Route path="tms/mobile" element={<Placeholder title="App Móvil" />} />
+          <Route path="tms/mobile" element={<MobileApp />} />
 
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<Reception />} />
