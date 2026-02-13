@@ -10,6 +10,19 @@ const LocationsSheet = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Habilitar Realtime
+    const subscription = supabase
+      .channel('public:wms_ubicaciones')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_ubicaciones' }, (payload) => {
+        // Al recibir cambio, recargamos la data (estrategia simple para consistencia total)
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const fetchData = async () => {
