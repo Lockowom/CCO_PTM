@@ -98,6 +98,16 @@ const PIPELINE_ESTADOS = [
     description: 'En camino'
   },
   { 
+    key: 'NULA', 
+    label: 'Nula', 
+    icon: X, 
+    bgColor: 'bg-red-500',
+    lightBg: 'bg-red-50',
+    textColor: 'text-red-700',
+    borderColor: 'border-red-200',
+    description: 'Venta anulada'
+  },
+  { 
     key: 'Refacturacion', 
     label: 'Refacturación', 
     icon: RotateCcw, 
@@ -110,7 +120,7 @@ const PIPELINE_ESTADOS = [
 ];
 
 // Estados que se muestran en el pipeline (antes de despachar)
-const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping'];
+const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping', 'NULA', 'Refacturacion'];
 
 // Acciones: desde qué estado a cuál
 const ACCIONES_ESTADO = {
@@ -510,7 +520,7 @@ const SalesOrders = () => {
               <div className="bg-white rounded-xl border border-slate-200 p-4">
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Cambiar Estado</h3>
                 <div className="flex flex-wrap gap-2">
-                  {PIPELINE_ESTADOS.filter(e => e.key !== 'Refacturacion').map((estado) => {
+                  {PIPELINE_ESTADOS.map((estado) => {
                     const isCurrent = selectedOrder.estado === estado.key || 
                                      (selectedOrder.estado === 'PENDIENTE' && estado.key === 'Pendiente');
                     const accion = ACCIONES_ESTADO[selectedOrder.estado] || 
