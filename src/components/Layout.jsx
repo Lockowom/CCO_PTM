@@ -1,5 +1,6 @@
 import React from 'react';
 import Navbar from './Navbar';
+import ErrorReportWidget from './ErrorReportWidget'; // Nuevo Widget
 
 const Layout = ({ children }) => {
   return (
@@ -13,6 +14,9 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* Widget Global de Errores */}
+      <ErrorReportWidget />
     </div>
   );
 };
