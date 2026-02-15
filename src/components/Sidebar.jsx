@@ -3,13 +3,38 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import {
-  LayoutDashboard, Map, Satellite, Users, Smartphone,
-  ArrowDownToLine, Truck, PackagePlus, ArrowUpFromLine,
-  FileText, Hand, Package, Ship, Warehouse, MapPin,
-  ArrowLeftRight, Search, Barcode, MapPinned, Settings,
-  Shield, Layers, FileBarChart, ChevronDown, ChevronRight,
-  History, Timer, Upload, Trash2, Clock, MessageSquareWarning,
-  RefreshCw
+  LayoutDashboard,
+  Map,
+  Satellite,
+  Users,
+  Smartphone,
+  ArrowDownToLine,
+  Truck,
+  PackagePlus,
+  ArrowUpFromLine,
+  FileText,
+  Hand,
+  Package,
+  Ship,
+  Warehouse,
+  MapPin,
+  ArrowLeftRight,
+  Search,
+  Barcode,
+  MapPinned,
+  Settings,
+  Shield,
+  Layers,
+  FileBarChart,
+  ChevronDown,
+  ChevronRight,
+  History,
+  Timer,
+  Upload,
+  Trash2,
+  Clock,
+  MessageSquareWarning,
+  Activity
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -63,7 +88,8 @@ const Sidebar = () => {
     '/admin/data-import': 'manage_data_import',
     '/admin/cleanup': 'manage_cleanup',
     '/admin/time-reports': 'view_time_reports',
-    '/admin/tickets': 'manage_tickets'
+    '/admin/tickets': 'manage_tickets',
+    '/admin/active-users': 'manage_users'
   };
 
   // Verificar si una sección está visible
@@ -194,6 +220,7 @@ const Sidebar = () => {
         { id: 'admin-data-import', label: 'Carga Datos', icon: <Upload size={18} />, path: '/admin/data-import' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
+        { id: 'admin-active-users', label: 'Usuarios', icon: <Activity size={18} />, path: '/admin/active-users' },
         { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquareWarning size={18} />, path: '/admin/tickets' },
         { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]

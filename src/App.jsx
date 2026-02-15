@@ -44,7 +44,8 @@ import Mediciones from './pages/Admin/Mediciones';
 import DataImport from './pages/Admin/DataImport';
 import Cleanup from './pages/Admin/Cleanup';
 import TimeReports from './pages/Admin/TimeReports';
-import Tickets from './pages/Admin/Tickets'; // NUEVO
+import Tickets from './pages/Admin/Tickets';
+import UsuariosActivos from './pages/Admin/UsuariosActivos'; // NUEVO
 
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
@@ -87,7 +88,8 @@ const ROUTE_PERMISSIONS = {
   '/admin/mediciones': ['manage_mediciones'],
   '/admin/reports': ['view_reports'],
   '/admin/time-reports': ['view_time_reports'],
-  '/admin/tickets': ['manage_tickets'], // NUEVO
+  '/admin/tickets': ['manage_tickets'],
+  '/admin/active-users': ['manage_users'], // NUEVO (usa permiso de usuarios)
   '/admin/data-import': ['manage_data_import'],
   '/admin/cleanup': ['manage_cleanup']
 };
@@ -278,6 +280,7 @@ function AppContent() {
           <Route path="admin/reports" element={<Placeholder title="Reportes Generales" />} />
           <Route path="admin/time-reports" element={<TimeReports />} />
           <Route path="admin/tickets" element={<Tickets />} />
+          <Route path="admin/active-users" element={<UsuariosActivos />} />
         </Route>
 
         {/* Fallback */}

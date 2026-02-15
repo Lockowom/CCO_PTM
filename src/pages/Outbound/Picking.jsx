@@ -21,7 +21,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
+import { useAuth } from '../../context/AuthContext'; // Importar contexto de usuario
+
 const Picking = () => {
+  const { user } = useAuth(); // Obtener usuario real
   const [vista, setVista] = useState('lista'); // 'lista' o 'picking'
   const [nvData, setNvData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +38,8 @@ const Picking = () => {
   const [tiempoOcio, setTiempoOcio] = useState(0);
   const [pausaInicio, setPausaInicio] = useState(null);
   
-  // Usuario simulado
-  const [usuario] = useState({ id: 'user-picking-001', nombre: 'Operador Picking' });
+  // Usuario simulado (ELIMINADO - Usar user del contexto)
+  // const [usuario] = useState({ id: 'user-picking-001', nombre: 'Operador Picking' });
   
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
@@ -108,6 +111,12 @@ const Picking = () => {
 
   // Iniciar picking
   const iniciarPicking = async (nv) => {
+    // Verificar si ya está asignada a otro usuario
+    if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
+      alert(`⚠️ Esta N.V. ya está siendo procesada por: ${nv.usuario_nombre}`);
+      return;
+    }
+
     setNvActiva(nv);
     setTiempoInicio(Date.now());
     setTiempoTranscurrido(0);
@@ -115,20 +124,25 @@ const Picking = () => {
     setEnPausa(false);
     setVista('picking');
     
-    // Cambiar estado a "Pendiente Picking" si está "Aprobada"
-    if (nv.estado === 'Aprobada') {
-      await supabase
-        .from('tms_nv_diarias')
-        .update({ estado: 'Pendiente Picking' })
-        .eq('nv', nv.nv);
-    }
+    // Cambiar estado y ASIGNAR USUARIO
+    const updateData = {
+      estado: 'Pendiente Picking',
+      usuario_asignado: user.id,
+      usuario_nombre: user.nombre
+    };
+
+    // Si ya estaba aprobada, cambiar estado, si no solo asignar
+    await supabase
+      .from('tms_nv_diarias')
+      .update(updateData)
+      .eq('nv', nv.nv);
     
-    // Registrar inicio
+    // Registrar inicio en mediciones
     await supabase.from('tms_mediciones_tiempos').insert({
       nv: nv.nv,
       proceso: 'PICKING',
-      usuario_id: usuario.id,
-      usuario_nombre: usuario.nombre,
+      usuario_id: user.id,
+      usuario_nombre: user.nombre,
       inicio_at: new Date().toISOString(),
       estado: 'EN_PROCESO'
     });
@@ -161,19 +175,18 @@ const Picking = () => {
         : 0;
     
     // Determinar nuevo estado según acción
-    // COMPLETO -> PACKING
-    // PARCIAL -> PACKING (con nota)
-    // SIN_STOCK -> QUIEBRE_STOCK (o similar)
     const nuevoEstado = tipoAccion === 'SIN_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING';
 
     try {
-      // Actualizar N.V.
+      // Actualizar N.V. y LIBERAR ASIGNACIÓN (para que packing la tome)
       await supabase
         .from('tms_nv_diarias')
         .update({ 
           estado: nuevoEstado,
           cantidad_real: cantidadPickeada,
-          picking_status: tipoAccion
+          picking_status: tipoAccion,
+          usuario_asignado: null, // Liberar para el siguiente proceso
+          usuario_nombre: null
         })
         .eq('nv', nvActiva.nv);
       
@@ -211,12 +224,23 @@ const Picking = () => {
   // Cancelar
   const cancelarPicking = async () => {
     if (nvActiva) {
+      // Registrar abandono
       await supabase
         .from('tms_mediciones_tiempos')
         .update({ estado: 'ABANDONADO', updated_at: new Date().toISOString() })
         .eq('nv', nvActiva.nv)
         .eq('proceso', 'PICKING')
         .eq('estado', 'EN_PROCESO');
+
+      // Liberar N.V.
+      await supabase
+        .from('tms_nv_diarias')
+        .update({ 
+          estado: 'Aprobada', // Volver a estado anterior
+          usuario_asignado: null,
+          usuario_nombre: null
+        })
+        .eq('nv', nvActiva.nv);
     }
     
     setNvActiva(null);
@@ -306,7 +330,7 @@ const Picking = () => {
             <div className="flex items-center gap-2 text-emerald-600 text-xs font-semibold uppercase mb-2">
               <Timer size={14} /> Operador
             </div>
-            <p className="text-sm font-bold text-emerald-700">{usuario.nombre}</p>
+            <p className="text-sm font-bold text-emerald-700 truncate">{user?.nombre || 'Desconocido'}</p>
           </div>
         </div>
 
@@ -328,19 +352,20 @@ const Picking = () => {
                   <th className="px-4 py-3 text-left font-medium">Producto</th>
                   <th className="px-4 py-3 text-right font-medium">Cantidad</th>
                   <th className="px-4 py-3 text-center font-medium">Estado</th>
+                  <th className="px-4 py-3 text-left font-medium">Asignado</th>
                   <th className="px-4 py-3 text-right font-medium">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-12 text-center">
+                    <td colSpan="7" className="px-4 py-12 text-center">
                       <RefreshCw className="animate-spin mx-auto text-cyan-500" size={24} />
                     </td>
                   </tr>
                 ) : nvFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-12 text-center text-slate-400">
+                    <td colSpan="7" className="px-4 py-12 text-center text-slate-400">
                       <Package size={32} className="mx-auto mb-2 opacity-40" />
                       <p>No hay N.V. pendientes de picking</p>
                     </td>
@@ -367,13 +392,28 @@ const Picking = () => {
                           {nv.estado === 'Aprobada' ? 'Aprobada' : 'En Picking'}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                         {nv.usuario_nombre ? (
+                           <span className="flex items-center gap-1 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg w-fit">
+                             <User size={12} /> {nv.usuario_nombre}
+                           </span>
+                         ) : (
+                           <span className="text-xs text-slate-400 italic">Sin asignar</span>
+                         )}
+                      </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => iniciarPicking(nv)}
-                          className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
-                        >
-                          <Play size={14} /> Iniciar
-                        </button>
+                        {(!nv.usuario_asignado || nv.usuario_asignado === user.id) ? (
+                          <button
+                            onClick={() => iniciarPicking(nv)}
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
+                          >
+                            <Play size={14} /> {nv.usuario_asignado === user.id ? 'Continuar' : 'Iniciar'}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-400 flex items-center justify-end gap-1">
+                            <Users size={12} /> Ocupado
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -397,7 +437,7 @@ const Picking = () => {
           </button>
           <div className="text-right">
             <p className="text-white/70 text-sm">Operador</p>
-            <p className="font-bold">{usuario.nombre}</p>
+            <p className="font-bold">{user?.nombre}</p>
           </div>
         </div>
         

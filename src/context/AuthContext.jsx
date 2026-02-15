@@ -77,6 +77,34 @@ export const AuthProvider = ({ children }) => {
     initSession();
   }, [loadPermissions]);
 
+  // Heartbeat: Actualizar estado 'ONLINE' en BD
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const updateHeartbeat = async () => {
+      try {
+        await supabase
+          .from('tms_usuarios_activos')
+          .upsert({
+            usuario_id: user.id,
+            nombre: user.nombre,
+            rol: user.rol,
+            ultima_actividad: new Date().toISOString(),
+            modulo_actual: window.location.pathname,
+            estado: 'ONLINE'
+          }, { onConflict: 'usuario_id' });
+      } catch (err) {
+        console.error('Error updating heartbeat:', err);
+      }
+    };
+
+    // Actualizar inmediatamente y luego cada 30s
+    updateHeartbeat();
+    const interval = setInterval(updateHeartbeat, 30000);
+
+    return () => clearInterval(interval);
+  }, [user?.id, window.location.pathname]); // Se actualiza al cambiar de ruta también
+
   // Login
   const login = async (email, password) => {
     setLoading(true);

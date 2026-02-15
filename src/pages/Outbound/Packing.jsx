@@ -24,7 +24,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
+import { useAuth } from '../../context/AuthContext'; // Importar contexto
+
 const Packing = () => {
+  const { user } = useAuth(); // Usar usuario real
   // Vista actual: 'clientes' o 'packing'
   const [vista, setVista] = useState('clientes');
   
@@ -57,8 +60,8 @@ const Packing = () => {
     });
   };
   
-  // Usuario simulado (en producción vendría del auth)
-  const [usuario] = useState({ id: 'user-packing-001', nombre: 'Operador Packing' });
+  // Usuario simulado (ELIMINADO - Usar user del contexto)
+  // const [usuario] = useState({ id: 'user-packing-001', nombre: 'Operador Packing' });
   
   // Timer ref
   const timerRef = useRef(null);
@@ -155,6 +158,12 @@ const Packing = () => {
 
   // Iniciar packing de una N.V.
   const iniciarPacking = async (nv) => {
+    // Verificar si ya está asignada a otro usuario
+    if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
+      alert(`⚠️ Esta N.V. ya está siendo procesada por: ${nv.usuario_nombre}`);
+      return;
+    }
+
     setNvActiva(nv);
     setTiempoInicio(Date.now());
     setTiempoTranscurrido(0);
@@ -163,12 +172,21 @@ const Packing = () => {
     setVista('packing');
     setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '' }); // Reset form
     
+    // Asignar usuario
+    await supabase
+      .from('tms_nv_diarias')
+      .update({
+        usuario_asignado: user.id,
+        usuario_nombre: user.nombre
+      })
+      .eq('nv', nv.nv);
+
     // Registrar inicio en mediciones
     await supabase.from('tms_mediciones_tiempos').insert({
       nv: nv.nv,
       proceso: 'PACKING',
-      usuario_id: usuario.id,
-      usuario_nombre: usuario.nombre,
+      usuario_id: user.id,
+      usuario_nombre: user.nombre,
       inicio_at: new Date().toISOString(),
       estado: 'EN_PROCESO'
     });
@@ -206,7 +224,9 @@ const Packing = () => {
           bultos_reales: parseInt(formData.bultos) || 0,
           pallets_reales: parseInt(formData.pallets) || 0,
           peso_real: parseFloat(formData.peso) || 0,
-          peso_sobredimensionado: parseFloat(formData.peso_sobredimensionado) || 0
+          peso_sobredimensionado: parseFloat(formData.peso_sobredimensionado) || 0,
+          usuario_asignado: null, // Liberar
+          usuario_nombre: null
         })
         .eq('nv', nvActiva.nv);
       
@@ -267,6 +287,15 @@ const Packing = () => {
         .eq('nv', nvActiva.nv)
         .eq('proceso', 'PACKING')
         .eq('estado', 'EN_PROCESO');
+
+      // Liberar usuario
+      await supabase
+        .from('tms_nv_diarias')
+        .update({
+          usuario_asignado: null,
+          usuario_nombre: null
+        })
+        .eq('nv', nvActiva.nv);
     }
     
     setNvActiva(null);
@@ -369,11 +398,11 @@ const Packing = () => {
               {nvData.reduce((sum, nv) => sum + (parseInt(nv.cantidad) || 0), 0)}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200 shadow-sm">
             <div className="flex items-center gap-2 text-emerald-500 text-xs font-semibold uppercase mb-2">
               <Timer size={14} /> Operador
             </div>
-            <p className="text-sm font-bold text-emerald-600">{usuario.nombre}</p>
+            <p className="text-sm font-bold text-emerald-600 truncate">{user?.nombre || 'Desconocido'}</p>
           </div>
         </div>
 
@@ -461,7 +490,7 @@ const Packing = () => {
           </button>
           <div className="text-right">
             <p className="text-white/70 text-sm">Operador</p>
-            <p className="font-bold">{usuario.nombre}</p>
+            <p className="font-bold">{user?.nombre}</p>
           </div>
         </div>
         
