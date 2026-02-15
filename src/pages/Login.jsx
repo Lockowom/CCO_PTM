@@ -37,20 +37,19 @@ const Login = () => {
 
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-orange-500 overflow-hidden">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg border border-slate-100 overflow-hidden p-2">
             <img 
               src="https://i.imgur.com/YJh67CY.png" 
               alt="Logo CCO" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
 
-          <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest mb-3 border-2 border-orange-200">
-            SISTEMA WMS
+          <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest mb-3 border border-orange-100">
+            ACCESO AUTORIZADO
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-1">C.C.O</h1>
-          <p className="text-sm text-orange-500 font-bold uppercase tracking-wider">Centro Control Operacional</p>
+          <h1 className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tight mb-1">Control de Bodega</h1>
         </div>
 
         {error && (

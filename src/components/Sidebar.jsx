@@ -211,12 +211,12 @@ const Sidebar = () => {
 
   return (
     <aside className="bg-slate-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col h-screen overflow-y-auto border-r border-slate-700">
-      <div className="p-6 border-b border-slate-700 flex flex-col items-center">
-        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg border-2 border-orange-500 overflow-hidden">
-          <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-cover" />
+      <div className="p-6 border-b border-slate-700 flex flex-col items-center text-center">
+        <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center mb-3 shadow-lg border border-slate-600 p-2">
+          <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">TMS CCO</h1>
-        <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Control Logístico</p>
+        <h1 className="text-xl font-black tracking-tight text-white">C.C.O</h1>
+        <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">Centro Control Operacional</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
