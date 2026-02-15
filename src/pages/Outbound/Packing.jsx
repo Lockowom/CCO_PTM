@@ -80,26 +80,44 @@ const Packing = () => {
 
       if (error) throw error;
 
-      setNvData(data || []);
+      // Agrupar por NV (para tener datos consolidados)
+      const nvGrouped = {};
+      (data || []).forEach(item => {
+        const nvId = item.nv;
+        if (!nvGrouped[nvId]) {
+          nvGrouped[nvId] = {
+            ...item,
+            items: [],
+            total_items: 0,
+            total_cantidad: 0
+          };
+        }
+        nvGrouped[nvId].items.push(item);
+        nvGrouped[nvId].total_items++;
+        nvGrouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
+      });
+
+      const uniqueNVs = Object.values(nvGrouped);
+      setNvData(uniqueNVs); // Lista de NVs únicas
       
-      // Agrupar por cliente
-      const grouped = {};
-      (data || []).forEach(nv => {
+      // Agrupar por cliente (usando las NVs únicas)
+      const groupedByClient = {};
+      uniqueNVs.forEach(nv => {
         const cliente = nv.cliente || 'Sin Cliente';
-        if (!grouped[cliente]) {
-          grouped[cliente] = {
+        if (!groupedByClient[cliente]) {
+          groupedByClient[cliente] = {
             cliente,
             nvList: [],
             totalBultos: 0,
             totalItems: 0
           };
         }
-        grouped[cliente].nvList.push(nv);
-        grouped[cliente].totalItems++;
-        grouped[cliente].totalBultos += parseInt(nv.cantidad) || 1;
+        groupedByClient[cliente].nvList.push(nv);
+        groupedByClient[cliente].totalItems++; // Cantidad de NVs
+        groupedByClient[cliente].totalBultos += nv.total_cantidad; // Suma de productos
       });
       
-      setClientesAgrupados(Object.values(grouped));
+      setClientesAgrupados(Object.values(groupedByClient));
       
     } catch (error) {
       console.error('Error:', error);
@@ -453,10 +471,14 @@ const Packing = () => {
                     >
                       <div>
                         <p className="font-mono text-sm font-bold text-indigo-600">#{nv.nv}</p>
-                        <p className="text-xs text-slate-500 truncate max-w-[120px]">{nv.codigo_producto}</p>
+                        <p className="text-xs text-slate-500 truncate max-w-[120px]">
+                          {nv.total_items > 1 ? `${nv.total_items} items` : nv.codigo_producto}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-700">{nv.cantidad}</span>
+                        <span className="text-sm font-bold text-slate-700">
+                          {nv.total_items > 1 ? `${nv.total_cantidad} un.` : nv.cantidad}
+                        </span>
                         <button
                           onClick={() => iniciarPacking(nv)}
                           className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -630,30 +652,25 @@ const Packing = () => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
             <Package size={18} className="text-indigo-500" />
-            Detalle del Producto
+            Detalle de Productos ({nvActiva?.total_items || 1})
           </h3>
           
-          <div className="space-y-4">
-            <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-              <p className="text-xs text-indigo-500 font-semibold uppercase">Código</p>
-              <p className="text-xl font-mono font-bold text-indigo-700">{nvActiva?.codigo_producto}</p>
-            </div>
-            
-            <div>
-              <p className="text-xs text-slate-400 font-semibold uppercase">Descripción</p>
-              <p className="text-slate-700">{nvActiva?.descripcion_producto}</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100">
-                <p className="text-3xl font-black text-emerald-600">{nvActiva?.cantidad}</p>
-                <p className="text-xs text-emerald-700">{nvActiva?.unidad || 'UNI'}</p>
+          <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+            {(nvActiva?.items || [nvActiva]).map((item, idx) => (
+              <div key={idx} className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 flex items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-xs text-indigo-500 font-semibold uppercase mb-1">Código</p>
+                  <p className="text-lg font-mono font-bold text-indigo-700">{item.codigo_producto}</p>
+                  <p className="text-sm text-slate-600 mt-1">{item.descripcion_producto}</p>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white rounded-lg p-2 text-center border border-indigo-100 shadow-sm">
+                    <p className="text-2xl font-black text-indigo-600">{item.cantidad}</p>
+                    <p className="text-[10px] text-indigo-400 font-bold">{item.unidad || 'UNI'}</p>
+                  </div>
+                </div>
               </div>
-              <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-                <p className="text-xl font-bold text-slate-600">{nvActiva?.fecha_emision ? new Date(nvActiva.fecha_emision).toLocaleDateString() : '-'}</p>
-                <p className="text-xs text-slate-500">Fecha</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 

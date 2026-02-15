@@ -157,15 +157,37 @@ const SalesOrders = () => {
 
       if (error) throw error;
 
-      setOrders(data || []);
+      // AGRUPAR POR N.V.
+      const grouped = {};
+      (data || []).forEach(item => {
+        const nvId = item.nv;
+        if (!grouped[nvId]) {
+          grouped[nvId] = {
+            ...item,
+            items: [],
+            total_items: 0,
+            total_cantidad: 0
+          };
+        }
+        grouped[nvId].items.push(item);
+        grouped[nvId].total_items++;
+        grouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
+      });
+
+      // Convertir a array
+      const ordersArray = Object.values(grouped).sort((a, b) => 
+        new Date(b.fecha_emision) - new Date(a.fecha_emision)
+      );
+
+      setOrders(ordersArray);
       
-      // Calcular contadores
+      // Calcular contadores (basado en NVs únicas)
       const counts = {};
       PIPELINE_ESTADOS.forEach(e => {
-        counts[e.key] = (data || []).filter(o => o.estado === e.key).length;
+        counts[e.key] = ordersArray.filter(o => o.estado === e.key).length;
       });
       // También contar PENDIENTE en mayúsculas (datos legacy)
-      counts['Pendiente'] = (counts['Pendiente'] || 0) + (data || []).filter(o => o.estado === 'PENDIENTE').length;
+      counts['Pendiente'] = (counts['Pendiente'] || 0) + ordersArray.filter(o => o.estado === 'PENDIENTE').length;
       setContadores(counts);
       
     } catch (error) {
@@ -206,6 +228,7 @@ const SalesOrders = () => {
       if (newStatus === 'Despachado') {
         setSelectedOrder(null);
       } else {
+        // Actualizar el estado en el modal si está abierto
         setSelectedOrder(prev => prev ? { ...prev, estado: newStatus } : null);
       }
       
@@ -223,7 +246,11 @@ const SalesOrders = () => {
     const matchSearch = !searchTerm || 
       order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // Buscar en los items también
+      order.items?.some(i => 
+        i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
+      ) ||
       order.vendedor?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchEstado && matchSearch;
   });
@@ -402,12 +429,28 @@ const SalesOrders = () => {
                         {order.vendedor}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-mono text-xs text-slate-600">{order.codigo_producto}</div>
-                        <div className="text-xs text-slate-400 truncate max-w-[150px]">{order.descripcion_producto}</div>
+                        {order.total_items > 1 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">
+                              {order.total_items} items
+                            </span>
+                            <span className="text-xs text-slate-400 truncate max-w-[100px]">
+                              {order.descripcion_producto} ...
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="font-mono text-xs text-slate-600">{order.codigo_producto}</div>
+                            <div className="text-xs text-slate-400 truncate max-w-[150px]">{order.descripcion_producto}</div>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-slate-800">{order.cantidad}</span>
-                        <span className="text-xs text-slate-400 ml-1">{order.unidad}</span>
+                        {order.total_items > 1 ? (
+                           <span className="font-bold text-slate-800">{order.total_cantidad} <span className="text-[10px] font-normal text-slate-400">Total</span></span>
+                        ) : (
+                           <span className="font-bold text-slate-800">{order.cantidad} <span className="text-xs font-normal text-slate-400">{order.unidad}</span></span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
@@ -496,23 +539,28 @@ const SalesOrders = () => {
                 </div>
               </div>
 
-              {/* Producto */}
+              {/* Producto (Lista de items) */}
               <div className="bg-white rounded-xl border border-slate-200 p-4">
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                  <Package size={14} /> Producto
+                  <Package size={14} /> Productos ({selectedOrder.total_items || 1})
                 </h3>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <Package size={28} className="text-indigo-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-mono text-indigo-600 font-bold">{selectedOrder.codigo_producto}</p>
-                    <p className="text-slate-600 text-sm">{selectedOrder.descripcion_producto}</p>
-                  </div>
-                  <div className="text-right bg-emerald-50 px-4 py-2 rounded-xl">
-                    <p className="text-2xl font-black text-emerald-600">{selectedOrder.cantidad}</p>
-                    <p className="text-xs text-emerald-700">{selectedOrder.unidad}</p>
-                  </div>
+                
+                <div className="max-h-60 overflow-y-auto space-y-3">
+                  {(selectedOrder.items || [selectedOrder]).map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-4 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Package size={20} className="text-indigo-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-indigo-600 font-bold text-xs">{item.codigo_producto}</p>
+                        <p className="text-slate-600 text-sm truncate">{item.descripcion_producto}</p>
+                      </div>
+                      <div className="text-right bg-white border border-slate-200 px-3 py-1 rounded-lg">
+                        <p className="text-lg font-bold text-emerald-600">{item.cantidad}</p>
+                        <p className="text-[10px] text-slate-400">{item.unidad || 'UNI'}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

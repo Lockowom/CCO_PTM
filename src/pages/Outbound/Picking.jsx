@@ -59,7 +59,25 @@ const Picking = () => {
         .order('fecha_emision', { ascending: true });
 
       if (error) throw error;
-      setNvData(data || []);
+
+      // AGRUPAR POR N.V.
+      const grouped = {};
+      (data || []).forEach(item => {
+        const nvId = item.nv;
+        if (!grouped[nvId]) {
+          grouped[nvId] = {
+            ...item,
+            items: [],
+            total_items: 0,
+            total_cantidad: 0
+          };
+        }
+        grouped[nvId].items.push(item);
+        grouped[nvId].total_items++;
+        grouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
+      });
+
+      setNvData(Object.values(grouped));
       
     } catch (error) {
       console.error('Error:', error);
@@ -263,7 +281,11 @@ const Picking = () => {
   const nvFiltradas = nvData.filter(nv =>
     nv.nv?.toString().includes(searchTerm) ||
     nv.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    nv.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Buscar en los items
+    nv.items?.some(i => 
+      i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   // Agrupar por estado
@@ -379,10 +401,29 @@ const Picking = () => {
                         <p className="text-xs text-slate-400">{nv.vendedor}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-mono text-xs text-slate-600">{nv.codigo_producto}</p>
-                        <p className="text-xs text-slate-400 truncate max-w-[150px]">{nv.descripcion_producto}</p>
+                        {nv.total_items > 1 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">
+                              {nv.total_items} items
+                            </span>
+                            <span className="text-xs text-slate-400 truncate max-w-[100px]">
+                              {nv.descripcion_producto} ...
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="font-mono text-xs text-slate-600">{nv.codigo_producto}</p>
+                            <p className="text-xs text-slate-400 truncate max-w-[150px]">{nv.descripcion_producto}</p>
+                          </>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-right font-bold">{nv.cantidad} <span className="text-slate-400 font-normal text-xs">{nv.unidad}</span></td>
+                      <td className="px-4 py-3 text-right font-bold">
+                        {nv.total_items > 1 ? (
+                           <span>{nv.total_cantidad} <span className="text-[10px] font-normal text-slate-400">Total</span></span>
+                        ) : (
+                           <span>{nv.cantidad} <span className="text-slate-400 font-normal text-xs">{nv.unidad}</span></span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                           nv.estado === 'Aprobada' 
@@ -493,7 +534,9 @@ const Picking = () => {
                 <CheckCircle size={32} />
               </div>
               <span className="font-bold text-lg">Pickeo Completo</span>
-              <span className="text-xs text-emerald-100">Cantidad: {nvActiva?.cantidad}</span>
+              <span className="text-xs text-emerald-100">
+                {nvActiva?.total_items > 1 ? `Todos los ${nvActiva?.total_items} items` : `Cantidad: ${nvActiva?.cantidad}`}
+              </span>
             </button>
 
             {/* 2. Pickeo Parcial */}
@@ -559,24 +602,24 @@ const Picking = () => {
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Package size={18} className="text-cyan-500" /> Producto a Recolectar
+            <Package size={18} className="text-cyan-500" /> Productos a Recolectar ({nvActiva?.total_items || 1})
           </h3>
           
-          <div className="space-y-4">
-            <div className="bg-cyan-50 rounded-xl p-4 border border-cyan-100">
-              <p className="text-xs text-cyan-600 font-semibold uppercase">Código</p>
-              <p className="text-xl font-mono font-bold text-cyan-700">{nvActiva?.codigo_producto}</p>
-            </div>
-            
-            <div>
-              <p className="text-xs text-slate-400 font-semibold uppercase">Descripción</p>
-              <p className="text-slate-700">{nvActiva?.descripcion_producto}</p>
-            </div>
-            
-            <div className="bg-emerald-50 rounded-lg p-4 text-center border border-emerald-100">
-              <p className="text-4xl font-black text-emerald-600">{nvActiva?.cantidad}</p>
-              <p className="text-sm text-emerald-700 font-medium">{nvActiva?.unidad || 'UNI'}</p>
-            </div>
+          <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+            {(nvActiva?.items || [nvActiva]).map((item, idx) => (
+              <div key={idx} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="bg-cyan-100 p-3 rounded-lg">
+                  <p className="text-xs text-cyan-700 font-bold font-mono">{item.codigo_producto}</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-700 font-medium">{item.descripcion_producto}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-emerald-600">{item.cantidad}</p>
+                  <p className="text-[10px] text-emerald-700 font-bold">{item.unidad || 'UNI'}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
