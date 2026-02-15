@@ -6,8 +6,10 @@ import {
   ArrowDownToLine, Warehouse, Search, Settings
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { useConfig } from '../../context/ConfigContext';
 
 const ViewsPage = () => {
+  const { refreshConfig } = useConfig(); // Obtener función para refrescar configuración
   const [activeTab, setActiveTab] = useState('modules'); // 'modules' | 'landing'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -161,15 +163,15 @@ const ViewsPage = () => {
         throw error;
       }
       
-      // La suscripción Realtime se encargará de confirmar el cambio, 
-      // pero el optimistic update ya lo hizo visible.
+      // Refrescar la configuración global para que el Sidebar se actualice
+      await refreshConfig();
 
     } catch (error) {
       console.error('Error toggling module:', error);
       alert('❌ Error al actualizar módulo: ' + error.message);
       await fetchData(); // Revert on error
     } finally {
-      // setIsSyncing(false); // Dejar que el realtime apague el indicador
+      setIsSyncing(false);
     }
   };
 

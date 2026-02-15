@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
@@ -33,13 +33,14 @@ import {
   Upload,
   Trash2,
   Clock,
-  MessageSquareWarning
+  MessageSquareWarning,
+  RefreshCw
 } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { user, hasPermission, isSyncing } = useAuth(); // Usar isSyncing para forzar re-render si es necesario
-  const { isModuleEnabled } = useConfig();
+  const { user, permissions, permissionsVersion, hasPermission, refreshPermissions, isSyncing } = useAuth();
+  const { isModuleEnabled, configVersion, refreshConfig } = useConfig();
   const [expandedSections, setExpandedSections] = useState({});
 
   // Mapeo de secciones a permisos requeridos
@@ -87,7 +88,8 @@ const Sidebar = () => {
     '/admin/tickets': 'manage_tickets'
   };
 
-  const isEnabled = (moduleId) => {
+  // Verificar si una sección está habilitada - MEMOIZADO para performance
+  const isEnabled = useMemo(() => (moduleId) => {
     // 1. Verificar configuración de módulos desde Contexto
     if (!isModuleEnabled(moduleId)) return false;
 
@@ -99,9 +101,10 @@ const Sidebar = () => {
     if (requiredPermissions.length === 0) return true;
 
     return requiredPermissions.some(perm => hasPermission(perm));
-  };
+  }, [isModuleEnabled, user?.rol, hasPermission, permissions, permissionsVersion, configVersion]);
 
-  const canAccessModule = (modulePath, sectionId) => {
+  // Verificar acceso a módulo específico - MEMOIZADO
+  const canAccessModule = useMemo(() => (modulePath, sectionId) => {
     // Admin sección solo accede si es rol ADMIN
     if (sectionId === 'admin') return user?.rol === 'ADMIN';
     // ADMIN rol puede acceder a todo
@@ -110,14 +113,18 @@ const Sidebar = () => {
     const requiredPermission = PATH_PERMISSIONS[modulePath];
     if (!requiredPermission) return true;
     return hasPermission(requiredPermission);
-  };
-
+  }, [user?.rol, hasPermission, permissions, permissionsVersion]);
 
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => ({
       ...prev,
       [sectionId]: !prev[sectionId]
     }));
+  };
+
+  // Forzar recarga de permisos y configuración
+  const handleRefresh = async () => {
+    await Promise.all([refreshPermissions(), refreshConfig()]);
   };
 
   const menuConfig = [
@@ -209,6 +216,9 @@ const Sidebar = () => {
     }
   ];
 
+  // Debug info - comentar en producción
+  console.log('🔄 Sidebar render - Permisos:', permissions.length, '| Version:', permissionsVersion, '| Config:', configVersion);
+
   return (
     <aside className="bg-slate-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col h-screen overflow-y-auto border-r border-slate-700">
       <div className="p-6 border-b border-slate-700 flex flex-col items-center text-center">
@@ -292,6 +302,14 @@ const Sidebar = () => {
             <p className="text-sm font-medium text-white truncate capitalize">{user?.nombre || 'Usuario'}</p>
             <p className="text-xs text-slate-400 truncate uppercase">{user?.rol || 'Sin rol'}</p>
           </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isSyncing}
+            className={`p-2 rounded-lg transition-colors ${isSyncing ? 'text-green-400 animate-spin' : 'text-slate-500 hover:text-white hover:bg-slate-700'}`}
+            title="Actualizar permisos"
+          >
+            <RefreshCw size={16} />
+          </button>
         </div>
       </div>
     </aside>

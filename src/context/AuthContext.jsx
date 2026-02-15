@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 
 const AuthContext = createContext();
@@ -17,35 +17,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
 
-  // Restaurar sesión al cargar la app
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        console.log('🔄 Restaurando sesión para:', parsed.nombre, '| Rol:', parsed.rol);
-        setUser(parsed);
-        // Cargar permisos del rol guardado
-      loadPermissionsForRole(parsed.rol);
-      // Listener se activa con useEffect
-    } catch (err) {
-        console.error('Error restaurando usuario:', err);
-        localStorage.removeItem('currentUser');
-        setLoading(false);
-      }
-    } else {
+  // Función para cargar permisos
+  const loadPermissionsForRole = useCallback(async (rolId) => {
+    if (!rolId) {
+      console.log('⚠️ No hay rol ID para cargar permisos');
+      setPermissions([]);
       setLoading(false);
+      return [];
     }
-  }, []);
 
-  // Cargar permisos de un rol específico - SOLUCIÓN DEFINITIVA
-  const loadPermissionsForRole = async (rolId) => {
     console.log('🔍 Cargando permisos para rol:', rolId);
     try {
       setIsSyncing(true);
 
-      // Obtener el rol con sus permisos desde permisos_json
       const { data: roleData, error: roleError } = await supabase
         .from('tms_roles')
         .select('id, nombre, permisos_json')
@@ -55,64 +41,110 @@ export const AuthProvider = ({ children }) => {
       if (roleError) {
         console.error('❌ Error obteniendo rol:', roleError);
         setPermissions([]);
-        return;
+        return [];
       }
 
-      // Extraer permisos del campo permisos_json (es un array JSONB)
       const permisos = roleData?.permisos_json || [];
-      console.log('✅ Permisos cargados desde permisos_json:', permisos);
+      console.log('✅ Permisos cargados:', permisos.length, 'permisos');
+      
       setPermissions(permisos);
+      setPermissionsVersion(v => v + 1);
+      
+      return permisos;
 
     } catch (err) {
       console.error('❌ Error cargando permisos:', err);
       setPermissions([]);
+      return [];
     } finally {
       setIsSyncing(false);
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Configurar listeners de Realtime para cambios en roles y permisos
+  // Función pública para refrescar permisos manualmente
+  const refreshPermissions = useCallback(async () => {
+    if (user?.rol) {
+      console.log('🔄 Refrescando permisos manualmente...');
+      return await loadPermissionsForRole(user.rol);
+    }
+    return [];
+  }, [user?.rol, loadPermissionsForRole]);
+
+  // Restaurar sesión al cargar
+  useEffect(() => {
+    const initSession = async () => {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          console.log('🔄 Restaurando sesión para:', parsed.nombre, '| Rol:', parsed.rol);
+          setUser(parsed);
+          await loadPermissionsForRole(parsed.rol);
+        } catch (err) {
+          console.error('Error restaurando usuario:', err);
+          localStorage.removeItem('currentUser');
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initSession();
+  }, [loadPermissionsForRole]);
+
+  // Suscripción a Realtime
   useEffect(() => {
     if (!user?.rol) return;
 
-    console.log('🔌 Suscribiendo a cambios de permisos para rol:', user.rol);
+    console.log('🔌 Suscribiendo a cambios Realtime para rol:', user.rol);
 
-    // Escuchar cambios en la tabla tms_roles (donde están los permisos_json)
     const channel = supabase
-      .channel(`permissions_watch_${user.rol}`)
+      .channel(`role_permissions_${user.rol}_${Date.now()}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'tms_roles',
           filter: `id=eq.${user.rol}`
         },
         (payload) => {
-          console.log('🔄 Cambio en rol/permisos detectado (Realtime):', payload);
-          // Si hay permisos_json en el payload, actualizar directamente
+          console.log('🔄 Cambio Realtime detectado:', payload);
           if (payload.new?.permisos_json) {
-            console.log('✅ Actualizando permisos en tiempo real:', payload.new.permisos_json);
+            console.log('✅ Actualizando permisos desde Realtime');
             setPermissions(payload.new.permisos_json);
-          } else {
-            // Fallback: recargar permisos
-            loadPermissionsForRole(user.rol);
+            setPermissionsVersion(v => v + 1);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Estado suscripción Realtime:', status);
+      });
 
     return () => {
+      console.log('🔌 Desconectando canal Realtime');
       supabase.removeChannel(channel);
     };
   }, [user?.rol]);
+
+  // Polling como fallback (cada 30 segundos)
+  useEffect(() => {
+    if (!user?.rol) return;
+
+    const pollInterval = setInterval(() => {
+      console.log('⏰ Polling de permisos...');
+      loadPermissionsForRole(user.rol);
+    }, 30000);
+
+    return () => clearInterval(pollInterval);
+  }, [user?.rol, loadPermissionsForRole]);
 
   const login = async (email, password) => {
     setLoading(true);
     setError('');
     try {
-      // Buscar usuario en la BD por email
       const { data, error: queryError } = await supabase
         .from('tms_usuarios')
         .select('*')
@@ -125,14 +157,12 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      // Verificar contraseña (en producción, deberías usar comparación de hash)
       if (data.password_hash !== password) {
         setError('❌ Usuario o contraseña inválidos');
         setLoading(false);
         return false;
       }
 
-      // Verificar si el usuario está activo
       if (!data.activo) {
         setError('❌ Usuario desactivado. Contacta al administrador');
         setLoading(false);
@@ -140,9 +170,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('✓ Login exitoso:', data.nombre, '| Rol:', data.rol);
-      console.log('📋 Datos completos del usuario:', JSON.stringify(data, null, 2));
 
-      // Guardar usuario en estado y localStorage
       const userData = {
         id: data.id,
         nombre: data.nombre,
@@ -154,10 +182,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
 
-      // Cargar permisos del rol
       await loadPermissionsForRole(data.rol);
-      
-      // Listener se activa con useEffect al setear user
 
       setLoading(false);
       return true;
@@ -173,30 +198,33 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setPermissions([]);
+    setPermissionsVersion(0);
     localStorage.removeItem('currentUser');
     setError('');
   };
 
-  // Función para verificar si el usuario tiene un permiso específico
-  const hasPermission = (permissionId) => {
-    const has = permissions.includes(permissionId);
-    return has;
-  };
+  const hasPermission = useCallback((permissionId) => {
+    return permissions.includes(permissionId);
+  }, [permissions]);
 
   const isAuthenticated = !!user;
 
+  const value = {
+    user,
+    permissions,
+    permissionsVersion,
+    loading,
+    error,
+    login,
+    logout,
+    isAuthenticated,
+    hasPermission,
+    isSyncing,
+    refreshPermissions
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      permissions,
-      loading,
-      error,
-      login,
-      logout,
-      isAuthenticated,
-      hasPermission,
-      isSyncing
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

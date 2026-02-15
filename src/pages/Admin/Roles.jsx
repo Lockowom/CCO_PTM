@@ -8,8 +8,10 @@ import {
   Satellite, Smartphone, MapPinned, Layers, FileBarChart
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { useAuth } from '../../context/AuthContext';
 
 const RolesPage = () => {
+  const { refreshPermissions, user } = useAuth(); // Obtener función para refrescar permisos
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -240,6 +242,13 @@ const RolesPage = () => {
 
       // PASO 2: Recargar datos
       await fetchRolesAndPermissions();
+      
+      // PASO 3: Si el rol guardado es el rol del usuario actual, refrescar sus permisos
+      if (user?.rol === roleId) {
+        console.log('🔄 Refrescando permisos del usuario actual...');
+        await refreshPermissions();
+      }
+      
       setIsEditing(false);
       setIsCreating(false);
 
