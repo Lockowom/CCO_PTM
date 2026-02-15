@@ -41,6 +41,21 @@ const Packing = () => {
   const [enPausa, setEnPausa] = useState(false);
   const [tiempoOcio, setTiempoOcio] = useState(0);
   const [pausaInicio, setPausaInicio] = useState(null);
+
+  // Formulario de Packing (Campos requeridos al finalizar)
+  const [formData, setFormData] = useState({
+    bultos: '',
+    pallets: '',
+    peso: '',
+    peso_sobredimensionado: ''
+  });
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
   
   // Usuario simulado (en producción vendría del auth)
   const [usuario] = useState({ id: 'user-packing-001', nombre: 'Operador Packing' });
@@ -146,6 +161,7 @@ const Packing = () => {
     setTiempoOcio(0);
     setEnPausa(false);
     setVista('packing');
+    setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '' }); // Reset form
     
     // Registrar inicio en mediciones
     await supabase.from('tms_mediciones_tiempos').insert({
@@ -171,17 +187,46 @@ const Packing = () => {
   // Finalizar packing
   const finalizarPacking = async () => {
     if (!nvActiva) return;
+
+    // Validación de campos obligatorios
+    if (!formData.bultos || !formData.pallets || !formData.peso) {
+      alert("Debes completar Bultos, Pallets y Peso antes de finalizar.");
+      return;
+    }
     
     const tiempoFinal = tiempoTranscurrido;
     const ocioFinal = tiempoOcio;
     
     try {
-      // Actualizar N.V. a LISTO_DESPACHO
+      // 1. Actualizar N.V. con datos de despacho y estado LISTO_DESPACHO
       await supabase
         .from('tms_nv_diarias')
-        .update({ estado: 'LISTO_DESPACHO' })
+        .update({ 
+          estado: 'LISTO_DESPACHO',
+          bultos_reales: parseInt(formData.bultos) || 0,
+          pallets_reales: parseInt(formData.pallets) || 0,
+          peso_real: parseFloat(formData.peso) || 0,
+          peso_sobredimensionado: parseFloat(formData.peso_sobredimensionado) || 0
+        })
         .eq('nv', nvActiva.nv);
       
+      // 2. Crear o Actualizar Entrega en TMS (tms_entregas)
+      // Esto sincroniza con el módulo de Rutas y Despacho
+      const { error: upsertError } = await supabase
+        .from('tms_entregas')
+        .upsert({
+          nv: nvActiva.nv.toString(),
+          cliente: nvActiva.cliente,
+          direccion: nvActiva.direccion_despacho || 'Dirección por confirmar', // Fallback si no hay dirección
+          comuna: nvActiva.comuna || '',
+          bultos: parseInt(formData.bultos) || 0,
+          peso: parseFloat(formData.peso) || 0,
+          estado: 'PENDIENTE', // Queda lista para ser asignada a ruta
+          fecha_creacion: new Date()
+        }, { onConflict: 'nv' });
+
+      if (upsertError) throw upsertError;
+
       // Actualizar medición
       await supabase
         .from('tms_mediciones_tiempos')
@@ -203,12 +248,13 @@ const Packing = () => {
       setTiempoOcio(0);
       setEnPausa(false);
       setVista('clientes');
+      setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '' });
       
       await fetchData();
       
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al finalizar packing');
+      alert('Error al finalizar packing: ' + error.message);
     }
   };
 
@@ -423,8 +469,8 @@ const Packing = () => {
           <p className="text-white/70 text-sm mb-1">Empacando N.V.</p>
           <h1 className="text-4xl font-black mb-4">#{nvActiva?.nv}</h1>
           
-          {/* Timer principal */}
-          <div className="flex justify-center gap-8">
+          {/* Timer principal (Oculto visualmente, pero funcional internamente) */}
+          <div className="flex justify-center gap-8 opacity-0 pointer-events-none h-0 overflow-hidden">
             <div className="text-center">
               <div className={`text-5xl font-mono font-bold ${enPausa ? 'text-amber-300' : ''}`}>
                 {formatTime(tiempoTranscurrido)}
@@ -442,6 +488,13 @@ const Packing = () => {
             )}
           </div>
           
+          {/* Mensaje de estado */}
+          <div className="text-center mb-6">
+            <span className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
+              ⏱️ Proceso de empaque en curso...
+            </span>
+          </div>
+          
           {/* Controles */}
           <div className="flex justify-center gap-4 mt-6">
             <button
@@ -455,13 +508,66 @@ const Packing = () => {
               {enPausa ? <Play size={20} /> : <Pause size={20} />}
               {enPausa ? 'Reanudar' : 'Pausar'}
             </button>
+          </div>
+
+          {/* Formulario de Cierre de Packing (Restaurado) */}
+          <div className="mt-8 bg-white/10 p-6 rounded-xl text-left backdrop-blur-sm border border-white/20 max-w-2xl mx-auto">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <Package size={20} /> Datos de Despacho
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs text-white/70 mb-1">Bultos *</label>
+                <input 
+                  type="number"
+                  name="bultos"
+                  value={formData.bultos}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/70 mb-1">Pallets *</label>
+                <input 
+                  type="number"
+                  name="pallets"
+                  value={formData.pallets}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/70 mb-1">Peso (kg) *</label>
+                <input 
+                  type="number"
+                  name="peso"
+                  value={formData.peso}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30"
+                  placeholder="0.0"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/70 mb-1">Peso Sobredim.</label>
+                <input 
+                  type="number"
+                  name="peso_sobredimensionado"
+                  value={formData.peso_sobredimensionado}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30"
+                  placeholder="0.0"
+                />
+              </div>
+            </div>
             
             <button
               onClick={finalizarPacking}
-              className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg"
+              className="w-full mt-6 px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-lg"
             >
               <CheckCircle size={20} />
-              Finalizar Packing
+              Finalizar y Registrar Bultos
             </button>
           </div>
           
