@@ -160,19 +160,16 @@ const ViewsPage = () => {
         console.error('Error toggling module:', error);
         throw error;
       }
-
-      // Confirmar el cambio
-      if (data && data.length > 0) {
-        setModulesConfig(prev => prev.map(m => m.id === id ? data[0] : m));
-        console.log(`✓ Módulo ${id} actualizado: ${newStatus}`);
-      }
+      
+      // La suscripción Realtime se encargará de confirmar el cambio, 
+      // pero el optimistic update ya lo hizo visible.
 
     } catch (error) {
       console.error('Error toggling module:', error);
       alert('❌ Error al actualizar módulo: ' + error.message);
       await fetchData(); // Revert on error
     } finally {
-      setIsSyncing(false);
+      // setIsSyncing(false); // Dejar que el realtime apague el indicador
     }
   };
 

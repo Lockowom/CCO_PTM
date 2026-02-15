@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import {
   LayoutDashboard,
   Map,
@@ -10,7 +10,7 @@ import {
   Smartphone,
   ArrowDownToLine,
   Truck,
-  PackagePlus, // Reemplazo de DollyChart (no existe en lucide-react)
+  PackagePlus,
   ArrowUpFromLine,
   FileText,
   Hand,
@@ -30,62 +30,16 @@ import {
   ChevronRight,
   History,
   Timer,
-  Upload
+  Upload,
+  Trash2,
+  Clock
 } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, hasPermission } = useAuth();
+  const { isModuleEnabled } = useConfig(); // Usar contexto global
   const [expandedSections, setExpandedSections] = useState({});
-  const [modulesConfig, setModulesConfig] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchModulesConfig();
-
-    // REALTIME: Escuchar cambios en tms_modules_config
-    const channel = supabase
-      .channel('tms_modules_config_sidebar')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tms_modules_config'
-        },
-        (payload) => {
-          console.log('🔄 Cambio en módulos del sidebar (Realtime):', payload);
-          fetchModulesConfig();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
-
-  const fetchModulesConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tms_modules_config')
-        .select('id, enabled');
-
-      if (error) throw error;
-
-      const config = {};
-      if (data) {
-        data.forEach(m => {
-          config[m.id] = m.enabled;
-        });
-      }
-      setModulesConfig(config);
-    } catch (err) {
-      console.error('Error fetching modules config:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Mapeo de secciones a permisos requeridos
   const MODULE_PERMISSIONS = {
@@ -95,7 +49,7 @@ const Sidebar = () => {
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import']
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import', 'manage_cleanup']
   };
 
   // Mapeo de rutas a permisos específicos
@@ -126,17 +80,14 @@ const Sidebar = () => {
     '/admin/views': 'manage_views',
     '/admin/reports': 'manage_reports',
     '/admin/mediciones': 'manage_mediciones',
-    '/admin/data-import': 'manage_data_import'
+    '/admin/data-import': 'manage_data_import',
+    '/admin/cleanup': 'manage_cleanup',
+    '/admin/time-reports': 'view_time_reports'
   };
 
   const isEnabled = (moduleId) => {
-    // 1. Verificar configuración de módulos
-    if (moduleId.includes('-')) {
-      const parentSection = moduleId.split('-')[0];
-      if (modulesConfig[parentSection] === false) return false;
-    } else {
-      if (modulesConfig[moduleId] === false) return false;
-    }
+    // 1. Verificar configuración de módulos desde Contexto
+    if (!isModuleEnabled(moduleId)) return false;
 
     // 2. ADMIN rol tiene acceso a todo
     if (user?.rol === 'ADMIN') return true;
@@ -158,6 +109,7 @@ const Sidebar = () => {
     if (!requiredPermission) return true;
     return hasPermission(requiredPermission);
   };
+
 
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => ({
@@ -247,7 +199,9 @@ const Sidebar = () => {
         { id: 'roles', label: 'Roles', icon: <Shield size={18} />, path: '/admin/roles' },
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
         { id: 'admin-data-import', label: 'Carga Datos', icon: <Upload size={18} />, path: '/admin/data-import' },
-        { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' }
+        { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
+        { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
+        { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]
     }
   ];
