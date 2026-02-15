@@ -494,6 +494,21 @@ const Packing = () => {
               ⏱️ Proceso de empaque en curso...
             </span>
           </div>
+
+          {/* Alerta de Picking Parcial */}
+          {nvActiva?.picking_status === 'PARCIAL' && (
+            <div className="mx-auto max-w-lg mb-6 bg-red-500/20 border-2 border-red-400 rounded-xl p-4 flex items-center gap-4 animate-bounce-subtle">
+              <div className="bg-red-100 p-2 rounded-full">
+                <AlertCircle size={24} className="text-red-600" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-lg text-white">¡ATENCIÓN: Picking Incompleto!</h4>
+                <p className="text-white/90 text-sm">
+                  Se solicitaron <span className="font-bold">{nvActiva.cantidad}</span> pero solo se encontraron <span className="font-bold text-xl underline">{nvActiva.cantidad_real}</span> unidades.
+                </p>
+              </div>
+            </div>
+          )}
           
           {/* Controles */}
           <div className="flex justify-center gap-4 mt-6">

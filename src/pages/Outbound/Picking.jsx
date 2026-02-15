@@ -41,6 +41,9 @@ const Picking = () => {
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
 
+  const [action, setAction] = useState(null); // 'COMPLETO', 'PARCIAL', 'SIN_STOCK'
+  const [cantidadReal, setCantidadReal] = useState('');
+
   // Cargar N.V. en estado "Pendiente Picking" o "Aprobada"
   const fetchData = useCallback(async () => {
     try {
@@ -142,14 +145,36 @@ const Picking = () => {
   };
 
   // Finalizar picking
-  const finalizarPicking = async () => {
+  const finalizarPicking = async (tipoAccion) => {
     if (!nvActiva) return;
     
+    // Validar cantidad si es parcial
+    if (tipoAccion === 'PARCIAL' && (!cantidadReal || parseInt(cantidadReal) <= 0)) {
+      alert('Debes ingresar la cantidad real pickeada');
+      return;
+    }
+
+    const cantidadPickeada = tipoAccion === 'COMPLETO' 
+      ? nvActiva.cantidad 
+      : tipoAccion === 'PARCIAL' 
+        ? parseInt(cantidadReal) 
+        : 0;
+    
+    // Determinar nuevo estado según acción
+    // COMPLETO -> PACKING
+    // PARCIAL -> PACKING (con nota)
+    // SIN_STOCK -> QUIEBRE_STOCK (o similar)
+    const nuevoEstado = tipoAccion === 'SIN_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING';
+
     try {
-      // Actualizar N.V. a PACKING
+      // Actualizar N.V.
       await supabase
         .from('tms_nv_diarias')
-        .update({ estado: 'PACKING' })
+        .update({ 
+          estado: nuevoEstado,
+          cantidad_real: cantidadPickeada,
+          picking_status: tipoAccion
+        })
         .eq('nv', nvActiva.nv);
       
       // Actualizar medición
@@ -173,6 +198,8 @@ const Picking = () => {
       setTiempoOcio(0);
       setEnPausa(false);
       setVista('lista');
+      setAction(null);
+      setCantidadReal('');
       
       await fetchData();
     } catch (error) {
@@ -413,12 +440,69 @@ const Picking = () => {
               {enPausa ? <Play size={20} /> : <Pause size={20} />}
               {enPausa ? 'Reanudar' : 'Pausar'}
             </button>
-            
+          </div>
+
+          {/* Botones de Acción */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            {/* 1. Pickeo Completo */}
             <button
-              onClick={finalizarPicking}
-              className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-600 shadow-lg"
+              onClick={() => finalizarPicking('COMPLETO')}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105"
             >
-              <CheckCircle size={20} /> Finalizar → Packing
+              <div className="bg-white/20 p-2 rounded-full">
+                <CheckCircle size={32} />
+              </div>
+              <span className="font-bold text-lg">Pickeo Completo</span>
+              <span className="text-xs text-emerald-100">Cantidad: {nvActiva?.cantidad}</span>
+            </button>
+
+            {/* 2. Pickeo Parcial */}
+            <div className="relative group">
+              <button
+                onClick={() => setAction(action === 'PARCIAL' ? null : 'PARCIAL')}
+                className={`w-full h-full ${action === 'PARCIAL' ? 'bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105`}
+              >
+                <div className="bg-white/20 p-2 rounded-full">
+                  <Box size={32} />
+                </div>
+                <span className="font-bold text-lg">Pickeo Parcial</span>
+                <span className="text-xs text-blue-100">Falta Stock / Dañado</span>
+              </button>
+              
+              {/* Popup para ingresar cantidad parcial */}
+              {action === 'PARCIAL' && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl p-4 z-10 animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 text-left">Cantidad Real</label>
+                  <input 
+                    type="number" 
+                    value={cantidadReal}
+                    onChange={(e) => setCantidadReal(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg p-2 text-slate-800 font-bold text-center mb-3"
+                    placeholder="0"
+                    autoFocus
+                  />
+                  <button 
+                    onClick={() => finalizarPicking('PARCIAL')}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-700"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Sin Stock */}
+            <button
+              onClick={() => {
+                if(confirm('¿Seguro que quieres marcar como SIN STOCK?')) finalizarPicking('SIN_STOCK');
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105"
+            >
+              <div className="bg-white/20 p-2 rounded-full">
+                <AlertCircle size={32} />
+              </div>
+              <span className="font-bold text-lg">Sin Stock</span>
+              <span className="text-xs text-red-100">No hay producto</span>
             </button>
           </div>
           
