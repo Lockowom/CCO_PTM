@@ -3,20 +3,13 @@ import { supabase } from '../supabase';
 
 const ConfigContext = createContext();
 
-// Evento personalizado
-const CONFIG_UPDATED_EVENT = 'config-updated';
-
-export const emitConfigUpdate = () => {
-  window.dispatchEvent(new CustomEvent(CONFIG_UPDATED_EVENT));
-};
-
 export const useConfig = () => useContext(ConfigContext);
 
 export const ConfigProvider = ({ children }) => {
   const [modulesConfig, setModulesConfig] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Cargar configuración
+  // Cargar configuración desde BD
   const loadConfig = useCallback(async () => {
     try {
       console.log('📥 Cargando configuración de módulos...');
@@ -25,29 +18,29 @@ export const ConfigProvider = ({ children }) => {
         .from('tms_modules_config')
         .select('id, enabled');
 
-      if (error) {
-        console.error('Error cargando config:', error);
-        return;
-      }
+      if (error) throw error;
 
-      const configMap = (data || []).reduce((acc, item) => {
-        acc[item.id] = item.enabled;
-        return acc;
-      }, {});
+      const configMap = {};
+      (data || []).forEach(item => {
+        configMap[item.id] = item.enabled;
+      });
 
       console.log('✅ Módulos cargados:', Object.keys(configMap).length);
       setModulesConfig(configMap);
+      return configMap;
       
     } catch (err) {
-      console.error('Error:', err);
+      console.error('❌ Error cargando config:', err);
+      return {};
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Refrescar configuración
+  // FUNCIÓN PÚBLICA: Refrescar config (llamar desde Views.jsx)
   const refreshConfig = useCallback(async () => {
-    await loadConfig();
+    console.log('🔄 Refrescando configuración...');
+    return await loadConfig();
   }, [loadConfig]);
 
   // Cargar al iniciar
@@ -55,18 +48,7 @@ export const ConfigProvider = ({ children }) => {
     loadConfig();
   }, [loadConfig]);
 
-  // Escuchar eventos de actualización
-  useEffect(() => {
-    const handleConfigUpdate = () => {
-      console.log('🔔 Evento de actualización de config recibido');
-      loadConfig();
-    };
-
-    window.addEventListener(CONFIG_UPDATED_EVENT, handleConfigUpdate);
-    return () => window.removeEventListener(CONFIG_UPDATED_EVENT, handleConfigUpdate);
-  }, [loadConfig]);
-
-  // Verificar si un módulo está habilitado
+  // Verificar si módulo está habilitado
   const isModuleEnabled = useCallback((moduleId) => {
     return modulesConfig[moduleId] !== false;
   }, [modulesConfig]);

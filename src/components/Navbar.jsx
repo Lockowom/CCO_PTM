@@ -9,14 +9,15 @@ import {
   Warehouse, MapPin, ArrowLeftRight,
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
-  LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw
+  LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
+  Clock, Timer, Trash2, MessageSquareWarning
 } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // USAR CONTEXTOS COMPARTIDOS
+  // USAR LOS CONTEXTOS - Esto es la clave
   const { user, logout, hasPermission, permissions, refreshPermissions } = useAuth();
   const { isModuleEnabled, refreshConfig } = useConfig();
   
@@ -24,91 +25,107 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Debug log
-  console.log('🔄 Navbar render - User:', user?.nombre, '| Permisos:', permissions?.length);
+  // DEBUG: Log cada render para ver los permisos actuales
+  console.log('🎨 Navbar render | Usuario:', user?.nombre, '| Rol:', user?.rol, '| Permisos:', permissions?.length);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
-  // Refrescar manualmente
+  // Refrescar todo manualmente
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    console.log('🔄 Refrescando manualmente...');
     await Promise.all([refreshPermissions(), refreshConfig()]);
-    setTimeout(() => setIsRefreshing(false), 500);
+    setIsRefreshing(false);
+    console.log('✅ Refresh completado');
   };
 
-  // Permisos por sección
+  // Permisos requeridos por sección
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
-    'dashboard': ['view_dashboard'],
+    'dashboard': ['view_dashboard', 'view_kpis'],
     'inbound': ['view_reception', 'view_entry'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import']
   };
 
-  // Verificar si sección está habilitada
-  const isSectionEnabled = (sectionId) => {
-    // Verificar módulo habilitado en config
-    if (!isModuleEnabled(sectionId)) return false;
+  // Permisos por ruta específica
+  const ROUTE_PERMISSIONS = {
+    '/dashboard': 'view_dashboard',
+    '/tms/dashboard': 'view_tms_dashboard',
+    '/tms/planning': 'view_routes',
+    '/tms/control-tower': 'view_control_tower',
+    '/tms/drivers': 'view_drivers',
+    '/tms/mobile': 'view_mobile_app',
+    '/inbound/reception': 'view_reception',
+    '/inbound/entry': 'view_entry',
+    '/outbound/sales-orders': 'view_sales_orders',
+    '/outbound/picking': 'view_picking',
+    '/outbound/packing': 'view_packing',
+    '/outbound/shipping': 'view_shipping',
+    '/outbound/deliveries': 'view_deliveries',
+    '/inventory/stock': 'view_stock',
+    '/inventory/layout': 'view_layout',
+    '/inventory/transfers': 'view_transfers',
+    '/queries/batches': 'view_batches',
+    '/queries/sales-status': 'view_sales_status',
+    '/queries/addresses': 'view_addresses',
+    '/queries/locations': 'view_locations',
+    '/queries/historial-nv': 'view_historial_nv',
+    '/admin/users': 'manage_users',
+    '/admin/roles': 'manage_roles',
+    '/admin/views': 'manage_views',
+    '/admin/reports': 'manage_reports',
+    '/admin/mediciones': 'manage_mediciones',
+    '/admin/data-import': 'manage_data_import',
+    '/admin/cleanup': 'manage_cleanup',
+    '/admin/time-reports': 'view_time_reports',
+    '/admin/tickets': 'manage_tickets'
+  };
 
+  // ¿Está la sección visible?
+  const isSectionVisible = (sectionId) => {
+    // 1. Verificar si el módulo está habilitado globalmente
+    if (!isModuleEnabled(sectionId)) {
+      return false;
+    }
+
+    // 2. ADMIN siempre ve todo
+    if (user?.rol === 'ADMIN') {
+      return true;
+    }
+
+    // 3. Sección admin solo para ADMIN
+    if (sectionId === 'admin') {
+      return false;
+    }
+
+    // 4. Verificar que tenga al menos un permiso de la sección
+    const sectionPerms = SECTION_PERMISSIONS[sectionId] || [];
+    const hasAccess = sectionPerms.some(perm => hasPermission(perm));
+    return hasAccess;
+  };
+
+  // ¿Puede acceder a esta ruta específica?
+  const canAccessRoute = (path, sectionId) => {
     // ADMIN ve todo
     if (user?.rol === 'ADMIN') return true;
-
-    // Para otros roles, verificar permisos
-    const requiredPermissions = SECTION_PERMISSIONS[sectionId] || [];
-    if (requiredPermissions.length === 0) return true;
-
-    return requiredPermissions.some(perm => hasPermission(perm));
-  };
-
-  // Verificar acceso a módulo específico
-  const canAccessModule = (modulePath, sectionId) => {
-    // Admin solo para rol ADMIN
+    
+    // Sección admin solo ADMIN
     if (sectionId === 'admin') return user?.rol === 'ADMIN';
 
-    // ADMIN ve todo
-    if (user?.rol === 'ADMIN') return true;
-
-    // Permisos por ruta
-    const pathPermissions = {
-      '/dashboard': 'view_dashboard',
-      '/tms/dashboard': 'view_tms_dashboard',
-      '/tms/planning': 'view_routes',
-      '/tms/control-tower': 'view_control_tower',
-      '/tms/drivers': 'view_drivers',
-      '/tms/mobile': 'view_mobile_app',
-      '/inbound/reception': 'view_reception',
-      '/inbound/entry': 'view_entry',
-      '/outbound/sales-orders': 'view_sales_orders',
-      '/outbound/picking': 'view_picking',
-      '/outbound/packing': 'view_packing',
-      '/outbound/shipping': 'view_shipping',
-      '/outbound/deliveries': 'view_deliveries',
-      '/inventory/stock': 'view_stock',
-      '/inventory/layout': 'view_layout',
-      '/inventory/transfers': 'view_transfers',
-      '/queries/batches': 'view_batches',
-      '/queries/sales-status': 'view_sales_status',
-      '/queries/addresses': 'view_addresses',
-      '/queries/locations': 'view_locations',
-      '/queries/historial-nv': 'view_historial_nv',
-      '/admin/users': 'manage_users',
-      '/admin/roles': 'manage_roles',
-      '/admin/views': 'manage_views',
-      '/admin/reports': 'manage_reports',
-      '/admin/data-import': 'manage_data_import'
-    };
-
-    const requiredPermission = pathPermissions[modulePath];
-    if (!requiredPermission) return true;
-
-    return hasPermission(requiredPermission);
+    // Verificar permiso específico de la ruta
+    const requiredPerm = ROUTE_PERMISSIONS[path];
+    if (!requiredPerm) return true;
+    
+    return hasPermission(requiredPerm);
   };
 
+  // Configuración del menú
   const menuConfig = [
     {
       id: 'tms',
@@ -177,11 +194,15 @@ const Navbar = () => {
       label: 'Admin',
       icon: <Settings size={18} />,
       modules: [
+        { label: 'Mediciones', path: '/admin/mediciones', icon: <Timer size={16} /> },
         { label: 'Usuarios', path: '/admin/users', icon: <Users size={16} /> },
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
         { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
         { label: 'Carga Datos', path: '/admin/data-import', icon: <Upload size={16} /> },
-        { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> }
+        { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> },
+        { label: 'Tiempos', path: '/admin/time-reports', icon: <Clock size={16} /> },
+        { label: 'Soporte TI', path: '/admin/tickets', icon: <MessageSquareWarning size={16} /> },
+        { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
       ]
     }
   ];
@@ -203,8 +224,8 @@ const Navbar = () => {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center flex-1 px-2 sm:px-4">
           {menuConfig.map((item) => {
-            // Verificar si la sección está habilitada
-            if (!isSectionEnabled(item.id)) return null;
+            // Verificar visibilidad de la sección
+            if (!isSectionVisible(item.id)) return null;
 
             return (
               <div
@@ -227,7 +248,7 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <button
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer group
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer
                       ${activeDropdown === item.id
                         ? 'bg-orange-500 text-white shadow-lg'
                         : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
@@ -239,21 +260,21 @@ const Navbar = () => {
                   </button>
                 )}
 
-                {/* Dropdown Menu */}
+                {/* Dropdown */}
                 {!item.isLink && activeDropdown === item.id && (
-                  <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 animate-in fade-in slide-in-from-top-1 duration-100 z-50">
-                    {item.modules.filter(module => canAccessModule(module.path, item.id)).length === 0 ? (
+                  <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 z-50">
+                    {item.modules.filter(m => canAccessRoute(m.path, item.id)).length === 0 ? (
                       <div className="px-3 py-4 text-center text-slate-400 text-xs">
                         <Lock size={14} className="mx-auto mb-1" />
                         Sin acceso
                       </div>
                     ) : (
-                      item.modules.filter(module => canAccessModule(module.path, item.id)).map((module) => (
+                      item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                         <Link
                           key={module.path}
                           to={module.path}
                           onClick={() => setActiveDropdown(null)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all
                             ${location.pathname === module.path
                               ? 'bg-orange-500 text-white shadow-md'
                               : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
@@ -273,13 +294,13 @@ const Navbar = () => {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-fit">
-          {/* Refresh Button */}
+          {/* Botón Refresh */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={`p-2 rounded-lg transition-all ${
               isRefreshing 
-                ? 'text-green-500 animate-spin' 
+                ? 'text-green-500 animate-spin bg-green-50' 
                 : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50'
             }`}
             title="Actualizar menú"
@@ -287,118 +308,134 @@ const Navbar = () => {
             <RefreshCw size={18} />
           </button>
 
-          {/* User Profile */}
+          {/* User */}
           {user && (
             <div className="hidden md:flex items-center gap-2 lg:gap-3 pl-3 lg:pl-4 border-l-2 border-orange-200">
               <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs lg:text-sm shadow-lg">
-                {user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+                {user.nombre?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className="flex flex-col hidden lg:block">
-                <span className="text-sm font-bold text-slate-800 leading-none capitalize">{user.nombre}</span>
-                <span className="text-[10px] font-semibold text-orange-500 uppercase mt-0.5">{user.rol}</span>
+              <div className="hidden lg:block">
+                <span className="text-sm font-bold text-slate-800 leading-none capitalize block">{user.nombre}</span>
+                <span className="text-[10px] font-semibold text-orange-500 uppercase">{user.rol}</span>
               </div>
             </div>
           )}
 
           {/* Clock */}
-          {(() => {
-            const [now, setNow] = React.useState(new Date());
-            React.useEffect(() => {
-              const timer = setInterval(() => setNow(new Date()), 1000);
-              return () => clearInterval(timer);
-            }, []);
-            const h = now.getHours();
-            const m = now.getMinutes().toString().padStart(2, '0');
-            const s = now.getSeconds().toString().padStart(2, '0');
-            const h24 = h.toString().padStart(2, '0');
-            const ampm = h < 12 ? 'AM' : 'PM';
-            const day = now.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).toUpperCase();
-            return (
-              <div className="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700 shadow-inner">
-                <div className="flex items-baseline gap-0.5">
-                  <span className="font-mono text-sm font-black text-emerald-400 tracking-wider">{h24}:{m}</span>
-                  <span className="font-mono text-[10px] text-emerald-400/60">{s}</span>
-                </div>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ampm === 'AM' ? 'bg-sky-500/20 text-sky-400' : 'bg-amber-500/20 text-amber-400'}`}>{ampm}</span>
-                <div className="w-px h-4 bg-slate-700" />
-                <span className="text-[10px] font-bold text-slate-400 tracking-wide">{day}</span>
-              </div>
-            );
-          })()}
+          <ClockWidget />
 
-          <button onClick={handleLogout} className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-150 active:scale-95">
+          {/* Logout */}
+          <button 
+            onClick={handleLogout} 
+            className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-lg"
+          >
             <LogOut size={16} />
-            <span className="hidden xs:inline">Salir</span>
+            <span className="hidden sm:inline">Salir</span>
           </button>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 hover:bg-orange-50 rounded-lg transition-colors duration-150"
+            className="lg:hidden p-2 hover:bg-orange-50 rounded-lg"
           >
-            {mobileMenuOpen ? <X size={20} className="text-slate-700" /> : <Menu size={20} className="text-slate-700" />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-150">
-          {menuConfig.map((item) => {
-            if (!isSectionEnabled(item.id)) return null;
-            
-            return item.isLink ? (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100 hover:text-orange-700 transition-colors"
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            ) : (
-              <div key={item.id} className="space-y-1">
-                <button
-                  onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100 hover:text-orange-700 transition-colors"
-                >
-                  {item.icon}
-                  {item.label}
-                  <ChevronDown size={14} className={`ml-auto transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
-                </button>
-                {activeDropdown === item.id && (
-                  <div className="ml-2 space-y-1 animate-in fade-in duration-100">
-                    {item.modules.filter(module => canAccessModule(module.path, item.id)).length === 0 ? (
-                      <div className="px-3 py-2 text-center text-slate-400 text-xs flex items-center justify-center gap-1">
-                        <Lock size={12} />
-                        Sin acceso
-                      </div>
-                    ) : (
-                      item.modules.filter(module => canAccessModule(module.path, item.id)).map((module) => (
-                        <Link
-                          key={module.path}
-                          to={module.path}
-                          onClick={() => {
-                            setMobileMenuOpen(false);
-                            setActiveDropdown(null);
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-orange-500 hover:text-white transition-colors"
-                        >
-                          {module.icon}
-                          {module.label}
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
+        <MobileMenu 
+          menuConfig={menuConfig}
+          isSectionVisible={isSectionVisible}
+          canAccessRoute={canAccessRoute}
+          activeDropdown={activeDropdown}
+          setActiveDropdown={setActiveDropdown}
+          setMobileMenuOpen={setMobileMenuOpen}
+          location={location}
+        />
       )}
     </header>
   );
 };
+
+// Clock Widget separado para no re-renderizar todo el Navbar
+const ClockWidget = () => {
+  const [now, setNow] = React.useState(new Date());
+  
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  const ampm = now.getHours() < 12 ? 'AM' : 'PM';
+  const day = now.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).toUpperCase();
+
+  return (
+    <div className="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
+      <div className="flex items-baseline gap-0.5">
+        <span className="font-mono text-sm font-black text-emerald-400">{h}:{m}</span>
+        <span className="font-mono text-[10px] text-emerald-400/60">{s}</span>
+      </div>
+      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ampm === 'AM' ? 'bg-sky-500/20 text-sky-400' : 'bg-amber-500/20 text-amber-400'}`}>
+        {ampm}
+      </span>
+      <div className="w-px h-4 bg-slate-700" />
+      <span className="text-[10px] font-bold text-slate-400">{day}</span>
+    </div>
+  );
+};
+
+// Mobile Menu separado
+const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdown, setActiveDropdown, setMobileMenuOpen, location }) => (
+  <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2">
+    {menuConfig.map((item) => {
+      if (!isSectionVisible(item.id)) return null;
+      
+      return item.isLink ? (
+        <Link
+          key={item.id}
+          to={item.path}
+          onClick={() => setMobileMenuOpen(false)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100"
+        >
+          {item.icon}
+          {item.label}
+        </Link>
+      ) : (
+        <div key={item.id} className="space-y-1">
+          <button
+            onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100"
+          >
+            {item.icon}
+            {item.label}
+            <ChevronDown size={14} className={`ml-auto transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+          </button>
+          {activeDropdown === item.id && (
+            <div className="ml-4 space-y-1">
+              {item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
+                <Link
+                  key={module.path}
+                  to={module.path}
+                  onClick={() => { setMobileMenuOpen(false); setActiveDropdown(null); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                    location.pathname === module.path ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-orange-100'
+                  }`}
+                >
+                  {module.icon}
+                  {module.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </nav>
+);
 
 export default Navbar;

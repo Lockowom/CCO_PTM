@@ -4,9 +4,12 @@ import {
   AlertTriangle, Loader2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { emitConfigUpdate } from '../../context/ConfigContext';
+import { useConfig } from '../../context/ConfigContext';
 
 const ViewsPage = () => {
+  // IMPORTANTE: Obtener refreshConfig del contexto
+  const { refreshConfig } = useConfig();
+  
   const [activeTab, setActiveTab] = useState('modules');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,19 +54,15 @@ const ViewsPage = () => {
     try {
       setLoading(true);
       
-      const { data: modulesData, error: modulesError } = await supabase
+      const { data: modulesData } = await supabase
         .from('tms_modules_config')
         .select('*')
         .order('id');
 
-      if (modulesError) throw modulesError;
-
-      const { data: rolesData, error: rolesError } = await supabase
+      const { data: rolesData } = await supabase
         .from('tms_roles')
         .select('*')
         .order('nombre');
-
-      if (rolesError) throw rolesError;
 
       setModulesConfig(modulesData || []);
       setRoles(rolesData || []);
@@ -75,17 +74,20 @@ const ViewsPage = () => {
     }
   };
 
+  // ⭐ Cambiar estado de módulo y actualizar menú instantáneamente
   const handleToggleModule = async (id, currentStatus) => {
     try {
       setSaving(true);
+      console.log('💾 Cambiando módulo:', id, '→', !currentStatus);
       
       const newStatus = !currentStatus;
       
-      // Actualización optimista
+      // Actualización optimista local
       setModulesConfig(prev => prev.map(m => 
         m.id === id ? { ...m, enabled: newStatus } : m
       ));
 
+      // Guardar en BD
       const { error } = await supabase
         .from('tms_modules_config')
         .update({ 
@@ -95,15 +97,18 @@ const ViewsPage = () => {
         .eq('id', id);
 
       if (error) throw error;
-      
-      // ⚡ EMITIR EVENTO PARA ACTUALIZAR EL MENÚ
-      console.log('📢 Emitiendo evento de actualización de config...');
-      emitConfigUpdate();
+
+      console.log('✅ Módulo actualizado en BD');
+
+      // ⭐⭐⭐ ACTUALIZAR EL MENÚ INSTANTÁNEAMENTE ⭐⭐⭐
+      console.log('🔄 Actualizando menú...');
+      await refreshConfig();
+      console.log('✅ Menú actualizado');
 
     } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error: ' + error.message);
-      await fetchData(); // Revertir en error
+      console.error('❌ Error:', error);
+      alert('Error: ' + error.message);
+      await fetchData(); // Revertir en caso de error
     } finally {
       setSaving(false);
     }
@@ -126,7 +131,7 @@ const ViewsPage = () => {
 
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Error: ' + error.message);
+      alert('Error: ' + error.message);
       await fetchData();
     } finally {
       setSaving(false);
@@ -149,9 +154,11 @@ const ViewsPage = () => {
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
             <Layout className="text-indigo-600" />
             Configuración de Vistas
-            {saving && <Loader2 size={18} className="animate-spin text-green-500" />}
+            {saving && <Loader2 size={18} className="animate-spin text-green-500 ml-2" />}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Gestiona módulos y páginas de inicio</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Los cambios se reflejan instantáneamente en el menú
+          </p>
         </div>
         <button 
           onClick={fetchData} 
@@ -168,7 +175,7 @@ const ViewsPage = () => {
           className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 ${
             activeTab === 'modules' 
               ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
           <Power size={16} />
@@ -179,7 +186,7 @@ const ViewsPage = () => {
           className={`px-6 py-3 text-sm font-bold border-b-2 flex items-center gap-2 ${
             activeTab === 'landing' 
               ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
           <Home size={16} />
@@ -195,7 +202,7 @@ const ViewsPage = () => {
               <AlertTriangle className="shrink-0 mt-0.5" size={16} />
               <p>
                 Desactivar un módulo lo ocultará para <strong>todos los usuarios</strong>. 
-                El menú se actualizará automáticamente al cambiar.
+                El menú se actualiza <strong>instantáneamente</strong> al cambiar.
               </p>
             </div>
 
@@ -229,6 +236,7 @@ const ViewsPage = () => {
                       className="sr-only peer"
                       checked={module.enabled}
                       onChange={() => handleToggleModule(module.id, module.enabled)}
+                      disabled={saving}
                     />
                     <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                   </label>
@@ -252,7 +260,7 @@ const ViewsPage = () => {
                 <div key={role.id} className="p-4 border border-slate-200 rounded-xl">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold">
-                      {role.nombre.charAt(0)}
+                      {role.nombre?.charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-800">{role.nombre}</h3>

@@ -2,20 +2,25 @@ import React, { useState, useEffect } from 'react';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
-  Search, Settings, AlertCircle, Loader2,
+  Search, Settings, Loader2,
   Warehouse, ArrowDownToLine, ArrowUpFromLine, FileText,
-  Hand, Box, Ship, MapPin, Barcode, History, Timer,
-  Satellite, Smartphone, MapPinned, Layers, FileBarChart
+  Hand, Ship, MapPin, Barcode, History, Timer,
+  Satellite, Smartphone, MapPinned, Layers, FileBarChart,
+  Clock, Upload, Trash, MessageSquareWarning
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { emitPermissionsUpdate } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const RolesPage = () => {
+  // IMPORTANTE: Obtener refreshPermissions del contexto
+  const { refreshPermissions } = useAuth();
+  
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Definición de módulos y permisos
   const modules = [
@@ -142,13 +147,11 @@ const RolesPage = () => {
         .select('rol');
 
       const userCounts = {};
-      if (usersData) {
-        usersData.forEach(u => {
-          userCounts[u.rol] = (userCounts[u.rol] || 0) + 1;
-        });
-      }
+      (usersData || []).forEach(u => {
+        userCounts[u.rol] = (userCounts[u.rol] || 0) + 1;
+      });
 
-      const formattedRoles = rolesData.map(rol => ({
+      const formattedRoles = (rolesData || []).map(rol => ({
         ...rol,
         usuarios: userCounts[rol.id] || 0,
         permisos: rol.permisos_json || []
@@ -157,7 +160,7 @@ const RolesPage = () => {
       setRoles(formattedRoles);
 
     } catch (error) {
-      console.error('Error fetching roles:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -175,9 +178,11 @@ const RolesPage = () => {
     setIsEditing(true);
   };
 
+  // ⭐ FUNCIÓN PRINCIPAL: Guardar rol y actualizar menú
   const handleSaveRole = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
+      console.log('💾 Guardando rol...');
 
       const roleId = isCreating
         ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_')
@@ -185,6 +190,7 @@ const RolesPage = () => {
 
       const roleName = selectedRole.id === 'ADMIN' ? 'Administrador' : selectedRole.nombre;
 
+      // Guardar en BD
       const { error } = await supabase
         .from('tms_roles')
         .upsert({
@@ -196,23 +202,24 @@ const RolesPage = () => {
 
       if (error) throw error;
 
-      // Recargar roles
+      console.log('✅ Rol guardado en BD');
+
+      // Recargar lista de roles
       await fetchRoles();
-      
-      // ⚡ EMITIR EVENTO PARA ACTUALIZAR EL MENÚ
-      console.log('📢 Emitiendo evento de actualización de permisos...');
-      emitPermissionsUpdate();
-      
+
+      // ⭐⭐⭐ ACTUALIZAR EL MENÚ INSTANTÁNEAMENTE ⭐⭐⭐
+      console.log('🔄 Actualizando menú...');
+      await refreshPermissions();
+      console.log('✅ Menú actualizado');
+
       setIsEditing(false);
       setIsCreating(false);
 
-      alert('✓ Rol guardado exitosamente. El menú se actualizará automáticamente.');
-
     } catch (error) {
-      console.error('Error saving role:', error);
-      alert('❌ Error al guardar: ' + error.message);
+      console.error('❌ Error:', error);
+      alert('Error al guardar: ' + error.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -230,15 +237,12 @@ const RolesPage = () => {
       if (error) throw error;
 
       await fetchRoles();
+      await refreshPermissions(); // También actualizar al eliminar
       setSelectedRole(null);
       
-      // Emitir evento
-      emitPermissionsUpdate();
-      
-      alert('✓ Rol eliminado');
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Error: ' + error.message);
+      alert('Error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -260,12 +264,10 @@ const RolesPage = () => {
     const currentPerms = selectedRole.permisos || [];
     const hasAll = allPerms.every(p => currentPerms.includes(p));
 
-    let newPerms;
-    if (hasAll) {
-      newPerms = currentPerms.filter(p => !allPerms.includes(p));
-    } else {
-      newPerms = [...new Set([...currentPerms, ...allPerms])];
-    }
+    const newPerms = hasAll
+      ? currentPerms.filter(p => !allPerms.includes(p))
+      : [...new Set([...currentPerms, ...allPerms])];
+    
     setSelectedRole({ ...selectedRole, permisos: newPerms });
   };
 
@@ -285,7 +287,9 @@ const RolesPage = () => {
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <Shield className="text-indigo-500" /> Roles y Permisos
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Define qué pueden hacer los usuarios en el sistema</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Los cambios se reflejan instantáneamente en el menú
+          </p>
         </div>
         <button
           onClick={handleCreateRole}
@@ -296,7 +300,7 @@ const RolesPage = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
-        {/* Roles List */}
+        {/* Lista de Roles */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50">
             <h3 className="font-bold text-slate-700">Roles ({roles.length})</h3>
@@ -318,12 +322,13 @@ const RolesPage = () => {
                       {role.nombre}
                     </h4>
                     <p className="text-xs text-slate-500 mt-1">{role.descripcion}</p>
+                    <p className="text-xs text-indigo-500 mt-1">{role.permisos?.length || 0} permisos</p>
                   </div>
                   {role.id === 'ADMIN' ? (
                     <Lock size={14} className="text-amber-500" />
                   ) : (
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Users size={10} /> {role.usuarios}
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                      {role.usuarios} usuarios
                     </span>
                   )}
                 </div>
@@ -332,10 +337,11 @@ const RolesPage = () => {
           </div>
         </div>
 
-        {/* Role Details */}
+        {/* Detalle del Rol */}
         <div className="w-full lg:w-2/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           {selectedRole ? (
             <>
+              {/* Header del rol */}
               <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50">
                 <div className="flex-1 mr-4">
                   {isEditing ? (
@@ -347,14 +353,14 @@ const RolesPage = () => {
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
-                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
+                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1 disabled:bg-slate-100"
                         />
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-500 uppercase">Descripción</label>
                         <input
                           type="text"
-                          value={selectedRole.descripcion}
+                          value={selectedRole.descripcion || ''}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
                           className="w-full text-sm text-slate-600 bg-white border border-slate-300 rounded px-2 py-1"
                         />
@@ -364,7 +370,7 @@ const RolesPage = () => {
                     <>
                       <h2 className="text-2xl font-bold text-slate-800">{selectedRole.nombre}</h2>
                       <p className="text-slate-500 mt-1">{selectedRole.descripcion}</p>
-                      <p className="text-xs text-indigo-600 mt-2">{selectedRole.permisos?.length || 0} permisos</p>
+                      <p className="text-xs text-indigo-600 mt-2">{selectedRole.permisos?.length || 0} permisos asignados</p>
                     </>
                   )}
                 </div>
@@ -373,18 +379,22 @@ const RolesPage = () => {
                   {isEditing ? (
                     <>
                       <button
-                        onClick={() => { setIsEditing(false); setIsCreating(false); if (isCreating) setSelectedRole(null); }}
+                        onClick={() => { 
+                          setIsEditing(false); 
+                          setIsCreating(false); 
+                          if (isCreating) setSelectedRole(null); 
+                        }}
                         className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg"
                       >
                         <X size={20} />
                       </button>
                       <button
                         onClick={handleSaveRole}
-                        disabled={loading}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold flex items-center gap-2"
+                        disabled={saving}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
                       >
-                        {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                        Guardar
+                        {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        {saving ? 'Guardando...' : 'Guardar'}
                       </button>
                     </>
                   ) : (
@@ -407,7 +417,7 @@ const RolesPage = () => {
                 </div>
               </div>
 
-              {/* Permissions */}
+              {/* Permisos */}
               <div className="flex-1 overflow-y-auto p-5">
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Lock size={14} /> Permisos
@@ -430,7 +440,7 @@ const RolesPage = () => {
                             <button
                               onClick={() => selectAllModule(module.id)}
                               className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                hasAll ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+                                hasAll ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                               }`}
                             >
                               {hasAll ? 'Quitar' : 'Todos'}
@@ -446,7 +456,9 @@ const RolesPage = () => {
                             return (
                               <label
                                 key={perm.id}
-                                className={`flex items-center gap-2 p-1.5 rounded-lg ${isEditing ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                                className={`flex items-center gap-2 p-1.5 rounded-lg ${
+                                  isEditing ? 'cursor-pointer hover:bg-slate-50' : ''
+                                }`}
                                 onClick={() => togglePermission(perm.id)}
                               >
                                 <div className={`w-4 h-4 rounded border flex items-center justify-center ${
@@ -471,6 +483,7 @@ const RolesPage = () => {
             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
               <Shield size={48} className="opacity-20 mb-4" />
               <h3 className="text-lg font-bold text-slate-600">Selecciona un Rol</h3>
+              <p className="text-sm">Elige un rol para ver o editar sus permisos</p>
             </div>
           )}
         </div>
