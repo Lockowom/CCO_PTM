@@ -37,8 +37,12 @@ const Login = () => {
 
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 shadow-lg text-white font-black text-3xl">
-            C
+          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg border-4 border-orange-500 overflow-hidden">
+            <img 
+              src="https://i.imgur.com/YJh67CY.png" 
+              alt="Logo CCO" 
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <div className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest mb-3 border-2 border-orange-200">
