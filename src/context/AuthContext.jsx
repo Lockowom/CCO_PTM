@@ -27,10 +27,9 @@ export const AuthProvider = ({ children }) => {
         console.log('🔄 Restaurando sesión para:', parsed.nombre, '| Rol:', parsed.rol);
         setUser(parsed);
         // Cargar permisos del rol guardado
-        loadPermissionsForRole(parsed.rol);
-        // Escuchar cambios en Realtime
-        setupRealtimeListeners(parsed.rol);
-      } catch (err) {
+      loadPermissionsForRole(parsed.rol);
+      // Listener se activa con useEffect
+    } catch (err) {
         console.error('Error restaurando usuario:', err);
         localStorage.removeItem('currentUser');
         setLoading(false);
@@ -46,120 +45,36 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsSyncing(true);
 
-      // ESTRATEGIA 1: Buscar por ID exacto
-      let roleData = null;
-      let queryError = null;
-
-      const { data: data1, error: err1 } = await supabase
+      // 1. Obtener el rol
+      const { data: roleData, error: roleError } = await supabase
         .from('tms_roles')
         .select('*')
         .eq('id', rolId)
         .single();
 
-      if (!err1 && data1) {
-        roleData = data1;
-        console.log('✓ Rol encontrado por ID:', rolId, '→', data1);
-      } else {
-        console.warn('⚠️ No se encontró rol por ID:', rolId, '| Error:', err1?.message);
-
-        // ESTRATEGIA 2: Buscar por nombre
-        const { data: data2, error: err2 } = await supabase
-          .from('tms_roles')
-          .select('*')
-          .eq('nombre', rolId)
-          .single();
-
-        if (!err2 && data2) {
-          roleData = data2;
-          console.log('✓ Rol encontrado por nombre:', rolId, '→', data2);
-        } else {
-          console.warn('⚠️ No se encontró rol por nombre:', rolId, '| Error:', err2?.message);
-
-          // ESTRATEGIA 3: Buscar por nombre case-insensitive (ilike)
-          const { data: data3, error: err3 } = await supabase
-            .from('tms_roles')
-            .select('*')
-            .ilike('nombre', rolId)
-            .single();
-
-          if (!err3 && data3) {
-            roleData = data3;
-            console.log('✓ Rol encontrado por nombre (ilike):', rolId, '→', data3);
-          } else {
-            console.warn('⚠️ No se encontró rol por ilike:', rolId);
-
-            // ESTRATEGIA 4: Listar TODOS los roles para debug
-            const { data: allRoles, error: allErr } = await supabase
-              .from('tms_roles')
-              .select('*');
-
-            console.log('📋 TODOS los roles en BD:', allRoles);
-            console.log('📋 IDs disponibles:', allRoles?.map(r => `"${r.id}"`).join(', '));
-            console.log('📋 Nombres disponibles:', allRoles?.map(r => `"${r.nombre}"`).join(', '));
-
-            // ESTRATEGIA 5: Buscar coincidencia parcial en ID o nombre
-            if (allRoles) {
-              const rolIdLower = rolId.toLowerCase();
-              const match = allRoles.find(r =>
-                r.id?.toLowerCase() === rolIdLower ||
-                r.nombre?.toLowerCase() === rolIdLower ||
-                r.id?.toLowerCase().replace(/[\s_-]/g, '') === rolIdLower.replace(/[\s_-]/g, '') ||
-                r.nombre?.toLowerCase().replace(/[\s_-]/g, '') === rolIdLower.replace(/[\s_-]/g, '')
-              );
-
-              if (match) {
-                roleData = match;
-                console.log('✓ Rol encontrado por coincidencia parcial:', match);
-              }
-            }
-          }
-        }
-      }
-
-      if (!roleData) {
-        console.error('❌ NO se pudo encontrar el rol:', rolId, '- sin permisos');
+      if (roleError) {
+        console.error('❌ Error obteniendo rol:', roleError);
         setPermissions([]);
         return;
       }
 
-      // Extraer permisos - intentar múltiples campos
-      let permisos = [];
+      // 2. Obtener permisos asociados en la tabla pivote tms_roles_permisos
+      const { data: permisosData, error: permisosError } = await supabase
+        .from('tms_roles_permisos')
+        .select('permiso_id')
+        .eq('rol_id', rolId);
 
-      // Prioridad: permisos_json > permisos > permissions
-      if (roleData.permisos_json && Array.isArray(roleData.permisos_json) && roleData.permisos_json.length > 0) {
-        permisos = roleData.permisos_json;
-        console.log('✓ Usando permisos_json:', permisos);
-      } else if (roleData.permisos && Array.isArray(roleData.permisos) && roleData.permisos.length > 0) {
-        permisos = roleData.permisos;
-        console.log('✓ Usando permisos:', permisos);
-      } else if (roleData.permissions && Array.isArray(roleData.permissions) && roleData.permissions.length > 0) {
-        permisos = roleData.permissions;
-        console.log('✓ Usando permissions:', permisos);
-      } else {
-        // Intentar parsear si es string JSON
-        const jsonFields = ['permisos_json', 'permisos', 'permissions'];
-        for (const field of jsonFields) {
-          if (roleData[field] && typeof roleData[field] === 'string') {
-            try {
-              const parsed = JSON.parse(roleData[field]);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                permisos = parsed;
-                console.log(`✓ Parseado de ${field} (string):`, permisos);
-                break;
-              }
-            } catch (e) {
-              // No es JSON válido, continuar
-            }
-          }
-        }
+      if (permisosError) {
+        console.error('❌ Error obteniendo permisos:', permisosError);
+        setPermissions([]);
+        return;
       }
 
-      // Mostrar todas las columnas del rol para debug
-      console.log('📋 Columnas del rol:', Object.keys(roleData));
-      console.log('📋 Valores del rol:', JSON.stringify(roleData, null, 2));
-      console.log('✅ PERMISOS FINALES:', permisos);
+      // 3. Extraer IDs de permisos
+      const permisos = permisosData.map(p => p.permiso_id);
+      console.log('✅ Permisos cargados:', permisos);
+      setPermissions(permisos);
 
-      setPermissions(Array.isArray(permisos) ? permisos : []);
     } catch (err) {
       console.error('❌ Error cargando permisos:', err);
       setPermissions([]);
@@ -169,29 +84,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Configurar listeners de Realtime para cambios en roles
-  const setupRealtimeListeners = (rolId) => {
+  // Configurar listeners de Realtime para cambios en roles y permisos
+  useEffect(() => {
+    if (!user?.rol) return;
+
+    console.log('🔌 Suscribiendo a cambios de permisos para rol:', user.rol);
+
     const channel = supabase
-      .channel(`role_changes_${rolId}`)
+      .channel(`permissions_watch_${user.rol}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'tms_roles',
-          filter: `id=eq.${rolId}`
+          table: 'tms_roles_permisos',
+          filter: `rol_id=eq.${user.rol}`
         },
         (payload) => {
-          console.log('🔄 Cambios detectados en rol (Realtime):', payload);
-          loadPermissionsForRole(rolId);
+          console.log('🔄 Cambio en permisos detectado (Realtime):', payload);
+          loadPermissionsForRole(user.rol);
         }
       )
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  };
+  }, [user?.rol]);
 
   const login = async (email, password) => {
     setLoading(true);
@@ -241,9 +160,8 @@ export const AuthProvider = ({ children }) => {
 
       // Cargar permisos del rol
       await loadPermissionsForRole(data.rol);
-
-      // Configurar listeners en tiempo real
-      setupRealtimeListeners(data.rol);
+      
+      // Listener se activa con useEffect al setear user
 
       setLoading(false);
       return true;

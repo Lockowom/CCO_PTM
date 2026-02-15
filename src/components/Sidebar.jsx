@@ -38,8 +38,8 @@ import {
 
 const Sidebar = () => {
   const location = useLocation();
-  const { user, hasPermission } = useAuth();
-  const { isModuleEnabled } = useConfig(); // Usar contexto global
+  const { user, hasPermission, isSyncing } = useAuth(); // Usar isSyncing para forzar re-render si es necesario
+  const { isModuleEnabled } = useConfig();
   const [expandedSections, setExpandedSections] = useState({});
 
   // Mapeo de secciones a permisos requeridos
