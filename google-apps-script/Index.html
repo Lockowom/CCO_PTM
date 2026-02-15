@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FF6B00">
+  <meta name="description" content="CCO - Centro Control Operacional">
+
+  <!-- DNS Prefetch para mejor rendimiento -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+  <title>Centro Control Operacional</title>
+
+  <!-- Preconnect para recursos críticos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Cargar fuentes con display=swap para mejor rendimiento -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS externos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <?!= include('Styles') ?>
+  <?!= include('Sidebar_Menu_Styles') ?>
+
+  <!-- WMS Design System -->
+  <?!= include('WMS_Design_System') ?>
+  <?!= include('WMS_Components') ?>
+  <?!= include('WMS_Animations') ?>
+
+  <style>
+    /* ==================== GLOBAL DESIGN SYSTEM ==================== */
+    :root {
+      /* Color Palette */
+      --primary: #FF6B00;
+      /* Orange (Brand) */
+      --primary-hover: #e65100;
+      --primary-light: #fff3e0;
+
+      --secondary: #2c3e50;
+      /* Dark Blue */
+      --secondary-hover: #1a252f;
+
+      --success: #10b981;
+      /* Green */
+      --success-light: #d1fae5;
+
+      --warning: #f59e0b;
+      /* Amber */
+      --warning-light: #fef3c7;
+
+      --danger: #ef4444;
+      /* Red */
+      --danger-light: #fee2e2;
+
+      --info: #3b82f6;
+      /* Blue */
+      --info-light: #dbeafe;
+
+      /* Neutral Colors */
+      --bg-body: #f3f4f6;
+      --bg-surface: #ffffff;
+      --text-main: #111827;
+      --text-secondary: #6b7280;
+      --text-light: #9ca3af;
+      --border-color: #e5e7eb;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+      /* Spacing & Radius */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 1rem;
+      --radius-full: 9999px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==================== LAYOUT UTILS ==================== */
+    .view {
+      display: none !important;
+      min-height: calc(100vh - 80px);
+      padding: 2rem;
+      margin: 0;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .view.active {
+      display: block !important;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ==================== HEADERS ==================== */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title h1 {
+      font-size: 1.875rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-title h1 i {
+      color: var(--primary);
+      font-size: 1.5rem;
+    }
+
+    .header-title .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* ==================== CARDS & STATS ==================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue {
+      background: var(--info-light);
+      color: var(--info);
+    }
+
+    .stat-icon.green {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .stat-icon.orange {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .stat-icon.red {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .stat-icon.purple {
+      background: #ede9fe;
+      color: #8b5cf6;
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ==================== BUTTONS ==================== */
+    .btn-modern {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: transparent;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-body);
+      border-color: var(--text-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==================== FORMS ==================== */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      background: white;
+      color: var(--text-main);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    /* ==================== TABLES ==================== */
+    .table-container {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+
+    .table-modern {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-modern th {
+      background: #f9fafb;
+      padding: 1rem 1.5rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-modern td {
+      padding: 1rem 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-modern tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    /* ==================== APP HEADER (FIXED) ==================== */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-header.visible {
+      display: flex !important;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.02);
+    }
+
+    .header-logo-img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo-text-container {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .logo-text {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .logo-subtitle {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Header Right Section */
+    .header-right-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px 6px 6px;
+      background: #f8fafc;
+      border-radius: 50px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .header-user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF6B00, #ff8534);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .header-user-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .header-user-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .header-user-role {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .header-datetime {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #eff6ff;
+      border-radius: 50px;
+      color: #3b82f6;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .header-datetime i {
+      font-size: 0.9rem;
+    }
+
+    .header-logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+    }
+
+    .header-logout-btn:hover {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    }
+
+    .header-logout-btn i {
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+      .header-user-details {
+        display: none;
+      }
+
+      .header-datetime span {
+        display: none;
+      }
+
+      .header-logout-btn span {
+        display: none;
+      }
+
+      .header-logout-btn {
+        padding: 10px 12px;
+      }
+
+      .header-right-section {
+        gap: 8px;
+      }
+
+      .logo-text-container {
+        display: none;
+      }
+    }
+
+    /* ==================== NAVIGATION MENU ==================== */
+    .navigation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .nav-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      min-height: 180px;
+    }
+
+    .nav-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+
+    .nav-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      color: #6b7280;
+    }
+
+    .nav-card:hover .nav-card-icon {
+      transform: scale(1.1) rotate(5deg);
+      color: white;
+    }
+
+    /* Module Colors */
+    .nav-card[data-view="dashboard"]:hover .nav-card-icon {
+      background: #6366f1;
+    }
+
+    .nav-card[data-view="inventory"]:hover .nav-card-icon {
+      background: #10b981;
+    }
+
+    .nav-card[data-view="reception"]:hover .nav-card-icon {
+      background: #f59e0b;
+    }
+
+    .nav-card[data-view="sales"]:hover .nav-card-icon {
+      background: #ef4444;
+    }
+
+    .nav-card[data-view="picking"]:hover .nav-card-icon {
+      background: #8b5cf6;
+    }
+
+    .nav-card[data-view="packing"]:hover .nav-card-icon {
+      background: #06b6d4;
+    }
+
+    .nav-card[data-view="dispatch"]:hover .nav-card-icon {
+      background: #84cc16;
+    }
+
+    .nav-card[data-view="transfers"]:hover .nav-card-icon {
+      background: #f97316;
+    }
+
+    .nav-card[data-view="reports"]:hover .nav-card-icon {
+      background: #6b7280;
+    }
+
+    .nav-card[data-view="admin"]:hover .nav-card-icon {
+      background: #dc2626;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app-header {
+        padding: 0 16px;
+        height: 60px;
+      }
+
+      .navigation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Utilities */
+    .hidden {
+      display: none !important;
+    }
+
+    .visible {
+      display: flex !important;
+    }
+  </style>
+
+  <script>
+    // ==================== THEME MANAGER ====================
+    var ThemeManager = {
+      init: function () {
+        var savedTheme = localStorage.getItem('app_theme') || 'light';
+        this.setTheme(savedTheme);
+      },
+      setTheme: function (themeName) {
+        document.documentElement.setAttribute('data-theme', themeName);
+        localStorage.setItem('app_theme', themeName);
+      }
+    };
+
+    // Inicializar tema al cargar
+    document.addEventListener('DOMContentLoaded', function () {
+      ThemeManager.init();
+    });
+  </script>
+</head>
+
+<body>
+  <!-- Loading Screen ULTRA Premium CCO -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loader-container">
+      <!-- Partículas de fondo -->
+      <div class="loader-particles">
+        <div class="loader-particle"></div>
+        <div class="loader-particle"></div>
+        <div class="loader-particle"></div>
+        <div class="loader-particle"></div>
+        <div class="loader-particle"></div>
+        <div class="loader-particle"></div>
+      </div>
+
+      <!-- Logo animado CCO -->
+      <div class="loader-logo-cco">
+        <div class="cco-hexagon">
+          <div class="hex-inner">
+            <span class="cco-letter">C</span>
+            <span class="cco-letter">C</span>
+            <span class="cco-letter">O</span>
+          </div>
+        </div>
+        <div class="cco-orbit cco-orbit-1"></div>
+        <div class="cco-orbit cco-orbit-2"></div>
+        <div class="cco-orbit cco-orbit-3"></div>
+        <div class="cco-pulse"></div>
+      </div>
+
+      <h2 class="loader-title-cco">
+        <span class="title-char">C</span>
+        <span class="title-char">e</span>
+        <span class="title-char">n</span>
+        <span class="title-char">t</span>
+        <span class="title-char">r</span>
+        <span class="title-char">o</span>
+        <span class="title-space"></span>
+        <span class="title-char">C</span>
+        <span class="title-char">o</span>
+        <span class="title-char">n</span>
+        <span class="title-char">t</span>
+        <span class="title-char">r</span>
+        <span class="title-char">o</span>
+        <span class="title-char">l</span>
+        <span class="title-space"></span>
+        <span class="title-char">O</span>
+        <span class="title-char">p</span>
+        <span class="title-char">e</span>
+        <span class="title-char">r</span>
+        <span class="title-char">a</span>
+        <span class="title-char">c</span>
+        <span class="title-char">i</span>
+        <span class="title-char">o</span>
+        <span class="title-char">n</span>
+        <span class="title-char">a</span>
+        <span class="title-char">l</span>
+      </h2>
+      <p class="loader-text-cco">Iniciando sistema...</p>
+
+      <!-- Barra de progreso mejorada -->
+      <div class="loader-progress-cco">
+        <div class="progress-track">
+          <div class="progress-fill"></div>
+          <div class="progress-glow"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIN VIEW ==================== -->
+  <div id="loginView">
+    <?!= include('Login') ?>
+  </div>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="app-header" id="appHeader">
+    <!-- Botón menú móvil -->
+    <button class="mobile-menu-btn" onclick="toggleSidebarMobile()" aria-label="Abrir menú">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Logo con imagen - Click va al Dashboard -->
+    <div class="logo" onclick="SidebarMenu.goToDashboard()" title="Ir al Dashboard">
+      <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" class="header-logo-img">
+      <div class="logo-text-container">
+        <span class="logo-text">C.C.O</span>
+        <span class="logo-subtitle">Centro Control Operacional</span>
+      </div>
+    </div>
+
+    <!-- Header Right Section: User Info + Logout -->
+    <div class="header-right-section" id="headerRightSection">
+      <div class="header-user-info" id="headerUserInfo">
+        <div class="header-user-avatar" id="headerUserAvatar">U</div>
+        <div class="header-user-details">
+          <span class="header-user-name" id="headerUserName">Usuario</span>
+          <span class="header-user-role" id="headerUserRole">Rol</span>
+        </div>
+      </div>
+      <div class="header-datetime">
+        <i class="fas fa-clock"></i>
+        <span id="headerClock">00:00</span>
+      </div>
+      <button class="header-logout-btn" onclick="SidebarMenu.logout()" title="Cerrar Sesión">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Salir</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Modal de Confirmación de Logout -->
+  <div class="logout-modal-overlay" id="logoutModal" onclick="hideLogoutConfirm()">
+    <div class="logout-modal" onclick="event.stopPropagation()">
+      <div class="logout-modal-icon">
+        <i class="fas fa-sign-out-alt"></i>
+      </div>
+      <h3 class="logout-modal-title">¿Cerrar sesión?</h3>
+      <p class="logout-modal-text">Tu sesión actual se cerrará y volverás a la pantalla de inicio de sesión.</p>
+      <div class="logout-modal-buttons">
+        <button class="logout-btn-cancel" onclick="hideLogoutConfirm()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button class="logout-btn-confirm" onclick="confirmLogout()">
+          <i class="fas fa-check"></i> Sí, cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Notificación/Éxito Universal -->
+  <div class="notify-modal-overlay" id="notifyModal" onclick="hideNotifyModal()">
+    <div class="notify-modal" onclick="event.stopPropagation()">
+      <div class="notify-modal-icon" id="notifyModalIcon">
+        <i class="fas fa-check"></i>
+      </div>
+      <h3 class="notify-modal-title" id="notifyModalTitle">Operación Exitosa</h3>
+      <div class="notify-modal-content" id="notifyModalContent"></div>
+      <button class="notify-btn-ok" onclick="hideNotifyModal()">
+        <i class="fas fa-check"></i> Aceptar
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación Universal -->
+  <div class="confirm-modal-overlay" id="confirmModal" onclick="cancelConfirmModal()">
+    <div class="confirm-modal" onclick="event.stopPropagation()">
+      <div class="confirm-modal-icon" id="confirmModalIcon">
+        <i class="fas fa-question"></i>
+      </div>
+      <h3 class="confirm-modal-title" id="confirmModalTitle">Confirmar Acción</h3>
+      <p class="confirm-modal-text" id="confirmModalText">¿Está seguro de realizar esta acción?</p>
+      <div class="confirm-modal-buttons">
+        <button class="confirm-btn-cancel" onclick="cancelConfirmModal()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button class="confirm-btn-ok" id="confirmModalOkBtn" onclick="acceptConfirmModal()">
+          <i class="fas fa-check"></i> Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SIDEBAR MENU ==================== -->
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <div class="app-layout" id="appLayout">
+    <aside class="sidebar-menu" id="sidebarMenu" role="navigation" aria-label="Menú principal">
+      <!-- Contenido generado por SidebarMenu.render() -->
+    </aside>
+
+    <!-- Backdrop para móvil -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="SidebarMenu.closeMobileMenu()"></div>
+
+    <main class="main-content" id="mainContent">
+      <!-- Vistas de la aplicación -->
+      <?!= include('Dashboard_Unified') ?>
+      <div id="homeView" class="view"></div> <!-- Legacy/Placeholder -->
+      <?!= include('Ingreso_Page') ?>
+      <?!= include('Reception_Page') ?>
+      <?!= include('Inventory_Page') ?>
+      <?!= include('Picking_Page') ?>
+      <?!= include('Packing_Page') ?>
+      <?!= include('Despacho_Page') ?>
+      <?!= include('Shipping_Page') ?>
+      <?!= include('Delivery_Page') ?>
+      <?!= include('Reports_Page') ?>
+      <?!= include('UserManagement_Page') ?>
+      <?!= include('RoleManagement_Page') ?>
+      <?!= include('NotasVenta_Page') ?>
+      <?!= include('Transfer_Page') ?>
+      <?!= include('Consultas_Page') ?>
+      <?!= include('LotesSeries_Page') ?>
+      <?!= include('Direcciones_Page') ?>
+      <?!= include('Layout_Page') ?>
+      <?!= include('AdminViews_Page') ?>
+      
+      <!-- TMS Views -->
+      <?!= include('TMS_Dashboard_Page') ?>
+      <?!= include('TMS_RoutePlanning_Page') ?>
+      <?!= include('TMS_ControlTower_Page') ?>
+      <?!= include('TMS_Drivers_Page') ?>
+      
+      <div id="tms-mobileView" class="view">
+        <div class="page-container">
+          <div class="page-header">
+            <div class="header-title">
+              <h1><i class="fas fa-mobile-screen"></i> Aplicación Móvil</h1>
+              <p class="subtitle">Configuración y acceso a la app móvil</p>
+            </div>
+          </div>
+          <div id="tmsMobileContent">
+            <div class="loading-message">
+              <i class="fas fa-spinner fa-spin"></i> Cargando configuración móvil...
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- SheetJS para parsing de archivos Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+  <?!= include('Navigation_Handler') ?>
+  <?!= include('Sidebar_Menu_Component') ?>
+  <?!= include('Login_Success_Handler') ?>
+  <?!= include('Utils') ?>
+  <?!= include('Scripts') ?>
+
+  <!-- WMS Components JavaScript -->
+  <?!= include('WMS_Components_JS') ?>
+
+  <script>
+    // Failsafe: Ensure loader is hidden if something crashes
+    setTimeout(function() {
+      var loader = document.getElementById('loadingScreen');
+      if (loader && !loader.classList.contains('hidden') && loader.style.display !== 'none') {
+        console.warn('Failsafe: Forcing loader hide after 5s');
+        loader.classList.add('hidden');
+        loader.style.display = 'none';
+        // Try to animate entrance if function exists
+        try {
+          if(typeof animateLoginEntrance === 'function') animateLoginEntrance();
+          else {
+             // Fallback animation if function not ready
+             var loginCard = document.getElementById('loginCard');
+             if(loginCard) loginCard.style.opacity = '1';
+          }
+        } catch(e) {}
+      }
+    }, 5000);
+  </script>
+</body>
+
+</html>

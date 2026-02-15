@@ -1,0 +1,38 @@
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const el = document.getElementById('mainTitle');
+  if (!el) return;
+  
+  // Usamos escapes Unicode para asegurar la compatibilidad
+  // 🕷️ = \uD83D\uDD77\uFE0F
+  // 🕸️ = \uD83D\uDD78\uFE0F
+  const finalText = '\uD83D\uDD77\uFE0F\uD83D\uDD78\uFE0F Partidas, Series, Farmapack, Peso y Ubicaciones \uD83D\uDD78\uFE0F\uD83D\uDD77\uFE0F';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&?';
+  let animating = false;
+  
+  function runDecrypt() {
+    if (animating) return;
+    animating = true;
+    let frame = 0;
+    const len = finalText.length;
+    const interval = setInterval(() => {
+      const out = finalText.split('').map((ch, i) => {
+        // Ignorar espacios y emojis en el "decifrado"
+        if (ch === ' ' || ch.match(/[\uD800-\uDFFF]/)) return ch;
+        if (i < frame / 2) return ch;
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join('');
+      el.textContent = out;
+      frame++;
+      if (frame / 2 >= len + 3) {
+        el.textContent = finalText;
+        clearInterval(interval);
+        animating = false;
+      }
+    }, 30);
+  }
+  
+  runDecrypt();
+  el.addEventListener('mouseenter', runDecrypt);
+});
+</script>

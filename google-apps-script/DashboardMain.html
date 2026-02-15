@@ -1,0 +1,176 @@
+<section class="view" id="dashboardView">
+  <div class="container-fluid pt-4">
+    <h2 class="mb-4">Dashboard en Tiempo Real</h2>
+    
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+          <div class="card-body">
+            <i class="fas fa-shopping-cart fa-3x text-primary mb-2"></i>
+            <h2 id="totalOrders">0</h2>
+            <p class="text-muted mb-0">Órdenes Totales</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+          <div class="card-body">
+            <i class="fas fa-box fa-3x text-success mb-2"></i>
+            <h2 id="totalProducts">0</h2>
+            <p class="text-muted mb-0">Productos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+          <div class="card-body">
+            <i class="fas fa-truck fa-3x text-warning mb-2"></i>
+            <h2 id="activeDispatches">0</h2>
+            <p class="text-muted mb-0">Despachos Activos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+          <div class="card-body">
+            <i class="fas fa-check-circle fa-3x text-info mb-2"></i>
+            <h2 id="deliveredOrders">0</h2>
+            <p class="text-muted mb-0">Entregas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stages -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-stream"></i> Flujo del Proceso</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center" id="stagesContainer">
+          <div class="col">
+            <h3 id="stage1">0</h3>
+            <small class="text-muted">Recepción</small>
+          </div>
+          <div class="col">
+            <h3 id="stage2">0</h3>
+            <small class="text-muted">Picking</small>
+          </div>
+          <div class="col">
+            <h3 id="stage3">0</h3>
+            <small class="text-muted">Packing</small>
+          </div>
+          <div class="col">
+            <h3 id="stage4">0</h3>
+            <small class="text-muted">Despacho</small>
+          </div>
+          <div class="col">
+            <h3 id="stage5">0</h3>
+            <small class="text-muted">Entregado</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning">
+        <h5 class="mb-0">
+          <i class="fas fa-bell"></i> Alertas 
+          <span class="badge bg-danger" id="alertCount">0</span>
+        </h5>
+      </div>
+      <div class="card-body">
+        <div id="alertsContainer">
+          <p class="text-muted">Cargando alertas...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inicialización del Dashboard
+    function initDashboard() {
+      console.log('Inicializando Dashboard...');
+      loadUserInfo();
+      loadDashboardData();
+      
+      // Configurar auto-refresh si no existe
+      if (!window.dashboardInterval) {
+        window.dashboardInterval = setInterval(loadDashboardData, 30000); // 30 segundos
+      }
+    }
+    
+    function loadUserInfo() {
+      const userName = sessionStorage.getItem('userName') || 'Usuario';
+      // Buscar elemento userName en el header principal si existe, o localmente
+      const userEl = document.getElementById('userName');
+      if (userEl) userEl.textContent = userName;
+    }
+    
+    function loadDashboardData() {
+      google.script.run
+        .withSuccessHandler(updateDashboard)
+        .withFailureHandler(function(error) {
+          console.error('Error:', error);
+          const container = document.getElementById('alertsContainer');
+          if(container) {
+            container.innerHTML = '<div class="alert alert-danger">Error al cargar datos: ' + error.message + '</div>';
+          }
+        })
+        .getDashboardMetrics();
+    }
+    
+    function updateDashboard(data) {
+      if (!data || !data.success) {
+        console.error('Error en respuesta:', data);
+        return;
+      }
+      
+      // Actualizar KPIs
+      safeTextContent('totalOrders', data.orders.total || 0);
+      safeTextContent('totalProducts', data.inventory.totalProducts || 0);
+      safeTextContent('activeDispatches', (data.dispatches.pendientes || 0) + (data.dispatches.enTransito || 0));
+      safeTextContent('deliveredOrders', data.orders.entregadas || 0);
+      
+      // Actualizar stages
+      safeTextContent('stage1', data.receptions.pendingCount || 0);
+      safeTextContent('stage2', data.orders.picking || 0);
+      safeTextContent('stage3', data.orders.packing || 0);
+      safeTextContent('stage4', data.dispatches.pendientes || 0);
+      safeTextContent('stage5', data.orders.entregadas || 0);
+      
+      // Actualizar alertas
+      updateAlerts(data.alerts);
+    }
+    
+    function safeTextContent(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    
+    function updateAlerts(alerts) {
+      const container = document.getElementById('alertsContainer');
+      const countBadge = document.getElementById('alertCount');
+      
+      if (countBadge) countBadge.textContent = alerts ? alerts.length : 0;
+      if (!container) return;
+      
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay alertas</p>';
+        return;
+      }
+      
+      container.innerHTML = alerts.slice(0, 5).map(alert => 
+        '<div class="alert alert-' + alert.type + ' mb-2">' +
+        '<i class="fas fa-' + alert.icon + '"></i> ' +
+        '<strong>' + alert.title + ':</strong> ' + alert.message +
+        '</div>'
+      ).join('');
+    }
+    
+    // Exponer globalmente
+    window.initDashboard = initDashboard;
+  </script>
+</section>

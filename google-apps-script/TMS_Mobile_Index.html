@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="apple-mobile-web-app-title" content="TMS Conductor">
+  
+  <title>TMS - Aplicación del Conductor</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="<?= ScriptApp.getService().getUrl() ?>?page=manifest">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBmaWxsPSIjM2I4MmY2Ii8+CjxwYXRoIGQ9Ik05MCA0NUw2MCA3NUg4MFY5MEg2MFYxMDVIODBWMTIwSDEwMFYxMDVIMTIwVjkwSDEwMFY3NUgxMjBMOTAgNDVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ==================== MOBILE PWA STYLES ==================== */
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-primary: #f8fafc;
+      --bg-surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --radius: 0.75rem;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* PWA App Container */
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Header */
+    .mobile-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: max(env(safe-area-inset-top), 1rem) 1rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-logo {
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .header-text h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .header-text p {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 0.125rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .header-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0.95);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      background: var(--bg-surface);
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .driver-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-text {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Action Cards */
+    .action-section {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .action-btn {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
+      background: var(--border);
+    }
+
+    .action-btn.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .action-btn.primary:active {
+      background: var(--primary-dark);
+    }
+
+    .action-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn:not(.primary) .action-icon {
+      background: var(--primary);
+      color: white;
+    }
+
+    .action-text {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Current Route Card */
+    .current-route {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .route-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .route-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .route-progress {
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+    }
+
+    .route-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .route-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .route-detail-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .route-detail-label {
+      font-size: 0.625rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.5rem;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.95);
+    }
+
+    .nav-icon {
+      font-size: 1.25rem;
+    }
+
+    .nav-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Loading States */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loading-content {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      max-width: 280px;
+      margin: 1rem;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Offline Banner */
+    .offline-banner {
+      background: var(--warning);
+      color: white;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: none;
+    }
+
+    .offline-banner.show {
+      display: block;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 375px) {
+      .quick-stats {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f172a;
+        --bg-surface: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border: #334155;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    
+    <!-- Offline Banner -->
+    <div class="offline-banner" id="offlineBanner">
+      <i class="fas fa-wifi-slash"></i> Modo sin conexión - Los datos se sincronizarán cuando vuelva la conexión
+    </div>
+
+    <!-- Header -->
+    <header class="mobile-header">
+      <div class="header-content">
+        <div class="header-title">
+          <div class="header-logo">
+            <i class="fas fa-route"></i>
+          </div>
+          <div class="header-text">
+            <h1>TMS Conductor</h1>
+            <p id="driverName">Cargando...</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="header-btn" id="syncBtn" title="Sincronizar">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button class="header-btn" id="menuBtn" title="Menú">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="driver-status">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <span class="status-text" id="statusText">En línea</span>
+      </div>
+      <div class="connection-status">
+        <i class="fas fa-signal" id="connectionIcon"></i>
+        <span id="connectionText">Conectado</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Quick Stats -->
+      <div class="quick-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="pendingDeliveries">0</div>
+          <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="completedToday">0</div>
+          <div class="stat-label">Completadas Hoy</div>
+        </div>
+      </div>
+
+      <!-- Current Route -->
+      <div class="current-route" id="currentRoute" style="display: none;">
+        <div class="route-header">
+          <div class="route-title" id="routeName">Ruta Actual</div>
+          <div class="route-progress" id="routeProgress">0%</div>
+        </div>
+        <div class="route-details">
+          <div class="route-detail">
+            <div class="route-detail-value" id="routeTotal">0</div>
+            <div class="route-detail-label">Total</div>
+          </div>
+          <div class="route-detail">
+            <div class="route-detail-value" id="routeCompleted">0</div>
+            <div class="route-detail-label">Completadas</div>
+          </div>
+          <div class="route-detail">
+            <div class="route-detail-value" id="routeRemaining">0</div>
+            <div class="route-detail-label">Restantes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="action-section">
+        <h2 class="section-title">
+          <i class="fas fa-bolt"></i>
+          Acciones Rápidas
+        </h2>
+        <div class="action-grid">
+          <button class="action-btn primary" id="viewTasksBtn">
+            <div class="action-icon">
+              <i class="fas fa-list-check"></i>
+            </div>
+            <div class="action-text">Ver Tareas</div>
+          </button>
+          <button class="action-btn" id="scanQRBtn">
+            <div class="action-icon">
+              <i class="fas fa-qrcode"></i>
+            </div>
+            <div class="action-text">Escanear QR</div>
+          </button>
+          <button class="action-btn" id="takePhotoBtn">
+            <div class="action-icon">
+              <i class="fas fa-camera"></i>
+            </div>
+            <div class="action-text">Tomar Foto</div>
+          </button>
+          <button class="action-btn" id="reportIssueBtn">
+            <div class="action-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="action-text">Reportar Problema</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tools -->
+      <div class="action-section">
+        <h2 class="section-title">
+          <i class="fas fa-map-marked-alt"></i>
+          Navegación
+        </h2>
+        <div class="action-grid">
+          <button class="action-btn" id="openMapsBtn">
+            <div class="action-icon">
+              <i class="fas fa-map"></i>
+            </div>
+            <div class="action-text">Google Maps</div>
+          </button>
+          <button class="action-btn" id="openWazeBtn">
+            <div class="action-icon">
+              <i class="fas fa-route"></i>
+            </div>
+            <div class="action-text">Waze</div>
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-view="home">
+        <i class="nav-icon fas fa-home"></i>
+        <span class="nav-label">Inicio</span>
+      </button>
+      <button class="nav-btn" data-view="tasks">
+        <i class="nav-icon fas fa-list-check"></i>
+        <span class="nav-label">Tareas</span>
+      </button>
+      <button class="nav-btn" data-view="map">
+        <i class="nav-icon fas fa-map"></i>
+        <span class="nav-label">Mapa</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <i class="nav-icon fas fa-user"></i>
+        <span class="nav-label">Perfil</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p id="loadingText">Cargando...</p>
+    </div>
+  </div>
+
+  <script>
+    // ==================== TMS MOBILE PWA JAVASCRIPT ==================== 
+    
+    /**
+     * Initialize TMS Mobile configuration view
+     * Called from Navigation_Handler when tms-mobile view is loaded
+     */
+    window.initTMSMobile = function() {
+      console.log('initTMSMobile: Initializing TMS Mobile configuration view');
+      
+      const container = document.getElementById('tmsMobileContent');
+      if (!container) {
+        console.error('initTMSMobile: tmsMobileContent container not found');
+        return;
+      }
+      
+      // Render mobile app configuration interface
+      renderTMSMobileConfig(container);
+    };
+    
+    /**
+     * Render TMS Mobile configuration interface
+     */
+    function renderTMSMobileConfig(container) {
+      const html = `
+        <div class="tms-mobile-config">
+          <!-- Mobile App Info Section -->
+          <div class="config-section">
+            <div class="section-header">
+              <h3><i class="fas fa-mobile-screen"></i> Aplicación Móvil TMS</h3>
+              <p>Aplicación Progressive Web App (PWA) para conductores</p>
+            </div>
+            
+            <div class="mobile-app-preview">
+              <div class="phone-mockup">
+                <div class="phone-screen">
+                  <div class="app-preview">
+                    <div class="preview-header">
+                      <i class="fas fa-route"></i>
+                      <span>TMS Conductor</span>
+                    </div>
+                    <div class="preview-content">
+                      <div class="preview-stats">
+                        <div class="stat-item">
+                          <div class="stat-value">5</div>
+                          <div class="stat-label">Pendientes</div>
+                        </div>
+                        <div class="stat-item">
+                          <div class="stat-value">12</div>
+                          <div class="stat-label">Completadas</div>
+                        </div>
+                      </div>
+                      <div class="preview-actions">
+                        <div class="action-btn">📋 Ver Tareas</div>
+                        <div class="action-btn">📷 Tomar Foto</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="app-info">
+                <h4>Características Principales</h4>
+                <ul class="feature-list">
+                  <li><i class="fas fa-check-circle"></i> Funciona sin conexión a internet</li>
+                  <li><i class="fas fa-check-circle"></i> Sincronización automática</li>
+                  <li><i class="fas fa-check-circle"></i> Captura de fotos de entrega</li>
+                  <li><i class="fas fa-check-circle"></i> Navegación GPS integrada</li>
+                  <li><i class="fas fa-check-circle"></i> Actualizaciones en tiempo real</li>
+                  <li><i class="fas fa-check-circle"></i> Interfaz optimizada para móvil</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Access Section -->
+          <div class="config-section">
+            <div class="section-header">
+              <h3><i class="fas fa-link"></i> Acceso a la Aplicación</h3>
+              <p>Enlaces y códigos QR para acceder a la app móvil</p>
+            </div>
+            
+            <div class="access-methods">
+              <div class="access-card">
+                <div class="access-header">
+                  <i class="fas fa-globe"></i>
+                  <h4>Acceso Web Directo</h4>
+                </div>
+                <div class="access-content">
+                  <div class="url-display">
+                    <input type="text" id="mobileAppUrl" readonly class="form-control" 
+                           value="${ScriptApp.getService().getUrl()}?page=mobile">
+                    <button class="btn-copy" onclick="copyMobileUrl()">
+                      <i class="fas fa-copy"></i>
+                    </button>
+                  </div>
+                  <button class="btn-modern btn-primary" onclick="openMobileApp()">
+                    <i class="fas fa-external-link-alt"></i>
+                    Abrir App Móvil
+                  </button>
+                </div>
+              </div>
+              
+              <div class="access-card">
+                <div class="access-header">
+                  <i class="fas fa-qrcode"></i>
+                  <h4>Código QR</h4>
+                </div>
+                <div class="access-content">
+                  <div class="qr-container">
+                    <div id="qrCode" class="qr-placeholder">
+                      <i class="fas fa-qrcode"></i>
+                      <p>Código QR</p>
+                    </div>
+                  </div>
+                  <button class="btn-modern btn-secondary" onclick="generateQR()">
+                    <i class="fas fa-refresh"></i>
+                    Generar QR
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Installation Guide -->
+          <div class="config-section">
+            <div class="section-header">
+              <h3><i class="fas fa-download"></i> Guía de Instalación</h3>
+              <p>Instrucciones para instalar la app en dispositivos móviles</p>
+            </div>
+            
+            <div class="installation-guide">
+              <div class="guide-tabs">
+                <button class="tab-btn active" onclick="showGuide('android')">
+                  <i class="fab fa-android"></i> Android
+                </button>
+                <button class="tab-btn" onclick="showGuide('ios')">
+                  <i class="fab fa-apple"></i> iOS
+                </button>
+              </div>
+              
+              <div class="guide-content">
+                <div id="androidGuide" class="guide-panel active">
+                  <h4>Instalación en Android</h4>
+                  <ol class="installation-steps">
+                    <li>Abrir el enlace de la app en Chrome</li>
+                    <li>Tocar el menú (⋮) y seleccionar "Instalar app"</li>
+                    <li>Confirmar la instalación</li>
+                    <li>La app aparecerá en el escritorio</li>
+                  </ol>
+                </div>
+                
+                <div id="iosGuide" class="guide-panel">
+                  <h4>Instalación en iOS</h4>
+                  <ol class="installation-steps">
+                    <li>Abrir el enlace de la app en Safari</li>
+                    <li>Tocar el botón de compartir (□↗)</li>
+                    <li>Seleccionar "Añadir a pantalla de inicio"</li>
+                    <li>Confirmar el nombre y tocar "Añadir"</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Configuration Section -->
+          <div class="config-section">
+            <div class="section-header">
+              <h3><i class="fas fa-cog"></i> Configuración</h3>
+              <p>Ajustes de la aplicación móvil</p>
+            </div>
+            
+            <div class="config-options">
+              <div class="config-row">
+                <label class="config-label">
+                  <i class="fas fa-sync"></i>
+                  Sincronización automática
+                </label>
+                <div class="config-control">
+                  <label class="switch">
+                    <input type="checkbox" id="autoSync" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="config-row">
+                <label class="config-label">
+                  <i class="fas fa-bell"></i>
+                  Notificaciones push
+                </label>
+                <div class="config-control">
+                  <label class="switch">
+                    <input type="checkbox" id="pushNotifications" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="config-row">
+                <label class="config-label">
+                  <i class="fas fa-map-marker-alt"></i>
+                  Tracking de ubicación
+                </label>
+                <div class="config-control">
+                  <label class="switch">
+                    <input type="checkbox" id="locationTracking" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="config-actions">
+              <button class="btn-modern btn-success" onclick="saveMobileConfig()">
+                <i class="fas fa-save"></i>
+                Guardar Configuración
+              </button>
+              <button class="btn-modern btn-secondary" onclick="resetMobileConfig()">
+                <i class="fas fa-undo"></i>
+                Restaurar Valores
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <style>
+          .tms-mobile-config {
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+          
+          .config-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+          }
+          
+          .section-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 16px;
+          }
+          
+          .section-header h3 {
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          
+          .section-header p {
+            color: #6b7280;
+            margin: 0;
+            font-size: 0.9rem;
+          }
+          
+          .mobile-app-preview {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+            align-items: start;
+          }
+          
+          .phone-mockup {
+            width: 250px;
+            height: 500px;
+            background: #1f2937;
+            border-radius: 25px;
+            padding: 20px;
+            position: relative;
+            margin: 0 auto;
+          }
+          
+          .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            border-radius: 15px;
+            overflow: hidden;
+          }
+          
+          .app-preview {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .preview-header {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+          }
+          
+          .preview-content {
+            flex: 1;
+            padding: 16px;
+          }
+          
+          .preview-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+          
+          .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          
+          .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+          }
+          
+          .stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+          }
+          
+          .preview-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          .action-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+          }
+          
+          .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+          }
+          
+          .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            color: #374151;
+          }
+          
+          .feature-list i {
+            color: #10b981;
+          }
+          
+          .access-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+          }
+          
+          .access-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9fafb;
+          }
+          
+          .access-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+          }
+          
+          .access-header h4 {
+            margin: 0;
+            color: #1f2937;
+            font-size: 1.1rem;
+          }
+          
+          .url-display {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+          }
+          
+          .url-display input {
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.85rem;
+          }
+          
+          .btn-copy {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+          }
+          
+          .qr-container {
+            text-align: center;
+            margin-bottom: 16px;
+          }
+          
+          .qr-placeholder {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            color: #6b7280;
+          }
+          
+          .qr-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 8px;
+          }
+          
+          .guide-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+          }
+          
+          .tab-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #6b7280;
+          }
+          
+          .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+          }
+          
+          .guide-panel {
+            display: none;
+          }
+          
+          .guide-panel.active {
+            display: block;
+          }
+          
+          .installation-steps {
+            padding-left: 20px;
+          }
+          
+          .installation-steps li {
+            margin-bottom: 8px;
+            color: #374151;
+          }
+          
+          .config-options {
+            margin-bottom: 24px;
+          }
+          
+          .config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          
+          .config-row:last-child {
+            border-bottom: none;
+          }
+          
+          .config-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #374151;
+          }
+          
+          .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+          }
+          
+          .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+          
+          .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+          }
+          
+          .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+          }
+          
+          input:checked + .slider {
+            background-color: #3b82f6;
+          }
+          
+          input:checked + .slider:before {
+            transform: translateX(26px);
+          }
+          
+          .config-actions {
+            display: flex;
+            gap: 12px;
+          }
+          
+          @media (max-width: 768px) {
+            .mobile-app-preview {
+              grid-template-columns: 1fr;
+              text-align: center;
+            }
+            
+            .access-methods {
+              grid-template-columns: 1fr;
+            }
+            
+            .config-actions {
+              flex-direction: column;
+            }
+          }
+        </style>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    // Mobile app configuration functions
+    window.copyMobileUrl = function() {
+      const urlInput = document.getElementById('mobileAppUrl');
+      urlInput.select();
+      document.execCommand('copy');
+      
+      // Show feedback
+      const btn = event.target.closest('.btn-copy');
+      const originalIcon = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i>';
+      setTimeout(() => {
+        btn.innerHTML = originalIcon;
+      }, 2000);
+    };
+    
+    window.openMobileApp = function() {
+      const url = document.getElementById('mobileAppUrl').value;
+      window.open(url, '_blank');
+    };
+    
+    window.generateQR = function() {
+      const qrContainer = document.getElementById('qrCode');
+      const url = document.getElementById('mobileAppUrl').value;
+      
+      // Simple QR placeholder - in production, use a QR library
+      qrContainer.innerHTML = `
+        <div style="background: #000; color: #fff; padding: 20px; font-family: monospace; font-size: 8px; line-height: 1;">
+          ████████████████<br>
+          █ QR CODE HERE █<br>
+          █ ${url.substring(0, 12)}... █<br>
+          ████████████████
+        </div>
+      `;
+    };
+    
+    window.showGuide = function(platform) {
+      // Update tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update panels
+      document.querySelectorAll('.guide-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(platform + 'Guide').classList.add('active');
+    };
+    
+    window.saveMobileConfig = function() {
+      const config = {
+        autoSync: document.getElementById('autoSync').checked,
+        pushNotifications: document.getElementById('pushNotifications').checked,
+        locationTracking: document.getElementById('locationTracking').checked
+      };
+      
+      // Save configuration (implement backend call)
+      console.log('Saving mobile config:', config);
+      
+      // Show success message
+      alert('Configuración guardada exitosamente');
+    };
+    
+    window.resetMobileConfig = function() {
+      document.getElementById('autoSync').checked = true;
+      document.getElementById('pushNotifications').checked = true;
+      document.getElementById('locationTracking').checked = true;
+    };
+    
+    class TMSMobileApp {
+      constructor() {
+        this.isOnline = navigator.onLine;
+        this.driverData = null;
+        this.currentRoute = null;
+        this.syncQueue = [];
+        
+        this.init();
+      }
+
+      init() {
+        console.log('TMSMobileApp: Initializing...');
+        
+        this.setupEventListeners();
+        this.setupServiceWorker();
+        this.checkOnlineStatus();
+        this.loadDriverData();
+        
+        // Auto-sync every 30 seconds when online
+        setInterval(() => {
+          if (this.isOnline) {
+            this.syncData();
+          }
+        }, 30000);
+      }
+
+      setupEventListeners() {
+        // Header buttons
+        document.getElementById('syncBtn').addEventListener('click', () => this.syncData());
+        document.getElementById('menuBtn').addEventListener('click', () => this.showMenu());
+
+        // Quick actions
+        document.getElementById('viewTasksBtn').addEventListener('click', () => this.navigateToTasks());
+        document.getElementById('scanQRBtn').addEventListener('click', () => this.scanQR());
+        document.getElementById('takePhotoBtn').addEventListener('click', () => this.takePhoto());
+        document.getElementById('reportIssueBtn').addEventListener('click', () => this.reportIssue());
+        document.getElementById('openMapsBtn').addEventListener('click', () => this.openMaps());
+        document.getElementById('openWazeBtn').addEventListener('click', () => this.openWaze());
+
+        // Bottom navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const view = e.currentTarget.getAttribute('data-view');
+            this.navigateToView(view);
+          });
+        });
+
+        // Online/offline events
+        window.addEventListener('online', () => this.handleOnline());
+        window.addEventListener('offline', () => this.handleOffline());
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+          const now = (new Date()).getTime();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, false);
+      }
+
+      async setupServiceWorker() {
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registered:', registration);
+          } catch (error) {
+            console.error('Service Worker registration failed:', error);
+          }
+        }
+      }
+
+      checkOnlineStatus() {
+        this.isOnline = navigator.onLine;
+        this.updateConnectionStatus();
+      }
+
+      updateConnectionStatus() {
+        const banner = document.getElementById('offlineBanner');
+        const statusText = document.getElementById('statusText');
+        const connectionIcon = document.getElementById('connectionIcon');
+        const connectionText = document.getElementById('connectionText');
+
+        if (this.isOnline) {
+          banner.classList.remove('show');
+          statusText.textContent = 'En línea';
+          connectionIcon.className = 'fas fa-signal';
+          connectionText.textContent = 'Conectado';
+        } else {
+          banner.classList.add('show');
+          statusText.textContent = 'Sin conexión';
+          connectionIcon.className = 'fas fa-wifi-slash';
+          connectionText.textContent = 'Sin conexión';
+        }
+      }
+
+      handleOnline() {
+        console.log('TMSMobileApp: Back online');
+        this.isOnline = true;
+        this.updateConnectionStatus();
+        this.syncData();
+      }
+
+      handleOffline() {
+        console.log('TMSMobileApp: Gone offline');
+        this.isOnline = false;
+        this.updateConnectionStatus();
+      }
+
+      showLoading(text = 'Cargando...') {
+        document.getElementById('loadingText').textContent = text;
+        document.getElementById('loadingOverlay').style.display = 'flex';
+      }
+
+      hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
+
+      async loadDriverData() {
+        this.showLoading('Cargando datos del conductor...');
+        
+        try {
+          // In a real implementation, this would get the current driver's data
+          // For now, we'll use mock data
+          this.driverData = {
+            id: 'DRV001',
+            nombre: 'Juan Pérez',
+            telefono: '+56912345678',
+            vehiculo: 'Toyota Hiace - ABC123'
+          };
+
+          // Load current route and tasks
+          await this.loadCurrentRoute();
+          await this.loadTasks();
+          
+          this.updateUI();
+          
+        } catch (error) {
+          console.error('Error loading driver data:', error);
+          this.showError('Error al cargar datos del conductor');
+        } finally {
+          this.hideLoading();
+        }
+      }
+
+      async loadCurrentRoute() {
+        // Mock current route data
+        this.currentRoute = {
+          id: 'RUT001',
+          nombre: 'Ruta Centro - Mañana',
+          totalEntregas: 12,
+          completadas: 5,
+          progreso: 42
+        };
+      }
+
+      async loadTasks() {
+        // Mock tasks data
+        this.tasks = [
+          { id: 1, direccion: 'Av. Providencia 123', estado: 'PENDIENTE' },
+          { id: 2, direccion: 'Calle Moneda 456', estado: 'PENDIENTE' },
+          { id: 3, direccion: 'Plaza Italia 789', estado: 'COMPLETADA' }
+        ];
+      }
+
+      updateUI() {
+        // Update driver name
+        document.getElementById('driverName').textContent = this.driverData.nombre;
+
+        // Update stats
+        const pendingTasks = this.tasks.filter(t => t.estado === 'PENDIENTE').length;
+        const completedToday = this.tasks.filter(t => t.estado === 'COMPLETADA').length;
+        
+        document.getElementById('pendingDeliveries').textContent = pendingTasks;
+        document.getElementById('completedToday').textContent = completedToday;
+
+        // Update current route
+        if (this.currentRoute) {
+          const routeCard = document.getElementById('currentRoute');
+          routeCard.style.display = 'block';
+          
+          document.getElementById('routeName').textContent = this.currentRoute.nombre;
+          document.getElementById('routeProgress').textContent = `${this.currentRoute.progreso}%`;
+          document.getElementById('routeTotal').textContent = this.currentRoute.totalEntregas;
+          document.getElementById('routeCompleted').textContent = this.currentRoute.completadas;
+          document.getElementById('routeRemaining').textContent = this.currentRoute.totalEntregas - this.currentRoute.completadas;
+        }
+      }
+
+      async syncData() {
+        if (!this.isOnline) return;
+
+        const syncBtn = document.getElementById('syncBtn');
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+
+        try {
+          // Sync pending data
+          await this.processSyncQueue();
+          
+          // Refresh data
+          await this.loadDriverData();
+          
+          console.log('TMSMobileApp: Data synced successfully');
+          
+        } catch (error) {
+          console.error('Sync error:', error);
+        } finally {
+          syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        }
+      }
+
+      async processSyncQueue() {
+        // Process any queued offline actions
+        while (this.syncQueue.length > 0) {
+          const action = this.syncQueue.shift();
+          try {
+            await this.executeAction(action);
+          } catch (error) {
+            console.error('Failed to sync action:', action, error);
+            // Re-queue failed actions
+            this.syncQueue.unshift(action);
+            break;
+          }
+        }
+      }
+
+      async executeAction(action) {
+        // Execute queued actions (status updates, photos, etc.)
+        console.log('Executing action:', action);
+      }
+
+      // Navigation methods
+      navigateToView(view) {
+        // Update active nav button
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        // Load view content
+        this.loadViewContent(view);
+      }
+
+      loadViewContent(view) {
+        const mainContent = document.querySelector('.main-content');
+        
+        switch (view) {
+          case 'home':
+            // Show home content (current implementation)
+            location.reload(); // Simple refresh for now
+            break;
+            
+          case 'tasks':
+            this.loadTasksView();
+            break;
+            
+          case 'map':
+            this.loadNavigationView();
+            break;
+            
+          case 'profile':
+            this.loadProfileView();
+            break;
+            
+          default:
+            console.log('Unknown view:', view);
+        }
+      }
+
+      loadTasksView() {
+        // Create iframe to load tasks interface
+        const iframe = document.createElement('iframe');
+        iframe.src = `${ScriptApp.getService().getUrl()}?page=tasks`;
+        iframe.style.cssText = `
+          width: 100%;
+          height: calc(100vh - 200px);
+          border: none;
+          border-radius: 0.75rem;
+          background: white;
+        `;
+        
+        const mainContent = document.querySelector('.main-content');
+        mainContent.innerHTML = '';
+        mainContent.appendChild(iframe);
+      }
+
+      loadNavigationView() {
+        // Create iframe to load navigation interface
+        const iframe = document.createElement('iframe');
+        iframe.src = `${ScriptApp.getService().getUrl()}?page=navigation`;
+        iframe.style.cssText = `
+          width: 100%;
+          height: calc(100vh - 200px);
+          border: none;
+          border-radius: 0.75rem;
+          background: white;
+        `;
+        
+        const mainContent = document.querySelector('.main-content');
+        mainContent.innerHTML = '';
+        mainContent.appendChild(iframe);
+      }
+
+      loadProfileView() {
+        const mainContent = document.querySelector('.main-content');
+        mainContent.innerHTML = `
+          <div class="profile-view" style="background: white; border-radius: 0.75rem; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <h2 style="margin: 0 0 1rem 0; color: #1e293b;">
+              <i class="fas fa-user"></i> Perfil del Conductor
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <label style="font-weight: 600; color: #374151;">Nombre:</label>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280;">${this.driverData?.nombre || 'Cargando...'}</p>
+              </div>
+              <div>
+                <label style="font-weight: 600; color: #374151;">Teléfono:</label>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280;">${this.driverData?.telefono || 'Cargando...'}</p>
+              </div>
+              <div>
+                <label style="font-weight: 600; color: #374151;">Vehículo:</label>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280;">${this.driverData?.vehiculo || 'Cargando...'}</p>
+              </div>
+              <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                <button onclick="window.tmsApp.logout()" style="
+                  background: #ef4444; 
+                  color: white; 
+                  border: none; 
+                  border-radius: 0.5rem; 
+                  padding: 0.75rem 1rem; 
+                  font-weight: 600; 
+                  cursor: pointer; 
+                  width: 100%;
+                ">
+                  <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      navigateToTasks() {
+        this.navigateToView('tasks');
+      }
+
+      // Action methods
+      async scanQR() {
+        try {
+          // Enhanced QR scanner implementation
+          if ('BarcodeDetector' in window) {
+            // Use native barcode detection if available
+            const barcodeDetector = new BarcodeDetector({
+              formats: ['qr_code']
+            });
+            
+            // Request camera access
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              video: { facingMode: 'environment' } 
+            });
+            
+            // Create video element for camera feed
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            
+            // Simple QR scanner UI
+            this.showQRScanner(video, barcodeDetector, stream);
+            
+          } else {
+            // Fallback: manual QR code input
+            const qrCode = prompt('Ingresa el código QR manualmente:');
+            if (qrCode) {
+              this.processQRCode(qrCode);
+            }
+          }
+        } catch (error) {
+          console.error('QR Scanner error:', error);
+          this.showError('Error al abrir escáner QR. Verifica los permisos de cámara.');
+        }
+      }
+
+      showQRScanner(video, detector, stream) {
+        // Create QR scanner overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.9);
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        `;
+        
+        video.style.cssText = `
+          width: 80%;
+          max-width: 400px;
+          border-radius: 0.75rem;
+        `;
+        
+        const instructions = document.createElement('p');
+        instructions.textContent = 'Apunta la cámara al código QR';
+        instructions.style.cssText = `
+          color: white;
+          margin: 1rem 0;
+          text-align: center;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i> Cerrar';
+        closeBtn.style.cssText = `
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          margin-top: 1rem;
+          cursor: pointer;
+        `;
+        
+        closeBtn.onclick = () => {
+          stream.getTracks().forEach(track => track.stop());
+          document.body.removeChild(overlay);
+        };
+        
+        overlay.appendChild(instructions);
+        overlay.appendChild(video);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+        
+        // Scan for QR codes
+        const scanInterval = setInterval(async () => {
+          try {
+            const barcodes = await detector.detect(video);
+            if (barcodes.length > 0) {
+              clearInterval(scanInterval);
+              stream.getTracks().forEach(track => track.stop());
+              document.body.removeChild(overlay);
+              this.processQRCode(barcodes[0].rawValue);
+            }
+          } catch (error) {
+            console.error('QR detection error:', error);
+          }
+        }, 1000);
+      }
+
+      processQRCode(qrCode) {
+        console.log('QR Code scanned:', qrCode);
+        
+        // Process different QR code types
+        if (qrCode.startsWith('TMS_TASK_')) {
+          const taskId = qrCode.replace('TMS_TASK_', '');
+          this.openTaskDetails(taskId);
+        } else if (qrCode.startsWith('TMS_DELIVERY_')) {
+          const deliveryId = qrCode.replace('TMS_DELIVERY_', '');
+          this.startDeliveryProcess(deliveryId);
+        } else {
+          this.showInfo(`Código QR escaneado: ${qrCode}`);
+        }
+      }
+
+      async takePhoto() {
+        try {
+          // Enhanced camera implementation
+          if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              video: { 
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+              } 
+            });
+            
+            this.showCameraInterface(stream);
+            
+          } else {
+            // Fallback: file input
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (file) {
+                this.processPhoto(file);
+              }
+            };
+            
+            input.click();
+          }
+        } catch (error) {
+          console.error('Camera error:', error);
+          this.showError('Error al abrir cámara. Verifica los permisos.');
+        }
+      }
+
+      showCameraInterface(stream) {
+        // Create camera interface
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: black;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+        `;
+        
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.style.cssText = `
+          flex: 1;
+          width: 100%;
+          object-fit: cover;
+        `;
+        
+        const controls = document.createElement('div');
+        controls.style.cssText = `
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          padding: 2rem;
+          background: rgba(0, 0, 0, 0.8);
+        `;
+        
+        const captureBtn = document.createElement('button');
+        captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
+        captureBtn.style.cssText = `
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          background: white;
+          border: 4px solid #3b82f6;
+          font-size: 1.5rem;
+          color: #3b82f6;
+          cursor: pointer;
+        `;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.style.cssText = `
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: #ef4444;
+          border: none;
+          color: white;
+          font-size: 1.25rem;
+          cursor: pointer;
+        `;
+        
+        captureBtn.onclick = () => {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0);
+          
+          canvas.toBlob((blob) => {
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(overlay);
+            this.processPhoto(blob);
+          }, 'image/jpeg', 0.8);
+        };
+        
+        closeBtn.onclick = () => {
+          stream.getTracks().forEach(track => track.stop());
+          document.body.removeChild(overlay);
+        };
+        
+        controls.appendChild(closeBtn);
+        controls.appendChild(captureBtn);
+        controls.appendChild(document.createElement('div')); // Spacer
+        
+        overlay.appendChild(video);
+        overlay.appendChild(controls);
+        document.body.appendChild(overlay);
+      }
+
+      async processPhoto(photoBlob) {
+        try {
+          this.showLoading('Subiendo foto...');
+          
+          // Upload photo to backend
+          const response = await this.callBackend('uploadMobileDeliveryPhoto', [
+            'CURRENT_TASK', // Would be actual task ID
+            this.driverId,
+            photoBlob,
+            { timestamp: new Date().toISOString() }
+          ]);
+          
+          if (response.success) {
+            this.showInfo('Foto subida exitosamente');
+          } else {
+            throw new Error(response.error);
+          }
+          
+        } catch (error) {
+          console.error('Photo upload error:', error);
+          this.showError('Error al subir foto');
+        } finally {
+          this.hideLoading();
+        }
+      }
+
+      async reportIssue() {
+        // Enhanced issue reporting
+        const issueTypes = [
+          'Problema de tráfico',
+          'Vehículo averiado',
+          'Cliente no disponible',
+          'Dirección incorrecta',
+          'Problema de seguridad',
+          'Otro'
+        ];
+        
+        const type = await this.showSelectDialog('Tipo de problema:', issueTypes);
+        if (!type) return;
+        
+        const description = prompt('Describe el problema:');
+        if (!description) return;
+        
+        try {
+          this.showLoading('Reportando problema...');
+          
+          const issueData = {
+            tipo: type,
+            descripcion: description,
+            ubicacion: await this.getCurrentLocation(),
+            prioridad: type.includes('seguridad') ? 'ALTA' : 'MEDIA'
+          };
+          
+          const response = await this.callBackend('reportMobileIssue', [this.driverId, issueData]);
+          
+          if (response.success) {
+            this.showInfo('Problema reportado exitosamente');
+          } else {
+            throw new Error(response.error);
+          }
+          
+        } catch (error) {
+          console.error('Issue report error:', error);
+          this.showError('Error al reportar problema');
+        } finally {
+          this.hideLoading();
+        }
+      }
+
+      openMaps() {
+        if (this.currentRoute) {
+          // Would open Google Maps with route
+          window.open('https://maps.google.com/', '_blank');
+        } else {
+          this.showInfo('No hay ruta activa');
+        }
+      }
+
+      openWaze() {
+        if (this.currentRoute) {
+          // Would open Waze with route
+          window.open('https://waze.com/', '_blank');
+        } else {
+          this.showInfo('No hay ruta activa');
+        }
+      }
+
+      showMenu() {
+        // Would show side menu
+        console.log('Opening menu...');
+        this.showInfo('Menú próximamente');
+      }
+
+      // Utility methods
+      async getCurrentLocation() {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            }),
+            (error) => reject(error),
+            { enableHighAccuracy: true, timeout: 5000 }
+          );
+        });
+      }
+
+      async callBackend(functionName, params = []) {
+        return new Promise((resolve, reject) => {
+          try {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)[functionName](...params);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+
+      async showSelectDialog(title, options) {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+          `;
+          
+          const dialog = document.createElement('div');
+          dialog.style.cssText = `
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+          `;
+          
+          const titleEl = document.createElement('h3');
+          titleEl.textContent = title;
+          titleEl.style.cssText = `
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.125rem;
+          `;
+          
+          const optionsList = document.createElement('div');
+          optionsList.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+          `;
+          
+          options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.textContent = option;
+            btn.style.cssText = `
+              background: #f3f4f6;
+              border: 1px solid #d1d5db;
+              border-radius: 0.5rem;
+              padding: 0.75rem;
+              text-align: left;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            `;
+            
+            btn.onclick = () => {
+              document.body.removeChild(overlay);
+              resolve(option);
+            };
+            
+            optionsList.appendChild(btn);
+          });
+          
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Cancelar';
+          cancelBtn.style.cssText = `
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            width: 100%;
+          `;
+          
+          cancelBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            resolve(null);
+          };
+          
+          dialog.appendChild(titleEl);
+          dialog.appendChild(optionsList);
+          dialog.appendChild(cancelBtn);
+          overlay.appendChild(dialog);
+          document.body.appendChild(overlay);
+        });
+      }
+
+      openTaskDetails(taskId) {
+        console.log('Opening task details:', taskId);
+        // Navigate to task details view
+        this.navigateToView('tasks');
+      }
+
+      async startDeliveryProcess(deliveryId) {
+        try {
+          this.showLoading('Iniciando proceso de entrega...');
+          
+          const response = await this.callBackend('updateMobileTaskStatus', [
+            deliveryId,
+            this.driverId,
+            'EN_RUTA',
+            { observaciones: 'Proceso iniciado via QR' }
+          ]);
+          
+          if (response.success) {
+            this.showInfo('Proceso de entrega iniciado');
+            this.loadDriverData(); // Refresh data
+          } else {
+            throw new Error(response.error);
+          }
+          
+        } catch (error) {
+          console.error('Error starting delivery:', error);
+          this.showError('Error al iniciar entrega');
+        } finally {
+          this.hideLoading();
+        }
+      }
+
+      logout() {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+          // Clear local data
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Redirect to login
+          window.location.href = ScriptApp.getService().getUrl();
+        }
+      }
+
+      showError(message) {
+        this.showToast(message, 'error');
+      }
+
+      showInfo(message) {
+        this.showToast(message, 'info');
+      }
+
+      showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: ${type === 'error' ? '#ef4444' : '#3b82f6'};
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 0.5rem;
+          z-index: 1000;
+          font-weight: 600;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          max-width: 90%;
+          text-align: center;
+        `;
+        
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+          }
+        }, 3000);
+      }
+    }
+
+    // Initialize app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      window.tmsApp = new TMSMobileApp();
+    });
+
+    // Prevent pull-to-refresh on iOS
+    document.body.addEventListener('touchstart', e => {
+      if (e.touches.length === 1 && e.touches[0].clientY <= 40) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.body.addEventListener('touchmove', e => {
+      if (e.touches.length === 1 && e.touches[0].clientY <= 40) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+</body>
+</html>

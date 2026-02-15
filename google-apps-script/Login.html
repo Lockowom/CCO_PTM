@@ -1,0 +1,430 @@
+<!-- Login.html - Diseño Limpio y Corporativo -->
+<div class="login-container" id="loginContainer">
+  <div class="login-card" id="loginCard">
+    <!-- Header de la Card -->
+    <div class="login-header">
+      <div class="logo-circle">
+        <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" class="login-logo" id="loginLogo">
+      </div>
+      <div class="access-badge">
+        <i class="fas fa-shield-alt"></i> ACCESO AUTORIZADO
+      </div>
+      <h1 class="login-title">Control de Bodega</h1>
+    </div>
+    
+    <!-- Formulario -->
+    <form id="loginForm" class="login-form">
+      <div class="input-group-modern">
+        <div class="input-icon-box">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <input type="email" id="loginEmail" placeholder="Correo corporativo" required autocomplete="email">
+      </div>
+      
+      <div class="input-group-modern">
+        <div class="input-icon-box">
+          <i class="fas fa-lock"></i>
+        </div>
+        <input type="password" id="loginPassword" placeholder="Contraseña de acceso" required autocomplete="current-password">
+        <button type="button" class="toggle-password-modern" onclick="togglePasswordVisibility()">
+          <i class="fas fa-eye" id="toggleIcon"></i>
+        </button>
+      </div>
+      
+      <!-- Mensaje de error -->
+      <div class="error-message" id="loginError">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorText"></span>
+      </div>
+      
+      <!-- Botón de login -->
+      <button type="submit" class="login-btn-modern" id="loginBtn">
+        <span class="btn-text"><i class="fas fa-sign-in-alt"></i> Ingresar al Sistema</span>
+        <span class="btn-loader">
+          <i class="fas fa-circle-notch fa-spin"></i>
+        </span>
+      </button>
+    </form>
+    
+    <!-- Footer de seguridad -->
+    <div class="security-footer">
+      <div class="security-badge">
+        <i class="fas fa-lock"></i>
+        <div class="security-text">
+          <strong>Conexión Encriptada</strong>
+          <span>SSL 256-bit · © 2026 CCO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ============================================
+   LOGIN STYLES - Diseño Clean & Orange
+   ============================================ */
+
+.login-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8fafc; /* Fondo blanco/gris muy claro */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 107, 0, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.05) 0px, transparent 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Card Principal */
+.login-card {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 24px;
+  padding: 40px 30px;
+  box-shadow: 
+    0 20px 40px -5px rgba(0, 0, 0, 0.1), 
+    0 10px 20px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0,0,0,0.03); /* Borde sutil */
+  position: relative;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: cardEntrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes cardEntrance {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-circle {
+  width: 100px;
+  height: 100px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.logo-circle::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 0, 0.1);
+}
+
+.login-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.access-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 107, 0, 0.08);
+  color: #FF6B00;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.login-title {
+  color: #FF6B00;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Inputs */
+.input-group-modern {
+  position: relative;
+  margin-bottom: 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.input-group-modern:focus-within {
+  background: white;
+  border-color: rgba(255, 107, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.1);
+}
+
+.input-icon-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.input-group-modern input {
+  width: 100%;
+  padding: 16px 16px 16px 46px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #334155;
+  outline: none;
+  font-weight: 500;
+}
+
+.input-group-modern input::placeholder {
+  color: #94a3b8;
+}
+
+.input-group-modern:focus-within .input-icon-box {
+  color: #FF6B00;
+}
+
+.toggle-password-modern {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.toggle-password-modern:hover {
+  color: #FF6B00;
+}
+
+/* Error Message */
+.error-message {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: shake 0.5s ease-in-out;
+}
+
+.error-message.show {
+  display: flex;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Button */
+.login-btn-modern {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #FF6B00 0%, #e65100 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.login-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 0, 0.4);
+}
+
+.login-btn-modern:active {
+  transform: translateY(0);
+}
+
+.login-btn-modern .btn-loader {
+  display: none;
+}
+
+.login-btn-modern.loading .btn-text {
+  display: none;
+}
+
+.login-btn-modern.loading .btn-loader {
+  display: inline-block;
+}
+
+/* Footer Security */
+.security-footer {
+  margin-top: 30px;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #ecfdf5; /* Verde muy claro */
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+}
+
+.security-badge i {
+  font-size: 20px;
+  color: #10b981;
+}
+
+.security-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.security-text strong {
+  font-size: 12px;
+  color: #047857;
+  font-weight: 700;
+}
+
+.security-text span {
+  font-size: 10px;
+  color: #059669;
+}
+
+/* Corner Accents */
+.login-container::before,
+.login-container::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 107, 0, 0.2);
+  pointer-events: none;
+}
+
+.login-container::before {
+  top: 20px;
+  left: 20px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.login-container::after {
+  bottom: 20px;
+  right: 20px;
+  border-left: none;
+  border-top: none;
+}
+</style>
+
+<script>
+// Submit Handler
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  
+  hideLoginError();
+  
+  // Loading state
+  btn.classList.add('loading');
+  btn.disabled = true;
+  
+  // Timeout de seguridad (15 segundos)
+  const loginTimeout = setTimeout(() => {
+    if (btn.classList.contains('loading')) {
+      console.warn('Login timeout reached');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      showLoginError('El servidor está tardando en responder. Verifique su conexión.');
+    }
+  }, 15000);
+  
+  // Call backend
+  google.script.run
+    .withSuccessHandler(function(response) {
+      clearTimeout(loginTimeout); // Limpiar timeout
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      
+      console.log('Login response:', response);
+      
+      if (response && response.success) {
+        // Success Animation
+        const card = document.getElementById('loginCard');
+        card.style.transform = 'translateY(-20px)';
+        card.style.opacity = '0';
+        card.style.transition = 'all 0.4s ease';
+        
+        setTimeout(() => {
+          // REDIRECCIÓN A TMS SI EL BACKEND LO INDICA
+          if (response.redirectToTms) {
+             var currentUrl = window.location.href;
+             var separator = currentUrl.includes('?') ? '&' : '?';
+             var tmsUrl = currentUrl.split('?')[0] + '?app=tms'; // Limpiar params previos y poner solo tms
+             window.location.href = tmsUrl;
+             return;
+          }
+
+          if (typeof onLoginSuccess === 'function') {
+            onLoginSuccess(response);
+          } else {
+            console.error('onLoginSuccess function not found');
+            location.reload(); // Fallback
+          }
+        }, 400);
+      } else {
+        showLoginError(response.error || 'Credenciales incorrectas');
+        // Shake animation
+        const card = document.getElementById('loginCard');
+        card.style.animation = 'none';
+        card.offsetHeight; /* trigger reflow */
+        card.style.animation = 'shake 0.5s';
+      }
+    })
+    .withFailureHandler(function(error) {
+      clearTimeout(loginTimeout); // Limpiar timeout
+      console.error('Login failure:', error);
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      showLoginError('Error de conexión: ' + error.message);
+    })
+    .authenticateUser(email, password);
+});
+</script>

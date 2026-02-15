@@ -1,0 +1,480 @@
+<script>
+  // ==================== APP STATE ====================
+  var App = { 
+    user: null, 
+    sessionId: null, 
+    currentView: null, 
+    initialized: {},
+    cache: {},
+    cacheTimestamps: {},
+    cacheDuration: 30000, 
+    
+    getCached: function(key) {
+      var now = Date.now();
+      if (this.cache[key] && this.cacheTimestamps[key] && (now - this.cacheTimestamps[key] < this.cacheDuration)) {
+        return this.cache[key];
+      }
+      return null;
+    },
+    
+    setCache: function(key, data) {
+      this.cache[key] = data;
+      this.cacheTimestamps[key] = Date.now();
+    },
+    
+    invalidateCache: function(key) {
+      delete this.cache[key];
+      delete this.cacheTimestamps[key];
+    },
+    
+    clearCache: function() {
+      this.cache = {};
+      this.cacheTimestamps = {};
+    }
+  };
+
+  // ==================== DEBOUNCE & THROTTLE UTILITIES ====================
+  function debounce(func, wait, immediate) {
+    var timeout;
+    wait = wait || 300;
+    
+    return function() {
+      var context = this;
+      var args = arguments;
+      
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      
+      if (callNow) func.apply(context, args);
+    };
+  }
+
+  function throttle(func, limit) {
+    var inThrottle;
+    return function() {
+      var context = this;
+      var args = arguments;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(function() { inThrottle = false; }, limit);
+      }
+    };
+  }
+
+  // Expose globally
+  window.debounce = debounce;
+  window.throttle = throttle;
+  window.App = App;
+
+  // ==================== PERMISSION MANAGER ====================
+  var PermissionManager = {
+    userPermissions: [],
+    userRole: null,
+    roleColor: '#6366f1',
+    moduleCategories: null,
+    loaded: false,
+    lastLoadTime: 0,
+    
+    loadPermissions: function(callback) {
+      var self = this;
+      if (!App.sessionId) {
+        console.log('PermissionManager: No hay sessionId');
+        self.userPermissions = [];
+        self.loaded = true;
+        self.lastLoadTime = Date.now();
+        if (callback) callback({ success: false, error: 'No session' });
+        return;
+      }
+      
+      console.log('PermissionManager: Cargando permisos para sessionId:', App.sessionId);
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          console.log('PermissionManager: Respuesta del servidor:', result);
+          if (result && result.success) {
+            self.userPermissions = result.permisos || [];
+            self.userRole = result.rol;
+            self.roleColor = result.roleColor || '#6366f1';
+            self.moduleCategories = result.moduleCategories;
+            self.loaded = true;
+            self.lastLoadTime = Date.now();
+            
+            console.log('PermissionManager: Permisos cargados para rol "' + self.userRole + '":', self.userPermissions);
+            
+            if (App.user) {
+              App.user.vistas = self.userPermissions;
+              App.user.permisos = self.userPermissions;
+            }
+          } else {
+            console.warn('PermissionManager: Error en respuesta:', result ? result.error : 'Sin respuesta');
+            self.userPermissions = [];
+            self.loaded = true;
+            self.lastLoadTime = Date.now();
+          }
+          if (callback) callback(result);
+        })
+        .withFailureHandler(function(error) {
+          console.error('PermissionManager: Error de conexión:', error);
+          self.userPermissions = [];
+          self.loaded = true;
+          self.lastLoadTime = Date.now();
+          if (callback) callback({ success: false, error: error.message });
+        })
+        .getUserPermissions(App.sessionId);
+    },
+    
+    reloadPermissions: function(callback) {
+      this.loaded = false;
+      this.loadPermissions(callback);
+    },
+    
+    moduleAliases: {
+      'despacho': 'dispatch',
+      'entregas': 'delivery',
+      'inventario': 'inventory',
+      'lotesseries': 'lotesseries',
+      'usuarios': 'users',
+      'reportes': 'reports'
+    },
+    
+    normalizeModuleId: function(moduleId) {
+      if (!moduleId) return '';
+      var lower = moduleId.toLowerCase();
+      return this.moduleAliases[lower] || lower;
+    },
+    
+    hasPermission: function(moduleId) {
+      if (!moduleId) return false;
+      var moduleIdLower = this.normalizeModuleId(moduleId);
+      
+      if (!this.loaded) return true;
+      if (this.userPermissions.includes('*')) return true;
+      if (this.userRole && (this.userRole.toUpperCase() === 'ADMIN' || this.userRole.toUpperCase() === 'ADMINISTRADOR')) return true;
+      if (!this.userPermissions || this.userPermissions.length === 0) return false;
+      
+      var permisosNormalizados = this.userPermissions.map(function(p) { return String(p).toLowerCase(); });
+      var self = this;
+      return permisosNormalizados.some(function(p) {
+        var pNormalizado = self.normalizeModuleId(p);
+        return pNormalizado === moduleIdLower || p === moduleIdLower;
+      });
+    },
+    
+    checkAccess: function(viewId) {
+      var publicViews = ['home', 'login'];
+      if (publicViews.includes(viewId)) return true;
+      return this.hasPermission(viewId);
+    },
+    
+    refreshHomeView: function() {
+      var self = this;
+      var homeView = document.getElementById('homeView');
+      self.reloadPermissions(function(result) {
+        console.log('PermissionManager.refreshHomeView: Permisos recargados:', result);
+        if (homeView && typeof renderHomeView === 'function') {
+          renderHomeView(homeView);
+        }
+      });
+    },
+    
+    forceReloadAndRefresh: function() {
+      var self = this;
+      console.log('PermissionManager: Forzando recarga de permisos...');
+      self.reloadPermissions(function(result) {
+        console.log('PermissionManager: Permisos actualizados:', result);
+        if (App.user && result && result.success) {
+          App.user.vistas = result.permisos || [];
+          App.user.permisos = result.permisos || [];
+        }
+        var homeView = document.getElementById('homeView');
+        if (homeView && homeView.classList.contains('active') && typeof renderHomeView === 'function') {
+          renderHomeView(homeView);
+        }
+      });
+    }
+  };
+  window.PermissionManager = PermissionManager;
+
+  // ==================== SECURITY UTILITIES ====================
+  var SecurityUtils = {
+    loginAttempts: 0,
+    maxAttempts: 5,
+    lockoutTime: 0,
+    lockoutDuration: 30000, 
+    
+    sanitize: function(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+    },
+    
+    isValidEmail: function(email) {
+      var re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return re.test(String(email).toLowerCase());
+    },
+    
+    isValidPassword: function(password) {
+      return password && password.length >= 4;
+    },
+    
+    isLockedOut: function() {
+      if (this.lockoutTime > 0) {
+        var remaining = this.lockoutTime - Date.now();
+        if (remaining > 0) return Math.ceil(remaining / 1000);
+        this.lockoutTime = 0;
+        this.loginAttempts = 0;
+      }
+      return false;
+    },
+    
+    recordFailedAttempt: function() {
+      this.loginAttempts++;
+      if (this.loginAttempts >= this.maxAttempts) {
+        this.lockoutTime = Date.now() + this.lockoutDuration;
+        return true;
+      }
+      return false;
+    },
+    
+    resetAttempts: function() {
+      this.loginAttempts = 0;
+      this.lockoutTime = 0;
+    }
+  };
+
+  // ==================== SKELETON LOADER HELPER ====================
+  var SkeletonLoader = {
+    table: function(rows, cols) {
+      rows = rows || 5;
+      cols = cols || 6;
+      var html = '';
+      for (var i = 0; i < rows; i++) {
+        html += '<tr class="skeleton-row-animated">';
+        for (var j = 0; j < cols; j++) {
+          var width = j === 0 ? '40%' : (j === cols - 1 ? '80px' : '60%');
+          html += '<td><div class="skeleton-loader skeleton-text" style="width:' + width + ';height:14px"></div></td>';
+        }
+        html += '</tr>';
+      }
+      return html;
+    },
+    
+    statCards: function(count) {
+      count = count || 4;
+      var html = '';
+      for (var i = 0; i < count; i++) {
+        html += '<div class="stat-card skeleton-card-animated">';
+        html += '<div class="skeleton-loader skeleton-avatar"></div>';
+        html += '<div style="flex:1">';
+        html += '<div class="skeleton-loader skeleton-title" style="width:60px;height:24px;margin-bottom:8px"></div>';
+        html += '<div class="skeleton-loader skeleton-text" style="width:80px;height:12px"></div>';
+        html += '</div></div>';
+      }
+      return html;
+    },
+    
+    list: function(items) {
+      items = items || 5;
+      var html = '';
+      for (var i = 0; i < items; i++) {
+        html += '<div class="skeleton-list-item">';
+        html += '<div class="skeleton-loader skeleton-avatar"></div>';
+        html += '<div style="flex:1">';
+        html += '<div class="skeleton-loader skeleton-text" style="width:70%;margin-bottom:8px"></div>';
+        html += '<div class="skeleton-loader skeleton-text" style="width:40%"></div>';
+        html += '</div></div>';
+      }
+      return html;
+    },
+    
+    gridCards: function(count) {
+      count = count || 6;
+      var html = '';
+      for (var i = 0; i < count; i++) {
+        html += '<div class="skeleton-loader skeleton-card" style="height:150px"></div>';
+      }
+      return html;
+    }
+  };
+  window.SkeletonLoader = SkeletonLoader;
+
+  // ==================== CLIENT CACHE MANAGER ====================
+  var ClientCache = {
+    storage: new Map(),
+    timestamps: new Map(),
+    tags: new Map(),
+    defaultTTL: 60000, 
+    
+    get: function(key) {
+      if (!this.storage.has(key)) return undefined;
+      var timestamp = this.timestamps.get(key);
+      var entry = this.storage.get(key);
+      var ttl = entry.ttl || this.defaultTTL;
+      if (Date.now() - timestamp > ttl) {
+        this.invalidate(key);
+        return undefined;
+      }
+      return entry.value;
+    },
+    
+    set: function(key, value, customTTL, entryTags) {
+      this.storage.set(key, { value: value, ttl: customTTL || this.defaultTTL });
+      this.timestamps.set(key, Date.now());
+      if (entryTags && Array.isArray(entryTags)) {
+        entryTags.forEach(function(tag) {
+          if (!this.tags.has(tag)) this.tags.set(tag, new Set());
+          this.tags.get(tag).add(key);
+        }.bind(this));
+      }
+    },
+    
+    invalidate: function(key) {
+      this.storage.delete(key);
+      this.timestamps.delete(key);
+      this.tags.forEach(function(keys, tag) { keys.delete(key); });
+    },
+    
+    invalidatePattern: function(pattern) {
+      var regex = pattern instanceof RegExp ? pattern : new RegExp(pattern);
+      var keysToDelete = [];
+      this.storage.forEach(function(value, key) { if (regex.test(key)) keysToDelete.push(key); });
+      keysToDelete.forEach(function(key) { this.invalidate(key); }.bind(this));
+    },
+    
+    invalidateByTag: function(tag) {
+      if (!this.tags.has(tag)) return;
+      var keys = this.tags.get(tag);
+      keys.forEach(function(key) {
+        this.storage.delete(key);
+        this.timestamps.delete(key);
+      }.bind(this));
+      this.tags.delete(tag);
+    },
+    
+    clear: function() {
+      this.storage.clear();
+      this.timestamps.clear();
+      this.tags.clear();
+    },
+    
+    fetchWithCache: function(cacheKey, fetchFn, ttl, tags) {
+      var cached = this.get(cacheKey);
+      if (cached !== undefined) {
+        console.log('ClientCache HIT:', cacheKey);
+        return Promise.resolve(cached);
+      }
+      console.log('ClientCache MISS:', cacheKey);
+      var self = this;
+      return new Promise(function(resolve, reject) {
+        fetchFn()
+          .then(function(data) {
+            self.set(cacheKey, data, ttl, tags);
+            resolve(data);
+          })
+          .catch(reject);
+      });
+    }
+  };
+  window.ClientCache = ClientCache;
+
+  // ==================== TOAST NOTIFICATIONS ====================
+  var ToastManager = {
+    container: null,
+    toasts: new Map(),
+    toastId: 0,
+    
+    init: function() {
+      if (!this.container) {
+        this.container = document.createElement('div');
+        this.container.id = 'toastContainer';
+        this.container.className = 'toast-container';
+        document.body.appendChild(this.container);
+      }
+    },
+    
+    show: function(message, type, options) {
+      this.init();
+      options = options || {};
+      type = type || 'info';
+      var id = ++this.toastId;
+      var duration = options.duration !== undefined ? options.duration : (type === 'error' ? 5000 : 3000);
+      var dismissible = options.dismissible !== false;
+      var showProgress = options.showProgress !== false && duration > 0;
+      var retryCallback = options.retry || null;
+      
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.setAttribute('data-toast-id', id);
+      
+      var icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle',
+        loading: 'fa-circle-notch fa-spin'
+      };
+      
+      var html = '<i class="fas ' + icons[type] + '"></i>';
+      html += '<span class="toast-message">' + message + '</span>';
+      if (retryCallback && type === 'error') html += '<button class="toast-retry" onclick="ToastManager.retry(' + id + ')"><i class="fas fa-redo"></i></button>';
+      if (dismissible) html += '<button class="toast-close" onclick="ToastManager.dismiss(' + id + ')"><i class="fas fa-times"></i></button>';
+      if (showProgress && duration > 0) html += '<div class="toast-progress" style="animation-duration: ' + duration + 'ms"></div>';
+      
+      toast.innerHTML = html;
+      this.container.appendChild(toast);
+      
+      this.toasts.set(id, { element: toast, retryCallback: retryCallback, timeout: null });
+      
+      var self = this;
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      
+      if (duration > 0 && type !== 'loading') {
+        var timeout = setTimeout(function() { self.dismiss(id); }, duration);
+        this.toasts.get(id).timeout = timeout;
+      }
+      return id;
+    },
+    
+    dismiss: function(id) {
+      var toastData = this.toasts.get(id);
+      if (!toastData) return;
+      var toast = toastData.element;
+      if (toastData.timeout) clearTimeout(toastData.timeout);
+      toast.classList.remove('show');
+      var self = this;
+      setTimeout(function() { toast.remove(); self.toasts.delete(id); }, 300);
+    },
+    
+    retry: function(id) {
+      var toastData = this.toasts.get(id);
+      if (toastData && toastData.retryCallback) {
+        this.dismiss(id);
+        toastData.retryCallback();
+      }
+    },
+    
+    success: function(msg, options) { return this.show(msg, 'success', options); },
+    error: function(msg, retryCallback) { return this.show(msg, 'error', { retry: retryCallback }); },
+    warning: function(msg, options) { return this.show(msg, 'warning', options); },
+    info: function(msg, options) { return this.show(msg, 'info', options); },
+    loading: function(msg) { return this.show(msg || 'Cargando...', 'loading', { duration: 0, dismissible: false, showProgress: false }); },
+    dismissAll: function() { var self = this; this.toasts.forEach(function(data, id) { self.dismiss(id); }); }
+  };
+  
+  var Toast = ToastManager;
+  window.Toast = Toast;
+  window.ToastManager = ToastManager;
+  window.showToast = function(message, type, duration) { return ToastManager.show(message, type, { duration: duration }); };
+</script>

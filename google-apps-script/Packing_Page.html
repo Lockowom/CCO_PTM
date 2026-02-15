@@ -1,0 +1,1059 @@
+<section class="view" id="packingView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Packing</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Packing - Área de Empaque</h1>
+          <p class="wms-module-subtitle">Empaque de productos para despacho</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span id="packingAutoRefreshStatus">Auto-refresh: ON</span>
+      </div>
+      <button class="wms-btn wms-btn-premium" onclick="refreshPackingEnhanced()">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard Premium -->
+  <div class="wms-stats-grid wms-stats-4">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="purple">
+      <div class="wms-stat-icon"><i class="fas fa-box-open"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="packing_total">0</span>
+        <span class="wms-stat-label">N.V en Packing</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-users"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="packing_clientes">0</span>
+        <span class="wms-stat-label">Clientes</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-spinner"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="packing_activos">0</span>
+        <span class="wms-stat-label">Packings Activos</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="packing_listos">0</span>
+        <span class="wms-stat-label">Listos Despacho</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="wms-tabs">
+    <button class="wms-tab active" data-tab="pendientes" onclick="switchPackingTab('pendientes')">
+      <i class="fas fa-list"></i> Pendientes
+    </button>
+    <button class="wms-tab" data-tab="activos" onclick="switchPackingTab('activos')">
+      <i class="fas fa-users"></i> Packings Activos
+    </button>
+    <button class="wms-tab" data-tab="historial" onclick="switchPackingTab('historial')">
+      <i class="fas fa-history"></i> Historial
+    </button>
+    <button class="wms-tab" data-tab="estadisticas" onclick="switchPackingTab('estadisticas')">
+      <i class="fas fa-chart-bar"></i> Por Usuario
+    </button>
+  </div>
+
+  <!-- Tab Content: Pendientes -->
+  <div id="packingTabContent" class="wms-tab-content active">
+    <!-- Two Column Layout -->
+    <div class="wms-grid" style="grid-template-columns: 1fr 2fr; gap: var(--wms-space-6);">
+      <!-- Column 1: Clients Summary -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-users"></i> Clientes - N.V Asociadas</h3>
+        </div>
+        <div id="packingClientesList" style="max-height: 500px; overflow-y: auto;">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Orders in Packing -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-clipboard-list"></i> N.V en Área de Packing</h3>
+        </div>
+        <div id="packingOrdersList" style="max-height: 500px; overflow-y: auto;">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Packing -->
+  <div id="packingModalEnhanced" class="wms-modal-overlay">
+    <div class="wms-modal wms-modal-lg">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-box"></i>
+          Packing - NV: <span id="modal_packingNVEnhanced"></span>
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="cerrarModalPacking2()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body">
+        <div id="modal_packingProductos" class="wms-mb-4"></div>
+
+        <div class="wms-card" style="border-color: var(--wms-warning);">
+          <div class="wms-card-body">
+            <h4 class="wms-h4 wms-mb-4" style="color: var(--wms-warning);">
+              <i class="fas fa-boxes"></i> DATOS DE EMPAQUE
+            </h4>
+            <div class="wms-grid wms-grid-cols-2 wms-gap-4">
+              <div class="wms-form-group">
+                <label class="wms-label wms-label-required">Cantidad de Bultos</label>
+                <input type="number" id="packing_bultos_enh" min="1" value="1" class="wms-input"
+                  style="text-align: center; font-weight: bold; font-size: 1.25rem;">
+              </div>
+              <div class="wms-form-group">
+                <label class="wms-label">Cantidad de Pallets</label>
+                <input type="number" id="packing_pallets_enh" min="0" value="0" class="wms-input"
+                  style="text-align: center; font-weight: bold; font-size: 1.25rem;">
+              </div>
+              <div class="wms-form-group">
+                <label class="wms-label">Peso del Bulto (kg)</label>
+                <input type="number" id="packing_peso_bulto" min="0" step="0.1" value="0" class="wms-input"
+                  style="text-align: center; font-weight: bold; font-size: 1.25rem;" placeholder="0.0">
+              </div>
+              <div class="wms-form-group">
+                <label class="wms-label">Peso Bulto con Pallet (kg)</label>
+                <input type="number" id="packing_peso_pallet" min="0" step="0.1" value="0" class="wms-input"
+                  style="text-align: center; font-weight: bold; font-size: 1.25rem;" placeholder="0.0">
+              </div>
+              <div class="wms-form-group wms-col-span-full">
+                <label class="wms-label">Observaciones</label>
+                <textarea id="packing_observaciones_enh" rows="2" class="wms-textarea"
+                  placeholder="Observaciones adicionales..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview de Etiqueta de Despacho -->
+        <div class="wms-card wms-mt-4" style="border-color: var(--wms-info);">
+          <div class="wms-card-header" style="background: var(--wms-info-light);">
+            <h4 class="wms-card-title" style="color: var(--wms-info);">
+              <i class="fas fa-tag"></i> Preview Etiqueta de Despacho
+            </h4>
+            <button type="button" class="wms-btn wms-btn-sm wms-btn-outline" onclick="imprimirEtiqueta()">
+              <i class="fas fa-print"></i> Imprimir
+            </button>
+          </div>
+          <div class="wms-card-body">
+            <div id="etiquetaPreview" class="shipping-label-preview">
+              <!-- Se genera dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wms-modal-footer">
+        <button type="button" onclick="cerrarModalPacking2()" class="wms-btn wms-btn-outline">Cancelar</button>
+        <button type="button" class="wms-btn wms-btn-info" onclick="generarEtiqueta()">
+          <i class="fas fa-tag"></i> Generar Etiqueta
+        </button>
+        <button type="button" id="btn_completarPacking" onclick="completarPackingEnhancedUI()"
+          class="wms-btn wms-btn-success">
+          <i class="fas fa-truck"></i> LISTO PARA DESPACHO
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Etiqueta Grande para Impresión -->
+  <div id="etiquetaPrintModal" class="wms-modal-overlay">
+    <div class="wms-modal" style="max-width: 500px;">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-print"></i> Imprimir Etiqueta
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="cerrarModalEtiqueta()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body" style="padding: 0;">
+        <div id="etiquetaPrintContent" class="shipping-label-print">
+          <!-- Se genera dinámicamente -->
+        </div>
+      </div>
+      <div class="wms-modal-footer">
+        <button type="button" onclick="cerrarModalEtiqueta()" class="wms-btn wms-btn-outline">Cerrar</button>
+        <button type="button" onclick="ejecutarImpresion()" class="wms-btn wms-btn-primary">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estilos para Etiqueta -->
+  <style>
+    /* Preview de Etiqueta */
+    .shipping-label-preview {
+      background: white;
+      border: 2px dashed var(--wms-border);
+      border-radius: var(--wms-radius-lg);
+      padding: var(--wms-space-4);
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .shipping-label-preview.has-content {
+      border-style: solid;
+      border-color: var(--wms-info);
+    }
+
+    .shipping-label-placeholder {
+      text-align: center;
+      color: var(--wms-text-secondary);
+    }
+
+    .shipping-label-placeholder i {
+      font-size: 3rem;
+      margin-bottom: var(--wms-space-2);
+      opacity: 0.5;
+    }
+
+    /* Etiqueta de Despacho */
+    .shipping-label {
+      background: white;
+      border: 3px solid #000;
+      border-radius: 8px;
+      padding: 16px;
+      width: 100%;
+      max-width: 400px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .label-header {
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .label-company {
+      font-size: 1.25rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .label-subtitle {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .label-nv {
+      background: #000;
+      color: white;
+      padding: 8px 16px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 12px 0;
+      border-radius: 4px;
+    }
+
+    .label-section {
+      margin: 12px 0;
+      padding: 8px 0;
+      border-bottom: 1px dashed #ccc;
+    }
+
+    .label-section:last-child {
+      border-bottom: none;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      font-size: 0.875rem;
+    }
+
+    .label-key {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .label-value {
+      text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+
+    .label-bultos {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin: 16px 0;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+
+    .bulto-item {
+      text-align: center;
+    }
+
+    .bulto-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #000;
+    }
+
+    .bulto-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .label-barcode {
+      text-align: center;
+      margin: 16px 0 8px;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+
+    .barcode-placeholder {
+      font-family: 'Libre Barcode 39', 'Courier New', monospace;
+      font-size: 2.5rem;
+      letter-spacing: 4px;
+    }
+
+    .barcode-text {
+      font-size: 0.75rem;
+      margin-top: 4px;
+      color: #666;
+    }
+
+    .label-footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #999;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+
+    /* Print Styles */
+    .shipping-label-print {
+      padding: var(--wms-space-4);
+      display: flex;
+      justify-content: center;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #etiquetaPrintContent,
+      #etiquetaPrintContent * {
+        visibility: visible;
+      }
+
+      #etiquetaPrintContent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+
+      .shipping-label {
+        border-width: 2px;
+        max-width: none;
+        width: 10cm;
+        margin: 0 auto;
+      }
+    }
+  </style>
+
+  <script>
+    var nvActualPacking = '';
+    var currentPackingTab = 'pendientes';
+    var packingRefreshInterval = null;
+
+    function initPackingModule() {
+      console.log('Inicializando Packing Module...');
+      switchPackingTab('pendientes');
+      loadPackingStats();
+
+      // Auto-refresh cada 30 segundos
+      if (packingRefreshInterval) clearInterval(packingRefreshInterval);
+      packingRefreshInterval = setInterval(function () {
+        console.log('🔄 Auto-refresh Packing ejecutándose...');
+        refreshPackingEnhanced(true); // true = silent refresh
+      }, 30000);
+
+      console.log('✅ Auto-refresh Packing iniciado (cada 30 segundos)');
+    }
+
+    function switchPackingTab(tab) {
+      currentPackingTab = tab;
+
+      // Update tab buttons
+      var tabs = document.querySelectorAll('#packingView .wms-tab');
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        if (t.dataset.tab === tab) t.classList.add('active');
+      });
+
+      var content = document.getElementById('packingTabContent');
+
+      if (tab === 'pendientes') {
+        content.innerHTML = '<div class="wms-grid" style="grid-template-columns: 1fr 2fr; gap: var(--wms-space-6);">' +
+          '<div class="wms-card"><div class="wms-card-header"><h3 class="wms-card-title"><i class="fas fa-users"></i> Clientes - N.V Asociadas</h3></div>' +
+          '<div id="packingClientesList" style="max-height: 500px; overflow-y: auto;"><div class="wms-loading-state"><div class="wms-spinner"></div></div></div></div>' +
+          '<div class="wms-card"><div class="wms-card-header"><h3 class="wms-card-title"><i class="fas fa-clipboard-list"></i> N.V en Área de Packing</h3></div>' +
+          '<div id="packingOrdersList" style="max-height: 500px; overflow-y: auto;"><div class="wms-loading-state"><div class="wms-spinner"></div></div></div></div></div>';
+        loadPackingOrdersEnhanced();
+        loadPackingClientesResumen();
+      } else if (tab === 'activos') {
+        content.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div></div>';
+        loadPackingsActivos();
+      } else if (tab === 'historial') {
+        content.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div></div>';
+        loadHistorialPacking();
+      } else if (tab === 'estadisticas') {
+        content.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div></div>';
+        loadEstadisticasPackingUsuarios();
+      }
+    }
+
+    function refreshPackingEnhanced(silent) {
+      loadPackingStats();
+
+      if (currentPackingTab === 'pendientes') {
+        loadPackingOrdersEnhanced();
+        loadPackingClientesResumen();
+      } else if (currentPackingTab === 'activos') {
+        loadPackingsActivos();
+      } else if (currentPackingTab === 'historial') {
+        loadHistorialPacking();
+      } else if (currentPackingTab === 'estadisticas') {
+        loadEstadisticasPackingUsuarios();
+      }
+
+      if (!silent && window.WMSToast) WMSToast.info('Datos actualizados');
+    }
+
+    function loadPackingStats() {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result.success && result.resumen) {
+            document.getElementById('packing_total').textContent = result.resumen.enPacking || 0;
+            document.getElementById('packing_listos').textContent = result.resumen.listoDespacho || 0;
+          }
+        })
+        .withFailureHandler(function () { })
+        .getResumenEstadosNV();
+
+      // Cargar packings activos count
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result.success) {
+            document.getElementById('packing_activos').textContent = result.total || 0;
+          }
+        })
+        .withFailureHandler(function () { })
+        .getPackingsActivos();
+    }
+
+    function loadPackingClientesResumen() {
+      var container = document.getElementById('packingClientesList');
+      if (!container) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.resumenClientes || result.resumenClientes.clientes.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-users"></i></div><h3 class="wms-empty-title">Sin clientes</h3><p class="wms-empty-text">No hay clientes en packing</p></div>';
+            return;
+          }
+
+          var clientes = result.resumenClientes.clientes;
+          var html = '<div class="wms-p-2">';
+
+          for (var i = 0; i < clientes.length; i++) {
+            var c = clientes[i];
+            html += '<div class="wms-flex wms-items-center wms-justify-between wms-p-3 wms-border-b">';
+            html += '<div>';
+            html += '<div class="wms-font-semibold">' + (c.nombre || 'Sin nombre') + '</div>';
+            html += '<div class="wms-text-sm wms-text-secondary">Cód: ' + (c.codigo || '-') + '</div>';
+            html += '</div>';
+            html += '<div class="wms-badge wms-badge-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">' + c.ordenes + ' NV</div>';
+            html += '</div>';
+          }
+
+          html += '</div>';
+          container.innerHTML = html;
+          document.getElementById('packing_clientes').textContent = clientes.length;
+        })
+        .withFailureHandler(function () {
+          container.innerHTML = '<div class="wms-alert wms-alert-danger"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error al cargar</div></div>';
+        })
+        .getOrdenesPackingEnhanced();
+    }
+
+    function loadPackingOrdersEnhanced() {
+      var container = document.getElementById('packingOrdersList');
+      if (!container) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success) {
+            container.innerHTML = '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error: ' + result.error + '</div></div>';
+            return;
+          }
+
+          document.getElementById('packing_total').textContent = result.total || 0;
+
+          if (!result.ordenes || result.ordenes.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-box-open"></i></div><h3 class="wms-empty-title">Sin órdenes</h3><p class="wms-empty-text">No hay N.V en área de packing</p></div>';
+            return;
+          }
+
+          var html = '<div class="wms-table-wrapper"><table class="wms-table">';
+          html += '<thead><tr>';
+          html += '<th>N.Venta</th>';
+          html += '<th>Cliente</th>';
+          html += '<th class="wms-text-center">Fecha</th>';
+          html += '<th class="wms-text-center">Items</th>';
+          html += '<th class="wms-text-center">Acción</th>';
+          html += '</tr></thead><tbody>';
+
+          for (var i = 0; i < result.ordenes.length; i++) {
+            var o = result.ordenes[i];
+            var fechaStr = o.fechaEntrega ? new Date(o.fechaEntrega).toLocaleDateString() : '-';
+            html += '<tr>';
+            html += '<td class="wms-td-mono">' + o.notaVenta + '</td>';
+            html += '<td>' + (o.cliente || '-') + '</td>';
+            html += '<td class="wms-text-center wms-text-secondary">' + fechaStr + '</td>';
+            html += '<td class="wms-text-center"><span class="wms-badge wms-badge-warning">' + o.totalItems + '</span></td>';
+            html += '<td class="wms-td-actions"><button class="wms-btn wms-btn-primary wms-btn-sm wms-ripple" onclick="abrirPackingModalEnhanced(\'' + o.notaVenta + '\')"><i class="fas fa-box"></i> Empacar</button></td>';
+            html += '</tr>';
+          }
+
+          html += '</tbody></table></div>';
+          container.innerHTML = html;
+        })
+        .withFailureHandler(function (err) {
+          container.innerHTML = '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error: ' + (err.message || err) + '</div></div>';
+        })
+        .getOrdenesPackingEnhanced();
+    }
+
+    // ========== PACKINGS ACTIVOS (TIEMPO REAL) ==========
+    function loadPackingsActivos() {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.packingsActivos || result.packingsActivos.length === 0) {
+            document.getElementById('packingTabContent').innerHTML =
+              '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-users"></i></div>' +
+              '<h3 class="wms-empty-title">Sin packings activos</h3>' +
+              '<p class="wms-empty-text">No hay usuarios realizando packing en este momento</p></div>';
+            return;
+          }
+          renderPackingsActivos(result.packingsActivos);
+        })
+        .withFailureHandler(function () {
+          document.getElementById('packingTabContent').innerHTML =
+            '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+            '<div class="wms-alert-content">Error al cargar packings activos</div></div>';
+        })
+        .getPackingsActivos();
+    }
+
+    function renderPackingsActivos(activos) {
+      var content = document.getElementById('packingTabContent');
+      var html = '<div class="wms-card wms-mb-4"><div class="wms-card-header">';
+      html += '<h4 class="wms-card-title"><i class="fas fa-users"></i> Usuarios Realizando Packing Ahora</h4>';
+      html += '<span class="wms-badge wms-badge-success"><i class="fas fa-sync-alt fa-spin"></i> Tiempo Real</span>';
+      html += '</div><div class="wms-card-body wms-p-0">';
+      html += '<div class="wms-table-wrapper"><table class="wms-table">';
+      html += '<thead><tr>';
+      html += '<th>Usuario</th><th>N.V</th><th>Cliente</th>';
+      html += '<th class="wms-text-center">Items</th><th class="wms-text-center">Tiempo</th><th>Inicio</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < activos.length; i++) {
+        var a = activos[i];
+        var fechaInicio = a.fechaInicio ? new Date(a.fechaInicio).toLocaleTimeString('es-PE') : '-';
+        var tiempoClass = a.duracionActualMin > 30 ? 'danger' : (a.duracionActualMin > 15 ? 'warning' : 'success');
+
+        html += '<tr>';
+        html += '<td><div class="wms-flex wms-items-center wms-gap-2">';
+        html += '<div class="wms-avatar wms-avatar-sm" style="background: var(--wms-purple);"><i class="fas fa-user"></i></div>';
+        html += '<strong>' + (a.usuario || '-') + '</strong></div></td>';
+        html += '<td><span class="wms-font-semibold wms-text-primary">' + (a.notaVenta || '-') + '</span></td>';
+        html += '<td>' + (a.cliente || '-') + '</td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-info">' + (a.totalItems || 0) + '</span></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-' + tiempoClass + '">' + a.duracionActualMin + ' min</span></td>';
+        html += '<td><span class="wms-text-sm wms-text-secondary">' + fechaInicio + '</span></td>';
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div></div></div>';
+      content.innerHTML = html;
+    }
+
+    // ========== HISTORIAL DE PACKING ==========
+    function loadHistorialPacking() {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.historial || result.historial.length === 0) {
+            document.getElementById('packingTabContent').innerHTML =
+              '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-history"></i></div>' +
+              '<h3 class="wms-empty-title">Sin historial</h3>' +
+              '<p class="wms-empty-text">No hay registros de packing</p></div>';
+            return;
+          }
+          renderHistorialPacking(result.historial);
+        })
+        .withFailureHandler(function () {
+          document.getElementById('packingTabContent').innerHTML =
+            '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+            '<div class="wms-alert-content">Error al cargar historial</div></div>';
+        })
+        .getHistorialPackingCompleto(50);
+    }
+
+    function renderHistorialPacking(historial) {
+      var content = document.getElementById('packingTabContent');
+      var html = '<div class="wms-card"><div class="wms-card-header">';
+      html += '<h4 class="wms-card-title"><i class="fas fa-history"></i> Historial de Packing</h4>';
+      html += '</div><div class="wms-card-body wms-p-0">';
+      html += '<div class="wms-table-wrapper"><table class="wms-table">';
+      html += '<thead><tr>';
+      html += '<th>Fecha</th><th>Usuario</th><th>N.V</th><th>Cliente</th>';
+      html += '<th class="wms-text-center">Bultos</th><th class="wms-text-center">Pallets</th>';
+      html += '<th class="wms-text-center">Duración</th><th>Estado</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < historial.length; i++) {
+        var h = historial[i];
+        var fecha = h.fechaInicio ? new Date(h.fechaInicio).toLocaleString('es-PE') : '-';
+        var estadoClass = h.estado === 'COMPLETADO' ? 'success' : (h.estado === 'EN_PROCESO' ? 'warning' : 'secondary');
+
+        html += '<tr>';
+        html += '<td><span class="wms-text-sm">' + fecha + '</span></td>';
+        html += '<td><span class="wms-badge wms-badge-info"><i class="fas fa-user"></i> ' + (h.usuario || '-') + '</span></td>';
+        html += '<td><strong>' + (h.notaVenta || '-') + '</strong></td>';
+        html += '<td>' + (h.cliente || '-') + '</td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-primary">' + (h.bultos || 0) + '</span></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-secondary">' + (h.pallets || 0) + '</span></td>';
+        html += '<td class="wms-text-center">' + (h.duracionMin ? h.duracionMin + ' min' : '-') + '</td>';
+        html += '<td><span class="wms-badge wms-badge-' + estadoClass + '">' + h.estado + '</span></td>';
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div></div></div>';
+      content.innerHTML = html;
+    }
+
+    // ========== ESTADÍSTICAS POR USUARIO ==========
+    function loadEstadisticasPackingUsuarios() {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.usuarios || result.usuarios.length === 0) {
+            document.getElementById('packingTabContent').innerHTML =
+              '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-chart-bar"></i></div>' +
+              '<h3 class="wms-empty-title">Sin estadísticas</h3>' +
+              '<p class="wms-empty-text">No hay datos de packing registrados</p></div>';
+            return;
+          }
+          renderEstadisticasPackingUsuarios(result.usuarios, result.resumen);
+        })
+        .withFailureHandler(function () {
+          document.getElementById('packingTabContent').innerHTML =
+            '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+            '<div class="wms-alert-content">Error al cargar estadísticas</div></div>';
+        })
+        .getEstadisticasPackingTodos();
+    }
+
+    function renderEstadisticasPackingUsuarios(usuarios, resumen) {
+      var content = document.getElementById('packingTabContent');
+
+      // Resumen general
+      var html = '<div class="wms-stats-grid wms-stats-4 wms-mb-6">';
+      html += '<div class="wms-stat-card" data-color="primary">';
+      html += '<div class="wms-stat-icon"><i class="fas fa-box"></i></div>';
+      html += '<div class="wms-stat-content"><span class="wms-stat-value">' + (resumen.totalPackings || 0) + '</span>';
+      html += '<span class="wms-stat-label">Total Packings</span></div></div>';
+
+      html += '<div class="wms-stat-card" data-color="success">';
+      html += '<div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>';
+      html += '<div class="wms-stat-content"><span class="wms-stat-value">' + (resumen.packingsCompletados || 0) + '</span>';
+      html += '<span class="wms-stat-label">Completados</span></div></div>';
+
+      html += '<div class="wms-stat-card" data-color="info">';
+      html += '<div class="wms-stat-icon"><i class="fas fa-boxes"></i></div>';
+      html += '<div class="wms-stat-content"><span class="wms-stat-value">' + (resumen.totalBultos || 0) + '</span>';
+      html += '<span class="wms-stat-label">Total Bultos</span></div></div>';
+
+      var tiempoPromedio = resumen.packingsCompletados > 0 ? Math.round(resumen.tiempoTotalMin / resumen.packingsCompletados) : 0;
+      html += '<div class="wms-stat-card" data-color="warning">';
+      html += '<div class="wms-stat-icon"><i class="fas fa-clock"></i></div>';
+      html += '<div class="wms-stat-content"><span class="wms-stat-value">' + tiempoPromedio + ' min</span>';
+      html += '<span class="wms-stat-label">Tiempo Promedio</span></div></div>';
+      html += '</div>';
+
+      // Tabla de usuarios
+      html += '<div class="wms-card"><div class="wms-card-header">';
+      html += '<h4 class="wms-card-title"><i class="fas fa-trophy"></i> Ranking de Usuarios - Packing</h4>';
+      html += '</div><div class="wms-card-body wms-p-0">';
+      html += '<div class="wms-table-wrapper"><table class="wms-table">';
+      html += '<thead><tr>';
+      html += '<th>#</th><th>Usuario</th><th class="wms-text-center">Packings</th>';
+      html += '<th class="wms-text-center">Completados</th><th class="wms-text-center">Bultos</th>';
+      html += '<th class="wms-text-center">Pallets</th><th class="wms-text-center">Tiempo Prom.</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < usuarios.length; i++) {
+        var u = usuarios[i];
+        var rankClass = i === 0 ? 'wms-text-warning' : (i === 1 ? 'wms-text-secondary' : (i === 2 ? 'wms-text-danger' : ''));
+        var rankIcon = i < 3 ? '<i class="fas fa-medal ' + rankClass + '"></i> ' : '';
+
+        html += '<tr>';
+        html += '<td>' + rankIcon + (i + 1) + '</td>';
+        html += '<td><div class="wms-flex wms-items-center wms-gap-2">';
+        html += '<div class="wms-avatar wms-avatar-sm" style="background: var(--wms-purple);"><i class="fas fa-user"></i></div>';
+        html += '<strong>' + u.usuario + '</strong></div></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-primary">' + u.totalPackings + '</span></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-success">' + u.packingsCompletados + '</span></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-info">' + u.totalBultos + '</span></td>';
+        html += '<td class="wms-text-center"><span class="wms-badge wms-badge-secondary">' + u.totalPallets + '</span></td>';
+        html += '<td class="wms-text-center">' + u.tiempoPromedioMin + ' min</td>';
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div></div></div>';
+      content.innerHTML = html;
+    }
+
+    function mostrarModalPacking2() {
+      var modal = document.getElementById('packingModalEnhanced');
+      if (modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function cerrarModalPacking2() {
+      var modal = document.getElementById('packingModalEnhanced');
+      if (modal) {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+    window.cerrarModalPacking2 = cerrarModalPacking2;
+
+    function abrirPackingModalEnhanced(notaVenta) {
+      nvActualPacking = notaVenta;
+      document.getElementById('modal_packingNVEnhanced').textContent = notaVenta;
+      document.getElementById('modal_packingProductos').innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div></div>';
+      document.getElementById('packing_bultos_enh').value = 1;
+      document.getElementById('packing_pallets_enh').value = 0;
+      document.getElementById('packing_peso_bulto').value = 0;
+      document.getElementById('packing_peso_pallet').value = 0;
+      document.getElementById('packing_observaciones_enh').value = '';
+
+      mostrarModalPacking2();
+
+      // Registrar inicio de packing
+      var usuario = sessionStorage.getItem('userName') || 'Usuario';
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result.success) {
+            console.log('Packing iniciado: ' + result.packingId);
+          } else if (result.packingActivo) {
+            if (window.WMSToast) WMSToast.info('Packing ya iniciado por ' + result.packingActivo.usuario);
+          }
+        })
+        .withFailureHandler(function () { })
+        .iniciarPackingEnhanced(notaVenta, usuario);
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success) {
+            document.getElementById('modal_packingProductos').innerHTML = '<div class="wms-alert wms-alert-danger"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">' + result.error + '</div></div>';
+            return;
+          }
+
+          var html = '<div class="wms-grid wms-grid-cols-2 wms-gap-4 wms-mb-4">';
+          html += '<div class="wms-card"><div class="wms-card-body">';
+          html += '<div class="wms-text-xs wms-text-secondary wms-mb-1">CLIENTE</div>';
+          html += '<div class="wms-font-semibold">' + (result.orden.cliente || '-') + '</div>';
+          html += '</div></div>';
+          html += '<div class="wms-card"><div class="wms-card-body">';
+          html += '<div class="wms-text-xs wms-text-secondary wms-mb-1">VENDEDOR</div>';
+          html += '<div class="wms-font-semibold">' + (result.orden.vendedor || result.orden.codVendedor || '-') + '</div>';
+          html += '</div></div>';
+          html += '</div>';
+
+          html += '<div class="wms-table-container"><div class="wms-table-wrapper"><table class="wms-table">';
+          html += '<thead><tr><th>Código</th><th>Descripción</th><th class="wms-text-center">U.M</th><th class="wms-text-center">Cant</th></tr></thead><tbody>';
+
+          for (var i = 0; i < result.productos.length; i++) {
+            var p = result.productos[i];
+            html += '<tr>';
+            html += '<td class="wms-td-mono">' + p.codigo + '</td>';
+            html += '<td>' + (p.descripcion || '-') + '</td>';
+            html += '<td class="wms-text-center wms-text-secondary">' + (p.unidadMedida || '-') + '</td>';
+            html += '<td class="wms-td-number">' + p.pedido + '</td>';
+            html += '</tr>';
+          }
+
+          html += '</tbody></table></div></div>';
+          document.getElementById('modal_packingProductos').innerHTML = html;
+        })
+        .withFailureHandler(function () {
+          document.getElementById('modal_packingProductos').innerHTML = '<div class="wms-alert wms-alert-danger"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error al cargar productos</div></div>';
+        })
+        .getDetalleOrdenPacking(notaVenta);
+    }
+
+    function completarPackingEnhancedUI() {
+      var bultos = parseInt(document.getElementById('packing_bultos_enh').value) || 0;
+      var pallets = parseInt(document.getElementById('packing_pallets_enh').value) || 0;
+      var pesoBulto = parseFloat(document.getElementById('packing_peso_bulto').value) || 0;
+      var pesoBultoPallet = parseFloat(document.getElementById('packing_peso_pallet').value) || 0;
+
+      if (bultos < 1) {
+        if (window.WMSToast) WMSToast.warning('Debe ingresar al menos 1 bulto');
+        else alert('Debe ingresar al menos 1 bulto');
+        return;
+      }
+
+      var datosEmpaque = {
+        bultos: bultos,
+        pallets: pallets,
+        pesoBulto: pesoBulto,
+        pesoBultoPallet: pesoBultoPallet,
+        observaciones: document.getElementById('packing_observaciones_enh').value.trim()
+      };
+
+      var btn = document.getElementById('btn_completarPacking');
+      setButtonLoading(btn, true);
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          setButtonLoading(btn, false);
+          if (result.success) {
+            if (window.WMSToast) WMSToast.success('¡Packing completado! N.V lista para despacho');
+            cerrarModalPacking2();
+            refreshPackingEnhanced();
+          } else {
+            if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+            else alert('Error: ' + result.error);
+          }
+        })
+        .withFailureHandler(function (err) {
+          setButtonLoading(btn, false);
+          if (window.WMSToast) WMSToast.error('Error de conexión');
+          else alert('Error de conexión');
+        })
+        .completarPackingYDespachar(nvActualPacking, datosEmpaque, sessionStorage.getItem('userName') || 'Usuario');
+    }
+
+    // Variables para etiqueta
+    var datosEtiquetaActual = null;
+
+    // Generar preview de etiqueta
+    function generarEtiqueta() {
+      var bultos = parseInt(document.getElementById('packing_bultos_enh').value) || 1;
+      var pallets = parseInt(document.getElementById('packing_pallets_enh').value) || 0;
+      var pesoBulto = parseFloat(document.getElementById('packing_peso_bulto').value) || 0;
+      var pesoBultoPallet = parseFloat(document.getElementById('packing_peso_pallet').value) || 0;
+      var observaciones = document.getElementById('packing_observaciones_enh').value.trim();
+
+      // Obtener datos del modal
+      var clienteEl = document.querySelector('#modal_packingProductos .wms-font-semibold');
+      var cliente = clienteEl ? clienteEl.textContent : 'Cliente';
+
+      datosEtiquetaActual = {
+        notaVenta: nvActualPacking,
+        cliente: cliente,
+        bultos: bultos,
+        pallets: pallets,
+        pesoBulto: pesoBulto,
+        pesoBultoPallet: pesoBultoPallet,
+        observaciones: observaciones,
+        fecha: new Date().toLocaleDateString(),
+        hora: new Date().toLocaleTimeString()
+      };
+
+      var previewContainer = document.getElementById('etiquetaPreview');
+      previewContainer.classList.add('has-content');
+      previewContainer.innerHTML = generarHTMLEtiqueta(datosEtiquetaActual);
+
+      if (window.WMSToast) WMSToast.success('Etiqueta generada');
+    }
+
+    // Generar HTML de la etiqueta
+    function generarHTMLEtiqueta(datos) {
+      var barcodeText = '*' + datos.notaVenta + '*';
+
+      return `
+        <div class="shipping-label">
+          <div class="label-header">
+            <div class="label-company">WMS INSUMOS MÉDICOS</div>
+            <div class="label-subtitle">Sistema de Gestión de Almacén</div>
+          </div>
+          
+          <div class="label-nv">N.V ${datos.notaVenta}</div>
+          
+          <div class="label-section">
+            <div class="label-row">
+              <span class="label-key">CLIENTE:</span>
+              <span class="label-value">${datos.cliente}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">FECHA:</span>
+              <span class="label-value">${datos.fecha}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">HORA:</span>
+              <span class="label-value">${datos.hora}</span>
+            </div>
+          </div>
+          
+          <div class="label-bultos">
+            <div class="bulto-item">
+              <div class="bulto-value">${datos.bultos}</div>
+              <div class="bulto-label">Bultos</div>
+            </div>
+            <div class="bulto-item">
+              <div class="bulto-value">${datos.pallets}</div>
+              <div class="bulto-label">Pallets</div>
+            </div>
+          </div>
+          
+          ${(datos.pesoBulto > 0 || datos.pesoBultoPallet > 0) ? `
+          <div class="label-section" style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0;">
+            <div class="label-row">
+              <span class="label-key">PESO BULTO:</span>
+              <span class="label-value">${datos.pesoBulto} kg</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">PESO C/PALLET:</span>
+              <span class="label-value">${datos.pesoBultoPallet} kg</span>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${datos.observaciones ? `
+          <div class="label-section">
+            <div class="label-row">
+              <span class="label-key">OBS:</span>
+              <span class="label-value">${datos.observaciones}</span>
+            </div>
+          </div>
+          ` : ''}
+          
+          <div class="label-barcode">
+            <div class="barcode-placeholder">${barcodeText}</div>
+            <div class="barcode-text">${datos.notaVenta}</div>
+          </div>
+          
+          <div class="label-footer">
+            Generado por WMS · ${datos.fecha} ${datos.hora}
+          </div>
+        </div>
+      `;
+    }
+
+    // Abrir modal de impresión
+    function imprimirEtiqueta() {
+      if (!datosEtiquetaActual) {
+        if (window.WMSToast) WMSToast.warning('Primero genere la etiqueta');
+        return;
+      }
+
+      var printContent = document.getElementById('etiquetaPrintContent');
+      printContent.innerHTML = generarHTMLEtiqueta(datosEtiquetaActual);
+
+      var modal = document.getElementById('etiquetaPrintModal');
+      if (modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // Cerrar modal de etiqueta
+    function cerrarModalEtiqueta() {
+      var modal = document.getElementById('etiquetaPrintModal');
+      if (modal) {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Ejecutar impresión
+    function ejecutarImpresion() {
+      window.print();
+    }
+
+    // Inicializar preview vacío
+    function initEtiquetaPreview() {
+      var previewContainer = document.getElementById('etiquetaPreview');
+      if (previewContainer && !previewContainer.classList.contains('has-content')) {
+        previewContainer.innerHTML = `
+          <div class="shipping-label-placeholder">
+            <i class="fas fa-tag"></i>
+            <p>Ingrese los datos de empaque y presione "Generar Etiqueta"</p>
+          </div>
+        `;
+      }
+    }
+
+    // Modificar abrirPackingModalEnhanced para inicializar preview
+    var originalAbrirPackingModal = abrirPackingModalEnhanced;
+    abrirPackingModalEnhanced = function (notaVenta) {
+      datosEtiquetaActual = null;
+      originalAbrirPackingModal(notaVenta);
+      setTimeout(initEtiquetaPreview, 100);
+    };
+
+    window.initPackingModule = initPackingModule;
+    window.refreshPackingEnhanced = refreshPackingEnhanced;
+    window.switchPackingTab = switchPackingTab;
+    window.abrirPackingModalEnhanced = abrirPackingModalEnhanced;
+    window.completarPackingEnhancedUI = completarPackingEnhancedUI;
+    window.generarEtiqueta = generarEtiqueta;
+    window.imprimirEtiqueta = imprimirEtiqueta;
+    window.cerrarModalEtiqueta = cerrarModalEtiqueta;
+    window.ejecutarImpresion = ejecutarImpresion;
+  </script>
+</section>

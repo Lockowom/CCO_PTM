@@ -1,0 +1,437 @@
+<!-- Navigation_Handler.html - Funciones de navegación y menú -->
+
+<script>
+  // Sistema de navegación completo
+  // Los estilos se cargan desde Menu_Styles_Fixed.html
+
+  // Función principal para mostrar vistas
+  window.showView = function (viewName, data) {
+    console.log('showView: Iniciando - Mostrando vista', viewName, data);
+
+    // PASO 1: Asegurar que los contenedores principales están visibles
+    var loginView = document.getElementById('loginView');
+    var appHeader = document.getElementById('appHeader');
+    var appLayout = document.getElementById('appLayout');
+    var sidebar = document.getElementById('sidebarMenu');
+    var mainContent = document.getElementById('mainContent');
+
+    if (loginView) {
+      loginView.classList.add('hidden');
+      console.log('showView: loginView ocultado');
+    }
+
+    if (viewName !== 'login') {
+      if (appHeader) {
+        appHeader.classList.add('visible');
+        appHeader.style.display = 'flex';
+        console.log('showView: appHeader visible');
+      }
+      if (appLayout) {
+        appLayout.classList.add('visible');
+        appLayout.style.display = 'flex';
+        console.log('showView: appLayout visible');
+      }
+      if (sidebar) {
+        sidebar.classList.add('visible');
+        sidebar.style.display = 'flex';
+        
+        // Verificación de seguridad: Si el sidebar está vacío, intentar renderizarlo de nuevo
+        if (sidebar.innerHTML.trim() === '' && typeof SidebarMenu !== 'undefined') {
+          console.warn('showView: Sidebar vacío, forzando renderizado...');
+          SidebarMenu.init();
+        }
+        console.log('showView: sidebar visible');
+      }
+      if (mainContent) {
+        mainContent.style.display = 'block';
+        console.log('showView: mainContent visible');
+      }
+    }
+
+    // PASO 2: Ocultar TODAS las vistas completamente
+    console.log('showView: Ocultando todas las vistas...');
+    document.querySelectorAll('.view').forEach(function (v) {
+      v.classList.remove('active');
+      v.style.display = 'none';
+    });
+
+    // PASO 3: Mostrar vista específica
+    var targetView = document.getElementById(viewName + 'View');
+    if (targetView) {
+      console.log('showView: Vista encontrada:', viewName + 'View');
+      targetView.style.display = 'block';
+      targetView.classList.add('active');
+      App.currentView = viewName;
+      console.log('showView: Vista ' + viewName + ' activada');
+
+      // Cargar contenido específico de la vista
+      loadViewContent(viewName, targetView, data);
+    } else {
+      console.warn('showView: Vista no encontrada:', viewName + 'View');
+      // Intentar mostrar homeView como fallback
+      var homeView = document.getElementById('homeView');
+      if (homeView) {
+        homeView.style.display = 'block';
+        homeView.classList.add('active');
+        loadViewContent('home', homeView, data);
+      }
+    }
+
+    // PASO 4: Actualizar navegación activa en sidebar
+    updateSidebarActiveModule(viewName);
+
+    // PASO 5: Scroll al inicio de la página
+    window.scrollTo(0, 0);
+    
+    console.log('showView: Completado - Vista ' + viewName + ' mostrada');
+  };
+
+  // Función para actualizar módulo activo en sidebar
+  window.updateSidebarActiveModule = function (viewName) {
+    if (typeof SidebarMenu !== 'undefined' && SidebarMenu.config) {
+      // Buscar el módulo correspondiente a la vista
+      var foundModule = null;
+      SidebarMenu.config.areas.forEach(function (area) {
+        area.modules.forEach(function (module) {
+          if (module.view === viewName) {
+            foundModule = module.id;
+          }
+        });
+      });
+
+      if (foundModule) {
+        SidebarMenu.setActiveModule(foundModule);
+        SidebarMenu.expandSectionForModule(foundModule);
+      }
+    }
+  };
+
+  // Función para cargar contenido específico de cada vista
+  window.loadViewContent = function (viewName, container, data) {
+    console.log('loadViewContent: Cargando contenido para', viewName);
+
+    switch (viewName) {
+      case 'home':
+        if (typeof renderHomeView === 'function') {
+          renderHomeView(container);
+        } else {
+          renderDefaultHomeView(container);
+        }
+        break;
+
+      case 'dashboard':
+        if (typeof initDashboardUnified === 'function') {
+          initDashboardUnified();
+        } else if (typeof initDashboard === 'function') {
+          initDashboard();
+        }
+        break;
+
+      case 'reception':
+        if (typeof initReception === 'function') {
+          initReception();
+        }
+        break;
+
+      case 'inventory':
+        if (typeof initInventoryModule === 'function') {
+          initInventoryModule();
+        } else if (typeof initInventory === 'function') {
+          initInventory();
+        }
+        break;
+
+      case 'picking':
+        if (typeof initPickingModule === 'function') {
+          initPickingModule();
+        } else if (typeof initPicking === 'function') {
+          initPicking();
+        }
+        break;
+
+      case 'packing':
+        if (typeof initPackingModule === 'function') {
+          initPackingModule();
+        } else if (typeof initPacking === 'function') {
+          initPacking();
+        }
+        break;
+
+      case 'dispatch':
+        if (typeof initDespachoModule === 'function') {
+          initDespachoModule();
+        } else if (typeof initDispatchModule === 'function') {
+          initDispatchModule();
+        } else if (typeof initDispatch === 'function') {
+          initDispatch();
+        }
+        break;
+
+      case 'shipping':
+        if (typeof initShippingModule === 'function') {
+          initShippingModule();
+        }
+        break;
+
+      case 'delivery':
+        if (typeof initDeliveryModule === 'function') {
+          initDeliveryModule();
+        } else if (typeof initDelivery === 'function') {
+          initDelivery();
+        }
+        break;
+
+      case 'notasventa':
+        if (typeof initNotasVentaModule === 'function') {
+          initNotasVentaModule();
+        } else if (typeof initNotasVenta === 'function') {
+          initNotasVenta();
+        } else if (typeof loadNotasVenta === 'function') {
+          loadNotasVenta();
+        }
+        break;
+
+      case 'lotesseries':
+        if (typeof initLotesSeriesModule === 'function') {
+          initLotesSeriesModule();
+        } else if (typeof initLotesSeries === 'function') {
+          initLotesSeries();
+        } else {
+          console.warn('No se encontró función de inicialización para Lotes/Series');
+        }
+        break;
+
+      case 'estadonv':
+        // Cargar contenido en el contenedor de estadonvView
+        var estadonvContainer = document.getElementById('estadonvViewContent');
+        if (estadonvContainer && typeof loadEstadoNVView === 'function') {
+          loadEstadoNVView(estadonvContainer);
+        } else if (typeof initEstadoNV === 'function') {
+          initEstadoNV();
+        } else if (typeof initConsultas === 'function') {
+          initConsultas();
+        }
+        break;
+
+      case 'layout':
+        // Cargar contenido en el contenedor de layoutView
+        var layoutContainer = document.getElementById('layoutViewContent');
+        if (layoutContainer && typeof loadLayoutView === 'function') {
+          loadLayoutView(layoutContainer);
+        } else if (typeof initLayoutModule === 'function') {
+          initLayoutModule();
+        } else if (typeof initLayout === 'function') {
+          initLayout();
+        }
+        break;
+
+      case 'consultas':
+        // Cargar contenido en el contenedor de consultasView
+        var consultasContainer = document.getElementById('consultasViewContent');
+        if (consultasContainer && typeof loadConsultasView === 'function') {
+          loadConsultasView(consultasContainer);
+        } else if (typeof initConsultas === 'function') {
+          initConsultas();
+        }
+        break;
+
+      case 'direcciones':
+        // Módulo simple, no requiere init complejo, pero podemos loguearlo
+        console.log('Cargando módulo de Direcciones');
+        break;
+
+      case 'transferencias':
+        if (typeof initTransferenciasModule === 'function') {
+          initTransferenciasModule();
+        } else if (typeof initTransferencias === 'function') {
+          initTransferencias();
+        } else if (typeof initTransfer === 'function') {
+          initTransfer();
+        }
+        break;
+
+      case 'users':
+        if (typeof initUsersModule === 'function') {
+          initUsersModule();
+        } else if (typeof initUserManagement === 'function') {
+          initUserManagement();
+        } else if (typeof loadUsers === 'function') {
+          loadUsers();
+        }
+        break;
+
+      case 'roles':
+        if (typeof initRolesModule === 'function') {
+          initRolesModule();
+        } else if (typeof initRoleManagement === 'function') {
+          initRoleManagement();
+        } else if (typeof loadRoles === 'function') {
+          loadRoles();
+        }
+        break;
+
+      case 'reports':
+        if (typeof initReportsModule === 'function') {
+          initReportsModule();
+        } else if (typeof initReports === 'function') {
+          initReports();
+        }
+        break;
+
+      case 'adminviews':
+        if (typeof initAdminViewsModule === 'function') {
+          initAdminViewsModule();
+        } else if (typeof AdminViewsModule !== 'undefined' && AdminViewsModule.init) {
+          AdminViewsModule.init();
+        }
+        break;
+
+      // TMS Cases
+      case 'tms-dashboard':
+        // Asegurar permisos TMS antes de cargar
+        if (typeof ensureTMSPermissions === 'function') {
+          ensureTMSPermissions();
+        }
+        
+        if (typeof initTMSDashboard === 'function') {
+          initTMSDashboard();
+        } else {
+          console.warn('initTMSDashboard function not found');
+          // Cargar dashboard con datos mock
+          loadTMSPlaceholder('tmsDashboardView', 'Dashboard TMS', 'Sistema de gestión de transporte con métricas en tiempo real.');
+        }
+        break;
+
+      case 'tmsRoutePlanning':
+        if (typeof initRoutePlanning === 'function') {
+          initRoutePlanning();
+        } else {
+          console.warn('initRoutePlanning function not found');
+          loadTMSPlaceholder('tmsRoutesContent', 'Planificación de Rutas', 'Aquí se mostrará la interfaz para planificar y optimizar rutas de entrega.');
+        }
+        break;
+
+      case 'tms-control':
+      case 'tmsControlTower':
+        if (typeof initTMSControlTower === 'function') {
+          initTMSControlTower();
+        } else {
+          console.warn('initTMSControlTower function not found');
+          loadTMSPlaceholder('tmsControlContent', 'Torre de Control', 'Aquí se mostrará el mapa en tiempo real con la ubicación de todos los conductores.');
+        }
+        break;
+
+      case 'tms-drivers':
+        if (typeof initTMSDrivers === 'function') {
+          initTMSDrivers();
+        } else {
+          console.warn('initTMSDrivers function not found');
+          loadTMSPlaceholder('tmsDriversContent', 'Gestión de Conductores', 'Aquí se mostrará la interfaz para gestionar conductores y vehículos.');
+        }
+        break;
+
+      case 'tms-mobile':
+        if (typeof initTMSMobile === 'function') {
+          initTMSMobile();
+        } else {
+          loadTMSPlaceholder('tmsMobileContent', 'Aplicación Móvil', 'Aquí se mostrará la configuración y acceso a la aplicación móvil para conductores.');
+        }
+        break;
+
+      default:
+        console.log('Vista', viewName, 'cargada (sin inicialización especial)');
+    }
+  };
+
+  // Función para renderizar vista home por defecto (ahora simplificada - el sidebar maneja la navegación)
+  window.renderDefaultHomeView = function (container) {
+    console.log('renderDefaultHomeView: Renderizando vista home simplificada');
+
+    if (!container) return;
+
+    // Verificar si el usuario tiene permisos
+    if (!App.user) {
+      container.innerHTML = '<div class="error-message">No se pudo cargar la información del usuario</div>';
+      return;
+    }
+
+    // Renderizar vista de bienvenida (el sidebar ya tiene la navegación)
+    renderWelcomeHome(container);
+  };
+
+  // Nueva función para renderizar home de bienvenida
+  window.renderWelcomeHome = function (container) {
+    var userName = App.user?.nombre || 'Usuario';
+    var userRol = App.user?.rol || 'Operador';
+
+    var html = '<div class="page-container">';
+    html += '<div class="welcome-section" style="text-align:center; padding:60px 20px;">';
+    html += '<div class="welcome-icon" style="font-size:4rem; color:var(--primary); margin-bottom:24px;">';
+    html += '<i class="fas fa-hospital-user"></i>';
+    html += '</div>';
+    html += '<h1 style="font-size:2rem; font-weight:700; color:var(--text-main); margin-bottom:8px;">¡Bienvenido, ' + userName + '!</h1>';
+    html += '<p style="color:var(--text-secondary); font-size:1.1rem; margin-bottom:32px;">Rol: ' + userRol + '</p>';
+    html += '<p style="color:var(--text-light); max-width:500px; margin:0 auto;">Utiliza el menú lateral para navegar entre los diferentes módulos del sistema.</p>';
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  };
+
+  // Función para cargar placeholders de TMS
+  window.loadTMSPlaceholder = function (containerId, title, description) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+
+    var html = '<div class="tms-placeholder">';
+    html += '<div class="placeholder-content">';
+    html += '<div class="placeholder-icon">';
+    html += '<i class="fas fa-route" style="font-size: 4rem; color: #10b981; margin-bottom: 24px;"></i>';
+    html += '</div>';
+    html += '<h2 style="color: var(--text-main); margin-bottom: 16px;">' + title + '</h2>';
+    html += '<p style="color: var(--text-secondary); margin-bottom: 32px; max-width: 500px;">' + description + '</p>';
+    html += '<div class="placeholder-status">';
+    html += '<div class="status-badge" style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">';
+    html += '<i class="fas fa-clock"></i> En Desarrollo';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="placeholder-info" style="margin-top: 32px; padding: 24px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #10b981;">';
+    html += '<h4 style="color: var(--text-main); margin-bottom: 12px;"><i class="fas fa-info-circle"></i> Próximamente</h4>';
+    html += '<p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Este módulo está siendo desarrollado como parte del Sistema de Gestión de Transporte (TMS). Incluirá funcionalidades avanzadas para optimizar las operaciones de entrega.</p>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  };
+
+  // Función para construir navegación basada en permisos (legacy - ahora usa sidebar)
+  window.buildNavigation = function (container) {
+    console.log('buildNavigation: Redirigiendo a renderWelcomeHome (sidebar maneja navegación)');
+    renderWelcomeHome(container);
+  };
+
+  // Función para actualizar navegación activa (legacy - ahora usa sidebar)
+  window.updateActiveNavigation = function (viewName) {
+    // Actualizar sidebar si existe
+    updateSidebarActiveModule(viewName);
+
+    // Legacy: actualizar cards si existen
+    document.querySelectorAll('.nav-card').forEach(function (card) {
+      card.classList.remove('active');
+    });
+
+    var activeCard = document.querySelector('[data-view="' + viewName + '"]');
+    if (activeCard) {
+      activeCard.classList.add('active');
+    }
+  };
+
+  // Función para renderizar vista home (alias para buildNavigation)
+  window.renderHomeView = function (container) {
+    console.log('renderHomeView: Alias de buildNavigation');
+    buildNavigation(container);
+  };
+
+  console.log('Navigation_Handler: Sistema de navegación cargado');
+</script>

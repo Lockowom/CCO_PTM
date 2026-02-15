@@ -1,0 +1,1843 @@
+<section class="view" id="pickingView">
+  <!-- Module Header -->
+  <div class="wms-module-header">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Picking</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Gestión de Picking</h1>
+          <p class="wms-module-subtitle">Recolección de productos para órdenes</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <button class="wms-btn wms-btn-outline wms-mr-2" onclick="PickingModule.openMonitor()">
+        <i class="fas fa-desktop"></i> Monitor
+      </button>
+      <button class="wms-btn wms-btn-primary" onclick="PickingModule.refresh()">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard -->
+  <div class="wms-stats-grid wms-stats-3">
+    <div class="wms-stat-card" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="stat_pendientePicking">0</span>
+        <span class="wms-stat-label">Pendiente Picking</span>
+      </div>
+    </div>
+    <div class="wms-stat-card" data-color="primary">
+      <div class="wms-stat-icon"><i class="fas fa-box"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="stat_enPicking">0</span>
+        <span class="wms-stat-label">En Picking</span>
+      </div>
+    </div>
+    <div class="wms-stat-card" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-double"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="stat_completadas">0</span>
+        <span class="wms-stat-label">Completadas Hoy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista Principal: Lista de N.V Pendientes -->
+  <div id="pickingListView">
+    <div class="wms-card">
+      <div class="wms-card-header"
+        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h3 class="wms-card-title">
+          <i class="fas fa-hand-pointer"></i> Notas de Venta Pendientes de Picking
+        </h3>
+        <!-- Buscador de N.V -->
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="position: relative;">
+            <i class="fas fa-search"
+              style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--wms-text-secondary);"></i>
+            <input type="text" id="picking_search_input" placeholder="Buscar N.V..."
+              style="padding: 0.5rem 0.5rem 0.5rem 2.5rem; border: 1px solid var(--wms-border-default); border-radius: var(--wms-radius-md); width: 200px; font-size: 0.875rem;"
+              oninput="PickingModule.filtrarNV(this.value)">
+          </div>
+          <button class="wms-btn wms-btn-sm wms-btn-outline" onclick="PickingModule.limpiarBusqueda()"
+            title="Limpiar búsqueda">
+            <i class="fas fa-times"></i>
+          </button>
+          <span id="picking_autorefresh_indicator" style="font-size: 0.75rem; color: var(--wms-text-secondary); margin-right: 10px;">
+            <i class="fas fa-sync-alt fa-spin" style="margin-right: 4px;"></i> Auto-refresh activo
+          </span>
+          <button class="wms-btn wms-btn-sm wms-btn-primary" onclick="PickingModule.openMonitor()">
+            <i class="fas fa-desktop"></i> Monitor
+          </button>
+        </div>
+      </div>
+      <div class="wms-card-body" style="max-height: 600px; overflow-y: auto;">
+        <div id="picking_pendientesList">
+          <div class="wms-loading-state">
+            <div class="wms-spinner wms-spinner-lg"></div>
+            <span class="wms-loading-text">Cargando notas de venta...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Picking Activo -->
+  <div id="pickingActiveView" style="display: none;">
+    <!-- Header de N.V Activa -->
+    <div class="wms-card wms-mb-4">
+      <div class="wms-card-header">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 class="wms-card-title">
+              <i class="fas fa-clipboard-list"></i> Picking N.V: <span id="active_nv_numero"></span>
+            </h3>
+            <p style="font-size: 0.875rem; color: var(--wms-text-secondary); margin-top: 0.5rem;">
+              Cliente: <strong id="active_nv_cliente"></strong> |
+              Fecha Entrega: <span id="active_nv_fecha"></span>
+            </p>
+          </div>
+          <button class="wms-btn wms-btn-outline" onclick="PickingModule.volverALista()">
+            <i class="fas fa-arrow-left"></i> Volver
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Productos -->
+    <div class="wms-card">
+      <div class="wms-card-header">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="wms-card-title">
+            <i class="fas fa-boxes"></i> Productos a Recolectar
+          </h3>
+          <div id="picking_progress_badge" class="wms-badge wms-badge-info">
+            <i class="fas fa-tasks"></i> <span id="picking_progress_text">0/0</span>
+          </div>
+        </div>
+      </div>
+      <div class="wms-card-body wms-p-0">
+        <div id="active_productos_list" style="max-height: 500px; overflow-y: auto;">
+          <!-- Productos se cargan aquí -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de Estado -->
+    <div class="wms-card wms-mt-4">
+      <div class="wms-card-body">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <button class="wms-btn wms-btn-warning wms-btn-block" onclick="PickingModule.marcarFaltanteBigTicket()">
+            <i class="fas fa-exclamation-circle"></i> Faltante PROD BIG TICKET
+          </button>
+          <button class="wms-btn wms-btn-warning wms-btn-block" onclick="PickingModule.marcarFaltanteMiniTicket()">
+            <i class="fas fa-exclamation-circle"></i> Faltante PROD MINI TICKET
+          </button>
+          <button class="wms-btn wms-btn-success wms-btn-block" onclick="PickingModule.completarPicking()">
+            <i class="fas fa-check-double"></i> Picking Completo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Monitoreo (Admin/Supervisor) -->
+  <div id="pickingMonitorView" style="display: none;">
+    <div class="wms-card wms-mb-4">
+      <div class="wms-card-header">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="wms-card-title">
+            <i class="fas fa-desktop"></i> Monitor de Picking en Tiempo Real
+          </h3>
+          <button class="wms-btn wms-btn-outline" onclick="PickingModule.volverALista()">
+            <i class="fas fa-times"></i> Cerrar Monitor
+          </button>
+        </div>
+      </div>
+      <div class="wms-card-body">
+        <div id="monitor_activos_list">
+          <!-- Lista de pickings activos -->
+        </div>
+
+        <!-- NEW: User Stats Section -->
+        <div class="wms-mt-4">
+          <h4 class="wms-section-title wms-mb-3" style="font-size: 1.1rem; font-weight: 600; color: var(--wms-text-primary); border-bottom: 2px solid var(--wms-border-default); padding-bottom: 0.5rem;">
+            <i class="fas fa-users"></i> Rendimiento de Usuarios (Hoy)
+          </h4>
+          <div id="monitor_usuarios_list">
+            <div class="wms-loading-state"><div class="wms-spinner"></div><span>Cargando estadísticas...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="wms-toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
+  <!-- Modal: Selección de Ubicación para Producto Dañado -->
+  <div id="danadoModal" class="wms-modal-overlay">
+    <div class="wms-modal wms-modal-lg">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-exclamation-triangle"></i> Producto Dañado - Seleccionar Ubicación
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="PickingModule.cerrarDanadoModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body">
+        <div style="margin-bottom: 1rem;">
+          <h4 style="margin-bottom: 0.5rem;" id="danado_producto_nombre"></h4>
+          <p style="font-size: 0.875rem; color: var(--wms-text-secondary);">
+            Código: <code class="wms-code" id="danado_producto_codigo"></code> |
+            Cantidad solicitada: <strong id="danado_cantidad_solicitada"></strong>
+          </p>
+        </div>
+        <div id="danado_ubicacion_lista">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+            <span>Cargando ubicaciones...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Selección de Ubicación -->
+  <div id="ubicacionModal" class="wms-modal-overlay">
+    <div class="wms-modal wms-modal-lg">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-map-marker-alt"></i> Seleccionar Ubicación
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="PickingModule.cerrarUbicacionModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body">
+        <div style="margin-bottom: 1rem;">
+          <h4 style="margin-bottom: 0.5rem;" id="ubicacion_producto_nombre"></h4>
+          <p style="font-size: 0.875rem; color: var(--wms-text-secondary);">
+            Código: <code class="wms-code" id="ubicacion_producto_codigo"></code> |
+            Cantidad solicitada: <strong id="ubicacion_cantidad_solicitada"></strong>
+          </p>
+        </div>
+        <div id="ubicacion_lista">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+            <span>Cargando ubicaciones...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Estilos específicos del módulo de Picking */
+    .producto-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-bottom: 1px solid var(--wms-border-default);
+      transition: background 0.2s;
+    }
+
+    .producto-item:hover {
+      background: var(--wms-gray-50);
+    }
+
+    .producto-item:last-child {
+      border-bottom: none;
+    }
+
+    .producto-item.pickeado {
+      background: var(--wms-success-light);
+    }
+
+    .producto-item.faltante {
+      background: var(--wms-danger-light);
+    }
+
+    .producto-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--wms-border-dark);
+      border-radius: var(--wms-radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .producto-checkbox.checked {
+      background: var(--wms-success);
+      border-color: var(--wms-success);
+      color: white;
+    }
+
+    .producto-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .producto-nombre {
+      font-weight: 500;
+      color: var(--wms-text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .producto-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--wms-text-secondary);
+    }
+
+    .producto-cantidad {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--wms-text-primary);
+      flex-shrink: 0;
+    }
+
+    .producto-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .ubicacion-card {
+      border: 2px solid var(--wms-border-default);
+      border-radius: var(--wms-radius-md);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ubicacion-card:hover {
+      border-color: var(--wms-primary);
+      background: var(--wms-primary-light);
+    }
+
+    .ubicacion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .ubicacion-codigo {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--wms-primary);
+    }
+
+    .ubicacion-stock {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--wms-success);
+    }
+
+    .ubicacion-detalles {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--wms-text-secondary);
+    }
+
+    .ubicacion-detalle-item {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .ubicacion-detalle-label {
+      font-weight: 500;
+    }
+
+    /* Menú de opciones del producto */
+    .producto-menu-container {
+      position: relative;
+    }
+
+    .producto-menu {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 0.25rem;
+      background: white;
+      border: 1px solid var(--wms-border-default);
+      border-radius: var(--wms-radius-md);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      z-index: 1000;
+      min-width: 220px;
+    }
+
+    .producto-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.875rem;
+      color: var(--wms-text-primary);
+    }
+
+    .producto-menu-item:first-child {
+      border-radius: var(--wms-radius-md) var(--wms-radius-md) 0 0;
+    }
+
+    .producto-menu-item:last-child {
+      border-radius: 0 0 var(--wms-radius-md) var(--wms-radius-md);
+    }
+
+    .producto-menu-item:hover {
+      background: var(--wms-gray-50);
+    }
+
+    .producto-menu-item i {
+      color: var(--wms-text-secondary);
+    }
+  </style>
+
+  <script>
+    /* ============================================
+       TOAST NOTIFICATIONS
+       ============================================ */
+    var WMSToast = {
+      show: function (message, type, duration) {
+        var container = document.getElementById('wms-toast-container');
+        var toast = document.createElement('div');
+        toast.className = 'wms-toast wms-toast-' + (type || 'info');
+        toast.style.cssText = 'background: white; border-left: 4px solid ' + this.getColor(type) + '; padding: 1rem; margin-top: 10px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; align-items: center; min-width: 300px; animation: slideIn 0.3s ease-out;';
+
+        var icon = this.getIcon(type);
+        toast.innerHTML = '<i class="' + icon + '" style="color: ' + this.getColor(type) + '; margin-right: 10px; font-size: 1.2rem;"></i><span style="color: #2d3748; font-weight: 500;">' + message + '</span>';
+
+        container.appendChild(toast);
+
+        setTimeout(function () {
+          toast.style.animation = 'slideOut 0.3s ease-in forwards';
+          setTimeout(function () {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 300);
+        }, duration || 3000);
+      },
+      success: function (msg) { this.show(msg, 'success'); },
+      error: function (msg) { this.show(msg, 'error', 5000); },
+      info: function (msg) { this.show(msg, 'info'); },
+      warning: function (msg) { this.show(msg, 'warning', 4000); },
+
+      getColor: function (type) {
+        switch (type) {
+          case 'success': return '#48bb78';
+          case 'error': return '#f56565';
+          case 'warning': return '#ed8936';
+          default: return '#4299e1';
+        }
+      },
+      getIcon: function (type) {
+        switch (type) {
+          case 'success': return 'fas fa-check-circle';
+          case 'error': return 'fas fa-exclamation-circle';
+          case 'warning': return 'fas fa-exclamation-triangle';
+          default: return 'fas fa-info-circle';
+        }
+      }
+    };
+
+    /* ============================================
+       PICKING MODULE - JavaScript Logic
+       ============================================ */
+
+    var PickingModule = (function () {
+      // Estado global del módulo
+      var state = {
+        nvActual: null,
+        productosNV: [],
+        estadoProductos: {},
+        productoSeleccionado: null,
+        pollingInterval: null,
+        autoRefreshInterval: null,
+        todasLasNV: [],           // Almacena todas las N.V para filtrado
+        filtroActual: ''          // Filtro de búsqueda actual
+      };
+
+      var userName = sessionStorage.getItem('userName') || 'Usuario';
+      var AUTO_REFRESH_INTERVAL = 30000; // 30 segundos
+
+      /* ═══════════════════════════════════════════
+         INICIALIZACIÓN
+         ═══════════════════════════════════════════ */
+
+      function init() {
+        console.log('🚀 Inicializando Picking Module...');
+        refresh();
+        iniciarAutoRefresh();
+      }
+
+      function refresh() {
+        loadNVPendientes();
+        updateStats();
+      }
+
+      // Auto-refresh cada 30 segundos
+      function iniciarAutoRefresh() {
+        // Detener si ya existe
+        if (state.autoRefreshInterval) {
+          clearInterval(state.autoRefreshInterval);
+        }
+
+        state.autoRefreshInterval = setInterval(function () {
+          console.log('🔄 Auto-refresh ejecutándose...');
+          // Solo actualizar si no hay picking activo
+          if (!state.nvActual) {
+            refresh();
+          } else {
+            // Si hay picking activo, solo actualizar stats
+            updateStats();
+          }
+        }, AUTO_REFRESH_INTERVAL);
+
+        console.log('✅ Auto-refresh iniciado (cada 30 segundos)');
+      }
+
+      function detenerAutoRefresh() {
+        if (state.autoRefreshInterval) {
+          clearInterval(state.autoRefreshInterval);
+          state.autoRefreshInterval = null;
+        }
+      }
+
+      // Filtrar N.V por número
+      function filtrarNV(filtro) {
+        state.filtroActual = (filtro || '').toLowerCase().trim();
+
+        if (!state.todasLasNV || state.todasLasNV.length === 0) {
+          return;
+        }
+
+        if (!state.filtroActual) {
+          // Sin filtro, mostrar todas
+          renderNVPendientes(state.todasLasNV);
+          return;
+        }
+
+        // Filtrar por N.V o cliente
+        var nvFiltradas = [];
+        for (var i = 0; i < state.todasLasNV.length; i++) {
+          var nv = state.todasLasNV[i];
+          var nvNumero = String(nv.notaVenta || '').toLowerCase();
+          var cliente = String(nv.cliente || '').toLowerCase();
+
+          if (nvNumero.indexOf(state.filtroActual) !== -1 || cliente.indexOf(state.filtroActual) !== -1) {
+            nvFiltradas.push(nv);
+          }
+        }
+
+        renderNVPendientes(nvFiltradas);
+      }
+
+      function limpiarBusqueda() {
+        var input = document.getElementById('picking_search_input');
+        if (input) {
+          input.value = '';
+        }
+        state.filtroActual = '';
+        if (state.todasLasNV && state.todasLasNV.length > 0) {
+          renderNVPendientes(state.todasLasNV);
+        }
+      }
+
+      /* ═══════════════════════════════════════════
+         VISTA PRINCIPAL - LISTA DE N.V PENDIENTES
+         ═══════════════════════════════════════════ */
+
+      function loadNVPendientes() {
+        var container = document.getElementById('picking_pendientesList');
+        if (!container) return;
+
+        container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner wms-spinner-lg"></div><span class="wms-loading-text">Cargando notas de venta...</span></div>';
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + (result ? result.error : 'Error al cargar datos') + '</p></div>';
+              return;
+            }
+
+            if (!result.notasVenta || result.notasVenta.length === 0) {
+              state.todasLasNV = [];
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-clipboard-check"></i></div><h3 class="wms-empty-title">Sin N.V pendientes</h3><p class="wms-empty-text">No hay notas de venta pendientes de picking</p></div>';
+              return;
+            }
+
+            // Guardar todas las N.V para filtrado
+            state.todasLasNV = result.notasVenta;
+
+            // Renderizar (aplicando filtro si existe)
+            if (state.filtroActual) {
+              filtrarNV(state.filtroActual);
+            } else {
+              renderNVPendientes(result.notasVenta);
+            }
+          })
+          .withFailureHandler(function (error) {
+            console.error('Error:', error);
+            container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error de conexión</h3><p class="wms-empty-text">' + error.message + '</p></div>';
+          })
+          .getNVPendientesPicking();
+      }
+
+      function renderNVPendientes(notasVenta) {
+        var html = '<div class="wms-process-cards">';
+
+        for (var i = 0; i < notasVenta.length; i++) {
+          var nv = notasVenta[i];
+
+          html += '<div class="wms-process-card" data-status="pending">';
+          html += '<div class="wms-card-header">';
+          html += '<div class="wms-card-id">';
+          html += '<span class="wms-card-label">N° Venta</span>';
+          html += '<span class="wms-card-value">' + nv.notaVenta + '</span>';
+          html += '</div>';
+          html += '<div class="wms-card-badges">';
+          html += '<span class="wms-badge wms-badge-status-pending">Pendiente</span>';
+          html += '</div>';
+          html += '</div>';
+
+          html += '<div class="wms-card-body">';
+          html += '<div class="wms-card-info">';
+          html += '<div class="wms-info-row"><i class="fas fa-user"></i> <strong>' + (nv.cliente || '-') + '</strong></div>';
+          html += '<div class="wms-info-row"><i class="fas fa-calendar"></i> ' + (nv.fechaEntrega || '-') + '</div>';
+          html += '<div class="wms-info-row"><i class="fas fa-boxes"></i> ' + (nv.totalProductos || 0) + ' productos</div>';
+          html += '</div>';
+          html += '</div>';
+
+          html += '<div class="wms-card-footer">';
+          html += '<button class="wms-btn wms-btn-success wms-btn-block" onclick="PickingModule.empezarPicking(\'' + nv.notaVenta + '\')">';
+          html += '<i class="fas fa-play"></i> Empezar Picking</button>';
+          html += '</div>';
+          html += '</div>';
+        }
+
+        html += '</div>';
+        document.getElementById('picking_pendientesList').innerHTML = html;
+      }
+
+      function updateStats() {
+        // 1. Stats Generales
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (result && result.success) {
+              document.getElementById('stat_pendientePicking').textContent = result.pendientes || 0;
+              document.getElementById('stat_enPicking').textContent = result.enPicking || 0;
+              document.getElementById('stat_completadas').textContent = result.completadas || 0;
+            }
+          })
+          .withFailureHandler(function (err) {
+            console.error('Error al cargar stats:', err);
+          })
+          .getPickingStats();
+
+        // 2. Stats Usuarios (NEW CALL)
+        google.script.run
+          .withSuccessHandler(function (result) {
+            var container = document.getElementById('dashboard_user_stats');
+            if (!container) {
+              return;
+            }
+            if (!result || !result.success || !result.usuarios || result.usuarios.length === 0) {
+              container.innerHTML = '<div class="wms-empty-state wms-py-3"><p class="wms-empty-text">Sin actividad hoy</p></div>';
+              return;
+            }
+
+            var html = '<table class="wms-table wms-table-sm"><thead><tr><th>Usuario</th><th>Completados</th><th>En Proceso</th><th>Items</th><th>Tiempo Prom.</th></tr></thead><tbody>';
+
+            for (var i = 0; i < result.usuarios.length; i++) {
+              var u = result.usuarios[i];
+              html += '<tr>';
+              html += '<td><div class="wms-user-badge"><div class="wms-user-avatar sm">' + (u.usuario ? u.usuario.charAt(0).toUpperCase() : '?') + '</div><span>' + (u.usuario || '-') + '</span></div></td>';
+              html += '<td><span class="wms-badge wms-badge-success">' + (u.pickingsCompletados || 0) + '</span></td>';
+              html += '<td><span class="wms-badge wms-badge-primary">' + (u.pickingsEnProceso || 0) + '</span></td>';
+              html += '<td>' + (u.totalItemsPickeados || 0) + '</td>';
+              html += '<td>' + (u.tiempoPromedioMin || 0) + ' min</td>';
+              html += '</tr>';
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+          })
+          .withFailureHandler(function (err) {
+            console.error('Error user stats:', err);
+            var container = document.getElementById('dashboard_user_stats');
+            if (container) {
+              container.innerHTML = '<div class="wms-text-danger p-3">Error al cargar historial</div>';
+            }
+          })
+          .getDailyUserStats();
+      }
+
+      /* ═══════════════════════════════════════════
+         EMPEZAR PICKING
+         ═══════════════════════════════════════════ */
+
+      function empezarPicking(notaVenta) {
+        console.log('Empezando picking de N.V:', notaVenta);
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result.success) {
+              if (result.bloqueado) {
+                alert('N.V bloqueada por ' + result.usuarioBloqueado + '. Intente más tarde.');
+              } else {
+                alert('Error al bloquear N.V: ' + result.error);
+              }
+              return;
+            }
+
+            cargarDatosNV(notaVenta);
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .bloquearNVParaPicking(notaVenta, userName);
+      }
+
+      function cargarDatosNV(notaVenta) {
+        state.nvActual = notaVenta;
+
+        // Mostrar vista de picking activo
+        document.getElementById('pickingListView').style.display = 'none';
+        document.getElementById('pickingActiveView').style.display = 'block';
+
+        // Cargar datos de la N.V
+        var container = document.getElementById('active_productos_list');
+        container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div><span>Cargando productos...</span></div>';
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error al cargar N.V: ' + (result ? result.error : 'Sin respuesta'));
+              volverALista();
+              return;
+            }
+
+            // Guardar datos en estado
+            state.productosNV = result.productos || [];
+
+            // Actualizar header
+            document.getElementById('active_nv_numero').textContent = notaVenta;
+            document.getElementById('active_nv_cliente').textContent = result.cliente || '-';
+            document.getElementById('active_nv_fecha').textContent = result.fechaEntrega || '-';
+
+            // Cargar estado de productos
+            cargarEstadoProductos();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+            volverALista();
+          })
+          .getProductosNV(notaVenta);
+      }
+
+      function cargarEstadoProductos() {
+        google.script.run
+          .withSuccessHandler(function (result) {
+            state.estadoProductos = {};
+
+            if (result && result.success && result.productos) {
+              for (var i = 0; i < result.productos.length; i++) {
+                var p = result.productos[i];
+                state.estadoProductos[p.codigo] = p;
+              }
+            }
+
+            renderProductosNV();
+          })
+          .withFailureHandler(function (error) {
+            console.error('Error al cargar estado:', error);
+            state.estadoProductos = {};
+            renderProductosNV();
+          })
+          .getEstadoPickingNV(state.nvActual);
+      }
+
+      function renderProductosNV() {
+        console.log('🎨 Renderizando productos...');
+
+        var container = document.getElementById('active_productos_list');
+        var html = '';
+        var allChecked = true;
+        var hasError = false;
+
+        // Calcular progreso
+        var totalItems = state.productosNV.length;
+        var itemsCompletados = 0;
+
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var producto = state.productosNV[i];
+          var codigo = producto.codigo || producto.codigoProducto;
+          var estadoProd = state.estadoProductos[codigo] || { estado: 'PENDIENTE' };
+          var isChecked = estadoProd.estado === 'OK';
+          var isNoStock = estadoProd.estado === 'NO_STOCK';
+          var isErrorBD = estadoProd.estado === 'ERROR_BD';
+
+          if (isChecked || isNoStock || isErrorBD) itemsCompletados++;
+          if (!isChecked && !isNoStock && !isErrorBD) allChecked = false;
+          if (isErrorBD) hasError = true;
+
+          var rowClass = 'producto-item';
+          if (isChecked) rowClass += ' pickeado';
+          if (isNoStock) rowClass += ' faltante';
+          if (isErrorBD) rowClass += ' error-bd';
+
+          html += '<div class="' + rowClass + '" id="prod_row_' + codigo + '">';
+
+          // Checkbox (Visual only, state controlled by dropdown)
+          html += '<div class="producto-checkbox ' + (isChecked ? 'checked' : '') + '">';
+          html += isChecked ? '<i class="fas fa-check"></i>' : (isNoStock ? '<i class="fas fa-times"></i>' : (isErrorBD ? '<i class="fas fa-exclamation"></i>' : ''));
+          html += '</div>';
+
+          // Info
+          html += '<div class="producto-info">';
+          html += '<div class="producto-nombre">' + (producto.descripcion || 'Producto sin nombre') + '</div>';
+          html += '<div class="producto-meta">';
+          html += '<span><i class="fas fa-barcode"></i> ' + codigo + '</span>';
+          html += '<span><i class="fas fa-ruler"></i> ' + (producto.unidadMedida || 'UN') + '</span>';
+          html += '</div>';
+
+          // Botones Simplificados para Picking (SIN ubicaciones)
+          html += '<div class="producto-ubicaciones wms-mt-2">';
+          if (!isChecked && !isNoStock && !isErrorBD) {
+            // NUEVO: Botón "Pickeado Completo" (sin ubicación)
+            html += '<button type="button" class="wms-btn wms-btn-success wms-btn-sm wms-mr-2" onclick="PickingModule.confirmarPickingCompleto(\'' + codigo + '\', ' + producto.pedido + ')">';
+            html += '<i class="fas fa-check-circle"></i> Pickeado Completo (' + producto.pedido + ')';
+            html += '</button>';
+
+            // NUEVO: Botón "Cantidad Parcial"
+            html += '<button type="button" class="wms-btn wms-btn-warning wms-btn-sm" onclick="PickingModule.confirmarPickingParcial(\'' + codigo + '\', ' + producto.pedido + ')">';
+            html += '<i class="fas fa-edit"></i> Cantidad Parcial';
+            html += '</button>';
+          } else {
+            // Si ya está procesado, mostrar badge con estado
+            if (isChecked) {
+              html += '<span class="wms-badge wms-badge-success"><i class="fas fa-check"></i> Pickeado</span>';
+            } else if (isNoStock) {
+              html += '<span class="wms-badge wms-badge-warning"><i class="fas fa-times"></i> Sin Stock</span>';
+            } else {
+              html += '<span class="wms-badge wms-badge-danger"><i class="fas fa-exclamation"></i> Error</span>';
+            }
+          }
+          html += '</div>';
+
+          html += '</div>'; // End info
+
+          // Cantidad
+          html += '<div class="producto-cantidad">' + producto.pedido + '</div>';
+
+          // Acciones - Botón de menú 3 puntos
+          html += '<div class="producto-actions">';
+          if (!isChecked && !isNoStock && !isErrorBD) {
+            html += '<div class="producto-menu-container">';
+            html += '<button class="wms-btn wms-btn-sm wms-btn-outline" onclick="PickingModule.toggleProductoMenu(\'' + codigo + '\')" type="button">';
+            html += '<i class="fas fa-ellipsis-v"></i>';
+            html += '</button>';
+            html += '<div class="producto-menu" id="menu_' + codigo + '" style="display: none;">';
+            html += '<button class="producto-menu-item" onclick="PickingModule.marcarNoEncontrado(\'' + codigo + '\')">';
+            html += '<i class="fas fa-search-minus"></i> No encontrado';
+            html += '</button>';
+            html += '<button class="producto-menu-item" onclick="PickingModule.abrirModalDanado(\'' + codigo + '\')">';
+            html += '<i class="fas fa-exclamation-triangle"></i> Producto dañado';
+            html += '</button>';
+            html += '</div>';
+            html += '</div>';
+          } else {
+            html += '<span class="wms-badge ' + (isChecked ? 'wms-badge-success' : (isNoStock ? 'wms-badge-warning' : 'wms-badge-danger')) + '">';
+            html += isChecked ? '<i class="fas fa-check"></i> OK' : (isNoStock ? '<i class="fas fa-times"></i> Sin Stock' : '<i class="fas fa-exclamation"></i> Error');
+            html += '</span>';
+          }
+          html += '</div>';
+
+          html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        // Actualizar badge de progreso
+        document.getElementById('picking_progress_text').textContent = itemsCompletados + '/' + totalItems;
+
+        // Actualizar botón de completar
+        var btnCompletar = document.querySelector('button[onclick="PickingModule.completarPicking()"]');
+        if (btnCompletar) {
+          btnCompletar.disabled = !allChecked;
+          if (hasError) {
+            btnCompletar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Reportar Error BD';
+            btnCompletar.className = 'wms-btn wms-btn-danger wms-btn-block';
+          } else {
+            btnCompletar.innerHTML = '<i class="fas fa-check-double"></i> Picking Completo';
+            btnCompletar.className = 'wms-btn wms-btn-success wms-btn-block';
+          }
+        }
+      }
+
+      function updateProductoStatus(codigo, nuevoEstado) {
+        if (!state.estadoProductos[codigo]) {
+          state.estadoProductos[codigo] = {};
+        }
+        state.estadoProductos[codigo].estado = nuevoEstado;
+
+        // Guardar progreso parcial en backend (debounce)
+        guardarProgresoDebounced();
+
+        renderProductosNV();
+      }
+
+      function confirmarPickingDesdeUbicacion(codigo, ubicacion, cantidad) {
+        console.log('📦 Confirmando picking:', codigo, 'desde', ubicacion, 'cantidad:', cantidad);
+
+        if (!confirm('¿Confirmar recolección de ' + cantidad + ' unidad(es) desde ubicación ' + ubicacion + '?')) {
+          return;
+        }
+
+        // Mostrar loading
+        var row = document.getElementById('prod_row_' + codigo);
+        if (row) {
+          row.style.opacity = '0.5';
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (row) row.style.opacity = '1';
+
+            if (!result || !result.success) {
+              WMSToast.error('Error al confirmar picking: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Picking confirmado:', result);
+
+            // Actualizar estado local
+            if (!state.estadoProductos[codigo]) {
+              state.estadoProductos[codigo] = {};
+            }
+            state.estadoProductos[codigo].estado = 'OK';
+            state.estadoProductos[codigo].ubicacion = ubicacion;
+            state.estadoProductos[codigo].cantidad = cantidad;
+
+            WMSToast.success('Producto ' + codigo + ' pickeado de ' + ubicacion);
+
+            renderProductosNV();
+          })
+          .withFailureHandler(function (error) {
+            if (row) row.style.opacity = '1';
+            WMSToast.error('Error: ' + error.message);
+          })
+          .marcarProductoPickeadoIntegrado(state.nvActual, codigo, ubicacion, cantidad, userName);
+      }
+
+      function confirmarPickingSinUbicacion(codigo, cantidad) {
+        console.log('📦 Confirmando picking SIN ubicación:', codigo, 'cantidad:', cantidad);
+
+        if (!confirm('¿Confirmar recolección de ' + cantidad + ' unidad(es) de ' + codigo + ' SIN ubicación registrada?')) {
+          return;
+        }
+
+        // Mostrar loading
+        var row = document.getElementById('prod_row_' + codigo);
+        if (row) {
+          row.style.opacity = '0.5';
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (row) row.style.opacity = '1';
+
+            if (!result || !result.success) {
+              alert('Error al confirmar picking: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Picking sin ubicación confirmado:', result);
+
+            // Actualizar estado local
+            if (!state.estadoProductos[codigo]) {
+              state.estadoProductos[codigo] = {};
+            }
+            state.estadoProductos[codigo].estado = 'OK';
+            state.estadoProductos[codigo].ubicacion = 'SIN_UBICACION';
+            state.estadoProductos[codigo].cantidad = cantidad;
+
+            WMSToast.success('Producto ' + codigo + ' pickeado (sin ubicación registrada)');
+
+            renderProductosNV();
+          })
+          .withFailureHandler(function (error) {
+            if (row) row.style.opacity = '1';
+            alert('Error: ' + error.message);
+          })
+          .marcarProductoPickeadoIntegrado(state.nvActual, codigo, 'SIN_UBICACION', cantidad, userName);
+      }
+
+      var _saveTimeout;
+      function guardarProgresoDebounced() {
+        if (_saveTimeout) clearTimeout(_saveTimeout);
+        _saveTimeout = setTimeout(function () {
+          var progreso = [];
+          for (var key in state.estadoProductos) {
+            progreso.push({
+              codigo: key,
+              estado: state.estadoProductos[key].estado
+            });
+          }
+
+          google.script.run.savePickingProgress(state.nvActual, progreso);
+        }, 1000);
+      }
+
+      function completarPicking() {
+        var reporte = [];
+        var hayPendientes = false;
+
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var prod = state.productosNV[i];
+          var codigo = prod.codigo || prod.codigoProducto;
+          var estado = state.estadoProductos[codigo] ? state.estadoProductos[codigo].estado : 'PENDIENTE';
+
+          if (estado === 'PENDIENTE') {
+            hayPendientes = true;
+          }
+
+          reporte.push({
+            codigo: codigo,
+            estado: estado
+          });
+        }
+
+        if (hayPendientes) {
+          WMSToast.warning('Aún hay productos pendientes. Por favor verifique todos los items.');
+          return;
+        }
+
+        // Confirmación simplificada
+        var msg = '¿Confirmar término de picking?';
+        var hasError = reporte.some(function (r) { return r.estado === 'ERROR_BD'; });
+
+        if (hasError) {
+          msg = 'Se han marcado productos como ERROR BD (BD3). Esto devolverá la N.V a estado Pendiente. ¿Confirmar?';
+        }
+
+        if (confirm(msg)) {
+          WMSLoading.show('pickingActiveView', 'Procesando picking...');
+
+          google.script.run
+            .withSuccessHandler(function (result) {
+              WMSLoading.hide('pickingActiveView');
+              if (result.success) {
+                // Notificación toast si existe, sino alert simple
+                WMSToast.success(result.mensaje);
+
+                volverALista();
+                refresh();
+              } else {
+                WMSToast.error('Error: ' + result.error);
+              }
+            })
+            .withFailureHandler(function (err) {
+              WMSLoading.hide('pickingActiveView');
+              WMSToast.error('Error de conexión: ' + err.message);
+            })
+            .completarPickingConReporte(state.nvActual, userName, reporte);
+        }
+      }
+
+      function volverALista() {
+        // Desbloquear N.V
+        if (state.nvActual) {
+          google.script.run.desbloquearNV(state.nvActual);
+        }
+
+        // Limpiar estado
+        state.nvActual = null;
+        state.productosNV = [];
+        state.estadoProductos = {};
+
+        // Detener polling del monitor
+        stopMonitorPolling();
+
+        // Mostrar vista de lista
+        document.getElementById('pickingActiveView').style.display = 'none';
+        document.getElementById('pickingMonitorView').style.display = 'none';
+        document.getElementById('pickingListView').style.display = 'block';
+
+        refresh();
+      }
+
+      /* ═══════════════════════════════════════════
+         MONITOR DE PICKING
+         ═══════════════════════════════════════════ */
+
+      var _monitorInterval;
+
+      function openMonitor() {
+        document.getElementById('pickingListView').style.display = 'none';
+        document.getElementById('pickingActiveView').style.display = 'none';
+        document.getElementById('pickingMonitorView').style.display = 'block';
+
+        loadMonitorData();
+        startMonitorPolling();
+      }
+
+      function startMonitorPolling() {
+        if (_monitorInterval) clearInterval(_monitorInterval);
+        _monitorInterval = setInterval(loadMonitorData, 15000); // 15 seconds
+      }
+
+      function stopMonitorPolling() {
+        if (_monitorInterval) {
+          clearInterval(_monitorInterval);
+          _monitorInterval = null;
+        }
+      }
+
+      function loadMonitorData() {
+        var container = document.getElementById('monitor_activos_list');
+        // Solo mostrar spinner si está vacío o tiene error
+        if (!container.innerHTML.trim() || container.querySelector('.wms-empty-title')) {
+          container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div><span>Cargando monitor...</span></div>';
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (result.success) {
+              renderMonitor(result.data, result.timestamp, result.userStats);
+            } else {
+              container.innerHTML = '<div class="wms-empty-state"><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + result.error + '</p></div>';
+            }
+          })
+          .withFailureHandler(function (err) {
+            console.error('Error monitor:', err);
+          })
+          .getMonitorData();
+      }
+
+      function renderMonitor(data, timestamp, userStats) {
+        var container = document.getElementById('monitor_activos_list');
+        var userContainer = document.getElementById('monitor_usuarios_list');
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-desktop"></i></div><h3 class="wms-empty-title">Sin actividad</h3><p class="wms-empty-text">No hay pickings activos en este momento</p><p class="wms-text-muted wms-mt-2">Última act: ' + timestamp + '</p></div>';
+          return;
+        }
+
+        var html = '<div class="wms-text-right wms-mb-3"><span class="wms-badge wms-badge-secondary"><i class="fas fa-clock"></i> Actualizado: ' + timestamp + '</span></div>';
+
+        html += '<div class="wms-table-responsive"><table class="wms-table"><thead><tr><th>Usuario</th><th>N.V</th><th>Cliente</th><th>Inicio</th><th>Duración</th><th>Progreso</th></tr></thead><tbody>';
+
+        for (var i = 0; i < data.length; i++) {
+          var row = data[i];
+          var inicioStr = new Date(row.inicio).toLocaleTimeString();
+
+          html += '<tr>';
+          html += '<td><div class="wms-user-badge"><div class="wms-user-avatar">' + (row.usuario ? row.usuario.charAt(0).toUpperCase() : '?') + '</div><span>' + row.usuario + '</span></div></td>';
+          html += '<td><strong>' + row.notaVenta + '</strong></td>';
+          html += '<td>' + row.cliente + '</td>';
+          html += '<td>' + inicioStr + '</td>';
+          html += '<td><span class="wms-badge wms-badge-warning">' + row.duracionMin + ' min</span></td>';
+
+          // Barra de progreso
+          var porcentaje = 0;
+          if (row.totalItems > 0) {
+            porcentaje = Math.round((row.itemsPickeados / row.totalItems) * 100);
+          }
+
+          html += '<td>';
+          html += '<div style="display: flex; align-items: center; gap: 8px;">';
+          html += '<div style="flex: 1; height: 8px; background: #edf2f7; border-radius: 4px; overflow: hidden;">';
+          html += '<div style="width: ' + porcentaje + '%; height: 100%; background: var(--wms-primary); transition: width 0.3s;"></div>';
+          html += '</div>';
+          html += '<span style="font-size: 0.75rem; color: var(--wms-text-secondary); white-space: nowrap;">' + (row.itemsPickeados || 0) + '/' + (row.totalItems || 0) + '</span>';
+          html += '</div>';
+          html += '</td>';
+          html += '</tr>';
+        }
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+
+        // Render User Stats
+        if (userContainer && userStats) {
+          if (userStats.length === 0) {
+             userContainer.innerHTML = '<div class="wms-empty-state wms-py-4"><p class="wms-empty-text">No hay actividad de usuarios hoy</p></div>';
+          } else {
+             var uHtml = '<div class="wms-table-responsive"><table class="wms-table wms-table-striped"><thead><tr><th>Usuario</th><th>Pickings Completados</th><th>Tiempo Promedio</th><th>Items Total</th></tr></thead><tbody>';
+             
+             for (var j = 0; j < userStats.length; j++) {
+               var u = userStats[j];
+               uHtml += '<tr>';
+               uHtml += '<td><div class="wms-user-badge"><div class="wms-user-avatar" style="width: 28px; height: 28px; font-size: 0.8rem;">' + (u.usuario ? u.usuario.charAt(0).toUpperCase() : '?') + '</div><span>' + u.usuario + '</span></div></td>';
+               uHtml += '<td class="wms-text-center"><span class="wms-badge wms-badge-success">' + u.pickingsCompletados + '</span></td>';
+               uHtml += '<td class="wms-text-center">' + u.tiempoPromedioMin + ' min</td>';
+               uHtml += '<td class="wms-text-center">' + u.totalItems + '</td>';
+               uHtml += '</tr>';
+             }
+             
+             uHtml += '</tbody></table></div>';
+             userContainer.innerHTML = uHtml;
+          }
+        }
+      }
+
+      /* ═══════════════════════════════════════════
+         SELECCIÓN DE UBICACIÓN
+         ═══════════════════════════════════════════ */
+
+      function seleccionarUbicacion(codigoProducto) {
+        console.log('📍 Seleccionando ubicación para:', codigoProducto);
+        state.productoSeleccionado = codigoProducto;
+
+        // Buscar producto
+        var producto = null;
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var p = state.productosNV[i];
+          if ((p.codigo || p.codigoProducto) === codigoProducto) {
+            producto = p;
+            break;
+          }
+        }
+
+        if (!producto) {
+          WMSToast.error('Producto no encontrado');
+          console.error('❌ Producto no encontrado:', codigoProducto);
+          return;
+        }
+
+        console.log('✅ Producto encontrado:', producto);
+
+        // Actualizar modal
+        document.getElementById('ubicacion_producto_nombre').textContent = producto.descripcion || '-';
+        document.getElementById('ubicacion_producto_codigo').textContent = codigoProducto;
+        document.getElementById('ubicacion_cantidad_solicitada').textContent = producto.pedido || producto.cantidad || 0;
+
+        // Abrir modal
+        var modal = document.getElementById('ubicacionModal');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Modal abierto');
+
+        // Cargar ubicaciones
+        var container = document.getElementById('ubicacion_lista');
+        container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div><span>Cargando ubicaciones...</span></div>';
+
+        console.log('🔍 Llamando a getUbicacionesDisponibles para código:', codigoProducto);
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            console.log('📦 Respuesta recibida:', result);
+
+            if (!result || !result.success) {
+              var errorMsg = result ? result.error : 'Error al cargar ubicaciones';
+              console.error('❌ Error:', errorMsg);
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + errorMsg + '</p></div>';
+              return;
+            }
+
+            if (!result.ubicaciones || result.ubicaciones.length === 0) {
+              console.warn('⚠️ No hay ubicaciones disponibles');
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-map-marker-alt"></i></div><h3 class="wms-empty-title">Sin ubicaciones</h3><p class="wms-empty-text">No hay ubicaciones disponibles para este producto</p></div>';
+              return;
+            }
+
+            console.log('✅ Ubicaciones encontradas:', result.ubicaciones.length);
+            renderUbicaciones(result.ubicaciones, producto);
+          })
+          .withFailureHandler(function (error) {
+            console.error('❌ Error en llamada:', error);
+            container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + error.message + '</p></div>';
+          })
+          .getUbicacionesDisponibles(codigoProducto);
+      }
+
+      function renderUbicaciones(ubicaciones, producto) {
+        console.log('🎨 Renderizando ' + ubicaciones.length + ' ubicaciones');
+        console.log('Ubicaciones:', ubicaciones);
+
+        var html = '';
+
+        for (var i = 0; i < ubicaciones.length; i++) {
+          var ub = ubicaciones[i];
+
+          html += '<div class="ubicacion-card" onclick="PickingModule.confirmarPickingUbicacion(\'' + ub.ubicacion + '\', ' + ub.cantidad + ')">';
+          html += '<div class="ubicacion-header">';
+          html += '<div class="ubicacion-codigo"><i class="fas fa-map-marker-alt"></i> ' + ub.ubicacion + '</div>';
+          html += '<div class="ubicacion-stock">' + ub.cantidad + ' unid.</div>';
+          html += '</div>';
+          html += '<div class="ubicacion-detalles">';
+
+          if (ub.serie) {
+            html += '<div class="ubicacion-detalle-item">';
+            html += '<span class="ubicacion-detalle-label">Serie:</span>';
+            html += '<span>' + ub.serie + '</span>';
+            html += '</div>';
+          }
+
+          if (ub.partida) {
+            html += '<div class="ubicacion-detalle-item">';
+            html += '<span class="ubicacion-detalle-label">Partida:</span>';
+            html += '<span>' + ub.partida + '</span>';
+            html += '</div>';
+          }
+
+          if (ub.fechaVencimiento) {
+            html += '<div class="ubicacion-detalle-item">';
+            html += '<span class="ubicacion-detalle-label">Vencimiento:</span>';
+            html += '<span>' + ub.fechaVencimiento + '</span>';
+            html += '</div>';
+          }
+
+          html += '</div>';
+          html += '</div>';
+        }
+
+        console.log('✅ HTML generado, longitud:', html.length);
+        document.getElementById('ubicacion_lista').innerHTML = html;
+        console.log('✅ Ubicaciones renderizadas en el DOM');
+      }
+
+      function confirmarPickingUbicacion(ubicacion, stockDisponible) {
+        console.log('✅ Confirmando picking desde ubicación:', ubicacion);
+
+        var producto = null;
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var p = state.productosNV[i];
+          if ((p.codigo || p.codigoProducto) === state.productoSeleccionado) {
+            producto = p;
+            break;
+          }
+        }
+
+        if (!producto) {
+          alert('Producto no encontrado');
+          return;
+        }
+
+        var cantidadSolicitada = producto.pedido || producto.cantidad || 0;
+
+        // Cerrar modal
+        cerrarUbicacionModal();
+
+        // Llamar a función integrada de picking
+        // Parámetros: notaVenta, codigo, ubicacion, cantidad, usuario
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error al confirmar picking: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Picking confirmado exitosamente');
+
+            // Recargar estado de productos
+            cargarEstadoProductos();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .marcarProductoPickeadoIntegrado(
+            state.nvActual,              // notaVenta
+            state.productoSeleccionado,  // codigo
+            ubicacion,                   // ubicacion (FIXED ORDER)
+            cantidadSolicitada,          // cantidad (FIXED ORDER)
+            userName                     // usuario
+          );
+      }
+
+      function cerrarUbicacionModal() {
+        document.getElementById('ubicacionModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      /* ═══════════════════════════════════════════
+         MENÚ DE OPCIONES DEL PRODUCTO
+         ═══════════════════════════════════════════ */
+
+      function toggleProductoMenu(codigo) {
+        var menu = document.getElementById('menu_' + codigo);
+        if (!menu) return;
+
+        // Cerrar otros menús abiertos
+        var todosMenus = document.querySelectorAll('.producto-menu');
+        for (var i = 0; i < todosMenus.length; i++) {
+          if (todosMenus[i].id !== 'menu_' + codigo) {
+            todosMenus[i].style.display = 'none';
+          }
+        }
+
+        // Toggle este menú
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+
+      function marcarNoEncontrado(codigo) {
+        console.log('❌ Marcando producto no encontrado:', codigo);
+
+        // Cerrar menú
+        var menu = document.getElementById('menu_' + codigo);
+        if (menu) menu.style.display = 'none';
+
+        // Buscar producto
+        var producto = null;
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var p = state.productosNV[i];
+          if ((p.codigo || p.codigoProducto) === codigo) {
+            producto = p;
+            break;
+          }
+        }
+
+        if (!producto) {
+          alert('Producto no encontrado');
+          return;
+        }
+
+        if (!confirm('¿Confirmar que el producto ' + codigo + ' NO se encontró en ninguna ubicación?')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Producto marcado como NO ENCONTRADO');
+            alert('Producto registrado en observaciones como NO ENCONTRADO');
+
+            // Recargar estado
+            cargarEstadoProductos();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .marcarProductoNoEncontradoIntegrado(
+            codigo,
+            producto.descripcion || '-',
+            producto.pedido || producto.cantidad || 0,
+            state.nvActual,
+            userName
+          );
+      }
+
+      function abrirModalDanado(codigo) {
+        console.log('⚠️ Abriendo modal de producto dañado:', codigo);
+
+        // Cerrar menú
+        var menu = document.getElementById('menu_' + codigo);
+        if (menu) menu.style.display = 'none';
+
+        state.productoSeleccionado = codigo;
+
+        // Buscar producto
+        var producto = null;
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var p = state.productosNV[i];
+          if ((p.codigo || p.codigoProducto) === codigo) {
+            producto = p;
+            break;
+          }
+        }
+
+        if (!producto) {
+          alert('Producto no encontrado');
+          return;
+        }
+
+        // Actualizar modal
+        document.getElementById('danado_producto_nombre').textContent = producto.descripcion || '-';
+        document.getElementById('danado_producto_codigo').textContent = codigo;
+        document.getElementById('danado_cantidad_solicitada').textContent = producto.pedido || producto.cantidad || 0;
+
+        // Abrir modal
+        var modal = document.getElementById('danadoModal');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        // Cargar ubicaciones
+        var container = document.getElementById('danado_ubicacion_lista');
+        container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner"></div><span>Cargando ubicaciones...</span></div>';
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + (result ? result.error : 'Error al cargar ubicaciones') + '</p></div>';
+              return;
+            }
+
+            if (!result.ubicaciones || result.ubicaciones.length === 0) {
+              container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-map-marker-alt"></i></div><h3 class="wms-empty-title">Sin ubicaciones</h3><p class="wms-empty-text">No hay ubicaciones disponibles</p></div>';
+              return;
+            }
+
+            renderUbicacionesDanado(result.ubicaciones, producto);
+          })
+          .withFailureHandler(function (error) {
+            container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + error.message + '</p></div>';
+          })
+          .getUbicacionesDisponibles(codigo);
+      }
+
+      function renderUbicacionesDanado(ubicaciones, producto) {
+        var html = '';
+
+        for (var i = 0; i < ubicaciones.length; i++) {
+          var ub = ubicaciones[i];
+
+          html += '<div class="ubicacion-card" onclick="PickingModule.confirmarProductoDanado(\'' + ub.ubicacion + '\')">';
+          html += '<div class="ubicacion-header">';
+          html += '<div class="ubicacion-codigo"><i class="fas fa-map-marker-alt"></i> ' + ub.ubicacion + '</div>';
+          html += '<div class="ubicacion-stock">' + ub.cantidad + ' unid.</div>';
+          html += '</div>';
+          html += '</div>';
+        }
+
+        document.getElementById('danado_ubicacion_lista').innerHTML = html;
+      }
+
+      function confirmarProductoDanado(ubicacion) {
+        console.log('⚠️ Confirmando producto dañado en ubicación:', ubicacion);
+
+        var producto = null;
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var p = state.productosNV[i];
+          if ((p.codigo || p.codigoProducto) === state.productoSeleccionado) {
+            producto = p;
+            break;
+          }
+        }
+
+        if (!producto) {
+          alert('Producto no encontrado');
+          return;
+        }
+
+        // Cerrar modal
+        cerrarDanadoModal();
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Producto marcado como DAÑADO');
+            alert('Producto registrado en observaciones como DAÑADO en ubicación ' + ubicacion);
+
+            // Recargar estado
+            cargarEstadoProductos();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .marcarProductoDanadoIntegrado(
+            state.productoSeleccionado,
+            producto.descripcion || '-',
+            ubicacion,
+            producto.pedido || producto.cantidad || 0,
+            state.nvActual,
+            userName
+          );
+      }
+
+      function cerrarDanadoModal() {
+        document.getElementById('danadoModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      /* ═══════════════════════════════════════════
+         BOTONES DE ESTADO
+         ═══════════════════════════════════════════ */
+
+      function marcarFaltanteBigTicket() {
+        if (!confirm('¿Marcar esta N.V como FALTANTE PROD BIG TICKET?\n\nLa N.V volverá a estado PENDIENTE PICKING.')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            alert('N.V marcada como FALTANTE PROD BIG TICKET');
+            volverALista();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .volverAPendientePicking(state.nvActual, 'FALTANTE PROD BIG TICKET');
+      }
+
+      function marcarFaltanteMiniTicket() {
+        if (!confirm('¿Marcar esta N.V como FALTANTE PROD MINI TICKET?\n\nLa N.V volverá a estado PENDIENTE PICKING.')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            alert('N.V marcada como FALTANTE PROD MINI TICKET');
+            volverALista();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .volverAPendientePicking(state.nvActual, 'FALTANTE PROD MINI TICKET');
+      }
+
+      function completarPicking() {
+        // Verificar que todos los productos estén pickeados
+        var todosPicados = true;
+        var totalProductos = state.productosNV.length;
+        var productosPickeados = 0;
+
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var codigo = state.productosNV[i].codigo || state.productosNV[i].codigoProducto;
+          var estadoProducto = state.estadoProductos[codigo];
+
+          if (estadoProducto && estadoProducto.estado === 'PICKEADO') {
+            productosPickeados++;
+          } else {
+            todosPicados = false;
+          }
+        }
+
+        if (!todosPicados) {
+          if (!confirm('⚠️ ADVERTENCIA: No todos los productos están pickeados (' + productosPickeados + '/' + totalProductos + ').\n\n¿Desea completar el picking de todas formas?')) {
+            return;
+          }
+        }
+
+        if (!confirm('¿Completar el picking de esta N.V?\n\nLa N.V se moverá a PACKING y se eliminará de PICKING.')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              alert('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            alert('✅ Picking completado exitosamente!\n\nLa N.V ha sido migrada a PACKING.');
+            volverALista();
+          })
+          .withFailureHandler(function (error) {
+            alert('Error: ' + error.message);
+          })
+          .completarPicking(state.nvActual, userName);
+      }
+
+      /* ═══════════════════════════════════════════
+         ACTUALIZAR PROGRESO
+         ═══════════════════════════════════════════ */
+
+      function actualizarProgreso() {
+        var totalProductos = state.productosNV.length;
+        var productosPickeados = 0;
+
+        for (var i = 0; i < state.productosNV.length; i++) {
+          var codigo = state.productosNV[i].codigo || state.productosNV[i].codigoProducto;
+          var estadoProducto = state.estadoProductos[codigo];
+
+          if (estadoProducto && estadoProducto.estado === 'PICKEADO') {
+            productosPickeados++;
+          }
+        }
+
+        var progressText = document.getElementById('picking_progress_text');
+        if (progressText) {
+          progressText.textContent = productosPickeados + '/' + totalProductos;
+        }
+
+        var progressBadge = document.getElementById('picking_progress_badge');
+        if (progressBadge) {
+          if (productosPickeados === totalProductos && totalProductos > 0) {
+            progressBadge.className = 'wms-badge wms-badge-success';
+          } else if (productosPickeados > 0) {
+            progressBadge.className = 'wms-badge wms-badge-warning';
+          } else {
+            progressBadge.className = 'wms-badge wms-badge-info';
+          }
+        }
+      }
+
+      /* ═══════════════════════════════════════════
+         PICKING SIMPLIFICADO - SIN UBICACIONES
+         ═══════════════════════════════════════════ */
+
+      /**
+       * Confirma picking COMPLETO (cantidad total) SIN pedir ubicación
+       */
+      function confirmarPickingCompleto(codigo, cantidadTotal) {
+        console.log('✅ Picking Completo:', codigo, 'cantidad:', cantidadTotal);
+
+        if (!confirm('¿Confirmar recolección COMPLETA de ' + cantidadTotal + ' unidad(es) del producto ' + codigo + '?')) {
+          return;
+        }
+
+        // Mostrar loading en la fila
+        var row = document.getElementById('prod_row_' + codigo);
+        if (row) {
+          row.style.opacity = '0.5';
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (row) row.style.opacity = '1';
+
+            if (!result || !result.success) {
+              WMSToast.error('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Picking completo confirmado:', result);
+
+            // Actualizar estado local
+            if (!state.estadoProductos[codigo]) {
+              state.estadoProductos[codigo] = {};
+            }
+            state.estadoProductos[codigo].estado = 'OK';
+            state.estadoProductos[codigo].cantidad = cantidadTotal;
+
+            WMSToast.success('Producto pickeado: ' + cantidadTotal + ' unidades');
+
+            renderProductosNV();
+          })
+          .withFailureHandler(function (error) {
+            if (row) row.style.opacity = '1';
+            WMSToast.error('Error: ' + error.message);
+          })
+          .confirmarPickingSimplificado(state.nvActual, codigo, cantidadTotal, userName);
+      }
+
+      /**
+       * Permite ingresar cantidad PARCIAL para picking
+       */
+      function confirmarPickingParcial(codigo, cantidadSolicitada) {
+        console.log('✏️ Picking Parcial:', codigo, 'solicitado:', cantidadSolicitada);
+
+        var cantidadPickeada = prompt('Ingrese la cantidad pickeada (de ' + cantidadSolicitada + ' solicitadas):', cantidadSolicitada);
+
+        if (cantidadPickeada === null || cantidadPickeada === '') {
+          return; // Usuario canceló
+        }
+
+        cantidadPickeada = parseInt(cantidadPickeada, 10);
+
+        if (isNaN(cantidadPickeada) || cantidadPickeada <= 0) {
+          WMSToast.error('Cantidad inválida');
+          return;
+        }
+
+        if (cantidadPickeada > cantidadSolicitada) {
+          WMSToast.warning('La cantidad pickeada (' + cantidadPickeada + ') es mayor a la solicitada (' + cantidadSolicitada + ')');
+          // Permitir de todas formas (el usuario puede haber pickeado de más)
+        }
+
+        // Mostrar loading en la fila
+        var row = document.getElementById('prod_row_' + codigo);
+        if (row) {
+          row.style.opacity = '0.5';
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (row) row.style.opacity = '1';
+
+            if (!result || !result.success) {
+              WMSToast.error('Error: ' + (result ? result.error : 'Sin respuesta'));
+              return;
+            }
+
+            console.log('✅ Picking parcial confirmado:', result);
+
+            // Actualizar estado local
+            if (!state.estadoProductos[codigo]) {
+              state.estadoProductos[codigo] = {};
+            }
+            state.estadoProductos[codigo].estado = 'OK';
+            state.estadoProductos[codigo].cantidad = cantidadPickeada;
+
+            if (cantidadPickeada < cantidadSolicitada) {
+              WMSToast.warning('Pickeado parcial: ' + cantidadPickeada + '/' + cantidadSolicitada + ' unidades');
+            } else {
+              WMSToast.success('Producto pickeado: ' + cantidadPickeada + ' unidades');
+            }
+
+            renderProductosNV();
+          })
+          .withFailureHandler(function (error) {
+            if (row) row.style.opacity = '1';
+            WMSToast.error('Error: ' + error.message);
+          })
+          .confirmarPickingSimplificado(state.nvActual, codigo, cantidadPickeada, userName);
+      }
+
+      // API Pública
+      return {
+        init: init,
+        refresh: refresh,
+        filtrarNV: filtrarNV,                                         // NUEVO
+        limpiarBusqueda: limpiarBusqueda,                             // NUEVO
+        empezarPicking: empezarPicking,
+        volverALista: volverALista,
+        seleccionarUbicacion: seleccionarUbicacion,
+        confirmarPickingUbicacion: confirmarPickingUbicacion,
+        confirmarPickingDesdeUbicacion: confirmarPickingDesdeUbicacion,
+        confirmarPickingSinUbicacion: confirmarPickingSinUbicacion,
+        confirmarPickingCompleto: confirmarPickingCompleto,
+        confirmarPickingParcial: confirmarPickingParcial,
+        cerrarUbicacionModal: cerrarUbicacionModal,
+        toggleProductoMenu: toggleProductoMenu,
+        marcarNoEncontrado: marcarNoEncontrado,
+        abrirModalDanado: abrirModalDanado,
+        confirmarProductoDanado: confirmarProductoDanado,
+        cerrarDanadoModal: cerrarDanadoModal,
+        marcarFaltanteBigTicket: marcarFaltanteBigTicket,
+        marcarFaltanteMiniTicket: marcarFaltanteMiniTicket,
+        completarPicking: completarPicking
+      };
+    })();
+
+    // Inicializar cuando se carga el módulo
+    document.addEventListener('DOMContentLoaded', function () {
+      if (document.getElementById('pickingView')) {
+        PickingModule.init();
+      }
+    });
+  </script>
+</section>

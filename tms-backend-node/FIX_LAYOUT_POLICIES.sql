@@ -1,0 +1,14 @@
+ALTER TABLE public.wms_layout ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wms_ubicaciones ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anon Insert Layout" ON public.wms_layout;
+DROP POLICY IF EXISTS "Anon Update Layout" ON public.wms_layout;
+DROP POLICY IF EXISTS "Anon Select Layout" ON public.wms_layout;
+DROP POLICY IF EXISTS "Anon Insert Ubicaciones" ON public.wms_ubicaciones;
+DROP POLICY IF EXISTS "Anon Update Ubicaciones" ON public.wms_ubicaciones;
+DROP POLICY IF EXISTS "Anon Select Ubicaciones" ON public.wms_ubicaciones;
+CREATE POLICY "Anon Insert Layout" ON public.wms_layout FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "Anon Update Layout" ON public.wms_layout FOR UPDATE TO anon USING (true);
+CREATE POLICY "Anon Select Layout" ON public.wms_layout FOR SELECT TO anon USING (true);
+CREATE POLICY "Anon Insert Ubicaciones" ON public.wms_ubicaciones FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "Anon Update Ubicaciones" ON public.wms_ubicaciones FOR UPDATE TO anon USING (true);
+CREATE POLICY "Anon Select Ubicaciones" ON public.wms_ubicaciones FOR SELECT TO anon USING (true);

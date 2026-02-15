@@ -1,0 +1,548 @@
+<script>
+  // ==================== HORIZONTAL DROPDOWN MENU COMPONENT ====================
+  // Menú horizontal con dropdowns para WMS - Estilo CSS Dropdown Menu
+
+  var SidebarMenu = {
+    // Configuración de áreas y módulos
+    config: {
+      areas: [
+        {
+          id: 'tms',
+          label: 'TMS',
+          icon: 'fa-route',
+          color: '#10b981',
+          modules: [
+            { id: 'tms-dashboard', label: 'Dashboard TMS', icon: 'fa-tachometer-alt', view: 'tms-dashboard', permiso: 'tms' },
+            { id: 'tms-routes', label: 'Planificar Rutas', icon: 'fa-map-marked-alt', view: 'tmsRoutePlanning', permiso: 'tms' },
+            { id: 'tms-control', label: 'Torre de Control', icon: 'fa-satellite-dish', view: 'tms-control', permiso: 'tms' },
+            { id: 'tms-drivers', label: 'Conductores', icon: 'fa-users', view: 'tms-drivers', permiso: 'tms' },
+            { id: 'tms-mobile', label: 'App Móvil', icon: 'fa-mobile-screen', view: 'tms-mobile', permiso: 'tms' }
+          ]
+        },
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: 'fa-chart-line',
+          color: '#6366f1',
+          isLink: true, // Es un link directo, no dropdown
+          view: 'dashboard',
+          permiso: 'dashboard'
+        },
+        {
+          id: 'inbound',
+          label: 'Inbound',
+          icon: 'fa-arrow-down',
+          color: '#10b981',
+          modules: [
+            { id: 'reception', label: 'Recepción', icon: 'fa-truck-loading', view: 'reception', permiso: 'recepcion' },
+            { id: 'ingreso', label: 'Ingreso', icon: 'fa-dolly-flatbed', view: 'ingreso', permiso: 'ingreso' }
+          ]
+        },
+        {
+          id: 'outbound',
+          label: 'Outbound',
+          icon: 'fa-arrow-up',
+          color: '#3b82f6',
+          modules: [
+            { id: 'notasventa', label: 'Notas de Venta', icon: 'fa-file-invoice', view: 'notasventa', permiso: 'notasventa' },
+            { id: 'picking', label: 'Picking', icon: 'fa-hand-pointer', view: 'picking', permiso: 'picking' },
+            { id: 'packing', label: 'Packing', icon: 'fa-box', view: 'packing', permiso: 'packing' },
+            { id: 'shipping', label: 'Despachos', icon: 'fa-shipping-fast', view: 'shipping', permiso: 'shipping' },
+            { id: 'entregas', label: 'Entregas', icon: 'fa-truck-loading', view: 'delivery', permiso: 'entregas' }
+          ]
+        },
+        {
+          id: 'inventario',
+          label: 'Inventario',
+          icon: 'fa-warehouse',
+          color: '#f59e0b',
+          modules: [
+            { id: 'inventory', label: 'Stock', icon: 'fa-boxes-stacked', view: 'inventory', permiso: 'inventory' },
+            { id: 'layout', label: 'Layout', icon: 'fa-map', view: 'layout', permiso: 'layout' },
+            { id: 'transferencias', label: 'Transferencias', icon: 'fa-right-left', view: 'transferencias', permiso: 'transferencias' }
+          ]
+        },
+        {
+          id: 'consultas',
+          label: 'Consultas',
+          icon: 'fa-search',
+          color: '#8b5cf6',
+          modules: [
+            { id: 'lotesseries', label: 'Lotes/Series', icon: 'fa-barcode', view: 'lotesseries', permiso: 'lotesseries' },
+            { id: 'estadonv', label: 'Estado N.V', icon: 'fa-magnifying-glass-chart', view: 'estadonv', permiso: 'consultas' },
+            { id: 'direcciones', label: 'Direcciones', icon: 'fa-map-location-dot', view: 'direcciones', permiso: 'consultas' }
+          ]
+        },
+        {
+          id: 'admin',
+          label: 'Admin',
+          icon: 'fa-gear',
+          color: '#ef4444',
+          adminOnly: true,
+          modules: [
+            { id: 'users', label: 'Usuarios', icon: 'fa-users', view: 'users', permiso: 'users' },
+            { id: 'roles', label: 'Roles', icon: 'fa-shield-halved', view: 'roles', permiso: 'roles' },
+            { id: 'adminviews', label: 'Vistas', icon: 'fa-layer-group', view: 'adminviews', permiso: 'adminviews' },
+            { id: 'reports', label: 'Reportes', icon: 'fa-file-lines', view: 'reports', permiso: 'reports' }
+          ]
+        }
+      ],
+      hiddenModules: ['facturasanticipada', 'consultacodigo'],
+      storageKey: 'cco_menu_state'
+    },
+
+    // Estado interno
+    state: {
+      isMobileOpen: false,
+      expandedSections: {},
+      activeModule: null
+    },
+
+    // Inicializar menú
+    init: function () {
+      console.log('SidebarMenu: Inicializando menú horizontal...');
+      
+      // Verificar que App existe
+      if (typeof App === 'undefined') {
+        console.error('SidebarMenu.init: App no está definido');
+        return;
+      }
+      
+      this.loadState();
+      this.render();
+      this.bindEvents();
+      this.updateActiveFromCurrentView();
+      this.startHeaderClock();
+      this.updateHeaderUserInfo();
+      
+      console.log('SidebarMenu: Inicializado correctamente');
+    },
+
+    // Actualizar info del usuario en el header
+    updateHeaderUserInfo: function () {
+      var userName = (App.user && App.user.nombre) ? App.user.nombre : 'Usuario';
+      var userRole = (App.user && App.user.rol) ? App.user.rol : 'Operador';
+      var userInitials = userName.split(' ').map(function (n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
+
+      console.log('SidebarMenu.updateHeaderUserInfo: Actualizando info del usuario');
+      console.log('SidebarMenu.updateHeaderUserInfo: Nombre:', userName);
+      console.log('SidebarMenu.updateHeaderUserInfo: Rol:', userRole);
+      console.log('SidebarMenu.updateHeaderUserInfo: Iniciales:', userInitials);
+
+      var headerUserName = document.getElementById('headerUserName');
+      var headerUserRole = document.getElementById('headerUserRole');
+      var headerUserAvatar = document.getElementById('headerUserAvatar');
+
+      if (headerUserName) {
+        headerUserName.textContent = userName;
+        console.log('SidebarMenu.updateHeaderUserInfo: Nombre actualizado en header');
+      } else {
+        console.warn('SidebarMenu.updateHeaderUserInfo: Elemento headerUserName no encontrado');
+      }
+      
+      if (headerUserRole) {
+        headerUserRole.textContent = userRole;
+        console.log('SidebarMenu.updateHeaderUserInfo: Rol actualizado en header');
+      } else {
+        console.warn('SidebarMenu.updateHeaderUserInfo: Elemento headerUserRole no encontrado');
+      }
+      
+      if (headerUserAvatar) {
+        headerUserAvatar.textContent = userInitials || 'U';
+        console.log('SidebarMenu.updateHeaderUserInfo: Avatar actualizado en header');
+      } else {
+        console.warn('SidebarMenu.updateHeaderUserInfo: Elemento headerUserAvatar no encontrado');
+      }
+    },
+
+    // Iniciar reloj del header
+    startHeaderClock: function () {
+      var updateClock = function () {
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        var headerClock = document.getElementById('headerClock');
+        if (headerClock) {
+          headerClock.textContent = timeStr;
+          console.log('SidebarMenu.startHeaderClock: Hora actualizada:', timeStr);
+        } else {
+          console.warn('SidebarMenu.startHeaderClock: Elemento headerClock no encontrado');
+        }
+      };
+      
+      console.log('SidebarMenu.startHeaderClock: Iniciando reloj...');
+      updateClock(); // Actualizar inmediatamente
+      setInterval(updateClock, 1000); // Actualizar cada segundo
+    },
+
+    // Renderizar menú horizontal
+    render: function () {
+      var container = document.getElementById('sidebarMenu');
+      if (!container) {
+        console.error('SidebarMenu: No se encontró el contenedor #sidebarMenu');
+        return;
+      }
+
+      console.log('SidebarMenu.render: Iniciando renderizado...');
+      
+      // Fallback para App.user
+      var user = (typeof App !== 'undefined' && App.user) ? App.user : { nombre: 'Usuario', rol: 'Operador', permisos: ['dashboard'] };
+      console.log('SidebarMenu.render: Usuario actual:', user.nombre);
+      
+      var self = this;
+      var html = '';
+
+      // Navigation
+      html += '<nav class="sidebar-nav" role="navigation" aria-label="Menú principal">';
+
+      this.config.areas.forEach(function (area) {
+        // Si es un link directo (como Dashboard)
+        if (area.isLink) {
+          // Siempre mostrar Dashboard si no hay permisos definidos
+          if (area.id !== 'dashboard' && !self.hasPermission(area.permiso)) {
+            return;
+          }
+
+          var isActive = self.state.activeModule === area.id;
+          html += '<div class="nav-section" data-section="' + area.id + '">';
+          html += '<button class="section-header' + (isActive ? ' active' : '') + '" ';
+          html += 'onclick="SidebarMenu.navigateTo(\'' + area.view + '\', \'' + area.id + '\')">';
+          html += '<div class="section-icon"><i class="fas ' + area.icon + '"></i></div>';
+          html += '<span class="section-label">' + area.label + '</span>';
+          html += '</button>';
+          html += '</div>';
+          return;
+        }
+
+        // Filtrar módulos por permisos
+        var filteredModules = self.filterModulesByPermissions(area.modules || []);
+        
+        if (filteredModules.length === 0) {
+          return;
+        }
+
+        var isExpanded = self.state.expandedSections[area.id] !== false;
+
+        html += '<div class="nav-section" data-section="' + area.id + '">';
+
+        // Section header (dropdown trigger)
+        html += '<button class="section-header" ';
+        html += 'onclick="SidebarMenu.toggleSection(\'' + area.id + '\')" ';
+        html += 'aria-expanded="' + isExpanded + '">';
+        html += '<div class="section-icon"><i class="fas ' + area.icon + '"></i></div>';
+        html += '<span class="section-label">' + area.label + '</span>';
+        html += '<i class="fas fa-chevron-down section-arrow"></i>';
+        html += '</button>';
+
+        // Dropdown modules
+        html += '<div class="section-modules' + (isExpanded ? ' expanded' : '') + '" id="' + area.id + '-modules">';
+
+        filteredModules.forEach(function (module) {
+          var isActive = self.state.activeModule === module.id;
+          html += '<button class="module-item' + (isActive ? ' active' : '') + '" ';
+          html += 'data-view="' + module.view + '" data-module="' + module.id + '" ';
+          html += 'onclick="SidebarMenu.navigateTo(\'' + module.view + '\', \'' + module.id + '\')">';
+          html += '<i class="fas ' + module.icon + '"></i>';
+          html += '<span>' + module.label + '</span>';
+          html += '</button>';
+        });
+
+        html += '</div>';
+        html += '</div>';
+      });
+
+      html += '</nav>';
+
+      container.innerHTML = html;
+
+      // Mostrar menú y layout
+      container.classList.add('visible');
+      container.style.display = 'flex';
+      
+      var appLayout = document.getElementById('appLayout');
+      if (appLayout) {
+        appLayout.classList.add('visible');
+        appLayout.style.display = 'flex';
+      }
+    },
+
+    // Verificar permiso
+    hasPermission: function (permiso) {
+      console.log('SidebarMenu.hasPermission: Verificando permiso:', permiso);
+      
+      if (!permiso) {
+        console.log('SidebarMenu.hasPermission: Sin permiso requerido, permitido');
+        return true;
+      }
+      
+      var userPermisos = (App.user && App.user.permisos) ? App.user.permisos : [];
+      var userRol = (App.user && App.user.rol) ? App.user.rol.toLowerCase() : '';
+      var isAdmin = userRol === 'administrador' || userRol === 'admin';
+
+      console.log('SidebarMenu.hasPermission: Usuario:', App.user ? App.user.nombre : 'No definido');
+      console.log('SidebarMenu.hasPermission: Rol:', userRol);
+      console.log('SidebarMenu.hasPermission: Permisos:', userPermisos);
+      console.log('SidebarMenu.hasPermission: Es admin:', isAdmin);
+
+      if (isAdmin) {
+        console.log('SidebarMenu.hasPermission: Admin - acceso completo');
+        return true;
+      }
+      if (userPermisos.includes('*')) {
+        console.log('SidebarMenu.hasPermission: Wildcard - acceso completo');
+        return true;
+      }
+      if (permiso === 'dashboard') {
+        console.log('SidebarMenu.hasPermission: Dashboard siempre permitido');
+        return true;
+      }
+
+      var hasPermission = userPermisos.includes(permiso);
+      console.log('SidebarMenu.hasPermission: Resultado para', permiso, ':', hasPermission);
+      return hasPermission;
+    },
+
+    // Filtrar módulos según permisos
+    filterModulesByPermissions: function (modules) {
+      var self = this;
+      var userPermisos = (App.user && App.user.permisos) ? App.user.permisos : [];
+      var userRol = (App.user && App.user.rol) ? App.user.rol.toLowerCase() : '';
+      var isAdmin = userRol === 'administrador' || userRol === 'admin';
+      var hasWildcard = userPermisos.includes('*');
+
+      console.log('SidebarMenu.filterModulesByPermissions: Filtrando', modules.length, 'módulos');
+      console.log('SidebarMenu.filterModulesByPermissions: Es admin:', isAdmin);
+      console.log('SidebarMenu.filterModulesByPermissions: Tiene wildcard:', hasWildcard);
+      console.log('SidebarMenu.filterModulesByPermissions: Permisos:', userPermisos);
+
+      var filtered = modules.filter(function (module) {
+        if (self.config.hiddenModules.includes(module.id)) {
+          console.log('SidebarMenu.filterModulesByPermissions: Módulo oculto:', module.id);
+          return false;
+        }
+        if (isAdmin || hasWildcard) {
+          console.log('SidebarMenu.filterModulesByPermissions: Admin/wildcard - módulo permitido:', module.id);
+          return true;
+        }
+        
+        var hasPermission = userPermisos.includes(module.permiso) || userPermisos.includes(module.id);
+        console.log('SidebarMenu.filterModulesByPermissions: Módulo', module.id, 'permiso', module.permiso, '- permitido:', hasPermission);
+        return hasPermission;
+      });
+
+      console.log('SidebarMenu.filterModulesByPermissions: Módulos filtrados:', filtered.length);
+      return filtered;
+    },
+
+    // Toggle sección (para móvil)
+    toggleSection: function (sectionId) {
+      // En desktop, el hover maneja los dropdowns
+      // En móvil, usamos click
+      if (window.innerWidth <= 768) {
+        var section = document.querySelector('[data-section="' + sectionId + '"]');
+        if (!section) return;
+
+        var modules = section.querySelector('.section-modules');
+        var isExpanded = this.state.expandedSections[sectionId] !== false;
+        this.state.expandedSections[sectionId] = !isExpanded;
+
+        if (this.state.expandedSections[sectionId]) {
+          modules?.classList.add('expanded');
+        } else {
+          modules?.classList.remove('expanded');
+        }
+
+        this.saveState();
+      }
+    },
+
+    // Navegar a módulo
+    navigateTo: function (viewId, moduleId) {
+      console.log('SidebarMenu: Navegando a', viewId);
+
+      // REDIRECCIÓN ESPECIAL A TMS
+      if (viewId === 'tms-redirect') {
+        var tmsUrl = window.location.href.split('?')[0] + '?app=tms';
+        window.open(tmsUrl, '_blank');
+        return;
+      }
+
+      this.closeMobileMenu();
+      this.setActiveModule(moduleId);
+
+      if (typeof showView === 'function') {
+        showView(viewId);
+      } else {
+        console.error('SidebarMenu: showView no está definido');
+      }
+    },
+
+    // Establecer módulo activo
+    setActiveModule: function (moduleId) {
+      this.state.activeModule = moduleId;
+
+      document.querySelectorAll('.module-item, .section-header').forEach(function (item) {
+        item.classList.remove('active');
+      });
+
+      var activeItem = document.querySelector('[data-module="' + moduleId + '"]');
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+
+      // Para links directos como Dashboard
+      var directLink = document.querySelector('[data-section="' + moduleId + '"] .section-header');
+      if (directLink && !document.querySelector('[data-section="' + moduleId + '"] .section-modules')) {
+        directLink.classList.add('active');
+      }
+
+      this.saveState();
+    },
+
+    // Actualizar activo desde vista actual
+    updateActiveFromCurrentView: function () {
+      var currentView = App.currentView;
+      if (!currentView) return;
+
+      var self = this;
+      var foundModule = null;
+
+      this.config.areas.forEach(function (area) {
+        if (area.isLink && area.view === currentView) {
+          foundModule = area.id;
+        } else if (area.modules) {
+          area.modules.forEach(function (module) {
+            if (module.view === currentView) {
+              foundModule = module.id;
+            }
+          });
+        }
+      });
+
+      if (foundModule) {
+        this.setActiveModule(foundModule);
+      }
+    },
+
+    // Abrir menú móvil
+    openMobileMenu: function () {
+      var sidebar = document.getElementById('sidebarMenu');
+      var backdrop = document.getElementById('sidebarBackdrop');
+
+      this.state.isMobileOpen = true;
+      sidebar?.classList.add('mobile-open');
+      backdrop?.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    },
+
+    // Cerrar menú móvil
+    closeMobileMenu: function () {
+      var sidebar = document.getElementById('sidebarMenu');
+      var backdrop = document.getElementById('sidebarBackdrop');
+
+      this.state.isMobileOpen = false;
+      sidebar?.classList.remove('mobile-open');
+      backdrop?.classList.remove('visible');
+      document.body.style.overflow = '';
+    },
+
+    // Toggle menú móvil
+    toggleMobileMenu: function () {
+      if (this.state.isMobileOpen) {
+        this.closeMobileMenu();
+      } else {
+        this.openMobileMenu();
+      }
+    },
+
+    // Bind eventos
+    bindEvents: function () {
+      var self = this;
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && self.state.isMobileOpen) {
+          self.closeMobileMenu();
+        }
+      });
+
+      var resizeTimeout;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function () {
+          if (window.innerWidth > 768 && self.state.isMobileOpen) {
+            self.closeMobileMenu();
+          }
+        }, 100);
+      });
+    },
+
+    // Guardar estado
+    saveState: function () {
+      try {
+        var stateToSave = {
+          expandedSections: this.state.expandedSections,
+          activeModule: this.state.activeModule,
+          lastUpdated: Date.now()
+        };
+        localStorage.setItem(this.config.storageKey, JSON.stringify(stateToSave));
+      } catch (e) {
+        console.warn('SidebarMenu: Error guardando estado:', e.message);
+      }
+    },
+
+    // Cargar estado
+    loadState: function () {
+      try {
+        var saved = localStorage.getItem(this.config.storageKey);
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          this.state.expandedSections = parsed.expandedSections || {};
+          this.state.activeModule = parsed.activeModule || null;
+        }
+      } catch (e) {
+        console.warn('SidebarMenu: Error cargando estado:', e.message);
+      }
+    },
+
+    // Logout
+    logout: function () {
+      if (typeof showLogoutConfirm === 'function') {
+        showLogoutConfirm();
+      } else if (typeof confirmLogout === 'function') {
+        confirmLogout();
+      } else {
+        if (confirm('¿Está seguro que desea cerrar sesión?')) {
+          if (typeof doLogout === 'function') {
+            doLogout();
+          } else {
+            window.location.reload();
+          }
+        }
+      }
+    },
+
+    // Ir al Dashboard
+    goToDashboard: function () {
+      this.navigateTo('dashboard', 'dashboard');
+    }
+  };
+
+  // Función global para toggle móvil
+  window.toggleSidebarMobile = function () {
+    SidebarMenu.toggleMobileMenu();
+  };
+
+  // Exponer globalmente
+  window.SidebarMenu = SidebarMenu;
+
+  // ==================== INICIALIZACIÓN AUTOMÁTICA DE TMS ====================
+  // Asegurar permisos TMS para el usuario actual
+  if (typeof ensureTMSPermissionsForCurrentUser === 'function') {
+    try {
+      ensureTMSPermissionsForCurrentUser();
+    } catch (e) {
+      console.warn('No se pudieron asegurar permisos TMS:', e.message);
+    }
+  }
+
+  console.log('Sidebar_Menu_Component: Menú horizontal cargado');
+</script>

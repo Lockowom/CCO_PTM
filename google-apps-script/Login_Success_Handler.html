@@ -1,0 +1,272 @@
+<!-- Login_Success_Handler.html - Manejador robusto de login exitoso -->
+
+<script>
+  // Función mejorada de manejo de login exitoso
+  window.onLoginSuccess = function (response) {
+    console.log('onLoginSuccess: Iniciando proceso de login exitoso', response);
+
+    if (!response || !response.success) {
+      console.error('onLoginSuccess: Respuesta inválida', response);
+      showLoginError('Error en respuesta del servidor');
+      return;
+    }
+
+    if (!response.user || !response.sessionId) {
+      console.error('onLoginSuccess: Datos incompletos', response);
+      showLoginError('Respuesta del servidor incompleta');
+      return;
+    }
+
+    // Función de sanitización segura
+    function sanitizeString(str) {
+      if (typeof SecurityUtils !== 'undefined' && SecurityUtils.sanitize) {
+        return SecurityUtils.sanitize(str);
+      }
+      // Sanitización básica de respaldo
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+    }
+
+    var sanitizedUser = {
+      id: response.user.id || '',
+      nombre: sanitizeString(response.user.nombre || 'Usuario'),
+      email: sanitizeString(response.user.email || ''),
+      rol: sanitizeString(response.user.rol || 'Operador')
+    };
+
+    // Asegurar que App existe
+    if (typeof window.App === 'undefined') {
+      console.warn('App no está definido, creando objeto temporal');
+      window.App = {
+        user: sanitizedUser,
+        sessionId: response.sessionId,
+        currentView: null,
+        initialized: {},
+        cache: {},
+        cacheTimestamps: {},
+        cacheDuration: 30000,
+
+        getCached: function (key) {
+          var now = Date.now();
+          if (this.cache[key] && this.cacheTimestamps[key] && (now - this.cacheTimestamps[key] < this.cacheDuration)) {
+            return this.cache[key];
+          }
+          return null;
+        },
+
+        setCache: function (key, data) {
+          this.cache[key] = data;
+          this.cacheTimestamps[key] = Date.now();
+        },
+
+        invalidateCache: function (key) {
+          delete this.cache[key];
+          delete this.cacheTimestamps[key];
+        },
+
+        clearCache: function () {
+          this.cache = {};
+          this.cacheTimestamps = {};
+        }
+      };
+    } else {
+      App.user = sanitizedUser;
+      App.sessionId = response.sessionId;
+    }
+
+    // Guardar en sessionStorage
+    try {
+      sessionStorage.setItem('sessionId', response.sessionId);
+      sessionStorage.setItem('user', JSON.stringify(sanitizedUser));
+      sessionStorage.setItem('userName', sanitizedUser.nombre);
+      sessionStorage.setItem('userRole', sanitizedUser.rol);
+    } catch (e) {
+      console.warn('No se pudo guardar la sesión:', e);
+    }
+
+    // Actualizar UI
+    try {
+      var loginView = document.getElementById('loginView');
+      var appHeader = document.getElementById('appHeader');
+      var userNameEl = document.getElementById('userName');
+      var userRoleEl = document.getElementById('userRole');
+      var userInitialsEl = document.getElementById('userInitials');
+
+      if (loginView) loginView.classList.add('hidden');
+      if (appHeader) appHeader.classList.add('visible');
+      if (userNameEl) userNameEl.textContent = sanitizedUser.nombre;
+      if (userRoleEl) userRoleEl.textContent = sanitizedUser.rol;
+
+      if (userInitialsEl && sanitizedUser.nombre) {
+        const initials = sanitizedUser.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        userInitialsEl.textContent = initials || 'U';
+      }
+
+      // Ocultar errores de login
+      var loginError = document.getElementById('loginError');
+      if (loginError) loginError.classList.remove('show');
+
+    } catch (e) {
+      console.error('Error actualizando UI en login:', e);
+    }
+
+    console.log('onLoginSuccess: Cargando permisos en segundo plano...');
+
+    // Función para inicializar la vista home
+    function initHome() {
+      console.log('initHome: Iniciando inicialización de home...');
+      
+      // PASO 1: Asegurar que el layout es visible
+      var appLayout = document.getElementById('appLayout');
+      var appHeader = document.getElementById('appHeader');
+      var sidebarMenu = document.getElementById('sidebarMenu');
+      
+      if (appLayout) {
+        appLayout.classList.add('visible');
+        console.log('initHome: appLayout hecho visible');
+      }
+      if (appHeader) {
+        appHeader.classList.add('visible');
+        console.log('initHome: appHeader hecho visible');
+      }
+      
+      // PASO 2: Inicializar sidebar
+      if (typeof SidebarMenu !== 'undefined') {
+        console.log('initHome: Inicializando SidebarMenu...');
+        SidebarMenu.init();
+        if (sidebarMenu) {
+          sidebarMenu.classList.add('visible');
+          console.log('initHome: sidebarMenu hecho visible');
+        }
+      } else {
+        console.warn('initHome: SidebarMenu no está definido');
+      }
+
+      // PASO 3: Obtener vista inicial según el rol del usuario
+      var userRol = App.user ? App.user.rol : 'Operador';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          var initialView = 'dashboard';
+          if (result && result.success && result.viewId) {
+            initialView = result.viewId;
+          }
+          console.log('initHome: Vista inicial para rol "' + userRol + '": ' + initialView);
+
+          if (typeof showView === 'function') {
+            console.log('initHome: Llamando showView con vista:', initialView);
+            showView(initialView);
+          } else {
+            console.warn('initHome: showView no está disponible');
+            var homeView = document.getElementById('homeView');
+            if (homeView && typeof buildNavigation === 'function') {
+              buildNavigation(homeView);
+              homeView.classList.add('active');
+            }
+          }
+        })
+        .withFailureHandler(function (error) {
+          console.warn('initHome: Error obteniendo vista inicial, usando dashboard:', error);
+          if (typeof showView === 'function') {
+            showView('dashboard');
+          }
+        })
+        .getInitialViewForUser(userRol);
+    }
+
+    // Función para cargar permisos con fallback robusto
+    function loadPermissionsWithFallback() {
+      console.log('loadPermissionsWithFallback: Iniciando carga de permisos...');
+      
+      // Bypass para ADMIN - dar acceso completo inmediatamente
+      var userRolUpper = (App.user.rol || '').toUpperCase();
+      if (userRolUpper === 'ADMIN' || userRolUpper === 'ADMINISTRADOR') {
+        console.log('loadPermissionsWithFallback: Usuario ADMIN detectado, otorgando acceso completo');
+        App.user.permisos = ['*'];
+        App.user.vistas = ['*'];
+        sessionStorage.setItem('userPermissions', JSON.stringify(['*']));
+        initHome();
+        return;
+      }
+      
+      // Intentar cargar permisos desde el backend directamente
+      google.script.run
+        .withSuccessHandler(function(result) {
+          console.log('loadPermissionsWithFallback: Respuesta del backend:', result);
+          
+          if (result && result.success && result.permisos) {
+            console.log('loadPermissionsWithFallback: Permisos cargados exitosamente:', result.permisos);
+            App.user.permisos = result.permisos;
+            App.user.vistas = result.permisos;
+            sessionStorage.setItem('userPermissions', JSON.stringify(result.permisos));
+            initHome();
+          } else {
+            console.warn('loadPermissionsWithFallback: Error en respuesta, usando permisos por defecto');
+            // Dar permisos básicos por defecto
+            var defaultPermisos = ['dashboard', 'consultas'];
+            App.user.permisos = defaultPermisos;
+            App.user.vistas = defaultPermisos;
+            sessionStorage.setItem('userPermissions', JSON.stringify(defaultPermisos));
+            
+            if (typeof WMSToast !== 'undefined') {
+              WMSToast.warning('Acceso limitado. Contacte al administrador si necesita más permisos.');
+            }
+            initHome();
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('loadPermissionsWithFallback: Error llamando al backend:', error);
+          
+          // Último recurso: permisos mínimos
+          var minimalPermisos = ['dashboard'];
+          App.user.permisos = minimalPermisos;
+          App.user.vistas = minimalPermisos;
+          sessionStorage.setItem('userPermissions', JSON.stringify(minimalPermisos));
+          
+          if (typeof WMSToast !== 'undefined') {
+            WMSToast.error('Error cargando permisos. Solo dashboard disponible.');
+          }
+          initHome();
+        })
+        .getUserPermissions(App.sessionId);
+    }
+
+    // Cargar permisos con el nuevo sistema de fallback
+    loadPermissionsWithFallback();
+
+    console.log('onLoginSuccess: Proceso completado');
+  };
+
+  // Función para mostrar errores de login
+  window.showLoginError = function (message) {
+    var errorDiv = document.getElementById('loginError');
+    var errorText = document.getElementById('errorText');
+
+    if (errorDiv && errorText) {
+      errorText.textContent = message;
+      errorDiv.classList.add('show');
+
+      // Auto-ocultar después de 5 segundos
+      setTimeout(function () {
+        if (errorDiv) errorDiv.classList.remove('show');
+      }, 5000);
+    } else {
+      console.error('Error en login:', message);
+      alert('Error: ' + message);
+    }
+  };
+
+  // Función para ocultar errores de login
+  window.hideLoginError = function () {
+    var errorDiv = document.getElementById('loginError');
+    if (errorDiv) {
+      errorDiv.classList.remove('show');
+    }
+  };
+
+  console.log('Login_Success_Handler: Funciones de login cargadas');
+</script>

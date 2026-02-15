@@ -1,0 +1,956 @@
+<section class="view" id="ingresoView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Ingreso de Mercancía</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <i class="fas fa-dolly-flatbed"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Ingreso de Mercancía</h1>
+          <p class="wms-module-subtitle">Registro de entrada a ubicaciones · Guarda en hoja Ubicaciones</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status" id="ingConnectionStatus">
+        <span class="wms-status-dot" id="ingConnectionDot"></span>
+        <span id="ingConnectionText">Conectando...</span>
+      </div>
+      <div class="wms-badge wms-badge-info">
+        <i class="fas fa-database"></i> Cola: <strong id="ingQueueCount">0</strong>/45
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard Premium -->
+  <div class="wms-stats-grid wms-stats-4">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-box-open"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ing_stat_hoy">0</span>
+        <span class="wms-stat-label">Ingresos Hoy</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-list-ol"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ing_stat_cola">0</span>
+        <span class="wms-stat-label">En Cola</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ing_stat_pendientes">0</span>
+        <span class="wms-stat-label">Pendientes Sync</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="primary">
+      <div class="wms-stat-icon"><i class="fas fa-cubes"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ing_stat_items">0</span>
+        <span class="wms-stat-label">Items Registrados</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="ing-main-grid">
+    <!-- Form Card -->
+    <div class="wms-card">
+      <div class="wms-card-header">
+        <h3 class="wms-card-title"><i class="fas fa-plus-circle"></i> Nuevo Registro</h3>
+        <button class="wms-btn wms-btn-ghost wms-btn-sm" onclick="ingLimpiarFormulario()">
+          <i class="fas fa-eraser"></i> Limpiar
+        </button>
+      </div>
+      <div class="wms-card-body">
+        <form id="ingresoForm" onsubmit="return ingAgregarACola(event)">
+          <!-- Ubicación -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Ubicación <span class="wms-text-danger">*</span></label>
+            <div class="wms-input-group">
+              <input type="text" class="wms-form-control" id="ing_ubicacion" maxlength="8" placeholder="Ej: A-01-01" required autocomplete="off">
+              <button type="button" class="wms-btn wms-btn-outline" onclick="ingEscanear('ing_ubicacion')">
+                <i class="fas fa-qrcode"></i>
+              </button>
+            </div>
+            <small class="wms-form-hint">Máximo 8 caracteres</small>
+          </div>
+          
+          <!-- Código -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Código <span class="wms-text-danger">*</span></label>
+            <div class="wms-input-group">
+              <input type="text" class="wms-form-control" id="ing_codigo" maxlength="12" placeholder="SKU / Código interno" required autocomplete="off">
+              <button type="button" class="wms-btn wms-btn-outline" onclick="ingEscanear('ing_codigo')">
+                <i class="fas fa-barcode"></i>
+              </button>
+            </div>
+            <small class="wms-form-hint">Máximo 12 caracteres</small>
+            <!-- Descripción automática -->
+            <div class="ing-desc-preview" id="ing_descPreview">
+              <i class="fas fa-info-circle"></i> <span id="ing_descText">Buscando descripción...</span>
+            </div>
+          </div>
+          
+          <!-- Cantidad -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Cantidad <span class="wms-text-danger">*</span></label>
+            <input type="number" class="wms-form-control" id="ing_cantidad" min="1" step="1" placeholder="Solo números positivos" required>
+            <small class="wms-form-hint">Solo números positivos</small>
+          </div>
+          
+          <!-- Serie -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Serie</label>
+            <div class="wms-input-group">
+              <input type="text" class="wms-form-control" id="ing_serie" placeholder="Número de serie (opcional)">
+              <button type="button" class="wms-btn wms-btn-outline" onclick="ingEscanear('ing_serie')">
+                <i class="fas fa-qrcode"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Partida -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Partida / Lote</label>
+            <input type="text" class="wms-form-control" id="ing_partida" placeholder="Número de lote (opcional)">
+          </div>
+          
+          <!-- Pieza -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Pieza</label>
+            <input type="text" class="wms-form-control" id="ing_pieza" placeholder="Identificador de pieza (opcional)">
+          </div>
+          
+          <!-- Fecha Vencimiento -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Fecha de Vencimiento</label>
+            <input type="date" class="wms-form-control" id="ing_fechaVenc">
+          </div>
+          
+          <!-- Color/Detalles -->
+          <div class="wms-form-group">
+            <label class="wms-form-label">Color / Detalles</label>
+            <input type="text" class="wms-form-control" id="ing_color" placeholder="Color u otros detalles">
+          </div>
+          
+          <!-- Actions -->
+          <div class="ing-form-actions">
+            <button type="submit" class="wms-btn wms-btn-secondary wms-btn-lg wms-ripple">
+              <i class="fas fa-plus"></i> Agregar a Cola
+            </button>
+            <button type="button" class="wms-btn wms-btn-success wms-btn-lg wms-ripple" id="btnSaveAll" onclick="ingGuardarTodo()" disabled>
+              <i class="fas fa-save"></i> Guardar Todo (<span id="btnSaveCount">0</span>)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Queue Panel -->
+    <div class="wms-card">
+      <div class="wms-card-header">
+        <h3 class="wms-card-title">
+          <i class="fas fa-list-alt"></i> Cola de Registros
+          <span class="wms-badge wms-badge-primary" id="queueCountBadge">0</span>
+        </h3>
+        <button class="wms-btn wms-btn-ghost wms-btn-sm wms-text-danger" onclick="ingLimpiarCola()" title="Limpiar cola">
+          <i class="fas fa-trash-alt"></i> Limpiar
+        </button>
+      </div>
+      <div class="wms-card-body wms-p-0">
+        <div class="ing-queue-body" id="queueBody">
+          <div class="wms-empty-state" id="queueEmpty">
+            <div class="wms-empty-icon"><i class="fas fa-inbox"></i></div>
+            <h3 class="wms-empty-title">Cola vacía</h3>
+            <p class="wms-empty-text">Agrega registros usando el formulario</p>
+          </div>
+          <div id="queueItems"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="wms-modal-overlay" id="ingSuccessModal">
+    <div class="ing-success-modal">
+      <div class="ing-success-icon"><i class="fas fa-check-circle"></i></div>
+      <h2 class="ing-success-title">¡Guardado Exitoso!</h2>
+      <p class="ing-success-text" id="ingSuccessText">Se guardaron 0 registros en la hoja Ubicaciones</p>
+    </div>
+  </div>
+
+  <style>
+    /* ═══════════════════════════════════════════
+       INGRESO MODULE - Premium Styles
+       ═══════════════════════════════════════════ */
+    
+    /* Main Grid Layout */
+    .ing-main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--wms-space-4);
+    }
+    
+    @media (min-width: 1024px) {
+      .ing-main-grid {
+        grid-template-columns: 450px 1fr;
+      }
+    }
+    
+    /* Form Groups */
+    .wms-form-group {
+      margin-bottom: var(--wms-space-4);
+    }
+    
+    .wms-form-label {
+      display: block;
+      font-size: var(--wms-text-xs);
+      font-weight: 600;
+      color: var(--wms-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--wms-space-1);
+    }
+    
+    .wms-form-control {
+      width: 100%;
+      padding: var(--wms-space-3);
+      border: 1px solid var(--wms-border-default);
+      border-radius: var(--wms-radius-md);
+      font-size: var(--wms-text-sm);
+      background: var(--wms-bg-surface);
+      transition: all var(--wms-transition-fast);
+      min-height: 44px;
+    }
+    
+    .wms-form-control:focus {
+      outline: none;
+      border-color: var(--wms-primary);
+      box-shadow: 0 0 0 3px var(--wms-primary-light);
+    }
+    
+    .wms-form-control.error {
+      border-color: var(--wms-danger);
+      background: var(--wms-danger-light);
+    }
+    
+    .wms-form-hint {
+      font-size: var(--wms-text-xs);
+      color: var(--wms-text-tertiary);
+      margin-top: 4px;
+      display: block;
+    }
+    
+    .wms-input-group {
+      display: flex;
+      gap: var(--wms-space-2);
+    }
+    
+    .wms-input-group .wms-form-control {
+      flex: 1;
+    }
+    
+    .wms-input-group .wms-btn {
+      flex-shrink: 0;
+      width: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Description Preview */
+    .ing-desc-preview {
+      padding: var(--wms-space-3);
+      background: var(--wms-info-light);
+      border: 1px solid var(--wms-info);
+      border-radius: var(--wms-radius-md);
+      margin-top: var(--wms-space-2);
+      font-size: var(--wms-text-sm);
+      color: var(--wms-info-hover);
+      display: none;
+    }
+    
+    .ing-desc-preview.visible { display: block; }
+    
+    .ing-desc-preview.success {
+      background: var(--wms-success-light);
+      border-color: var(--wms-success);
+      color: var(--wms-success-hover);
+    }
+    
+    .ing-desc-preview.warning {
+      background: var(--wms-warning-light);
+      border-color: var(--wms-warning);
+      color: var(--wms-warning-hover);
+    }
+    
+    /* Form Actions */
+    .ing-form-actions {
+      display: flex;
+      gap: var(--wms-space-3);
+      padding-top: var(--wms-space-4);
+      border-top: 1px solid var(--wms-border-light);
+      margin-top: var(--wms-space-4);
+    }
+    
+    .ing-form-actions .wms-btn {
+      flex: 1;
+    }
+    
+    /* Queue Body */
+    .ing-queue-body {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    /* Queue Item */
+    .ing-queue-item {
+      display: flex;
+      align-items: center;
+      gap: var(--wms-space-3);
+      padding: var(--wms-space-3) var(--wms-space-4);
+      border-bottom: 1px solid var(--wms-border-light);
+      transition: background var(--wms-transition-fast);
+    }
+    
+    .ing-queue-item:hover {
+      background: var(--wms-gray-50);
+    }
+    
+    .ing-queue-item.synced {
+      background: var(--wms-success-light);
+    }
+    
+    .ing-queue-num {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--wms-radius-full);
+      background: var(--wms-gray-100);
+      color: var(--wms-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--wms-text-xs);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .ing-queue-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .ing-queue-main {
+      display: flex;
+      gap: var(--wms-space-2);
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: var(--wms-text-sm);
+      font-weight: 500;
+    }
+    
+    .ing-queue-code {
+      font-family: var(--wms-font-mono);
+      color: var(--wms-primary);
+      font-weight: 700;
+    }
+    
+    .ing-queue-loc {
+      color: var(--wms-text-secondary);
+    }
+    
+    .ing-queue-qty {
+      background: var(--wms-success-light);
+      color: var(--wms-success);
+      padding: 2px 8px;
+      border-radius: var(--wms-radius-sm);
+      font-size: var(--wms-text-xs);
+      font-weight: 700;
+    }
+    
+    .ing-queue-desc {
+      font-size: var(--wms-text-xs);
+      color: var(--wms-text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .ing-queue-delete {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--wms-radius-sm);
+      background: transparent;
+      color: var(--wms-text-tertiary);
+      cursor: pointer;
+      transition: all var(--wms-transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .ing-queue-delete:hover {
+      background: var(--wms-danger-light);
+      color: var(--wms-danger);
+    }
+    
+    /* Success Modal */
+    #ingSuccessModal {
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--wms-transition-base);
+    }
+    
+    #ingSuccessModal.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .ing-success-modal {
+      background: var(--wms-success);
+      border-radius: var(--wms-radius-xl);
+      padding: var(--wms-space-8);
+      text-align: center;
+      color: white;
+      max-width: 400px;
+      transform: scale(0.9);
+      transition: transform var(--wms-transition-base);
+    }
+    
+    #ingSuccessModal.visible .ing-success-modal {
+      transform: scale(1);
+    }
+    
+    .ing-success-icon {
+      font-size: 64px;
+      margin-bottom: var(--wms-space-4);
+    }
+    
+    .ing-success-title {
+      font-size: var(--wms-text-2xl);
+      font-weight: 700;
+      margin: 0 0 var(--wms-space-2) 0;
+    }
+    
+    .ing-success-text {
+      font-size: var(--wms-text-base);
+      opacity: 0.9;
+      margin: 0;
+    }
+  </style>
+
+  <script>
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INGRESO MODULE - JavaScript Logic
+  // Guarda en hoja "Ubicaciones" - Soporte batch 20 registros, cola offline 45
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  var IngresoModule = {
+    // Estado del módulo
+    state: {
+      isOnline: true,
+      queue: [],
+      maxQueue: 45,
+      maxBatch: 20,
+      descripcionCache: {},
+      ingresosHoy: 0,
+      debounceTimer: null
+    },
+    
+    // Inicializar módulo
+    init: function() {
+      console.log('IngresoModule: Inicializando...');
+      this.loadQueueFromStorage();
+      this.verificarConexion();
+      this.bindEvents();
+      this.actualizarUI();
+      this.cargarEstadisticas();
+      console.log('IngresoModule: Inicializado correctamente');
+    },
+    
+    // Verificar conexión con el servidor
+    verificarConexion: function() {
+      var self = this;
+      var dot = document.getElementById('ingConnectionDot');
+      var text = document.getElementById('ingConnectionText');
+      
+      if (dot) dot.className = 'wms-status-dot checking';
+      if (text) text.textContent = 'Verificando...';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          self.state.isOnline = true;
+          if (dot) dot.className = 'wms-status-dot online';
+          if (text) text.textContent = 'Conectado';
+          
+          // Sincronizar cola pendiente si hay conexión
+          if (self.state.queue.length > 0) {
+            self.sincronizarPendientes();
+          }
+        })
+        .withFailureHandler(function(error) {
+          self.state.isOnline = false;
+          if (dot) dot.className = 'wms-status-dot offline';
+          if (text) text.textContent = 'Sin conexión';
+          console.warn('IngresoModule: Sin conexión -', error);
+        })
+        .buscarEnMatriz('TEST');
+      
+      // Verificar cada 30 segundos
+      setTimeout(function() { self.verificarConexion(); }, 30000);
+    },
+    
+    // Bind eventos
+    bindEvents: function() {
+      var self = this;
+      var codigoInput = document.getElementById('ing_codigo');
+      
+      if (codigoInput) {
+        codigoInput.addEventListener('input', function() {
+          clearTimeout(self.state.debounceTimer);
+          self.state.debounceTimer = setTimeout(function() {
+            self.buscarDescripcion(codigoInput.value);
+          }, 500);
+        });
+        
+        codigoInput.addEventListener('blur', function() {
+          self.buscarDescripcion(codigoInput.value);
+        });
+      }
+      
+      // Validar cantidad solo positivos
+      var cantidadInput = document.getElementById('ing_cantidad');
+      if (cantidadInput) {
+        cantidadInput.addEventListener('input', function() {
+          var val = parseInt(this.value);
+          if (val < 1) this.value = '';
+        });
+      }
+    },
+    
+    // Buscar descripción en MATRIZ
+    buscarDescripcion: function(codigo) {
+      var self = this;
+      var preview = document.getElementById('ing_descPreview');
+      var descText = document.getElementById('ing_descText');
+      
+      if (!codigo || codigo.length < 2) {
+        if (preview) preview.classList.remove('visible', 'success', 'warning');
+        return;
+      }
+      
+      codigo = codigo.trim().toUpperCase();
+      
+      // Verificar cache
+      if (self.state.descripcionCache[codigo]) {
+        self.mostrarDescripcion(self.state.descripcionCache[codigo], true);
+        return;
+      }
+      
+      if (preview) {
+        preview.classList.add('visible');
+        preview.classList.remove('success', 'warning');
+      }
+      if (descText) descText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            self.state.descripcionCache[codigo] = result.descripcion;
+            self.mostrarDescripcion(result.descripcion, true);
+          } else {
+            self.mostrarDescripcion('Código no encontrado en catálogo', false);
+          }
+        })
+        .withFailureHandler(function(error) {
+          self.mostrarDescripcion('Error al buscar: ' + error.message, false);
+        })
+        .buscarEnMatriz(codigo);
+    },
+    
+    // Mostrar descripción en preview
+    mostrarDescripcion: function(descripcion, encontrado) {
+      var preview = document.getElementById('ing_descPreview');
+      var descText = document.getElementById('ing_descText');
+      
+      if (preview) {
+        preview.classList.add('visible');
+        preview.classList.remove('success', 'warning');
+        preview.classList.add(encontrado ? 'success' : 'warning');
+      }
+      
+      if (descText) {
+        var icon = encontrado ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        descText.innerHTML = '<i class="fas ' + icon + '"></i> ' + descripcion;
+      }
+    },
+    
+    // Agregar registro a la cola
+    agregarACola: function(event) {
+      if (event) event.preventDefault();
+      
+      // Validar campos requeridos
+      var ubicacion = document.getElementById('ing_ubicacion').value.trim().toUpperCase();
+      var codigo = document.getElementById('ing_codigo').value.trim().toUpperCase();
+      var cantidad = parseInt(document.getElementById('ing_cantidad').value);
+      
+      if (!ubicacion) {
+        WMSToast.warning('Ingresa la ubicación');
+        document.getElementById('ing_ubicacion').focus();
+        return false;
+      }
+      
+      if (ubicacion.length > 8) {
+        WMSToast.warning('La ubicación debe tener máximo 8 caracteres');
+        document.getElementById('ing_ubicacion').focus();
+        return false;
+      }
+      
+      if (!codigo) {
+        WMSToast.warning('Ingresa el código');
+        document.getElementById('ing_codigo').focus();
+        return false;
+      }
+      
+      if (codigo.length > 12) {
+        WMSToast.warning('El código debe tener máximo 12 caracteres');
+        document.getElementById('ing_codigo').focus();
+        return false;
+      }
+      
+      if (!cantidad || cantidad < 1) {
+        WMSToast.warning('Ingresa una cantidad válida');
+        document.getElementById('ing_cantidad').focus();
+        return false;
+      }
+      
+      // Verificar límite de cola
+      if (this.state.queue.length >= this.state.maxQueue) {
+        WMSToast.error('Cola llena (' + this.state.maxQueue + ' máximo). Guarda los registros primero.');
+        return false;
+      }
+      
+      // Obtener descripción del cache o preview
+      var descripcion = this.state.descripcionCache[codigo] || '';
+      
+      // Crear registro
+      var registro = {
+        id: 'ING-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+        ubicacion: ubicacion,
+        codigo: codigo,
+        descripcion: descripcion,
+        cantidad: cantidad,
+        serie: document.getElementById('ing_serie').value.trim(),
+        partida: document.getElementById('ing_partida').value.trim(),
+        pieza: document.getElementById('ing_pieza').value.trim(),
+        fechaVenc: document.getElementById('ing_fechaVenc').value,
+        color: document.getElementById('ing_color').value.trim(),
+        timestamp: new Date().toISOString(),
+        synced: false
+      };
+      
+      // Agregar a cola
+      this.state.queue.push(registro);
+      this.saveQueueToStorage();
+      this.actualizarUI();
+      this.limpiarFormulario();
+      
+      WMSToast.success('Agregado a cola: ' + codigo + ' x ' + cantidad);
+      
+      // Focus en ubicación para siguiente registro
+      document.getElementById('ing_ubicacion').focus();
+      
+      return false;
+    },
+    
+    // Guardar todos los registros de la cola
+    guardarTodo: function() {
+      var self = this;
+      
+      if (this.state.queue.length === 0) {
+        WMSToast.warning('No hay registros en la cola');
+        return;
+      }
+      
+      if (!this.state.isOnline) {
+        WMSToast.warning('Sin conexión. Los registros se guardarán cuando vuelva la conexión.');
+        return;
+      }
+      
+      // Deshabilitar botón
+      var btnSave = document.getElementById('btnSaveAll');
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+      }
+      
+      // Tomar hasta maxBatch registros
+      var batch = this.state.queue.slice(0, this.state.maxBatch);
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            // Remover registros guardados de la cola
+            var guardadosIds = result.guardados || [];
+            self.state.queue = self.state.queue.filter(function(item) {
+              return !guardadosIds.includes(item.id);
+            });
+            
+            self.saveQueueToStorage();
+            self.actualizarUI();
+            self.mostrarExito(result.total);
+            
+            // Si quedan más registros, guardar el siguiente batch
+            if (self.state.queue.length > 0) {
+              setTimeout(function() {
+                self.guardarTodo();
+              }, 1000);
+            }
+          } else {
+            WMSToast.error('Error: ' + (result.error || 'Error desconocido'));
+            self.restaurarBotonGuardar();
+          }
+        })
+        .withFailureHandler(function(error) {
+          WMSToast.error('Error de conexión: ' + error.message);
+          self.state.isOnline = false;
+          self.restaurarBotonGuardar();
+        })
+        .guardarIngresoBatch(batch);
+    },
+    
+    // Restaurar botón guardar
+    restaurarBotonGuardar: function() {
+      var btnSave = document.getElementById('btnSaveAll');
+      var count = this.state.queue.length;
+      if (btnSave) {
+        btnSave.disabled = count === 0;
+        btnSave.innerHTML = '<i class="fas fa-save"></i> Guardar Todo (<span id="btnSaveCount">' + count + '</span>)';
+      }
+    },
+    
+    // Mostrar modal de éxito
+    mostrarExito: function(cantidad) {
+      var modal = document.getElementById('ingSuccessModal');
+      var text = document.getElementById('ingSuccessText');
+      
+      if (text) text.textContent = 'Se guardaron ' + cantidad + ' registros en la hoja Ubicaciones';
+      if (modal) modal.classList.add('visible');
+      
+      // Actualizar estadísticas
+      this.state.ingresosHoy += cantidad;
+      this.actualizarEstadisticas();
+      
+      // Cerrar modal después de 2.5 segundos
+      setTimeout(function() {
+        if (modal) modal.classList.remove('visible');
+      }, 2500);
+    },
+    
+    // Limpiar formulario
+    limpiarFormulario: function() {
+      document.getElementById('ing_ubicacion').value = '';
+      document.getElementById('ing_codigo').value = '';
+      document.getElementById('ing_cantidad').value = '';
+      document.getElementById('ing_serie').value = '';
+      document.getElementById('ing_partida').value = '';
+      document.getElementById('ing_pieza').value = '';
+      document.getElementById('ing_fechaVenc').value = '';
+      document.getElementById('ing_color').value = '';
+      
+      var preview = document.getElementById('ing_descPreview');
+      if (preview) preview.classList.remove('visible', 'success', 'warning');
+    },
+    
+    // Limpiar toda la cola
+    limpiarCola: function() {
+      if (this.state.queue.length === 0) return;
+      
+      if (confirm('¿Eliminar todos los ' + this.state.queue.length + ' registros de la cola?')) {
+        this.state.queue = [];
+        this.saveQueueToStorage();
+        this.actualizarUI();
+        WMSToast.info('Cola limpiada');
+      }
+    },
+    
+    // Eliminar un registro de la cola
+    eliminarDeCola: function(id) {
+      this.state.queue = this.state.queue.filter(function(item) {
+        return item.id !== id;
+      });
+      this.saveQueueToStorage();
+      this.actualizarUI();
+      WMSToast.info('Registro eliminado');
+    },
+    
+    // Actualizar toda la UI
+    actualizarUI: function() {
+      this.renderCola();
+      this.actualizarContadores();
+      this.restaurarBotonGuardar();
+    },
+    
+    // Actualizar contadores
+    actualizarContadores: function() {
+      var count = this.state.queue.length;
+      
+      var queueCount = document.getElementById('ingQueueCount');
+      var queueBadge = document.getElementById('queueCountBadge');
+      var statCola = document.getElementById('ing_stat_cola');
+      var statPendientes = document.getElementById('ing_stat_pendientes');
+      var btnSaveCount = document.getElementById('btnSaveCount');
+      
+      if (queueCount) queueCount.textContent = count;
+      if (queueBadge) queueBadge.textContent = count;
+      if (statCola) statCola.textContent = count;
+      if (statPendientes) statPendientes.textContent = count;
+      if (btnSaveCount) btnSaveCount.textContent = count;
+    },
+    
+    // Renderizar cola de registros
+    renderCola: function() {
+      var container = document.getElementById('queueItems');
+      var emptyState = document.getElementById('queueEmpty');
+      
+      if (!container) return;
+      
+      if (this.state.queue.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+      }
+      
+      if (emptyState) emptyState.style.display = 'none';
+      
+      var html = '';
+      var self = this;
+      
+      this.state.queue.forEach(function(item, index) {
+        html += '<div class="ing-queue-item' + (item.synced ? ' synced' : '') + '" data-id="' + item.id + '">';
+        html += '<div class="ing-queue-num">' + (index + 1) + '</div>';
+        html += '<div class="ing-queue-info">';
+        html += '<div class="ing-queue-main">';
+        html += '<span class="ing-queue-code">' + item.codigo + '</span>';
+        html += '<span class="ing-queue-loc"><i class="fas fa-map-marker-alt"></i> ' + item.ubicacion + '</span>';
+        html += '<span class="ing-queue-qty">x' + item.cantidad + '</span>';
+        html += '</div>';
+        if (item.descripcion) {
+          html += '<div class="ing-queue-desc">' + item.descripcion + '</div>';
+        }
+        html += '</div>';
+        html += '<button class="ing-queue-delete" onclick="IngresoModule.eliminarDeCola(\'' + item.id + '\')" title="Eliminar">';
+        html += '<i class="fas fa-times"></i>';
+        html += '</button>';
+        html += '</div>';
+      });
+      
+      container.innerHTML = html;
+    },
+    
+    // Guardar cola en localStorage
+    saveQueueToStorage: function() {
+      try {
+        localStorage.setItem('wms_ingreso_queue', JSON.stringify(this.state.queue));
+      } catch (e) {
+        console.warn('IngresoModule: Error guardando cola:', e);
+      }
+    },
+    
+    // Cargar cola desde localStorage
+    loadQueueFromStorage: function() {
+      try {
+        var saved = localStorage.getItem('wms_ingreso_queue');
+        if (saved) {
+          this.state.queue = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.warn('IngresoModule: Error cargando cola:', e);
+        this.state.queue = [];
+      }
+    },
+    
+    // Sincronizar registros pendientes
+    sincronizarPendientes: function() {
+      if (this.state.queue.length > 0 && this.state.isOnline) {
+        WMSToast.info('Sincronizando ' + this.state.queue.length + ' registros pendientes...');
+        this.guardarTodo();
+      }
+    },
+    
+    // Cargar estadísticas
+    cargarEstadisticas: function() {
+      var self = this;
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result && result.success) {
+            self.state.ingresosHoy = result.ingresos ? result.ingresos.length : 0;
+            self.actualizarEstadisticas();
+          }
+        })
+        .withFailureHandler(function() {
+          // Silenciar error
+        })
+        .getHistorialIngresos(50);
+    },
+    
+    // Actualizar estadísticas en UI
+    actualizarEstadisticas: function() {
+      var statHoy = document.getElementById('ing_stat_hoy');
+      var statItems = document.getElementById('ing_stat_items');
+      
+      if (statHoy) statHoy.textContent = this.state.ingresosHoy;
+      if (statItems) statItems.textContent = this.state.ingresosHoy;
+    },
+    
+    // Función para escanear (placeholder)
+    escanear: function(inputId) {
+      WMSToast.info('Función de escaneo próximamente');
+      document.getElementById(inputId).focus();
+    }
+  };
+  
+  // Funciones globales para llamar desde HTML
+  function initIngresoModule() {
+    IngresoModule.init();
+  }
+  
+  function ingAgregarACola(event) {
+    return IngresoModule.agregarACola(event);
+  }
+  
+  function ingGuardarTodo() {
+    IngresoModule.guardarTodo();
+  }
+  
+  function ingLimpiarFormulario() {
+    IngresoModule.limpiarFormulario();
+  }
+  
+  function ingLimpiarCola() {
+    IngresoModule.limpiarCola();
+  }
+  
+  function ingEscanear(inputId) {
+    IngresoModule.escanear(inputId);
+  }
+  
+  // Exponer globalmente
+  window.IngresoModule = IngresoModule;
+  
+  console.log('Ingreso_Page: JavaScript cargado');
+  </script>
+
+</section>

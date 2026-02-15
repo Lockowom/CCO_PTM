@@ -1,0 +1,1472 @@
+<!-- TMS Drivers Management Page -->
+<div id="tms-driversView" class="view" style="display: none;">
+  
+  <!-- Header -->
+  <div class="tms-drivers-header">
+    <div class="tms-header-content">
+      <h1 class="tms-page-title">
+        <i class="fas fa-users"></i>
+        Gestión de Conductores
+      </h1>
+      <div class="tms-header-actions">
+        <button id="tmsAddDriverBtn" class="tms-btn tms-btn-primary">
+          <i class="fas fa-plus"></i>
+          Nuevo Conductor
+        </button>
+        <button id="tmsAddVehicleBtn" class="tms-btn tms-btn-secondary">
+          <i class="fas fa-truck"></i>
+          Nuevo Vehículo
+        </button>
+        <button id="tmsRefreshDriversBtn" class="tms-btn tms-btn-outline">
+          <i class="fas fa-sync-alt"></i>
+          Actualizar
+        </button>
+      </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="tms-stats-grid">
+      <div class="tms-stat-card">
+        <div class="tms-stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="tms-stat-content">
+          <div class="tms-stat-number" id="totalDriversCount">0</div>
+          <div class="tms-stat-label">Total Conductores</div>
+        </div>
+      </div>
+      
+      <div class="tms-stat-card">
+        <div class="tms-stat-icon active">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="tms-stat-content">
+          <div class="tms-stat-number" id="activeDriversCount">0</div>
+          <div class="tms-stat-label">Conductores Activos</div>
+        </div>
+      </div>
+      
+      <div class="tms-stat-card">
+        <div class="tms-stat-icon busy">
+          <i class="fas fa-route"></i>
+        </div>
+        <div class="tms-stat-content">
+          <div class="tms-stat-number" id="busyDriversCount">0</div>
+          <div class="tms-stat-label">En Ruta</div>
+        </div>
+      </div>
+      
+      <div class="tms-stat-card">
+        <div class="tms-stat-icon">
+          <i class="fas fa-truck"></i>
+        </div>
+        <div class="tms-stat-content">
+          <div class="tms-stat-number" id="totalVehiclesCount">0</div>
+          <div class="tms-stat-label">Total Vehículos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="tms-drivers-content">
+    
+    <!-- Filters and Search -->
+    <div class="tms-filters-section">
+      <div class="tms-search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="driversSearchInput" placeholder="Buscar conductores por nombre, teléfono o placa...">
+      </div>
+      
+      <div class="tms-filters">
+        <select id="statusFilter" class="tms-select">
+          <option value="">Todos los Estados</option>
+          <option value="DISPONIBLE">Disponible</option>
+          <option value="EN_RUTA">En Ruta</option>
+          <option value="OCUPADO">Ocupado</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+        
+        <select id="vehicleFilter" class="tms-select">
+          <option value="">Todos los Vehículos</option>
+          <option value="assigned">Con Vehículo</option>
+          <option value="unassigned">Sin Vehículo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tms-tabs">
+      <button class="tms-tab active" data-tab="drivers">
+        <i class="fas fa-users"></i>
+        Conductores
+      </button>
+      <button class="tms-tab" data-tab="vehicles">
+        <i class="fas fa-truck"></i>
+        Vehículos
+      </button>
+    </div>
+
+    <!-- Drivers Tab Content -->
+    <div id="driversTabContent" class="tms-tab-content active">
+      <div class="tms-drivers-grid" id="driversGrid">
+        <!-- Drivers will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Vehicles Tab Content -->
+    <div id="vehiclesTabContent" class="tms-tab-content">
+      <div class="tms-vehicles-grid" id="vehiclesGrid">
+        <!-- Vehicles will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Driver Modal -->
+<div id="driverModal" class="tms-modal">
+  <div class="tms-modal-content">
+    <div class="tms-modal-header">
+      <h3 id="driverModalTitle">Nuevo Conductor</h3>
+      <button class="tms-modal-close" id="closeDriverModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="tms-modal-body">
+      <form id="driverForm">
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="driverNombre">Nombre *</label>
+            <input type="text" id="driverNombre" name="nombre" required>
+          </div>
+          <div class="tms-form-group">
+            <label for="driverApellido">Apellido *</label>
+            <input type="text" id="driverApellido" name="apellido" required>
+          </div>
+        </div>
+        
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="driverTelefono">Teléfono *</label>
+            <input type="tel" id="driverTelefono" name="telefono" required>
+          </div>
+          <div class="tms-form-group">
+            <label for="driverEmail">Email</label>
+            <input type="email" id="driverEmail" name="email">
+          </div>
+        </div>
+        
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="driverLicencia">Licencia de Conducir</label>
+            <input type="text" id="driverLicencia" name="licencia">
+          </div>
+          <div class="tms-form-group">
+            <label for="driverVehiculo">Vehículo Asignado</label>
+            <select id="driverVehiculo" name="vehiculoId">
+              <option value="">Sin asignar</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="tms-form-group">
+          <label for="driverObservaciones">Observaciones</label>
+          <textarea id="driverObservaciones" name="observaciones" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    
+    <div class="tms-modal-footer">
+      <button type="button" class="tms-btn tms-btn-secondary" id="cancelDriverBtn">Cancelar</button>
+      <button type="submit" class="tms-btn tms-btn-primary" id="saveDriverBtn">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vehicle Modal -->
+<div id="vehicleModal" class="tms-modal">
+  <div class="tms-modal-content">
+    <div class="tms-modal-header">
+      <h3 id="vehicleModalTitle">Nuevo Vehículo</h3>
+      <button class="tms-modal-close" id="closeVehicleModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="tms-modal-body">
+      <form id="vehicleForm">
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="vehiclePlaca">Placa *</label>
+            <input type="text" id="vehiclePlaca" name="placa" required>
+          </div>
+          <div class="tms-form-group">
+            <label for="vehicleModelo">Modelo *</label>
+            <input type="text" id="vehicleModelo" name="modelo" required>
+          </div>
+        </div>
+        
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="vehicleMarca">Marca</label>
+            <input type="text" id="vehicleMarca" name="marca">
+          </div>
+          <div class="tms-form-group">
+            <label for="vehicleAño">Año</label>
+            <input type="number" id="vehicleAño" name="año" min="1990" max="2030">
+          </div>
+        </div>
+        
+        <div class="tms-form-row">
+          <div class="tms-form-group">
+            <label for="vehicleTipo">Tipo</label>
+            <select id="vehicleTipo" name="tipo">
+              <option value="CAMIONETA">Camioneta</option>
+              <option value="CAMION">Camión</option>
+              <option value="FURGON">Furgón</option>
+              <option value="MOTO">Motocicleta</option>
+            </select>
+          </div>
+          <div class="tms-form-group">
+            <label for="vehicleCapacidad">Capacidad</label>
+            <input type="text" id="vehicleCapacidad" name="capacidad" placeholder="ej: 1000 kg">
+          </div>
+        </div>
+        
+        <div class="tms-form-group">
+          <label for="vehicleObservaciones">Observaciones</label>
+          <textarea id="vehicleObservaciones" name="observaciones" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    
+    <div class="tms-modal-footer">
+      <button type="button" class="tms-btn tms-btn-secondary" id="cancelVehicleBtn">Cancelar</button>
+      <button type="submit" class="tms-btn tms-btn-primary" id="saveVehicleBtn">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Driver Details Modal -->
+<div id="driverDetailsModal" class="tms-modal">
+  <div class="tms-modal-content large">
+    <div class="tms-modal-header">
+      <h3 id="driverDetailsTitle">Detalles del Conductor</h3>
+      <button class="tms-modal-close" id="closeDriverDetailsModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="tms-modal-body">
+      <div id="driverDetailsContent">
+        <!-- Driver details will be loaded here -->
+      </div>
+    </div>
+    
+    <div class="tms-modal-footer">
+      <button type="button" class="tms-btn tms-btn-secondary" id="editDriverBtn">
+        <i class="fas fa-edit"></i>
+        Editar
+      </button>
+      <button type="button" class="tms-btn tms-btn-danger" id="deleteDriverBtn">
+        <i class="fas fa-trash"></i>
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Styles -->
+<style>
+/* ==================== DRIVERS PAGE STYLES ==================== */
+.tms-drivers-header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.tms-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tms-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tms-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.tms-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tms-stat-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tms-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+.tms-stat-icon.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tms-stat-icon.busy {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.tms-stat-number {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.tms-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.tms-drivers-content {
+  padding: 0 24px 24px;
+}
+
+.tms-filters-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tms-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 300px;
+}
+
+.tms-search-box i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.tms-search-box input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.tms-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.tms-select {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  min-width: 150px;
+}
+
+.tms-tabs {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+}
+
+.tms-tab {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tms-tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+.tms-tab:hover:not(.active) {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+
+.tms-tab-content {
+  display: none;
+}
+
+.tms-tab-content.active {
+  display: block;
+}
+
+.tms-drivers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.tms-driver-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tms-driver-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tms-driver-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.tms-driver-info h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.tms-driver-info p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.tms-driver-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tms-driver-status.disponible {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tms-driver-status.en-ruta {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.tms-driver-status.ocupado {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.tms-driver-status.inactivo {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.tms-driver-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tms-driver-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.tms-driver-detail i {
+  width: 16px;
+  color: var(--text-secondary);
+}
+
+.tms-driver-metrics {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.tms-metric {
+  text-align: center;
+}
+
+.tms-metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tms-metric-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tms-vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.tms-vehicle-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.tms-vehicle-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tms-vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.tms-vehicle-info h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.tms-vehicle-info p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.tms-vehicle-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tms-vehicle-status.disponible {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tms-vehicle-status.en-uso {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.tms-vehicle-status.mantenimiento {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.tms-vehicle-details {
+  display: grid;
+  gap: 8px;
+}
+
+.tms-vehicle-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.tms-vehicle-detail i {
+  width: 16px;
+  color: var(--text-secondary);
+}
+
+/* Modal Styles */
+.tms-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.tms-modal.show {
+  display: flex;
+}
+
+.tms-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tms-modal-content.large {
+  max-width: 800px;
+}
+
+.tms-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tms-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.tms-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.tms-modal-body {
+  padding: 24px;
+}
+
+.tms-modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.tms-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tms-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.tms-form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.tms-form-group input,
+.tms-form-group select,
+.tms-form-group textarea {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.tms-form-group input:focus,
+.tms-form-group select:focus,
+.tms-form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tms-header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .tms-header-actions {
+    justify-content: center;
+  }
+  
+  .tms-filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tms-search-box {
+    min-width: auto;
+  }
+  
+  .tms-filters {
+    flex-wrap: wrap;
+  }
+  
+  .tms-drivers-grid,
+  .tms-vehicles-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tms-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .tms-driver-details {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+// Global variables for drivers management
+let driversData = [];
+let vehiclesData = [];
+let currentDriverId = null;
+let isEditingDriver = false;
+
+// Initialize Drivers Management
+function initTMSDrivers() {
+  console.log('TMS Drivers: Inicializando gestión de conductores...');
+  
+  // Load initial data
+  loadDriversData();
+  loadVehiclesData();
+  
+  // Set up event listeners
+  setupDriversEventListeners();
+}
+
+// Set up event listeners
+function setupDriversEventListeners() {
+  // Header buttons
+  document.getElementById('tmsAddDriverBtn').addEventListener('click', () => {
+    openDriverModal();
+  });
+  
+  document.getElementById('tmsAddVehicleBtn').addEventListener('click', () => {
+    openVehicleModal();
+  });
+  
+  document.getElementById('tmsRefreshDriversBtn').addEventListener('click', () => {
+    loadDriversData();
+    loadVehiclesData();
+  });
+  
+  // Search and filters
+  document.getElementById('driversSearchInput').addEventListener('input', filterDrivers);
+  document.getElementById('statusFilter').addEventListener('change', filterDrivers);
+  document.getElementById('vehicleFilter').addEventListener('change', filterDrivers);
+  
+  // Tabs
+  document.querySelectorAll('.tms-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      switchTab(e.target.dataset.tab);
+    });
+  });
+  
+  // Driver modal
+  document.getElementById('closeDriverModal').addEventListener('click', closeDriverModal);
+  document.getElementById('cancelDriverBtn').addEventListener('click', closeDriverModal);
+  document.getElementById('saveDriverBtn').addEventListener('click', saveDriver);
+  
+  // Vehicle modal
+  document.getElementById('closeVehicleModal').addEventListener('click', closeVehicleModal);
+  document.getElementById('cancelVehicleBtn').addEventListener('click', closeVehicleModal);
+  document.getElementById('saveVehicleBtn').addEventListener('click', saveVehicle);
+  
+  // Driver details modal
+  document.getElementById('closeDriverDetailsModal').addEventListener('click', closeDriverDetailsModal);
+  document.getElementById('editDriverBtn').addEventListener('click', editCurrentDriver);
+  document.getElementById('deleteDriverBtn').addEventListener('click', deleteCurrentDriver);
+  
+  // Close modals on outside click
+  window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('tms-modal')) {
+      e.target.classList.remove('show');
+    }
+  });
+}
+
+// Load drivers data
+function loadDriversData() {
+  console.log('TMS Drivers: Cargando datos de conductores...');
+  
+  google.script.run
+    .withSuccessHandler(handleDriversDataLoaded)
+    .withFailureHandler(handleDriversError)
+    .getTMSDrivers();
+}
+
+// Handle drivers data loaded
+function handleDriversDataLoaded(drivers) {
+  console.log('TMS Drivers: Datos de conductores cargados:', drivers);
+  
+  if (drivers.error) {
+    showTMSError('Error cargando conductores: ' + drivers.error);
+    return;
+  }
+  
+  driversData = drivers;
+  renderDrivers(drivers);
+  updateDriversStatistics(drivers);
+}
+
+// Load vehicles data
+function loadVehiclesData() {
+  console.log('TMS Drivers: Cargando datos de vehículos...');
+  
+  google.script.run
+    .withSuccessHandler(handleVehiclesDataLoaded)
+    .withFailureHandler(handleDriversError)
+    .getTMSVehicles();
+}
+
+// Handle vehicles data loaded
+function handleVehiclesDataLoaded(vehicles) {
+  console.log('TMS Drivers: Datos de vehículos cargados:', vehicles);
+  
+  if (vehicles.error) {
+    showTMSError('Error cargando vehículos: ' + vehicles.error);
+    return;
+  }
+  
+  vehiclesData = vehicles;
+  renderVehicles(vehicles);
+  updateVehicleOptions(vehicles);
+}
+
+// Handle errors
+function handleDriversError(error) {
+  console.error('TMS Drivers: Error:', error);
+  showTMSError('Error en gestión de conductores: ' + error);
+}
+
+// Render drivers
+function renderDrivers(drivers) {
+  const grid = document.getElementById('driversGrid');
+  
+  if (!drivers || drivers.length === 0) {
+    grid.innerHTML = `
+      <div class="tms-empty-state">
+        <i class="fas fa-users"></i>
+        <h3>No hay conductores registrados</h3>
+        <p>Comienza agregando tu primer conductor</p>
+        <button class="tms-btn tms-btn-primary" onclick="openDriverModal()">
+          <i class="fas fa-plus"></i>
+          Agregar Conductor
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  grid.innerHTML = drivers.map(driver => `
+    <div class="tms-driver-card" onclick="showDriverDetails('${driver.id}')">
+      <div class="tms-driver-header">
+        <div class="tms-driver-info">
+          <h4>${driver.nombreCompleto}</h4>
+          <p><i class="fas fa-phone"></i> ${driver.telefono}</p>
+        </div>
+        <span class="tms-driver-status ${driver.estado.toLowerCase().replace('_', '-')}">
+          ${getStatusLabel(driver.estado)}
+        </span>
+      </div>
+      
+      <div class="tms-driver-details">
+        <div class="tms-driver-detail">
+          <i class="fas fa-id-card"></i>
+          <span>${driver.licencia || 'Sin licencia'}</span>
+        </div>
+        <div class="tms-driver-detail">
+          <i class="fas fa-truck"></i>
+          <span>${driver.vehiculo ? driver.vehiculo.placa : 'Sin vehículo'}</span>
+        </div>
+        <div class="tms-driver-detail">
+          <i class="fas fa-envelope"></i>
+          <span>${driver.email || 'Sin email'}</span>
+        </div>
+        <div class="tms-driver-detail">
+          <i class="fas fa-calendar"></i>
+          <span>${formatDate(driver.fechaIngreso)}</span>
+        </div>
+      </div>
+      
+      <div class="tms-driver-metrics">
+        <div class="tms-metric">
+          <div class="tms-metric-value">${driver.estadisticas.entregasCompletadas}</div>
+          <div class="tms-metric-label">Completadas</div>
+        </div>
+        <div class="tms-metric">
+          <div class="tms-metric-value">${driver.estadisticas.entregasEnRuta}</div>
+          <div class="tms-metric-label">En Ruta</div>
+        </div>
+        <div class="tms-metric">
+          <div class="tms-metric-value">${driver.estadisticas.eficiencia}%</div>
+          <div class="tms-metric-label">Eficiencia</div>
+        </div>
+        <div class="tms-metric">
+          <div class="tms-metric-value">${driver.metricas?.puntuacion || 0}</div>
+          <div class="tms-metric-label">Puntuación</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render vehicles
+function renderVehicles(vehicles) {
+  const grid = document.getElementById('vehiclesGrid');
+  
+  if (!vehicles || vehicles.length === 0) {
+    grid.innerHTML = `
+      <div class="tms-empty-state">
+        <i class="fas fa-truck"></i>
+        <h3>No hay vehículos registrados</h3>
+        <p>Comienza agregando tu primer vehículo</p>
+        <button class="tms-btn tms-btn-primary" onclick="openVehicleModal()">
+          <i class="fas fa-plus"></i>
+          Agregar Vehículo
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  grid.innerHTML = vehicles.map(vehicle => `
+    <div class="tms-vehicle-card">
+      <div class="tms-vehicle-header">
+        <div class="tms-vehicle-info">
+          <h4>${vehicle.placa}</h4>
+          <p>${vehicle.marca} ${vehicle.modelo} (${vehicle.año || 'N/A'})</p>
+        </div>
+        <span class="tms-vehicle-status ${vehicle.estado.toLowerCase().replace('_', '-')}">
+          ${getVehicleStatusLabel(vehicle.estado)}
+        </span>
+      </div>
+      
+      <div class="tms-vehicle-details">
+        <div class="tms-vehicle-detail">
+          <i class="fas fa-truck"></i>
+          <span>${vehicle.tipo}</span>
+        </div>
+        <div class="tms-vehicle-detail">
+          <i class="fas fa-weight-hanging"></i>
+          <span>${vehicle.capacidad || 'No especificada'}</span>
+        </div>
+        ${vehicle.conductor ? `
+          <div class="tms-vehicle-detail">
+            <i class="fas fa-user"></i>
+            <span>${vehicle.conductor.nombre}</span>
+          </div>
+          <div class="tms-vehicle-detail">
+            <i class="fas fa-phone"></i>
+            <span>${vehicle.conductor.telefono}</span>
+          </div>
+        ` : `
+          <div class="tms-vehicle-detail">
+            <i class="fas fa-user-slash"></i>
+            <span>Sin conductor asignado</span>
+          </div>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Update statistics
+function updateDriversStatistics(drivers) {
+  const activeDrivers = drivers.filter(d => d.estado === 'DISPONIBLE' || d.estado === 'EN_RUTA');
+  const busyDrivers = drivers.filter(d => d.estado === 'EN_RUTA');
+  
+  document.getElementById('totalDriversCount').textContent = drivers.length;
+  document.getElementById('activeDriversCount').textContent = activeDrivers.length;
+  document.getElementById('busyDriversCount').textContent = busyDrivers.length;
+  
+  if (vehiclesData) {
+    document.getElementById('totalVehiclesCount').textContent = vehiclesData.length;
+  }
+}
+
+// Filter drivers
+function filterDrivers() {
+  const searchTerm = document.getElementById('driversSearchInput').value.toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+  const vehicleFilter = document.getElementById('vehicleFilter').value;
+  
+  let filteredDrivers = driversData.filter(driver => {
+    const matchesSearch = !searchTerm || 
+      driver.nombreCompleto.toLowerCase().includes(searchTerm) ||
+      driver.telefono.includes(searchTerm) ||
+      (driver.vehiculo && driver.vehiculo.placa.toLowerCase().includes(searchTerm));
+    
+    const matchesStatus = !statusFilter || driver.estado === statusFilter;
+    
+    const matchesVehicle = !vehicleFilter || 
+      (vehicleFilter === 'assigned' && driver.vehiculo) ||
+      (vehicleFilter === 'unassigned' && !driver.vehiculo);
+    
+    return matchesSearch && matchesStatus && matchesVehicle;
+  });
+  
+  renderDrivers(filteredDrivers);
+}
+
+// Switch tabs
+function switchTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.tms-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+  
+  // Update tab content
+  document.querySelectorAll('.tms-tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  document.getElementById(`${tabName}TabContent`).classList.add('active');
+}
+
+// Modal functions
+function openDriverModal(driverId = null) {
+  isEditingDriver = !!driverId;
+  currentDriverId = driverId;
+  
+  const modal = document.getElementById('driverModal');
+  const title = document.getElementById('driverModalTitle');
+  const form = document.getElementById('driverForm');
+  
+  title.textContent = isEditingDriver ? 'Editar Conductor' : 'Nuevo Conductor';
+  
+  if (isEditingDriver) {
+    const driver = driversData.find(d => d.id === driverId);
+    if (driver) {
+      document.getElementById('driverNombre').value = driver.nombre;
+      document.getElementById('driverApellido').value = driver.apellido;
+      document.getElementById('driverTelefono').value = driver.telefono;
+      document.getElementById('driverEmail').value = driver.email || '';
+      document.getElementById('driverLicencia').value = driver.licencia || '';
+      document.getElementById('driverVehiculo').value = driver.vehiculo ? driver.vehiculo.id : '';
+      document.getElementById('driverObservaciones').value = driver.observaciones || '';
+    }
+  } else {
+    form.reset();
+  }
+  
+  modal.classList.add('show');
+}
+
+function closeDriverModal() {
+  document.getElementById('driverModal').classList.remove('show');
+  currentDriverId = null;
+  isEditingDriver = false;
+}
+
+function saveDriver() {
+  const form = document.getElementById('driverForm');
+  const formData = new FormData(form);
+  
+  const driverData = {
+    nombre: formData.get('nombre'),
+    apellido: formData.get('apellido'),
+    telefono: formData.get('telefono'),
+    email: formData.get('email'),
+    licencia: formData.get('licencia'),
+    vehiculoId: formData.get('vehiculoId'),
+    observaciones: formData.get('observaciones')
+  };
+  
+  // Validate required fields
+  if (!driverData.nombre || !driverData.apellido || !driverData.telefono) {
+    showTMSError('Por favor complete todos los campos requeridos');
+    return;
+  }
+  
+  const saveBtn = document.getElementById('saveDriverBtn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+  
+  if (isEditingDriver) {
+    google.script.run
+      .withSuccessHandler(handleDriverSaved)
+      .withFailureHandler(handleDriverSaveError)
+      .updateTMSDriver(currentDriverId, driverData);
+  } else {
+    google.script.run
+      .withSuccessHandler(handleDriverSaved)
+      .withFailureHandler(handleDriverSaveError)
+      .createTMSDriver(driverData);
+  }
+}
+
+function handleDriverSaved(result) {
+  const saveBtn = document.getElementById('saveDriverBtn');
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = 'Guardar';
+  
+  if (result.success) {
+    closeDriverModal();
+    loadDriversData();
+    showTMSSuccess(isEditingDriver ? 'Conductor actualizado correctamente' : 'Conductor creado correctamente');
+  } else {
+    showTMSError(result.error || 'Error guardando conductor');
+  }
+}
+
+function handleDriverSaveError(error) {
+  const saveBtn = document.getElementById('saveDriverBtn');
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = 'Guardar';
+  
+  showTMSError('Error guardando conductor: ' + error);
+}
+
+// Vehicle modal functions
+function openVehicleModal() {
+  const modal = document.getElementById('vehicleModal');
+  const form = document.getElementById('vehicleForm');
+  
+  form.reset();
+  modal.classList.add('show');
+}
+
+function closeVehicleModal() {
+  document.getElementById('vehicleModal').classList.remove('show');
+}
+
+function saveVehicle() {
+  const form = document.getElementById('vehicleForm');
+  const formData = new FormData(form);
+  
+  const vehicleData = {
+    placa: formData.get('placa'),
+    modelo: formData.get('modelo'),
+    marca: formData.get('marca'),
+    año: formData.get('año'),
+    tipo: formData.get('tipo'),
+    capacidad: formData.get('capacidad'),
+    observaciones: formData.get('observaciones')
+  };
+  
+  // Validate required fields
+  if (!vehicleData.placa || !vehicleData.modelo) {
+    showTMSError('Por favor complete todos los campos requeridos');
+    return;
+  }
+  
+  const saveBtn = document.getElementById('saveVehicleBtn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+  
+  google.script.run
+    .withSuccessHandler(handleVehicleSaved)
+    .withFailureHandler(handleVehicleSaveError)
+    .createTMSVehicle(vehicleData);
+}
+
+function handleVehicleSaved(result) {
+  const saveBtn = document.getElementById('saveVehicleBtn');
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = 'Guardar';
+  
+  if (result.success) {
+    closeVehicleModal();
+    loadVehiclesData();
+    showTMSSuccess('Vehículo creado correctamente');
+  } else {
+    showTMSError(result.error || 'Error guardando vehículo');
+  }
+}
+
+function handleVehicleSaveError(error) {
+  const saveBtn = document.getElementById('saveVehicleBtn');
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = 'Guardar';
+  
+  showTMSError('Error guardando vehículo: ' + error);
+}
+
+// Driver details functions
+function showDriverDetails(driverId) {
+  const driver = driversData.find(d => d.id === driverId);
+  if (!driver) return;
+  
+  currentDriverId = driverId;
+  
+  const modal = document.getElementById('driverDetailsModal');
+  const title = document.getElementById('driverDetailsTitle');
+  const content = document.getElementById('driverDetailsContent');
+  
+  title.textContent = `${driver.nombreCompleto}`;
+  
+  content.innerHTML = `
+    <div class="driver-details-grid">
+      <div class="driver-basic-info">
+        <h4>Información Básica</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Nombre Completo:</label>
+            <span>${driver.nombreCompleto}</span>
+          </div>
+          <div class="info-item">
+            <label>Teléfono:</label>
+            <span>${driver.telefono}</span>
+          </div>
+          <div class="info-item">
+            <label>Email:</label>
+            <span>${driver.email || 'No especificado'}</span>
+          </div>
+          <div class="info-item">
+            <label>Licencia:</label>
+            <span>${driver.licencia || 'No especificada'}</span>
+          </div>
+          <div class="info-item">
+            <label>Estado:</label>
+            <span class="tms-driver-status ${driver.estado.toLowerCase().replace('_', '-')}">
+              ${getStatusLabel(driver.estado)}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Fecha de Ingreso:</label>
+            <span>${formatDate(driver.fechaIngreso)}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="driver-vehicle-info">
+        <h4>Vehículo Asignado</h4>
+        ${driver.vehiculo ? `
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Placa:</label>
+              <span>${driver.vehiculo.placa}</span>
+            </div>
+            <div class="info-item">
+              <label>Modelo:</label>
+              <span>${driver.vehiculo.modelo}</span>
+            </div>
+            <div class="info-item">
+              <label>Tipo:</label>
+              <span>${driver.vehiculo.tipo}</span>
+            </div>
+          </div>
+        ` : `
+          <p>Sin vehículo asignado</p>
+        `}
+      </div>
+      
+      <div class="driver-stats">
+        <h4>Estadísticas</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">${driver.estadisticas.entregasAsignadas}</div>
+            <div class="stat-label">Entregas Asignadas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${driver.estadisticas.entregasCompletadas}</div>
+            <div class="stat-label">Completadas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${driver.estadisticas.entregasEnRuta}</div>
+            <div class="stat-label">En Ruta</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${driver.estadisticas.eficiencia}%</div>
+            <div class="stat-label">Eficiencia</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="driver-metrics">
+        <h4>Métricas de Rendimiento</h4>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <div class="metric-value">${driver.metricas?.entregasUltimoMes || 0}</div>
+            <div class="metric-label">Entregas Último Mes</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${driver.metricas?.tasaExito || 0}%</div>
+            <div class="metric-label">Tasa de Éxito</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${driver.metricas?.tiempoPromedioEntrega || 0} min</div>
+            <div class="metric-label">Tiempo Promedio</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${driver.metricas?.puntuacion || 0}</div>
+            <div class="metric-label">Puntuación</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.add('show');
+}
+
+function closeDriverDetailsModal() {
+  document.getElementById('driverDetailsModal').classList.remove('show');
+  currentDriverId = null;
+}
+
+function editCurrentDriver() {
+  closeDriverDetailsModal();
+  openDriverModal(currentDriverId);
+}
+
+function deleteCurrentDriver() {
+  if (!currentDriverId) return;
+  
+  const driver = driversData.find(d => d.id === currentDriverId);
+  if (!driver) return;
+  
+  if (confirm(`¿Está seguro de que desea eliminar al conductor ${driver.nombreCompleto}?`)) {
+    google.script.run
+      .withSuccessHandler(handleDriverDeleted)
+      .withFailureHandler(handleDriverDeleteError)
+      .deleteTMSDriver(currentDriverId);
+  }
+}
+
+function handleDriverDeleted(result) {
+  if (result.success) {
+    closeDriverDetailsModal();
+    loadDriversData();
+    showTMSSuccess('Conductor eliminado correctamente');
+  } else {
+    showTMSError(result.error || 'Error eliminando conductor');
+  }
+}
+
+function handleDriverDeleteError(error) {
+  showTMSError('Error eliminando conductor: ' + error);
+}
+
+// Update vehicle options in driver form
+function updateVehicleOptions(vehicles) {
+  const select = document.getElementById('driverVehiculo');
+  
+  // Clear existing options except first one
+  while (select.children.length > 1) {
+    select.removeChild(select.lastChild);
+  }
+  
+  // Add available vehicles
+  const availableVehicles = vehicles.filter(v => v.estado === 'DISPONIBLE');
+  availableVehicles.forEach(vehicle => {
+    const option = document.createElement('option');
+    option.value = vehicle.id;
+    option.textContent = `${vehicle.placa} - ${vehicle.modelo}`;
+    select.appendChild(option);
+  });
+}
+
+// Utility functions
+function getStatusLabel(status) {
+  const labels = {
+    'DISPONIBLE': 'Disponible',
+    'EN_RUTA': 'En Ruta',
+    'OCUPADO': 'Ocupado',
+    'INACTIVO': 'Inactivo'
+  };
+  return labels[status] || status;
+}
+
+function getVehicleStatusLabel(status) {
+  const labels = {
+    'DISPONIBLE': 'Disponible',
+    'EN_USO': 'En Uso',
+    'MANTENIMIENTO': 'Mantenimiento'
+  };
+  return labels[status] || status;
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-ES');
+}
+
+function showTMSSuccess(message) {
+  // Implementation depends on your notification system
+  console.log('Success:', message);
+  alert(message); // Replace with your notification system
+}
+
+function showTMSError(message) {
+  // Implementation depends on your notification system
+  console.error('Error:', message);
+  alert(message); // Replace with your notification system
+}
+
+console.log('TMS Drivers: Sistema de gestión de conductores cargado');
+</script>
+</div>

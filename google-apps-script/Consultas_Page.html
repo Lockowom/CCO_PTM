@@ -1,0 +1,1043 @@
+<section class="view" id="estadonvView">
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     ESTADO N.V - Premium Pipeline View
+     Seguimiento en tiempo real de Notas de Venta
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Module Header Premium -->
+<div class="wms-module-header wms-module-header-premium">
+  <div class="wms-header-content">
+    <nav class="wms-breadcrumb">
+      <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Estado de Notas de Venta</span>
+    </nav>
+    <div class="wms-header-title-row">
+      <div class="wms-header-icon" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="wms-header-text">
+        <h1 class="wms-module-title">Estado de Notas de Venta</h1>
+        <p class="wms-module-subtitle">Pipeline en tiempo real · Seguimiento completo del proceso</p>
+      </div>
+    </div>
+  </div>
+  <div class="wms-header-actions">
+    <div class="wms-connection-status" id="envConnectionStatus">
+      <span class="wms-status-dot" id="envConnectionDot"></span>
+      <span id="envConnectionText">Conectando...</span>
+    </div>
+    <button class="wms-btn wms-btn-success" onclick="envExportarExcel()">
+      <i class="fas fa-file-excel"></i> Exportar
+    </button>
+    <button class="wms-btn wms-btn-outline" onclick="envRefrescarPipeline()">
+      <i class="fas fa-sync-alt"></i> Actualizar
+    </button>
+  </div>
+</div>
+
+<!-- Pipeline Stats Premium -->
+<div class="env-pipeline-container">
+  <div class="env-pipeline-header">
+    <h3 class="env-pipeline-title"><i class="fas fa-stream"></i> Pipeline de Estados</h3>
+    <span class="env-pipeline-subtitle">Click en un estado para filtrar</span>
+  </div>
+  <div class="env-pipeline-stats" id="envPipelineStats">
+    <div class="env-pipeline-stat" data-estado="TOTAL" onclick="envFiltrarPorEstado('TOTAL')">
+      <div class="env-stat-icon"><i class="fas fa-layer-group"></i></div>
+      <div class="env-stat-value" id="envStatTotal">0</div>
+      <div class="env-stat-label">Total N.V</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="PENDIENTE" onclick="envFiltrarPorEstado('PENDIENTE')">
+      <div class="env-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="env-stat-value" id="envStatPendiente">0</div>
+      <div class="env-stat-label">Pendiente</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="PENDIENTE_PICKING" onclick="envFiltrarPorEstado('PENDIENTE_PICKING')">
+      <div class="env-stat-icon"><i class="fas fa-clipboard-list"></i></div>
+      <div class="env-stat-value" id="envStatPendientePicking">0</div>
+      <div class="env-stat-label">Pend. Picking</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="EN_PICKING" onclick="envFiltrarPorEstado('EN_PICKING')">
+      <div class="env-stat-icon"><i class="fas fa-hand-pointer"></i></div>
+      <div class="env-stat-value" id="envStatEnPicking">0</div>
+      <div class="env-stat-label">En Picking</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="PK" onclick="envFiltrarPorEstado('PK')">
+      <div class="env-stat-icon"><i class="fas fa-box"></i></div>
+      <div class="env-stat-value" id="envStatPacking">0</div>
+      <div class="env-stat-label">Packing</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="DESPACHADO" onclick="envFiltrarPorEstado('DESPACHADO')">
+      <div class="env-stat-icon"><i class="fas fa-truck"></i></div>
+      <div class="env-stat-value" id="envStatDespachado">0</div>
+      <div class="env-stat-label">Despachado</div>
+      <div class="env-stat-bar"></div>
+    </div>
+    <div class="env-pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+    <div class="env-pipeline-stat" data-estado="ENTREGADO" onclick="envFiltrarPorEstado('ENTREGADO')">
+      <div class="env-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="env-stat-value" id="envStatEntregado">0</div>
+      <div class="env-stat-label">Entregado</div>
+      <div class="env-stat-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Card -->
+<div class="wms-card env-filters-card">
+  <div class="wms-card-header">
+    <h3 class="wms-card-title"><i class="fas fa-filter"></i> Filtros</h3>
+    <button class="wms-btn wms-btn-ghost wms-btn-sm" onclick="envLimpiarFiltros()">
+      <i class="fas fa-times"></i> Limpiar
+    </button>
+  </div>
+  <div class="wms-card-body">
+    <div class="env-filters-grid">
+      <div class="wms-form-group">
+        <label class="wms-form-label">Fecha Desde</label>
+        <input type="date" class="wms-form-control" id="envFiltroFechaDesde">
+      </div>
+      <div class="wms-form-group">
+        <label class="wms-form-label">Fecha Hasta</label>
+        <input type="date" class="wms-form-control" id="envFiltroFechaHasta">
+      </div>
+      <div class="wms-form-group">
+        <label class="wms-form-label">Vendedor</label>
+        <select class="wms-form-control" id="envFiltroVendedor">
+          <option value="">Todos los vendedores</option>
+        </select>
+      </div>
+      <div class="wms-form-group">
+        <label class="wms-form-label">Cliente</label>
+        <input type="text" class="wms-form-control" id="envFiltroCliente" placeholder="Buscar cliente...">
+      </div>
+      <div class="wms-form-group">
+        <label class="wms-form-label">N° Nota de Venta</label>
+        <input type="text" class="wms-form-control" id="envFiltroNV" placeholder="Buscar N.V...">
+      </div>
+      <div class="wms-form-group env-filter-actions">
+        <label class="wms-form-label">&nbsp;</label>
+        <button class="wms-btn wms-btn-primary" onclick="envAplicarFiltros()">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Results Card -->
+<div class="wms-card">
+  <div class="wms-card-header">
+    <div class="env-results-info">
+      <h3 class="wms-card-title"><i class="fas fa-list"></i> Resultados</h3>
+      <span class="wms-badge wms-badge-primary" id="envResultsCount">0</span>
+      <span class="env-estado-activo" id="envEstadoActivo"></span>
+    </div>
+    <div class="env-view-toggle">
+      <button class="wms-btn wms-btn-ghost wms-btn-sm active" id="btnViewTable" onclick="envToggleView('table')">
+        <i class="fas fa-table"></i>
+      </button>
+      <button class="wms-btn wms-btn-ghost wms-btn-sm" id="btnViewCards" onclick="envToggleView('cards')">
+        <i class="fas fa-th-large"></i>
+      </button>
+    </div>
+  </div>
+  <div class="wms-card-body wms-p-0" id="envResultsContainer">
+    <div class="env-loading" id="envLoading">
+      <div class="env-spinner"></div>
+      <span>Cargando datos en tiempo real...</span>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ═══════════════════════════════════════════
+   ESTADO N.V - Premium Styles
+   ═══════════════════════════════════════════ */
+
+/* Pipeline Container */
+.env-pipeline-container {
+  background: var(--wms-bg-surface);
+  border: 1px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-xl);
+  padding: var(--wms-space-4);
+  margin-bottom: var(--wms-space-4);
+  box-shadow: var(--wms-shadow-sm);
+}
+
+.env-pipeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--wms-space-4);
+  padding-bottom: var(--wms-space-3);
+  border-bottom: 1px solid var(--wms-border-light);
+}
+
+.env-pipeline-title {
+  font-size: var(--wms-text-base);
+  font-weight: 600;
+  color: var(--wms-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-2);
+}
+
+.env-pipeline-subtitle {
+  font-size: var(--wms-text-xs);
+  color: var(--wms-text-tertiary);
+}
+
+/* Pipeline Stats Grid */
+.env-pipeline-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-2);
+  overflow-x: auto;
+  padding: var(--wms-space-2) 0;
+}
+
+.env-pipeline-arrow {
+  color: var(--wms-text-tertiary);
+  font-size: var(--wms-text-sm);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .env-pipeline-arrow { display: none; }
+  .env-pipeline-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--wms-space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .env-pipeline-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Pipeline Stat Card */
+.env-pipeline-stat {
+  flex: 1;
+  min-width: 100px;
+  background: var(--wms-bg-surface);
+  border: 2px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-lg);
+  padding: var(--wms-space-3);
+  cursor: pointer;
+  transition: all var(--wms-transition-base);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.env-pipeline-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wms-shadow-md);
+}
+
+.env-pipeline-stat.active {
+  border-color: var(--stat-color);
+  background: var(--stat-bg);
+  box-shadow: 0 0 0 3px var(--stat-bg);
+}
+
+.env-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--wms-radius-full);
+  background: var(--stat-bg, var(--wms-gray-100));
+  color: var(--stat-color, var(--wms-gray-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--wms-space-2);
+  font-size: var(--wms-text-sm);
+}
+
+.env-stat-value {
+  font-size: var(--wms-text-2xl);
+  font-weight: 700;
+  color: var(--stat-color, var(--wms-text-primary));
+  line-height: 1;
+  margin-bottom: var(--wms-space-1);
+}
+
+.env-stat-label {
+  font-size: var(--wms-text-xs);
+  font-weight: 600;
+  color: var(--wms-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.env-stat-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--stat-color, var(--wms-gray-300));
+  opacity: 0.5;
+}
+
+/* Stat Colors */
+.env-pipeline-stat[data-estado="TOTAL"] { --stat-color: #6366f1; --stat-bg: #EEF2FF; }
+.env-pipeline-stat[data-estado="PENDIENTE"] { --stat-color: #f59e0b; --stat-bg: #FFFBEB; }
+.env-pipeline-stat[data-estado="PENDIENTE_PICKING"] { --stat-color: #3b82f6; --stat-bg: #EFF6FF; }
+.env-pipeline-stat[data-estado="EN_PICKING"] { --stat-color: #8b5cf6; --stat-bg: #F5F3FF; }
+.env-pipeline-stat[data-estado="PK"] { --stat-color: #ec4899; --stat-bg: #FDF2F8; }
+.env-pipeline-stat[data-estado="DESPACHADO"] { --stat-color: #14b8a6; --stat-bg: #F0FDFA; }
+.env-pipeline-stat[data-estado="ENTREGADO"] { --stat-color: #22c55e; --stat-bg: #F0FDF4; }
+
+/* Filters */
+.env-filters-card {
+  margin-bottom: var(--wms-space-4);
+}
+
+.env-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--wms-space-4);
+}
+
+@media (min-width: 768px) {
+  .env-filters-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .env-filters-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.env-filter-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.env-filter-actions .wms-btn {
+  margin-top: auto;
+}
+
+/* Results Header */
+.env-results-info {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-3);
+}
+
+.env-estado-activo {
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+}
+
+.env-view-toggle {
+  display: flex;
+  gap: var(--wms-space-1);
+}
+
+.env-view-toggle .wms-btn.active {
+  background: var(--wms-primary-light);
+  color: var(--wms-primary);
+}
+
+/* Results Table */
+.env-results-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.env-results-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.env-results-table th {
+  padding: var(--wms-space-3) var(--wms-space-4);
+  text-align: left;
+  font-weight: 600;
+  color: var(--wms-text-secondary);
+  background: var(--wms-gray-50);
+  border-bottom: 2px solid var(--wms-border-default);
+  font-size: var(--wms-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.env-results-table td {
+  padding: var(--wms-space-3) var(--wms-space-4);
+  border-bottom: 1px solid var(--wms-border-light);
+  color: var(--wms-text-primary);
+  font-size: var(--wms-text-sm);
+}
+
+.env-results-table tbody tr:hover {
+  background: var(--wms-gray-50);
+}
+
+.env-nv-number {
+  font-family: var(--wms-font-mono);
+  font-weight: 700;
+  color: var(--wms-primary);
+}
+
+/* Estado Badge */
+.env-estado-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--wms-radius-full);
+  font-size: var(--wms-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.env-estado-badge[data-estado="PENDIENTE"] { background: #FFFBEB; color: #b45309; }
+.env-estado-badge[data-estado="APROBADA"] { background: #ECFDF5; color: #047857; }
+.env-estado-badge[data-estado="PENDIENTE_PICKING"] { background: #EFF6FF; color: #1d4ed8; }
+.env-estado-badge[data-estado="EN_PICKING"] { background: #F5F3FF; color: #6d28d9; }
+.env-estado-badge[data-estado="PK"] { background: #FDF2F8; color: #be185d; }
+.env-estado-badge[data-estado="DESPACHADO"] { background: #F0FDFA; color: #0f766e; }
+.env-estado-badge[data-estado="ENTREGADO"] { background: #F0FDF4; color: #15803d; }
+.env-estado-badge[data-estado="NULA"] { background: #FEF2F2; color: #b91c1c; }
+
+/* Cards View */
+.env-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--wms-space-4);
+  padding: var(--wms-space-4);
+}
+
+.env-nv-card {
+  background: var(--wms-bg-surface);
+  border: 1px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-lg);
+  padding: var(--wms-space-4);
+  cursor: pointer;
+  transition: all var(--wms-transition-base);
+}
+
+.env-nv-card:hover {
+  border-color: var(--wms-primary);
+  box-shadow: var(--wms-shadow-md);
+  transform: translateY(-2px);
+}
+
+.env-nv-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--wms-space-3);
+  padding-bottom: var(--wms-space-3);
+  border-bottom: 1px solid var(--wms-border-light);
+}
+
+.env-nv-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wms-space-2);
+}
+
+.env-nv-card-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-2);
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+}
+
+.env-nv-card-row i {
+  width: 16px;
+  color: var(--wms-text-tertiary);
+}
+
+/* Loading & Empty States */
+.env-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wms-space-12);
+  gap: var(--wms-space-4);
+}
+
+.env-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--wms-gray-200);
+  border-top-color: var(--wms-primary);
+  border-radius: 50%;
+  animation: envSpin 0.8s linear infinite;
+}
+
+@keyframes envSpin { to { transform: rotate(360deg); } }
+
+.env-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wms-space-12);
+  text-align: center;
+}
+
+.env-empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--wms-radius-full);
+  background: var(--wms-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: var(--wms-text-tertiary);
+  margin-bottom: var(--wms-space-4);
+}
+
+.env-empty-title {
+  font-size: var(--wms-text-lg);
+  font-weight: 600;
+  color: var(--wms-text-primary);
+  margin: 0 0 var(--wms-space-2) 0;
+}
+
+.env-empty-text {
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+  margin: 0;
+}
+
+/* Table Wrapper */
+.env-table-wrap {
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// ESTADO N.V MODULE - JavaScript Logic
+// Pipeline en tiempo real de Notas de Venta
+// ═══════════════════════════════════════════════════════════════════════════
+
+var EstadoNVModule = {
+  // Estado del módulo
+  state: {
+    isOnline: true,
+    allData: [],
+    filteredData: [],
+    estadoActivo: 'TOTAL',
+    viewMode: 'table',
+    vendedores: [],
+    isLoading: false
+  },
+  
+  // Inicializar módulo
+  init: function() {
+    console.log('EstadoNVModule: Inicializando...');
+    this.verificarConexion();
+    this.cargarDatos();
+    console.log('EstadoNVModule: Inicializado');
+  },
+  
+  // Verificar conexión
+  verificarConexion: function() {
+    var self = this;
+    var dot = document.getElementById('envConnectionDot');
+    var text = document.getElementById('envConnectionText');
+    
+    if (dot) dot.className = 'wms-status-dot checking';
+    if (text) text.textContent = 'Verificando...';
+    
+    google.script.run
+      .withSuccessHandler(function() {
+        self.state.isOnline = true;
+        if (dot) dot.className = 'wms-status-dot online';
+        if (text) text.textContent = 'Conectado';
+      })
+      .withFailureHandler(function() {
+        self.state.isOnline = false;
+        if (dot) dot.className = 'wms-status-dot offline';
+        if (text) text.textContent = 'Sin conexión';
+      })
+      .getNotasVenta();
+  },
+  
+  // Cargar datos desde backend
+  cargarDatos: function() {
+    var self = this;
+    self.mostrarLoading(true);
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        self.mostrarLoading(false);
+        if (result && result.success) {
+          self.state.allData = result.notasVenta || [];
+          self.extraerVendedores();
+          self.actualizarPipeline();
+          self.aplicarFiltros();
+        } else {
+          self.mostrarError('Error al cargar datos: ' + (result ? result.error : 'Sin respuesta'));
+        }
+      })
+      .withFailureHandler(function(error) {
+        self.mostrarLoading(false);
+        self.mostrarError('Error de conexión: ' + error.message);
+      })
+      .getNotasVenta();
+  },
+  
+  // Extraer lista de vendedores únicos
+  extraerVendedores: function() {
+    var self = this;
+    var vendedoresSet = {};
+    this.state.allData.forEach(function(nv) {
+      if (nv.vendedor) vendedoresSet[nv.vendedor] = true;
+    });
+    this.state.vendedores = Object.keys(vendedoresSet).sort();
+    
+    var select = document.getElementById('envFiltroVendedor');
+    if (select) {
+      select.innerHTML = '<option value="">Todos los vendedores</option>';
+      this.state.vendedores.forEach(function(v) {
+        select.innerHTML += '<option value="' + self.escapeHtml(v) + '">' + self.escapeHtml(v) + '</option>';
+      });
+    }
+  },
+  
+  // Actualizar pipeline con conteos
+  actualizarPipeline: function() {
+    var self = this;
+    var stats = {
+      TOTAL: 0,
+      PENDIENTE: 0,
+      PENDIENTE_PICKING: 0,
+      EN_PICKING: 0,
+      PK: 0,
+      DESPACHADO: 0,
+      ENTREGADO: 0
+    };
+    
+    this.state.allData.forEach(function(nv) {
+      stats.TOTAL++;
+      var estado = self.normalizarEstado(nv.estado);
+      if (stats.hasOwnProperty(estado)) {
+        stats[estado]++;
+      } else if (estado === 'APROBADA' || estado === 'NUEVA') {
+        stats.PENDIENTE++;
+      } else if (estado.indexOf('PACKING') !== -1) {
+        stats.PK++;
+      }
+    });
+    
+    // Actualizar UI
+    var el;
+    el = document.getElementById('envStatTotal'); if (el) el.textContent = stats.TOTAL;
+    el = document.getElementById('envStatPendiente'); if (el) el.textContent = stats.PENDIENTE;
+    el = document.getElementById('envStatPendientePicking'); if (el) el.textContent = stats.PENDIENTE_PICKING;
+    el = document.getElementById('envStatEnPicking'); if (el) el.textContent = stats.EN_PICKING;
+    el = document.getElementById('envStatPacking'); if (el) el.textContent = stats.PK;
+    el = document.getElementById('envStatDespachado'); if (el) el.textContent = stats.DESPACHADO;
+    el = document.getElementById('envStatEntregado'); if (el) el.textContent = stats.ENTREGADO;
+  },
+  
+  // Normalizar estado para comparación
+  normalizarEstado: function(estado) {
+    if (!estado) return 'PENDIENTE';
+    var e = estado.toUpperCase().replace(/\s+/g, '_').trim();
+    
+    if (e === 'PENDIENTE_PICKING' || e === 'PEND_PICKING' || e === 'PEND._PICKING') return 'PENDIENTE_PICKING';
+    if (e === 'EN_PICKING' || e === 'PICKING') return 'EN_PICKING';
+    if (e.indexOf('PACKING') !== -1 || e === 'PK') return 'PK';
+    if (e.indexOf('DESPACH') !== -1 || e.indexOf('TRANSITO') !== -1) return 'DESPACHADO';
+    if (e.indexOf('ENTREGAD') !== -1) return 'ENTREGADO';
+    if (e === 'PENDIENTE' || e === 'NUEVA' || e === 'APROBADA') return 'PENDIENTE';
+    
+    return e;
+  },
+  
+  // Filtrar por estado (click en pipeline)
+  filtrarPorEstado: function(estado) {
+    this.state.estadoActivo = estado;
+    
+    // Actualizar UI de pipeline
+    document.querySelectorAll('.env-pipeline-stat').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    var activeEl = document.querySelector('.env-pipeline-stat[data-estado="' + estado + '"]');
+    if (activeEl) activeEl.classList.add('active');
+    
+    // Actualizar label
+    var label = document.getElementById('envEstadoActivo');
+    if (label) {
+      label.textContent = estado === 'TOTAL' ? '' : '· Filtrado por: ' + estado.replace(/_/g, ' ');
+    }
+    
+    this.aplicarFiltros();
+  },
+  
+  // Aplicar todos los filtros
+  aplicarFiltros: function() {
+    var self = this;
+    var fechaDesdeEl = document.getElementById('envFiltroFechaDesde');
+    var fechaHastaEl = document.getElementById('envFiltroFechaHasta');
+    var vendedorEl = document.getElementById('envFiltroVendedor');
+    var clienteEl = document.getElementById('envFiltroCliente');
+    var nvEl = document.getElementById('envFiltroNV');
+    
+    var fechaDesde = fechaDesdeEl ? fechaDesdeEl.value : '';
+    var fechaHasta = fechaHastaEl ? fechaHastaEl.value : '';
+    var vendedor = vendedorEl ? vendedorEl.value : '';
+    var cliente = clienteEl ? clienteEl.value.toLowerCase().trim() : '';
+    var nv = nvEl ? nvEl.value.toLowerCase().trim() : '';
+    
+    this.state.filteredData = this.state.allData.filter(function(item) {
+      // Filtro por estado
+      if (self.state.estadoActivo !== 'TOTAL') {
+        var estadoNorm = self.normalizarEstado(item.estado);
+        if (estadoNorm !== self.state.estadoActivo) return false;
+      }
+      
+      // Filtro por fecha
+      if (fechaDesde && item.fechaEntrega) {
+        var itemDate = new Date(item.fechaEntrega);
+        var fromDate = new Date(fechaDesde);
+        if (itemDate < fromDate) return false;
+      }
+      if (fechaHasta && item.fechaEntrega) {
+        var itemDate2 = new Date(item.fechaEntrega);
+        var toDate = new Date(fechaHasta);
+        toDate.setHours(23, 59, 59);
+        if (itemDate2 > toDate) return false;
+      }
+      
+      // Filtro por vendedor
+      if (vendedor && item.vendedor !== vendedor) return false;
+      
+      // Filtro por cliente
+      if (cliente && (!item.cliente || item.cliente.toLowerCase().indexOf(cliente) === -1)) return false;
+      
+      // Filtro por N.V
+      if (nv && (!item.notaVenta || item.notaVenta.toLowerCase().indexOf(nv) === -1)) return false;
+      
+      return true;
+    });
+    
+    // Actualizar contador
+    var countEl = document.getElementById('envResultsCount');
+    if (countEl) countEl.textContent = this.state.filteredData.length;
+    
+    this.renderResultados();
+  },
+  
+  // Limpiar filtros
+  limpiarFiltros: function() {
+    var el;
+    el = document.getElementById('envFiltroFechaDesde'); if (el) el.value = '';
+    el = document.getElementById('envFiltroFechaHasta'); if (el) el.value = '';
+    el = document.getElementById('envFiltroVendedor'); if (el) el.value = '';
+    el = document.getElementById('envFiltroCliente'); if (el) el.value = '';
+    el = document.getElementById('envFiltroNV'); if (el) el.value = '';
+    
+    this.state.estadoActivo = 'TOTAL';
+    document.querySelectorAll('.env-pipeline-stat').forEach(function(stat) {
+      stat.classList.remove('active');
+    });
+    el = document.getElementById('envEstadoActivo'); if (el) el.textContent = '';
+    
+    this.aplicarFiltros();
+  },
+  
+  // Renderizar resultados
+  renderResultados: function() {
+    var container = document.getElementById('envResultsContainer');
+    if (!container) return;
+    
+    if (this.state.filteredData.length === 0) {
+      container.innerHTML = this.renderEmpty();
+      return;
+    }
+    
+    if (this.state.viewMode === 'table') {
+      container.innerHTML = this.renderTable();
+    } else {
+      container.innerHTML = this.renderCards();
+    }
+  },
+  
+  // Renderizar tabla
+  renderTable: function() {
+    var self = this;
+    var html = '<div class="env-table-wrap"><table class="env-results-table">';
+    html += '<thead><tr>';
+    html += '<th>N° N.V</th>';
+    html += '<th>Fecha Entrega</th>';
+    html += '<th>Cliente</th>';
+    html += '<th>Vendedor</th>';
+    html += '<th>Items</th>';
+    html += '<th>Estado</th>';
+    html += '</tr></thead><tbody>';
+    
+    this.state.filteredData.forEach(function(nv) {
+      var estadoNorm = self.normalizarEstado(nv.estado);
+      html += '<tr>';
+      html += '<td><span class="env-nv-number">' + self.escapeHtml(nv.notaVenta) + '</span></td>';
+      html += '<td>' + self.formatDate(nv.fechaEntrega) + '</td>';
+      html += '<td>' + self.escapeHtml(nv.cliente || '-') + '</td>';
+      html += '<td>' + self.escapeHtml(nv.vendedor || '-') + '</td>';
+      html += '<td>' + (nv.totalItems || 0) + '</td>';
+      html += '<td><span class="env-estado-badge" data-estado="' + estadoNorm + '">' + self.escapeHtml(nv.estado || 'PENDIENTE') + '</span></td>';
+      html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+  },
+  
+  // Renderizar cards
+  renderCards: function() {
+    var self = this;
+    var html = '<div class="env-cards-grid">';
+    
+    this.state.filteredData.forEach(function(nv) {
+      var estadoNorm = self.normalizarEstado(nv.estado);
+      html += '<div class="env-nv-card">';
+      html += '<div class="env-nv-card-header">';
+      html += '<span class="env-nv-number">' + self.escapeHtml(nv.notaVenta) + '</span>';
+      html += '<span class="env-estado-badge" data-estado="' + estadoNorm + '">' + self.escapeHtml(nv.estado || 'PENDIENTE') + '</span>';
+      html += '</div>';
+      html += '<div class="env-nv-card-info">';
+      html += '<div class="env-nv-card-row"><i class="fas fa-calendar"></i> ' + self.formatDate(nv.fechaEntrega) + '</div>';
+      html += '<div class="env-nv-card-row"><i class="fas fa-user"></i> ' + self.escapeHtml(nv.cliente || '-') + '</div>';
+      html += '<div class="env-nv-card-row"><i class="fas fa-user-tie"></i> ' + self.escapeHtml(nv.vendedor || '-') + '</div>';
+      html += '<div class="env-nv-card-row"><i class="fas fa-boxes"></i> ' + (nv.totalItems || 0) + ' items</div>';
+      html += '</div>';
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    return html;
+  },
+  
+  // Renderizar estado vacío
+  renderEmpty: function() {
+    return '<div class="env-empty">' +
+      '<div class="env-empty-icon"><i class="fas fa-search"></i></div>' +
+      '<h3 class="env-empty-title">Sin resultados</h3>' +
+      '<p class="env-empty-text">No se encontraron Notas de Venta con los filtros aplicados</p>' +
+      '</div>';
+  },
+  
+  // Toggle vista tabla/cards
+  toggleView: function(mode) {
+    this.state.viewMode = mode;
+    
+    var tableBtn = document.getElementById('btnViewTable');
+    var cardsBtn = document.getElementById('btnViewCards');
+    if (tableBtn) tableBtn.classList.toggle('active', mode === 'table');
+    if (cardsBtn) cardsBtn.classList.toggle('active', mode === 'cards');
+    
+    this.renderResultados();
+  },
+  
+  // Refrescar datos
+  refrescar: function() {
+    this.cargarDatos();
+  },
+  
+  // Mostrar/ocultar loading
+  mostrarLoading: function(show) {
+    var loading = document.getElementById('envLoading');
+    
+    if (show) {
+      this.state.isLoading = true;
+      if (loading) loading.style.display = 'flex';
+    } else {
+      this.state.isLoading = false;
+      if (loading) loading.style.display = 'none';
+    }
+  },
+  
+  // Mostrar error
+  mostrarError: function(msg) {
+    if (typeof WMSToast !== 'undefined') {
+      WMSToast.error(msg);
+    } else {
+      console.error('EstadoNV Error:', msg);
+    }
+  },
+  
+  // Formatear fecha
+  formatDate: function(dateStr) {
+    if (!dateStr) return '-';
+    try {
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('es-CL');
+    } catch (e) {
+      return dateStr;
+    }
+  },
+  
+  // Escapar HTML
+  escapeHtml: function(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FUNCIONES GLOBALES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function initEstadoNVModule() {
+  EstadoNVModule.init();
+}
+
+function envRefrescarPipeline() {
+  EstadoNVModule.refrescar();
+}
+
+function envFiltrarPorEstado(estado) {
+  EstadoNVModule.filtrarPorEstado(estado);
+}
+
+function envAplicarFiltros() {
+  EstadoNVModule.aplicarFiltros();
+}
+
+function envLimpiarFiltros() {
+  EstadoNVModule.limpiarFiltros();
+}
+
+function envToggleView(mode) {
+  EstadoNVModule.toggleView(mode);
+}
+
+function envExportarExcel() {
+  console.log('envExportarExcel: Iniciando exportación...');
+  
+  var data = EstadoNVModule.state.filteredData;
+  
+  // Verificar si hay datos
+  if (!data || data.length === 0) {
+    if (typeof WMSToast !== 'undefined') {
+      WMSToast.warning('No hay datos para exportar');
+    } else {
+      alert('No hay datos para exportar');
+    }
+    return;
+  }
+  
+  // Verificar si XLSX está disponible
+  if (typeof XLSX === 'undefined') {
+    console.error('SheetJS (XLSX) no está cargado');
+    if (typeof WMSToast !== 'undefined') {
+      WMSToast.error('Librería de Excel no disponible');
+    } else {
+      alert('Librería de Excel no disponible');
+    }
+    return;
+  }
+  
+  // Verificar si WMSExport está disponible
+  if (typeof WMSExport !== 'undefined' && WMSExport.toExcel) {
+    WMSExport.toExcel(data, {
+      filename: 'Estado_NV',
+      sheetName: 'Notas de Venta',
+      columns: [
+        { key: 'notaVenta', header: 'N° Nota Venta', width: 15 },
+        { key: 'fechaEntrega', header: 'Fecha Entrega', width: 15 },
+        { key: 'cliente', header: 'Cliente', width: 30 },
+        { key: 'vendedor', header: 'Vendedor', width: 20 },
+        { key: 'totalItems', header: 'Items', width: 10 },
+        { key: 'estado', header: 'Estado', width: 18 },
+        { key: 'direccion', header: 'Dirección', width: 35 },
+        { key: 'comuna', header: 'Comuna', width: 15 },
+        { key: 'observaciones', header: 'Observaciones', width: 30 }
+      ]
+    });
+  } else {
+    // Fallback: exportar directamente con XLSX
+    console.log('WMSExport no disponible, usando XLSX directamente');
+    try {
+      var exportData = data.map(function(row) {
+        return {
+          'N° Nota Venta': row.notaVenta || '',
+          'Fecha Entrega': row.fechaEntrega || '',
+          'Cliente': row.cliente || '',
+          'Vendedor': row.vendedor || '',
+          'Items': row.totalItems || 0,
+          'Estado': row.estado || '',
+          'Dirección': row.direccion || '',
+          'Comuna': row.comuna || '',
+          'Observaciones': row.observaciones || ''
+        };
+      });
+      
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Notas de Venta');
+      
+      var now = new Date();
+      var dateStr = now.getFullYear() + 
+        String(now.getMonth() + 1).padStart(2, '0') + 
+        String(now.getDate()).padStart(2, '0') + '_' +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0');
+      
+      XLSX.writeFile(wb, 'Estado_NV_' + dateStr + '.xlsx');
+      
+      if (typeof WMSToast !== 'undefined') {
+        WMSToast.success('Archivo Excel descargado correctamente');
+      }
+    } catch (error) {
+      console.error('Error exportando:', error);
+      if (typeof WMSToast !== 'undefined') {
+        WMSToast.error('Error al exportar: ' + error.message);
+      } else {
+        alert('Error al exportar: ' + error.message);
+      }
+    }
+  }
+}
+
+// Función para cargar la vista (llamada desde loadViewContent)
+function loadEstadoNVView(container) {
+  console.log('loadEstadoNVView: Inicializando módulo Estado N.V');
+  initEstadoNVModule();
+}
+
+// Alias para compatibilidad
+window.initEstadoNV = initEstadoNVModule;
+window.loadEstadoNVView = loadEstadoNVView;
+window.envExportarExcel = envExportarExcel;
+</script>
+
+</section>

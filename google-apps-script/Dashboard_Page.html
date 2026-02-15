@@ -1,0 +1,873 @@
+<!-- Dashboard_Page.html - Dashboard Principal con Diseño Moderno -->
+
+<div class="dashboard-container">
+  <!-- Header del Dashboard -->
+  <div class="dashboard-header">
+    <div class="header-title">
+      <h1 class="gradient-title">
+        <i class="fas fa-chart-line"></i>
+        Dashboard
+      </h1>
+      <p class="subtitle">Monitoreo en tiempo real del sistema logístico</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" onclick="loadDashboardData()">
+        <i class="fas fa-sync-alt"></i>
+        Actualizar
+      </button>
+      <span class="last-update" id="lastUpdate">Última actualización: --:--</span>
+    </div>
+  </div>
+
+  <!-- KPIs Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <i class="fas fa-shopping-cart"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="totalOrders">0</span>
+        <span class="kpi-label">Órdenes Totales</span>
+      </div>
+      <div class="kpi-trend up">
+        <i class="fas fa-arrow-up"></i>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <i class="fas fa-boxes"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="totalStock">0</span>
+        <span class="kpi-label">Stock Total</span>
+      </div>
+      <div class="kpi-trend up">
+        <i class="fas fa-arrow-up"></i>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon orange">
+        <i class="fas fa-warehouse"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="ocupacionBodega">0%</span>
+        <span class="kpi-label">Ocupación Bodega</span>
+      </div>
+      <div class="kpi-trend neutral" id="ocupacionTrend">
+        <i class="fas fa-minus"></i>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon purple">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="deliveredOrders">0</span>
+        <span class="kpi-label">Entregas</span>
+      </div>
+      <div class="kpi-trend up">
+        <i class="fas fa-arrow-up"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segunda fila de KPIs -->
+  <div class="kpi-grid" style="margin-bottom: 30px;">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">
+        <i class="fas fa-hand-pointer"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="pickingPendiente">0</span>
+        <span class="kpi-label">Picking Pendiente</span>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9;">
+        <i class="fas fa-box"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="packingActivo">0</span>
+        <span class="kpi-label">En Packing</span>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background: rgba(234, 179, 8, 0.2); color: #eab308;">
+        <i class="fas fa-truck-loading"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="listoDespacho">0</span>
+        <span class="kpi-label">Listo Despacho</span>
+      </div>
+    </div>
+    
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">
+        <i class="fas fa-map-marker-alt"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value" id="ubicacionesActivas">0</span>
+        <span class="kpi-label">Ubicaciones Activas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-grid">
+    <!-- Gráfico de Órdenes -->
+    <div class="dashboard-card chart-card">
+      <div class="card-header">
+        <h3><i class="fas fa-chart-pie"></i> Órdenes por Estado</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Pipeline de Proceso -->
+    <div class="dashboard-card pipeline-card">
+      <div class="card-header">
+        <h3><i class="fas fa-stream"></i> Pipeline de Proceso</h3>
+      </div>
+      <div class="card-body">
+        <div class="pipeline">
+          <div class="pipeline-stage">
+            <div class="stage-icon"><i class="fas fa-inbox"></i></div>
+            <div class="stage-info">
+              <span class="stage-count" id="stageCreadas">0</span>
+              <span class="stage-label">Creadas</span>
+            </div>
+          </div>
+          <div class="pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="pipeline-stage">
+            <div class="stage-icon"><i class="fas fa-hand-pointer"></i></div>
+            <div class="stage-info">
+              <span class="stage-count" id="stagePicking">0</span>
+              <span class="stage-label">Picking</span>
+            </div>
+          </div>
+          <div class="pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="pipeline-stage">
+            <div class="stage-icon"><i class="fas fa-box"></i></div>
+            <div class="stage-info">
+              <span class="stage-count" id="stagePacking">0</span>
+              <span class="stage-label">Packing</span>
+            </div>
+          </div>
+          <div class="pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="pipeline-stage">
+            <div class="stage-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div class="stage-info">
+              <span class="stage-count" id="stageDespachadas">0</span>
+              <span class="stage-label">Despachadas</span>
+            </div>
+          </div>
+          <div class="pipeline-arrow"><i class="fas fa-chevron-right"></i></div>
+          <div class="pipeline-stage completed">
+            <div class="stage-icon"><i class="fas fa-check-double"></i></div>
+            <div class="stage-info">
+              <span class="stage-count" id="stageEntregadas">0</span>
+              <span class="stage-label">Entregadas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="dashboard-card alerts-card">
+      <div class="card-header">
+        <h3><i class="fas fa-bell"></i> Alertas</h3>
+        <span class="alert-badge" id="alertCount">0</span>
+      </div>
+      <div class="card-body">
+        <div class="alerts-list" id="alertsList">
+          <div class="alert-item loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Cargando alertas...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="dashboard-card activity-card">
+      <div class="card-header">
+        <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
+      </div>
+      <div class="card-body">
+        <div class="activity-list" id="activityList">
+          <div class="activity-item loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Cargando actividad...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Dashboard Container */
+.dashboard-container {
+  padding: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.gradient-title {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-refresh {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-refresh:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.last-update {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.kpi-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.kpi-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.kpi-icon.blue { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+.kpi-icon.green { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.kpi-icon.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.kpi-icon.purple { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  display: block;
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 5px;
+  display: block;
+}
+
+.kpi-trend {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.kpi-trend.up { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.kpi-trend.down { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.kpi-trend.neutral { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-header h3 i {
+  color: #667eea;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Chart Card */
+.chart-card {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.chart-card .card-body {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pipeline Card */
+.pipeline-card {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+}
+
+.pipeline-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.stage-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #667eea;
+}
+
+.pipeline-stage.completed .stage-icon {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.stage-info {
+  text-align: center;
+}
+
+.stage-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  display: block;
+}
+
+.stage-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pipeline-arrow {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 16px;
+}
+
+/* Alerts Card */
+.alerts-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.alert-badge {
+  background: #ef4444;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alerts-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.alert-item:last-child {
+  margin-bottom: 0;
+}
+
+.alert-item.loading {
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.alert-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.alert-icon.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.alert-icon.danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.alert-icon.info { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.alert-message {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Activity Card */
+.activity-card {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.activity-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.activity-item.loading {
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.activity-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.activity-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-card, .alerts-card, .pipeline-card, .activity-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pipeline {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .pipeline-arrow {
+    display: none;
+  }
+  
+  .pipeline-stage {
+    flex: 0 0 calc(33.33% - 15px);
+  }
+}
+</style>
+
+<script>
+// Variables globales
+var ordersChart = null;
+var ordersChartInstance = null;
+
+// Inicializar dashboard
+function initDashboard() {
+  console.log('Inicializando Dashboard...');
+  loadDashboardData();
+  
+  // Auto-refresh cada 30 segundos
+  setInterval(loadDashboardData, 30000);
+}
+
+// Cargar datos del dashboard
+function loadDashboardData() {
+  google.script.run
+    .withSuccessHandler(updateDashboardUI)
+    .withFailureHandler(function(error) {
+      console.error('Error cargando dashboard:', error);
+    })
+    .getDashboardMetrics();
+}
+
+// Actualizar UI con los datos
+function updateDashboardUI(data) {
+  console.log('Dashboard data received:', data);
+  
+  if (!data) {
+    console.error('No data received');
+    return;
+  }
+  
+  // Manejar tanto success como datos directos
+  const orders = data.orders || {};
+  const inventory = data.inventory || {};
+  const layout = data.layout || {};
+  const dispatches = data.dispatches || {};
+  const alerts = data.alerts || [];
+  const recentActivity = data.recentActivity || [];
+  
+  // Actualizar KPIs principales
+  updateElement('totalOrders', orders.total || 0);
+  updateElement('totalStock', formatNumber(inventory.totalStock || 0));
+  updateElement('deliveredOrders', orders.entregadas || 0);
+  
+  // Ocupación de bodega
+  const ocupacion = inventory.porcentajeOcupacion || 0;
+  updateElement('ocupacionBodega', ocupacion + '%');
+  
+  // Cambiar color del trend según ocupación
+  const ocupacionTrend = document.getElementById('ocupacionTrend');
+  if (ocupacionTrend) {
+    if (ocupacion >= 90) {
+      ocupacionTrend.className = 'kpi-trend down';
+      ocupacionTrend.innerHTML = '<i class="fas fa-exclamation"></i>';
+    } else if (ocupacion >= 70) {
+      ocupacionTrend.className = 'kpi-trend neutral';
+      ocupacionTrend.innerHTML = '<i class="fas fa-minus"></i>';
+    } else {
+      ocupacionTrend.className = 'kpi-trend up';
+      ocupacionTrend.innerHTML = '<i class="fas fa-check"></i>';
+    }
+  }
+  
+  // KPIs secundarios
+  updateElement('pickingPendiente', orders.picking || 0);
+  updateElement('packingActivo', orders.packing || 0);
+  updateElement('listoDespacho', orders.listoDespacho || 0);
+  updateElement('ubicacionesActivas', inventory.ubicacionesOcupadas || 0);
+  
+  // Actualizar Pipeline
+  updateElement('stageCreadas', orders.creadas || 0);
+  updateElement('stagePicking', orders.picking || 0);
+  updateElement('stagePacking', orders.packing || 0);
+  updateElement('stageDespachadas', orders.despachadas || 0);
+  updateElement('stageEntregadas', orders.entregadas || 0);
+  
+  // Actualizar gráfico
+  updateOrdersChart(orders);
+  
+  // Actualizar alertas
+  updateAlerts(alerts);
+  
+  // Actualizar actividad
+  updateActivity(recentActivity);
+  
+  // Actualizar timestamp
+  const lastUpdateEl = document.getElementById('lastUpdate');
+  if (lastUpdateEl) {
+    lastUpdateEl.textContent = 'Última actualización: ' + new Date().toLocaleTimeString();
+  }
+}
+
+// Helper para actualizar elementos
+function updateElement(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+// Formatear números grandes
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
+
+// Actualizar gráfico de órdenes
+function updateOrdersChart(orders) {
+  const ctx = document.getElementById('ordersChart');
+  if (!ctx) return;
+  
+  const chartData = {
+    labels: ['Creadas', 'Picking', 'Packing', 'Despachadas', 'En Tránsito', 'Entregadas'],
+    datasets: [{
+      data: [
+        orders.creadas || 0,
+        orders.picking || 0,
+        orders.packing || 0,
+        orders.despachadas || 0,
+        orders.enTransito || 0,
+        orders.entregadas || 0
+      ],
+      backgroundColor: [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(16, 185, 129, 0.8)'
+      ],
+      borderWidth: 0
+    }]
+  };
+  
+  if (ordersChartInstance) {
+    ordersChartInstance.data = chartData;
+    ordersChartInstance.update();
+  } else if (typeof Chart !== 'undefined') {
+    ordersChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              padding: 15,
+              font: { size: 12 }
+            }
+          }
+        },
+        cutout: '60%'
+      }
+    });
+  }
+}
+
+// Actualizar alertas
+function updateAlerts(alerts) {
+  const container = document.getElementById('alertsList');
+  const badge = document.getElementById('alertCount');
+  
+  badge.textContent = alerts ? alerts.length : 0;
+  
+  if (!alerts || alerts.length === 0) {
+    container.innerHTML = `
+      <div class="alert-item" style="justify-content: center; color: rgba(255,255,255,0.5);">
+        <i class="fas fa-check-circle" style="color: #10b981;"></i>
+        <span>Sin alertas activas</span>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = alerts.slice(0, 5).map(alert => {
+    const iconClass = alert.type === 'danger' ? 'danger' : 
+                      alert.type === 'warning' ? 'warning' : 'info';
+    return `
+      <div class="alert-item">
+        <div class="alert-icon ${iconClass}">
+          <i class="fas fa-${alert.icon || 'exclamation-triangle'}"></i>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">${alert.title}</div>
+          <div class="alert-message">${alert.message}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Actualizar actividad reciente
+function updateActivity(activities) {
+  const container = document.getElementById('activityList');
+  
+  if (!activities || activities.length === 0) {
+    container.innerHTML = `
+      <div class="activity-item" style="justify-content: center; color: rgba(255,255,255,0.5);">
+        Sin actividad reciente
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = activities.slice(0, 6).map(activity => {
+    const time = activity.timestamp ? 
+      new Date(activity.timestamp).toLocaleString('es-CL', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        day: '2-digit',
+        month: 'short'
+      }) : '';
+    
+    return `
+      <div class="activity-item">
+        <div class="activity-icon">
+          <i class="fas fa-${activity.icon || 'circle'}"></i>
+        </div>
+        <div class="activity-content">
+          <div class="activity-title">${activity.title}</div>
+          <div class="activity-desc">${activity.description}</div>
+        </div>
+        <div class="activity-time">${time}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Exponer funciones globalmente
+window.initDashboard = initDashboard;
+window.initDashboardModule = initDashboard;
+window.loadDashboardData = loadDashboardData;
+</script>

@@ -1,0 +1,254 @@
+<section class="view" id="receptionView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Recepción</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-truck-loading"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Recepción de Mercancía</h1>
+          <p class="wms-module-subtitle">Gestión de ingresos y control de calidad</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span>Conectado</span>
+      </div>
+      <button class="wms-btn wms-btn-premium" onclick="loadPending(); loadHistory(); if(window.WMSToast) WMSToast.info('Datos actualizados');">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard Premium -->
+  <div class="wms-stats-grid wms-stats-4">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="reception_pending">0</span>
+        <span class="wms-stat-label">Pendientes Verificación</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="reception_verified">0</span>
+        <span class="wms-stat-label">Verificadas Hoy</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-boxes"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="reception_items">0</span>
+        <span class="wms-stat-label">Items Recibidos</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="danger">
+      <div class="wms-stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="reception_discrepancies">0</span>
+        <span class="wms-stat-label">Discrepancias</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="wms-grid" style="grid-template-columns: 1fr 2fr; gap: var(--wms-space-6);">
+    <!-- Left Column: Form -->
+    <div class="wms-card">
+      <div class="wms-card-header">
+        <h3 class="wms-card-title"><i class="fas fa-plus-circle"></i> Nueva Recepción</h3>
+      </div>
+      <div class="wms-card-body">
+        <form id="receptionForm">
+          <div class="wms-form-group">
+            <label class="wms-label wms-label-required">Proveedor</label>
+            <input type="text" class="wms-input" id="proveedor" required placeholder="Nombre del proveedor">
+          </div>
+          <div class="wms-form-group">
+            <label class="wms-label wms-label-required">Productos (IDs)</label>
+            <input type="text" class="wms-input" id="productos" placeholder="PRD-001, PRD-002" required>
+            <span class="wms-helper-text">Separados por coma</span>
+          </div>
+          <div class="wms-form-group">
+            <label class="wms-label wms-label-required">Cantidades</label>
+            <input type="text" class="wms-input" id="cantidades" placeholder="10, 20" required>
+            <span class="wms-helper-text">Correspondiente a cada ID</span>
+          </div>
+          <div class="wms-form-group">
+            <label class="wms-label">Notas</label>
+            <textarea class="wms-textarea" id="notas" rows="3" placeholder="Observaciones adicionales..."></textarea>
+          </div>
+          <button type="submit" class="wms-btn wms-btn-primary wms-btn-block wms-ripple">
+            <i class="fas fa-save"></i> Registrar Recepción
+          </button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Right Column: Pending & History -->
+    <div class="wms-flex wms-flex-col wms-gap-6">
+      <!-- Pending -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-clock"></i> Pendientes de Verificación</h3>
+        </div>
+        <div id="pendingList" style="max-height: 300px; overflow-y: auto;">
+          <div class="wms-loading-state"><div class="wms-spinner"></div></div>
+        </div>
+      </div>
+      
+      <!-- History -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-history"></i> Historial Reciente</h3>
+        </div>
+        <div id="historyList" style="max-height: 300px; overflow-y: auto;">
+          <div class="wms-loading-state"><div class="wms-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function initReception() {
+      console.log('Inicializando Recepción...');
+      loadPending();
+      loadHistory();
+      
+      var form = document.getElementById('receptionForm');
+      if (form && !form.dataset.listenerAdded) {
+        form.addEventListener('submit', handleReceptionSubmit);
+        form.dataset.listenerAdded = 'true';
+      }
+    }
+    
+    function handleReceptionSubmit(e) {
+      e.preventDefault();
+      var btn = e.target.querySelector('button[type="submit"]');
+      setButtonLoading(btn, true);
+
+      var data = {
+        proveedor: document.getElementById('proveedor').value,
+        productos: document.getElementById('productos').value.split(',').map(function(s) { return s.trim(); }),
+        cantidades: document.getElementById('cantidades').value.split(',').map(function(s) { return parseInt(s.trim()); }),
+        notas: document.getElementById('notas').value
+      };
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          setButtonLoading(btn, false);
+          if (result.success) {
+            if (window.WMSToast) WMSToast.success('Recepción registrada correctamente');
+            document.getElementById('receptionForm').reset();
+            loadPending();
+          } else {
+            if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+          }
+        })
+        .withFailureHandler(function(error) {
+          setButtonLoading(btn, false);
+          if (window.WMSToast) WMSToast.error('Error de red: ' + error);
+        })
+        .createReception(data);
+    }
+    
+    function loadPending() {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          var container = document.getElementById('pendingList');
+          if (!container) return;
+          
+          if (!result.success || result.receptions.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state wms-py-4"><div class="wms-empty-icon"><i class="fas fa-clipboard-check"></i></div><h3 class="wms-empty-title">Sin pendientes</h3><p class="wms-empty-text">No hay recepciones pendientes</p></div>';
+            document.getElementById('reception_pending').textContent = '0';
+            return;
+          }
+          
+          document.getElementById('reception_pending').textContent = result.receptions.length;
+          
+          var html = '<div class="wms-p-2">';
+          for (var i = 0; i < result.receptions.length; i++) {
+            var r = result.receptions[i];
+            html += '<div class="wms-card wms-mb-3 wms-hover-lift">';
+            html += '<div class="wms-card-body">';
+            html += '<div class="wms-flex wms-justify-between wms-items-center">';
+            html += '<div>';
+            html += '<div class="wms-font-semibold">' + r.proveedor + '</div>';
+            html += '<div class="wms-text-sm wms-text-secondary">';
+            html += '<i class="far fa-calendar"></i> ' + new Date(r.fecha).toLocaleDateString() + ' &bull; ';
+            html += '<i class="fas fa-box"></i> ' + r.productos.length + ' ítems';
+            html += '</div></div>';
+            html += '<button class="wms-btn wms-btn-success wms-btn-sm wms-ripple" onclick="verifyReception(\'' + r.id + '\')">';
+            html += '<i class="fas fa-check"></i> Verificar</button>';
+            html += '</div></div></div>';
+          }
+          html += '</div>';
+          container.innerHTML = html;
+        })
+        .getPendingReceptions();
+    }
+    
+    function loadHistory() {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          var container = document.getElementById('historyList');
+          if (!container) return;
+          
+          if (!result.success || result.receptions.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state wms-py-4"><div class="wms-empty-icon"><i class="fas fa-history"></i></div><p class="wms-empty-text">Sin historial disponible</p></div>';
+            return;
+          }
+          
+          var verified = result.receptions.filter(function(r) { return r.estado === 'VERIFICADA'; }).length;
+          document.getElementById('reception_verified').textContent = verified;
+          
+          var html = '<div class="wms-table-wrapper"><table class="wms-table">';
+          html += '<thead><tr><th>Fecha</th><th>Proveedor</th><th>Estado</th><th>Detalles</th></tr></thead><tbody>';
+          
+          var items = result.receptions.slice(0, 10);
+          for (var i = 0; i < items.length; i++) {
+            var r = items[i];
+            var badgeClass = r.estado === 'VERIFICADA' ? 'wms-badge-success' : 'wms-badge-warning';
+            html += '<tr>';
+            html += '<td>' + new Date(r.fecha).toLocaleDateString() + '</td>';
+            html += '<td class="wms-font-medium">' + r.proveedor + '</td>';
+            html += '<td><span class="wms-badge ' + badgeClass + '">' + r.estado + '</span></td>';
+            html += '<td class="wms-text-secondary wms-text-sm">' + r.productos.length + ' productos</td>';
+            html += '</tr>';
+          }
+          
+          html += '</tbody></table></div>';
+          container.innerHTML = html;
+        })
+        .getReceptionHistory();
+    }
+    
+    function verifyReception(id) {
+      if (confirm('¿Confirmar verificación de recepción? Esto actualizará el inventario.')) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.success) {
+              if (window.WMSToast) WMSToast.success('Recepción verificada. Inventario actualizado.');
+              loadPending();
+              loadHistory();
+            } else {
+              if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+            }
+          })
+          .verifyReception(id, sessionStorage.getItem('userName'));
+      }
+    }
+    
+    window.initReception = initReception;
+    window.verifyReception = verifyReception;
+  </script>
+</section>

@@ -1,0 +1,475 @@
+<section class="view" id="inventoryView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Inventario</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Inventario</h1>
+          <p class="wms-module-subtitle">Gestión de productos y control de stock</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span>Conectado</span>
+      </div>
+      <button class="wms-btn wms-btn-success" onclick="invExportarExcel()">
+        <i class="fas fa-file-excel"></i> Exportar
+      </button>
+      <button class="wms-btn wms-btn-outline" onclick="loadInventoryData(); if(window.WMSToast) WMSToast.info('Datos actualizados');">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Row 1: Stock Premium -->
+  <div class="wms-stats-grid wms-stats-4">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_disponibles">0</span>
+        <span class="wms-stat-label">Disponibles</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-lock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_reservados">0</span>
+        <span class="wms-stat-label">Reservados</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-truck-loading"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_transitorios">0</span>
+        <span class="wms-stat-label">En Tránsito</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="purple">
+      <div class="wms-stat-icon"><i class="fas fa-cubes"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_stockTotal">0</span>
+        <span class="wms-stat-label">Stock Total</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row 2: Alerts Premium -->
+  <div class="wms-stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: var(--wms-space-6);">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_stockBajo">0</span>
+        <span class="wms-stat-label">Stock Bajo</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="danger">
+      <div class="wms-stat-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="inv_agotados">0</span>
+        <span class="wms-stat-label">Agotados</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="wms-tabs">
+    <button class="wms-tab active" data-tab="productos" onclick="showInventoryTab('productos')">
+      <i class="fas fa-boxes"></i> Productos
+    </button>
+    <button class="wms-tab" data-tab="movimientos" onclick="showInventoryTab('movimientos')">
+      <i class="fas fa-exchange-alt"></i> Movimientos
+    </button>
+  </div>
+
+  <!-- Tab: Productos -->
+  <div id="tab_productos" class="wms-tab-content active">
+    <div class="wms-table-container">
+      <div class="wms-table-toolbar">
+        <div class="wms-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="inventory_search_input" placeholder="Buscar por código, descripción o ubicación..." oninput="filterInventory()">
+        </div>
+      </div>
+      <div class="wms-table-wrapper">
+        <table class="wms-table" id="inventoryTable">
+          <thead>
+            <tr>
+              <th>Ubicación</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Serie</th>
+              <th>Partida</th>
+              <th class="wms-text-center">Cantidad</th>
+              <th>Talla</th>
+              <th>Color</th>
+              <th>Vencimiento</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody">
+            <tr><td colspan="10"><div class="wms-loading-state"><div class="wms-spinner"></div><span class="wms-loading-text">Cargando inventario...</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Movimientos -->
+  <div id="tab_movimientos" class="wms-tab-content" style="display:none;">
+    <div class="wms-flex wms-items-center wms-justify-between wms-mb-4 wms-flex-wrap wms-gap-4">
+      <div class="wms-flex wms-gap-4 wms-items-end">
+        <div class="wms-form-group wms-mb-0">
+          <label class="wms-label">Desde:</label>
+          <input type="date" class="wms-input" id="mov_fechaDesde" onchange="loadMovimientos()">
+        </div>
+        <div class="wms-form-group wms-mb-0">
+          <label class="wms-label">Hasta:</label>
+          <input type="date" class="wms-input" id="mov_fechaHasta" onchange="loadMovimientos()">
+        </div>
+        <button class="wms-btn wms-btn-outline" onclick="loadMovimientos()">
+          <i class="fas fa-filter"></i> Filtrar
+        </button>
+      </div>
+      <div class="wms-flex wms-gap-3">
+        <span class="wms-badge wms-badge-success" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+          <i class="fas fa-arrow-down"></i> Entradas: <strong id="mov_totalEntradas">0</strong>
+        </span>
+        <span class="wms-badge wms-badge-danger" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+          <i class="fas fa-arrow-up"></i> Salidas: <strong id="mov_totalSalidas">0</strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="wms-grid wms-grid-cols-2 wms-gap-6">
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-chart-bar"></i> Movimientos por Día</h3>
+        </div>
+        <div class="wms-card-body" style="height: 300px;">
+          <canvas id="movimientosChart"></canvas>
+        </div>
+      </div>
+
+      <div class="wms-card">
+        <div class="wms-card-header wms-flex wms-gap-4">
+          <div class="wms-flex-1">
+            <h3 class="wms-card-title wms-text-success"><i class="fas fa-plus-circle"></i> Agregados</h3>
+          </div>
+          <div class="wms-flex-1">
+            <h3 class="wms-card-title wms-text-danger"><i class="fas fa-minus-circle"></i> Descontados</h3>
+          </div>
+        </div>
+        <div class="wms-flex" style="height: 300px;">
+          <div id="mov_agregados" class="wms-flex-1 wms-overflow-y-auto wms-p-4 wms-border-r"></div>
+          <div id="mov_descontados" class="wms-flex-1 wms-overflow-y-auto wms-p-4"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Ubicación -->
+  <div id="ubicacionModal" class="wms-modal-overlay">
+    <div class="wms-modal" style="max-width: 400px;">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title"><i class="fas fa-map-marker-alt"></i> Cambiar Ubicación</h3>
+        <button class="wms-modal-close" onclick="closeUbicacionModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="wms-modal-body">
+        <p id="modal_productoInfo" class="wms-text-secondary wms-mb-4"></p>
+        <div class="wms-form-group">
+          <label class="wms-label">Nueva Ubicación</label>
+          <input type="text" class="wms-input" id="modal_nuevaUbicacion" maxlength="8" placeholder="Ej: A01-B02" style="text-transform:uppercase;">
+        </div>
+      </div>
+      <div class="wms-modal-footer">
+        <button class="wms-btn wms-btn-outline" onclick="closeUbicacionModal()">Cancelar</button>
+        <button class="wms-btn wms-btn-primary" onclick="guardarNuevaUbicacion()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+var allProducts = [];
+var selectedProductId = null;
+
+function initInventoryModule() {
+  console.log('Inicializando módulo de Inventario...');
+  setDefaultDates();
+  loadInventoryData();
+}
+
+function setDefaultDates() {
+  var today = new Date();
+  var weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  var formatDate = function(d) { return d.toISOString().split('T')[0]; };
+  
+  var fechaHasta = document.getElementById('mov_fechaHasta');
+  var fechaDesde = document.getElementById('mov_fechaDesde');
+  
+  if(fechaHasta) fechaHasta.value = formatDate(today);
+  if(fechaDesde) fechaDesde.value = formatDate(weekAgo);
+}
+
+// Variable global para almacenar productos filtrados
+var invFilteredProducts = [];
+
+function invExportarExcel() {
+  var data = invFilteredProducts.length > 0 ? invFilteredProducts : allProducts;
+  
+  if (!data || data.length === 0) {
+    if (window.WMSToast) WMSToast.warning('No hay datos para exportar');
+    return;
+  }
+  
+  if (typeof WMSExport !== 'undefined') {
+    WMSExport.toExcel(data, {
+      filename: 'Inventario_Stock',
+      sheetName: 'Stock',
+      columns: [
+        { key: 'codigo', header: 'Código', width: 15 },
+        { key: 'descripcion', header: 'Descripción', width: 35 },
+        { key: 'ubicacion', header: 'Ubicación', width: 12 },
+        { key: 'cantidad', header: 'Cantidad', width: 12 },
+        { key: 'unidad', header: 'Unidad', width: 10 },
+        { key: 'lote', header: 'Lote', width: 15 },
+        { key: 'serie', header: 'Serie', width: 15 },
+        { key: 'fechaVencimiento', header: 'Vencimiento', width: 12 }
+      ]
+    });
+  } else {
+    if (window.WMSToast) WMSToast.error('Función de exportación no disponible');
+  }
+}
+
+function loadInventoryData() {
+  var tbody = document.getElementById('inventoryTableBody');
+  if(tbody) tbody.innerHTML = '<tr><td colspan="10"><div class="wms-loading-state"><div class="wms-spinner"></div><span class="wms-loading-text">Cargando...</span></div></td></tr>';
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        allProducts = result.productos || [];
+        updateInventoryStats(result.estadisticas);
+        renderProducts(allProducts);
+      } else {
+        if(tbody) tbody.innerHTML = '<tr><td colspan="10"><div class="wms-error-state"><div class="wms-error-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error: ' + result.error + '</p></div></td></tr>';
+      }
+    })
+    .withFailureHandler(function(error) {
+      if(tbody) tbody.innerHTML = '<tr><td colspan="10"><div class="wms-error-state"><div class="wms-error-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error de conexión</p></div></td></tr>';
+    })
+    .getInventarioCompleto();
+}
+
+function updateInventoryStats(stats) {
+  if (!stats) return;
+  var setVal = function(id, val) { var el = document.getElementById(id); if(el) el.textContent = val; };
+  
+  setVal('inv_disponibles', stats.totalProductosDisponibles || 0);
+  setVal('inv_reservados', stats.totalProductosReservados || 0);
+  setVal('inv_transitorios', stats.totalProductosTransitorio || 0);
+  setVal('inv_stockTotal', stats.stockTotal || 0);
+  setVal('inv_stockBajo', stats.stockBajo || 0);
+  setVal('inv_agotados', stats.agotados || 0);
+}
+
+function renderProducts(products) {
+  var tbody = document.getElementById('inventoryTableBody');
+  if (!tbody) return;
+  
+  if (!products || products.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-boxes"></i></div><h3 class="wms-empty-title">Sin productos</h3></div></td></tr>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < products.length; i++) {
+    var p = products[i];
+    var vencimiento = p.fechaVencimiento ? new Date(p.fechaVencimiento).toLocaleDateString() : '-';
+    html += '<tr>';
+    html += '<td><div class="wms-flex wms-items-center wms-gap-2">';
+    html += '<span class="wms-font-semibold" style="color: var(--wms-primary);">' + (p.ubicacion || '-') + '</span>';
+    html += '<button class="wms-btn wms-btn-ghost wms-btn-xs" onclick="openUbicacionModal(\'' + p.id + '\', \'' + p.codigo + '\', \'' + (p.ubicacion || '') + '\')"><i class="fas fa-edit"></i></button>';
+    html += '</div></td>';
+    html += '<td class="wms-td-mono">' + p.codigo + '</td>';
+    html += '<td>' + (p.descripcion || '-') + '</td>';
+    html += '<td>' + (p.serie || '-') + '</td>';
+    html += '<td>' + (p.partida || '-') + '</td>';
+    html += '<td class="wms-td-number wms-text-success">' + p.cantidad + '</td>';
+    html += '<td>' + (p.talla || '-') + '</td>';
+    html += '<td>' + (p.color || '-') + '</td>';
+    html += '<td>' + vencimiento + '</td>';
+    html += '<td></td>';
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function filterInventory() {
+  var searchInput = document.getElementById('inventory_search_input');
+  if(!searchInput) return;
+  
+  var search = searchInput.value.toLowerCase();
+  var filtered = allProducts.filter(function(p) {
+    return (p.codigo || '').toLowerCase().includes(search) ||
+           (p.descripcion || '').toLowerCase().includes(search) ||
+           (p.ubicacion || '').toLowerCase().includes(search);
+  });
+  renderProducts(filtered);
+}
+
+function showInventoryTab(tabId) {
+  var tabs = document.querySelectorAll('#inventoryView .wms-tab');
+  tabs.forEach(function(t) { 
+    t.classList.remove('active');
+    if (t.dataset.tab === tabId) t.classList.add('active');
+  });
+  
+  document.querySelectorAll('#inventoryView .wms-tab-content').forEach(function(tab) {
+    tab.style.display = 'none';
+    tab.classList.remove('active');
+  });
+  
+  var activeTab = document.getElementById('tab_' + tabId);
+  if (activeTab) {
+    activeTab.style.display = 'block';
+    activeTab.classList.add('active');
+    if (tabId === 'movimientos') setTimeout(loadMovimientos, 100);
+  }
+}
+
+function loadMovimientos() {
+  var fechaDesde = document.getElementById('mov_fechaDesde').value;
+  var fechaHasta = document.getElementById('mov_fechaHasta').value;
+  
+  var setHtml = function(id, html) { var el = document.getElementById(id); if(el) el.innerHTML = html; };
+  setHtml('mov_agregados', '<div class="wms-loading-state"><div class="wms-spinner"></div></div>');
+  setHtml('mov_descontados', '<div class="wms-loading-state"><div class="wms-spinner"></div></div>');
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        var setTxt = function(id, val) { var el = document.getElementById(id); if(el) el.textContent = val; };
+        setTxt('mov_totalEntradas', result.totales?.ingresados || 0);
+        setTxt('mov_totalSalidas', result.totales?.despachados || 0);
+        
+        renderMovimientos(result.agregados, 'mov_agregados', 'entrada');
+        renderMovimientos(result.descontados, 'mov_descontados', 'salida');
+        renderMovimientosChart(result.graficoData);
+      }
+    })
+    .getResumenMovimientos(fechaDesde, fechaHasta);
+}
+
+function renderMovimientos(items, containerId, tipo) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  
+  if (!items || items.length === 0) {
+    container.innerHTML = '<div class="wms-text-center wms-text-secondary wms-p-4">Sin movimientos</div>';
+    return;
+  }
+  
+  var html = '';
+  var colorCantidad = tipo === 'entrada' ? 'var(--wms-success)' : 'var(--wms-danger)';
+  var signo = tipo === 'entrada' ? '+' : '-';
+  
+  for (var i = 0; i < Math.min(items.length, 50); i++) {
+    var m = items[i];
+    html += '<div class="wms-flex wms-justify-between wms-items-center wms-py-2 wms-border-b">';
+    html += '<div><div class="wms-font-semibold">' + m.codigo + '</div><div class="wms-text-xs wms-text-tertiary">' + m.fecha + '</div></div>';
+    html += '<div class="wms-font-bold" style="color:' + colorCantidad + '">' + signo + m.cantidad + '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderMovimientosChart(data) {
+  var ctx = document.getElementById('movimientosChart');
+  if (!ctx) return;
+  
+  if (window.invMovimientosChart) window.invMovimientosChart.destroy();
+  
+  var labels = (data || []).map(function(d) { return d.fecha; });
+  var entradas = (data || []).map(function(d) { return d.entradas; });
+  var salidas = (data || []).map(function(d) { return d.salidas; });
+  
+  window.invMovimientosChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Entradas', data: entradas, backgroundColor: '#10b981', borderRadius: 4 },
+        { label: 'Salidas', data: salidas, backgroundColor: '#ef4444', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { usePointStyle: true } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: '#f3f4f6' } } }
+    }
+  });
+}
+
+function openUbicacionModal(id, codigo, ubicacionActual) {
+  selectedProductId = id;
+  var infoEl = document.getElementById('modal_productoInfo');
+  var inputEl = document.getElementById('modal_nuevaUbicacion');
+  var modal = document.getElementById('ubicacionModal');
+  
+  if(infoEl) infoEl.innerHTML = '<strong>Código:</strong> ' + codigo + '<br><strong>Ubicación actual:</strong> ' + (ubicacionActual || 'Sin ubicación');
+  if(inputEl) inputEl.value = ubicacionActual || '';
+  if(modal) modal.classList.add('open');
+}
+
+function closeUbicacionModal() {
+  var modal = document.getElementById('ubicacionModal');
+  if(modal) modal.classList.remove('open');
+  selectedProductId = null;
+}
+
+function guardarNuevaUbicacion() {
+  if (!selectedProductId) return;
+  
+  var inputEl = document.getElementById('modal_nuevaUbicacion');
+  var nuevaUbicacion = inputEl ? inputEl.value.trim().toUpperCase() : '';
+  
+  if (!nuevaUbicacion) { if(window.WMSToast) WMSToast.warning('Ingrese una ubicación válida'); return; }
+  if (nuevaUbicacion.length > 8) { if(window.WMSToast) WMSToast.warning('Máximo 8 caracteres'); return; }
+  
+  var usuario = window.App?.user?.nombre || 'Usuario';
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        closeUbicacionModal();
+        loadInventoryData();
+        if(window.WMSToast) WMSToast.success('Ubicación actualizada');
+      } else {
+        if(window.WMSToast) WMSToast.error('Error: ' + result.error);
+      }
+    })
+    .actualizarUbicacionEnTiempoReal(selectedProductId, nuevaUbicacion, usuario);
+}
+
+window.initInventoryModule = initInventoryModule;
+window.loadInventoryData = loadInventoryData;
+window.filterInventory = filterInventory;
+window.showInventoryTab = showInventoryTab;
+window.loadMovimientos = loadMovimientos;
+window.openUbicacionModal = openUbicacionModal;
+window.closeUbicacionModal = closeUbicacionModal;
+window.guardarNuevaUbicacion = guardarNuevaUbicacion;
+</script>
+</section>

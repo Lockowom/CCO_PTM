@@ -1,0 +1,1192 @@
+<!-- TMS Dashboard Page -->
+<div id="tms-dashboardView" class="view" style="display: none;">
+  
+  <!-- Header del Dashboard -->
+  <div class="tms-dashboard-header">
+    <div class="tms-header-content">
+      <h1 class="tms-dashboard-title">
+        <i class="fas fa-truck"></i>
+        Dashboard TMS
+      </h1>
+      <div class="tms-header-actions">
+        <button id="tmsDashboardRefresh" class="tms-btn tms-btn-primary">
+          <i class="fas fa-sync-alt"></i>
+          Actualizar
+        </button>
+        <div class="tms-last-update">
+          Última actualización: <span id="tmsLastUpdate">--:--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Métricas Cards -->
+  <div class="tms-metrics-grid">
+    
+    <!-- Card Entregas -->
+    <div class="tms-metric-card tms-card-entregas">
+      <div class="tms-card-header">
+        <h3><i class="fas fa-box"></i> Entregas</h3>
+      </div>
+      <div class="tms-card-content">
+        <div class="tms-metric-main">
+          <span class="tms-metric-number" id="tmsEntregasTotal">0</span>
+          <span class="tms-metric-label">Total</span>
+        </div>
+        <div class="tms-metric-breakdown">
+          <div class="tms-metric-item">
+            <span class="tms-metric-value" id="tmsEntregasEnRuta">0</span>
+            <span class="tms-metric-sublabel">En Ruta</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value" id="tmsEntregasEntregadas">0</span>
+            <span class="tms-metric-sublabel">Entregadas</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value" id="tmsEntregasPendientes">0</span>
+            <span class="tms-metric-sublabel">Pendientes</span>
+          </div>
+        </div>
+        <div class="tms-metric-progress">
+          <div class="tms-progress-bar">
+            <div class="tms-progress-fill" id="tmsEntregasProgress" style="width: 0%"></div>
+          </div>
+          <span class="tms-progress-text" id="tmsEntregasProgressText">0% Completado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Conductores -->
+    <div class="tms-metric-card tms-card-conductores">
+      <div class="tms-card-header">
+        <h3><i class="fas fa-users"></i> Conductores</h3>
+      </div>
+      <div class="tms-card-content">
+        <div class="tms-metric-main">
+          <span class="tms-metric-number" id="tmsConductoresTotal">0</span>
+          <span class="tms-metric-label">Total</span>
+        </div>
+        <div class="tms-metric-breakdown">
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-available" id="tmsConductoresDisponibles">0</span>
+            <span class="tms-metric-sublabel">Disponibles</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-busy" id="tmsConductoresEnRuta">0</span>
+            <span class="tms-metric-sublabel">En Ruta</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-offline" id="tmsConductoresOffline">0</span>
+            <span class="tms-metric-sublabel">Offline</span>
+          </div>
+        </div>
+        <div class="tms-metric-extra">
+          <div class="tms-rating">
+            <i class="fas fa-star"></i>
+            <span id="tmsConductoresRating">0.0</span>
+            <span class="tms-rating-label">Rating Promedio</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Vehículos -->
+    <div class="tms-metric-card tms-card-vehiculos">
+      <div class="tms-card-header">
+        <h3><i class="fas fa-truck"></i> Vehículos</h3>
+      </div>
+      <div class="tms-card-content">
+        <div class="tms-metric-main">
+          <span class="tms-metric-number" id="tmsVehiculosTotal">0</span>
+          <span class="tms-metric-label">Total</span>
+        </div>
+        <div class="tms-metric-breakdown">
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-available" id="tmsVehiculosDisponibles">0</span>
+            <span class="tms-metric-sublabel">Disponibles</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-busy" id="tmsVehiculosEnUso">0</span>
+            <span class="tms-metric-sublabel">En Uso</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value tms-status-maintenance" id="tmsVehiculosMantenimiento">0</span>
+            <span class="tms-metric-sublabel">Mantenimiento</span>
+          </div>
+        </div>
+        <div class="tms-metric-extra">
+          <div class="tms-utilization">
+            <span class="tms-utilization-value" id="tmsVehiculosUtilizacion">0%</span>
+            <span class="tms-utilization-label">Utilización</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Performance -->
+    <div class="tms-metric-card tms-card-performance">
+      <div class="tms-card-header">
+        <h3><i class="fas fa-chart-line"></i> Performance Hoy</h3>
+      </div>
+      <div class="tms-card-content">
+        <div class="tms-metric-main">
+          <span class="tms-metric-number" id="tmsPerformanceCompletadas">0</span>
+          <span class="tms-metric-label">Completadas</span>
+        </div>
+        <div class="tms-metric-breakdown">
+          <div class="tms-metric-item">
+            <span class="tms-metric-value" id="tmsPerformanceTiempo">0</span>
+            <span class="tms-metric-sublabel">min promedio</span>
+          </div>
+          <div class="tms-metric-item">
+            <span class="tms-metric-value" id="tmsPerformanceEficiencia">0%</span>
+            <span class="tms-metric-sublabel">Eficiencia</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección Principal -->
+  <div class="tms-main-content">
+    
+    <!-- Control Tower -->
+    <div class="tms-control-tower">
+      <div class="tms-section-header">
+        <h2><i class="fas fa-map-marked-alt"></i> Control Tower</h2>
+        <div class="tms-section-actions">
+          <button id="tmsMapRefresh" class="tms-btn tms-btn-secondary">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button id="tmsMapFullscreen" class="tms-btn tms-btn-secondary">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="tms-map-container">
+        <div id="tmsMap" class="tms-map">
+          <!-- Mapa se cargará aquí -->
+          <div class="tms-map-placeholder">
+            <i class="fas fa-map"></i>
+            <p>Cargando mapa...</p>
+            <small>Ubicaciones de conductores en tiempo real</small>
+          </div>
+        </div>
+        
+        <!-- Leyenda del mapa -->
+        <div class="tms-map-legend">
+          <div class="tms-legend-item">
+            <span class="tms-legend-icon tms-driver-available"></span>
+            <span>Disponible</span>
+          </div>
+          <div class="tms-legend-item">
+            <span class="tms-legend-icon tms-driver-busy"></span>
+            <span>En Ruta</span>
+          </div>
+          <div class="tms-legend-item">
+            <span class="tms-legend-icon tms-driver-destination"></span>
+            <span>En Destino</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entregas Activas -->
+    <div class="tms-active-deliveries">
+      <div class="tms-section-header">
+        <h2><i class="fas fa-list-alt"></i> Entregas Activas</h2>
+        <div class="tms-section-actions">
+          <button id="tmsDeliveriesRefresh" class="tms-btn tms-btn-secondary">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button id="tmsDeliveriesViewAll" class="tms-btn tms-btn-outline">
+            Ver Todas
+          </button>
+        </div>
+      </div>
+      
+      <div class="tms-deliveries-container">
+        <div id="tmsDeliveriesList" class="tms-deliveries-list">
+          <!-- Lista de entregas se cargará aquí -->
+          <div class="tms-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando entregas activas...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Alertas del Sistema -->
+  <div id="tmsAlertsContainer" class="tms-alerts-container" style="display: none;">
+    <div class="tms-alerts-header">
+      <h3><i class="fas fa-exclamation-triangle"></i> Alertas del Sistema</h3>
+      <button id="tmsAlertsClose" class="tms-btn-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div id="tmsAlertsList" class="tms-alerts-list">
+      <!-- Alertas se cargarán aquí -->
+    </div>
+  </div>
+
+</div>
+
+<!-- Estilos CSS para el Dashboard TMS -->
+<style>
+/* ==================== LAYOUT PRINCIPAL ==================== */
+.tms-dashboard-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tms-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.tms-dashboard-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tms-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.tms-last-update {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ==================== MÉTRICAS GRID ==================== */
+.tms-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.tms-metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ddd;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tms-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tms-card-entregas { border-left-color: #4CAF50; }
+.tms-card-conductores { border-left-color: #2196F3; }
+.tms-card-vehiculos { border-left-color: #FF9800; }
+.tms-card-performance { border-left-color: #9C27B0; }
+
+.tms-card-header h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tms-metric-main {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.tms-metric-number {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+.tms-metric-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.tms-metric-breakdown {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.tms-metric-item {
+  text-align: center;
+  flex: 1;
+}
+
+.tms-metric-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.tms-metric-sublabel {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Estados de colores */
+.tms-status-available { color: #4CAF50; }
+.tms-status-busy { color: #FF9800; }
+.tms-status-offline { color: #f44336; }
+.tms-status-maintenance { color: #9E9E9E; }
+
+/* ==================== PROGRESS BAR ==================== */
+.tms-metric-progress {
+  margin-top: 10px;
+}
+
+.tms-progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tms-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.3s ease;
+}
+
+.tms-progress-text {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* ==================== MÉTRICAS EXTRA ==================== */
+.tms-metric-extra {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.tms-rating, .tms-utilization {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.tms-rating i {
+  color: #FFD700;
+}
+
+.tms-utilization-value, .tms-rating span:first-of-type {
+  font-weight: 600;
+  color: #333;
+}
+
+.tms-utilization-label, .tms-rating-label {
+  font-size: 12px;
+  color: #666;
+}
+
+/* ==================== CONTENIDO PRINCIPAL ==================== */
+.tms-main-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+  .tms-main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== SECCIONES ==================== */
+.tms-control-tower, .tms-active-deliveries {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tms-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.tms-section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tms-section-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ==================== MAPA ==================== */
+.tms-map-container {
+  position: relative;
+}
+
+.tms-map {
+  width: 100%;
+  height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tms-map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  text-align: center;
+}
+
+.tms-map-placeholder i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.tms-map-legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tms-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.tms-legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.tms-legend-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.tms-driver-available { background-color: #4CAF50; }
+.tms-driver-busy { background-color: #FF9800; }
+.tms-driver-destination { background-color: #f44336; }
+
+/* ==================== ENTREGAS ACTIVAS ==================== */
+.tms-deliveries-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.tms-deliveries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tms-delivery-item {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  transition: all 0.2s ease;
+}
+
+.tms-delivery-item:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+.tms-delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.tms-delivery-nv {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.tms-delivery-priority {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tms-priority-alta { background: #ffebee; color: #c62828; }
+.tms-priority-media { background: #fff3e0; color: #ef6c00; }
+.tms-priority-baja { background: #e8f5e8; color: #2e7d32; }
+
+.tms-delivery-client {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.tms-delivery-address {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.tms-delivery-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.tms-delivery-driver {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tms-delivery-time {
+  font-weight: 500;
+  color: #333;
+}
+
+/* ==================== BOTONES ==================== */
+.tms-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.tms-btn-primary {
+  background: #2196F3;
+  color: white;
+}
+
+.tms-btn-primary:hover {
+  background: #1976D2;
+}
+
+.tms-btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.tms-btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.tms-btn-outline {
+  background: transparent;
+  color: #2196F3;
+  border: 1px solid #2196F3;
+}
+
+.tms-btn-outline:hover {
+  background: #2196F3;
+  color: white;
+}
+
+.tms-btn-close {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.tms-btn-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== ALERTAS ==================== */
+.tms-alerts-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 350px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.tms-alerts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.tms-alerts-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tms-alerts-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tms-alert-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  gap: 12px;
+}
+
+.tms-alert-item:last-child {
+  border-bottom: none;
+}
+
+.tms-alert-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tms-alert-warning .tms-alert-icon {
+  background: #FF9800;
+}
+
+.tms-alert-error .tms-alert-icon {
+  background: #f44336;
+}
+
+.tms-alert-content {
+  flex: 1;
+}
+
+.tms-alert-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.tms-alert-message {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* ==================== LOADING ==================== */
+.tms-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+  text-align: center;
+}
+
+.tms-loading i {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .tms-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .tms-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tms-main-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .tms-metric-breakdown {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .tms-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .tms-alerts-container {
+    width: calc(100% - 40px);
+    right: 20px;
+    left: 20px;
+  }
+}
+</style>
+
+<!-- JavaScript para el Dashboard TMS -->
+<script>
+// ==================== VARIABLES GLOBALES ====================
+let tmsDashboardData = null;
+let tmsRefreshInterval = null;
+let tmsLastUpdateTime = null;
+
+// ==================== INICIALIZACIÓN ====================
+function initTMSDashboard() {
+  console.log('TMS Dashboard: Inicializando...');
+  
+  // Configurar event listeners
+  setupTMSEventListeners();
+  
+  // Cargar datos iniciales
+  loadTMSDashboardData();
+  
+  // Configurar auto-refresh cada 30 segundos
+  tmsRefreshInterval = setInterval(loadTMSDashboardData, 30000);
+  
+  console.log('TMS Dashboard: Inicializado correctamente');
+}
+
+// ==================== EVENT LISTENERS ====================
+function setupTMSEventListeners() {
+  // Botón de refresh principal
+  const refreshBtn = document.getElementById('tmsDashboardRefresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+      loadTMSDashboardData();
+    });
+  }
+  
+  // Botones de refresh individuales
+  const mapRefreshBtn = document.getElementById('tmsMapRefresh');
+  if (mapRefreshBtn) {
+    mapRefreshBtn.addEventListener('click', loadTMSDriverLocations);
+  }
+  
+  const deliveriesRefreshBtn = document.getElementById('tmsDeliveriesRefresh');
+  if (deliveriesRefreshBtn) {
+    deliveriesRefreshBtn.addEventListener('click', loadTMSActiveDeliveries);
+  }
+  
+  // Botón de pantalla completa del mapa
+  const mapFullscreenBtn = document.getElementById('tmsMapFullscreen');
+  if (mapFullscreenBtn) {
+    mapFullscreenBtn.addEventListener('click', toggleTMSMapFullscreen);
+  }
+  
+  // Botón ver todas las entregas
+  const viewAllBtn = document.getElementById('tmsDeliveriesViewAll');
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener('click', () => {
+      // Aquí se podría abrir una vista completa de entregas
+      showNotification('Funcionalidad en desarrollo', 'info');
+    });
+  }
+  
+  // Cerrar alertas
+  const alertsCloseBtn = document.getElementById('tmsAlertsClose');
+  if (alertsCloseBtn) {
+    alertsCloseBtn.addEventListener('click', hideTMSAlerts);
+  }
+}
+
+// ==================== CARGA DE DATOS ====================
+function loadTMSDashboardData() {
+  console.log('TMS Dashboard: Cargando datos...');
+  
+  google.script.run
+    .withSuccessHandler(handleTMSDashboardData)
+    .withFailureHandler(handleTMSError)
+    .getTMSDashboardData();
+}
+
+function handleTMSDashboardData(response) {
+  console.log('TMS Dashboard: Datos recibidos:', response);
+  
+  if (response.success) {
+    tmsDashboardData = response.data;
+    tmsLastUpdateTime = new Date();
+    
+    // Actualizar todas las secciones
+    updateTMSMetrics(tmsDashboardData.metrics);
+    updateTMSActiveDeliveries(tmsDashboardData.activeDeliveries);
+    updateTMSDriverLocations(tmsDashboardData.driverLocations);
+    updateTMSAlerts(tmsDashboardData.alerts);
+    updateTMSLastUpdateTime();
+    
+    // Restaurar botón de refresh
+    const refreshBtn = document.getElementById('tmsDashboardRefresh');
+    if (refreshBtn) {
+      refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+    }
+    
+  } else {
+    handleTMSError(response.error || 'Error desconocido');
+  }
+}
+
+function handleTMSError(error) {
+  console.error('TMS Dashboard: Error:', error);
+  showNotification('Error cargando datos del dashboard: ' + error, 'error');
+  
+  // Restaurar botón de refresh
+  const refreshBtn = document.getElementById('tmsDashboardRefresh');
+  if (refreshBtn) {
+    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+  }
+}
+
+// ==================== ACTUALIZACIÓN DE MÉTRICAS ====================
+function updateTMSMetrics(metrics) {
+  if (!metrics) return;
+  
+  console.log('TMS Dashboard: Actualizando métricas:', metrics);
+  
+  // Métricas de entregas
+  if (metrics.entregas) {
+    updateElement('tmsEntregasTotal', metrics.entregas.total);
+    updateElement('tmsEntregasEnRuta', metrics.entregas.enRuta);
+    updateElement('tmsEntregasEntregadas', metrics.entregas.entregadas);
+    updateElement('tmsEntregasPendientes', metrics.entregas.pendientes);
+    
+    // Progress bar
+    const progress = metrics.entregas.porcentajeExito;
+    updateElement('tmsEntregasProgress', '', (el) => {
+      el.style.width = progress + '%';
+    });
+    updateElement('tmsEntregasProgressText', progress + '% Completado');
+  }
+  
+  // Métricas de conductores
+  if (metrics.conductores) {
+    updateElement('tmsConductoresTotal', metrics.conductores.total);
+    updateElement('tmsConductoresDisponibles', metrics.conductores.disponibles);
+    updateElement('tmsConductoresEnRuta', metrics.conductores.enRuta);
+    updateElement('tmsConductoresOffline', metrics.conductores.offline);
+    updateElement('tmsConductoresRating', metrics.conductores.calificacionPromedio);
+  }
+  
+  // Métricas de vehículos
+  if (metrics.vehiculos) {
+    updateElement('tmsVehiculosTotal', metrics.vehiculos.total);
+    updateElement('tmsVehiculosDisponibles', metrics.vehiculos.disponibles);
+    updateElement('tmsVehiculosEnUso', metrics.vehiculos.enUso);
+    updateElement('tmsVehiculosMantenimiento', metrics.vehiculos.mantenimiento);
+    updateElement('tmsVehiculosUtilizacion', metrics.vehiculos.utilizacion + '%');
+  }
+  
+  // Métricas de performance
+  if (metrics.performance) {
+    updateElement('tmsPerformanceCompletadas', metrics.performance.completadasHoy);
+    updateElement('tmsPerformanceTiempo', metrics.performance.tiempoPromedioEntrega);
+    updateElement('tmsPerformanceEficiencia', metrics.performance.eficienciaHoy + '%');
+  }
+}
+
+// ==================== ENTREGAS ACTIVAS ====================
+function updateTMSActiveDeliveries(deliveries) {
+  const container = document.getElementById('tmsDeliveriesList');
+  if (!container) return;
+  
+  console.log('TMS Dashboard: Actualizando entregas activas:', deliveries);
+  
+  if (!deliveries || deliveries.length === 0) {
+    container.innerHTML = `
+      <div class="tms-loading">
+        <i class="fas fa-check-circle"></i>
+        <p>No hay entregas activas</p>
+        <small>Todas las entregas están completadas</small>
+      </div>
+    `;
+    return;
+  }
+  
+  const deliveriesHTML = deliveries.map(delivery => `
+    <div class="tms-delivery-item">
+      <div class="tms-delivery-header">
+        <span class="tms-delivery-nv">${delivery.nv}</span>
+        <span class="tms-delivery-priority tms-priority-${delivery.prioridad.toLowerCase()}">
+          ${delivery.prioridad}
+        </span>
+      </div>
+      <div class="tms-delivery-client">${delivery.cliente}</div>
+      <div class="tms-delivery-address">
+        <i class="fas fa-map-marker-alt"></i> ${delivery.direccion}
+      </div>
+      <div class="tms-delivery-footer">
+        <div class="tms-delivery-driver">
+          <i class="fas fa-user"></i>
+          ${delivery.conductorNombre}
+        </div>
+        <div class="tms-delivery-time">
+          <i class="fas fa-clock"></i>
+          ${delivery.tiempoEstimado}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = deliveriesHTML;
+}
+
+function loadTMSActiveDeliveries() {
+  google.script.run
+    .withSuccessHandler((response) => {
+      if (response.success) {
+        updateTMSActiveDeliveries(response.entregas);
+      }
+    })
+    .withFailureHandler(handleTMSError)
+    .getTMSActiveDeliveries();
+}
+
+// ==================== UBICACIONES DE CONDUCTORES ====================
+function updateTMSDriverLocations(locations) {
+  console.log('TMS Dashboard: Actualizando ubicaciones de conductores:', locations);
+  
+  // Por ahora mostrar placeholder del mapa
+  // En una implementación real aquí se cargaría Google Maps
+  const mapContainer = document.getElementById('tmsMap');
+  if (mapContainer && locations && locations.length > 0) {
+    mapContainer.innerHTML = `
+      <div class="tms-map-placeholder">
+        <i class="fas fa-map-marked-alt"></i>
+        <p>${locations.length} conductores activos</p>
+        <small>Mapa en desarrollo - Google Maps API requerida</small>
+      </div>
+    `;
+  }
+}
+
+function loadTMSDriverLocations() {
+  google.script.run
+    .withSuccessHandler((response) => {
+      if (response.success) {
+        updateTMSDriverLocations(response.locations);
+      }
+    })
+    .withFailureHandler(handleTMSError)
+    .getTMSDriverLocations();
+}
+
+// ==================== ALERTAS ====================
+function updateTMSAlerts(alerts) {
+  console.log('TMS Dashboard: Actualizando alertas:', alerts);
+  
+  const alertsContainer = document.getElementById('tmsAlertsContainer');
+  const alertsList = document.getElementById('tmsAlertsList');
+  
+  if (!alertsContainer || !alertsList) return;
+  
+  if (!alerts || alerts.length === 0) {
+    alertsContainer.style.display = 'none';
+    return;
+  }
+  
+  const alertsHTML = alerts.map(alert => `
+    <div class="tms-alert-item tms-alert-${alert.tipo}">
+      <div class="tms-alert-icon">
+        <i class="fas fa-${alert.tipo === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+      </div>
+      <div class="tms-alert-content">
+        <div class="tms-alert-title">${alert.titulo}</div>
+        <div class="tms-alert-message">${alert.mensaje}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  alertsList.innerHTML = alertsHTML;
+  alertsContainer.style.display = 'block';
+}
+
+function hideTMSAlerts() {
+  const alertsContainer = document.getElementById('tmsAlertsContainer');
+  if (alertsContainer) {
+    alertsContainer.style.display = 'none';
+  }
+}
+
+// ==================== UTILIDADES ====================
+function updateElement(id, value, callback) {
+  const element = document.getElementById(id);
+  if (element) {
+    if (callback) {
+      callback(element);
+    } else {
+      element.textContent = value;
+    }
+  }
+}
+
+function updateTMSLastUpdateTime() {
+  if (tmsLastUpdateTime) {
+    const timeString = tmsLastUpdateTime.toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    updateElement('tmsLastUpdate', timeString);
+  }
+}
+
+function toggleTMSMapFullscreen() {
+  // Funcionalidad de pantalla completa para el mapa
+  showTMSNotification('Pantalla completa en desarrollo', 'info');
+}
+
+/**
+ * Función para mostrar notificaciones TMS
+ */
+function showTMSNotification(message, type = 'info') {
+  // Intentar usar la función global de notificaciones si existe
+  if (typeof showNotification === 'function') {
+    showNotification(message, type);
+    return;
+  }
+  
+  // Fallback: usar alert
+  alert(message);
+}
+
+// ==================== CLEANUP ====================
+function cleanupTMSDashboard() {
+  if (tmsRefreshInterval) {
+    clearInterval(tmsRefreshInterval);
+    tmsRefreshInterval = null;
+  }
+}
+
+// ==================== AUTO-INICIALIZACIÓN ====================
+// El dashboard se inicializará cuando se muestre la vista
+document.addEventListener('DOMContentLoaded', function() {
+  // Se inicializará desde Navigation_Handler cuando se muestre la vista
+});
+
+// ==================== FUNCIÓN GLOBAL DE INICIALIZACIÓN ====================
+/**
+ * Función global para inicializar el TMS Dashboard
+ * Llamada desde Navigation_Handler
+ */
+window.initTMSDashboard = function() {
+  console.log('initTMSDashboard: Inicializando TMS Dashboard...');
+  
+  // Verificar que la vista esté visible
+  const dashboardView = document.getElementById('tmsDashboardView');
+  if (!dashboardView) {
+    console.error('initTMSDashboard: Vista tmsDashboardView no encontrada');
+    return;
+  }
+  
+  // Asegurar que la vista esté visible
+  if (!dashboardView.classList.contains('active')) {
+    console.log('initTMSDashboard: Vista no está activa, esperando...');
+    // Intentar de nuevo en 100ms
+    setTimeout(function() {
+      if (dashboardView.classList.contains('active')) {
+        initTMSDashboard();
+      }
+    }, 100);
+    return;
+  }
+  
+  console.log('initTMSDashboard: Vista activa, inicializando...');
+  
+  // Inicializar el dashboard
+  try {
+    // Configurar event listeners
+    setupTMSEventListeners();
+    
+    // Cargar datos iniciales
+    loadTMSDashboardData();
+    
+    // Configurar auto-refresh cada 30 segundos
+    if (tmsRefreshInterval) {
+      clearInterval(tmsRefreshInterval);
+    }
+    tmsRefreshInterval = setInterval(loadTMSDashboardData, 30000);
+    
+    console.log('initTMSDashboard: TMS Dashboard inicializado correctamente');
+    
+  } catch (error) {
+    console.error('initTMSDashboard: Error inicializando:', error);
+    showNotification('Error inicializando TMS Dashboard: ' + error.message, 'error');
+  }
+};
+</script>

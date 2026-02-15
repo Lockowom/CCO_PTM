@@ -1,0 +1,536 @@
+<section class="view" id="shippingView" style="background: var(--wms-bg-body, #f3f4f6);">
+  <!-- Module Header -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Despachos</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-shipping-fast"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Gestión de Despachos</h1>
+          <p class="wms-module-subtitle">Crear y gestionar despachos de notas de venta</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <button class="wms-btn wms-btn-premium" onclick="refreshShippingData()">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="wms-stats-grid wms-stats-3">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ship_pendientes">0</span>
+        <span class="wms-stat-label">Pendientes Despacho</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-truck-loading"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ship_despachados">0</span>
+        <span class="wms-stat-label">Despachados Hoy</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="ship_total">0</span>
+        <span class="wms-stat-label">Total Despachos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content: Two Column Layout -->
+  <div class="wms-grid" style="grid-template-columns: 1fr 1fr; gap: var(--wms-space-6); align-items: start;">
+    
+    <!-- Left Column: Lista de N.V Pendientes -->
+    <div class="wms-card">
+      <div class="wms-card-header wms-flex wms-justify-between wms-items-center">
+        <h3 class="wms-card-title"><i class="fas fa-list-alt"></i> N.V Pendientes de Despacho</h3>
+        <div class="wms-search-box" style="max-width: 200px;">
+          <i class="fas fa-search"></i>
+          <input type="text" id="filtroDespachos" placeholder="Buscar..." onkeyup="filtrarDespachos()">
+        </div>
+      </div>
+      <div class="wms-card-body wms-p-0">
+        <div class="wms-table-wrapper" style="max-height: 600px; overflow-y: auto;">
+          <table class="wms-table wms-table-hover">
+            <thead>
+              <tr>
+                <th>N.V</th>
+                <th>Cliente</th>
+                <th>Items</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="despachosTableBody">
+              <tr>
+                <td colspan="4">
+                  <div class="wms-loading-state wms-py-4">
+                    <div class="wms-spinner"></div>
+                    <p class="wms-text-secondary wms-mt-2">Cargando...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Formulario de Despacho -->
+    <div class="wms-card" id="formDespachoCard">
+      <div class="wms-card-header" style="background: linear-gradient(135deg, var(--wms-primary) 0%, var(--wms-primary-dark) 100%); color: white; border-radius: var(--wms-radius-lg) var(--wms-radius-lg) 0 0;">
+        <h3 class="wms-card-title" style="color: white;">
+          <i class="fas fa-shipping-fast"></i> Crear Despacho
+        </h3>
+      </div>
+      <div class="wms-card-body" id="formDespachoBody">
+        <!-- Estado inicial: Seleccionar N.V -->
+        <div class="wms-empty-state wms-py-6" id="despachoEmptyState">
+          <div class="wms-empty-icon" style="font-size: 3rem; color: var(--wms-gray-300);">
+            <i class="fas fa-hand-pointer"></i>
+          </div>
+          <h3 class="wms-empty-title">Seleccione una N.V</h3>
+          <p class="wms-empty-text">Haga clic en "Seleccionar" en una N.V de la lista para crear el despacho</p>
+        </div>
+        
+        <!-- Formulario de Despacho (oculto inicialmente) -->
+        <div id="despachoFormContent" style="display: none;">
+          <!-- N.V Seleccionada -->
+          <div class="wms-alert wms-alert-info wms-mb-4">
+            <div class="wms-alert-icon"><i class="fas fa-file-invoice"></i></div>
+            <div class="wms-alert-content">
+              <strong>N.V Seleccionada:</strong> <span id="desp_nv_display" class="wms-font-bold"></span>
+              <button type="button" class="wms-btn wms-btn-xs wms-btn-outline wms-ml-2" onclick="cancelarSeleccionNV()">
+                <i class="fas fa-times"></i> Cambiar
+              </button>
+            </div>
+          </div>
+
+          <!-- Datos Automáticos -->
+          <div class="wms-mb-4" style="background: var(--wms-gray-50); padding: var(--wms-space-4); border-radius: var(--wms-radius-md); border-left: 4px solid var(--wms-info);">
+            <h4 class="wms-h5 wms-mb-3" style="color: var(--wms-info);">
+              <i class="fas fa-magic"></i> Datos Automáticos
+            </h4>
+            <div class="wms-grid wms-grid-cols-2 wms-gap-3">
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">Fecha</label>
+                <input type="text" id="desp_fechaDocto" class="wms-input wms-input-sm" readonly>
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">Cliente</label>
+                <input type="text" id="desp_cliente" class="wms-input wms-input-sm" readonly>
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">Bultos</label>
+                <input type="number" id="desp_bultos" class="wms-input wms-input-sm" readonly>
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">Vendedor</label>
+                <input type="text" id="desp_vendedor" class="wms-input wms-input-sm" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- Datos Manuales -->
+          <div style="background: var(--wms-warning-light); padding: var(--wms-space-4); border-radius: var(--wms-radius-md); border-left: 4px solid var(--wms-warning);">
+            <h4 class="wms-h5 wms-mb-3" style="color: var(--wms-warning-dark);">
+              <i class="fas fa-edit"></i> Datos del Despacho
+            </h4>
+            <div class="wms-grid wms-grid-cols-2 wms-gap-3">
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">Factura/GD</label>
+                <input type="text" id="desp_facturas" class="wms-input wms-input-sm" placeholder="Número">
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">N° Guía</label>
+                <input type="text" id="desp_guia" class="wms-input wms-input-sm" placeholder="Número de guía">
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm wms-label-required">Empresa Transporte</label>
+                <select id="desp_empresa" class="wms-select wms-select-sm">
+                  <option value="PROPIO">PROPIO</option>
+                  <option value="STARKEN">STARKEN</option>
+                  <option value="CHILEXPRESS">CHILEXPRESS</option>
+                  <option value="CORREOS">CORREOS DE CHILE</option>
+                  <option value="BLUEXPRESS">BLUEXPRESS</option>
+                  <option value="OTRO">OTRO</option>
+                </select>
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm wms-label-required">Transportista</label>
+                <input type="text" id="desp_transportista" class="wms-input wms-input-sm" placeholder="Nombre">
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">División</label>
+                <input type="text" id="desp_division" class="wms-input wms-input-sm" placeholder="Opcional">
+              </div>
+              <div class="wms-form-group wms-mb-0">
+                <label class="wms-label wms-label-sm">N° Envío</label>
+                <input type="text" id="desp_numeroEnvio" class="wms-input wms-input-sm" placeholder="0" value="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="wms-flex wms-gap-3 wms-mt-4">
+            <button type="button" onclick="cancelarSeleccionNV()" class="wms-btn wms-btn-outline wms-flex-1">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="button" id="btn_crearDespacho" onclick="confirmarCrearDespacho()" class="wms-btn wms-btn-success wms-flex-1">
+              <i class="fas fa-truck"></i> Crear Despacho
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<script>
+  // ==================== VARIABLES GLOBALES ====================
+  var shippingNVPendientes = [];
+  var shippingNVActual = '';
+  var shippingRefreshInterval = null;
+
+  // ==================== INICIALIZACIÓN ====================
+  function initShippingModule() {
+    console.log('🚀 Inicializando módulo de Shipping...');
+    
+    try {
+      var container = document.getElementById('shippingView');
+      if (!container) {
+        console.error('❌ Error: No se encontró el contenedor #shippingView');
+        setTimeout(function() {
+          if (document.getElementById('shippingView')) {
+            initShippingModuleInternal();
+          }
+        }, 200);
+        return;
+      }
+      
+      initShippingModuleInternal();
+    } catch (e) {
+      console.error('❌ Error en initShippingModule:', e);
+      mostrarErrorShipping('Error al inicializar: ' + e.message);
+    }
+  }
+  
+  function initShippingModuleInternal() {
+    console.log('🚀 Ejecutando inicialización interna...');
+    
+    try {
+      // Cargar datos
+      loadShippingStats();
+      loadNVPendientesDespacho();
+      
+      // Auto-refresh cada 30 segundos
+      if (shippingRefreshInterval) clearInterval(shippingRefreshInterval);
+      shippingRefreshInterval = setInterval(function() {
+        refreshShippingData(true);
+      }, 30000);
+      
+      console.log('✅ Módulo Shipping inicializado correctamente');
+    } catch (e) {
+      console.error('❌ Error en initShippingModuleInternal:', e);
+      mostrarErrorShipping('Error interno: ' + e.message);
+    }
+  }
+  
+  function mostrarErrorShipping(mensaje) {
+    var tbody = document.getElementById('despachosTableBody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="4">' +
+        '<div class="wms-alert wms-alert-danger wms-m-4">' +
+        '<div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+        '<div class="wms-alert-content">' +
+        '<strong>Error</strong><br>' + mensaje +
+        '<br><br><button class="wms-btn wms-btn-sm wms-btn-primary" onclick="initShippingModule()">' +
+        '<i class="fas fa-sync-alt"></i> Reintentar</button>' +
+        '</div></div></td></tr>';
+    }
+  }
+
+  function refreshShippingData(silent) {
+    loadShippingStats();
+    loadNVPendientesDespacho();
+    if (!silent && window.WMSToast) WMSToast.info('Datos actualizados');
+  }
+
+  function loadShippingStats() {
+    console.log('� Cargando estadísticas...');
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        console.log('📊 Respuesta getEstadisticasDespachos:', result);
+        if (result && result.success && result.estadisticas) {
+          var el1 = document.getElementById('ship_pendientes');
+          var el2 = document.getElementById('ship_despachados');
+          var el3 = document.getElementById('ship_total');
+          
+          if (el1) el1.textContent = result.estadisticas.pendientes || 0;
+          if (el2) el2.textContent = result.estadisticas.despachados || 0;
+          if (el3) el3.textContent = result.estadisticas.total || 0;
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('❌ Error en getEstadisticasDespachos:', error);
+      })
+      .getEstadisticasDespachos();
+  }
+
+  // ==================== CARGAR N.V PENDIENTES ====================
+  function loadNVPendientesDespacho() {
+    var tbody = document.getElementById('despachosTableBody');
+    if (!tbody) {
+      console.error('❌ No se encontró despachosTableBody');
+      return;
+    }
+    
+    console.log('📦 Cargando N.V pendientes...');
+    
+    tbody.innerHTML = '<tr><td colspan="4"><div class="wms-loading-state wms-py-4">' +
+      '<div class="wms-spinner"></div><p class="wms-text-secondary wms-mt-2">Cargando...</p></div></td></tr>';
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        console.log('� Respuesta getNVPendientesShipping:', result);
+        
+        if (!result || !result.success) {
+          tbody.innerHTML = '<tr><td colspan="4"><div class="wms-alert wms-alert-danger wms-m-4">' +
+            '<div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+            '<div class="wms-alert-content">Error: ' + (result ? result.error : 'Sin respuesta') + '</div></div></td></tr>';
+          return;
+        }
+        
+        shippingNVPendientes = result.ordenes || [];
+        console.log('📦 N.V pendientes:', shippingNVPendientes.length);
+        
+        var el = document.getElementById('ship_pendientes');
+        if (el) el.textContent = result.total || 0;
+        
+        renderDespachosTable(shippingNVPendientes);
+      })
+      .withFailureHandler(function(error) {
+        console.error('❌ Error:', error);
+        tbody.innerHTML = '<tr><td colspan="4"><div class="wms-alert wms-alert-danger wms-m-4">' +
+          '<div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div>' +
+          '<div class="wms-alert-content">Error al cargar: ' + (error.message || error) +
+          '<br><button class="wms-btn wms-btn-sm wms-btn-primary wms-mt-2" onclick="loadNVPendientesDespacho()">' +
+          '<i class="fas fa-sync-alt"></i> Reintentar</button></div></div></td></tr>';
+      })
+      .getNVPendientesShipping();
+  }
+
+  function renderDespachosTable(ordenes) {
+    var tbody = document.getElementById('despachosTableBody');
+    if (!tbody) return;
+    
+    if (!ordenes || ordenes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="wms-empty-state wms-py-6">' +
+        '<div class="wms-empty-icon"><i class="fas fa-inbox"></i></div>' +
+        '<h3 class="wms-empty-title">Sin N.V pendientes</h3>' +
+        '<p class="wms-empty-text">No hay notas de venta listas para despacho.<br>' +
+        '<small>Las N.V aparecerán aquí después de completar el Packing.</small></p></div></td></tr>';
+      return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < ordenes.length; i++) {
+      var o = ordenes[i];
+      var isSelected = (shippingNVActual === o.nVenta);
+      html += '<tr class="' + (isSelected ? 'wms-table-row-selected' : '') + '">';
+      html += '<td class="wms-font-bold wms-text-primary">' + (o.nVenta || '-') + '</td>';
+      html += '<td class="wms-text-sm">' + (o.cliente || '-').substring(0, 25) + '</td>';
+      html += '<td class="wms-text-center"><span class="wms-badge wms-badge-info">' + (o.totalItems || 0) + '</span></td>';
+      html += '<td class="wms-text-center">';
+      if (isSelected) {
+        html += '<span class="wms-badge wms-badge-success"><i class="fas fa-check"></i> Seleccionada</span>';
+      } else {
+        html += '<button class="wms-btn wms-btn-primary wms-btn-xs" onclick="seleccionarNVDespacho(\'' + o.nVenta + '\')">';
+        html += '<i class="fas fa-hand-pointer"></i> Seleccionar</button>';
+      }
+      html += '</td></tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function filtrarDespachos() {
+    var filtroEl = document.getElementById('filtroDespachos');
+    if (!filtroEl) return;
+    var filtro = filtroEl.value.toLowerCase();
+    
+    if (!filtro) {
+      renderDespachosTable(shippingNVPendientes);
+      return;
+    }
+    
+    var filtradas = shippingNVPendientes.filter(function(o) {
+      return (o.nVenta || '').toLowerCase().indexOf(filtro) !== -1 ||
+             (o.cliente || '').toLowerCase().indexOf(filtro) !== -1;
+    });
+    renderDespachosTable(filtradas);
+  }
+</script>
+
+<script>
+  // ==================== SELECCIÓN Y FORMULARIO ====================
+  function seleccionarNVDespacho(nVenta) {
+    console.log('📋 Seleccionando N.V:', nVenta);
+    shippingNVActual = nVenta;
+    
+    // Mostrar formulario
+    document.getElementById('despachoEmptyState').style.display = 'none';
+    document.getElementById('despachoFormContent').style.display = 'block';
+    document.getElementById('desp_nv_display').textContent = nVenta;
+    
+    // Limpiar campos manuales
+    document.getElementById('desp_facturas').value = '';
+    document.getElementById('desp_guia').value = '';
+    document.getElementById('desp_empresa').value = 'PROPIO';
+    document.getElementById('desp_transportista').value = '';
+    document.getElementById('desp_division').value = '';
+    document.getElementById('desp_numeroEnvio').value = '0';
+    
+    // Cargar datos automáticos
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result && result.success && result.datos) {
+          document.getElementById('desp_fechaDocto').value = result.datos.fechaDocto || '';
+          document.getElementById('desp_cliente').value = result.datos.cliente || '';
+          document.getElementById('desp_bultos').value = result.datos.bultos || 1;
+          document.getElementById('desp_vendedor').value = result.datos.vendedor || '';
+        }
+      })
+      .withFailureHandler(function(e) {
+        console.error('Error cargando datos:', e);
+      })
+      .getDatosNVParaDespacho(nVenta);
+    
+    // Actualizar tabla para mostrar selección
+    renderDespachosTable(shippingNVPendientes);
+    
+    // Scroll al formulario en móvil
+    var formCard = document.getElementById('formDespachoCard');
+    if (formCard && window.innerWidth < 768) {
+      formCard.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function cancelarSeleccionNV() {
+    shippingNVActual = '';
+    document.getElementById('despachoEmptyState').style.display = 'block';
+    document.getElementById('despachoFormContent').style.display = 'none';
+    renderDespachosTable(shippingNVPendientes);
+  }
+
+  function confirmarCrearDespacho() {
+    var transportista = document.getElementById('desp_transportista').value.trim();
+    
+    if (!transportista) {
+      if (window.WMSToast) WMSToast.warning('Ingrese el nombre del transportista');
+      document.getElementById('desp_transportista').focus();
+      return;
+    }
+    
+    if (!shippingNVActual) {
+      if (window.WMSToast) WMSToast.warning('Seleccione una N.V primero');
+      return;
+    }
+    
+    var btn = document.getElementById('btn_crearDespacho');
+    if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+    
+    var datos = {
+      nVenta: shippingNVActual,
+      fechaDocto: document.getElementById('desp_fechaDocto').value,
+      cliente: document.getElementById('desp_cliente').value,
+      bultos: parseInt(document.getElementById('desp_bultos').value) || 1,
+      vendedor: document.getElementById('desp_vendedor').value,
+      facturas: document.getElementById('desp_facturas').value.trim(),
+      guia: document.getElementById('desp_guia').value.trim(),
+      empresaTransporte: document.getElementById('desp_empresa').value,
+      transportista: transportista,
+      division: document.getElementById('desp_division').value.trim(),
+      numeroEnvio: document.getElementById('desp_numeroEnvio').value.trim() || '0',
+      usuario: sessionStorage.getItem('userName') || 'Sistema'
+    };
+    
+    console.log('📦 Creando despacho:', datos);
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+        
+        if (result && result.success) {
+          if (window.WMSToast) WMSToast.success('✅ Despacho creado para N.V ' + shippingNVActual);
+          cancelarSeleccionNV();
+          refreshShippingData();
+        } else {
+          if (window.WMSToast) WMSToast.error('Error: ' + (result ? result.error : 'Sin respuesta'));
+        }
+      })
+      .withFailureHandler(function(error) {
+        if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+        if (window.WMSToast) WMSToast.error('Error: ' + (error.message || error));
+      })
+      .crearDespacho(datos);
+  }
+
+  // ==================== EXPORTS ====================
+  window.initShippingModule = initShippingModule;
+  window.refreshShippingData = refreshShippingData;
+  window.seleccionarNVDespacho = seleccionarNVDespacho;
+  window.cancelarSeleccionNV = cancelarSeleccionNV;
+  window.confirmarCrearDespacho = confirmarCrearDespacho;
+  window.filtrarDespachos = filtrarDespachos;
+  window.loadNVPendientesDespacho = loadNVPendientesDespacho;
+  
+  // Auto-inicialización
+  (function() {
+    console.log('🔧 Shipping_Page.html cargado');
+    var shippingView = document.getElementById('shippingView');
+    if (shippingView && shippingView.classList.contains('active')) {
+      console.log('🚀 Vista activa - iniciando...');
+      setTimeout(initShippingModule, 100);
+    }
+  })();
+</script>
+
+<style>
+  /* Estilos específicos para Shipping */
+  #shippingView .wms-table-row-selected {
+    background: var(--wms-primary-light) !important;
+    border-left: 3px solid var(--wms-primary);
+  }
+  
+  #shippingView .wms-table-row-selected td {
+    background: transparent !important;
+  }
+  
+  #formDespachoCard {
+    position: sticky;
+    top: var(--wms-space-4);
+  }
+  
+  @media (max-width: 768px) {
+    #shippingView .wms-grid {
+      grid-template-columns: 1fr !important;
+    }
+    
+    #formDespachoCard {
+      position: static;
+    }
+  }
+</style>

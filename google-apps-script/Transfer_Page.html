@@ -1,0 +1,447 @@
+<section class="view" id="transferenciasView">
+<!-- Transfer_Page.html -->
+<div class="page-container">
+  <div class="section-header">
+    <div class="header-title">
+      <h1 class="gradient-title"><i class="fas fa-exchange-alt"></i> Transferencias</h1>
+      <p class="subtitle">Mover productos entre ubicaciones</p>
+    </div>
+    <button class="btn-secondary" onclick="verHistorialTransferencias()"><i class="fas fa-history"></i> Historial</button>
+  </div>
+  
+  <!-- Wizard de Transferencia -->
+  <div class="panel-card" style="max-width:700px;margin:0 auto">
+    <div class="panel-header" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05))">
+      <h3><i class="fas fa-route" style="color:#f59e0b"></i> Nueva Transferencia</h3>
+    </div>
+    <div class="panel-body" id="transferWizard">
+      <!-- Contenido dinámico del wizard -->
+    </div>
+  </div>
+  
+  <!-- Historial reciente -->
+  <div class="panel-card" style="margin-top:24px">
+    <div class="panel-header">
+      <h3><i class="fas fa-clock"></i> Transferencias Recientes</h3>
+    </div>
+    <div class="panel-body" id="transferHistoryRecent" style="max-height:300px;overflow-y:auto">
+      <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Historial Completo -->
+<div id="transferHistoryModal" class="modal-overlay" style="display:none">
+  <div class="modal-content glass-card" style="max-width:900px;width:95%;max-height:90vh">
+    <div class="modal-header-enhanced">
+      <div class="modal-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-history"></i></div>
+      <h2>Historial de Transferencias</h2>
+      <button onclick="cerrarHistorialTransferencias()" class="modal-close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:20px">
+      <div class="row g-3" style="margin-bottom:20px">
+        <div class="col-md-4">
+          <input type="text" id="filterUbicacion" placeholder="Filtrar por ubicación..." class="form-control" oninput="filtrarHistorialTransferencias()">
+        </div>
+        <div class="col-md-4">
+          <input type="text" id="filterSKU" placeholder="Filtrar por SKU..." class="form-control" oninput="filtrarHistorialTransferencias()">
+        </div>
+        <div class="col-md-4">
+          <button class="btn-primary" style="width:100%" onclick="cargarHistorialTransferencias()"><i class="fas fa-sync-alt"></i> Actualizar</button>
+        </div>
+      </div>
+      <div id="transferHistoryFull" style="max-height:500px;overflow-y:auto">
+        <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .transfer-step { padding:30px;text-align:center }
+  .transfer-step-title { font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:8px }
+  .transfer-step-subtitle { font-size:14px;color:#666666;margin-bottom:24px }
+  .transfer-input-large { 
+    width:100%;max-width:400px;margin:0 auto;padding:20px;
+    font-size:24px;font-weight:700;text-align:center;
+    background:#ffffff;border:2px solid rgba(255,107,0,0.4);
+    border-radius:16px;color:#1a1a1a;text-transform:uppercase
+  }
+  .transfer-input-large:focus { border-color:#FF6B00;outline:none;box-shadow:0 0 0 4px rgba(255,107,0,0.2) }
+  .transfer-input-large::placeholder { color:#999999;text-transform:none;font-size:16px }
+  .transfer-btn-row { display:flex;gap:12px;justify-content:center;margin-top:24px }
+  .transfer-success { background:rgba(16,185,129,0.15);border:2px solid rgba(16,185,129,0.4);border-radius:16px;padding:30px;text-align:center }
+  .transfer-error { background:rgba(239,68,68,0.15);border:2px solid rgba(239,68,68,0.4);border-radius:16px;padding:30px;text-align:center }
+  .transfer-product-card { background:#f8f9fa;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px auto;max-width:400px;text-align:left }
+  .transfer-product-sku { font-size:20px;font-weight:800;color:#FF6B00;margin-bottom:8px }
+  .transfer-product-desc { font-size:14px;color:#475569;margin-bottom:12px }
+  .transfer-product-stock { font-size:16px;color:#10b981;font-weight:600 }
+</style>
+
+<script>
+  // Estado del módulo de transferencias
+  var transferState = {
+    step: 'origen', // 'origen' | 'sku' | 'cantidad' | 'destino' | 'confirmacion'
+    origen: '',
+    sku: '',
+    producto: null,
+    cantidad: 0,
+    destino: ''
+  };
+  
+  function initTransferenciasModule() {
+    // Inicializar hoja de transferencias en el backend
+    google.script.run.createTransferSheet();
+    
+    // Resetear estado
+    resetTransferState();
+    
+    // Mostrar paso inicial
+    showTransferStep('origen');
+    
+    // Cargar historial reciente
+    cargarHistorialReciente();
+  }
+  
+  function resetTransferState() {
+    transferState = {
+      step: 'origen',
+      origen: '',
+      sku: '',
+      producto: null,
+      cantidad: 0,
+      destino: ''
+    };
+  }
+  
+  function showTransferStep(step) {
+    transferState.step = step;
+    var wizard = document.getElementById('transferWizard');
+    if (!wizard) return;
+    
+    switch(step) {
+      case 'origen':
+        wizard.innerHTML = `
+          <div class="transfer-step">
+            <div class="transfer-step-title">PASO 1: Ubicación Origen</div>
+            <div class="transfer-step-subtitle">Escanee o digite la ubicación de donde tomará el producto</div>
+            <input type="text" id="inputOrigen" class="transfer-input-large" placeholder="Ej: G-31-04" autofocus onkeypress="if(event.key==='Enter')validarOrigen()">
+            <div class="transfer-btn-row">
+              <button class="btn-primary" onclick="validarOrigen()"><i class="fas fa-check"></i> Validar Ubicación</button>
+            </div>
+          </div>
+        `;
+        setTimeout(function() { var el = document.getElementById('inputOrigen'); if(el) el.focus(); }, 100);
+        break;
+        
+      case 'sku':
+        wizard.innerHTML = `
+          <div class="transfer-step">
+            <div style="margin-bottom:20px;padding:12px;background:rgba(16,185,129,0.15);border-radius:10px;display:inline-block">
+              <i class="fas fa-map-marker-alt" style="color:#10b981"></i> Origen: <strong style="color:#10b981">${transferState.origen}</strong>
+            </div>
+            <div class="transfer-step-title">PASO 2: Seleccionar Producto</div>
+            <div class="transfer-step-subtitle">Escanee o digite el SKU del producto a transferir</div>
+            <input type="text" id="inputSKU" class="transfer-input-large" placeholder="Escanear o digitar SKU" autofocus onkeypress="if(event.key==='Enter')validarSKU()">
+            <div class="transfer-btn-row">
+              <button class="btn-secondary" onclick="showTransferStep('origen')"><i class="fas fa-arrow-left"></i> Volver</button>
+              <button class="btn-primary" onclick="validarSKU()"><i class="fas fa-check"></i> Validar SKU</button>
+            </div>
+          </div>
+        `;
+        setTimeout(function() { var el = document.getElementById('inputSKU'); if(el) el.focus(); }, 100);
+        break;
+        
+      case 'cantidad':
+        var p = transferState.producto;
+        wizard.innerHTML = `
+          <div class="transfer-step">
+            <div style="margin-bottom:20px;padding:12px;background:rgba(16,185,129,0.15);border-radius:10px;display:inline-block">
+              <i class="fas fa-map-marker-alt" style="color:#10b981"></i> Origen: <strong style="color:#10b981">${transferState.origen}</strong>
+            </div>
+            <div class="transfer-product-card" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3)">
+              <div class="transfer-product-sku"><i class="fas fa-barcode"></i> ${p.sku}</div>
+              <div class="transfer-product-desc">${p.descripcion || '-'}</div>
+              <div class="transfer-product-stock"><i class="fas fa-cubes"></i> Stock disponible: ${p.cantidad} unidades</div>
+            </div>
+            <div class="transfer-step-title">PASO 3: Cantidad a Transferir</div>
+            <input type="number" id="inputCantidad" class="transfer-input-large" placeholder="Cantidad" min="1" max="${p.cantidad}" value="1" autofocus onkeypress="if(event.key==='Enter')validarCantidad()">
+            <div class="transfer-btn-row">
+              <button class="btn-secondary" onclick="showTransferStep('sku')"><i class="fas fa-arrow-left"></i> Volver</button>
+              <button class="btn-primary" onclick="validarCantidad()"><i class="fas fa-check"></i> Continuar</button>
+            </div>
+          </div>
+        `;
+        setTimeout(function() { var el = document.getElementById('inputCantidad'); if(el) { el.focus(); el.select(); } }, 100);
+        break;
+        
+      case 'destino':
+        var p = transferState.producto;
+        wizard.innerHTML = `
+          <div class="transfer-step">
+            <div style="display:flex;gap:15px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+              <div style="padding:12px;background:rgba(16,185,129,0.15);border-radius:10px">
+                <i class="fas fa-map-marker-alt" style="color:#10b981"></i> Origen: <strong style="color:#10b981">${transferState.origen}</strong>
+              </div>
+              <div style="padding:12px;background:rgba(245,158,11,0.15);border-radius:10px">
+                <i class="fas fa-barcode" style="color:#f59e0b"></i> ${p.sku} x <strong style="color:#f59e0b">${transferState.cantidad}</strong>
+              </div>
+            </div>
+            <div class="transfer-step-title">PASO 4: Ubicación Destino</div>
+            <div class="transfer-step-subtitle">Escanee o digite la ubicación donde colocará el producto</div>
+            <input type="text" id="inputDestino" class="transfer-input-large" placeholder="Ej: H-12-02" autofocus onkeypress="if(event.key==='Enter')ejecutarTransferencia()">
+            <div class="transfer-btn-row">
+              <button class="btn-secondary" onclick="showTransferStep('cantidad')"><i class="fas fa-arrow-left"></i> Volver</button>
+              <button class="btn-success" onclick="ejecutarTransferencia()"><i class="fas fa-exchange-alt"></i> Ejecutar Transferencia</button>
+            </div>
+          </div>
+        `;
+        setTimeout(function() { var el = document.getElementById('inputDestino'); if(el) el.focus(); }, 100);
+        break;
+    }
+  }
+  
+  function validarOrigen() {
+    var input = document.getElementById('inputOrigen');
+    var ubicacion = input.value.trim().toUpperCase();
+    
+    if (!ubicacion) {
+      Toast.error('Ingrese una ubicación');
+      return;
+    }
+    
+    var loadingToast = Toast.loading('Validando ubicación...');
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        Toast.dismiss(loadingToast);
+        if (result.valid) {
+          transferState.origen = result.ubicacion;
+          Toast.success('Ubicación válida');
+          showTransferStep('sku');
+        } else {
+          mostrarErrorTransferencia(result.error || 'Ubicación no encontrada');
+        }
+      })
+      .withFailureHandler(function(err) {
+        Toast.dismiss(loadingToast);
+        Toast.error('Error de conexión');
+      })
+      .validateLocation(ubicacion);
+  }
+  
+  function validarSKU() {
+    var input = document.getElementById('inputSKU');
+    var sku = input.value.trim().toUpperCase();
+    
+    if (!sku) {
+      Toast.error('Ingrese un SKU');
+      return;
+    }
+    
+    var loadingToast = Toast.loading('Validando producto...');
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        Toast.dismiss(loadingToast);
+        if (result.valid) {
+          transferState.sku = sku;
+          transferState.producto = result.product;
+          Toast.success('Producto encontrado');
+          showTransferStep('cantidad');
+        } else {
+          mostrarErrorTransferencia(result.error || 'Producto no encontrado en esta ubicación');
+        }
+      })
+      .withFailureHandler(function(err) {
+        Toast.dismiss(loadingToast);
+        Toast.error('Error de conexión');
+      })
+      .validateSKUInLocation(sku, transferState.origen);
+  }
+  
+  function validarCantidad() {
+    var input = document.getElementById('inputCantidad');
+    var cantidad = parseInt(input.value);
+    
+    if (isNaN(cantidad) || cantidad <= 0) {
+      Toast.error('Ingrese una cantidad válida');
+      return;
+    }
+    
+    if (cantidad > transferState.producto.cantidad) {
+      Toast.error('Stock insuficiente. Máximo: ' + transferState.producto.cantidad);
+      return;
+    }
+    
+    transferState.cantidad = cantidad;
+    showTransferStep('destino');
+  }
+  
+  function ejecutarTransferencia() {
+    var input = document.getElementById('inputDestino');
+    var destino = input.value.trim().toUpperCase();
+    
+    if (!destino) {
+      Toast.error('Ingrese una ubicación destino');
+      return;
+    }
+    
+    if (destino === transferState.origen) {
+      Toast.error('Origen y destino deben ser diferentes');
+      return;
+    }
+    
+    transferState.destino = destino;
+    
+    var loadingToast = Toast.loading('Ejecutando transferencia...');
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        Toast.dismiss(loadingToast);
+        if (result.success) {
+          mostrarExitoTransferencia(result);
+        } else {
+          mostrarErrorTransferencia(result.error || 'Error al ejecutar transferencia');
+        }
+      })
+      .withFailureHandler(function(err) {
+        Toast.dismiss(loadingToast);
+        Toast.error('Error de conexión');
+      })
+      .executeTransfer({
+        origen: transferState.origen,
+        sku: transferState.sku,
+        cantidad: transferState.cantidad,
+        destino: transferState.destino,
+        usuario: App.user ? App.user.email : 'Sistema'
+      });
+  }
+  
+  function mostrarExitoTransferencia(result) {
+    var wizard = document.getElementById('transferWizard');
+    wizard.innerHTML = `
+      <div class="transfer-success">
+        <i class="fas fa-check-circle" style="font-size:64px;color:#10b981;margin-bottom:20px;display:block"></i>
+        <h3 style="color:#10b981;margin-bottom:15px">¡Transferencia Exitosa!</h3>
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:20px;margin:20px 0;text-align:left;max-width:400px;margin-left:auto;margin-right:auto">
+          <p style="margin:8px 0;color:rgba(255,255,255,0.7)"><i class="fas fa-barcode" style="width:20px;color:#f59e0b"></i> <strong>${result.sku}</strong></p>
+          <p style="margin:8px 0;color:rgba(255,255,255,0.7)"><i class="fas fa-cubes" style="width:20px;color:#f59e0b"></i> Cantidad: <strong>${result.cantidad}</strong></p>
+          <p style="margin:8px 0;color:rgba(255,255,255,0.7)"><i class="fas fa-arrow-right" style="width:20px;color:#10b981"></i> ${result.origen} → ${result.destino}</p>
+          <p style="margin:8px 0;color:rgba(255,255,255,0.5);font-size:12px"><i class="fas fa-hashtag" style="width:20px"></i> ID: ${result.transferId}</p>
+        </div>
+        <button class="btn-primary" onclick="nuevaTransferencia()"><i class="fas fa-plus"></i> Nueva Transferencia</button>
+      </div>
+    `;
+    
+    // Recargar historial
+    cargarHistorialReciente();
+  }
+  
+  function mostrarErrorTransferencia(mensaje) {
+    var wizard = document.getElementById('transferWizard');
+    var stepActual = transferState.step;
+    
+    wizard.innerHTML = `
+      <div class="transfer-error">
+        <i class="fas fa-times-circle" style="font-size:64px;color:#ef4444;margin-bottom:20px;display:block"></i>
+        <h3 style="color:#ef4444;margin-bottom:15px">Error</h3>
+        <p style="color:rgba(255,255,255,0.7);margin-bottom:20px">${mensaje}</p>
+        <button class="btn-secondary" onclick="showTransferStep('${stepActual}')"><i class="fas fa-redo"></i> Reintentar</button>
+      </div>
+    `;
+  }
+  
+  function nuevaTransferencia() {
+    resetTransferState();
+    showTransferStep('origen');
+  }
+  
+  function cargarHistorialReciente() {
+    var container = document.getElementById('transferHistoryRecent');
+    if (!container) return;
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (!result.success || !result.transfers || result.transfers.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4)"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:10px;display:block"></i>Sin transferencias recientes</div>';
+          return;
+        }
+        
+        renderHistorialTransferencias(container, result.transfers.slice(0, 5));
+      })
+      .withFailureHandler(function() {
+        container.innerHTML = '<div style="color:#ef4444;text-align:center">Error al cargar historial</div>';
+      })
+      .getTransferHistory({ limit: 5 });
+  }
+  
+  function renderHistorialTransferencias(container, transfers) {
+    var html = '<table class="data-table"><thead><tr><th>Fecha</th><th>SKU</th><th>Cantidad</th><th>Origen → Destino</th><th>Usuario</th></tr></thead><tbody>';
+    
+    for (var i = 0; i < transfers.length; i++) {
+      var t = transfers[i];
+      html += '<tr>';
+      html += '<td><small>' + t.fecha + ' ' + t.hora + '</small></td>';
+      html += '<td><code style="background:rgba(245,158,11,0.2);padding:4px 8px;border-radius:4px;color:#f59e0b">' + t.sku + '</code></td>';
+      html += '<td style="text-align:center;font-weight:600">' + t.cantidad + '</td>';
+      html += '<td><span style="color:#10b981">' + t.ubicacionOrigen + '</span> → <span style="color:#3b82f6">' + t.ubicacionDestino + '</span></td>';
+      html += '<td><small style="color:rgba(255,255,255,0.5)">' + t.usuario + '</small></td>';
+      html += '</tr>';
+    }
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+  
+  function verHistorialTransferencias() {
+    document.getElementById('transferHistoryModal').style.display = 'flex';
+    cargarHistorialTransferencias();
+  }
+  
+  function cerrarHistorialTransferencias() {
+    document.getElementById('transferHistoryModal').style.display = 'none';
+  }
+  
+  function cargarHistorialTransferencias() {
+    var container = document.getElementById('transferHistoryFull');
+    container.innerHTML = '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>';
+    
+    var ubicacion = document.getElementById('filterUbicacion').value.trim();
+    var sku = document.getElementById('filterSKU').value.trim();
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (!result.success || !result.transfers || result.transfers.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4)"><i class="fas fa-inbox" style="font-size:48px;margin-bottom:15px;display:block"></i>No se encontraron transferencias</div>';
+          return;
+        }
+        
+        renderHistorialTransferencias(container, result.transfers);
+      })
+      .withFailureHandler(function() {
+        container.innerHTML = '<div style="color:#ef4444;text-align:center">Error al cargar historial</div>';
+      })
+      .getTransferHistory({ ubicacion: ubicacion, sku: sku, limit: 100 });
+  }
+  
+  var filterTimeout = null;
+  function filtrarHistorialTransferencias() {
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(cargarHistorialTransferencias, 300);
+  }
+  
+  // Exportar funciones
+  window.initTransferenciasModule = initTransferenciasModule;
+  window.showTransferStep = showTransferStep;
+  window.validarOrigen = validarOrigen;
+  window.validarSKU = validarSKU;
+  window.validarCantidad = validarCantidad;
+  window.ejecutarTransferencia = ejecutarTransferencia;
+  window.nuevaTransferencia = nuevaTransferencia;
+  window.verHistorialTransferencias = verHistorialTransferencias;
+  window.cerrarHistorialTransferencias = cerrarHistorialTransferencias;
+  window.cargarHistorialTransferencias = cargarHistorialTransferencias;
+  window.filtrarHistorialTransferencias = filtrarHistorialTransferencias;
+</script>
+</section>

@@ -1,0 +1,540 @@
+<script>
+/* ============================================
+   WMS COMPONENTS - JavaScript Logic
+   ============================================ */
+
+/* ═══════════════════════════════════════════
+   MODAL SYSTEM
+   ═══════════════════════════════════════════ */
+var WMSModal = {
+  activeModal: null,
+  
+  open: function(modalId) {
+    var modal = document.getElementById(modalId);
+    if (!modal) {
+      console.warn('Modal not found:', modalId);
+      return;
+    }
+    
+    // Close any existing modal
+    if (this.activeModal) {
+      this.close();
+    }
+    
+    this.activeModal = modal;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    
+    // Focus first focusable element
+    var focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable) {
+      setTimeout(function() { focusable.focus(); }, 100);
+    }
+    
+    // Add escape listener
+    document.addEventListener('keydown', this._handleEscape);
+  },
+  
+  close: function() {
+    if (!this.activeModal) return;
+    
+    this.activeModal.classList.remove('open');
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', this._handleEscape);
+    this.activeModal = null;
+  },
+  
+  _handleEscape: function(e) {
+    if (e.key === 'Escape') {
+      WMSModal.close();
+    }
+  }
+};
+
+// Close modal when clicking overlay
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('wms-modal-overlay')) {
+    WMSModal.close();
+  }
+});
+
+// Global functions for onclick handlers
+function openModal(modalId) { WMSModal.open(modalId); }
+function closeModal() { WMSModal.close(); }
+
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATION SYSTEM
+   ═══════════════════════════════════════════ */
+var WMSToast = {
+  container: null,
+  
+  init: function() {
+    if (this.container) return;
+    
+    this.container = document.createElement('div');
+    this.container.className = 'wms-toast-container';
+    document.body.appendChild(this.container);
+  },
+  
+  show: function(message, type, options) {
+    this.init();
+    
+    type = type || 'info';
+    options = options || {};
+    
+    var toast = document.createElement('div');
+    toast.className = 'wms-toast wms-toast-' + type;
+    
+    var icons = {
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle',
+      info: 'fa-info-circle'
+    };
+    
+    var html = '<div class="wms-toast-icon"><i class="fas ' + icons[type] + '"></i></div>';
+    html += '<div class="wms-toast-content">';
+    html += '<span class="wms-toast-message">' + message + '</span>';
+    if (options.action) {
+      html += '<button class="wms-toast-action" onclick="' + options.action.onclick + '">' + options.action.text + '</button>';
+    }
+    html += '</div>';
+    html += '<button class="wms-toast-close" onclick="WMSToast.dismiss(this.parentElement)"><i class="fas fa-times"></i></button>';
+    
+    toast.innerHTML = html;
+    this.container.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(function() {
+      toast.classList.add('show');
+    });
+    
+    // Auto dismiss
+    var duration = options.duration !== undefined ? options.duration : 5000;
+    if (duration > 0) {
+      setTimeout(function() { WMSToast.dismiss(toast); }, duration);
+    }
+    
+    return toast;
+  },
+  
+  dismiss: function(toast) {
+    if (!toast || !toast.parentElement) return;
+    
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    
+    setTimeout(function() {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 300);
+  },
+  
+  success: function(message, options) { return this.show(message, 'success', options); },
+  error: function(message, options) { return this.show(message, 'error', options); },
+  warning: function(message, options) { return this.show(message, 'warning', options); },
+  info: function(message, options) { return this.show(message, 'info', options); }
+};
+
+// Initialize toast on load
+document.addEventListener('DOMContentLoaded', function() {
+  WMSToast.init();
+});
+
+/* ═══════════════════════════════════════════
+   NUMBER FORMATTING
+   ═══════════════════════════════════════════ */
+var WMSFormat = {
+  number: function(value, decimals) {
+    if (value === null || value === undefined) return '-';
+    decimals = decimals !== undefined ? decimals : 0;
+    return Number(value).toLocaleString('es-CL', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  },
+  
+  currency: function(value) {
+    if (value === null || value === undefined) return '-';
+    return '$' + this.number(value, 0);
+  },
+  
+  date: function(value) {
+    if (!value) return '-';
+    var d = new Date(value);
+    return d.toLocaleDateString('es-CL');
+  },
+  
+  datetime: function(value) {
+    if (!value) return '-';
+    var d = new Date(value);
+    return d.toLocaleDateString('es-CL') + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  },
+  
+  timeAgo: function(date) {
+    var now = new Date();
+    var past = new Date(date);
+    var diffMs = now - past;
+    var diffMins = Math.floor(diffMs / 60000);
+    var diffHours = Math.floor(diffMs / 3600000);
+    var diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return 'Hace ' + diffMins + ' min';
+    if (diffHours < 24) return 'Hace ' + diffHours + 'h';
+    if (diffDays < 7) return 'Hace ' + diffDays + ' días';
+    return this.date(date);
+  }
+};
+
+/* ═══════════════════════════════════════════
+   TABLE UTILITIES
+   ═══════════════════════════════════════════ */
+var WMSTable = {
+  filter: function(tableId, searchValue) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    
+    var tbody = table.querySelector('tbody');
+    var rows = tbody.querySelectorAll('tr');
+    var search = searchValue.toLowerCase().trim();
+    
+    rows.forEach(function(row) {
+      var text = row.textContent.toLowerCase();
+      row.style.display = text.includes(search) ? '' : 'none';
+    });
+  },
+  
+  sort: function(tableId, columnIndex, direction) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    
+    var tbody = table.querySelector('tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    rows.sort(function(a, b) {
+      var aVal = a.cells[columnIndex].textContent.trim();
+      var bVal = b.cells[columnIndex].textContent.trim();
+      
+      // Try numeric comparison
+      var aNum = parseFloat(aVal.replace(/[^0-9.-]/g, ''));
+      var bNum = parseFloat(bVal.replace(/[^0-9.-]/g, ''));
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      // String comparison
+      return direction === 'asc' 
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
+    });
+    
+    rows.forEach(function(row) {
+      tbody.appendChild(row);
+    });
+  }
+};
+
+/* ═══════════════════════════════════════════
+   LOADING STATES
+   ═══════════════════════════════════════════ */
+var WMSLoading = {
+  show: function(containerId, message) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = 
+      '<div class="wms-loading-state">' +
+        '<div class="wms-spinner wms-spinner-lg"></div>' +
+        '<span class="wms-loading-text">' + (message || 'Cargando...') + '</span>' +
+      '</div>';
+  },
+  
+  showSkeleton: function(containerId, count) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    
+    count = count || 3;
+    var html = '<div class="wms-skeleton-grid">';
+    for (var i = 0; i < count; i++) {
+      html += 
+        '<div class="wms-skeleton-card">' +
+          '<div class="wms-skeleton wms-skeleton-header"></div>' +
+          '<div class="wms-skeleton wms-skeleton-text"></div>' +
+          '<div class="wms-skeleton wms-skeleton-text short"></div>' +
+        '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  },
+  
+  showError: function(containerId, message, retryFn) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    
+    var retryBtn = retryFn 
+      ? '<button class="wms-btn wms-btn-primary" onclick="' + retryFn + '"><i class="fas fa-redo"></i> Reintentar</button>'
+      : '';
+    
+    container.innerHTML = 
+      '<div class="wms-error-state">' +
+        '<div class="wms-error-icon"><i class="fas fa-exclamation-triangle"></i></div>' +
+        '<h3 class="wms-error-title">Error al cargar</h3>' +
+        '<p class="wms-error-message">' + (message || 'Ocurrió un error inesperado') + '</p>' +
+        retryBtn +
+      '</div>';
+  },
+  
+  showEmpty: function(containerId, config) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    
+    config = config || {};
+    container.innerHTML = 
+      '<div class="wms-empty-state">' +
+        '<div class="wms-empty-icon"><i class="fas ' + (config.icon || 'fa-inbox') + '"></i></div>' +
+        '<h3 class="wms-empty-title">' + (config.title || 'No hay datos') + '</h3>' +
+        '<p class="wms-empty-text">' + (config.message || 'No se encontraron registros') + '</p>' +
+        (config.action ? '<button class="wms-btn wms-btn-primary" onclick="' + config.action.onclick + '">' + config.action.text + '</button>' : '') +
+      '</div>';
+  }
+};
+
+/* ═══════════════════════════════════════════
+   STAT CARD INTERACTIONS
+   ═══════════════════════════════════════════ */
+var WMSStats = {
+  activeFilter: null,
+  
+  setActive: function(cardElement, filterValue, callback) {
+    // Remove active from all cards
+    var cards = document.querySelectorAll('.wms-stat-card');
+    cards.forEach(function(card) {
+      card.classList.remove('active');
+    });
+    
+    // Toggle active state
+    if (this.activeFilter === filterValue) {
+      this.activeFilter = null;
+    } else {
+      cardElement.classList.add('active');
+      this.activeFilter = filterValue;
+    }
+    
+    // Execute callback
+    if (callback && typeof callback === 'function') {
+      callback(this.activeFilter);
+    }
+  },
+  
+  updateValue: function(elementId, newValue, animate) {
+    var element = document.getElementById(elementId);
+    if (!element) return;
+    
+    if (animate) {
+      element.classList.add('wms-value-update');
+      setTimeout(function() {
+        element.textContent = WMSFormat.number(newValue);
+        element.classList.remove('wms-value-update');
+      }, 150);
+    } else {
+      element.textContent = WMSFormat.number(newValue);
+    }
+  }
+};
+
+/* ═══════════════════════════════════════════
+   BUTTON LOADING STATE
+   ═══════════════════════════════════════════ */
+function setButtonLoading(button, loading) {
+  if (loading) {
+    button.disabled = true;
+    button.classList.add('wms-btn-loading');
+    button.dataset.originalText = button.innerHTML;
+  } else {
+    button.disabled = false;
+    button.classList.remove('wms-btn-loading');
+    if (button.dataset.originalText) {
+      button.innerHTML = button.dataset.originalText;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   KEYBOARD NAVIGATION
+   ═══════════════════════════════════════════ */
+document.addEventListener('keydown', function(e) {
+  // Tab trap for modals
+  if (WMSModal.activeModal && e.key === 'Tab') {
+    var modal = WMSModal.activeModal.querySelector('.wms-modal');
+    var focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    var first = focusables[0];
+    var last = focusables[focusables.length - 1];
+    
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════
+   EXPOSE GLOBALLY
+   ═══════════════════════════════════════════ */
+window.WMSModal = WMSModal;
+window.WMSToast = WMSToast;
+window.WMSFormat = WMSFormat;
+window.WMSTable = WMSTable;
+window.WMSLoading = WMSLoading;
+window.WMSStats = WMSStats;
+window.setButtonLoading = setButtonLoading;
+window.openModal = openModal;
+window.closeModal = closeModal;
+
+/* ═══════════════════════════════════════════
+   EXCEL EXPORT UTILITY
+   Usa SheetJS (XLSX) para exportar datos a Excel
+   ═══════════════════════════════════════════ */
+var WMSExport = {
+  /**
+   * Exportar datos a Excel
+   * @param {Array} data - Array de objetos con los datos
+   * @param {Object} config - Configuración de exportación
+   * @param {string} config.filename - Nombre del archivo (sin extensión)
+   * @param {string} config.sheetName - Nombre de la hoja
+   * @param {Array} config.columns - Definición de columnas [{key, header, width}]
+   */
+  toExcel: function(data, config) {
+    config = config || {};
+    var filename = config.filename || 'export';
+    var sheetName = config.sheetName || 'Datos';
+    var columns = config.columns || null;
+    
+    if (!data || data.length === 0) {
+      WMSToast.warning('No hay datos para exportar');
+      return;
+    }
+    
+    // Verificar que XLSX esté disponible
+    if (typeof XLSX === 'undefined') {
+      WMSToast.error('Librería de Excel no disponible');
+      console.error('SheetJS (XLSX) no está cargado');
+      return;
+    }
+    
+    try {
+      WMSToast.info('Generando archivo Excel...');
+      
+      var exportData = [];
+      var headers = [];
+      var colWidths = [];
+      
+      // Si hay definición de columnas, usarla
+      if (columns && columns.length > 0) {
+        headers = columns.map(function(col) { return col.header || col.key; });
+        colWidths = columns.map(function(col) { return { wch: col.width || 15 }; });
+        
+        exportData = data.map(function(row) {
+          var newRow = {};
+          columns.forEach(function(col) {
+            var value = row[col.key];
+            // Formatear valores especiales
+            if (value instanceof Date) {
+              value = value.toLocaleDateString('es-CL');
+            } else if (value === null || value === undefined) {
+              value = '';
+            }
+            newRow[col.header || col.key] = value;
+          });
+          return newRow;
+        });
+      } else {
+        // Auto-detectar columnas del primer objeto
+        if (data.length > 0) {
+          headers = Object.keys(data[0]);
+          colWidths = headers.map(function() { return { wch: 15 }; });
+          exportData = data;
+        }
+      }
+      
+      // Crear workbook y worksheet
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Aplicar anchos de columna
+      ws['!cols'] = colWidths;
+      
+      // Agregar hoja al libro
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generar nombre de archivo con fecha
+      var now = new Date();
+      var dateStr = now.getFullYear() + 
+        String(now.getMonth() + 1).padStart(2, '0') + 
+        String(now.getDate()).padStart(2, '0') + '_' +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0');
+      
+      var fullFilename = filename + '_' + dateStr + '.xlsx';
+      
+      // Descargar archivo
+      XLSX.writeFile(wb, fullFilename);
+      
+      WMSToast.success('Archivo descargado: ' + fullFilename);
+      
+    } catch (error) {
+      console.error('Error exportando a Excel:', error);
+      WMSToast.error('Error al exportar: ' + error.message);
+    }
+  },
+  
+  /**
+   * Exportar tabla HTML a Excel
+   * @param {string} tableId - ID de la tabla HTML
+   * @param {string} filename - Nombre del archivo
+   */
+  tableToExcel: function(tableId, filename) {
+    var table = document.getElementById(tableId);
+    if (!table) {
+      WMSToast.warning('Tabla no encontrada');
+      return;
+    }
+    
+    if (typeof XLSX === 'undefined') {
+      WMSToast.error('Librería de Excel no disponible');
+      return;
+    }
+    
+    try {
+      WMSToast.info('Exportando tabla...');
+      
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.table_to_sheet(table);
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+      
+      var now = new Date();
+      var dateStr = now.getFullYear() + 
+        String(now.getMonth() + 1).padStart(2, '0') + 
+        String(now.getDate()).padStart(2, '0');
+      
+      var fullFilename = (filename || 'tabla') + '_' + dateStr + '.xlsx';
+      
+      XLSX.writeFile(wb, fullFilename);
+      
+      WMSToast.success('Archivo descargado: ' + fullFilename);
+      
+    } catch (error) {
+      console.error('Error exportando tabla:', error);
+      WMSToast.error('Error al exportar: ' + error.message);
+    }
+  }
+};
+
+window.WMSExport = WMSExport;
+</script>

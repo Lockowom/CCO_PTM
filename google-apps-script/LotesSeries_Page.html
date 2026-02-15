@@ -1,0 +1,693 @@
+<section class="view" id="lotesseriesView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Lotes y Series</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="fas fa-barcode"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Lotes y Series</h1>
+          <p class="wms-module-subtitle">Búsqueda instantánea de partidas, series, farmapack, peso y ubicaciones</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span>Conectado</span>
+      </div>
+      <div class="wms-view-toggle">
+        <button class="wms-btn wms-btn-sm wms-view-btn active" data-view="buscador" onclick="lsSetView('buscador')">
+          <i class="fas fa-search"></i> Buscador
+        </button>
+        <button class="wms-btn wms-btn-sm wms-view-btn" data-view="ingreso" onclick="lsSetView('ingreso')">
+          <i class="fas fa-plus-circle"></i> Ingreso
+        </button>
+      </div>
+      <button class="wms-btn wms-btn-success" onclick="lsExportarExcel()">
+        <i class="fas fa-file-excel"></i> Exportar
+      </button>
+      <button class="wms-btn wms-btn-outline wms-ripple" onclick="lsRefrescarCache()">
+        <i class="fas fa-sync-alt"></i> Refrescar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard Premium - Sheet Chips -->
+  <div class="wms-stats-grid wms-stats-5">
+    <div class="wms-stat-card wms-stat-card-premium ls-chip-card" data-color="success" data-hoja="Partidas"
+      onclick="lsSeleccionarHoja('Partidas', this)">
+      <div class="wms-stat-icon"><span style="font-size:24px;">🛰️</span></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value">Partidas</span>
+        <span class="wms-stat-label">Lotes y partidas</span>
+      </div>
+      <span class="ls-chip-key">1</span>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium ls-chip-card" data-color="info" data-hoja="Series"
+      onclick="lsSeleccionarHoja('Series', this)">
+      <div class="wms-stat-icon"><span style="font-size:24px;">📡</span></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value">Series</span>
+        <span class="wms-stat-label">Trazabilidad</span>
+      </div>
+      <span class="ls-chip-key">2</span>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium ls-chip-card" data-color="warning" data-hoja="Farmapack"
+      onclick="lsSeleccionarHoja('Farmapack', this)">
+      <div class="wms-stat-icon"><span style="font-size:24px;">💊</span></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value">Farmapack</span>
+        <span class="wms-stat-label">Presentaciones</span>
+      </div>
+      <span class="ls-chip-key">3</span>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium ls-chip-card" data-color="purple" data-hoja="Peso"
+      onclick="lsSeleccionarHoja('Peso', this)">
+      <div class="wms-stat-icon"><span style="font-size:24px;">⚖️</span></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value">Peso</span>
+        <span class="wms-stat-label">Control peso</span>
+      </div>
+      <span class="ls-chip-key">4</span>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium ls-chip-card" data-color="secondary" data-hoja="Ubicaciones"
+      onclick="lsSeleccionarHoja('Ubicaciones', this)">
+      <div class="wms-stat-icon"><span style="font-size:24px;">📦</span></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value">Ubicaciones</span>
+        <span class="wms-stat-label">Stock bodega</span>
+      </div>
+      <span class="ls-chip-key">5</span>
+    </div>
+  </div>
+
+  <!-- Buscador View -->
+  <div class="ls-view ls-view-buscador" id="lsViewBuscador">
+    <!-- Filter Bar -->
+    <div class="wms-filter-bar">
+      <div class="wms-search-box">
+        <i class="fas fa-bolt"></i>
+        <input type="text" id="lsEntrada" placeholder="⚡ Búsqueda instantánea..." autocomplete="off">
+      </div>
+      <div class="wms-filter-group">
+        <button class="wms-btn wms-btn-outline" id="lsExactBtn" onclick="lsToggleExact()">
+          <i class="fas fa-crosshairs"></i> Exacto: OFF
+        </button>
+        <button class="wms-btn wms-btn-ghost" onclick="lsLimpiar()">
+          <i class="fas fa-eraser"></i> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Info Bar -->
+    <div class="wms-info-bar"
+      style="display:flex; justify-content:space-between; align-items:center; padding: 8px 16px; background: var(--wms-gray-50); border-radius: var(--wms-radius-md); margin-bottom: 16px;">
+      <span class="wms-badge wms-badge-info" id="lsSheetBadge" style="display:none;">
+        <span class="ls-badge-dot"
+          style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+        <span id="lsBadgeText">-</span>
+      </span>
+      <span style="font-size: var(--wms-text-xs); color: var(--wms-text-tertiary);">
+        <kbd style="background:var(--wms-gray-200);padding:2px 6px;border-radius:4px;font-size:11px;">1-5</kbd> hojas ·
+        ⚡ Filtrado local instantáneo
+      </span>
+    </div>
+
+    <!-- Results Table -->
+    <div class="wms-table-container" id="lsResultsCard" style="display:none;">
+      <div class="wms-table-header"
+        style="display:flex; justify-content:space-between; align-items:center; padding: 12px 16px; background: var(--wms-gray-50); border-bottom: 1px solid var(--wms-border-light);">
+        <div class="wms-results-info" style="font-size: var(--wms-text-sm); color: var(--wms-text-secondary);">
+          <strong id="lsResultsCount" style="color: var(--wms-text-primary); font-weight: 700;">0</strong> resultados
+          <span id="lsResultsHoja"></span>
+        </div>
+        <div class="wms-results-time" id="lsResultsTime"
+          style="font-size: var(--wms-text-xs); color: var(--wms-success); display:flex; align-items:center; gap:4px;">
+        </div>
+      </div>
+      <div class="wms-table-wrapper" id="lsResultsBody">
+        <div class="wms-empty-state">
+          <div class="wms-empty-icon"><i class="fas fa-search"></i></div>
+          <h3 class="wms-empty-title">Selecciona una hoja</h3>
+          <p class="wms-empty-text">Haz clic en una de las hojas arriba para comenzar</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingreso View (placeholder) -->
+  <div class="ls-view ls-view-ingreso" id="lsViewIngreso" style="display:none;">
+    <div class="wms-card">
+      <div class="wms-card-body" style="text-align:center;padding:48px;">
+        <div class="wms-empty-icon" style="margin: 0 auto 16px;"><i class="fas fa-arrow-right"></i></div>
+        <h3 class="wms-empty-title">Usa el módulo Ingreso</h3>
+        <p class="wms-empty-text">Para ingresar nuevos registros, usa el módulo de Ingreso de Mercancía</p>
+        <button class="wms-btn wms-btn-primary wms-ripple" onclick="showView('ingreso')" style="margin-top:16px;">
+          <i class="fas fa-dolly-flatbed"></i> Ir a Ingreso
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ═══════════════════════════════════════════
+       LOTES/SERIES MODULE - Premium Styles
+       ═══════════════════════════════════════════ */
+
+    /* View Toggle Buttons */
+    .wms-view-toggle {
+      display: flex;
+      background: var(--wms-bg-surface);
+      border: 1px solid var(--wms-border-light);
+      border-radius: var(--wms-radius-lg);
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .wms-view-btn {
+      border-radius: var(--wms-radius-md) !important;
+      background: transparent !important;
+      color: var(--wms-text-secondary) !important;
+      border: none !important;
+    }
+
+    .wms-view-btn:hover {
+      color: var(--wms-text-primary) !important;
+      background: var(--wms-gray-50) !important;
+    }
+
+    .wms-view-btn.active {
+      background: var(--wms-primary) !important;
+      color: white !important;
+      box-shadow: var(--wms-shadow-sm);
+    }
+
+    /* Chip Card Enhancements */
+    .ls-chip-card {
+      cursor: pointer;
+      position: relative;
+    }
+
+    .ls-chip-card.active {
+      border-color: var(--wms-primary) !important;
+      box-shadow: 0 0 0 3px var(--wms-primary-light), var(--wms-shadow-md) !important;
+    }
+
+    .ls-chip-key {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--wms-text-tertiary);
+      background: var(--wms-gray-100);
+      padding: 2px 6px;
+      border-radius: var(--wms-radius-sm);
+    }
+
+    /* Table Styles */
+    #lsResultsBody .wms-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--wms-text-sm);
+    }
+
+    #lsResultsBody .wms-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    #lsResultsBody .wms-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--wms-text-secondary);
+      background: var(--wms-gray-100);
+      border-bottom: 2px solid var(--wms-border-default);
+      white-space: nowrap;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    #lsResultsBody .wms-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--wms-border-light);
+      color: var(--wms-text-primary);
+      vertical-align: middle;
+    }
+
+    #lsResultsBody .wms-table tbody tr:hover {
+      background: var(--wms-primary-lighter);
+    }
+
+    #lsResultsBody .wms-table mark {
+      background: var(--wms-warning-light);
+      color: var(--wms-warning-hover);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    /* Loading Spinner */
+    .ls-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      gap: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .wms-view-toggle {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .wms-header-actions {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+
+
+  <script>
+    // ═══════════════════════════════════════════
+    // LOTES/SERIES MODULE - Búsqueda Instantánea
+    // ═══════════════════════════════════════════
+
+    var lsState = {
+      hojaActiva: '',
+      exactMode: false,
+      currentView: 'buscador'
+    };
+
+    var lsCache = {};
+    var lsCacheTTL = 5 * 60 * 1000; // 5 minutos
+    var lsLoadingState = {};
+
+    var lsHojaColores = {
+      'Partidas': '#22c55e',
+      'Series': '#3b82f6',
+      'Farmapack': '#f97316',
+      'Peso': '#a855f7',
+      'Ubicaciones': '#eab308'
+    };
+
+    function initLotesSeriesModule() {
+      console.log('Inicializando módulo Lotes/Series...');
+
+      var entrada = document.getElementById('lsEntrada');
+      if (entrada) {
+        entrada.addEventListener('input', function () { lsFiltrarLocal(); });
+        entrada.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') lsFiltrarLocal();
+        });
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT') return;
+        var num = parseInt(e.key);
+        if (num >= 1 && num <= 5) {
+          var hojas = ['Partidas', 'Series', 'Farmapack', 'Peso', 'Ubicaciones'];
+          var chip = document.querySelector('.ls-chip-card[data-hoja="' + hojas[num - 1] + '"]');
+          if (chip) lsSeleccionarHoja(hojas[num - 1], chip);
+        }
+      });
+
+      lsSetView('buscador');
+    }
+
+    function lsSetView(view) {
+      lsState.currentView = view;
+
+      document.querySelectorAll('.wms-view-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+
+      document.getElementById('lsViewBuscador').style.display = view === 'buscador' ? 'block' : 'none';
+      document.getElementById('lsViewIngreso').style.display = view === 'ingreso' ? 'block' : 'none';
+    }
+
+    function lsSeleccionarHoja(nombre, el) {
+      lsState.hojaActiva = nombre;
+      lsSetView('buscador');
+
+      // Update chip selection
+      document.querySelectorAll('.ls-chip-card').forEach(function (chip) {
+        chip.classList.remove('active');
+      });
+      if (el) el.classList.add('active');
+
+      // Update badge
+      var badge = document.getElementById('lsSheetBadge');
+      var badgeText = document.getElementById('lsBadgeText');
+      var badgeDot = badge.querySelector('.ls-badge-dot');
+
+      badge.style.display = 'inline-flex';
+      badgeText.textContent = 'Hoja: ' + nombre;
+      if (badgeDot) badgeDot.style.background = lsHojaColores[nombre] || '#64748b';
+
+      // Show results card
+      document.getElementById('lsResultsCard').style.display = 'block';
+
+      // Update input placeholder
+      var entrada = document.getElementById('lsEntrada');
+      if (entrada) {
+        entrada.value = '';
+        entrada.placeholder = '⚡ Buscar en ' + nombre + '...';
+        entrada.focus();
+      }
+
+      // Load data
+      lsPrecargarHoja(nombre);
+
+      // Toast notification
+      if (window.WMSToast) WMSToast.info('Cargando ' + nombre + '...');
+    }
+
+    function lsPrecargarHoja(nombre) {
+      var resultsBody = document.getElementById('lsResultsBody');
+      var resultsCount = document.getElementById('lsResultsCount');
+      var resultsHoja = document.getElementById('lsResultsHoja');
+      var resultsTime = document.getElementById('lsResultsTime');
+
+      // Check cache
+      var cached = lsCache[nombre];
+      if (cached && (Date.now() - cached.timestamp < lsCacheTTL)) {
+        resultsCount.textContent = cached.rows.length;
+        resultsHoja.textContent = ' en ' + nombre;
+        resultsTime.innerHTML = '<i class="fas fa-bolt"></i> Caché activo';
+        lsRenderTable(cached.columns, cached.rows.slice(0, 100), '');
+        return;
+      }
+
+      // Prevent duplicate requests
+      if (lsLoadingState[nombre]) return;
+      lsLoadingState[nombre] = true;
+
+      // Show loading
+      resultsBody.innerHTML = '<div class="ls-loading"><div class="wms-spinner wms-spinner-lg"></div><span class="wms-loading-text">Cargando datos...</span></div>';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          lsLoadingState[nombre] = false;
+
+          console.log('=== DATOS RECIBIDOS DEL BACKEND ===');
+          console.log('data:', data);
+          console.log('columns:', data ? data.columns : 'N/A');
+          console.log('rows count:', data && data.rows ? data.rows.length : 0);
+          if (data && data.rows && data.rows.length > 0) {
+            console.log('Primera fila:', data.rows[0]);
+          }
+
+          if (!data || !data.rows) {
+            resultsBody.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-inbox"></i></div><h3 class="wms-empty-title">Sin datos</h3><p class="wms-empty-text">La hoja está vacía</p></div>';
+            return;
+          }
+
+          // Index data for fast search
+          var rows = data.rows || [];
+          for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            r._sA = lsNormalize(r[0] || '');
+            r._sB = lsNormalize(r[1] || '');
+            if (nombre === 'Ubicaciones') {
+              var joinAll = '';
+              for (var k = 0; k < r.length; k++) {
+                joinAll += ' ' + lsNormalize(r[k] || '');
+              }
+              r._sFull = joinAll.trim();
+            } else {
+              r._sFull = r._sA + ' ' + r._sB;
+            }
+          }
+
+          // Save to cache
+          lsCache[nombre] = {
+            columns: data.columns || [],
+            rows: rows,
+            timestamp: Date.now()
+          };
+
+          console.log('Cache guardado para:', nombre);
+          console.log('Columnas en cache:', lsCache[nombre].columns);
+
+          resultsCount.textContent = rows.length;
+          resultsHoja.textContent = ' en ' + nombre;
+          resultsTime.innerHTML = '<i class="fas fa-check"></i> Indexado';
+          lsRenderTable(data.columns, rows.slice(0, 100), '');
+          
+          var chipEl = document.querySelector('.ls-chip-card[data-hoja="' + nombre + '"] .ls-chip-key');
+          if (chipEl) { chipEl.textContent = String(rows.length); }
+
+          if (window.WMSToast) WMSToast.success(rows.length + ' registros cargados');
+        })
+        .withFailureHandler(function (err) {
+          lsLoadingState[nombre] = false;
+          console.error('Error al cargar datos:', err);
+          resultsBody.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon wms-text-danger"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + lsEscapeHtml(err.message || err) + '</p></div>';
+          if (window.WMSToast) WMSToast.error('Error al cargar datos');
+        })
+        .buscarLotesSeries(nombre, '', false);
+    }
+
+    function lsFiltrarLocal() {
+      var entrada = document.getElementById('lsEntrada');
+      var q = entrada ? entrada.value.trim() : '';
+      var hoja = lsState.hojaActiva;
+
+      console.log('=== FILTRANDO ===');
+      console.log('Query:', q);
+      console.log('Hoja activa:', hoja);
+
+      if (!hoja) {
+        if (window.WMSToast) WMSToast.warning('Selecciona una hoja primero');
+        return;
+      }
+
+      // Si hay query de 2+ caracteres, buscar en SERVIDOR (todos los registros)
+      if (q && q.length >= 2) {
+        lsBuscarEnServidor(hoja, q);
+        return;
+      }
+
+      // Sin query: mostrar cache local
+      var cached = lsCache[hoja];
+      console.log('Cache encontrado:', cached ? 'SI' : 'NO');
+
+      if (!cached) {
+        lsPrecargarHoja(hoja);
+        return;
+      }
+
+      var t0 = performance.now();
+      var rows = cached.rows;
+      var filtered = [];
+
+      if (!q) {
+        filtered = rows.slice(0, 100);
+      } else {
+        var qNorm = lsNormalize(q);
+        var exact = lsState.exactMode;
+
+        console.log('Query normalizada:', qNorm);
+        console.log('Modo exacto:', exact);
+        if (rows.length > 0) {
+          console.log('Ejemplo row[0]:', rows[0]);
+          console.log('row[0]._sA:', rows[0]._sA);
+          console.log('row[0]._sB:', rows[0]._sB);
+        }
+
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var match = false;
+
+          if (row._sFull) {
+            if (exact) {
+              match = (row._sA === qNorm || row._sB === qNorm);
+            } else {
+              match = (row._sFull.indexOf(qNorm) !== -1);
+            }
+          } else {
+            var colA = lsNormalize(row[0] || '');
+            var colB = lsNormalize(row[1] || '');
+            match = exact ? (colA === qNorm || colB === qNorm) : (colA.indexOf(qNorm) !== -1 || colB.indexOf(qNorm) !== -1);
+          }
+
+          if (match) {
+            filtered.push(row);
+            if (filtered.length >= 200) break;
+          }
+        }
+
+        console.log('Resultados encontrados:', filtered.length);
+      }
+
+      var t1 = performance.now();
+      var ms = Math.round(t1 - t0);
+
+      var resultsCount = document.getElementById('lsResultsCount');
+      var resultsTime = document.getElementById('lsResultsTime');
+
+      resultsCount.textContent = filtered.length;
+      resultsTime.innerHTML = '<i class="fas fa-bolt"></i> ' + ms + 'ms';
+
+      if (filtered.length === 0) {
+        document.getElementById('lsResultsBody').innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-search"></i></div><h3 class="wms-empty-title">Sin resultados</h3><p class="wms-empty-text">No se encontraron coincidencias para "' + lsEscapeHtml(q) + '"</p></div>';
+      } else {
+        console.log('Renderizando tabla con', filtered.length, 'filas');
+        lsRenderTable(cached.columns, filtered, q);
+      }
+    }
+
+    // Nueva función: Buscar en servidor cuando hay query
+    function lsBuscarEnServidor(hoja, query) {
+      var resultsBody = document.getElementById('lsResultsBody');
+      var resultsCount = document.getElementById('lsResultsCount');
+      var resultsTime = document.getElementById('lsResultsTime');
+
+      console.log('=== BUSCANDO EN SERVIDOR ===');
+      console.log('Hoja:', hoja, 'Query:', query);
+
+      resultsBody.innerHTML = '<div class="ls-loading"><div class="wms-spinner"></div><span class="wms-loading-text">Buscando en todos los registros...</span></div>';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          console.log('Respuesta servidor:', data);
+
+          if (!data || !data.rows || data.rows.length === 0) {
+            resultsCount.textContent = '0';
+            resultsTime.innerHTML = '<i class="fas fa-server"></i> ' + (data && data.ms ? data.ms : 0) + 'ms';
+            resultsBody.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-search"></i></div><h3 class="wms-empty-title">Sin resultados</h3><p class="wms-empty-text">No se encontraron coincidencias para "' + lsEscapeHtml(query) + '"</p></div>';
+            return;
+          }
+
+          resultsCount.textContent = data.rows.length;
+          resultsTime.innerHTML = '<i class="fas fa-server"></i> ' + (data.ms || 0) + 'ms';
+          lsRenderTable(data.columns || [], data.rows, query);
+
+          if (window.WMSToast) WMSToast.success(data.rows.length + ' resultados');
+        })
+        .withFailureHandler(function (err) {
+          console.error('Error buscando en servidor:', err);
+          resultsBody.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon wms-text-danger"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + lsEscapeHtml(err.message || err) + '</p></div>';
+          if (window.WMSToast) WMSToast.error('Error al buscar');
+        })
+        .buscarLotesSeries(hoja, query, lsState.exactMode);
+    }
+
+    function lsRenderTable(columns, rows, query) {
+      var html = '<div style="overflow-x:auto;max-height:500px;overflow-y:auto;"><table class="wms-table"><thead><tr>';
+
+      for (var c = 0; c < columns.length; c++) {
+        html += '<th>' + lsEscapeHtml(columns[c]) + '</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      for (var r = 0; r < rows.length; r++) {
+        html += '<tr>';
+        for (var cell = 0; cell < rows[r].length; cell++) {
+          html += '<td>' + lsHighlight(rows[r][cell], query) + '</td>';
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div>';
+      document.getElementById('lsResultsBody').innerHTML = html;
+    }
+
+    function lsToggleExact() {
+      lsState.exactMode = !lsState.exactMode;
+      var btn = document.getElementById('lsExactBtn');
+      if (btn) {
+        btn.classList.toggle('wms-btn-primary', lsState.exactMode);
+        btn.classList.toggle('wms-btn-outline', !lsState.exactMode);
+        btn.innerHTML = '<i class="fas fa-crosshairs"></i> Exacto: ' + (lsState.exactMode ? 'ON' : 'OFF');
+      }
+      if (lsState.hojaActiva) lsFiltrarLocal();
+    }
+
+    function lsLimpiar() {
+      var entrada = document.getElementById('lsEntrada');
+      if (entrada) entrada.value = '';
+      if (lsState.hojaActiva) lsFiltrarLocal();
+      if (entrada) entrada.focus();
+    }
+
+    function lsRefrescarCache() {
+      var hoja = lsState.hojaActiva;
+      if (hoja) {
+        delete lsCache[hoja];
+        lsPrecargarHoja(hoja);
+        if (window.WMSToast) WMSToast.info('Actualizando ' + hoja + '...');
+      } else {
+        if (window.WMSToast) WMSToast.warning('Selecciona una hoja primero');
+      }
+    }
+
+    function lsExportarExcel() {
+      var data = lsState.resultados;
+      var hoja = lsState.hojaActiva || 'LotesSeries';
+
+      if (!data || data.length === 0) {
+        if (window.WMSToast) WMSToast.warning('No hay datos para exportar. Realiza una búsqueda primero.');
+        return;
+      }
+
+      if (typeof WMSExport !== 'undefined') {
+        WMSExport.toExcel(data, {
+          filename: hoja,
+          sheetName: hoja,
+          columns: null // Auto-detectar columnas
+        });
+      } else {
+        if (window.WMSToast) WMSToast.error('Función de exportación no disponible');
+      }
+    }
+
+    function lsNormalize(s) {
+      return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function lsEscapeHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function lsHighlight(text, query) {
+      if (!query) return lsEscapeHtml(text);
+      try {
+        var escaped = String(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var re = new RegExp(escaped, 'gi');
+        return lsEscapeHtml(String(text)).replace(re, function (m) { return '<mark>' + m + '</mark>'; });
+      } catch (e) { return lsEscapeHtml(text); }
+    }
+
+    // Alias para compatibilidad
+    function loadLotesSeriesView(container) {
+      if (container) {
+        container.innerHTML = document.getElementById('lotesseriesView').innerHTML;
+      }
+      setTimeout(initLotesSeriesModule, 100);
+    }
+
+    window.initLotesSeriesModule = initLotesSeriesModule;
+    window.loadLotesSeriesView = loadLotesSeriesView;
+    window.lsSetView = lsSetView;
+    window.lsSeleccionarHoja = lsSeleccionarHoja;
+    window.lsToggleExact = lsToggleExact;
+    window.lsLimpiar = lsLimpiar;
+    window.lsRefrescarCache = lsRefrescarCache;
+  </script>
+</section>

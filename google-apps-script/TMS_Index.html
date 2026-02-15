@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#10b981">
+  <title>TMS - App Conductores</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRNUyAtIEFwcCBDb25kdWN0b3JlcyIsCiAgInNob3J0X25hbWUiOiAiVE1TIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJ0aGVtZV9jb2xvciI6ICIjMTBiOTgxIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjNmNGY2IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTWpRaUlHaGxhV2RvZEQwaU1qUWlJSFpwWlhkQ2IzZzlJakFnTUNBeU5DQXlOQ0lnWm1sc2JEMGlJekV3WWprNE1TSStQR0ZzYkdWc2JHbHdjMlVnY25nOUlqRXlJaUJ5ZVQwaU1USWlJSGRwWkhSb1BTSXlJaUJvWldsbmFIUTlJaklpSUdacGJHdzlJaU5tWm1abVptWWlMejQ4TDNOMlp6ND0iLAogICAgICAic2l6ZXMiOiAiMjR4MjQiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-light: #d1fae5;
+      --secondary: #6b7280;
+      --bg-body: #f3f4f6;
+      --bg-surface: #ffffff;
+      --text-main: #111827;
+      --text-secondary: #6b7280;
+      --text-light: #9ca3af;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius-md: 0.5rem;
+      --radius-lg: 1rem;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .mobile-app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .mobile-header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-title h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .header-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 1.5rem 1rem;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+      text-align: center;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+    }
+
+    .welcome-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* Feature Cards */
+    .features-grid {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .feature-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .feature-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-light);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+
+    .feature-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .feature-description {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Status Section */
+    .status-section {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .status-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .status-badge {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-description {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .action-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .action-btn.secondary {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .action-btn.secondary:hover {
+      background: var(--bg-body);
+    }
+
+    /* Footer */
+    .mobile-footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .footer-text {
+      color: var(--text-light);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 1rem 0.75rem;
+      }
+      
+      .welcome-section {
+        padding: 1.5rem 0;
+      }
+      
+      .welcome-title {
+        font-size: 1.25rem;
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="mobile-app">
+    <!-- Header -->
+    <header class="mobile-header">
+      <div class="header-content">
+        <div class="header-title">
+          <i class="fas fa-route"></i>
+          <h1>TMS Conductores</h1>
+        </div>
+        <div class="header-actions">
+          <button class="header-btn" onclick="refreshApp()" title="Actualizar">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button class="header-btn" onclick="showSettings()" title="Configuración">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <div class="welcome-icon">
+          <i class="fas fa-mobile-screen"></i>
+        </div>
+        <h2 class="welcome-title">Aplicación para Conductores</h2>
+        <p class="welcome-subtitle">Sistema de Gestión de Transporte</p>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <i class="fas fa-list-check"></i>
+            </div>
+            <h3 class="feature-title">Lista de Tareas</h3>
+          </div>
+          <p class="feature-description">
+            Visualiza todas tus entregas del día organizadas por prioridad y ubicación.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <i class="fas fa-map-marked-alt"></i>
+            </div>
+            <h3 class="feature-title">Navegación Integrada</h3>
+          </div>
+          <p class="feature-description">
+            Navegación directa a cada destino con integración a Google Maps y Waze.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <i class="fas fa-camera"></i>
+            </div>
+            <h3 class="feature-title">Prueba de Entrega</h3>
+          </div>
+          <p class="feature-description">
+            Captura fotos como prueba de entrega y registra el estado de cada pedido.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="feature-title">Tiempo Real</h3>
+          </div>
+          <p class="feature-description">
+            Sincronización automática con el sistema central para actualizaciones instantáneas.
+          </p>
+        </div>
+      </div>
+
+      <!-- Status Section -->
+      <div class="status-section">
+        <div class="status-header">
+          <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+          <h3 class="status-title">Estado del Sistema</h3>
+          <span class="status-badge">En Desarrollo</span>
+        </div>
+        <p class="status-description">
+          La aplicación móvil para conductores está siendo desarrollada como parte del Sistema de Gestión de Transporte (TMS). 
+          Incluirá todas las funcionalidades necesarias para optimizar las operaciones de entrega.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="action-btn" onclick="loginDriver()">
+          <i class="fas fa-sign-in-alt"></i>
+          Iniciar Sesión como Conductor
+        </button>
+        <button class="action-btn secondary" onclick="goToWebApp()">
+          <i class="fas fa-desktop"></i>
+          Ir a la Aplicación Web
+        </button>
+        <button class="action-btn secondary" onclick="showHelp()">
+          <i class="fas fa-question-circle"></i>
+          Ayuda y Soporte
+        </button>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mobile-footer">
+      <p class="footer-text">
+        © 2024 Centro Control Operacional - TMS v1.0
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // App functionality
+    function refreshApp() {
+      const btn = event.target.closest('.header-btn');
+      const icon = btn.querySelector('i');
+      
+      icon.classList.add('fa-spin');
+      
+      setTimeout(() => {
+        icon.classList.remove('fa-spin');
+        showNotification('Aplicación actualizada', 'success');
+      }, 1000);
+    }
+
+    function showSettings() {
+      showNotification('Configuración próximamente disponible', 'info');
+    }
+
+    function loginDriver() {
+      showNotification('Sistema de login en desarrollo', 'info');
+    }
+
+    function goToWebApp() {
+      // Redirect to main web application
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.split('?')[0];
+      window.location.href = baseUrl;
+    }
+
+    function showHelp() {
+      showNotification('Sistema de ayuda en desarrollo', 'info');
+    }
+
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 90%;
+        text-align: center;
+        animation: slideDown 0.3s ease;
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Add slide down animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Remove notification after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+          document.head.removeChild(style);
+        }, 300);
+      }, 3000);
+      
+      // Add slide up animation
+      style.textContent += `
+        @keyframes slideUp {
+          from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+        }
+      `;
+    }
+
+    // PWA Installation
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Show install button
+      const installBtn = document.createElement('button');
+      installBtn.className = 'action-btn';
+      installBtn.innerHTML = '<i class="fas fa-download"></i> Instalar App';
+      installBtn.onclick = installApp;
+      
+      document.querySelector('.action-buttons').prepend(installBtn);
+    });
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((result) => {
+          if (result.outcome === 'accepted') {
+            showNotification('App instalada correctamente', 'success');
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('TMS Mobile App initialized');
+      
+      // Check if running as PWA
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        document.body.classList.add('pwa-mode');
+      }
+    });
+  </script>
+</body>
+</html>

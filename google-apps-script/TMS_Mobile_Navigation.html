@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TMS - Navegación</title>
+  
+  <style>
+    /* ==================== NAVIGATION INTERFACE STYLES ==================== */
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-primary: #f8fafc;
+      --bg-surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --radius: 0.75rem;
+    }
+
+    .navigation-container {
+      min-height: 100vh;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation Header */
+    .nav-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: max(env(safe-area-inset-top), 1rem) 1rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0.95);
+    }
+
+    .header-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .header-text p {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      margin: 0.25rem 0 0 0;
+    }
+
+    /* Current Destination */
+    .current-destination {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+
+    .destination-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .destination-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .destination-details {
+      flex: 1;
+    }
+
+    .destination-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .destination-address {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .destination-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    /* Navigation Options */
+    .nav-options {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .nav-section {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-apps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .nav-app {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .nav-app:active {
+      transform: scale(0.98);
+      background: var(--border);
+    }
+
+    .nav-app.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .nav-app.primary:active {
+      background: var(--primary-dark);
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-app:not(.primary) .app-icon {
+      background: var(--primary);
+      color: white;
+    }
+
+    .app-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .app-description {
+      font-size: 0.75rem;
+      text-align: center;
+      opacity: 0.8;
+      line-height: 1.3;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .quick-action {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .quick-action:active {
+      transform: scale(0.98);
+      background: var(--border);
+    }
+
+    .quick-action.success {
+      background: var(--success);
+      color: white;
+      border-color: var(--success);
+    }
+
+    .quick-action.warning {
+      background: var(--warning);
+      color: white;
+      border-color: var(--warning);
+    }
+
+    .quick-action.danger {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    .action-icon {
+      font-size: 1.125rem;
+    }
+
+    /* Route Progress */
+    .route-progress {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .progress-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .progress-percentage {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Location Status */
+    .location-status {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .location-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .location-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .location-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .location-text {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .location-toggle {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .location-toggle:active {
+      background: var(--primary-dark);
+      transform: scale(0.98);
+    }
+
+    .location-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Emergency Actions */
+    .emergency-section {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .emergency-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .emergency-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .emergency-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .emergency-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0.98);
+    }
+
+    /* Responsive */
+    @media (max-width: 375px) {
+      .nav-apps {
+        grid-template-columns: 1fr;
+      }
+      
+      .quick-actions {
+        flex-direction: column;
+      }
+      
+      .emergency-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f172a;
+        --bg-surface: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border: #334155;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="navigation-container">
+    
+    <!-- Header -->
+    <header class="nav-header">
+      <div class="header-content">
+        <div class="header-title">
+          <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <div class="header-text">
+            <h1>Navegación</h1>
+            <p>Próxima entrega</p>
+          </div>
+        </div>
+        <button class="back-btn" onclick="refreshLocation()">
+          <i class="fas fa-location-arrow"></i>
+        </button>
+      </div>
+      
+      <!-- Current Destination -->
+      <div class="current-destination" id="currentDestination">
+        <div class="destination-info">
+          <div class="destination-icon">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <div class="destination-details">
+            <h3 class="destination-name" id="destinationName">Cargando destino...</h3>
+            <p class="destination-address" id="destinationAddress">Obteniendo dirección...</p>
+            <div class="destination-meta">
+              <span id="destinationDistance"><i class="fas fa-route"></i> -- km</span>
+              <span id="destinationTime"><i class="fas fa-clock"></i> -- min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Options -->
+    <div class="nav-options">
+      
+      <!-- Navigation Apps -->
+      <div class="nav-section">
+        <h2 class="section-title">
+          <i class="fas fa-navigation"></i>
+          Aplicaciones de Navegación
+        </h2>
+        <div class="nav-apps">
+          <button class="nav-app primary" onclick="openGoogleMaps()">
+            <div class="app-icon">
+              <i class="fas fa-map"></i>
+            </div>
+            <div class="app-name">Google Maps</div>
+            <div class="app-description">Navegación con tráfico en tiempo real</div>
+          </button>
+          
+          <button class="nav-app" onclick="openWaze()">
+            <div class="app-icon">
+              <i class="fas fa-route"></i>
+            </div>
+            <div class="app-name">Waze</div>
+            <div class="app-description">Rutas optimizadas por la comunidad</div>
+          </button>
+          
+          <button class="nav-app" onclick="openAppleMaps()">
+            <div class="app-icon">
+              <i class="fas fa-compass"></i>
+            </div>
+            <div class="app-name">Apple Maps</div>
+            <div class="app-description">Navegación nativa de iOS</div>
+          </button>
+          
+          <button class="nav-app" onclick="openUberDriver()">
+            <div class="app-icon">
+              <i class="fas fa-car"></i>
+            </div>
+            <div class="app-name">Uber Driver</div>
+            <div class="app-description">Navegación para conductores</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="nav-section">
+        <h2 class="section-title">
+          <i class="fas fa-bolt"></i>
+          Acciones Rápidas
+        </h2>
+        <div class="quick-actions">
+          <button class="quick-action success" onclick="markArrived()">
+            <i class="action-icon fas fa-check-circle"></i>
+            <span>He Llegado</span>
+          </button>
+          
+          <button class="quick-action warning" onclick="callCustomer()">
+            <i class="action-icon fas fa-phone"></i>
+            <span>Llamar Cliente</span>
+          </button>
+          
+          <button class="quick-action danger" onclick="reportTrafficIssue()">
+            <i class="action-icon fas fa-exclamation-triangle"></i>
+            <span>Reportar Problema</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Route Progress -->
+      <div class="route-progress">
+        <div class="progress-header">
+          <h3 class="progress-title">Progreso de Ruta</h3>
+          <span class="progress-percentage" id="routePercentage">0%</span>
+        </div>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        
+        <div class="progress-stats">
+          <div class="stat-item">
+            <div class="stat-value" id="totalDeliveries">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="completedDeliveries">0</div>
+            <div class="stat-label">Completadas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="remainingDeliveries">0</div>
+            <div class="stat-label">Restantes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Status -->
+      <div class="location-status">
+        <div class="location-header">
+          <div class="location-indicator">
+            <div class="location-dot" id="locationDot"></div>
+            <span class="location-text" id="locationText">Ubicación activa</span>
+          </div>
+          <button class="location-toggle" onclick="toggleLocationSharing()">
+            <i class="fas fa-eye"></i> Compartir
+          </button>
+        </div>
+        <p class="location-info">
+          Tu ubicación se comparte automáticamente con el centro de control para un mejor seguimiento de las entregas.
+        </p>
+      </div>
+
+      <!-- Emergency Actions -->
+      <div class="emergency-section">
+        <h3 class="emergency-title">
+          <i class="fas fa-shield-alt"></i>
+          Acciones de Emergencia
+        </h3>
+        <div class="emergency-actions">
+          <button class="emergency-btn" onclick="callEmergency()">
+            <i class="fas fa-phone"></i>
+            Llamar 911
+          </button>
+          <button class="emergency-btn" onclick="callSupport()">
+            <i class="fas fa-headset"></i>
+            Soporte TMS
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    class TMSNavigationInterface {
+      constructor() {
+        this.currentTask = null;
+        this.routeData = null;
+        this.locationSharing = true;
+        this.driverId = this.getDriverId();
+        
+        this.init();
+      }
+
+      init() {
+        console.log('TMSNavigationInterface: Initializing...');
+        
+        this.loadCurrentTask();
+        this.loadRouteProgress();
+        this.startLocationTracking();
+      }
+
+      async loadCurrentTask() {
+        try {
+          // Get current/next task for navigation
+          const response = await this.callBackend('getMobileDriverTasks', [this.driverId]);
+          
+          if (response.success && response.data.nextTask) {
+            this.currentTask = response.data.nextTask;
+            this.updateDestinationInfo();
+          } else {
+            this.showNoDestination();
+          }
+          
+        } catch (error) {
+          console.error('Error loading current task:', error);
+          this.showNoDestination();
+        }
+      }
+
+      updateDestinationInfo() {
+        if (!this.currentTask) return;
+
+        document.getElementById('destinationName').textContent = this.currentTask.cliente || 'Cliente';
+        document.getElementById('destinationAddress').textContent = this.currentTask.direccion || 'Dirección no disponible';
+        
+        // Update distance and time (would be calculated from current location)
+        document.getElementById('destinationDistance').innerHTML = 
+          `<i class="fas fa-route"></i> ${this.currentTask.distancia || '5.2'} km`;
+        document.getElementById('destinationTime').innerHTML = 
+          `<i class="fas fa-clock"></i> ${this.currentTask.tiempoEstimado || '15'} min`;
+      }
+
+      showNoDestination() {
+        document.getElementById('destinationName').textContent = 'Sin destino activo';
+        document.getElementById('destinationAddress').textContent = 'No hay entregas pendientes';
+        document.getElementById('destinationDistance').innerHTML = '<i class="fas fa-route"></i> -- km';
+        document.getElementById('destinationTime').innerHTML = '<i class="fas fa-clock"></i> -- min';
+      }
+
+      async loadRouteProgress() {
+        try {
+          const response = await this.callBackend('getMobileDriverRoute', [this.driverId]);
+          
+          if (response.success && response.data.route) {
+            this.routeData = response.data.route;
+            this.updateProgressDisplay();
+          }
+          
+        } catch (error) {
+          console.error('Error loading route progress:', error);
+        }
+      }
+
+      updateProgressDisplay() {
+        if (!this.routeData) return;
+
+        const percentage = this.routeData.progreso || 0;
+        const total = this.routeData.totalEntregas || 0;
+        const completed = this.routeData.completadas || 0;
+        const remaining = total - completed;
+
+        document.getElementById('routePercentage').textContent = `${percentage}%`;
+        document.getElementById('progressFill').style.width = `${percentage}%`;
+        document.getElementById('totalDeliveries').textContent = total;
+        document.getElementById('completedDeliveries').textContent = completed;
+        document.getElementById('remainingDeliveries').textContent = remaining;
+      }
+
+      startLocationTracking() {
+        if (!navigator.geolocation) {
+          console.warn('Geolocation not supported');
+          return;
+        }
+
+        // Request location permission and start tracking
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Location obtained:', position.coords);
+            this.updateLocationStatus(true);
+            this.sendLocationUpdate(position.coords);
+          },
+          (error) => {
+            console.error('Location error:', error);
+            this.updateLocationStatus(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
+
+        // Update location every 30 seconds
+        setInterval(() => {
+          if (this.locationSharing) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => this.sendLocationUpdate(position.coords),
+              (error) => console.error('Location update error:', error),
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
+          }
+        }, 30000);
+      }
+
+      updateLocationStatus(active) {
+        const dot = document.getElementById('locationDot');
+        const text = document.getElementById('locationText');
+        
+        if (active) {
+          dot.style.background = 'var(--success)';
+          text.textContent = 'Ubicación activa';
+        } else {
+          dot.style.background = 'var(--danger)';
+          text.textContent = 'Ubicación inactiva';
+        }
+      }
+
+      async sendLocationUpdate(coords) {
+        try {
+          const locationData = {
+            lat: coords.latitude,
+            lng: coords.longitude,
+            accuracy: coords.accuracy,
+            timestamp: new Date().toISOString()
+          };
+
+          await this.callBackend('updateMobileDriverLocation', [this.driverId, locationData]);
+          console.log('Location updated successfully');
+          
+        } catch (error) {
+          console.error('Error updating location:', error);
+        }
+      }
+
+      // Navigation app integrations
+      openGoogleMaps() {
+        if (!this.currentTask || !this.currentTask.direccion) {
+          alert('No hay destino disponible');
+          return;
+        }
+
+        const address = encodeURIComponent(this.currentTask.direccion);
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${address}&travelmode=driving`;
+        
+        // Try to open in Google Maps app, fallback to web
+        window.open(url, '_blank');
+      }
+
+      openWaze() {
+        if (!this.currentTask || !this.currentTask.direccion) {
+          alert('No hay destino disponible');
+          return;
+        }
+
+        const address = encodeURIComponent(this.currentTask.direccion);
+        const url = `https://waze.com/ul?q=${address}&navigate=yes`;
+        
+        window.open(url, '_blank');
+      }
+
+      openAppleMaps() {
+        if (!this.currentTask || !this.currentTask.direccion) {
+          alert('No hay destino disponible');
+          return;
+        }
+
+        const address = encodeURIComponent(this.currentTask.direccion);
+        const url = `http://maps.apple.com/?daddr=${address}&dirflg=d`;
+        
+        window.open(url, '_blank');
+      }
+
+      openUberDriver() {
+        // Uber Driver app integration
+        const url = 'uber://';
+        window.open(url, '_blank');
+      }
+
+      // Quick actions
+      async markArrived() {
+        if (!this.currentTask) {
+          alert('No hay tarea activa');
+          return;
+        }
+
+        try {
+          const response = await this.callBackend('updateMobileTaskStatus', [
+            this.currentTask.id,
+            this.driverId,
+            'EN_RUTA',
+            { 
+              observaciones: 'Conductor ha llegado al destino',
+              ubicacion: await this.getCurrentLocation()
+            }
+          ]);
+
+          if (response.success) {
+            alert('Llegada registrada exitosamente');
+            this.loadCurrentTask(); // Refresh task data
+          } else {
+            throw new Error(response.error);
+          }
+
+        } catch (error) {
+          console.error('Error marking arrival:', error);
+          alert('Error al registrar llegada');
+        }
+      }
+
+      callCustomer() {
+        if (!this.currentTask || !this.currentTask.telefono) {
+          alert('Número de teléfono no disponible');
+          return;
+        }
+
+        window.open(`tel:${this.currentTask.telefono}`, '_self');
+      }
+
+      async reportTrafficIssue() {
+        const issue = prompt('Describe el problema de tráfico:');
+        if (!issue) return;
+
+        try {
+          const issueData = {
+            tipo: 'TRAFICO',
+            descripcion: issue,
+            ubicacion: await this.getCurrentLocation(),
+            prioridad: 'ALTA'
+          };
+
+          const response = await this.callBackend('reportMobileIssue', [this.driverId, issueData]);
+
+          if (response.success) {
+            alert('Problema reportado exitosamente');
+          } else {
+            throw new Error(response.error);
+          }
+
+        } catch (error) {
+          console.error('Error reporting issue:', error);
+          alert('Error al reportar problema');
+        }
+      }
+
+      toggleLocationSharing() {
+        this.locationSharing = !this.locationSharing;
+        
+        const button = document.querySelector('.location-toggle');
+        if (this.locationSharing) {
+          button.innerHTML = '<i class="fas fa-eye"></i> Compartir';
+          this.updateLocationStatus(true);
+        } else {
+          button.innerHTML = '<i class="fas fa-eye-slash"></i> Pausado';
+          this.updateLocationStatus(false);
+        }
+      }
+
+      // Emergency actions
+      callEmergency() {
+        if (confirm('¿Estás seguro de que quieres llamar a emergencias?')) {
+          window.open('tel:911', '_self');
+        }
+      }
+
+      callSupport() {
+        // Call TMS support number
+        window.open('tel:+56912345678', '_self');
+      }
+
+      // Utility methods
+      async getCurrentLocation() {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            }),
+            (error) => reject(error),
+            { enableHighAccuracy: true, timeout: 5000 }
+          );
+        });
+      }
+
+      async callBackend(functionName, params = []) {
+        return new Promise((resolve, reject) => {
+          try {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)[functionName](...params);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+
+      getDriverId() {
+        // In a real implementation, this would get the current driver's ID
+        return 'DRV001';
+      }
+    }
+
+    // Global functions
+    window.goBack = function() {
+      if (window.parent && window.parent.tmsApp) {
+        window.parent.tmsApp.navigateToView('home');
+      } else {
+        history.back();
+      }
+    };
+
+    window.refreshLocation = function() {
+      if (window.navigationInterface) {
+        window.navigationInterface.loadCurrentTask();
+        window.navigationInterface.loadRouteProgress();
+      }
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      window.navigationInterface = new TMSNavigationInterface();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<style>
+/* ============================================
+   WMS DESIGN SYSTEM - Design Tokens
+   Sistema de diseño unificado para WMS
+   ============================================ */
+
+/* === CSS RESET BASE === */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* === DESIGN TOKENS === */
+:root {
+  /* ─────────────────────────────────────────
+     COLORS - Primary Brand
+     ───────────────────────────────────────── */
+  --wms-primary: #FF6B00;
+  --wms-primary-hover: #E55A00;
+  --wms-primary-active: #CC5000;
+  --wms-primary-light: #FFF4ED;
+  --wms-primary-lighter: #FFF9F5;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Secondary
+     ───────────────────────────────────────── */
+  --wms-secondary: #3b82f6;
+  --wms-secondary-hover: #2563eb;
+  --wms-secondary-active: #1d4ed8;
+  --wms-secondary-light: #EFF6FF;
+  --wms-secondary-lighter: #F5F9FF;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Semantic (Success, Warning, Danger, Info)
+     ───────────────────────────────────────── */
+  --wms-success: #10b981;
+  --wms-success-hover: #059669;
+  --wms-success-light: #ECFDF5;
+  --wms-success-lighter: #F0FDF9;
+  
+  --wms-warning: #f59e0b;
+  --wms-warning-hover: #d97706;
+  --wms-warning-light: #FFFBEB;
+  --wms-warning-lighter: #FEFCE8;
+  
+  --wms-danger: #ef4444;
+  --wms-danger-hover: #dc2626;
+  --wms-danger-light: #FEF2F2;
+  --wms-danger-lighter: #FFF5F5;
+  
+  --wms-info: #06b6d4;
+  --wms-info-hover: #0891b2;
+  --wms-info-light: #ECFEFF;
+  --wms-info-lighter: #F0FDFA;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Process States
+     ───────────────────────────────────────── */
+  --wms-state-pending: #f59e0b;
+  --wms-state-pending-bg: #FFFBEB;
+  --wms-state-inprogress: #3b82f6;
+  --wms-state-inprogress-bg: #EFF6FF;
+  --wms-state-completed: #10b981;
+  --wms-state-completed-bg: #ECFDF5;
+  --wms-state-error: #ef4444;
+  --wms-state-error-bg: #FEF2F2;
+  --wms-state-blocked: #6b7280;
+  --wms-state-blocked-bg: #F3F4F6;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Area Colors (from sidebar)
+     ───────────────────────────────────────── */
+  --wms-area-inbound: #10b981;
+  --wms-area-outbound: #3b82f6;
+  --wms-area-consultas: #8b5cf6;
+  --wms-area-inventario: #f59e0b;
+  --wms-area-admin: #ef4444;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Neutrals (Gray Scale)
+     ───────────────────────────────────────── */
+  --wms-gray-50: #f8fafc;
+  --wms-gray-100: #f1f5f9;
+  --wms-gray-200: #e2e8f0;
+  --wms-gray-300: #cbd5e1;
+  --wms-gray-400: #94a3b8;
+  --wms-gray-500: #64748b;
+  --wms-gray-600: #475569;
+  --wms-gray-700: #334155;
+  --wms-gray-800: #1e293b;
+  --wms-gray-900: #0f172a;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Background & Surface
+     ───────────────────────────────────────── */
+  --wms-bg-body: #f8fafc;
+  --wms-bg-surface: #ffffff;
+  --wms-bg-elevated: #ffffff;
+  --wms-bg-overlay: rgba(15, 23, 42, 0.5);
+  
+  /* ─────────────────────────────────────────
+     COLORS - Text
+     ───────────────────────────────────────── */
+  --wms-text-primary: #0f172a;
+  --wms-text-secondary: #64748b;
+  --wms-text-tertiary: #94a3b8;
+  --wms-text-inverse: #ffffff;
+  --wms-text-link: #3b82f6;
+  --wms-text-link-hover: #2563eb;
+  
+  /* ─────────────────────────────────────────
+     COLORS - Borders
+     ───────────────────────────────────────── */
+  --wms-border-light: #f1f5f9;
+  --wms-border-default: #e2e8f0;
+  --wms-border-dark: #cbd5e1;
+  --wms-border-focus: #3b82f6;
+  
+  /* ─────────────────────────────────────────
+     TYPOGRAPHY - Font Families
+     ───────────────────────────────────────── */
+  --wms-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --wms-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  
+  /* ─────────────────────────────────────────
+     TYPOGRAPHY - Font Sizes
+     ───────────────────────────────────────── */
+  --wms-text-xs: 0.75rem;      /* 12px */
+  --wms-text-sm: 0.875rem;     /* 14px */
+  --wms-text-base: 1rem;       /* 16px */
+  --wms-text-lg: 1.125rem;     /* 18px */
+  --wms-text-xl: 1.25rem;      /* 20px */
+  --wms-text-2xl: 1.5rem;      /* 24px */
+  --wms-text-3xl: 1.875rem;    /* 30px */
+  --wms-text-4xl: 2.25rem;     /* 36px */
+  
+  /* ─────────────────────────────────────────
+     TYPOGRAPHY - Font Weights
+     ───────────────────────────────────────── */
+  --wms-font-normal: 400;
+  --wms-font-medium: 500;
+  --wms-font-semibold: 600;
+  --wms-font-bold: 700;
+  
+  /* ─────────────────────────────────────────
+     TYPOGRAPHY - Line Heights
+     ───────────────────────────────────────── */
+  --wms-leading-none: 1;
+  --wms-leading-tight: 1.25;
+  --wms-leading-snug: 1.375;
+  --wms-leading-normal: 1.5;
+  --wms-leading-relaxed: 1.625;
+  
+  /* ─────────────────────────────────────────
+     SPACING - Based on 4px grid
+     ───────────────────────────────────────── */
+  --wms-space-0: 0;
+  --wms-space-1: 0.25rem;   /* 4px */
+  --wms-space-2: 0.5rem;    /* 8px */
+  --wms-space-3: 0.75rem;   /* 12px */
+  --wms-space-4: 1rem;      /* 16px */
+  --wms-space-5: 1.25rem;   /* 20px */
+  --wms-space-6: 1.5rem;    /* 24px */
+  --wms-space-8: 2rem;      /* 32px */
+  --wms-space-10: 2.5rem;   /* 40px */
+  --wms-space-12: 3rem;     /* 48px */
+  --wms-space-16: 4rem;     /* 64px */
+  --wms-space-20: 5rem;     /* 80px */
+  
+  /* ─────────────────────────────────────────
+     BORDER RADIUS
+     ───────────────────────────────────────── */
+  --wms-radius-none: 0;
+  --wms-radius-sm: 4px;
+  --wms-radius-md: 8px;
+  --wms-radius-lg: 12px;
+  --wms-radius-xl: 16px;
+  --wms-radius-2xl: 24px;
+  --wms-radius-full: 9999px;
+  
+  /* ─────────────────────────────────────────
+     SHADOWS - Elevation System
+     ───────────────────────────────────────── */
+  --wms-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --wms-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --wms-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --wms-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --wms-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --wms-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --wms-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  
+  /* ─────────────────────────────────────────
+     TRANSITIONS
+     ───────────────────────────────────────── */
+  --wms-transition-fast: 150ms ease;
+  --wms-transition-base: 200ms ease;
+  --wms-transition-slow: 300ms ease;
+  --wms-transition-slower: 500ms ease;
+  --wms-transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --wms-transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ─────────────────────────────────────────
+     Z-INDEX Scale
+     ───────────────────────────────────────── */
+  --wms-z-dropdown: 1000;
+  --wms-z-sticky: 1020;
+  --wms-z-fixed: 1030;
+  --wms-z-modal-backdrop: 1040;
+  --wms-z-modal: 1050;
+  --wms-z-popover: 1060;
+  --wms-z-tooltip: 1070;
+  --wms-z-toast: 1080;
+  
+  /* ─────────────────────────────────────────
+     BREAKPOINTS (for reference in JS)
+     ───────────────────────────────────────── */
+  --wms-breakpoint-sm: 640px;
+  --wms-breakpoint-md: 768px;
+  --wms-breakpoint-lg: 1024px;
+  --wms-breakpoint-xl: 1280px;
+  --wms-breakpoint-2xl: 1536px;
+}
+</style>
+
+<style>
+/* ============================================
+   WMS DESIGN SYSTEM - Base Typography & Layout
+   ============================================ */
+
+/* === BASE TYPOGRAPHY === */
+body {
+  font-family: var(--wms-font-sans);
+  font-size: var(--wms-text-base);
+  font-weight: var(--wms-font-normal);
+  line-height: var(--wms-leading-normal);
+  color: var(--wms-text-primary);
+  background-color: var(--wms-bg-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings */
+.wms-h1, .wms-h2, .wms-h3, .wms-h4, .wms-h5, .wms-h6 {
+  font-family: var(--wms-font-sans);
+  font-weight: var(--wms-font-semibold);
+  line-height: var(--wms-leading-tight);
+  color: var(--wms-text-primary);
+  margin: 0;
+}
+
+.wms-h1 { font-size: var(--wms-text-3xl); }
+.wms-h2 { font-size: var(--wms-text-2xl); }
+.wms-h3 { font-size: var(--wms-text-xl); }
+.wms-h4 { font-size: var(--wms-text-lg); }
+.wms-h5 { font-size: var(--wms-text-base); }
+.wms-h6 { font-size: var(--wms-text-sm); }
+
+/* Text styles */
+.wms-text-xs { font-size: var(--wms-text-xs); }
+.wms-text-sm { font-size: var(--wms-text-sm); }
+.wms-text-base { font-size: var(--wms-text-base); }
+.wms-text-lg { font-size: var(--wms-text-lg); }
+.wms-text-xl { font-size: var(--wms-text-xl); }
+.wms-text-2xl { font-size: var(--wms-text-2xl); }
+
+.wms-text-primary { color: var(--wms-text-primary); }
+.wms-text-secondary { color: var(--wms-text-secondary); }
+.wms-text-tertiary { color: var(--wms-text-tertiary); }
+.wms-text-success { color: var(--wms-success); }
+.wms-text-warning { color: var(--wms-warning); }
+.wms-text-danger { color: var(--wms-danger); }
+.wms-text-info { color: var(--wms-info); }
+
+.wms-font-normal { font-weight: var(--wms-font-normal); }
+.wms-font-medium { font-weight: var(--wms-font-medium); }
+.wms-font-semibold { font-weight: var(--wms-font-semibold); }
+.wms-font-bold { font-weight: var(--wms-font-bold); }
+
+/* Monospace for codes */
+.wms-mono, code, .wms-code {
+  font-family: var(--wms-font-mono);
+  font-size: 0.9em;
+  background: var(--wms-gray-100);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--wms-radius-sm);
+  color: var(--wms-primary);
+}
+
+/* === SPACING UTILITIES === */
+.wms-m-0 { margin: var(--wms-space-0); }
+.wms-m-1 { margin: var(--wms-space-1); }
+.wms-m-2 { margin: var(--wms-space-2); }
+.wms-m-3 { margin: var(--wms-space-3); }
+.wms-m-4 { margin: var(--wms-space-4); }
+.wms-m-6 { margin: var(--wms-space-6); }
+.wms-m-8 { margin: var(--wms-space-8); }
+
+.wms-mt-0 { margin-top: var(--wms-space-0); }
+.wms-mt-1 { margin-top: var(--wms-space-1); }
+.wms-mt-2 { margin-top: var(--wms-space-2); }
+.wms-mt-3 { margin-top: var(--wms-space-3); }
+.wms-mt-4 { margin-top: var(--wms-space-4); }
+.wms-mt-6 { margin-top: var(--wms-space-6); }
+.wms-mt-8 { margin-top: var(--wms-space-8); }
+
+.wms-mb-0 { margin-bottom: var(--wms-space-0); }
+.wms-mb-1 { margin-bottom: var(--wms-space-1); }
+.wms-mb-2 { margin-bottom: var(--wms-space-2); }
+.wms-mb-3 { margin-bottom: var(--wms-space-3); }
+.wms-mb-4 { margin-bottom: var(--wms-space-4); }
+.wms-mb-6 { margin-bottom: var(--wms-space-6); }
+.wms-mb-8 { margin-bottom: var(--wms-space-8); }
+
+.wms-p-0 { padding: var(--wms-space-0); }
+.wms-p-1 { padding: var(--wms-space-1); }
+.wms-p-2 { padding: var(--wms-space-2); }
+.wms-p-3 { padding: var(--wms-space-3); }
+.wms-p-4 { padding: var(--wms-space-4); }
+.wms-p-6 { padding: var(--wms-space-6); }
+.wms-p-8 { padding: var(--wms-space-8); }
+
+.wms-px-2 { padding-left: var(--wms-space-2); padding-right: var(--wms-space-2); }
+.wms-px-3 { padding-left: var(--wms-space-3); padding-right: var(--wms-space-3); }
+.wms-px-4 { padding-left: var(--wms-space-4); padding-right: var(--wms-space-4); }
+.wms-px-6 { padding-left: var(--wms-space-6); padding-right: var(--wms-space-6); }
+
+.wms-py-2 { padding-top: var(--wms-space-2); padding-bottom: var(--wms-space-2); }
+.wms-py-3 { padding-top: var(--wms-space-3); padding-bottom: var(--wms-space-3); }
+.wms-py-4 { padding-top: var(--wms-space-4); padding-bottom: var(--wms-space-4); }
+.wms-py-6 { padding-top: var(--wms-space-6); padding-bottom: var(--wms-space-6); }
+
+.wms-gap-1 { gap: var(--wms-space-1); }
+.wms-gap-2 { gap: var(--wms-space-2); }
+.wms-gap-3 { gap: var(--wms-space-3); }
+.wms-gap-4 { gap: var(--wms-space-4); }
+.wms-gap-6 { gap: var(--wms-space-6); }
+
+/* === GRID SYSTEM === */
+.wms-grid {
+  display: grid;
+  gap: var(--wms-space-4);
+}
+
+.wms-grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.wms-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wms-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wms-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wms-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.wms-grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+
+.wms-col-span-1 { grid-column: span 1 / span 1; }
+.wms-col-span-2 { grid-column: span 2 / span 2; }
+.wms-col-span-3 { grid-column: span 3 / span 3; }
+.wms-col-span-4 { grid-column: span 4 / span 4; }
+.wms-col-span-6 { grid-column: span 6 / span 6; }
+.wms-col-span-8 { grid-column: span 8 / span 8; }
+.wms-col-span-12 { grid-column: span 12 / span 12; }
+.wms-col-span-full { grid-column: 1 / -1; }
+
+/* === FLEXBOX UTILITIES === */
+.wms-flex { display: flex; }
+.wms-inline-flex { display: inline-flex; }
+.wms-flex-col { flex-direction: column; }
+.wms-flex-row { flex-direction: row; }
+.wms-flex-wrap { flex-wrap: wrap; }
+.wms-flex-nowrap { flex-wrap: nowrap; }
+
+.wms-items-start { align-items: flex-start; }
+.wms-items-center { align-items: center; }
+.wms-items-end { align-items: flex-end; }
+.wms-items-stretch { align-items: stretch; }
+
+.wms-justify-start { justify-content: flex-start; }
+.wms-justify-center { justify-content: center; }
+.wms-justify-end { justify-content: flex-end; }
+.wms-justify-between { justify-content: space-between; }
+.wms-justify-around { justify-content: space-around; }
+
+.wms-flex-1 { flex: 1 1 0%; }
+.wms-flex-auto { flex: 1 1 auto; }
+.wms-flex-none { flex: none; }
+.wms-flex-grow { flex-grow: 1; }
+.wms-flex-shrink-0 { flex-shrink: 0; }
+
+/* === DISPLAY UTILITIES === */
+.wms-block { display: block; }
+.wms-inline-block { display: inline-block; }
+.wms-hidden { display: none; }
+
+/* === WIDTH/HEIGHT === */
+.wms-w-full { width: 100%; }
+.wms-w-auto { width: auto; }
+.wms-h-full { height: 100%; }
+.wms-h-auto { height: auto; }
+.wms-min-h-screen { min-height: 100vh; }
+
+/* === OVERFLOW === */
+.wms-overflow-auto { overflow: auto; }
+.wms-overflow-hidden { overflow: hidden; }
+.wms-overflow-x-auto { overflow-x: auto; }
+.wms-overflow-y-auto { overflow-y: auto; }
+
+/* === POSITION === */
+.wms-relative { position: relative; }
+.wms-absolute { position: absolute; }
+.wms-fixed { position: fixed; }
+.wms-sticky { position: sticky; }
+
+/* === BORDERS === */
+.wms-border { border: 1px solid var(--wms-border-default); }
+.wms-border-0 { border: none; }
+.wms-border-t { border-top: 1px solid var(--wms-border-default); }
+.wms-border-b { border-bottom: 1px solid var(--wms-border-default); }
+.wms-border-l { border-left: 1px solid var(--wms-border-default); }
+.wms-border-r { border-right: 1px solid var(--wms-border-default); }
+
+.wms-rounded-none { border-radius: var(--wms-radius-none); }
+.wms-rounded-sm { border-radius: var(--wms-radius-sm); }
+.wms-rounded { border-radius: var(--wms-radius-md); }
+.wms-rounded-lg { border-radius: var(--wms-radius-lg); }
+.wms-rounded-xl { border-radius: var(--wms-radius-xl); }
+.wms-rounded-full { border-radius: var(--wms-radius-full); }
+
+/* === SHADOWS === */
+.wms-shadow-none { box-shadow: none; }
+.wms-shadow-xs { box-shadow: var(--wms-shadow-xs); }
+.wms-shadow-sm { box-shadow: var(--wms-shadow-sm); }
+.wms-shadow { box-shadow: var(--wms-shadow-md); }
+.wms-shadow-lg { box-shadow: var(--wms-shadow-lg); }
+.wms-shadow-xl { box-shadow: var(--wms-shadow-xl); }
+
+/* === BACKGROUNDS === */
+.wms-bg-white { background-color: #ffffff; }
+.wms-bg-body { background-color: var(--wms-bg-body); }
+.wms-bg-surface { background-color: var(--wms-bg-surface); }
+.wms-bg-gray-50 { background-color: var(--wms-gray-50); }
+.wms-bg-gray-100 { background-color: var(--wms-gray-100); }
+.wms-bg-primary-light { background-color: var(--wms-primary-light); }
+.wms-bg-success-light { background-color: var(--wms-success-light); }
+.wms-bg-warning-light { background-color: var(--wms-warning-light); }
+.wms-bg-danger-light { background-color: var(--wms-danger-light); }
+.wms-bg-info-light { background-color: var(--wms-info-light); }
+
+/* === TRANSITIONS === */
+.wms-transition { transition: all var(--wms-transition-base); }
+.wms-transition-fast { transition: all var(--wms-transition-fast); }
+.wms-transition-slow { transition: all var(--wms-transition-slow); }
+
+/* === CURSOR === */
+.wms-cursor-pointer { cursor: pointer; }
+.wms-cursor-default { cursor: default; }
+.wms-cursor-not-allowed { cursor: not-allowed; }
+
+/* === TEXT ALIGNMENT === */
+.wms-text-left { text-align: left; }
+.wms-text-center { text-align: center; }
+.wms-text-right { text-align: right; }
+
+/* === RESPONSIVE GRID === */
+@media (min-width: 640px) {
+  .sm\:wms-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:wms-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sm\:wms-col-span-6 { grid-column: span 6 / span 6; }
+}
+
+@media (min-width: 768px) {
+  .md\:wms-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:wms-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .md\:wms-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .md\:wms-col-span-4 { grid-column: span 4 / span 4; }
+  .md\:wms-col-span-6 { grid-column: span 6 / span 6; }
+  .md\:wms-col-span-8 { grid-column: span 8 / span 8; }
+  .md\:wms-flex-row { flex-direction: row; }
+  .md\:wms-hidden { display: none; }
+  .md\:wms-block { display: block; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:wms-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lg\:wms-grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .lg\:wms-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .lg\:wms-col-span-3 { grid-column: span 3 / span 3; }
+  .lg\:wms-col-span-4 { grid-column: span 4 / span 4; }
+}
+
+@media (min-width: 1280px) {
+  .xl\:wms-grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .xl\:wms-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .wms-no-print { display: none !important; }
+}
+</style>

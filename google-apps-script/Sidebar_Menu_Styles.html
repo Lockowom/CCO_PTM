@@ -1,0 +1,371 @@
+<style>
+/* ==================== HORIZONTAL DROPDOWN MENU - WMS ==================== */
+:root {
+  --menu-bg: linear-gradient(to bottom, #ffffff 0%, #f1f5f9 100%);
+  --menu-bg-hover: linear-gradient(to bottom, #FF6B00 0%, #e65100 100%);
+  --menu-text: #475569;
+  --menu-text-hover: #ffffff;
+  --dropdown-bg: #1e293b;
+  --dropdown-border-top: #334155;
+  --dropdown-border-bottom: #0f172a;
+  --header-height: 70px;
+}
+
+/* ==================== LAYOUT ==================== */
+.app-layout { 
+  display: none; 
+  min-height: 100vh; 
+  padding-top: calc(var(--header-height) + 60px); /* Header + Menu */
+  flex-direction: column;
+}
+.app-layout.visible { display: flex !important; }
+.app-layout .main-content { 
+  flex: 1; 
+  margin-left: 0;
+  min-width: 0; 
+  background: var(--bg-body); 
+}
+
+/* ==================== HORIZONTAL NAV CONTAINER ==================== */
+.sidebar-menu {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: auto;
+  width: 100%;
+  background: transparent;
+  border-right: none;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  display: none;
+  flex-direction: row;
+  justify-content: center;
+  z-index: 950;
+  overflow: visible;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.sidebar-menu.visible { display: flex !important; }
+
+/* Hide toggle button for horizontal menu */
+.sidebar-toggle { display: none !important; }
+
+/* ==================== MAIN NAV UL ==================== */
+.sidebar-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  margin: 0;
+  overflow: visible;
+  background: var(--menu-bg);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  list-style: none;
+}
+
+/* ==================== NAV SECTIONS (Top Level Items) ==================== */
+.nav-section {
+  position: relative;
+  margin: 0;
+  float: left;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--menu-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  border-radius: 0;
+}
+
+.section-header:hover {
+  background: var(--menu-bg-hover);
+  color: var(--menu-text-hover);
+}
+
+.section-header:focus {
+  outline: none;
+}
+
+.section-icon {
+  width: auto;
+  height: auto;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-icon i {
+  color: inherit;
+}
+
+.section-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: inherit;
+}
+
+.section-arrow {
+  font-size: 10px;
+  margin-left: 6px;
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+/* ==================== DROPDOWN (Submenu) ==================== */
+.section-modules {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--dropdown-bg);
+  border-radius: 0 0 8px 8px;
+  padding: 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  z-index: 1000;
+  max-height: none;
+  overflow: visible;
+  opacity: 1;
+  transition: none;
+}
+
+/* Show dropdown on hover */
+.nav-section:hover > .section-modules {
+  display: block;
+}
+
+/* ==================== MODULE ITEMS (Dropdown Items) ==================== */
+.module-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid var(--dropdown-border-top);
+  border-bottom: 1px solid var(--dropdown-border-bottom);
+  transition: background 0.2s ease;
+  margin: 0;
+  border-radius: 0;
+  position: relative;
+}
+
+.module-item:first-child {
+  border-top: none;
+}
+
+.module-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.module-item:hover {
+  background: #334155;
+}
+
+.module-item i {
+  width: 20px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.module-item:hover i {
+  color: #FF6B00;
+}
+
+.module-item span {
+  flex: 1;
+}
+
+/* Active state */
+.module-item.active {
+  background: #334155;
+  color: #FF6B00;
+  font-weight: 600;
+}
+
+.module-item.active i {
+  color: #FF6B00;
+}
+
+.module-item.active::before {
+  display: none;
+}
+
+/* ==================== SIDEBAR FOOTER (Hidden in horizontal) ==================== */
+.sidebar-footer {
+  display: none;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1200px) {
+  .section-header {
+    padding: 16px 20px;
+  }
+  .section-label {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .section-header {
+    padding: 14px 16px;
+  }
+  .section-icon {
+    display: none;
+  }
+}
+
+/* ==================== MOBILE - Vertical Menu ==================== */
+@media (max-width: 768px) {
+  .app-layout {
+    padding-top: var(--header-height);
+  }
+  
+  .sidebar-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    transform: translateX(-100%);
+    border-bottom: none;
+    border-right: 1px solid rgba(0,0,0,0.1);
+    padding-top: var(--header-height);
+    background: #ffffff;
+    box-shadow: 4px 0 30px rgba(0,0,0,0.15);
+  }
+  
+  .sidebar-menu.mobile-open {
+    transform: translateX(0);
+    display: flex !important;
+  }
+  
+  .sidebar-nav {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    padding: 16px 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .nav-section {
+    float: none;
+    width: 100%;
+  }
+  
+  .section-header {
+    width: 100%;
+    padding: 14px 20px;
+    justify-content: flex-start;
+    border-radius: 0;
+  }
+  
+  .section-icon {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,107,0,0.1) !important;
+  }
+  
+  .section-icon i {
+    color: #FF6B00;
+  }
+  
+  .section-modules {
+    position: static;
+    display: none;
+    background: #f8fafc;
+    border-radius: 0;
+    box-shadow: none;
+    padding-left: 20px;
+  }
+  
+  .section-modules.expanded {
+    display: block;
+  }
+  
+  .module-item {
+    color: #475569;
+    border-color: #e2e8f0;
+    padding: 12px 20px 12px 56px;
+  }
+  
+  .module-item:hover {
+    background: #f1f5f9;
+  }
+  
+  .module-item i {
+    color: #64748b;
+  }
+  
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 940;
+    backdrop-filter: blur(4px);
+  }
+  
+  .sidebar-backdrop.visible {
+    display: block;
+  }
+  
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn { display: none !important; }
+  .sidebar-backdrop { display: none !important; }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== PRINT ==================== */
+@media print {
+  .sidebar-menu, .sidebar-backdrop, .mobile-menu-btn { display: none !important; }
+}
+</style>

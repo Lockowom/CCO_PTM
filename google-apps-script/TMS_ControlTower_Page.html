@@ -1,0 +1,1616 @@
+<!-- TMS Control Tower Page -->
+<div id="tms-controlView" class="view" style="display: none;">
+  
+  <!-- Header -->
+  <div class="tms-control-tower-header">
+    <div class="tms-header-content">
+      <h1 class="tms-page-title">
+        <i class="fas fa-tower-broadcast"></i>
+        Centro de Control
+      </h1>
+      <div class="tms-header-actions">
+        <button id="tmsRefreshControlTowerBtn" class="tms-btn tms-btn-primary">
+          <i class="fas fa-sync-alt"></i>
+          Actualizar
+        </button>
+        <button id="tmsFullscreenBtn" class="tms-btn tms-btn-outline">
+          <i class="fas fa-expand"></i>
+          Pantalla Completa
+        </button>
+      </div>
+    </div>
+    
+    <!-- Real-time Status -->
+    <div class="tms-status-bar">
+      <div class="status-item">
+        <div class="status-indicator active" id="systemStatus"></div>
+        <span>Sistema Activo</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-users"></i>
+        <span id="activeDriversCount">0</span>
+        <span>Conductores Activos</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-route"></i>
+        <span id="activeDeliveriesCount">0</span>
+        <span>Entregas en Curso</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="alertsCount">0</span>
+        <span>Alertas</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-clock"></i>
+        <span id="lastUpdate">--:--</span>
+        <span>Última Actualización</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="tms-control-tower-content">
+    
+    <!-- Left Panel - Map and Tracking -->
+    <div class="tms-left-panel">
+      
+      <!-- Live Map -->
+      <div class="tms-map-section">
+        <div class="section-header">
+          <h3><i class="fas fa-map"></i> Mapa en Tiempo Real</h3>
+          <div class="map-controls">
+            <button class="map-control-btn" id="centerMapBtn" title="Centrar Mapa">
+              <i class="fas fa-crosshairs"></i>
+            </button>
+            <button class="map-control-btn" id="toggleTrafficBtn" title="Mostrar Tráfico">
+              <i class="fas fa-traffic-light"></i>
+            </button>
+            <button class="map-control-btn" id="toggleSatelliteBtn" title="Vista Satélite">
+              <i class="fas fa-satellite"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="tms-map-container" id="liveMap">
+          <!-- Map will be loaded here -->
+          <div class="map-placeholder">
+            <i class="fas fa-map"></i>
+            <p>Cargando mapa...</p>
+            <div class="map-loading">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map Legend -->
+        <div class="map-legend">
+          <div class="legend-item">
+            <div class="legend-marker driver-available"></div>
+            <span>Conductor Disponible</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-marker driver-busy"></div>
+            <span>En Ruta</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-marker delivery-pending"></div>
+            <span>Entrega Pendiente</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-marker delivery-completed"></div>
+            <span>Entrega Completada</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-marker alert-marker"></div>
+            <span>Alerta</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Driver Tracking -->
+      <div class="tms-tracking-section">
+        <div class="section-header">
+          <h3><i class="fas fa-location-dot"></i> Seguimiento de Conductores</h3>
+          <button class="toggle-btn" id="toggleTrackingBtn">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        
+        <div class="tracking-list" id="driverTrackingList">
+          <!-- Driver tracking items will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Control and Monitoring -->
+    <div class="tms-right-panel">
+      
+      <!-- Active Deliveries -->
+      <div class="tms-deliveries-section">
+        <div class="section-header">
+          <h3><i class="fas fa-truck-fast"></i> Entregas Activas</h3>
+          <div class="delivery-filters">
+            <select id="deliveryStatusFilter" class="tms-select-sm">
+              <option value="">Todos</option>
+              <option value="EN_RUTA">En Ruta</option>
+              <option value="EN_DESTINO">En Destino</option>
+              <option value="RETRASADO">Retrasado</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="deliveries-list" id="activeDeliveriesList">
+          <!-- Active deliveries will be loaded here -->
+        </div>
+      </div>
+
+      <!-- System Alerts -->
+      <div class="tms-alerts-section">
+        <div class="section-header">
+          <h3><i class="fas fa-bell"></i> Alertas del Sistema</h3>
+          <button class="clear-alerts-btn" id="clearAlertsBtn">
+            <i class="fas fa-check-double"></i>
+            Marcar Leídas
+          </button>
+        </div>
+        
+        <div class="alerts-list" id="systemAlertsList">
+          <!-- System alerts will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="tms-actions-section">
+        <div class="section-header">
+          <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+        </div>
+        
+        <div class="quick-actions-grid">
+          <button class="quick-action-btn emergency" id="emergencyAlertBtn">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Alerta de Emergencia</span>
+          </button>
+          <button class="quick-action-btn" id="broadcastMessageBtn">
+            <i class="fas fa-bullhorn"></i>
+            <span>Mensaje Masivo</span>
+          </button>
+          <button class="quick-action-btn" id="reassignDeliveryBtn">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Reasignar Entrega</span>
+          </button>
+          <button class="quick-action-btn" id="generateReportBtn">
+            <i class="fas fa-chart-line"></i>
+            <span>Generar Reporte</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Performance Metrics -->
+      <div class="tms-metrics-section">
+        <div class="section-header">
+          <h3><i class="fas fa-tachometer-alt"></i> Métricas de Rendimiento</h3>
+        </div>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-percentage"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="deliverySuccessRate">0%</div>
+              <div class="metric-label">Tasa de Éxito</div>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="averageDeliveryTime">0 min</div>
+              <div class="metric-label">Tiempo Promedio</div>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-route"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="routeEfficiency">0%</div>
+              <div class="metric-label">Eficiencia de Rutas</div>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="driverUtilization">0%</div>
+              <div class="metric-label">Utilización</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delivery Details Modal -->
+<div id="deliveryDetailsModal" class="tms-modal">
+  <div class="tms-modal-content large">
+    <div class="tms-modal-header">
+      <h3 id="deliveryDetailsTitle">Detalles de Entrega</h3>
+      <button class="tms-modal-close" id="closeDeliveryDetailsModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="tms-modal-body">
+      <div id="deliveryDetailsContent">
+        <!-- Delivery details will be loaded here -->
+      </div>
+    </div>
+    
+    <div class="tms-modal-footer">
+      <button type="button" class="tms-btn tms-btn-secondary" id="trackDeliveryBtn">
+        <i class="fas fa-map-marker-alt"></i>
+        Rastrear
+      </button>
+      <button type="button" class="tms-btn tms-btn-warning" id="contactDriverBtn">
+        <i class="fas fa-phone"></i>
+        Contactar Conductor
+      </button>
+      <button type="button" class="tms-btn tms-btn-primary" id="reassignBtn">
+        <i class="fas fa-exchange-alt"></i>
+        Reasignar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Alert Modal -->
+<div id="emergencyAlertModal" class="tms-modal">
+  <div class="tms-modal-content">
+    <div class="tms-modal-header emergency">
+      <h3><i class="fas fa-exclamation-triangle"></i> Alerta de Emergencia</h3>
+      <button class="tms-modal-close" id="closeEmergencyModal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="tms-modal-body">
+      <form id="emergencyAlertForm">
+        <div class="tms-form-group">
+          <label for="emergencyType">Tipo de Emergencia *</label>
+          <select id="emergencyType" name="type" required>
+            <option value="">Seleccionar tipo</option>
+            <option value="ACCIDENTE">Accidente</option>
+            <option value="VEHICULO_AVERIADO">Vehículo Averiado</option>
+            <option value="SEGURIDAD">Problema de Seguridad</option>
+            <option value="CLIMA">Condiciones Climáticas</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+        
+        <div class="tms-form-group">
+          <label for="emergencyDriver">Conductor Afectado</label>
+          <select id="emergencyDriver" name="driverId">
+            <option value="">Todos los conductores</option>
+          </select>
+        </div>
+        
+        <div class="tms-form-group">
+          <label for="emergencyMessage">Mensaje de Alerta *</label>
+          <textarea id="emergencyMessage" name="message" rows="4" required 
+                    placeholder="Describe la situación de emergencia..."></textarea>
+        </div>
+        
+        <div class="tms-form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="requireAcknowledgment" name="requireAck">
+            <span class="checkmark"></span>
+            Requiere confirmación de recepción
+          </label>
+        </div>
+      </form>
+    </div>
+    
+    <div class="tms-modal-footer">
+      <button type="button" class="tms-btn tms-btn-secondary" id="cancelEmergencyBtn">Cancelar</button>
+      <button type="submit" class="tms-btn tms-btn-danger" id="sendEmergencyBtn">
+        <i class="fas fa-exclamation-triangle"></i>
+        Enviar Alerta
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Styles -->
+<style>
+/* ==================== CONTROL TOWER STYLES ==================== */
+.tms-control-tower-header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.tms-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tms-status-bar {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.status-indicator.active {
+  background: #10b981;
+  animation: pulse 2s infinite;
+}
+
+.tms-control-tower-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  padding: 0 24px 24px;
+  height: calc(100vh - 200px);
+}
+
+/* Left Panel */
+.tms-left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tms-map-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+  flex: 1;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.map-control-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.map-control-btn:hover {
+  background: #f3f4f6;
+  color: var(--primary);
+}
+
+.map-control-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.tms-map-container {
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.map-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #6b7280;
+}
+
+.map-placeholder i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.map-loading {
+  margin-top: 16px;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-marker.driver-available { background: #10b981; }
+.legend-marker.driver-busy { background: #f59e0b; }
+.legend-marker.delivery-pending { background: #3b82f6; }
+.legend-marker.delivery-completed { background: #6b7280; }
+.legend-marker.alert-marker { background: #ef4444; }
+
+.tms-tracking-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+  max-height: 300px;
+}
+
+.tracking-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.tracking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.tracking-item:last-child {
+  border-bottom: none;
+}
+
+.driver-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.driver-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.driver-details h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.driver-details p {
+  margin: 2px 0 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.driver-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.driver-status.available { color: #10b981; }
+.driver-status.busy { color: #f59e0b; }
+.driver-status.offline { color: #6b7280; }
+
+/* Right Panel */
+.tms-right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.tms-deliveries-section,
+.tms-alerts-section,
+.tms-actions-section,
+.tms-metrics-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.delivery-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.tms-select-sm {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  min-width: 120px;
+}
+
+.deliveries-list,
+.alerts-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.delivery-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delivery-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.delivery-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.delivery-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.delivery-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.delivery-status.en-ruta {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.delivery-status.en-destino {
+  background: rgba(251, 191, 36, 0.1);
+  color: #f59e0b;
+}
+
+.delivery-status.retrasado {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.alert-item.high-priority {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.alert-item.medium-priority {
+  border-color: #f59e0b;
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.alert-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.alert-icon.high-priority {
+  background: #ef4444;
+  color: white;
+}
+
+.alert-icon.medium-priority {
+  background: #f59e0b;
+  color: white;
+}
+
+.alert-icon.low-priority {
+  background: #6b7280;
+  color: white;
+}
+
+.alert-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.alert-content p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.alert-time {
+  font-size: 0.625rem;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.clear-alerts-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-alerts-btn:hover {
+  background: #e5e7eb;
+  color: var(--text-main);
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn.emergency {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.quick-action-btn.emergency:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.quick-action-btn i {
+  font-size: 1.25rem;
+}
+
+.quick-action-btn span {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.toggle-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.toggle-btn:hover,
+.toggle-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Emergency Modal */
+.tms-modal-header.emergency {
+  background: #ef4444;
+  color: white;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .tms-control-tower-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .tms-right-panel {
+    max-height: none;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tms-header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .tms-status-bar {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .map-controls {
+    flex-wrap: wrap;
+  }
+}
+</style>
+
+<script>
+// Global variables for control tower
+let controlTowerData = {
+  drivers: [],
+  deliveries: [],
+  alerts: [],
+  metrics: {}
+};
+
+let refreshInterval = null;
+let mapInstance = null;
+
+// Initialize Control Tower
+function initTMSControlTower() {
+  console.log('TMS Control Tower: Inicializando centro de control...');
+  
+  // Load initial data
+  loadControlTowerData();
+  
+  // Set up event listeners
+  setupControlTowerEventListeners();
+  
+  // Start auto-refresh
+  startAutoRefresh();
+  
+  // Initialize map
+  initializeMap();
+}
+
+// Set up event listeners
+function setupControlTowerEventListeners() {
+  // Header buttons
+  document.getElementById('tmsRefreshControlTowerBtn').addEventListener('click', () => {
+    loadControlTowerData();
+  });
+  
+  document.getElementById('tmsFullscreenBtn').addEventListener('click', toggleFullscreen);
+  
+  // Map controls
+  document.getElementById('centerMapBtn').addEventListener('click', centerMap);
+  document.getElementById('toggleTrafficBtn').addEventListener('click', toggleTraffic);
+  document.getElementById('toggleSatelliteBtn').addEventListener('click', toggleSatellite);
+  
+  // Tracking toggle
+  document.getElementById('toggleTrackingBtn').addEventListener('click', toggleTracking);
+  
+  // Delivery filter
+  document.getElementById('deliveryStatusFilter').addEventListener('change', filterDeliveries);
+  
+  // Quick actions
+  document.getElementById('emergencyAlertBtn').addEventListener('click', showEmergencyAlert);
+  document.getElementById('broadcastMessageBtn').addEventListener('click', showBroadcastMessage);
+  document.getElementById('reassignDeliveryBtn').addEventListener('click', showReassignDelivery);
+  document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+  
+  // Clear alerts
+  document.getElementById('clearAlertsBtn').addEventListener('click', clearAllAlerts);
+  
+  // Modal handlers
+  document.getElementById('closeDeliveryDetailsModal').addEventListener('click', closeDeliveryDetailsModal);
+  document.getElementById('closeEmergencyModal').addEventListener('click', closeEmergencyModal);
+  
+  // Emergency form
+  document.getElementById('sendEmergencyBtn').addEventListener('click', sendEmergencyAlert);
+  document.getElementById('cancelEmergencyBtn').addEventListener('click', closeEmergencyModal);
+}
+
+// Load control tower data
+function loadControlTowerData() {
+  console.log('Control Tower: Cargando datos...');
+  
+  // Show loading state
+  updateLastUpdateTime();
+  
+  // Load drivers data
+  google.script.run
+    .withSuccessHandler(handleDriversLoaded)
+    .withFailureHandler(handleError)
+    .getTMSDrivers();
+  
+  // Load active deliveries
+  google.script.run
+    .withSuccessHandler(handleDeliveriesLoaded)
+    .withFailureHandler(handleError)
+    .getTMSActiveDeliveries();
+  
+  // Load system alerts
+  google.script.run
+    .withSuccessHandler(handleAlertsLoaded)
+    .withFailureHandler(handleError)
+    .getTMSSystemAlerts();
+  
+  // Load performance metrics
+  google.script.run
+    .withSuccessHandler(handleMetricsLoaded)
+    .withFailureHandler(handleError)
+    .getTMSPerformanceMetrics();
+}
+
+// Handle drivers data loaded
+function handleDriversLoaded(drivers) {
+  if (drivers.error) {
+    console.error('Error loading drivers:', drivers.error);
+    return;
+  }
+  
+  controlTowerData.drivers = drivers;
+  renderDriverTracking(drivers);
+  updateDriverCounts(drivers);
+  updateMapMarkers();
+}
+
+// Handle deliveries data loaded
+function handleDeliveriesLoaded(deliveries) {
+  if (deliveries.error) {
+    console.error('Error loading deliveries:', deliveries.error);
+    return;
+  }
+  
+  controlTowerData.deliveries = deliveries;
+  renderActiveDeliveries(deliveries);
+  updateDeliveryCounts(deliveries);
+  updateMapMarkers();
+}
+
+// Handle alerts data loaded
+function handleAlertsLoaded(alerts) {
+  if (alerts.error) {
+    console.error('Error loading alerts:', alerts.error);
+    return;
+  }
+  
+  controlTowerData.alerts = alerts;
+  renderSystemAlerts(alerts);
+  updateAlertCounts(alerts);
+}
+
+// Handle metrics data loaded
+function handleMetricsLoaded(metrics) {
+  if (metrics.error) {
+    console.error('Error loading metrics:', metrics.error);
+    return;
+  }
+  
+  controlTowerData.metrics = metrics;
+  renderPerformanceMetrics(metrics);
+}
+
+// Handle errors
+function handleError(error) {
+  console.error('Control Tower Error:', error);
+  showError('Error cargando datos del centro de control');
+}
+
+// Render driver tracking
+function renderDriverTracking(drivers) {
+  const container = document.getElementById('driverTrackingList');
+  
+  if (!drivers || drivers.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No hay conductores activos</p>';
+    return;
+  }
+  
+  const activeDrivers = drivers.filter(d => d.estado !== 'INACTIVO');
+  
+  container.innerHTML = activeDrivers.map(driver => `
+    <div class="tracking-item">
+      <div class="driver-info">
+        <div class="driver-avatar">${driver.nombre.charAt(0)}</div>
+        <div class="driver-details">
+          <h4>${driver.nombreCompleto}</h4>
+          <p>${driver.vehiculo ? driver.vehiculo.placa : 'Sin vehículo'}</p>
+        </div>
+      </div>
+      <div class="driver-status ${driver.estado.toLowerCase()}">
+        <div class="status-indicator ${driver.estado === 'DISPONIBLE' ? 'active' : ''}"></div>
+        <span>${getStatusLabel(driver.estado)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render active deliveries
+function renderActiveDeliveries(deliveries) {
+  const container = document.getElementById('activeDeliveriesList');
+  
+  if (!deliveries || deliveries.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No hay entregas activas</p>';
+    return;
+  }
+  
+  const activeDeliveries = deliveries.filter(d => 
+    d.estado === 'EN_RUTA' || d.estado === 'EN_DESTINO' || d.estado === 'RETRASADO'
+  );
+  
+  container.innerHTML = activeDeliveries.map(delivery => `
+    <div class="delivery-item" onclick="showDeliveryDetails('${delivery.id}')">
+      <div class="delivery-info">
+        <h4>${delivery.cliente || 'Cliente'}</h4>
+        <p><i class="fas fa-map-marker-alt"></i> ${delivery.direccion}</p>
+        <p><i class="fas fa-user"></i> ${delivery.conductor || 'Sin asignar'}</p>
+      </div>
+      <div class="delivery-status ${delivery.estado.toLowerCase().replace('_', '-')}">
+        ${getDeliveryStatusLabel(delivery.estado)}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render system alerts
+function renderSystemAlerts(alerts) {
+  const container = document.getElementById('systemAlertsList');
+  
+  if (!alerts || alerts.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No hay alertas activas</p>';
+    return;
+  }
+  
+  container.innerHTML = alerts.map(alert => `
+    <div class="alert-item ${alert.prioridad.toLowerCase()}-priority">
+      <div class="alert-icon ${alert.prioridad.toLowerCase()}-priority">
+        <i class="fas fa-${getAlertIcon(alert.tipo)}"></i>
+      </div>
+      <div class="alert-content">
+        <h4>${alert.titulo}</h4>
+        <p>${alert.mensaje}</p>
+        <div class="alert-time">${formatTime(alert.fecha)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render performance metrics
+function renderPerformanceMetrics(metrics) {
+  if (!metrics) return;
+  
+  document.getElementById('deliverySuccessRate').textContent = `${metrics.tasaExito || 0}%`;
+  document.getElementById('averageDeliveryTime').textContent = `${metrics.tiempoPromedio || 0} min`;
+  document.getElementById('routeEfficiency').textContent = `${metrics.eficienciaRutas || 0}%`;
+  document.getElementById('driverUtilization').textContent = `${metrics.utilizacionConductores || 0}%`;
+}
+
+// Update counts
+function updateDriverCounts(drivers) {
+  const activeDrivers = drivers.filter(d => d.estado !== 'INACTIVO');
+  document.getElementById('activeDriversCount').textContent = activeDrivers.length;
+}
+
+function updateDeliveryCounts(deliveries) {
+  const activeDeliveries = deliveries.filter(d => 
+    d.estado === 'EN_RUTA' || d.estado === 'EN_DESTINO'
+  );
+  document.getElementById('activeDeliveriesCount').textContent = activeDeliveries.length;
+}
+
+function updateAlertCounts(alerts) {
+  document.getElementById('alertsCount').textContent = alerts.length;
+}
+
+function updateLastUpdateTime() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CL', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  document.getElementById('lastUpdate').textContent = timeStr;
+}
+
+// Map functions
+function initializeMap() {
+  console.log('Control Tower: Inicializando mapa...');
+  
+  const mapContainer = document.getElementById('liveMap');
+  // Clear placeholder
+  mapContainer.innerHTML = '';
+  
+  // Initialize Leaflet map
+  // Default to Santiago, Chile
+  try {
+    if (mapInstance) {
+        mapInstance.remove(); // Clean up existing instance if any
+        mapInstance = null;
+    }
+
+    mapInstance = L.map('liveMap').setView([-33.4489, -70.6693], 11);
+    
+    // Add OpenStreetMap tiles
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(mapInstance);
+    
+    // Add Esri Satellite layer (hidden by default)
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri'
+    });
+    
+    // Save layers for toggling
+    mapInstance.layers = {
+      osm: osmLayer,
+      satellite: satelliteLayer
+    };
+    
+    // Force map invalidation to ensure it renders correctly
+    setTimeout(() => {
+      mapInstance.invalidateSize();
+    }, 100);
+  } catch (e) {
+    console.error('Error initializing map:', e);
+    mapContainer.innerHTML = '<div class="map-placeholder"><p>Error inicializando mapa</p></div>';
+  }
+
+  // Hook for tab switching updates
+  if (window.tmsMapResizeObserver) {
+      window.tmsMapResizeObserver.disconnect();
+  }
+  
+  window.tmsMapResizeObserver = new ResizeObserver(() => {
+      if (mapInstance) {
+          mapInstance.invalidateSize();
+      }
+  });
+  const mapDiv = document.getElementById('liveMap');
+  if (mapDiv) window.tmsMapResizeObserver.observe(mapDiv);
+}
+
+function updateMapMarkers() {
+  console.log('Control Tower: Actualizando marcadores del mapa...');
+  if (!mapInstance) return;
+  
+  // Clear existing markers
+  if (mapInstance.markers) {
+    mapInstance.markers.forEach(marker => mapInstance.removeLayer(marker));
+  }
+  mapInstance.markers = [];
+  
+  const bounds = L.latLngBounds();
+  let hasMarkers = false;
+
+  // Add driver markers
+  if (controlTowerData.drivers) {
+    controlTowerData.drivers.forEach(driver => {
+      if (driver.ubicacion && driver.ubicacion.includes(',')) {
+        const parts = driver.ubicacion.split(',');
+        const lat = parseFloat(parts[0].trim());
+        const lng = parseFloat(parts[1].trim());
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Determine color based on status
+          let color = '#6b7280'; // Default gray
+          if (driver.estado === 'DISPONIBLE') color = '#10b981'; // Green
+          else if (driver.estado === 'EN_RUTA') color = '#f59e0b'; // Amber
+          else if (driver.estado === 'OCUPADO') color = '#ef4444'; // Red
+          
+          // Create custom icon
+          const icon = L.divIcon({
+            className: 'custom-map-marker',
+            html: `<div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          
+          const marker = L.marker([lat, lng], { icon: icon })
+            .bindPopup(`
+              <div style="min-width: 150px;">
+                <h4 style="margin: 0 0 5px; font-size: 14px;">${driver.nombreCompleto}</h4>
+                <p style="margin: 0; font-size: 12px;">Estado: <strong>${getStatusLabel(driver.estado)}</strong></p>
+                <p style="margin: 0; font-size: 12px;">Vehículo: ${driver.vehiculo ? driver.vehiculo.placa : 'N/A'}</p>
+              </div>
+            `)
+            .addTo(mapInstance);
+            
+          mapInstance.markers.push(marker);
+          bounds.extend([lat, lng]);
+          hasMarkers = true;
+        }
+      }
+    });
+  }
+  
+  // Add delivery markers
+   if (controlTowerData.deliveries) {
+    controlTowerData.deliveries.forEach(delivery => {
+      if (delivery.latitud && delivery.longitud) {
+         const lat = parseFloat(delivery.latitud);
+         const lng = parseFloat(delivery.longitud);
+         
+         if (!isNaN(lat) && !isNaN(lng)) {
+            let color = '#3b82f6'; // Blue for deliveries
+            if (delivery.estado === 'EN_DESTINO') color = '#f59e0b';
+            
+             const icon = L.divIcon({
+                className: 'custom-delivery-marker',
+                html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 2px; border: 1px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+             });
+
+             const marker = L.marker([lat, lng], { icon: icon })
+                .bindPopup(`
+                  <div style="min-width: 150px;">
+                    <h4 style="margin: 0 0 5px; font-size: 14px;">Entrega: ${delivery.cliente}</h4>
+                    <p style="margin: 0; font-size: 12px;">Estado: <strong>${getDeliveryStatusLabel(delivery.estado)}</strong></p>
+                    <p style="margin: 0; font-size: 12px;">${delivery.direccion}</p>
+                  </div>
+                `)
+                .addTo(mapInstance);
+             
+             mapInstance.markers.push(marker);
+             bounds.extend([lat, lng]);
+             hasMarkers = true;
+         }
+      }
+    });
+  }
+
+  // Fit bounds if markers exist
+  if (hasMarkers) {
+    mapInstance.fitBounds(bounds, { padding: [50, 50] });
+  }
+}
+
+function centerMap() {
+  console.log('Control Tower: Centrando mapa...');
+  if (mapInstance && mapInstance.markers && mapInstance.markers.length > 0) {
+     const bounds = L.latLngBounds(mapInstance.markers.map(m => m.getLatLng()));
+     mapInstance.fitBounds(bounds, { padding: [50, 50] });
+  } else if (mapInstance) {
+     mapInstance.setView([-33.4489, -70.6693], 11);
+  }
+}
+
+function toggleTraffic() {
+  const btn = document.getElementById('toggleTrafficBtn');
+  btn.classList.toggle('active');
+  // Leaflet traffic requires API, show notification
+  alert('La capa de tráfico requiere integración con Google Maps API Key. (Versión Demo: OpenStreetMap)');
+}
+
+function toggleSatellite() {
+  const btn = document.getElementById('toggleSatelliteBtn');
+  const isActive = btn.classList.toggle('active');
+  
+  if (!mapInstance) return;
+  
+  if (isActive) {
+    mapInstance.removeLayer(mapInstance.layers.osm);
+    mapInstance.addLayer(mapInstance.layers.satellite);
+  } else {
+    mapInstance.removeLayer(mapInstance.layers.satellite);
+    mapInstance.addLayer(mapInstance.layers.osm);
+  }
+}
+
+function toggleTracking() {
+  const btn = document.getElementById('toggleTrackingBtn');
+  btn.classList.toggle('active');
+  console.log('Control Tower: Toggle seguimiento');
+}
+
+// Filter functions
+function filterDeliveries() {
+  const filter = document.getElementById('deliveryStatusFilter').value;
+  let filteredDeliveries = controlTowerData.deliveries;
+  
+  if (filter) {
+    filteredDeliveries = controlTowerData.deliveries.filter(d => d.estado === filter);
+  }
+  
+  renderActiveDeliveries(filteredDeliveries);
+}
+
+// Modal functions
+function showDeliveryDetails(deliveryId) {
+  const delivery = controlTowerData.deliveries.find(d => d.id === deliveryId);
+  if (!delivery) return;
+  
+  const modal = document.getElementById('deliveryDetailsModal');
+  const title = document.getElementById('deliveryDetailsTitle');
+  const content = document.getElementById('deliveryDetailsContent');
+  
+  title.textContent = `Entrega - ${delivery.cliente}`;
+  
+  content.innerHTML = `
+    <div class="delivery-details-grid">
+      <div class="detail-section">
+        <h4>Información del Cliente</h4>
+        <p><strong>Cliente:</strong> ${delivery.cliente}</p>
+        <p><strong>Dirección:</strong> ${delivery.direccion}</p>
+        <p><strong>Teléfono:</strong> ${delivery.telefono || 'No disponible'}</p>
+      </div>
+      
+      <div class="detail-section">
+        <h4>Estado de Entrega</h4>
+        <p><strong>Estado:</strong> <span class="delivery-status ${delivery.estado.toLowerCase().replace('_', '-')}">${getDeliveryStatusLabel(delivery.estado)}</span></p>
+        <p><strong>Conductor:</strong> ${delivery.conductor || 'Sin asignar'}</p>
+        <p><strong>Vehículo:</strong> ${delivery.vehiculo || 'Sin asignar'}</p>
+      </div>
+      
+      <div class="detail-section">
+        <h4>Tiempos</h4>
+        <p><strong>Creado:</strong> ${formatDateTime(delivery.fechaCreacion)}</p>
+        <p><strong>Asignado:</strong> ${delivery.fechaAsignacion ? formatDateTime(delivery.fechaAsignacion) : 'No asignado'}</p>
+        <p><strong>Estimado:</strong> ${delivery.fechaEstimada ? formatDateTime(delivery.fechaEstimada) : 'No definido'}</p>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.add('show');
+}
+
+function closeDeliveryDetailsModal() {
+  document.getElementById('deliveryDetailsModal').classList.remove('show');
+}
+
+function showEmergencyAlert() {
+  const modal = document.getElementById('emergencyAlertModal');
+  
+  // Load drivers for selection
+  const driverSelect = document.getElementById('emergencyDriver');
+  driverSelect.innerHTML = '<option value="">Todos los conductores</option>';
+  
+  controlTowerData.drivers.forEach(driver => {
+    if (driver.estado !== 'INACTIVO') {
+      const option = document.createElement('option');
+      option.value = driver.id;
+      option.textContent = driver.nombreCompleto;
+      driverSelect.appendChild(option);
+    }
+  });
+  
+  modal.classList.add('show');
+}
+
+function closeEmergencyModal() {
+  document.getElementById('emergencyAlertModal').classList.remove('show');
+  document.getElementById('emergencyAlertForm').reset();
+}
+
+function sendEmergencyAlert() {
+  const form = document.getElementById('emergencyAlertForm');
+  const formData = new FormData(form);
+  
+  const alertData = {
+    type: formData.get('type'),
+    driverId: formData.get('driverId'),
+    message: formData.get('message'),
+    requireAck: formData.get('requireAck') === 'on'
+  };
+  
+  if (!alertData.type || !alertData.message) {
+    alert('Por favor complete todos los campos requeridos');
+    return;
+  }
+  
+  console.log('Enviando alerta de emergencia:', alertData);
+  
+  // Send emergency alert
+  google.script.run
+    .withSuccessHandler(() => {
+      closeEmergencyModal();
+      showSuccess('Alerta de emergencia enviada exitosamente');
+      loadControlTowerData(); // Refresh data
+    })
+    .withFailureHandler(handleError)
+    .sendTMSEmergencyAlert(alertData);
+}
+
+// Quick action functions
+function showBroadcastMessage() {
+  const message = prompt('Mensaje para enviar a todos los conductores:');
+  if (message) {
+    console.log('Enviando mensaje masivo:', message);
+    // Implement broadcast message
+  }
+}
+
+function showReassignDelivery() {
+  console.log('Mostrando reasignación de entrega');
+  // Implement delivery reassignment
+}
+
+function generateReport() {
+  console.log('Generando reporte');
+  // Implement report generation
+}
+
+function clearAllAlerts() {
+  if (confirm('¿Marcar todas las alertas como leídas?')) {
+    console.log('Limpiando alertas');
+    // Implement clear alerts
+    loadControlTowerData();
+  }
+}
+
+// Auto-refresh
+function startAutoRefresh() {
+  // Refresh every 30 seconds
+  refreshInterval = setInterval(() => {
+    loadControlTowerData();
+  }, 30000);
+}
+
+function stopAutoRefresh() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+}
+
+// Utility functions
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'DISPONIBLE': 'Disponible',
+    'EN_RUTA': 'En Ruta',
+    'OCUPADO': 'Ocupado',
+    'INACTIVO': 'Inactivo'
+  };
+  return labels[status] || status;
+}
+
+function getDeliveryStatusLabel(status) {
+  const labels = {
+    'EN_RUTA': 'En Ruta',
+    'EN_DESTINO': 'En Destino',
+    'RETRASADO': 'Retrasado',
+    'ENTREGADO': 'Entregado',
+    'FALLIDA': 'Fallida'
+  };
+  return labels[status] || status;
+}
+
+function getAlertIcon(type) {
+  const icons = {
+    'EMERGENCY': 'exclamation-triangle',
+    'DELAY': 'clock',
+    'VEHICLE': 'truck',
+    'SYSTEM': 'cog',
+    'WEATHER': 'cloud-rain'
+  };
+  return icons[type] || 'info-circle';
+}
+
+function formatTime(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('es-CL', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleString('es-CL');
+}
+
+function showSuccess(message) {
+  console.log('Success:', message);
+  // Implement success notification
+}
+
+function showError(message) {
+  console.error('Error:', message);
+  // Implement error notification
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  stopAutoRefresh();
+});
+
+console.log('TMS Control Tower: Sistema de centro de control cargado');
+</script>
+</div>

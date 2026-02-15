@@ -1,0 +1,252 @@
+<section class="view" id="reportsView">
+  <!-- Module Header -->
+  <div class="wms-module-header">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()">Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Reportes</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon" style="--icon-color: var(--wms-gray-600);">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Reportes y Análisis</h1>
+          <p class="wms-module-subtitle">Genera reportes detallados y analiza el desempeño del sistema</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <button class="wms-btn wms-btn-outline" onclick="exportReport()">
+        <i class="fas fa-download"></i> Exportar
+      </button>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="wms-grid" style="grid-template-columns: 1fr 2fr; gap: var(--wms-space-6);">
+    <!-- Left: Filters -->
+    <div class="wms-card">
+      <div class="wms-card-header">
+        <h3 class="wms-card-title"><i class="fas fa-filter"></i> Generar Reporte</h3>
+      </div>
+      <div class="wms-card-body">
+        <form id="reportForm" onsubmit="generateReportData(event)">
+          <div class="wms-form-group">
+            <label class="wms-label">Tipo de Reporte</label>
+            <select id="reportType" class="wms-select" required>
+              <option value="orders">📦 Órdenes</option>
+              <option value="inventory">📊 Inventario</option>
+              <option value="receptions">🚚 Recepciones</option>
+              <option value="dispatches">📤 Despachos</option>
+              <option value="deliveries">✅ Entregas</option>
+              <option value="performance">📈 Desempeño General</option>
+            </select>
+          </div>
+          <div class="wms-form-group">
+            <label class="wms-label">Fecha Desde</label>
+            <input type="date" id="fechaDesde" class="wms-input">
+          </div>
+          <div class="wms-form-group">
+            <label class="wms-label">Fecha Hasta</label>
+            <input type="date" id="fechaHasta" class="wms-input">
+          </div>
+          <button type="submit" class="wms-btn wms-btn-primary wms-btn-block wms-ripple" id="btnGenerateReport">
+            <i class="fas fa-file-alt"></i> Generar Reporte
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div class="wms-flex wms-flex-col wms-gap-6">
+      <!-- KPIs Panel -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-tachometer-alt"></i> KPIs</h3>
+        </div>
+        <div class="wms-card-body" id="kpisContainer">
+          <div class="wms-loading-state"><div class="wms-spinner"></div><span class="wms-loading-text">Cargando KPIs...</span></div>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="wms-card" style="flex: 1;">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-chart-line"></i> Resultado del Reporte</h3>
+        </div>
+        <div class="wms-card-body" id="reportResult">
+          <div class="wms-empty-state">
+            <div class="wms-empty-icon"><i class="fas fa-file-alt"></i></div>
+            <h3 class="wms-empty-title">Sin datos</h3>
+            <p class="wms-empty-text">Seleccione un tipo de reporte y haga clic en Generar</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function initReportsModule() {
+      console.log('Inicializando módulo de Reportes...');
+      setDefaultDates();
+      loadKPIs();
+    }
+    
+    function setDefaultDates() {
+      var today = new Date();
+      var monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      var formatDate = function(d) { return d.toISOString().split('T')[0]; };
+      
+      document.getElementById('fechaHasta').value = formatDate(today);
+      document.getElementById('fechaDesde').value = formatDate(monthAgo);
+    }
+    
+    function loadKPIs() {
+      var container = document.getElementById('kpisContainer');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            renderKPIs(result.kpis);
+          } else {
+            container.innerHTML = '<div class="wms-alert wms-alert-danger"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error al cargar KPIs</div></div>';
+          }
+        })
+        .withFailureHandler(function() {
+          container.innerHTML = '<div class="wms-alert wms-alert-danger"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error de conexión</div></div>';
+        })
+        .getKPIs();
+    }
+    
+    function renderKPIs(kpis) {
+      var container = document.getElementById('kpisContainer');
+      if (!kpis) {
+        container.innerHTML = '<p class="wms-text-secondary wms-text-center">No hay KPIs disponibles</p>';
+        return;
+      }
+      
+      var html = '<div class="wms-grid wms-grid-cols-2 wms-gap-4">';
+      
+      if (kpis.cumplimiento !== undefined) {
+        html += '<div class="wms-card"><div class="wms-card-body wms-text-center">';
+        html += '<div class="wms-text-3xl wms-font-bold" style="color: var(--wms-success);">' + kpis.cumplimiento + '%</div>';
+        html += '<div class="wms-text-sm wms-text-secondary">Cumplimiento</div>';
+        html += '</div></div>';
+      }
+      
+      if (kpis.tiempoPromedio !== undefined) {
+        html += '<div class="wms-card"><div class="wms-card-body wms-text-center">';
+        html += '<div class="wms-text-3xl wms-font-bold" style="color: var(--wms-info);">' + kpis.tiempoPromedio + '</div>';
+        html += '<div class="wms-text-sm wms-text-secondary">Tiempo Promedio</div>';
+        html += '</div></div>';
+      }
+      
+      if (kpis.ordenesHoy !== undefined) {
+        html += '<div class="wms-card"><div class="wms-card-body wms-text-center">';
+        html += '<div class="wms-text-3xl wms-font-bold" style="color: var(--wms-primary);">' + kpis.ordenesHoy + '</div>';
+        html += '<div class="wms-text-sm wms-text-secondary">Órdenes Hoy</div>';
+        html += '</div></div>';
+      }
+      
+      if (kpis.productividad !== undefined) {
+        html += '<div class="wms-card"><div class="wms-card-body wms-text-center">';
+        html += '<div class="wms-text-3xl wms-font-bold" style="color: var(--wms-warning);">' + kpis.productividad + '</div>';
+        html += '<div class="wms-text-sm wms-text-secondary">Productividad</div>';
+        html += '</div></div>';
+      }
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    
+    function generateReportData(e) {
+      e.preventDefault();
+      
+      var btn = document.getElementById('btnGenerateReport');
+      var container = document.getElementById('reportResult');
+      
+      setButtonLoading(btn, true);
+      container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner wms-spinner-lg"></div><span class="wms-loading-text">Generando reporte...</span></div>';
+      
+      var params = {
+        type: document.getElementById('reportType').value,
+        fechaDesde: document.getElementById('fechaDesde').value,
+        fechaHasta: document.getElementById('fechaHasta').value
+      };
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          setButtonLoading(btn, false);
+          if (result.success) {
+            renderReportResult(result);
+            if (window.WMSToast) WMSToast.success('Reporte generado');
+          } else {
+            container.innerHTML = '<div class="wms-error-state"><div class="wms-error-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-error-title">Error</h3><p class="wms-error-message">' + result.error + '</p></div>';
+          }
+        })
+        .withFailureHandler(function(error) {
+          setButtonLoading(btn, false);
+          container.innerHTML = '<div class="wms-error-state"><div class="wms-error-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-error-title">Error</h3><p class="wms-error-message">Error de conexión</p></div>';
+        })
+        .generateReport(params);
+    }
+    
+    function renderReportResult(result) {
+      var container = document.getElementById('reportResult');
+      
+      if (!result.data || result.data.length === 0) {
+        container.innerHTML = '<div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-search"></i></div><h3 class="wms-empty-title">Sin resultados</h3><p class="wms-empty-text">No se encontraron datos para el período seleccionado</p></div>';
+        return;
+      }
+      
+      // Summary cards
+      var html = '<div class="wms-stats-grid wms-mb-6" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">';
+      if (result.summary) {
+        for (var key in result.summary) {
+          html += '<div class="wms-stat-card"><div class="wms-stat-content wms-text-center">';
+          html += '<span class="wms-stat-value">' + result.summary[key] + '</span>';
+          html += '<span class="wms-stat-label">' + key + '</span>';
+          html += '</div></div>';
+        }
+      }
+      html += '</div>';
+      
+      // Data table
+      if (result.data && result.data.length > 0) {
+        var columns = Object.keys(result.data[0]);
+        html += '<div class="wms-table-container"><div class="wms-table-wrapper"><table class="wms-table">';
+        html += '<thead><tr>';
+        for (var c = 0; c < columns.length; c++) {
+          html += '<th>' + columns[c] + '</th>';
+        }
+        html += '</tr></thead><tbody>';
+        
+        for (var i = 0; i < Math.min(result.data.length, 100); i++) {
+          html += '<tr>';
+          for (var j = 0; j < columns.length; j++) {
+            html += '<td>' + (result.data[i][columns[j]] || '-') + '</td>';
+          }
+          html += '</tr>';
+        }
+        
+        html += '</tbody></table></div></div>';
+        
+        if (result.data.length > 100) {
+          html += '<p class="wms-text-secondary wms-text-sm wms-mt-2">Mostrando 100 de ' + result.data.length + ' registros</p>';
+        }
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    function exportReport() {
+      if (window.WMSToast) WMSToast.info('Función de exportación en desarrollo');
+    }
+    
+    window.initReportsModule = initReportsModule;
+    window.generateReportData = generateReportData;
+    window.exportReport = exportReport;
+  </script>
+</section>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 15px;
+    }
+    
+    .container { max-width: 420px; margin: 0 auto; }
+    
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+      margin-bottom: 12px;
+    }
+    
+    .header { text-align: center; margin-bottom: 15px; }
+    .header h1 { color: #333; font-size: 22px; }
+    .header .date { color: #666; font-size: 13px; margin-top: 4px; }
+    
+    .clock { text-align: center; margin-bottom: 20px; }
+    .clock .time { font-size: 52px; font-weight: 700; color: #667eea; }
+    .clock .seconds { font-size: 26px; color: #aaa; }
+    
+    .contador-hoy {
+      text-align: center;
+      padding: 15px;
+      background: #f0f4ff;
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+    .contador-hoy .num { font-size: 36px; font-weight: 700; color: #667eea; }
+    .contador-hoy .label { font-size: 13px; color: #666; }
+    
+    .buttons { display: flex; gap: 12px; margin-bottom: 15px; }
+    
+    .btn {
+      flex: 1;
+      padding: 25px 12px;
+      border: none;
+      border-radius: 18px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: white;
+    }
+    
+    .btn .material-icons { font-size: 42px; }
+    
+    .btn-fui { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .btn-no-fui { background: linear-gradient(135deg, #eb3349, #f45c43); }
+    
+    .btn:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    
+    .notas input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .notas input:focus { outline: none; border-color: #667eea; }
+    
+    .status {
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      display: none;
+      font-size: 14px;
+    }
+    .status.active { display: block; }
+    .status.success { background: #e8f5e9; color: #2e7d32; }
+    .status.error { background: #ffebee; color: #c62828; }
+    
+    .loading { display: none; text-align: center; padding: 15px; }
+    .loading.active { display: block; }
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Mini calendario */
+    .mini-cal h3 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    
+    .cal-header {
+      font-size: 9px;
+      color: #999;
+      text-align: center;
+      padding: 3px 0;
+    }
+    
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      border-radius: 6px;
+      background: #f5f5f5;
+    }
+    
+    .cal-day .dia { font-weight: 600; }
+    .cal-day .cant { font-size: 8px; color: #666; }
+    
+    .cal-day.empty { background: transparent; }
+    .cal-day.tiene { background: #c8e6c9; }
+    .cal-day.tiene-mucho { background: #81c784; }
+    .cal-day.hoy { border: 2px solid #667eea; }
+    
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    
+    .stat { text-align: center; }
+    .stat .num { font-size: 22px; font-weight: 700; color: #667eea; }
+    .stat .lbl { font-size: 10px; color: #666; }
+    
+    /* Historial */
+    .historial h3 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .historial-list { max-height: 180px; overflow-y: auto; }
+    
+    .item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    
+    .item .tiempo {
+      font-weight: 600;
+      color: #333;
+      min-width: 75px;
+    }
+    
+    .item .notas { flex: 1; color: #888; font-size: 11px; margin: 0 8px; }
+    
+    .item .estado {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .estado.fui { background: #c8e6c9; color: #2e7d32; }
+    .estado.no-fui { background: #ffcdd2; color: #c62828; }
+    
+    .item .del {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: 6px;
+    }
+    .item .del:hover { color: #c62828; }
+    
+    .empty { text-align: center; padding: 25px; color: #999; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h1>🚽 Tracker</h1>
+        <div class="date" id="fecha"></div>
+      </div>
+      
+      <div class="clock">
+        <span class="time" id="hora">00:00</span>
+        <span class="seconds" id="seg">:00</span>
+      </div>
+      
+      <div class="contador-hoy">
+        <div class="num" id="contadorHoy">0</div>
+        <div class="label">registros "Fui" hoy</div>
+      </div>
+      
+      <div class="notas">
+        <input type="text" id="notas" placeholder="Notas (opcional)...">
+      </div>
+      
+      <div class="buttons">
+        <button class="btn btn-fui" onclick="registrar('Fui')">
+          <span class="material-icons">check_circle</span>
+          Fui
+        </button>
+        <button class="btn btn-no-fui" onclick="registrar('No Fui')">
+          <span class="material-icons">cancel</span>
+          No Fui
+        </button>
+      </div>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Registrando...</p>
+      </div>
+      
+      <div class="status" id="status"></div>
+    </div>
+    
+    <div class="card">
+      <div class="mini-cal">
+        <h3>📅 <span id="nombreMes">Mes</span></h3>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="sDias">0</div>
+          <div class="lbl">Días con registro</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="sTotal">0</div>
+          <div class="lbl">Total "Fui"</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="sProm">0</div>
+          <div class="lbl">Promedio/día</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="historial">
+        <h3>📋 Registros de hoy</h3>
+        <div class="historial-list" id="lista"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    function reloj() {
+      const n = new Date();
+      document.getElementById('hora').textContent = 
+        n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+      document.getElementById('seg').textContent = ':' + n.getSeconds().toString().padStart(2,'0');
+    }
+    
+    function fechaHoy() {
+      const n = new Date();
+      const o = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      let f = n.toLocaleDateString('es-ES', o);
+      document.getElementById('fecha').textContent = f.charAt(0).toUpperCase() + f.slice(1);
+    }
+    
+    function mostrarStatus(ok, msg) {
+      const s = document.getElementById('status');
+      s.className = 'status active ' + (ok ? 'success' : 'error');
+      s.textContent = msg;
+      setTimeout(() => s.classList.remove('active'), 4000);
+    }
+    
+    function registrar(estado) {
+      const notas = document.getElementById('notas').value;
+      document.getElementById('loading').classList.add('active');
+      document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+      
+      google.script.run
+        .withSuccessHandler(r => {
+          document.getElementById('loading').classList.remove('active');
+          document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+          if (r.success) {
+            mostrarStatus(true, `✅ ${r.message}`);
+            document.getElementById('notas').value = '';
+            cargarTodo();
+          } else {
+            mostrarStatus(false, '❌ ' + r.message);
+          }
+        })
+        .withFailureHandler(e => {
+          document.getElementById('loading').classList.remove('active');
+          document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+          mostrarStatus(false, '❌ Error de conexión');
+        })
+        .registrarAsistenciaWeb(estado, notas);
+    }
+    
+    function cargarTodo() {
+      cargarHoy();
+      cargarCalendario();
+      cargarStats();
+    }
+    
+    function cargarHoy() {
+      google.script.run.withSuccessHandler(d => {
+        document.getElementById('contadorHoy').textContent = d.fui || 0;
+        
+        const lista = document.getElementById('lista');
+        if (d.registros && d.registros.length > 0) {
+          lista.innerHTML = d.registros.map(r => `
+            <div class="item">
+              <span class="tiempo">${r.hora}</span>
+              <span class="notas">${r.notas || ''}</span>
+              <span class="estado ${r.estado === 'Fui' ? 'fui' : 'no-fui'}">${r.estado}</span>
+              <button class="del" onclick="eliminar(${r.id})">
+                <span class="material-icons" style="font-size:16px">delete</span>
+              </button>
+            </div>
+          `).join('');
+        } else {
+          lista.innerHTML = '<div class="empty">Sin registros hoy</div>';
+        }
+      }).obtenerResumenHoy();
+    }
+    
+    function cargarCalendario() {
+      google.script.run.withSuccessHandler(c => {
+        document.getElementById('nombreMes').textContent = meses[c.mes] + ' ' + c.año;
+        
+        const grid = document.getElementById('calGrid');
+        const diasSem = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+        
+        let html = diasSem.map(d => `<div class="cal-header">${d}</div>`).join('');
+        
+        for (let i = 0; i < c.primerDia; i++) {
+          html += '<div class="cal-day empty"></div>';
+        }
+        
+        c.dias.forEach(d => {
+          let clase = 'cal-day';
+          if (d.cantidad >= 3) clase += ' tiene-mucho';
+          else if (d.cantidad > 0) clase += ' tiene';
+          if (d.esHoy) clase += ' hoy';
+          
+          html += `<div class="${clase}">
+            <span class="dia">${d.dia}</span>
+            ${d.cantidad > 0 ? `<span class="cant">${d.cantidad}</span>` : ''}
+          </div>`;
+        });
+        
+        grid.innerHTML = html;
+      }).obtenerCalendarioMes();
+    }
+    
+    function cargarStats() {
+      google.script.run.withSuccessHandler(s => {
+        document.getElementById('sDias').textContent = s.dias;
+        document.getElementById('sTotal').textContent = s.totalFui;
+        document.getElementById('sProm').textContent = s.promedio;
+      }).obtenerEstadisticasMes();
+    }
+    
+    function eliminar(fila) {
+      if (!confirm('¿Eliminar este registro?')) return;
+      google.script.run.withSuccessHandler(r => {
+        if (r.success) cargarTodo();
+      }).eliminarRegistro(fila);
+    }
+    
+    setInterval(reloj, 1000);
+    reloj();
+    fechaHoy();
+    cargarTodo();
+  </script>
+</body>
+</html>

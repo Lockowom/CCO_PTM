@@ -1,0 +1,1290 @@
+<section class="view" id="layoutView">
+<!-- ==================== LAYOUT 2D VIEW - PREMIUM EDITION ==================== -->
+<div id="layoutViewContent">
+  <!-- Contenido cargado dinámicamente por loadLayoutView -->
+</div>
+
+<style>
+/* ========== CSS VARIABLES ========== */
+:root {
+  --layout-green: linear-gradient(135deg, #00d4aa 0%, #00b894 50%, #00a884 100%);
+  --layout-green-glow: rgba(0, 212, 170, 0.5);
+  --layout-gray: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+  --layout-gray-glow: rgba(100, 116, 139, 0.4);
+  --layout-red: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 50%, #dc4444 100%);
+  --layout-red-glow: rgba(255, 107, 107, 0.5);
+  --layout-yellow: linear-gradient(135deg, #feca57 0%, #ff9f43 50%, #f39c12 100%);
+  --layout-yellow-glow: rgba(254, 202, 87, 0.5);
+  --layout-orange: linear-gradient(135deg, #FF6B00 0%, #E55A00 100%);
+  --layout-glass: rgba(30, 41, 59, 0.7);
+  --layout-glass-border: rgba(255, 255, 255, 0.1);
+  --layout-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== LAYOUT GRID ========== */
+.layout-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ========== PASILLO SECTION - GLASSMORPHISM ========== */
+.pasillo-section {
+  background: var(--layout-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--layout-glass-border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: var(--layout-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.pasillo-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--layout-orange);
+  opacity: 0.6;
+}
+
+.pasillo-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ========== PASILLO HEADER ========== */
+.pasillo-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+}
+
+.pasillo-badge {
+  background: var(--layout-orange);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  box-shadow: 
+    0 6px 20px rgba(255, 107, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.pasillo-info {
+  flex: 1;
+  min-width: 150px;
+}
+
+.pasillo-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.pasillo-stats {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pasillo-stats i {
+  color: #00d4aa;
+  font-size: 11px;
+}
+
+/* ========== OCCUPATION BAR ========== */
+.occupation-bar-container {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.occupation-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.occupation-fill {
+  height: 100%;
+  background: var(--layout-green);
+  border-radius: 10px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.occupation-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.occupation-fill.high {
+  background: var(--layout-yellow);
+}
+
+.occupation-fill.critical {
+  background: var(--layout-red);
+}
+
+.occupation-percent {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* ========== NIVELES CONTAINER ========== */
+.niveles-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nivel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nivel-label {
+  width: 70px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.nivel-label i {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.ubicaciones-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* ========== LOCATION CARD - PREMIUM ========== */
+.ubicacion-cell {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--layout-transition);
+  border: 2px solid transparent;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: visible;
+  backdrop-filter: blur(4px);
+}
+
+/* Glow effect layer */
+.ubicacion-cell::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+/* Shine effect */
+.ubicacion-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+}
+
+/* ========== LOCATION STATES ========== */
+.ubicacion-cell.con-productos {
+  background: var(--layout-green);
+  box-shadow: 
+    0 4px 15px rgba(0, 212, 170, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ubicacion-cell.con-productos::before {
+  background: var(--layout-green-glow);
+  filter: blur(8px);
+}
+
+.ubicacion-cell.vacia {
+  background: var(--layout-gray);
+  box-shadow: 
+    0 4px 15px rgba(100, 116, 139, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.ubicacion-cell.vacia::before {
+  background: var(--layout-gray-glow);
+  filter: blur(8px);
+}
+
+.ubicacion-cell.no-disponible {
+  background: var(--layout-red);
+  box-shadow: 
+    0 4px 15px rgba(255, 107, 107, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ubicacion-cell.no-disponible::before {
+  background: var(--layout-red-glow);
+  filter: blur(8px);
+}
+
+.ubicacion-cell.ocupado {
+  background: var(--layout-yellow);
+  box-shadow: 
+    0 4px 15px rgba(254, 202, 87, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #1a1a2e;
+  text-shadow: none;
+}
+
+.ubicacion-cell.ocupado::before {
+  background: var(--layout-yellow-glow);
+  filter: blur(8px);
+}
+
+/* ========== HOVER EFFECTS - 3D ELEVATION ========== */
+.ubicacion-cell:hover {
+  transform: scale(1.25) translateY(-4px);
+  z-index: 20;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ubicacion-cell:hover::before {
+  opacity: 1;
+}
+
+.ubicacion-cell.con-productos:hover {
+  box-shadow: 
+    0 12px 30px rgba(0, 212, 170, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ubicacion-cell.vacia:hover {
+  box-shadow: 
+    0 12px 30px rgba(100, 116, 139, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.ubicacion-cell.no-disponible:hover {
+  box-shadow: 
+    0 12px 30px rgba(255, 107, 107, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ubicacion-cell.ocupado:hover {
+  box-shadow: 
+    0 12px 30px rgba(254, 202, 87, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ========== SELECTED STATE ========== */
+.ubicacion-cell.selected {
+  border-color: #FF6B00 !important;
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 4px rgba(255, 107, 0, 0.4),
+      0 8px 25px rgba(255, 107, 0, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 8px rgba(255, 107, 0, 0.2),
+      0 12px 35px rgba(255, 107, 0, 0.4);
+  }
+}
+
+/* ========== QUANTITY BADGE ========== */
+.quantity-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  padding: 0 5px;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.5);
+  border: 2px solid rgba(15, 23, 42, 0.8);
+  animation: badge-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 5;
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+/* ========== SHIMMER ANIMATION ========== */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ========== SKELETON LOADER ========== */
+.skeleton-card {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.05) 25%, 
+    rgba(255,255,255,0.1) 50%, 
+    rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========== STATS CARDS ENHANCED ========== */
+.layout-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.layout-stat-card {
+  background: var(--layout-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--layout-glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: var(--layout-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.layout-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+}
+
+.layout-stat-card.blue::before { background: #3b82f6; }
+.layout-stat-card.green::before { background: #00d4aa; }
+.layout-stat-card.orange::before { background: #f59e0b; }
+.layout-stat-card.purple::before { background: #8b5cf6; }
+
+.layout-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.layout-stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.layout-stat-icon.blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+  color: #3b82f6;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.layout-stat-icon.green {
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.2), rgba(0, 212, 170, 0.1));
+  color: #00d4aa;
+  box-shadow: 0 4px 15px rgba(0, 212, 170, 0.2);
+}
+
+.layout-stat-icon.orange {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+  color: #f59e0b;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+}
+
+.layout-stat-icon.purple {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
+  color: #8b5cf6;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+}
+
+.layout-stat-content {
+  flex: 1;
+}
+
+.layout-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.layout-stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* ========== LEGEND ENHANCED ========== */
+.layout-legend {
+  background: var(--layout-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--layout-glass-border);
+  border-radius: 16px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+}
+
+.layout-legend-items {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.layout-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: var(--layout-transition);
+}
+
+.layout-legend-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.layout-legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.layout-legend-color.green { background: var(--layout-green); }
+.layout-legend-color.gray { background: var(--layout-gray); }
+.layout-legend-color.red { background: var(--layout-red); }
+.layout-legend-color.yellow { background: var(--layout-yellow); }
+
+/* ========== PASILLO BUTTONS ENHANCED ========== */
+.pasillo-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pasillo-btn {
+  padding: 12px 24px !important;
+  border-radius: 25px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: var(--layout-transition) !important;
+  border: 2px solid transparent !important;
+}
+
+.pasillo-btn.btn-primary {
+  background: var(--layout-orange) !important;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3) !important;
+}
+
+.pasillo-btn.btn-secondary {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pasillo-btn.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 107, 0, 0.3) !important;
+}
+
+/* ========== SEARCH BOX ENHANCED ========== */
+.layout-search-box {
+  position: relative;
+  max-width: 280px;
+}
+
+.layout-search-box input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: white;
+  font-size: 14px;
+  transition: var(--layout-transition);
+}
+
+.layout-search-box input:focus {
+  outline: none;
+  border-color: rgba(255, 107, 0, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
+}
+
+.layout-search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.layout-search-box i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .ubicacion-cell { 
+    width: 36px; 
+    height: 36px; 
+    font-size: 9px;
+    border-radius: 10px;
+  }
+  .nivel-label { 
+    width: 55px; 
+    font-size: 10px; 
+  }
+  .pasillo-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  .layout-stat-card {
+    padding: 16px;
+  }
+  .layout-stat-value {
+    font-size: 24px;
+  }
+  .quantity-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 8px;
+    top: -4px;
+    right: -4px;
+  }
+}
+</style>
+
+
+<script>
+function loadLayoutView(container) {
+  var html = '<div class="page-container">';
+  
+  // Header mejorado
+  html += '<div class="section-header">';
+  html += '<div class="header-title">';
+  html += '<h1 class="gradient-title"><i class="fas fa-warehouse"></i> Layout de Bodega</h1>';
+  html += '<p class="subtitle">Visualización interactiva de ubicaciones del almacén</p>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">';
+  html += '<div class="layout-search-box">';
+  html += '<i class="fas fa-search"></i>';
+  html += '<input type="text" id="layout_search" placeholder="Buscar ubicación (ej: A-01-01)" onkeypress="if(event.key===\'Enter\')buscarUbicacionLayout()">';
+  html += '</div>';
+  html += '<button class="btn-secondary" onclick="buscarUbicacionLayout()" style="padding:12px 18px;border-radius:14px"><i class="fas fa-search"></i></button>';
+  html += '<button class="btn-primary" onclick="loadLayoutData()" style="padding:12px 20px;border-radius:14px"><i class="fas fa-sync-alt"></i> Actualizar</button>';
+  html += '</div></div>';
+  
+  // Stats row mejorado
+  html += '<div class="layout-stats-row">';
+  html += '<div class="layout-stat-card blue"><div class="layout-stat-icon blue"><i class="fas fa-th-large"></i></div><div class="layout-stat-content"><span class="layout-stat-value" id="layout_total">0</span><span class="layout-stat-label">Total Ubicaciones</span></div></div>';
+  html += '<div class="layout-stat-card green"><div class="layout-stat-icon green"><i class="fas fa-box"></i></div><div class="layout-stat-content"><span class="layout-stat-value" id="layout_ocupadas">0</span><span class="layout-stat-label">Con Productos</span></div></div>';
+  html += '<div class="layout-stat-card orange"><div class="layout-stat-icon orange"><i class="fas fa-box-open"></i></div><div class="layout-stat-content"><span class="layout-stat-value" id="layout_vacias">0</span><span class="layout-stat-label">Vacías</span></div></div>';
+  html += '<div class="layout-stat-card purple"><div class="layout-stat-icon purple"><i class="fas fa-chart-pie"></i></div><div class="layout-stat-content"><span class="layout-stat-value" id="layout_porcentaje">0%</span><span class="layout-stat-label">Ocupación</span></div></div>';
+  html += '</div>';
+  
+  // Leyenda mejorada
+  html += '<div class="layout-legend">';
+  html += '<div class="layout-legend-items">';
+  html += '<div class="layout-legend-item" onclick="highlightByState(\'con-productos\')"><div class="layout-legend-color green"></div><span>Con productos</span></div>';
+  html += '<div class="layout-legend-item" onclick="highlightByState(\'vacia\')"><div class="layout-legend-color gray"></div><span>Vacía</span></div>';
+  html += '<div class="layout-legend-item" onclick="highlightByState(\'no-disponible\')"><div class="layout-legend-color red"></div><span>No Disponible</span></div>';
+  html += '<div class="layout-legend-item" onclick="highlightByState(\'ocupado\')"><div class="layout-legend-color yellow"></div><span>Ocupado</span></div>';
+  html += '</div></div>';
+  
+  // Selector de pasillo mejorado
+  html += '<div class="panel-card" style="margin-bottom:24px;background:var(--layout-glass);backdrop-filter:blur(20px);border:1px solid var(--layout-glass-border);border-radius:20px">';
+  html += '<div class="panel-header" style="border-bottom:1px solid rgba(255,255,255,0.08);padding:20px"><h3 style="margin:0;display:flex;align-items:center;gap:10px"><i class="fas fa-route" style="color:#FF6B00"></i> Seleccionar Pasillo</h3></div>';
+  html += '<div class="panel-body" style="padding:20px">';
+  html += '<div class="pasillo-buttons" id="pasilloButtons">';
+  html += '<button class="btn-primary pasillo-btn" data-pasillo="ALL" onclick="filtrarPasillo(\'ALL\')">Todos</button>';
+  var pasillos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+  pasillos.forEach(function(p) {
+    html += '<button class="btn-secondary pasillo-btn" data-pasillo="' + p + '" onclick="filtrarPasillo(\'' + p + '\')">Pasillo ' + p + '</button>';
+  });
+  html += '</div></div></div>';
+  
+  // Mapa 2D mejorado
+  html += '<div class="panel-card" style="background:var(--layout-glass);backdrop-filter:blur(20px);border:1px solid var(--layout-glass-border);border-radius:20px">';
+  html += '<div class="panel-header" style="border-bottom:1px solid rgba(255,255,255,0.08);padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+  html += '<h3 style="margin:0;display:flex;align-items:center;gap:10px"><i class="fas fa-map-marked-alt" style="color:#667eea"></i> Mapa de Ubicaciones <span id="layout_pasilloActual" style="color:#FF6B00;font-size:14px"></span></h3>';
+  html += '<span style="font-size:12px;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:6px"><i class="fas fa-mouse-pointer"></i> Click en una ubicación para ver detalles</span>';
+  html += '</div>';
+  html += '<div class="panel-body" style="padding:24px">';
+  html += '<div id="layout_container" style="min-height:400px">';
+  html += '<div class="loading-spinner" id="layout_loading"><i class="fas fa-circle-notch fa-spin"></i> Cargando ubicaciones...</div>';
+  html += '</div></div></div></div>';
+  
+  // Modal Premium
+  html += createPremiumModal();
+  
+  container.innerHTML = html;
+  initLayoutModule();
+}
+
+function createPremiumModal() {
+  var modal = '<div class="modal fade" id="ubicacionModal" tabindex="-1">';
+  modal += '<div class="modal-dialog modal-lg modal-dialog-centered">';
+  modal += '<div class="modal-content" style="background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid rgba(255,107,0,0.15);border-radius:24px;box-shadow:0 25px 60px rgba(0,0,0,0.6);overflow:hidden">';
+  
+  // Header del modal
+  modal += '<div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08);padding:24px 28px;background:linear-gradient(180deg,rgba(255,107,0,0.05),transparent)">';
+  modal += '<h5 class="modal-title" style="color:white;font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px">';
+  modal += '<div style="width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;display:flex;align-items:center;justify-content:center"><i class="fas fa-map-marker-alt" style="font-size:16px"></i></div>';
+  modal += '<span>Ubicación: <span id="modal_ubicacion" style="color:#FF6B00"></span></span>';
+  modal += '</h5>';
+  modal += '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="opacity:0.7"></button>';
+  modal += '</div>';
+  
+  // Body del modal
+  modal += '<div class="modal-body" id="modal_contenido" style="padding:28px">';
+  modal += '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i> Cargando...</div>';
+  modal += '</div>';
+  
+  // Footer del modal con botones de estado
+  modal += '<div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.08);padding:20px 28px;background:rgba(0,0,0,0.2)">';
+  modal += '<div style="width:100%">';
+  modal += '<p style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600"><i class="fas fa-exchange-alt" style="margin-right:8px"></i>Cambiar Estado</p>';
+  modal += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+  modal += '<button class="status-btn disponible" onclick="cambiarEstadoUbicacion(\'DISPONIBLE\')"><i class="fas fa-check-circle"></i> Disponible</button>';
+  modal += '<button class="status-btn no-disponible" onclick="cambiarEstadoUbicacion(\'NO DISPONIBLE\')"><i class="fas fa-ban"></i> No Disponible</button>';
+  modal += '<button class="status-btn ocupado" onclick="cambiarEstadoUbicacion(\'OCUPADO\')"><i class="fas fa-lock"></i> Ocupado</button>';
+  modal += '</div></div></div>';
+  
+  modal += '</div></div></div>';
+  
+  // Estilos para botones de estado
+  modal += '<style>';
+  modal += '.status-btn { padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all 0.3s ease; display:flex; align-items:center; gap:8px; }';
+  modal += '.status-btn.disponible { background:linear-gradient(135deg,#00d4aa,#00b894); color:white; box-shadow:0 4px 15px rgba(0,212,170,0.3); }';
+  modal += '.status-btn.disponible:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,212,170,0.4); }';
+  modal += '.status-btn.no-disponible { background:linear-gradient(135deg,#ff6b6b,#ee5a5a); color:white; box-shadow:0 4px 15px rgba(255,107,107,0.3); }';
+  modal += '.status-btn.no-disponible:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(255,107,107,0.4); }';
+  modal += '.status-btn.ocupado { background:linear-gradient(135deg,#feca57,#ff9f43); color:#1a1a2e; box-shadow:0 4px 15px rgba(254,202,87,0.3); }';
+  modal += '.status-btn.ocupado:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(254,202,87,0.4); }';
+  modal += '</style>';
+  
+  return modal;
+}
+</script>
+
+
+<script>
+// Variables globales del módulo Layout
+var layoutData = null;
+var ubicacionModal = null;
+var ubicacionSeleccionada = '';
+var pasilloActual = 'ALL';
+
+function initLayoutModule() {
+  var modalEl = document.getElementById('ubicacionModal');
+  if (modalEl) ubicacionModal = new bootstrap.Modal(modalEl);
+  loadLayoutData();
+}
+
+function loadLayoutData() {
+  var container = document.getElementById('layout_container');
+  
+  // Mostrar skeleton loader
+  var skeletonHtml = '<div class="layout-grid">';
+  for (var i = 0; i < 3; i++) {
+    skeletonHtml += '<div class="pasillo-section" style="opacity:0.5">';
+    skeletonHtml += '<div class="pasillo-header"><div class="skeleton-card" style="width:48px;height:48px"></div><div style="flex:1"><div class="skeleton-card" style="height:16px;width:120px;margin-bottom:8px"></div><div class="skeleton-card" style="height:12px;width:80px"></div></div></div>';
+    skeletonHtml += '<div class="niveles-container">';
+    for (var j = 0; j < 3; j++) {
+      skeletonHtml += '<div class="nivel-row"><div class="skeleton-card" style="width:60px;height:12px"></div><div class="ubicaciones-row">';
+      for (var k = 0; k < 10; k++) {
+        skeletonHtml += '<div class="skeleton-card" style="width:44px;height:44px"></div>';
+      }
+      skeletonHtml += '</div></div>';
+    }
+    skeletonHtml += '</div></div>';
+  }
+  skeletonHtml += '</div>';
+  container.innerHTML = skeletonHtml;
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        layoutData = result;
+        updateLayoutStats(result.estadisticas);
+        renderLayout2D(result.pasillos);
+      } else {
+        container.innerHTML = '<div class="empty-state" style="text-align:center;padding:60px"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;margin-bottom:20px"></i><h4 style="color:white;margin-bottom:10px">Error al cargar</h4><p style="color:rgba(255,255,255,0.6)">' + result.error + '</p></div>';
+      }
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = '<div class="empty-state" style="text-align:center;padding:60px"><i class="fas fa-wifi" style="font-size:48px;color:#ff6b6b;margin-bottom:20px"></i><h4 style="color:white;margin-bottom:10px">Error de conexión</h4><p style="color:rgba(255,255,255,0.6)">No se pudieron cargar los datos</p><button class="btn-primary" onclick="loadLayoutData()" style="margin-top:20px"><i class="fas fa-redo"></i> Reintentar</button></div>';
+    })
+    .getLayout3DData();
+}
+
+function updateLayoutStats(stats) {
+  // Animar contadores
+  animateCounter('layout_total', stats.totalUbicaciones || 0);
+  animateCounter('layout_ocupadas', stats.ubicacionesOcupadas || 0);
+  animateCounter('layout_vacias', stats.ubicacionesVacias || 0);
+  
+  var porcentaje = stats.porcentajeOcupacion || 0;
+  var porcentajeEl = document.getElementById('layout_porcentaje');
+  if (porcentajeEl) {
+    animateCounter('layout_porcentaje', porcentaje, '%');
+    // Cambiar color si es alto
+    if (porcentaje >= 80) {
+      porcentajeEl.style.color = '#ff6b6b';
+    } else if (porcentaje >= 60) {
+      porcentajeEl.style.color = '#feca57';
+    } else {
+      porcentajeEl.style.color = '#00d4aa';
+    }
+  }
+}
+
+function animateCounter(elementId, targetValue, suffix) {
+  var el = document.getElementById(elementId);
+  if (!el) return;
+  
+  var startValue = 0;
+  var duration = 1000;
+  var startTime = null;
+  suffix = suffix || '';
+  
+  function animate(currentTime) {
+    if (!startTime) startTime = currentTime;
+    var progress = Math.min((currentTime - startTime) / duration, 1);
+    var easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    var currentValue = Math.floor(easeProgress * targetValue);
+    el.textContent = currentValue + suffix;
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      el.textContent = targetValue + suffix;
+    }
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+function renderLayout2D(pasillos) {
+  var container = document.getElementById('layout_container');
+  var pasilloLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+  var html = '<div class="layout-grid">';
+  
+  pasilloLetters.forEach(function(letra) {
+    var pasilloData = pasillos[letra];
+    if (!pasilloData) return;
+    
+    // Verificar si mostrar este pasillo
+    var mostrar = pasilloActual === 'ALL' || pasilloActual === letra;
+    if (!mostrar) return;
+    
+    // Contar ubicaciones del pasillo
+    var totalPasillo = 0;
+    var ocupadasPasillo = 0;
+    for (var nivel in pasilloData.niveles) {
+      var ubicaciones = pasilloData.niveles[nivel];
+      totalPasillo += ubicaciones.length;
+      ubicaciones.forEach(function(ub) {
+        if (ub.tieneProductos) ocupadasPasillo++;
+      });
+    }
+    
+    var porcentajePasillo = totalPasillo > 0 ? Math.round((ocupadasPasillo / totalPasillo) * 100) : 0;
+    var barClass = porcentajePasillo >= 80 ? 'critical' : porcentajePasillo >= 60 ? 'high' : '';
+    
+    html += '<div class="pasillo-section" data-pasillo="' + letra + '">';
+    html += '<div class="pasillo-header">';
+    html += '<div class="pasillo-badge">' + letra + '</div>';
+    html += '<div class="pasillo-info">';
+    html += '<div class="pasillo-title">Pasillo ' + letra + '</div>';
+    html += '<div class="pasillo-stats"><i class="fas fa-box"></i> ' + ocupadasPasillo + ' / ' + totalPasillo + ' ubicaciones ocupadas</div>';
+    html += '</div>';
+    html += '<div class="occupation-bar-container">';
+    html += '<div class="occupation-bar"><div class="occupation-fill ' + barClass + '" style="width:' + porcentajePasillo + '%"></div></div>';
+    html += '<div class="occupation-percent">' + porcentajePasillo + '% ocupación</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="niveles-container">';
+    
+    // Ordenar niveles de mayor a menor
+    var niveles = Object.keys(pasilloData.niveles).sort(function(a, b) { return parseInt(b) - parseInt(a); });
+    
+    niveles.forEach(function(nivel) {
+      var ubicaciones = pasilloData.niveles[nivel];
+      html += '<div class="nivel-row">';
+      html += '<span class="nivel-label"><i class="fas fa-layer-group"></i> Nivel ' + nivel + '</span>';
+      html += '<div class="ubicaciones-row">';
+      
+      // Ordenar por columna
+      ubicaciones.sort(function(a, b) { return a.columna - b.columna; });
+      
+      ubicaciones.forEach(function(ub) {
+        var clase = 'vacia';
+        if (ub.estado === 'NO DISPONIBLE') {
+          clase = 'no-disponible';
+        } else if (ub.estado === 'OCUPADO') {
+          clase = 'ocupado';
+        } else if (ub.tieneProductos) {
+          clase = 'con-productos';
+        }
+        
+        html += '<div class="ubicacion-cell ' + clase + '" ';
+        html += 'data-ubicacion="' + ub.ubicacion + '" ';
+        html += 'data-estado="' + clase + '" ';
+        html += 'onclick="verDetalleUbicacion(\'' + ub.ubicacion + '\')" ';
+        html += 'title="' + ub.ubicacion + (ub.cantidad > 0 ? ' (' + ub.cantidad + ' items)' : '') + '">';
+        html += ub.columna;
+        // Badge de cantidad si tiene productos
+        if (ub.cantidad > 0) {
+          html += '<div class="quantity-badge">' + (ub.cantidad > 99 ? '99+' : ub.cantidad) + '</div>';
+        }
+        html += '</div>';
+      });
+      
+      html += '</div></div>';
+    });
+    
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function filtrarPasillo(pasillo) {
+  pasilloActual = pasillo;
+  
+  // Actualizar botones con animación
+  document.querySelectorAll('.pasillo-btn').forEach(function(btn) {
+    if (btn.dataset.pasillo === pasillo) {
+      btn.className = 'btn-primary pasillo-btn';
+    } else {
+      btn.className = 'btn-secondary pasillo-btn';
+    }
+  });
+  
+  document.getElementById('layout_pasilloActual').textContent = pasillo === 'ALL' ? '' : '- Pasillo ' + pasillo;
+  
+  // Re-renderizar con fade
+  var container = document.getElementById('layout_container');
+  container.style.opacity = '0';
+  container.style.transition = 'opacity 0.2s ease';
+  
+  setTimeout(function() {
+    if (layoutData && layoutData.pasillos) {
+      renderLayout2D(layoutData.pasillos);
+    }
+    container.style.opacity = '1';
+  }, 200);
+}
+
+function highlightByState(estado) {
+  document.querySelectorAll('.ubicacion-cell').forEach(function(cell) {
+    if (cell.dataset.estado === estado) {
+      cell.classList.add('selected');
+      setTimeout(function() { cell.classList.remove('selected'); }, 2000);
+    }
+  });
+}
+
+function buscarUbicacionLayout() {
+  var codigo = document.getElementById('layout_search').value.trim().toUpperCase();
+  if (!codigo) {
+    mostrarNotificacion('Ingrese un código de ubicación', 'error');
+    return;
+  }
+  
+  if (layoutData && layoutData.pasillos) {
+    var encontrada = false;
+    for (var pasillo in layoutData.pasillos) {
+      var pasilloData = layoutData.pasillos[pasillo];
+      for (var nivel in pasilloData.niveles) {
+        var ubicaciones = pasilloData.niveles[nivel];
+        for (var i = 0; i < ubicaciones.length; i++) {
+          if (ubicaciones[i].ubicacion.toUpperCase() === codigo) {
+            encontrada = true;
+            filtrarPasillo(pasillo);
+            setTimeout(function() {
+              var cell = document.querySelector('[data-ubicacion="' + codigo + '"]');
+              if (cell) {
+                cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                cell.classList.add('selected');
+                setTimeout(function() { cell.classList.remove('selected'); }, 3000);
+              }
+              verDetalleUbicacion(codigo);
+            }, 300);
+            return;
+          }
+        }
+      }
+    }
+    if (!encontrada) {
+      mostrarNotificacion('Ubicación no encontrada: ' + codigo, 'error');
+    }
+  }
+}
+</script>
+
+
+<script>
+function verDetalleUbicacion(ubicacion) {
+  ubicacionSeleccionada = ubicacion;
+  
+  // Resaltar celda
+  document.querySelectorAll('.ubicacion-cell').forEach(function(cell) {
+    cell.classList.remove('selected');
+  });
+  var cell = document.querySelector('[data-ubicacion="' + ubicacion + '"]');
+  if (cell) cell.classList.add('selected');
+  
+  document.getElementById('modal_ubicacion').textContent = ubicacion;
+  
+  // Mostrar skeleton en modal
+  var skeletonModal = '<div class="row g-3 mb-4">';
+  for (var i = 0; i < 3; i++) {
+    skeletonModal += '<div class="col-4"><div class="skeleton-card" style="height:100px;border-radius:16px"></div></div>';
+  }
+  skeletonModal += '</div>';
+  skeletonModal += '<div class="skeleton-card" style="height:200px;border-radius:16px"></div>';
+  document.getElementById('modal_contenido').innerHTML = skeletonModal;
+  
+  ubicacionModal.show();
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        renderModalContent(result);
+      } else {
+        document.getElementById('modal_contenido').innerHTML = '<div style="text-align:center;padding:40px"><i class="fas fa-exclamation-circle" style="font-size:48px;color:#ff6b6b;margin-bottom:16px"></i><h5 style="color:white">Error</h5><p style="color:rgba(255,255,255,0.6)">' + result.error + '</p></div>';
+      }
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('modal_contenido').innerHTML = '<div style="text-align:center;padding:40px"><i class="fas fa-wifi" style="font-size:48px;color:#ff6b6b;margin-bottom:16px"></i><h5 style="color:white">Error de conexión</h5><p style="color:rgba(255,255,255,0.6)">No se pudo cargar el detalle</p></div>';
+    })
+    .getDetalleUbicacion3D(ubicacion);
+}
+
+function renderModalContent(result) {
+  var estado = result.estado || 'DISPONIBLE';
+  var estadoConfig = getEstadoConfig(estado, result.cantidadTotal);
+  
+  var html = '';
+  
+  // Stats cards del modal
+  html += '<div class="row g-3 mb-4">';
+  
+  // Card Cantidad
+  html += '<div class="col-md-4">';
+  html += '<div style="background:linear-gradient(145deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.2);border-radius:16px;padding:20px;text-align:center">';
+  html += '<div style="width:50px;height:50px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><i class="fas fa-cubes" style="font-size:20px;color:white"></i></div>';
+  html += '<div style="font-size:32px;font-weight:800;color:white;margin-bottom:4px">' + result.cantidadTotal + '</div>';
+  html += '<div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.3)">Cantidad Total</div>';
+  html += '</div></div>';
+  
+  // Card Registros
+  html += '<div class="col-md-4">';
+  html += '<div style="background:linear-gradient(145deg,rgba(0,212,170,0.15),rgba(0,212,170,0.05));border:1px solid rgba(0,212,170,0.2);border-radius:16px;padding:20px;text-align:center">';
+  html += '<div style="width:50px;height:50px;background:linear-gradient(135deg,#00d4aa,#00b894);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><i class="fas fa-list-ul" style="font-size:20px;color:white"></i></div>';
+  html += '<div style="font-size:32px;font-weight:800;color:white;margin-bottom:4px">' + result.totalRegistros + '</div>';
+  html += '<div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.3)">Registros</div>';
+  html += '</div></div>';
+  
+  // Card Estado
+  html += '<div class="col-md-4">';
+  html += '<div style="background:linear-gradient(145deg,' + estadoConfig.bgLight + ',' + estadoConfig.bgDark + ');border:1px solid ' + estadoConfig.border + ';border-radius:16px;padding:20px;text-align:center">';
+  html += '<div style="width:50px;height:50px;background:' + estadoConfig.gradient + ';border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><i class="fas fa-' + estadoConfig.icon + '" style="font-size:20px;color:' + estadoConfig.iconColor + '"></i></div>';
+  html += '<div id="estadoActual" style="font-size:18px;font-weight:700;color:' + estadoConfig.color + ';margin-bottom:4px">' + estado + '</div>';
+  html += '<div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.3)">Estado</div>';
+  html += '</div></div>';
+  
+  html += '</div>';
+  
+  // Contenido de productos o estado vacío
+  if (result.cantidadTotal === 0) {
+    html += '<div style="text-align:center;padding:50px 20px;background:rgba(255,255,255,0.02);border-radius:16px;border:1px dashed rgba(255,255,255,0.1)">';
+    html += '<div style="width:80px;height:80px;background:linear-gradient(135deg,rgba(100,116,139,0.2),rgba(100,116,139,0.1));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">';
+    html += '<i class="fas fa-box-open" style="font-size:36px;color:#64748b"></i>';
+    html += '</div>';
+    html += '<h4 style="color:white;margin-bottom:8px;font-weight:600">Ubicación Vacía</h4>';
+    html += '<p style="color:rgba(255,255,255,0.5);margin:0;font-size:14px">No hay productos almacenados en esta ubicación</p>';
+    html += '</div>';
+  } else if (result.productos && result.productos.length > 0) {
+    html += '<div style="background:rgba(255,255,255,0.02);border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden">';
+    html += '<div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between">';
+    html += '<span style="color:white;font-weight:600;display:flex;align-items:center;gap:8px"><i class="fas fa-boxes" style="color:#667eea"></i> Productos en esta ubicación</span>';
+    html += '<span style="background:linear-gradient(135deg,#667eea,#764ba2);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;color:white">' + result.productos.length + ' items</span>';
+    html += '</div>';
+    html += '<div style="max-height:300px;overflow-y:auto">';
+    html += '<table style="width:100%;border-collapse:collapse">';
+    html += '<thead><tr style="background:rgba(15,23,42,0.8)">';
+    html += '<th style="padding:14px 16px;text-align:left;color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:2px solid rgba(255,107,0,0.3)">Código</th>';
+    html += '<th style="padding:14px 16px;text-align:left;color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:2px solid rgba(255,107,0,0.3)">Descripción</th>';
+    html += '<th style="padding:14px 16px;text-align:center;color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:2px solid rgba(255,107,0,0.3)">Cant.</th>';
+    html += '<th style="padding:14px 16px;text-align:center;color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:2px solid rgba(255,107,0,0.3)">Talla</th>';
+    html += '<th style="padding:14px 16px;text-align:center;color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:2px solid rgba(255,107,0,0.3)">Color</th>';
+    html += '</tr></thead><tbody>';
+    
+    result.productos.forEach(function(p, index) {
+      var rowBg = index % 2 === 0 ? 'rgba(30,41,59,0.5)' : 'rgba(15,23,42,0.5)';
+      html += '<tr style="background:' + rowBg + ';transition:background 0.2s" onmouseover="this.style.background=\'rgba(255,107,0,0.1)\'" onmouseout="this.style.background=\'' + rowBg + '\'">';
+      html += '<td style="padding:14px 16px"><code style="background:linear-gradient(135deg,rgba(102,126,234,0.3),rgba(102,126,234,0.15));padding:6px 12px;border-radius:8px;font-size:12px;color:#c7d2fe;font-weight:700;border:1px solid rgba(102,126,234,0.3)">' + p.codigo + '</code></td>';
+      html += '<td style="padding:14px 16px;color:#f1f5f9;font-size:13px;font-weight:500">' + (p.descripcion || '-') + '</td>';
+      html += '<td style="padding:14px 16px;text-align:center"><span style="background:linear-gradient(135deg,#00d4aa,#00b894);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;color:white;box-shadow:0 2px 8px rgba(0,212,170,0.3)">' + p.cantidad + '</span></td>';
+      html += '<td style="padding:14px 16px;text-align:center;color:#cbd5e1;font-size:13px;font-weight:500">' + (p.talla || '-') + '</td>';
+      html += '<td style="padding:14px 16px;text-align:center;color:#cbd5e1;font-size:13px;font-weight:500">' + (p.color || '-') + '</td>';
+      html += '</tr>';
+    });
+    
+    html += '</tbody></table></div></div>';
+  }
+  
+  document.getElementById('modal_contenido').innerHTML = html;
+}
+
+function getEstadoConfig(estado, cantidadTotal) {
+  if (estado === 'NO DISPONIBLE') {
+    return {
+      color: '#ff6b6b',
+      icon: 'ban',
+      iconColor: 'white',
+      gradient: 'linear-gradient(135deg,#ff6b6b,#ee5a5a)',
+      bgLight: 'rgba(255,107,107,0.15)',
+      bgDark: 'rgba(255,107,107,0.05)',
+      border: 'rgba(255,107,107,0.2)'
+    };
+  } else if (estado === 'OCUPADO') {
+    return {
+      color: '#feca57',
+      icon: 'lock',
+      iconColor: '#1a1a2e',
+      gradient: 'linear-gradient(135deg,#feca57,#ff9f43)',
+      bgLight: 'rgba(254,202,87,0.15)',
+      bgDark: 'rgba(254,202,87,0.05)',
+      border: 'rgba(254,202,87,0.2)'
+    };
+  } else if (cantidadTotal > 0) {
+    return {
+      color: '#00d4aa',
+      icon: 'check-circle',
+      iconColor: 'white',
+      gradient: 'linear-gradient(135deg,#00d4aa,#00b894)',
+      bgLight: 'rgba(0,212,170,0.15)',
+      bgDark: 'rgba(0,212,170,0.05)',
+      border: 'rgba(0,212,170,0.2)'
+    };
+  } else {
+    return {
+      color: '#64748b',
+      icon: 'info-circle',
+      iconColor: 'white',
+      gradient: 'linear-gradient(135deg,#64748b,#475569)',
+      bgLight: 'rgba(100,116,139,0.15)',
+      bgDark: 'rgba(100,116,139,0.05)',
+      border: 'rgba(100,116,139,0.2)'
+    };
+  }
+}
+
+function cambiarEstadoUbicacion(nuevoEstado) {
+  if (!ubicacionSeleccionada) return;
+  
+  // 1. ACTUALIZACIÓN OPTIMISTA
+  var cell = document.querySelector('[data-ubicacion="' + ubicacionSeleccionada + '"]');
+  if (cell) {
+    cell.classList.remove('con-productos', 'vacia', 'no-disponible', 'ocupado');
+    if (nuevoEstado === 'NO DISPONIBLE') {
+      cell.classList.add('no-disponible');
+      cell.dataset.estado = 'no-disponible';
+    } else if (nuevoEstado === 'OCUPADO') {
+      cell.classList.add('ocupado');
+      cell.dataset.estado = 'ocupado';
+    } else {
+      var tieneProductos = cell.querySelector('.quantity-badge') !== null;
+      cell.classList.add(tieneProductos ? 'con-productos' : 'vacia');
+      cell.dataset.estado = tieneProductos ? 'con-productos' : 'vacia';
+    }
+    // Efecto visual de confirmación
+    cell.style.transform = 'scale(1.4)';
+    setTimeout(function() { cell.style.transform = ''; }, 300);
+  }
+  
+  // 2. Actualizar estado en modal
+  var estadoEl = document.getElementById('estadoActual');
+  if (estadoEl) {
+    estadoEl.textContent = nuevoEstado;
+    var config = getEstadoConfig(nuevoEstado, 0);
+    estadoEl.style.color = config.color;
+  }
+  
+  // 3. Actualizar datos locales
+  actualizarDatosLocales(ubicacionSeleccionada, nuevoEstado);
+  
+  // 4. Mostrar notificación
+  mostrarNotificacion('Estado actualizado: ' + nuevoEstado, 'success');
+  
+  // 5. Guardar en servidor
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result.success) {
+        mostrarNotificacion('Error al guardar: ' + result.error, 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      mostrarNotificacion('Error de conexión al guardar', 'error');
+    })
+    .cambiarEstadoUbicacion3D(ubicacionSeleccionada, nuevoEstado);
+}
+
+function actualizarDatosLocales(ubicacion, nuevoEstado) {
+  if (layoutData && layoutData.pasillos) {
+    for (var pasillo in layoutData.pasillos) {
+      var pasilloData = layoutData.pasillos[pasillo];
+      for (var nivel in pasilloData.niveles) {
+        var ubicaciones = pasilloData.niveles[nivel];
+        for (var i = 0; i < ubicaciones.length; i++) {
+          if (ubicaciones[i].ubicacion === ubicacion) {
+            ubicaciones[i].estado = nuevoEstado;
+            return;
+          }
+        }
+      }
+    }
+  }
+}
+
+function mostrarNotificacion(mensaje, tipo) {
+  // Remover notificaciones anteriores
+  document.querySelectorAll('.layout-toast').forEach(function(t) { t.remove(); });
+  
+  var toast = document.createElement('div');
+  toast.className = 'layout-toast';
+  toast.style.cssText = 'position:fixed;top:90px;right:24px;padding:16px 24px;border-radius:14px;color:white;font-size:14px;font-weight:500;z-index:10000;display:flex;align-items:center;gap:12px;box-shadow:0 10px 40px rgba(0,0,0,0.4);backdrop-filter:blur(10px);animation:toastSlideIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);';
+  
+  if (tipo === 'success') {
+    toast.style.background = 'linear-gradient(135deg, rgba(0,212,170,0.95), rgba(0,184,148,0.95))';
+    toast.innerHTML = '<i class="fas fa-check-circle" style="font-size:20px"></i><span>' + mensaje + '</span>';
+  } else {
+    toast.style.background = 'linear-gradient(135deg, rgba(255,107,107,0.95), rgba(238,90,90,0.95))';
+    toast.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:20px"></i><span>' + mensaje + '</span>';
+  }
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(function() {
+    toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 3000);
+}
+
+// Agregar estilos de animación para toast
+var toastStyles = document.createElement('style');
+toastStyles.textContent = '@keyframes toastSlideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } @keyframes toastSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }';
+document.head.appendChild(toastStyles);
+
+// Exponer funciones globalmente
+window.loadLayoutView = loadLayoutView;
+window.initLayoutModule = initLayoutModule;
+window.loadLayoutData = loadLayoutData;
+window.filtrarPasillo = filtrarPasillo;
+window.buscarUbicacionLayout = buscarUbicacionLayout;
+window.verDetalleUbicacion = verDetalleUbicacion;
+window.cambiarEstadoUbicacion = cambiarEstadoUbicacion;
+window.actualizarDatosLocales = actualizarDatosLocales;
+window.highlightByState = highlightByState;
+window.mostrarNotificacion = mostrarNotificacion;
+</script>
+</section>

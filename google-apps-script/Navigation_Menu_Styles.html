@@ -1,0 +1,218 @@
+<!-- Navigation_Menu_Styles.html - Estilos modernos para el menú -->
+
+<style>
+/* Estilos base para el menú */
+.home-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.user-role {
+  color: #6b7280;
+  font-size: 1.1rem;
+  font-weight: 500;
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border-radius: 20px;
+}
+
+/* Grid Layout - Forzando display */
+.navigation-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 24px !important;
+  margin-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Card Design Moderno */
+.nav-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: left; /* Alineación izquierda para más modernidad */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Hover Effects */
+.nav-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.nav-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #e5e7eb;
+  transition: background 0.3s ease;
+}
+
+/* Icon Container */
+.nav-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  color: #4b5563;
+}
+
+.nav-card:hover .nav-card-icon {
+  background: #eff6ff;
+  color: #3b82f6;
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Typography */
+.nav-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.nav-card p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+  flex-grow: 1;
+}
+
+/* Colores específicos por módulo */
+.nav-card[data-view="dashboard"]:hover::before { background: #6366f1; }
+.nav-card[data-view="dashboard"]:hover .nav-card-icon { color: #6366f1; background: #e0e7ff; }
+
+.nav-card[data-view="inventory"]:hover::before { background: #10b981; }
+.nav-card[data-view="inventory"]:hover .nav-card-icon { color: #10b981; background: #d1fae5; }
+
+.nav-card[data-view="reception"]:hover::before { background: #f59e0b; }
+.nav-card[data-view="reception"]:hover .nav-card-icon { color: #f59e0b; background: #fef3c7; }
+
+.nav-card[data-view="sales"]:hover::before { background: #ef4444; }
+.nav-card[data-view="sales"]:hover .nav-card-icon { color: #ef4444; background: #fee2e2; }
+
+.nav-card[data-view="picking"]:hover::before { background: #8b5cf6; }
+.nav-card[data-view="picking"]:hover .nav-card-icon { color: #8b5cf6; background: #ede9fe; }
+
+.nav-card[data-view="packing"]:hover::before { background: #06b6d4; }
+.nav-card[data-view="packing"]:hover .nav-card-icon { color: #06b6d4; background: #cffafe; }
+
+.nav-card[data-view="dispatch"]:hover::before { background: #84cc16; }
+.nav-card[data-view="dispatch"]:hover .nav-card-icon { color: #84cc16; background: #ecfccb; }
+
+.nav-card[data-view="transfers"]:hover::before { background: #f97316; }
+.nav-card[data-view="transfers"]:hover .nav-card-icon { color: #f97316; background: #ffedd5; }
+
+.nav-card[data-view="reports"]:hover::before { background: #6b7280; }
+.nav-card[data-view="reports"]:hover .nav-card-icon { color: #6b7280; background: #f3f4f6; }
+
+.nav-card[data-view="admin"]:hover::before { background: #dc2626; }
+.nav-card[data-view="admin"]:hover .nav-card-icon { color: #dc2626; background: #fee2e2; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem;
+  }
+  
+  .home-header h1 {
+    font-size: 2rem;
+  }
+  
+  .navigation-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .nav-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 16px;
+    gap: 16px;
+    text-align: left;
+  }
+  
+  .nav-card-icon {
+    margin-bottom: 0;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  
+  .nav-card::before {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    height: auto;
+  }
+}
+
+/* Animación de entrada */
+.nav-card {
+  opacity: 0;
+  animation: slideUpFade 0.5s ease-out forwards;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-card:nth-child(1) { animation-delay: 0.05s; }
+.nav-card:nth-child(2) { animation-delay: 0.1s; }
+.nav-card:nth-child(3) { animation-delay: 0.15s; }
+.nav-card:nth-child(4) { animation-delay: 0.2s; }
+.nav-card:nth-child(5) { animation-delay: 0.25s; }
+.nav-card:nth-child(6) { animation-delay: 0.3s; }
+.nav-card:nth-child(7) { animation-delay: 0.35s; }
+.nav-card:nth-child(8) { animation-delay: 0.4s; }
+.nav-card:nth-child(9) { animation-delay: 0.45s; }
+.nav-card:nth-child(10) { animation-delay: 0.5s; }
+</style>

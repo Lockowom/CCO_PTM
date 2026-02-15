@@ -1,0 +1,938 @@
+<!-- Delivery_Page.html -->
+<div id="deliveryView" class="view">
+<style>
+  /* Variables & Reset */
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --secondary: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --bg-light: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-radius: 12px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .tms-container {
+    padding: 20px;
+    background-color: var(--bg-light);
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* Header & Stats */
+  .tms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .tms-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tms-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-tms {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: white; color: var(--secondary); border: 1px solid #e2e8f0; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 16px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid transparent;
+  }
+  
+  .stat-card.pending { border-color: var(--warning); }
+  .stat-card.route { border-color: var(--info); }
+  .stat-card.delivered { border-color: var(--success); }
+  .stat-card.failed { border-color: var(--danger); }
+
+  .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); }
+  .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+
+  /* Delivery Cards (Mobile First approach for lists) */
+  .delivery-list {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .delivery-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 0;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    position: relative;
+  }
+
+  .delivery-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .card-header {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .nv-badge {
+    background: #e0e7ff;
+    color: var(--primary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .status-PENDIENTE { background: #fffbeb; color: #b45309; }
+  .status-EN_RUTA, .status-EN-CAMINO { background: #eff6ff; color: #1d4ed8; }
+  .status-ENTREGADO, .status-ENTREGADA { background: #d1fae5; color: #047857; }
+  .status-RECHAZADO { background: #fee2e2; color: #b91c1c; }
+  .status-REPROGRAMADO { background: #f3f4f6; color: #4b5563; }
+
+  .card-body {
+    padding: 16px;
+  }
+
+  .info-row {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    align-items: baseline;
+  }
+
+  .info-icon {
+    width: 20px;
+    color: var(--secondary);
+    margin-right: 8px;
+  }
+
+  .info-text {
+    color: var(--text-main);
+    flex: 1;
+  }
+
+  .info-highlight {
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  
+  .timer-display {
+    background: #f0f9ff;
+    color: #0369a1;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-footer {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-action {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* Modal Styles */
+  .tms-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999; /* Z-Index ultra alto para asegurar que esté sobre todo */
+    backdrop-filter: blur(2px);
+  }
+
+  .tms-modal {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: 100000;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    background: var(--primary);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+  .close-modal { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+  .modal-body { padding: 20px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-main); font-size: 0.9rem; }
+  
+  .tms-select, .tms-input, .tms-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .tms-select:focus, .tms-input:focus { border-color: var(--primary); outline: none; }
+
+  .camera-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+
+  .camera-box:hover { border-color: var(--primary); background: #eef2ff; }
+  
+  .preview-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* Responsive Table for Desktop */
+  @media (min-width: 768px) {
+    .delivery-list.table-mode {
+      display: block;
+    }
+    
+    .tms-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .tms-table th, .tms-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .tms-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--secondary);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+  }
+</style>
+
+<div class="tms-container">
+  <!-- Header -->
+  <div class="tms-header">
+    <div class="tms-title">
+      <i class="fas fa-truck-fast"></i>
+      <span>Centro de Entregas</span>
+    </div>
+    <div class="tms-actions">
+      <button class="btn-tms btn-secondary" onclick="sincronizarEntregas()">
+        <i class="fas fa-sync-alt"></i> Sincronizar
+      </button>
+      <div id="user-badge" class="btn-tms btn-primary" style="background: var(--bg-light); color: var(--text-main); cursor: default;">
+        <i class="fas fa-user-circle"></i> <span id="current-user-name">Usuario</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card pending">
+      <div class="stat-value" id="stat-pending">0</div>
+      <div class="stat-label">Pendientes</div>
+    </div>
+    <div class="stat-card route">
+      <div class="stat-value" id="stat-route">0</div>
+      <div class="stat-label">En Ruta</div>
+    </div>
+    <div class="stat-card delivered">
+      <div class="stat-value" id="stat-delivered">0</div>
+      <div class="stat-label">Entregadas</div>
+    </div>
+    <div class="stat-card failed">
+      <div class="stat-value" id="stat-failed">0</div>
+      <div class="stat-label">Fallidas</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="delivery-content" class="delivery-list">
+    <!-- Cards will be injected here -->
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--secondary);">
+      <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+      <p style="margin-top: 10px;">Cargando entregas...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Gestión -->
+<div id="modal-gestion" class="tms-modal-overlay">
+  <div class="tms-modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Gestionar Entrega <span id="modal-nv-title"></span></h3>
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="entrega-form" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="modal-nv" name="nv">
+        
+        <div class="form-group">
+          <label class="form-label">Estado Actual</label>
+          <select class="tms-select" id="modal-estado" name="estado" required onchange="checkStatusChange()">
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="EN RUTA">EN RUTA</option>
+            <option value="REPROGRAMADO">REPROGRAMADO</option>
+            <option value="RECHAZADO">RECHAZADO</option>
+            <option value="ENTREGADO">ENTREGADO</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Evidencia Fotográfica</label>
+          <div class="camera-box" onclick="triggerCamera()">
+            <i class="fas fa-camera fa-2x" style="color: var(--secondary); margin-bottom: 8px;"></i>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">Tocar para tomar foto</div>
+            <input type="file" id="camera-input" capture="environment" accept="image/*" style="display: none;" onchange="previewImage(this)">
+          </div>
+          <img id="img-preview" class="preview-image">
+          <input type="hidden" id="foto-base64">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Receptor / Observaciones</label>
+          <input type="text" class="tms-input" id="modal-receptor" placeholder="Nombre de quien recibe">
+          <textarea class="tms-textarea" id="modal-obs" rows="2" placeholder="Comentarios adicionales..." style="margin-top: 8px;"></textarea>
+        </div>
+
+        <button type="submit" class="btn-action">
+          <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State
+  var entregasData = [];
+  var currentUser = null;
+  var refreshInterval = null;
+
+  // Init
+  function initDeliveryModule() {
+    console.log('Iniciando Módulo Entregas TMS...');
+    
+    // CRITICAL: Only run if we're in the delivery view
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      console.log('initDeliveryModule: Delivery view not active, skipping initialization');
+      return;
+    }
+    
+    // Forzar visibilidad del contenedor INMEDIATAMENTE
+    var tmsContainer = deliveryView.querySelector('.tms-container');
+    if(tmsContainer) {
+        tmsContainer.style.display = 'block';
+        tmsContainer.style.visibility = 'visible';
+        tmsContainer.style.opacity = '1';
+    } else {
+        console.error('CRITICAL: .tms-container no encontrado en deliveryView');
+        deliveryView.insertAdjacentHTML('beforeend', '<div style="color:red;padding:20px">Error crítico: Contenedor TMS no encontrado</div>');
+    }
+    
+    // Identificar Usuario
+    if (typeof App !== 'undefined' && App.user) {
+      currentUser = App.user;
+    } else {
+      currentUser = {
+        nombre: sessionStorage.getItem('userName') || 'Usuario',
+        rol: sessionStorage.getItem('userRole') || 'Operador'
+      };
+    }
+    
+    var userNameEl = deliveryView.querySelector('#current-user-name');
+    if(userNameEl) userNameEl.innerText = currentUser.nombre;
+    
+    // Carga Inicial (Caché + Red)
+    loadFromCache();
+    loadEntregasData();
+    
+    // Auto-refresh cada 30s
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => loadEntregasData(true), 30000);
+    
+    // UI Cleanup for Drivers
+    setTimeout(cleanupDriverInterface, 500);
+  }
+  
+  function cleanupDriverInterface() {
+    try {
+        // CRITICAL: Only run if we're in the delivery view
+        var deliveryView = document.getElementById('deliveryView');
+        if (!deliveryView || !deliveryView.classList.contains('active')) {
+          console.log('cleanupDriverInterface: Delivery view not active, skipping cleanup');
+          return;
+        }
+        
+        // Si estamos en modo TMS (Driver), ocultar header y sidebar principales
+        // Detectar por URL o por rol
+        var isTmsMode = window.location.href.indexOf('app=tms') !== -1;
+        var userRole = (currentUser && currentUser.rol) ? currentUser.rol.toUpperCase() : '';
+        var driverRoles = ['TRANSPORTISTA', 'CHOFER', 'CONDUCTOR', 'REPARTIDOR', 'TRANSPORTE'];
+        var isDriver = driverRoles.some(function(r) { return userRole.indexOf(r) !== -1; });
+        
+        // Failsafe: Si no es TMS Mode pero es Driver, asegurarse que no estamos ocultando la interfaz principal
+        // si la redirección falló y estamos en Index.html.
+        // Pero si estamos en TMS_Index, no hay header.
+        
+        if (isTmsMode || isDriver) {
+            console.log('Limpiando interfaz para conductor/TMS...');
+            
+            // Ocultar Header Principal (Solo si existe, e.g. en Index.html)
+            var mainHeader = document.getElementById('appHeader');
+            if(mainHeader) mainHeader.style.display = 'none';
+            
+            // Ocultar Sidebar (Solo si existe)
+            var sidebar = document.getElementById('sidebarMenu');
+            if(sidebar) sidebar.style.display = 'none';
+            
+            // Ocultar Boton Hamburguesa
+            var mobileBtn = document.querySelector('.mobile-menu-btn');
+            if(mobileBtn) mobileBtn.style.display = 'none';
+            
+            // Ajustar layout (Solo si existe el layout principal)
+            var appLayout = document.getElementById('appLayout');
+            if(appLayout) {
+                appLayout.style.gridTemplateColumns = '1fr';
+                appLayout.style.paddingTop = '0';
+            }
+            
+            var mainContent = document.getElementById('mainContent');
+            if(mainContent) {
+                mainContent.style.marginLeft = '0';
+                mainContent.style.width = '100%';
+                mainContent.style.padding = '0';
+            }
+            
+            // Ajustar TMS container padding
+            var tmsContainer = deliveryView.querySelector('.tms-container');
+            if(tmsContainer) {
+                tmsContainer.style.paddingTop = '20px';
+                // Asegurar visibilidad
+                tmsContainer.style.display = 'block';
+                tmsContainer.style.visibility = 'visible';
+                tmsContainer.style.opacity = '1';
+            }
+        }
+    } catch(e) {
+        console.error('Error cleanupDriverInterface:', e);
+    }
+  }
+
+  // Data Loading
+  function loadEntregasData(silent = false) {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      console.log('loadEntregasData: Delivery view not active, skipping load');
+      return;
+    }
+    
+    if (!silent) showLoading(true);
+    
+    // Timeout visual
+    var timeoutId = setTimeout(function() {
+        if(!silent) {
+            var container = deliveryView.querySelector('#delivery-content');
+            if(container && container.innerHTML.indexOf('fa-spin') !== -1) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:20px;color:red">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <p>La conexión está tardando demasiado.</p>
+                        <button class="btn-tms btn-secondary" onclick="loadEntregasData()" style="margin:10px auto">Reintentar</button>
+                    </div>
+                `;
+            }
+        }
+    }, 15000); // 15s timeout
+    
+    google.script.run
+      .withSuccessHandler(function(response) {
+        clearTimeout(timeoutId);
+        if (response.success) {
+          entregasData = response.entregas;
+          saveToCache(entregasData);
+          renderDashboard(entregasData);
+          updateStats(response.estadisticas);
+        } else {
+          console.error('Error cargando entregas:', response.error);
+          if(!silent) {
+             var deliveryView = document.getElementById('deliveryView');
+             var container = deliveryView ? deliveryView.querySelector('#delivery-content') : null;
+             if(container) container.innerHTML = '<div style="color:red;padding:20px">Error: ' + response.error + '</div>';
+          }
+        }
+        if (!silent) showLoading(false);
+      })
+      .withFailureHandler(function(err) {
+        clearTimeout(timeoutId);
+        console.error('Error de conexión:', err);
+        if(!silent) {
+             var deliveryView = document.getElementById('deliveryView');
+             var container = deliveryView ? deliveryView.querySelector('#delivery-content') : null;
+             if(container) container.innerHTML = '<div style="color:red;padding:20px">Error de conexión: ' + err.message + '</div>';
+        }
+        if (!silent) showLoading(false);
+      })
+      .getEntregas(sessionStorage.getItem('sessionId')); // Usar getEntregas backend
+  }
+
+  // Rendering
+  function renderDashboard(data) {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      console.log('renderDashboard: Delivery view not active, skipping render');
+      return;
+    }
+    
+    var container = deliveryView.querySelector('#delivery-content');
+    if (!container) {
+      console.error('renderDashboard: delivery-content container not found in deliveryView');
+      return;
+    }
+    
+    container.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--secondary);">
+          <i class="fas fa-box-open fa-3x" style="margin-bottom: 16px;"></i>
+          <p>No hay entregas asignadas para mostrar.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Filtrar localmente si es necesario (aunque el backend ya filtra)
+    // Render Cards
+    data.forEach(item => {
+      var card = document.createElement('div');
+      card.className = 'delivery-card';
+      
+      // Timer Logic Visuals
+      var timerHtml = '';
+      if (item.estado === 'EN RUTA' || item.estado === 'EN CAMINO') {
+        var startTime = item.inicioRuta ? new Date(item.inicioRuta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Recién';
+        timerHtml = `<div class="timer-display"><i class="fas fa-stopwatch"></i> En ruta desde: ${startTime}</div>`;
+      } else if (item.duracion) {
+        timerHtml = `<div class="timer-display" style="background: #f0fdf4; color: #166534;"><i class="fas fa-check-circle"></i> Tiempo: ${item.duracion}</div>`;
+      }
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="nv-badge">NV-${item.nv}</span>
+          <span class="status-badge status-${item.estado.replace(/\s+/g, '_')}">${item.estado}</span>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <i class="fas fa-user info-icon"></i>
+            <div class="info-text info-highlight">${item.facturaGD || 'Cliente S/N'}</div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-cubes info-icon"></i>
+            <div class="info-text">${item.bultos} Bultos/Pallets</div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-map-marker-alt info-icon"></i>
+            <div class="info-text">${item.guia || 'Dirección no especificada'}</div>
+          </div>
+          ${timerHtml}
+        </div>
+        <div class="card-footer">
+          <button class="btn-action" data-nv="${item.nv}" onclick="safeOpenModal(this)">
+            Gestionar <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function updateStats(stats) {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      return;
+    }
+    
+    if (!stats) return;
+    animateValue('stat-pending', stats.pendientes);
+    animateValue('stat-route', stats.enRuta);
+    animateValue('stat-delivered', stats.entregadas);
+    animateValue('stat-failed', stats.noEntregadas);
+  }
+
+  // Modal & Actions
+  function safeOpenModal(btn) {
+    var nv = btn.getAttribute('data-nv');
+    console.log('Abriendo modal para NV:', nv);
+    if (!nv) {
+      alert('Error: No se pudo identificar la entrega');
+      return;
+    }
+    openModal(nv);
+  }
+
+  function openModal(nv) {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      console.log('openModal: Delivery view not active, skipping modal open');
+      return;
+    }
+    
+    // Asegurar que entregasData esté disponible
+    if (!entregasData || entregasData.length === 0) {
+      console.warn('entregasData vacío, intentando recuperar de caché o DOM');
+      loadFromCache();
+    }
+    
+    // Búsqueda robusta (string vs number)
+    var item = entregasData.find(d => String(d.nv) === String(nv));
+    
+    if (!item) {
+      console.error('Entrega no encontrada en memoria:', nv);
+      // Fallback: buscar en el DOM si es necesario o alertar
+      alert('Error: Datos de la entrega no encontrados. Por favor sincronice.');
+      return;
+    }
+
+    console.log('Datos encontrados:', item);
+
+    var modalNv = deliveryView.querySelector('#modal-nv');
+    var modalTitle = deliveryView.querySelector('#modal-nv-title');
+    var modalEstado = deliveryView.querySelector('#modal-estado');
+    
+    if (!modalNv || !modalTitle || !modalEstado) {
+      console.error('Elementos del modal no encontrados en deliveryView');
+      return;
+    }
+
+    modalNv.value = nv;
+    modalTitle.innerText = nv;
+    modalEstado.value = item.estado;
+    var modalReceptor = deliveryView.querySelector('#modal-receptor');
+    var modalObs = deliveryView.querySelector('#modal-obs');
+    if (modalReceptor) modalReceptor.value = item.receptor || '';
+    if (modalObs) modalObs.value = item.observaciones || '';
+    
+    // Reset Image
+    var imgPreview = deliveryView.querySelector('#img-preview');
+    var fotoInput = deliveryView.querySelector('#foto-base64');
+    
+    if (imgPreview) {
+      imgPreview.style.display = 'none';
+      imgPreview.src = '';
+    }
+    if (fotoInput) fotoInput.value = '';
+    
+    // Show Modal
+    var modal = deliveryView.querySelector('#modal-gestion');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Forzar reflow/z-index por si acaso
+        modal.style.zIndex = '99999';
+    }
+  }
+
+  function closeModal() {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView) return;
+    
+    var modal = deliveryView.querySelector('#modal-gestion');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  function triggerCamera() {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView) return;
+    
+    var cameraInput = deliveryView.querySelector('#camera-input');
+    if (cameraInput) {
+      cameraInput.click();
+    }
+  }
+
+  function previewImage(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        // Resize/Compress before display/upload
+        compressImage(e.target.result, 800, 0.7, function(compressedBase64) {
+          var deliveryView = document.getElementById('deliveryView');
+          if (!deliveryView) return;
+          
+          var imgPreview = deliveryView.querySelector('#img-preview');
+          var fotoInput = deliveryView.querySelector('#foto-base64');
+          
+          if (imgPreview) {
+            imgPreview.src = compressedBase64;
+            imgPreview.style.display = 'block';
+          }
+          if (fotoInput) {
+            fotoInput.value = compressedBase64;
+          }
+        });
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Image Compression Helper
+  function compressImage(base64, maxWidth, quality, callback) {
+    var img = new Image();
+    img.src = base64;
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      
+      var width = img.width;
+      var height = img.height;
+      
+      if (width > maxWidth) {
+        height *= maxWidth / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      var compressed = canvas.toDataURL('image/jpeg', quality);
+      callback(compressed);
+    };
+  }
+
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      console.log('handleFormSubmit: Delivery view not active, skipping form submit');
+      return;
+    }
+    
+    var btn = e.target.querySelector('button[type="submit"]');
+    var originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    btn.disabled = true;
+
+    var data = {
+      nv: deliveryView.querySelector('#modal-nv').value,
+      estado: deliveryView.querySelector('#modal-estado').value,
+      receptor: deliveryView.querySelector('#modal-receptor').value,
+      observaciones: deliveryView.querySelector('#modal-obs').value,
+      foto: deliveryView.querySelector('#foto-base64').value,
+      usuario: currentUser.nombre
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        closeModal();
+        if (res.success) {
+          if(window.WMSToast) WMSToast.success('Entrega actualizada');
+          loadEntregasData(); // Refresh to show new status/timer
+        } else {
+          alert('Error: ' + res.error);
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        alert('Error de red');
+      })
+      .guardarEntrega(data);
+  }
+
+  // Utilities
+  function saveToCache(data) {
+    try {
+      localStorage.setItem('tms_entregas', JSON.stringify({
+        data: data,
+        timestamp: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function loadFromCache() {
+    try {
+      var cached = JSON.parse(localStorage.getItem('tms_entregas'));
+      if (cached && (Date.now() - cached.timestamp < 3600000)) {
+        entregasData = cached.data;
+        renderDashboard(entregasData);
+      }
+    } catch(e) {}
+  }
+
+  function animateValue(id, end) {
+    var deliveryView = document.getElementById('deliveryView');
+    if (!deliveryView || !deliveryView.classList.contains('active')) {
+      return;
+    }
+    
+    var obj = deliveryView.querySelector('#' + id);
+    if(!obj) return;
+    obj.innerText = end; // Simple update for now
+  }
+  
+  function sincronizarEntregas() {
+      var deliveryView = document.getElementById('deliveryView');
+      if (!deliveryView || !deliveryView.classList.contains('active')) {
+        return;
+      }
+      
+      var btn = deliveryView.querySelector('button[onclick="sincronizarEntregas()"]');
+      if(btn) {
+           btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> ...';
+           btn.disabled = true;
+      }
+      google.script.run
+          .withSuccessHandler(() => {
+              loadEntregasData();
+              if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar'; btn.disabled = false; }
+          })
+          .sincronizarEntregasConDespachos();
+  }
+
+  function showLoading(show) {
+      // Optional overlay logic
+  }
+  
+  // Close modal on outside click (Safe Event Listener)
+  function initDeliveryEventListeners() {
+    // Remove any existing listeners to prevent duplicates
+    if (window.deliveryClickListener) {
+      window.removeEventListener('click', window.deliveryClickListener);
+    }
+    
+    // Create scoped click listener
+    window.deliveryClickListener = function(event) {
+      var deliveryView = document.getElementById('deliveryView');
+      if (!deliveryView || !deliveryView.classList.contains('active')) {
+        return; // Only handle clicks when delivery view is active
+      }
+      
+      var modal = deliveryView.querySelector('#modal-gestion');
+      if (modal && event.target == modal) {
+        closeModal();
+      }
+    };
+    
+    window.addEventListener('click', window.deliveryClickListener);
+  }
+  
+  // Initialize event listeners when module loads
+  initDeliveryEventListeners();
+  
+  // Expose the main init function globally
+  window.initDeliveryModule = initDeliveryModule;
+</script>
+</div>

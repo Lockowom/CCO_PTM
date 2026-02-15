@@ -1,0 +1,829 @@
+<section class="view" id="dispatchView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Despachos</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-shipping-fast"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Gestión de Despachos</h1>
+          <p class="wms-module-subtitle">Control de envíos y logística de salida</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span>Conectado</span>
+      </div>
+      <button class="wms-btn wms-btn-premium" onclick="refreshDispatchData()">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard Premium -->
+  <div class="wms-stats-grid wms-stats-4">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="dispatch_ready">0</span>
+        <span class="wms-stat-label">Listos Despacho</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning">
+      <div class="wms-stat-icon"><i class="fas fa-truck-loading"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="dispatch_pending">0</span>
+        <span class="wms-stat-label">Pendientes</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info">
+      <div class="wms-stat-icon"><i class="fas fa-route"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="dispatch_transit">0</span>
+        <span class="wms-stat-label">En Tránsito</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="primary">
+      <div class="wms-stat-icon"><i class="fas fa-box-check"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="dispatch_delivered">0</span>
+        <span class="wms-stat-label">Entregados Hoy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="wms-grid" style="grid-template-columns: 1fr 2fr; gap: var(--wms-space-6);">
+    <!-- Left Column -->
+    <div class="wms-flex wms-flex-col wms-gap-6">
+      <!-- Form -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-plus-circle"></i> Crear Despacho</h3>
+        </div>
+        <div class="wms-card-body">
+          <form id="dispatchForm">
+            <div class="wms-form-group">
+              <label class="wms-label wms-label-required">Orden ID</label>
+              <div class="wms-input-wrapper">
+                <span class="wms-input-icon"><i class="fas fa-hashtag"></i></span>
+                <input type="text" class="wms-input" id="dispatch_ordenId" required
+                  placeholder="Seleccione o ingrese ID">
+              </div>
+              <span class="wms-helper-text">Seleccione una orden de la lista inferior</span>
+            </div>
+            <div class="wms-form-group">
+              <label class="wms-label">Transportista</label>
+              <select class="wms-select" id="dispatch_transportista">
+                <option value="DHL">DHL Express</option>
+                <option value="FedEx">FedEx</option>
+                <option value="UPS">UPS</option>
+                <option value="Correos">Correos de Chile</option>
+                <option value="Starken">Starken</option>
+                <option value="Chilexpress">Chilexpress</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="wms-form-group">
+              <label class="wms-label wms-label-required">Destino</label>
+              <input type="text" class="wms-input" id="dispatch_destino" required placeholder="Dirección de envío">
+            </div>
+            <button type="submit" class="wms-btn wms-btn-primary wms-btn-block wms-ripple" id="dispatch_btnCrear">
+              <i class="fas fa-paper-plane"></i> Crear Despacho
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Ready Orders -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-clipboard-check"></i> Órdenes Listas</h3>
+        </div>
+        <div id="dispatch_readyOrders" style="max-height: 400px; overflow-y: auto;">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="wms-flex wms-flex-col wms-gap-6">
+      <!-- Pending -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-truck-loading"></i> Despachos Pendientes</h3>
+        </div>
+        <div id="dispatch_pendingList" style="max-height: 300px; overflow-y: auto;">
+          <div class="wms-loading-state">
+            <div class="wms-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- In Transit -->
+      <div class="wms-card">
+        <div class="wms-card-header">
+          <h3 class="wms-card-title"><i class="fas fa-route"></i> En Tránsito</h3>
+        </div>
+        <div class="wms-table-wrapper">
+          <table class="wms-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Orden</th>
+                <th>Transportista</th>
+                <th>Destino</th>
+                <th>Fecha Salida</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="dispatch_transitBody">
+              <tr>
+                <td colspan="6">
+                  <div class="wms-loading-state">
+                    <div class="wms-spinner"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Timeline de Estado -->
+  <div id="dispatchTimelineModal" class="wms-modal-overlay">
+    <div class="wms-modal wms-modal-md">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-route"></i>
+          Estado del Envío: <span id="timeline_codigoSeguimiento"></span>
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="cerrarModalTimeline()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body">
+        <!-- Info del Despacho -->
+        <div class="wms-grid wms-grid-cols-2 wms-gap-4 wms-mb-6">
+          <div class="wms-card">
+            <div class="wms-card-body wms-p-3">
+              <div class="wms-text-xs wms-text-secondary wms-mb-1">ORDEN</div>
+              <div class="wms-font-semibold" id="timeline_orden">-</div>
+            </div>
+          </div>
+          <div class="wms-card">
+            <div class="wms-card-body wms-p-3">
+              <div class="wms-text-xs wms-text-secondary wms-mb-1">TRANSPORTISTA</div>
+              <div class="wms-font-semibold" id="timeline_transportista">-</div>
+            </div>
+          </div>
+          <div class="wms-card wms-col-span-full">
+            <div class="wms-card-body wms-p-3">
+              <div class="wms-text-xs wms-text-secondary wms-mb-1">DESTINO</div>
+              <div class="wms-font-semibold" id="timeline_destino">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline de Estados -->
+        <div class="dispatch-timeline" id="dispatchTimeline">
+          <!-- Se genera dinámicamente -->
+        </div>
+      </div>
+      <div class="wms-modal-footer">
+        <button type="button" onclick="cerrarModalTimeline()" class="wms-btn wms-btn-outline">Cerrar</button>
+        <button type="button" onclick="verDocumentoDespacho()" class="wms-btn wms-btn-info">
+          <i class="fas fa-file-alt"></i> Ver Documento
+        </button>
+        <button type="button" onclick="marcarEntregado()" class="wms-btn wms-btn-success" id="btn_marcarEntregado">
+          <i class="fas fa-check-circle"></i> Marcar Entregado
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Documento de Despacho -->
+  <div id="dispatchDocModal" class="wms-modal-overlay">
+    <div class="wms-modal" style="max-width: 600px;">
+      <div class="wms-modal-header">
+        <h3 class="wms-modal-title">
+          <i class="fas fa-file-alt"></i>
+          Documento de Despacho
+        </h3>
+        <button type="button" class="wms-modal-close" onclick="cerrarModalDocumento()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="wms-modal-body" style="padding: 0;">
+        <div id="dispatchDocContent" class="dispatch-document">
+          <!-- Se genera dinámicamente -->
+        </div>
+      </div>
+      <div class="wms-modal-footer">
+        <button type="button" onclick="cerrarModalDocumento()" class="wms-btn wms-btn-outline">Cerrar</button>
+        <button type="button" onclick="imprimirDocumento()" class="wms-btn wms-btn-primary">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estilos para Timeline y Documento -->
+  <style>
+    /* Timeline de Despacho */
+    .dispatch-timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .dispatch-timeline::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--wms-border);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: var(--wms-space-6);
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-node {
+      position: absolute;
+      left: -30px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      z-index: 1;
+    }
+
+    .timeline-node.completed {
+      background: var(--wms-success);
+      color: white;
+    }
+
+    .timeline-node.current {
+      background: var(--wms-info);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+
+    .timeline-node.pending {
+      background: var(--wms-bg-secondary);
+      color: var(--wms-text-tertiary);
+      border: 2px dashed var(--wms-border);
+    }
+
+    .timeline-content {
+      background: var(--wms-bg-secondary);
+      border-radius: var(--wms-radius-md);
+      padding: var(--wms-space-3);
+    }
+
+    .timeline-item.completed .timeline-content {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 3px solid var(--wms-success);
+    }
+
+    .timeline-item.current .timeline-content {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid var(--wms-info);
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      font-size: var(--wms-text-sm);
+      color: var(--wms-text-primary);
+      margin-bottom: var(--wms-space-1);
+    }
+
+    .timeline-desc {
+      font-size: var(--wms-text-xs);
+      color: var(--wms-text-secondary);
+    }
+
+    .timeline-time {
+      font-size: var(--wms-text-xs);
+      color: var(--wms-text-tertiary);
+      margin-top: var(--wms-space-1);
+    }
+
+    /* Documento de Despacho */
+    .dispatch-document {
+      background: white;
+      padding: var(--wms-space-6);
+    }
+
+    .doc-header {
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: var(--wms-space-4);
+      margin-bottom: var(--wms-space-4);
+    }
+
+    .doc-company {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .doc-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: var(--wms-space-2);
+      color: var(--wms-primary);
+    }
+
+    .doc-code {
+      background: #000;
+      color: white;
+      padding: var(--wms-space-2) var(--wms-space-4);
+      font-size: 1.25rem;
+      font-weight: bold;
+      display: inline-block;
+      margin: var(--wms-space-3) 0;
+      border-radius: var(--wms-radius-sm);
+    }
+
+    .doc-section {
+      margin: var(--wms-space-4) 0;
+      padding: var(--wms-space-3);
+      border: 1px solid var(--wms-border);
+      border-radius: var(--wms-radius-md);
+    }
+
+    .doc-section-title {
+      font-size: var(--wms-text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--wms-text-secondary);
+      margin-bottom: var(--wms-space-2);
+      letter-spacing: 0.5px;
+    }
+
+    .doc-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--wms-space-1) 0;
+      border-bottom: 1px dashed var(--wms-border);
+    }
+
+    .doc-row:last-child {
+      border-bottom: none;
+    }
+
+    .doc-label {
+      font-weight: 500;
+      color: var(--wms-text-secondary);
+    }
+
+    .doc-value {
+      font-weight: 600;
+      color: var(--wms-text-primary);
+    }
+
+    .doc-signature {
+      margin-top: var(--wms-space-6);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--wms-space-6);
+    }
+
+    .signature-box {
+      flex: 1;
+      text-align: center;
+    }
+
+    .signature-line {
+      border-top: 1px solid #000;
+      margin-top: 60px;
+      padding-top: var(--wms-space-2);
+      font-size: var(--wms-text-sm);
+      color: var(--wms-text-secondary);
+    }
+
+    .doc-footer {
+      text-align: center;
+      margin-top: var(--wms-space-4);
+      padding-top: var(--wms-space-3);
+      border-top: 1px solid var(--wms-border);
+      font-size: var(--wms-text-xs);
+      color: var(--wms-text-tertiary);
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #dispatchDocContent,
+      #dispatchDocContent * {
+        visibility: visible;
+      }
+
+      #dispatchDocContent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+
+  <script>
+    function initDispatchModule() {
+      console.log('Inicializando módulo de Despachos...');
+
+      var form = document.getElementById('dispatchForm');
+      if (form && !form.dataset.initialized) {
+        form.dataset.initialized = 'true';
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          createDispatch();
+        });
+      }
+
+      refreshDispatchData();
+    }
+
+    function refreshDispatchData() {
+      loadReadyOrders();
+      loadPendingDispatches();
+      loadTransitDispatches();
+      if (window.WMSToast) WMSToast.info('Datos actualizados');
+    }
+
+    function loadReadyOrders() {
+      var container = document.getElementById('dispatch_readyOrders');
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.ordenes || result.ordenes.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state wms-py-4"><div class="wms-empty-icon"><i class="fas fa-check-circle"></i></div><p class="wms-empty-text">No hay órdenes listas para despacho</p></div>';
+            document.getElementById('dispatch_ready').textContent = '0';
+            return;
+          }
+
+          document.getElementById('dispatch_ready').textContent = result.ordenes.length;
+
+          var html = '<div class="wms-p-2">';
+          for (var i = 0; i < result.ordenes.length; i++) {
+            var o = result.ordenes[i];
+            html += '<div class="wms-card wms-mb-2 wms-hover-lift wms-cursor-pointer" onclick="selectOrder(\'' + o.notaVenta + '\')">';
+            html += '<div class="wms-card-body wms-p-3">';
+            html += '<div class="wms-flex wms-justify-between wms-items-center">';
+            html += '<div>';
+            html += '<div class="wms-font-bold" style="color: var(--wms-primary);">#' + o.notaVenta + '</div>';
+            html += '<div class="wms-text-sm wms-text-secondary"><i class="fas fa-user"></i> ' + (o.cliente || o.nombreCliente || '-') + '</div>';
+            html += '<div class="wms-text-xs wms-text-tertiary"><i class="fas fa-box"></i> ' + o.totalItems + ' items</div>';
+            html += '</div>';
+            html += '<i class="fas fa-chevron-right wms-text-tertiary"></i>';
+            html += '</div></div></div>';
+          }
+          html += '</div>';
+          container.innerHTML = html;
+        })
+        .withFailureHandler(function (error) {
+          container.innerHTML = '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error al cargar</div></div>';
+        })
+        .getOrdenesListasDespacho();
+    }
+
+    function selectOrder(orderId) {
+      document.getElementById('dispatch_ordenId').value = orderId;
+      if (window.WMSToast) WMSToast.info('Orden seleccionada: ' + orderId);
+    }
+
+    function loadPendingDispatches() {
+      var container = document.getElementById('dispatch_pendingList');
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.success || !result.despachos || result.despachos.length === 0) {
+            container.innerHTML = '<div class="wms-empty-state wms-py-4"><div class="wms-empty-icon"><i class="fas fa-shipping-fast"></i></div><p class="wms-empty-text">No hay despachos recientes</p></div>';
+            document.getElementById('dispatch_pending').textContent = '0';
+            return;
+          }
+
+          document.getElementById('dispatch_pending').textContent = result.despachos.length;
+
+          var html = '<div class="wms-p-2">';
+          for (var i = 0; i < result.despachos.length; i++) {
+            var d = result.despachos[i];
+            html += '<div class="wms-card wms-mb-3 wms-hover-lift">';
+            html += '<div class="wms-card-body">';
+            html += '<div class="wms-flex wms-justify-between wms-items-start">';
+            html += '<div>';
+            html += '<div class="wms-font-bold wms-mb-2"><i class="fas fa-barcode wms-text-secondary"></i> ' + (d.numeroEnvio || d.guia) + '</div>';
+            html += '<div class="wms-flex wms-gap-4 wms-text-sm wms-text-secondary">';
+            html += '<span><strong>N.V:</strong> ' + (d.nVenta || d.numeroNV) + '</span>';
+            html += '<span><strong>Cliente:</strong> ' + (d.cliente || '-') + '</span>';
+            html += '</div>';
+            html += '<div class="wms-text-xs wms-text-tertiary wms-mt-1"><i class="fas fa-truck"></i> ' + (d.transportista || '-') + '</div>';
+            html += '</div>';
+            html += '<span class="wms-badge wms-badge-success"><i class="fas fa-check"></i> Despachado</span>';
+            html += '</div></div></div>';
+          }
+          html += '</div>';
+          container.innerHTML = html;
+        })
+        .withFailureHandler(function (error) {
+          container.innerHTML = '<div class="wms-alert wms-alert-danger wms-m-4"><div class="wms-alert-icon"><i class="fas fa-exclamation-circle"></i></div><div class="wms-alert-content">Error al cargar</div></div>';
+        })
+        .buscarDespachos('');
+    }
+
+    function loadTransitDispatches() {
+      var tbody = document.getElementById('dispatch_transitBody');
+
+      // Por ahora mostrar mensaje vacío - el sistema no tiene seguimiento de tránsito activo
+      tbody.innerHTML = '<tr><td colspan="6"><div class="wms-empty-state wms-py-4"><p class="wms-empty-text">Sistema de seguimiento en tránsito no habilitado</p></div></td></tr>';
+      document.getElementById('dispatch_transit').textContent = '0';
+    }
+
+    // Variables para timeline
+    var dispatchActual = null;
+
+    // Ver timeline de estado
+    function verTimeline(id, codigo, orden, transportista, destino) {
+      dispatchActual = {
+        id: id,
+        codigoSeguimiento: codigo,
+        numeroOrden: orden,
+        transportista: transportista,
+        destino: destino
+      };
+
+      document.getElementById('timeline_codigoSeguimiento').textContent = codigo;
+      document.getElementById('timeline_orden').textContent = orden;
+      document.getElementById('timeline_transportista').textContent = transportista;
+      document.getElementById('timeline_destino').textContent = destino;
+
+      // Generar timeline
+      generarTimeline('EN_TRANSITO');
+
+      // Mostrar modal
+      var modal = document.getElementById('dispatchTimelineModal');
+      if (modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // Generar HTML del timeline
+    function generarTimeline(estadoActual) {
+      var estados = [
+        { id: 'CREADO', titulo: 'Despacho Creado', desc: 'El despacho ha sido registrado en el sistema', icon: 'fa-plus-circle' },
+        { id: 'PENDIENTE', titulo: 'Pendiente de Envío', desc: 'Esperando recolección por transportista', icon: 'fa-clock' },
+        { id: 'EN_TRANSITO', titulo: 'En Tránsito', desc: 'El paquete está en camino al destino', icon: 'fa-truck-moving' },
+        { id: 'EN_DESTINO', titulo: 'En Destino', desc: 'El paquete llegó a la ciudad de destino', icon: 'fa-map-marker-alt' },
+        { id: 'ENTREGADO', titulo: 'Entregado', desc: 'El paquete fue entregado exitosamente', icon: 'fa-check-circle' }
+      ];
+
+      var estadoIndex = estados.findIndex(function (e) { return e.id === estadoActual; });
+      var ahora = new Date();
+
+      var html = '';
+      for (var i = 0; i < estados.length; i++) {
+        var estado = estados[i];
+        var clase = '';
+        var nodeClass = '';
+
+        if (i < estadoIndex) {
+          clase = 'completed';
+          nodeClass = 'completed';
+        } else if (i === estadoIndex) {
+          clase = 'current';
+          nodeClass = 'current';
+        } else {
+          clase = '';
+          nodeClass = 'pending';
+        }
+
+        var tiempo = '';
+        if (i <= estadoIndex) {
+          var fecha = new Date(ahora);
+          fecha.setHours(fecha.getHours() - (estadoIndex - i) * 4);
+          tiempo = fecha.toLocaleString();
+        }
+
+        html += '<div class="timeline-item ' + clase + '">';
+        html += '<div class="timeline-node ' + nodeClass + '"><i class="fas ' + estado.icon + '"></i></div>';
+        html += '<div class="timeline-content">';
+        html += '<div class="timeline-title">' + estado.titulo + '</div>';
+        html += '<div class="timeline-desc">' + estado.desc + '</div>';
+        if (tiempo) {
+          html += '<div class="timeline-time"><i class="fas fa-clock"></i> ' + tiempo + '</div>';
+        }
+        html += '</div></div>';
+      }
+
+      document.getElementById('dispatchTimeline').innerHTML = html;
+    }
+
+    // Cerrar modal timeline
+    function cerrarModalTimeline() {
+      var modal = document.getElementById('dispatchTimelineModal');
+      if (modal) {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Ver documento de despacho
+    function verDocumentoDespacho() {
+      if (!dispatchActual) return;
+
+      var ahora = new Date();
+      var html = `
+        <div class="doc-header">
+          <div class="doc-company">WMS Insumos Médicos</div>
+          <div class="doc-title">Guía de Despacho</div>
+          <div class="doc-code">${dispatchActual.codigoSeguimiento}</div>
+        </div>
+        
+        <div class="doc-section">
+          <div class="doc-section-title">Información del Envío</div>
+          <div class="doc-row">
+            <span class="doc-label">Número de Orden:</span>
+            <span class="doc-value">${dispatchActual.numeroOrden}</span>
+          </div>
+          <div class="doc-row">
+            <span class="doc-label">Código de Seguimiento:</span>
+            <span class="doc-value">${dispatchActual.codigoSeguimiento}</span>
+          </div>
+          <div class="doc-row">
+            <span class="doc-label">Fecha de Emisión:</span>
+            <span class="doc-value">${ahora.toLocaleDateString()}</span>
+          </div>
+        </div>
+        
+        <div class="doc-section">
+          <div class="doc-section-title">Transportista</div>
+          <div class="doc-row">
+            <span class="doc-label">Empresa:</span>
+            <span class="doc-value">${dispatchActual.transportista}</span>
+          </div>
+        </div>
+        
+        <div class="doc-section">
+          <div class="doc-section-title">Destino</div>
+          <div class="doc-row">
+            <span class="doc-label">Dirección:</span>
+            <span class="doc-value">${dispatchActual.destino}</span>
+          </div>
+        </div>
+        
+        <div class="doc-signature">
+          <div class="signature-box">
+            <div class="signature-line">Firma Despachador</div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line">Firma Receptor</div>
+          </div>
+        </div>
+        
+        <div class="doc-footer">
+          Documento generado por WMS · ${ahora.toLocaleString()}
+        </div>
+      `;
+
+      document.getElementById('dispatchDocContent').innerHTML = html;
+
+      // Mostrar modal documento
+      var modal = document.getElementById('dispatchDocModal');
+      if (modal) {
+        modal.classList.add('open');
+      }
+    }
+
+    // Cerrar modal documento
+    function cerrarModalDocumento() {
+      var modal = document.getElementById('dispatchDocModal');
+      if (modal) {
+        modal.classList.remove('open');
+      }
+    }
+
+    // Imprimir documento
+    function imprimirDocumento() {
+      window.print();
+    }
+
+    // Marcar como entregado
+    function marcarEntregado() {
+      if (!dispatchActual) return;
+
+      if (!confirm('¿Confirmar que el despacho ' + dispatchActual.codigoSeguimiento + ' fue entregado?')) return;
+
+      var btn = document.getElementById('btn_marcarEntregado');
+      setButtonLoading(btn, true);
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          setButtonLoading(btn, false);
+          if (result.success) {
+            if (window.WMSToast) WMSToast.success('Despacho marcado como entregado');
+            cerrarModalTimeline();
+            refreshDispatchData();
+          } else {
+            if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+          }
+        })
+        .withFailureHandler(function (error) {
+          setButtonLoading(btn, false);
+          if (window.WMSToast) WMSToast.error('Error: ' + error.message);
+        })
+        .markDispatchDelivered(dispatchActual.id);
+    }
+
+    function createDispatch() {
+      var btn = document.getElementById('dispatch_btnCrear');
+      var ordenId = document.getElementById('dispatch_ordenId').value.trim();
+      var destino = document.getElementById('dispatch_destino').value.trim();
+
+      if (!ordenId || !destino) {
+        if (window.WMSToast) WMSToast.warning('Complete los campos requeridos');
+        return;
+      }
+
+      setButtonLoading(btn, true);
+
+      var data = {
+        ordenId: ordenId,
+        transportista: document.getElementById('dispatch_transportista').value,
+        destino: destino
+      };
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          setButtonLoading(btn, false);
+          if (result.success) {
+            if (window.WMSToast) WMSToast.success('Despacho creado: ' + result.codigoSeguimiento);
+            document.getElementById('dispatchForm').reset();
+            refreshDispatchData();
+          } else {
+            if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+          }
+        })
+        .withFailureHandler(function (error) {
+          setButtonLoading(btn, false);
+          if (window.WMSToast) WMSToast.error('Error: ' + error.message);
+        })
+        .createDispatch(data);
+    }
+
+    function markInTransit(dispatchId) {
+      if (!confirm('¿Marcar este despacho como en tránsito?')) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result.success) {
+            if (window.WMSToast) WMSToast.success('Despacho en tránsito');
+            refreshDispatchData();
+          } else {
+            if (window.WMSToast) WMSToast.error('Error: ' + result.error);
+          }
+        })
+        .withFailureHandler(function (error) {
+          if (window.WMSToast) WMSToast.error('Error: ' + error.message);
+        })
+        .markDispatchInTransit(dispatchId);
+    }
+
+    window.initDispatchModule = initDispatchModule;
+    window.refreshDispatchData = refreshDispatchData;
+    window.selectOrder = selectOrder;
+    window.markInTransit = markInTransit;
+    window.verTimeline = verTimeline;
+    window.cerrarModalTimeline = cerrarModalTimeline;
+    window.verDocumentoDespacho = verDocumentoDespacho;
+    window.cerrarModalDocumento = cerrarModalDocumento;
+    window.imprimirDocumento = imprimirDocumento;
+    window.marcarEntregado = marcarEntregado;
+  </script>
+</section>

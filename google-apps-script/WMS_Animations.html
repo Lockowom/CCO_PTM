@@ -1,0 +1,366 @@
+<style>
+/* ============================================
+   WMS ANIMATIONS - Keyframes & Transitions
+   ============================================ */
+
+/* ═══════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+/* Spin - for loaders */
+@keyframes wms-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Pulse - for status indicators */
+@keyframes wms-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Pulse Ring - for active states */
+@keyframes wms-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* Shimmer - for skeleton loaders */
+@keyframes wms-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Fade In */
+@keyframes wms-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade Out */
+@keyframes wms-fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Fade In Up */
+@keyframes wms-fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade In Down */
+@keyframes wms-fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide In Right */
+@keyframes wms-slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide Out Right */
+@keyframes wms-slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Scale In */
+@keyframes wms-scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale Out */
+@keyframes wms-scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Bounce */
+@keyframes wms-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Shake - for errors */
+@keyframes wms-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Row Highlight */
+@keyframes wms-row-highlight {
+  0% { background: var(--wms-warning-light); }
+  100% { background: transparent; }
+}
+
+/* Value Pulse */
+@keyframes wms-value-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Ripple Effect */
+@keyframes wms-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Progress Bar */
+@keyframes wms-progress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Indeterminate Progress */
+@keyframes wms-indeterminate {
+  0% {
+    left: -35%;
+    right: 100%;
+  }
+  60% {
+    left: 100%;
+    right: -90%;
+  }
+  100% {
+    left: 100%;
+    right: -90%;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION UTILITY CLASSES
+   ═══════════════════════════════════════════ */
+.wms-animate-spin {
+  animation: wms-spin 1s linear infinite;
+}
+
+.wms-animate-pulse {
+  animation: wms-pulse 2s ease-in-out infinite;
+}
+
+.wms-animate-bounce {
+  animation: wms-bounce 1s ease infinite;
+}
+
+.wms-animate-shake {
+  animation: wms-shake 0.5s ease;
+}
+
+.wms-animate-fadeIn {
+  animation: wms-fadeIn 0.3s ease forwards;
+}
+
+.wms-animate-fadeOut {
+  animation: wms-fadeOut 0.3s ease forwards;
+}
+
+.wms-animate-fadeInUp {
+  animation: wms-fadeInUp 0.3s ease forwards;
+}
+
+.wms-animate-fadeInDown {
+  animation: wms-fadeInDown 0.3s ease forwards;
+}
+
+.wms-animate-scaleIn {
+  animation: wms-scaleIn 0.2s ease forwards;
+}
+
+.wms-animate-slideInRight {
+  animation: wms-slideInRight 0.3s ease forwards;
+}
+
+/* ═══════════════════════════════════════════
+   RIPPLE EFFECT FOR BUTTONS
+   ═══════════════════════════════════════════ */
+.wms-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.wms-ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+.wms-ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* ═══════════════════════════════════════════
+   PROGRESS BAR
+   ═══════════════════════════════════════════ */
+.wms-progress {
+  height: 8px;
+  background: var(--wms-gray-200);
+  border-radius: var(--wms-radius-full);
+  overflow: hidden;
+}
+
+.wms-progress-bar {
+  height: 100%;
+  background: var(--wms-primary);
+  border-radius: var(--wms-radius-full);
+  transition: width var(--wms-transition-slow);
+}
+
+.wms-progress-bar.wms-progress-success {
+  background: var(--wms-success);
+}
+
+.wms-progress-bar.wms-progress-warning {
+  background: var(--wms-warning);
+}
+
+.wms-progress-bar.wms-progress-danger {
+  background: var(--wms-danger);
+}
+
+.wms-progress-indeterminate .wms-progress-bar {
+  position: relative;
+  width: 100%;
+  background: transparent;
+}
+
+.wms-progress-indeterminate .wms-progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--wms-primary);
+  animation: wms-indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+
+/* ═══════════════════════════════════════════
+   HOVER EFFECTS
+   ═══════════════════════════════════════════ */
+.wms-hover-lift {
+  transition: transform var(--wms-transition-fast), box-shadow var(--wms-transition-fast);
+}
+
+.wms-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wms-shadow-lg);
+}
+
+.wms-hover-scale {
+  transition: transform var(--wms-transition-fast);
+}
+
+.wms-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.wms-hover-glow {
+  transition: box-shadow var(--wms-transition-fast);
+}
+
+.wms-hover-glow:hover {
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.3);
+}
+
+/* ═══════════════════════════════════════════
+   STAGGER ANIMATIONS (for lists)
+   ═══════════════════════════════════════════ */
+.wms-stagger > * {
+  opacity: 0;
+  animation: wms-fadeInUp 0.3s ease forwards;
+}
+
+.wms-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.wms-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.wms-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.wms-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.wms-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.wms-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+.wms-stagger > *:nth-child(7) { animation-delay: 0.35s; }
+.wms-stagger > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .wms-animate-spin,
+  .wms-animate-pulse,
+  .wms-animate-bounce {
+    animation: none !important;
+  }
+  
+  .wms-hover-lift:hover,
+  .wms-hover-scale:hover {
+    transform: none !important;
+  }
+}
+</style>

@@ -1,0 +1,768 @@
+<section class="view" id="rolesView">
+  <!-- RoleManagement_Page.html - Gestión de Roles con Guardado Automático -->
+
+  <div class="wms-page-container">
+    <!-- Module Header -->
+    <div class="wms-module-header">
+      <div class="wms-breadcrumb">
+        <a href="#" onclick="showView('dashboard'); return false;">
+          <i class="fas fa-home"></i> Inicio
+        </a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Administración</span>
+        <i class="fas fa-chevron-right"></i>
+        <span>Roles</span>
+      </div>
+
+      <div class="wms-header-content">
+        <div class="wms-header-icon">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1>Gestión de Roles</h1>
+          <p>Los cambios se guardan automáticamente</p>
+        </div>
+      </div>
+
+      <div class="wms-quick-actions">
+        <button class="wms-btn wms-btn-secondary" onclick="loadRolesData()" aria-label="Actualizar">
+          <i class="fas fa-sync-alt"></i>
+          <span>Actualizar</span>
+        </button>
+        <div class="roles-auto-save-indicator" id="rolesAutoSaveIndicator">
+          <i class="fas fa-check-circle"></i>
+          <span>Guardado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="wms-stats-grid">
+      <div class="wms-stat-card" data-type="info">
+        <div class="wms-stat-icon"><i class="fas fa-user-shield"></i></div>
+        <div class="wms-stat-content">
+          <span class="wms-stat-value" id="statRolesTotal">0</span>
+          <span class="wms-stat-label">Roles</span>
+        </div>
+      </div>
+      <div class="wms-stat-card" data-type="success">
+        <div class="wms-stat-icon"><i class="fas fa-key"></i></div>
+        <div class="wms-stat-content">
+          <span class="wms-stat-value" id="statPermisosTotal">0</span>
+          <span class="wms-stat-label">Permisos Asignados</span>
+        </div>
+      </div>
+      <div class="wms-stat-card" data-type="warning">
+        <div class="wms-stat-icon"><i class="fas fa-users"></i></div>
+        <div class="wms-stat-content">
+          <span class="wms-stat-value" id="statUsuariosTotal">0</span>
+          <span class="wms-stat-label">Usuarios</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roles Container -->
+    <div class="roles-container" id="rolesContainer">
+      <div class="roles-loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Cargando roles...</span>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ==================== ROLES MODULE - MODERN DESIGN ==================== */
+
+    /* Auto-save indicator */
+    .roles-auto-save-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #059669;
+      transition: all 0.3s ease;
+    }
+
+    .roles-auto-save-indicator.saving {
+      background: #fef3c7;
+      border-color: #fcd34d;
+      color: #d97706;
+    }
+
+    .roles-auto-save-indicator.saving i {
+      animation: spin 1s linear infinite;
+    }
+
+    .roles-auto-save-indicator.error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Roles Container */
+    .roles-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .roles-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px;
+      color: #6b7280;
+      font-size: 1rem;
+    }
+
+    .roles-loading i {
+      font-size: 1.5rem;
+      color: #FF6B00;
+    }
+
+    /* Role Card - Modern */
+    .role-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .role-card:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      border-color: #d1d5db;
+    }
+
+    /* Role Header */
+    .role-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .role-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .role-avatar.admin {
+      background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .role-avatar.supervisor {
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .role-avatar.operador {
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .role-avatar.default {
+      background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .role-info {
+      flex: 1;
+    }
+
+    .role-info h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 4px 0;
+    }
+
+    .role-info p {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .role-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .role-badge i {
+      color: #FF6B00;
+    }
+  </style>
+
+  <style>
+    /* Permissions Section */
+    .role-permissions {
+      padding: 24px;
+    }
+
+    .permissions-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .permissions-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+    }
+
+    .permissions-title i {
+      color: #FF6B00;
+    }
+
+    .permissions-count {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #FF6B00;
+      background: #fff7ed;
+      padding: 4px 12px;
+      border-radius: 50px;
+    }
+
+    /* Permissions Grid */
+    .permissions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    /* Toggle Switch Item */
+    .permission-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .permission-toggle:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .permission-toggle.active {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border-color: #fdba74;
+    }
+
+    .permission-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #475569;
+    }
+
+    .permission-label i {
+      width: 20px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .permission-toggle.active .permission-label {
+      color: #c2410c;
+    }
+
+    .permission-toggle.active .permission-label i {
+      color: #FF6B00;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #cbd5e1;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .permission-toggle.active .toggle-switch {
+      background: linear-gradient(135deg, #FF6B00 0%, #ff8534 100%);
+    }
+
+    .permission-toggle.active .toggle-switch::after {
+      left: 23px;
+    }
+
+    /* Saving indicator on toggle */
+    .permission-toggle.saving {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .permission-toggle.saving .toggle-switch::after {
+      animation: pulse 0.5s ease infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(0.9);
+      }
+    }
+
+    /* Role Footer */
+    .role-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: #f8fafc;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .role-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .role-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .role-stat i {
+      color: #94a3b8;
+    }
+
+    .role-stat strong {
+      color: #1e293b;
+      font-weight: 700;
+    }
+
+    .select-all-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .select-all-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .select-all-btn.all-selected {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .permissions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .role-header {
+        flex-wrap: wrap;
+      }
+
+      .role-badge {
+        margin-top: 12px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .role-footer {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+
+  <script>
+    // ==================== ROLES MODULE - AUTO-SAVE ==================== 
+
+    var RolesModule = {
+      // Lista de permisos disponibles (IDs en minúsculas para coincidir con la BD)
+      // IMPORTANTE: Mantener sincronizado con Sidebar_Menu_Component.html
+      PERMISSIONS: [
+        // Dashboard
+        { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
+        // Inbound
+        { id: 'recepcion', icon: 'fa-truck-loading', label: 'Recepción' },
+        { id: 'ingreso', icon: 'fa-dolly-flatbed', label: 'Ingreso' },
+        // Outbound
+        { id: 'notasventa', icon: 'fa-file-invoice', label: 'Notas Venta' },
+        { id: 'picking', icon: 'fa-hand-pointer', label: 'Picking' },
+        { id: 'packing', icon: 'fa-box-open', label: 'Packing' },
+        { id: 'shipping', icon: 'fa-shipping-fast', label: 'Despachos' },
+        { id: 'delivery', icon: 'fa-clipboard-check', label: 'Entregas' },
+        // Inventario
+        { id: 'inventory', icon: 'fa-cubes', label: 'Stock' },
+        { id: 'layout', icon: 'fa-th-large', label: 'Layout' },
+        { id: 'transferencias', icon: 'fa-exchange-alt', label: 'Transferencias' },
+        // Consultas
+        { id: 'lotesseries', icon: 'fa-barcode', label: 'Lotes/Series' },
+        { id: 'consultas', icon: 'fa-magnifying-glass-chart', label: 'Estado N.V' },
+        // Admin
+        { id: 'users', icon: 'fa-users', label: 'Usuarios' },
+        { id: 'roles', icon: 'fa-user-shield', label: 'Roles' },
+        { id: 'adminviews', icon: 'fa-layer-group', label: 'Admin Vistas' },
+        { id: 'reports', icon: 'fa-chart-bar', label: 'Reportes' }
+      ],
+
+      rolesData: [],
+      saveTimeout: null,
+
+      // Inicializar
+      init: function () {
+        console.log('RolesModule: Inicializando...');
+        this.loadRoles();
+      },
+
+      // Cargar roles
+      loadRoles: function () {
+        var self = this;
+        var container = document.getElementById('rolesContainer');
+
+        container.innerHTML = '<div class="roles-loading"><i class="fas fa-spinner fa-spin"></i><span>Cargando roles...</span></div>';
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (result.success) {
+              self.rolesData = result.roles || [];
+              self.render();
+              self.updateStats();
+            } else {
+              container.innerHTML = '<div class="roles-loading"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><span>Error: ' + (result.error || 'No se pudieron cargar los roles') + '</span></div>';
+            }
+          })
+          .withFailureHandler(function (error) {
+            container.innerHTML = '<div class="roles-loading"><i class="fas fa-wifi-slash" style="color:#ef4444;"></i><span>Error de conexión</span></div>';
+          })
+          .getAllRoles();
+      },
+
+      // Renderizar roles
+      render: function () {
+        var self = this;
+        var container = document.getElementById('rolesContainer');
+
+        if (!this.rolesData.length) {
+          container.innerHTML = '<div class="roles-loading"><i class="fas fa-folder-open" style="color:#94a3b8;"></i><span>No hay roles configurados</span></div>';
+          return;
+        }
+
+        var html = this.rolesData.map(function (role) {
+          return self.renderRoleCard(role);
+        }).join('');
+
+        container.innerHTML = html;
+      },
+
+      // Renderizar tarjeta de rol
+      renderRoleCard: function (role) {
+        var self = this;
+        var avatarClass = this.getAvatarClass(role.nombre);
+        var avatarIcon = this.getAvatarIcon(role.nombre);
+        // Normalizar permisos a minúsculas para comparación
+        var permissions = (role.vistas || []).map(function (v) { return String(v).toLowerCase(); });
+        var permCount = permissions.length;
+        var totalPerms = this.PERMISSIONS.length;
+
+        var permsHtml = this.PERMISSIONS.map(function (perm) {
+          // Comparar en minúsculas
+          var isActive = permissions.indexOf(perm.id.toLowerCase()) !== -1;
+          return '<div class="permission-toggle ' + (isActive ? 'active' : '') + '" ' +
+            'data-role="' + role.nombre + '" data-perm="' + perm.id + '" ' +
+            'onclick="RolesModule.togglePermission(this)">' +
+            '<div class="permission-label"><i class="fas ' + perm.icon + '"></i><span>' + perm.label + '</span></div>' +
+            '<div class="toggle-switch"></div>' +
+            '</div>';
+        }).join('');
+
+        var allSelected = permCount === totalPerms;
+
+        return '<div class="role-card" data-role-name="' + role.nombre + '">' +
+          '<div class="role-header">' +
+          '<div class="role-avatar ' + avatarClass + '"><i class="fas ' + avatarIcon + '"></i></div>' +
+          '<div class="role-info"><h3>' + role.nombre + '</h3><p>' + (role.descripcion || 'Rol del sistema') + '</p></div>' +
+          '<div class="role-badge"><i class="fas fa-users"></i><span>' + (role.usuarios || 0) + ' usuarios</span></div>' +
+          '</div>' +
+          '<div class="role-permissions">' +
+          '<div class="permissions-header">' +
+          '<div class="permissions-title"><i class="fas fa-key"></i>Permisos de Acceso</div>' +
+          '<div class="permissions-count">' + permCount + '/' + totalPerms + '</div>' +
+          '</div>' +
+          '<div class="permissions-grid">' + permsHtml + '</div>' +
+          '</div>' +
+          '<div class="role-footer">' +
+          '<div class="role-stats">' +
+          '<div class="role-stat"><i class="fas fa-check-circle"></i><strong>' + permCount + '</strong> activos</div>' +
+          '</div>' +
+          '<button class="select-all-btn ' + (allSelected ? 'all-selected' : '') + '" onclick="RolesModule.toggleAll(\'' + role.nombre + '\')">' +
+          '<i class="fas ' + (allSelected ? 'fa-times' : 'fa-check-double') + '"></i>' +
+          '<span>' + (allSelected ? 'Quitar todos' : 'Seleccionar todos') + '</span>' +
+          '</button>' +
+          '</div>' +
+          '</div>';
+      },
+
+      // Toggle permiso individual con guardado automático
+      togglePermission: function (element) {
+        var self = this;
+        var roleName = element.getAttribute('data-role');
+        var permId = element.getAttribute('data-perm').toLowerCase(); // Normalizar a minúsculas
+        var isActive = element.classList.contains('active');
+
+        // Toggle visual inmediato
+        element.classList.toggle('active');
+        element.classList.add('saving');
+
+        // Actualizar datos locales
+        var role = this.rolesData.find(function (r) { return r.nombre === roleName; });
+        if (role) {
+          if (!role.vistas) role.vistas = [];
+          // Normalizar vistas existentes a minúsculas
+          role.vistas = role.vistas.map(function (v) { return String(v).toLowerCase(); });
+
+          if (isActive) {
+            role.vistas = role.vistas.filter(function (v) { return v !== permId; });
+          } else {
+            if (role.vistas.indexOf(permId) === -1) role.vistas.push(permId);
+          }
+        }
+
+        // Actualizar UI
+        this.updateRoleCardUI(roleName);
+        this.updateStats();
+
+        // Guardar automáticamente
+        this.autoSave(roleName, function () {
+          element.classList.remove('saving');
+        });
+      },
+
+      // Toggle todos los permisos
+      toggleAll: function (roleName) {
+        var self = this;
+        var role = this.rolesData.find(function (r) { return r.nombre === roleName; });
+        if (!role) return;
+
+        // Normalizar permisos existentes
+        var currentPerms = (role.vistas || []).map(function (v) { return String(v).toLowerCase(); });
+        var allSelected = currentPerms.length === this.PERMISSIONS.length;
+
+        if (allSelected) {
+          role.vistas = [];
+        } else {
+          // Usar IDs en minúsculas
+          role.vistas = this.PERMISSIONS.map(function (p) { return p.id.toLowerCase(); });
+        }
+
+        // Re-renderizar la tarjeta
+        var card = document.querySelector('.role-card[data-role-name="' + roleName + '"]');
+        if (card) {
+          card.outerHTML = this.renderRoleCard(role);
+        }
+
+        this.updateStats();
+        this.autoSave(roleName);
+      },
+
+      // Actualizar UI de tarjeta
+      updateRoleCardUI: function (roleName) {
+        var role = this.rolesData.find(function (r) { return r.nombre === roleName; });
+        if (!role) return;
+
+        var card = document.querySelector('.role-card[data-role-name="' + roleName + '"]');
+        if (!card) return;
+
+        // Normalizar permisos para contar correctamente
+        var permissions = (role.vistas || []).map(function (v) { return String(v).toLowerCase(); });
+        var permCount = permissions.length;
+        var totalPerms = this.PERMISSIONS.length;
+        var allSelected = permCount === totalPerms;
+
+        // Actualizar contador
+        var countEl = card.querySelector('.permissions-count');
+        if (countEl) countEl.textContent = permCount + '/' + totalPerms;
+
+        // Actualizar stat
+        var statEl = card.querySelector('.role-stat strong');
+        if (statEl) statEl.textContent = permCount;
+
+        // Actualizar botón select all
+        var btn = card.querySelector('.select-all-btn');
+        if (btn) {
+          btn.className = 'select-all-btn ' + (allSelected ? 'all-selected' : '');
+          btn.innerHTML = '<i class="fas ' + (allSelected ? 'fa-times' : 'fa-check-double') + '"></i><span>' + (allSelected ? 'Quitar todos' : 'Seleccionar todos') + '</span>';
+        }
+      },
+
+      // Guardado automático
+      autoSave: function (roleName, callback) {
+        var self = this;
+        var indicator = document.getElementById('rolesAutoSaveIndicator');
+
+        // Mostrar indicador de guardando
+        if (indicator) {
+          indicator.className = 'roles-auto-save-indicator saving';
+          indicator.innerHTML = '<i class="fas fa-sync-alt"></i><span>Guardando...</span>';
+        }
+
+        var role = this.rolesData.find(function (r) { return r.nombre === roleName; });
+        if (!role) {
+          if (callback) callback();
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (result.success) {
+              if (indicator) {
+                indicator.className = 'roles-auto-save-indicator';
+                indicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Guardado</span>';
+              }
+            } else {
+              if (indicator) {
+                indicator.className = 'roles-auto-save-indicator error';
+                indicator.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+              }
+            }
+            if (callback) callback();
+          })
+          .withFailureHandler(function (error) {
+            if (indicator) {
+              indicator.className = 'roles-auto-save-indicator error';
+              indicator.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+            }
+            if (callback) callback();
+          })
+          .updateRolePermissions(roleName, role.vistas || []);
+      },
+
+      // Actualizar estadísticas
+      updateStats: function () {
+        var totalRoles = this.rolesData.length;
+        var totalPermisos = this.rolesData.reduce(function (sum, r) { return sum + (r.vistas ? r.vistas.length : 0); }, 0);
+        var totalUsuarios = this.rolesData.reduce(function (sum, r) { return sum + (r.usuarios || 0); }, 0);
+
+        var el1 = document.getElementById('statRolesTotal');
+        var el2 = document.getElementById('statPermisosTotal');
+        var el3 = document.getElementById('statUsuariosTotal');
+
+        if (el1) el1.textContent = totalRoles;
+        if (el2) el2.textContent = totalPermisos;
+        if (el3) el3.textContent = totalUsuarios;
+      },
+
+      // Obtener clase de avatar
+      getAvatarClass: function (name) {
+        var n = name.toLowerCase();
+        if (n.includes('admin')) return 'admin';
+        if (n.includes('supervisor')) return 'supervisor';
+        if (n.includes('operador')) return 'operador';
+        return 'default';
+      },
+
+      // Obtener icono de avatar
+      getAvatarIcon: function (name) {
+        var n = name.toLowerCase();
+        if (n.includes('admin')) return 'fa-crown';
+        if (n.includes('supervisor')) return 'fa-user-tie';
+        if (n.includes('operador')) return 'fa-user-cog';
+        return 'fa-user-shield';
+      }
+    };
+
+    // Funciones globales
+    function loadRolesData() { RolesModule.loadRoles(); }
+    function initRolesModule() { RolesModule.init(); }
+
+    window.RolesModule = RolesModule;
+    window.loadRolesData = loadRolesData;
+    window.initRolesModule = initRolesModule;
+  </script>
+</section>

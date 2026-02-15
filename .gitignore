@@ -1,0 +1,30 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if using clasp)
+node_modules/
+package-lock.json
+
+# Environment
+.env
+.env.local
+*.key
+credentials.json
+
+# Claude/Kiro/Trae config (local)
+.claude/
+.kiro/
+.trae/
+
+# Temporary files
+*.tmp
+*.bak
+*.log

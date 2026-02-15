@@ -1,0 +1,2413 @@
+<section class="view" id="notasventaView">
+  <!-- Module Header Premium -->
+  <div class="wms-module-header wms-module-header-premium">
+    <div class="wms-header-content">
+      <nav class="wms-breadcrumb">
+        <a href="#" onclick="SidebarMenu.goToDashboard()"><i class="fas fa-home"></i> Inicio</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>Notas de Venta</span>
+      </nav>
+      <div class="wms-header-title-row">
+        <div class="wms-header-icon">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="wms-header-text">
+          <h1 class="wms-module-title">Notas de Venta</h1>
+          <p class="wms-module-subtitle">Gestión de órdenes y seguimiento en tiempo real</p>
+        </div>
+      </div>
+    </div>
+    <div class="wms-header-actions">
+      <div class="wms-connection-status">
+        <span class="wms-status-dot online"></span>
+        <span>Conectado</span>
+      </div>
+      <!-- Botón Cargar Excel - Solo visible para Admin/Supervisor -->
+      <button id="btnCargarExcel" class="wms-btn wms-btn-success wms-ripple" onclick="openExcelUploadModal()" style="display:none;">
+        <i class="fas fa-file-excel"></i> Cargar Excel
+      </button>
+      <button class="wms-btn wms-btn-premium" onclick="loadNotasVentaData(true, true)">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+    
+  <!-- Stats Dashboard Premium -->
+  <div class="wms-stats-grid wms-stats-5">
+    <div class="wms-stat-card wms-stat-card-premium" data-color="primary" onclick="filterNVByStatus('')">
+      <div class="wms-stat-icon"><i class="fas fa-file-invoice"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="nv_total">0</span>
+        <span class="wms-stat-label">Total N.V</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="warning" onclick="filterNVByStatus('PENDIENTE')">
+      <div class="wms-stat-icon"><i class="fas fa-clock"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="nv_pendientes">0</span>
+        <span class="wms-stat-label">Pendientes</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="secondary" onclick="filterNVByStatus('APROBADA')">
+      <div class="wms-stat-icon"><i class="fas fa-thumbs-up"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="nv_aprobadas">0</span>
+        <span class="wms-stat-label">Aprobadas</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="info" onclick="filterNVByStatus('PENDIENTE_PICKING')">
+      <div class="wms-stat-icon"><i class="fas fa-hand-pointer"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="nv_picking">0</span>
+        <span class="wms-stat-label">Pend. Picking</span>
+      </div>
+    </div>
+    <div class="wms-stat-card wms-stat-card-premium" data-color="success" onclick="filterNVByStatus('LISTO')">
+      <div class="wms-stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="wms-stat-content">
+        <span class="wms-stat-value" id="nv_listas">0</span>
+        <span class="wms-stat-label">Listas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="wms-filter-bar">
+    <div class="wms-search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="nv_search" placeholder="Buscar N.V, cliente, vendedor..." oninput="filterNotasVenta()">
+    </div>
+    <div class="wms-filter-group">
+      <select id="nv_filterEstado" class="wms-select" onchange="filterNotasVenta()">
+        <option value="">Todos los estados</option>
+        <option value="PENDIENTE">⏳ Pendientes</option>
+        <option value="APROBADA">👍 Aprobadas</option>
+        <option value="PENDIENTE_PICKING">👆 Pend. Picking</option>
+        <option value="LISTO">✅ Listas</option>
+        <option value="NULA">❌ Anuladas</option>
+      </select>
+      <button class="wms-btn wms-btn-outline wms-btn-danger" onclick="limpiarFiltrosNV()">
+        <i class="fas fa-times"></i> Limpiar
+      </button>
+    </div>
+  </div>
+  
+  <!-- Panel de Detalle -->
+  <div id="nvDetallePanel" class="wms-detail-panel" style="display:none;">
+    <div class="wms-detail-header">
+      <div class="wms-detail-title">
+        <div class="wms-detail-icon">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div>
+          <h3>Nota de Venta</h3>
+          <span id="nvDetalleNumero" class="wms-detail-id"></span>
+        </div>
+      </div>
+      <button class="wms-btn wms-btn-outline" onclick="cerrarDetalleNV()">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+    </div>
+    <div id="nvDetalleContenido" class="wms-detail-body"></div>
+  </div>
+  
+  <!-- Modal de Carga de Excel -->
+  <div id="excelUploadModal" class="wms-modal-overlay" style="display:none;">
+    <div class="wms-modal wms-modal-lg">
+      <div class="wms-modal-header">
+        <div class="wms-modal-title">
+          <i class="fas fa-file-excel"></i>
+          <span>Cargar Archivo Excel</span>
+        </div>
+        <button class="wms-modal-close" onclick="closeExcelUploadModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="wms-modal-body">
+        <!-- Paso 1: Selección de archivo -->
+        <div id="excelStep1" class="excel-upload-step">
+          <div id="excelDropZone" class="excel-drop-zone">
+            <div class="excel-drop-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="excel-drop-text">
+              <p class="excel-drop-main">Arrastra tu archivo Excel aquí</p>
+              <p class="excel-drop-sub">o usa el botón de abajo</p>
+            </div>
+            <div class="excel-drop-formats">
+              <span class="wms-badge wms-badge-info">.xlsx</span>
+              <span class="wms-badge wms-badge-info">.xls</span>
+            </div>
+          </div>
+          <!-- Botón explícito para seleccionar archivo - Usando label para máxima compatibilidad -->
+          <div style="text-align:center; margin-top:16px;">
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleExcelFileSelect(event)" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">
+            <label for="excelFileInput" id="btnSelectExcelFile" class="wms-btn wms-btn-primary wms-btn-lg" style="padding:12px 24px; font-size:16px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+              <i class="fas fa-folder-open"></i> Seleccionar Archivo Excel
+            </label>
+          </div>
+          
+          <div id="excelFileInfo" class="excel-file-info" style="display:none;">
+            <div class="excel-file-icon">
+              <i class="fas fa-file-excel"></i>
+            </div>
+            <div class="excel-file-details">
+              <span id="excelFileName" class="excel-file-name"></span>
+              <span id="excelFileSize" class="excel-file-size"></span>
+            </div>
+            <button class="wms-btn wms-btn-outline wms-btn-sm" onclick="clearExcelFile()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Paso 2: Vista previa y validación -->
+        <div id="excelStep2" class="excel-upload-step" style="display:none;">
+          <div id="excelValidationStatus" class="excel-validation-status"></div>
+          
+          <div id="excelPreviewContainer" class="excel-preview-container">
+            <div class="excel-preview-header">
+              <span><i class="fas fa-table"></i> Vista Previa</span>
+              <span id="excelRowCount" class="wms-badge wms-badge-info"></span>
+            </div>
+            <div class="excel-preview-table-wrapper">
+              <table id="excelPreviewTable" class="wms-table wms-table-sm">
+                <thead id="excelPreviewHead"></thead>
+                <tbody id="excelPreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Opciones de duplicados -->
+          <div id="excelDuplicateOptions" class="excel-duplicate-options" style="display:none;">
+            <div class="wms-alert wms-alert-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span id="excelDuplicateMessage"></span>
+            </div>
+            <div class="excel-duplicate-actions">
+              <label class="wms-radio-label">
+                <input type="radio" name="duplicateAction" value="omit" checked>
+                <span>Omitir duplicados</span>
+              </label>
+              <label class="wms-radio-label">
+                <input type="radio" name="duplicateAction" value="overwrite">
+                <span>Agregar de todos modos</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Paso 3: Progreso de carga -->
+        <div id="excelStep3" class="excel-upload-step" style="display:none;">
+          <div class="excel-upload-progress">
+            <div class="wms-spinner wms-spinner-lg"></div>
+            <p id="excelUploadStatus">Cargando datos...</p>
+            <div class="wms-progress">
+              <div id="excelProgressBar" class="wms-progress-bar" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Paso 4: Resultado -->
+        <div id="excelStep4" class="excel-upload-step" style="display:none;">
+          <div id="excelResultContainer" class="excel-result-container"></div>
+        </div>
+      </div>
+      
+      <div class="wms-modal-footer">
+        <button id="btnExcelCancel" class="wms-btn wms-btn-outline" onclick="closeExcelUploadModal()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button id="btnExcelBack" class="wms-btn wms-btn-secondary" onclick="excelUploadBack()" style="display:none;">
+          <i class="fas fa-arrow-left"></i> Atrás
+        </button>
+        <button id="btnExcelNext" class="wms-btn wms-btn-primary" onclick="excelUploadNext()" style="display:none;">
+          Siguiente <i class="fas fa-arrow-right"></i>
+        </button>
+        <button id="btnExcelConfirm" class="wms-btn wms-btn-success" onclick="confirmExcelUpload()" style="display:none;">
+          <i class="fas fa-upload"></i> Cargar Datos
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Confirmación Genérico -->
+  <div id="wmsConfirmModal" class="wms-modal-overlay" style="display:none;z-index:10000;">
+    <div class="wms-modal" style="max-width:400px;animation:wms-pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+      <div class="wms-modal-body" style="text-align:center;padding:30px 24px 24px;">
+        <div id="wmsConfirmIcon" style="font-size:48px;color:var(--wms-primary);margin-bottom:16px;">
+          <i class="fas fa-question-circle"></i>
+        </div>
+        <h3 id="wmsConfirmTitle" style="margin:0 0 8px;font-size:1.25rem;color:var(--wms-text-primary);">¿Estás seguro?</h3>
+        <p id="wmsConfirmMessage" style="margin:0 0 24px;color:var(--wms-text-secondary);font-size:0.95rem;line-height:1.5;"></p>
+        
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="wmsConfirmCancelBtn" class="wms-btn wms-btn-outline wms-btn-lg" style="min-width:100px;">
+            Cancelar
+          </button>
+          <button id="wmsConfirmOkBtn" class="wms-btn wms-btn-primary wms-btn-lg" style="min-width:100px;">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes wms-pop-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+
+  <!-- Tabla de N.V -->
+  <div class="wms-table-container">
+    <div class="wms-table-wrapper">
+      <table class="wms-table" id="nvTable">
+        <thead>
+          <tr>
+            <th>N.V</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th class="wms-text-center">Items</th>
+            <th>Estado</th>
+            <th class="wms-text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="nvTableBody">
+          <tr>
+            <td colspan="6">
+              <div class="wms-loading-state">
+                <div class="wms-spinner wms-spinner-lg"></div>
+                <span class="wms-loading-text">Cargando notas de venta...</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  var allNotasVenta = [], nvRefreshInterval = null, nvDetalleAbierto = false;
+  var nvLoadingInProgress = false, nvLastLoadTime = 0;
+  var NV_MIN_INTERVAL = 5000;
+  
+  function initNotasVentaModule() {
+    console.log('Inicializando Notas de Venta Module...');
+    loadNotasVentaData();
+    if (nvRefreshInterval) clearInterval(nvRefreshInterval);
+    nvRefreshInterval = setInterval(function() {
+      if (!nvDetalleAbierto && !nvLoadingInProgress) loadNotasVentaData(false);
+    }, 90000);
+  }
+  
+  function loadNotasVentaData(showLoading, forceRefresh) {
+    if (nvLoadingInProgress) return;
+    
+    var now = Date.now();
+    if (!forceRefresh && now - nvLastLoadTime < NV_MIN_INTERVAL) return;
+    
+    var tbody = document.getElementById('nvTableBody');
+    if (!tbody) return;
+    
+    nvLoadingInProgress = true;
+    nvLastLoadTime = now;
+    
+    if (showLoading !== false) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="wms-loading-state"><div class="wms-spinner wms-spinner-lg"></div><span class="wms-loading-text">Cargando...</span></div></td></tr>';
+    }
+    
+    var shouldForceRefresh = forceRefresh === true || showLoading === true;
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        nvLoadingInProgress = false;
+        
+        if (!result) {
+          showNVError('Respuesta vacía del servidor');
+          return;
+        }
+        
+        if (result.estadisticas) updateNVStats(result.estadisticas);
+        
+        if (result.success) {
+          allNotasVenta = result.notasVenta || [];
+          renderNotasVenta(allNotasVenta);
+          if (allNotasVenta.length === 0) {
+            showNVEmpty(result.mensaje || 'No hay notas de venta');
+          }
+        } else {
+          allNotasVenta = result.notasVenta || [];
+          if (allNotasVenta.length > 0) {
+            renderNotasVenta(allNotasVenta);
+          } else {
+            showNVError(result.error || 'Error al cargar');
+          }
+        }
+        
+        if (window.WMSToast && forceRefresh) WMSToast.info('Datos actualizados');
+      })
+      .withFailureHandler(function(err) {
+        nvLoadingInProgress = false;
+        showNVError('Error de conexión');
+      })
+      .getNotasVenta(shouldForceRefresh);
+  }
+  
+  function showNVError(message) {
+    var tbody = document.getElementById('nvTableBody');
+    tbody.innerHTML = '<tr><td colspan="6"><div class="wms-empty-state"><div class="wms-empty-icon wms-text-danger"><i class="fas fa-exclamation-triangle"></i></div><h3 class="wms-empty-title">Error</h3><p class="wms-empty-text">' + message + '</p></div></td></tr>';
+  }
+  
+  function showNVEmpty(message) {
+    var tbody = document.getElementById('nvTableBody');
+    tbody.innerHTML = '<tr><td colspan="6"><div class="wms-empty-state"><div class="wms-empty-icon"><i class="fas fa-inbox"></i></div><h3 class="wms-empty-title">Sin datos</h3><p class="wms-empty-text">' + message + '</p></div></td></tr>';
+  }
+  
+  function updateNVStats(stats) {
+    var updates = {
+      'nv_total': stats.totalNV || 0,
+      'nv_pendientes': stats.pendientes || 0,
+      'nv_aprobadas': stats.aprobadas || 0,
+      'nv_picking': stats.enPicking || 0,
+      'nv_listas': stats.listasDespacho || 0
+    };
+    for (var id in updates) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = updates[id];
+    }
+  }
+  
+  function renderNotasVenta(notas) {
+    var tbody = document.getElementById('nvTableBody');
+    if (!notas || notas.length === 0) {
+      showNVEmpty('No hay notas de venta');
+      return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < notas.length; i++) {
+      var nv = notas[i];
+      var fecha = nv.fechaEntrega || '-';
+      var estadoInfo = getEstadoInfo(nv.estado);
+      
+      html += '<tr class="wms-table-row-hover">';
+      html += '<td><div class="wms-flex wms-items-center wms-gap-2">';
+      html += '<div class="wms-table-icon"><i class="fas fa-file-alt"></i></div>';
+      html += '<span class="wms-font-semibold wms-text-primary">' + (nv.notaVenta || '-') + '</span>';
+      html += '</div></td>';
+      html += '<td><span class="wms-text-secondary"><i class="fas fa-calendar-alt wms-mr-1"></i>' + fecha + '</span></td>';
+      html += '<td><span class="wms-font-medium">' + (nv.cliente || '-') + '</span></td>';
+      html += '<td class="wms-text-center"><span class="wms-badge wms-badge-info">' + (nv.totalItems || 0) + ' items</span></td>';
+      html += '<td><span class="wms-badge wms-badge-' + estadoInfo.class + '">' + estadoInfo.icon + ' ' + estadoInfo.text + '</span></td>';
+      html += '<td class="wms-text-center">';
+      html += '<button class="wms-btn wms-btn-primary wms-btn-sm wms-ripple" onclick="verDetalleNV(\'' + nv.notaVenta + '\')">';
+      html += '<i class="fas fa-eye"></i> Ver</button>';
+      html += '</td></tr>';
+    }
+    tbody.innerHTML = html;
+  }
+  
+  function getEstadoInfo(estado) {
+    var e = (estado || '').toUpperCase().replace(/\s+/g, '_');
+    
+    if (e === 'NULA') return { class: 'danger', icon: '<i class="fas fa-ban"></i>', text: 'Anulada' };
+    if (e === 'REFACTURACION') return { class: 'warning', icon: '<i class="fas fa-redo"></i>', text: 'Refacturación' };
+    if (e.indexOf('ENTREGAD') !== -1) return { class: 'success', icon: '<i class="fas fa-check-double"></i>', text: 'Entregada' };
+    if (e.indexOf('LISTO') !== -1) return { class: 'success', icon: '<i class="fas fa-check-circle"></i>', text: 'Lista' };
+    if (e.indexOf('PACKING') !== -1 || e === 'PK') return { class: 'purple', icon: '<i class="fas fa-box"></i>', text: 'Packing' };
+    if (e === 'EN_PICKING') return { class: 'info', icon: '<i class="fas fa-hand-pointer"></i>', text: 'En Picking' };
+    if (e === 'PENDIENTE_PICKING') return { class: 'primary', icon: '<i class="fas fa-clipboard-list"></i>', text: 'Pend. Picking' };
+    if (e === 'APROBADA' || e === 'APROBADO') return { class: 'secondary', icon: '<i class="fas fa-thumbs-up"></i>', text: 'Aprobada' };
+    
+    return { class: 'warning', icon: '<i class="fas fa-clock"></i>', text: 'Pendiente' };
+  }
+  
+  var nvFilterTimeout = null;
+  function filterNotasVenta() {
+    if (nvFilterTimeout) clearTimeout(nvFilterTimeout);
+    nvFilterTimeout = setTimeout(doFilterNotasVenta, 200);
+  }
+  
+  function doFilterNotasVenta() {
+    var searchEl = document.getElementById('nv_search');
+    var estadoEl = document.getElementById('nv_filterEstado');
+    var search = searchEl ? searchEl.value.toLowerCase().trim() : '';
+    var estadoFilter = estadoEl ? estadoEl.value.toUpperCase() : '';
+    
+    if (!search && !estadoFilter) {
+      renderNotasVenta(allNotasVenta);
+      return;
+    }
+    
+    var filtered = allNotasVenta.filter(function(nv) {
+      var matchSearch = !search || 
+        (nv.notaVenta || '').toLowerCase().indexOf(search) !== -1 ||
+        (nv.cliente || '').toLowerCase().indexOf(search) !== -1 ||
+        (nv.vendedor || '').toLowerCase().indexOf(search) !== -1;
+      
+      var matchEstado = !estadoFilter || (nv.estado || '').toUpperCase().indexOf(estadoFilter) !== -1;
+      
+      return matchSearch && matchEstado;
+    });
+    
+    renderNotasVenta(filtered);
+  }
+  
+  function filterNVByStatus(status) {
+    var cards = document.querySelectorAll('#notasventaView .wms-stat-card');
+    cards.forEach(function(c) { c.classList.remove('active'); });
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    
+    var estadoEl = document.getElementById('nv_filterEstado');
+    if (estadoEl) estadoEl.value = status;
+    filterNotasVenta();
+  }
+  
+  function limpiarFiltrosNV() {
+    var el;
+    el = document.getElementById('nv_search'); if (el) el.value = '';
+    el = document.getElementById('nv_filterEstado'); if (el) el.value = '';
+    
+    var cards = document.querySelectorAll('#notasventaView .wms-stat-card');
+    cards.forEach(function(c) { c.classList.remove('active'); });
+    
+    renderNotasVenta(allNotasVenta);
+  }
+
+  
+  function verDetalleNV(notaVenta) {
+    var nv = allNotasVenta.find(function(n) { return n.notaVenta === notaVenta; });
+    if (!nv) { 
+      if (window.WMSToast) WMSToast.error('N.V no encontrada');
+      return; 
+    }
+    
+    window._nvActual = nv.notaVenta;
+    nvDetalleAbierto = true;
+    
+    var fecha = nv.fechaEntrega || '-';
+    var estadoInfo = getEstadoInfo(nv.estado);
+    var estadoActual = (nv.estado || '').toUpperCase();
+    
+    var html = '<div class="wms-grid wms-grid-cols-4 wms-gap-4 wms-mb-6">';
+    
+    // Card Estado
+    html += '<div class="wms-info-card">';
+    html += '<div class="wms-info-card-label"><i class="fas fa-info-circle"></i> Estado</div>';
+    html += '<div class="wms-info-card-value"><span class="wms-badge wms-badge-' + estadoInfo.class + ' wms-badge-lg">' + estadoInfo.icon + ' ' + estadoInfo.text + '</span></div>';
+    html += '</div>';
+    
+    // Card Fecha
+    html += '<div class="wms-info-card">';
+    html += '<div class="wms-info-card-label"><i class="fas fa-calendar-alt"></i> Fecha Entrega</div>';
+    html += '<div class="wms-info-card-value">' + fecha + '</div>';
+    html += '</div>';
+    
+    // Card Cliente
+    html += '<div class="wms-info-card">';
+    html += '<div class="wms-info-card-label"><i class="fas fa-user"></i> Cliente</div>';
+    html += '<div class="wms-info-card-value">' + (nv.cliente || '-') + '</div>';
+    html += '</div>';
+    
+    // Card Vendedor
+    html += '<div class="wms-info-card">';
+    html += '<div class="wms-info-card-label"><i class="fas fa-user-tie"></i> Vendedor</div>';
+    html += '<div class="wms-info-card-value">' + (nv.vendedor || '-') + '</div>';
+    html += '</div>';
+    
+    html += '</div>';
+    
+    // Sección de acciones
+    html += '<div class="wms-card wms-mb-6">';
+    html += '<div class="wms-card-header"><h4 class="wms-card-title"><i class="fas fa-exchange-alt"></i> Cambiar Estado</h4></div>';
+    html += '<div class="wms-card-body">';
+    html += '<div class="wms-flex wms-gap-3 wms-flex-wrap">';
+    
+    if (estadoActual !== 'PENDIENTE_PICKING') {
+      html += '<button type="button" class="wms-btn wms-btn-info wms-ripple" onclick="hacerCambioEstado(\'PENDIENTE_PICKING\')">';
+      html += '<i class="fas fa-hand-pointer"></i> Enviar a Picking</button>';
+    }
+    if (estadoActual !== 'NULA') {
+      html += '<button type="button" class="wms-btn wms-btn-danger wms-ripple" onclick="hacerCambioEstado(\'NULA\')">';
+      html += '<i class="fas fa-ban"></i> Anular N.V</button>';
+    }
+    if (estadoActual !== 'REFACTURACION') {
+      html += '<button type="button" class="wms-btn wms-btn-warning wms-ripple" onclick="hacerCambioEstado(\'REFACTURACION\')">';
+      html += '<i class="fas fa-redo"></i> Refacturar</button>';
+    }
+    
+    html += '</div>';
+    html += '<div id="cambioEstadoMsg" class="wms-mt-3" style="display:none;"></div>';
+    html += '</div></div>';
+    
+    // Tabla de productos
+    html += '<div class="wms-card">';
+    html += '<div class="wms-card-header"><h4 class="wms-card-title"><i class="fas fa-boxes"></i> Productos <span class="wms-badge wms-badge-info wms-ml-2">' + nv.productos.length + ' items</span></h4></div>';
+    html += '<div class="wms-card-body wms-p-0">';
+    html += '<div class="wms-table-wrapper" style="max-height:350px;overflow-y:auto;">';
+    html += '<table class="wms-table wms-table-sm">';
+    html += '<thead><tr><th>Código</th><th>Descripción</th><th class="wms-text-center">U.M</th><th class="wms-text-center">Cantidad</th></tr></thead>';
+    html += '<tbody>';
+    
+    for (var i = 0; i < nv.productos.length; i++) {
+      var p = nv.productos[i];
+      html += '<tr>';
+      html += '<td><code class="wms-code">' + p.codigo + '</code></td>';
+      html += '<td>' + (p.descripcion || '-') + '</td>';
+      html += '<td class="wms-text-center wms-text-secondary">' + (p.unidadMedida || '-') + '</td>';
+      html += '<td class="wms-text-center"><span class="wms-badge wms-badge-success">' + p.pedido + '</span></td>';
+      html += '</tr>';
+    }
+    
+    html += '</tbody></table></div></div></div>';
+    
+    document.getElementById('nvDetalleNumero').textContent = nv.notaVenta;
+    document.getElementById('nvDetalleContenido').innerHTML = html;
+    document.getElementById('nvDetallePanel').style.display = 'block';
+    document.getElementById('nvDetallePanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  
+  function cerrarDetalleNV() {
+    document.getElementById('nvDetallePanel').style.display = 'none';
+    nvDetalleAbierto = false;
+    window._nvActual = null;
+  }
+  
+  // ============================================================
+  // UTILIDAD: CONFIRMACIÓN MODAL
+  // Reemplaza el confirm() nativo por uno estilizado
+  // ============================================================
+  function wmsConfirm(title, message, iconClass, colorClass, callback) {
+    var modal = document.getElementById('wmsConfirmModal');
+    var titleEl = document.getElementById('wmsConfirmTitle');
+    var msgEl = document.getElementById('wmsConfirmMessage');
+    var iconEl = document.getElementById('wmsConfirmIcon');
+    var okBtn = document.getElementById('wmsConfirmOkBtn');
+    var cancelBtn = document.getElementById('wmsConfirmCancelBtn');
+    
+    if (!modal) {
+      if (confirm(message)) callback();
+      return;
+    }
+    
+    titleEl.textContent = title || 'Confirmar';
+    msgEl.innerHTML = message || '¿Estás seguro?'; // Permitimos HTML
+    
+    // Configurar icono
+    iconEl.className = ''; // Reset class
+    iconEl.innerHTML = iconClass || '<i class="fas fa-question-circle"></i>';
+    iconEl.style.color = colorClass ? 'var(--wms-' + colorClass + ')' : 'var(--wms-primary)';
+    
+    // Configurar botón OK
+    okBtn.className = 'wms-btn wms-btn-lg ' + (colorClass ? 'wms-btn-' + colorClass : 'wms-btn-primary');
+    
+    // Handlers
+    var close = function() {
+      modal.style.display = 'none';
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+    };
+    
+    okBtn.onclick = function() {
+      close();
+      callback();
+    };
+    
+    cancelBtn.onclick = close;
+    
+    // Mostrar
+    modal.style.display = 'flex';
+  }
+
+  function hacerCambioEstado(nuevoEstado) {
+    var notaVenta = window._nvActual;
+    if (!notaVenta) { 
+      if (window.WMSToast) WMSToast.error('N.V no encontrada');
+      return; 
+    }
+    
+    // Ejecutar directamente sin confirmación
+    executeCambioEstado(notaVenta, nuevoEstado);
+  }
+  
+  // Función separada con la lógica de negocio para ejecutar tras la confirmación
+  function executeCambioEstado(notaVenta, nuevoEstado) {
+    var msgDiv = document.getElementById('cambioEstadoMsg');
+    if (msgDiv) { 
+      msgDiv.innerHTML = '<div class="wms-alert wms-alert-info"><i class="fas fa-spinner fa-spin"></i> Procesando...</div>'; 
+      msgDiv.style.display = 'block'; 
+    }
+    
+    var usuario = (window.App && window.App.user) ? window.App.user.nombre : 'Usuario';
+    
+    google.script.run
+      .withSuccessHandler(function(r) {
+        if (r && r.success) {
+          if (window.WMSToast) WMSToast.success('Estado cambiado a ' + nuevoEstado);
+          cerrarDetalleNV();
+          nvLastLoadTime = 0;
+          loadNotasVentaData(true, true);
+        } else {
+          if (window.WMSToast) WMSToast.error(r ? r.error : 'Error desconocido');
+          if (msgDiv) msgDiv.innerHTML = '<div class="wms-alert wms-alert-danger">' + (r ? r.error : 'Error') + '</div>';
+        }
+      })
+      .withFailureHandler(function(e) {
+        if (window.WMSToast) WMSToast.error('Error de conexión');
+        if (msgDiv) msgDiv.innerHTML = '<div class="wms-alert wms-alert-danger">Error de conexión</div>';
+      })
+      .cambiarEstadoNVDirecto(notaVenta, nuevoEstado, usuario);
+  }
+  
+  // ============================================================
+  // FUNCIONES DE VALIDACIÓN PARA CARGA DE EXCEL
+  // ============================================================
+  
+  // Columnas requeridas en el archivo Excel
+  var EXCEL_REQUIRED_COLUMNS = ['Fecha Entrega', 'N.Venta', 'Nombre Cliente', 'Cod.Producto', 'Descripción Producto', 'Pedido'];
+  
+  // Columnas opcionales
+  var EXCEL_OPTIONAL_COLUMNS = ['Estado', 'Nombre Vendedor', 'Unidad Medida'];
+  
+  /**
+   * Valida la extensión del archivo
+   * Property 1: Validación de Extensión de Archivo
+   * @param {string} filename - Nombre del archivo
+   * @returns {Object} - {valid: boolean, error: string}
+   */
+  function validateFileExtension(filename) {
+    if (!filename || typeof filename !== 'string') {
+      return { valid: false, error: 'Nombre de archivo inválido' };
+    }
+    
+    var lowerName = filename.toLowerCase().trim();
+    var isValid = lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls');
+    
+    if (isValid) {
+      return { valid: true, error: null };
+    } else {
+      return { valid: false, error: 'Solo se aceptan archivos Excel (.xlsx o .xls)' };
+    }
+  }
+  
+  /**
+   * Valida que el archivo contenga las columnas requeridas
+   * Property 2: Validación de Columnas Requeridas
+   * @param {Array} headers - Array de nombres de columnas del Excel
+   * @returns {Object} - {valid: boolean, missing: Array}
+   */
+  function validateColumns(headers) {
+    if (!headers || !Array.isArray(headers)) {
+      return { valid: false, missing: EXCEL_REQUIRED_COLUMNS.slice() };
+    }
+    
+    // Normalizar headers (trim y lowercase para comparación)
+    var normalizedHeaders = headers.map(function(h) {
+      return String(h || '').trim().toLowerCase();
+    });
+    
+    var missing = [];
+    
+    for (var i = 0; i < EXCEL_REQUIRED_COLUMNS.length; i++) {
+      var required = EXCEL_REQUIRED_COLUMNS[i].toLowerCase();
+      var found = normalizedHeaders.some(function(h) {
+        return h === required || h.indexOf(required) !== -1 || required.indexOf(h) !== -1;
+      });
+      
+      if (!found) {
+        missing.push(EXCEL_REQUIRED_COLUMNS[i]);
+      }
+    }
+    
+    return {
+      valid: missing.length === 0,
+      missing: missing,
+      found: headers.length - missing.length
+    };
+  }
+  
+  /**
+   * Valida los datos de una fila
+   * Property 3: Validación de Datos de Fila
+   * @param {Object} row - Objeto con los datos de la fila
+   * @param {number} rowIndex - Índice de la fila (para mensajes de error)
+   * @returns {Object} - {valid: boolean, errors: Array}
+   */
+  function validateRowData(row, rowIndex) {
+    var errors = [];
+    var rowNum = (rowIndex || 0) + 1;
+    
+    // Validar N.Venta (requerido, no vacío)
+    var nVenta = row['N.Venta'] || row['N.VENTA'] || row['n.venta'] || '';
+    if (!nVenta || String(nVenta).trim() === '') {
+      errors.push('Fila ' + rowNum + ': N.Venta es requerido');
+    }
+    
+    // Validar Fecha Entrega (formato válido)
+    var fecha = row['Fecha Entrega'] || row['FECHA ENTREGA'] || row['fecha entrega'] || '';
+    if (fecha) {
+      var fechaValida = isValidDate(fecha);
+      if (!fechaValida) {
+        errors.push('Fila ' + rowNum + ': Fecha Entrega tiene formato inválido');
+      }
+    }
+    
+    // Validar Pedido (número positivo)
+    var pedido = row['Pedido'] || row['PEDIDO'] || row['pedido'] || 0;
+    var pedidoNum = parseFloat(pedido);
+    if (isNaN(pedidoNum) || pedidoNum < 0) {
+      errors.push('Fila ' + rowNum + ': Pedido debe ser un número válido');
+    }
+    
+    // Validar Nombre Cliente (requerido)
+    var cliente = row['Nombre Cliente'] || row['NOMBRE CLIENTE'] || row['nombre cliente'] || '';
+    if (!cliente || String(cliente).trim() === '') {
+      errors.push('Fila ' + rowNum + ': Nombre Cliente es requerido');
+    }
+    
+    // Validar Cod.Producto (requerido)
+    var codProducto = row['Cod.Producto'] || row['COD.PRODUCTO'] || row['cod.producto'] || '';
+    if (!codProducto || String(codProducto).trim() === '') {
+      errors.push('Fila ' + rowNum + ': Cod.Producto es requerido');
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors: errors
+    };
+  }
+  
+  /**
+   * Verifica si una fecha es válida
+   * @param {*} value - Valor a verificar
+   * @returns {boolean}
+   */
+  function isValidDate(value) {
+    if (!value) return false;
+    
+    // Si es un objeto Date de JavaScript
+    if (value instanceof Date) {
+      return !isNaN(value.getTime());
+    }
+    
+    // Si es un número (Excel serial date)
+    if (typeof value === 'number') {
+      return value > 0 && value < 100000; // Rango razonable para fechas Excel
+    }
+    
+    // Si es string, intentar parsear
+    var str = String(value).trim();
+    
+    // Formato dd/mm/yyyy
+    var ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/;
+    if (ddmmyyyy.test(str)) return true;
+    
+    // Formato yyyy-mm-dd
+    var yyyymmdd = /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/;
+    if (yyyymmdd.test(str)) return true;
+    
+    // Intentar parsear como fecha
+    var parsed = new Date(str);
+    return !isNaN(parsed.getTime());
+  }
+  
+  /**
+   * Encuentra N.Venta duplicadas en los datos
+   * Property 4: Detección de Duplicados
+   * @param {Array} data - Array de objetos con los datos
+   * @returns {Object} - {hasDuplicates: boolean, duplicates: Array, counts: Object}
+   */
+  function findDuplicates(data) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return { hasDuplicates: false, duplicates: [], counts: {} };
+    }
+    
+    var counts = {};
+    var duplicates = [];
+    
+    // Contar ocurrencias de cada N.Venta
+    for (var i = 0; i < data.length; i++) {
+      var row = data[i];
+      var nVenta = String(row['N.Venta'] || row['N.VENTA'] || row['n.venta'] || '').trim();
+      
+      if (nVenta) {
+        counts[nVenta] = (counts[nVenta] || 0) + 1;
+      }
+    }
+    
+    // Identificar duplicados
+    for (var nv in counts) {
+      if (counts.hasOwnProperty(nv) && counts[nv] > 1) {
+        duplicates.push(nv);
+      }
+    }
+    
+    return {
+      hasDuplicates: duplicates.length > 0,
+      duplicates: duplicates,
+      counts: counts,
+      totalUnique: Object.keys(counts).length
+    };
+  }
+  
+  /**
+   * Valida todos los datos del Excel
+   * @param {Array} data - Array de objetos con los datos
+   * @returns {Object} - {valid: boolean, errors: Array, warnings: Array}
+   */
+  function validateAllData(data) {
+    var errors = [];
+    var warnings = [];
+    
+    if (!data || data.length === 0) {
+      return { valid: false, errors: ['El archivo está vacío'], warnings: [] };
+    }
+    
+    // Validar cada fila
+    for (var i = 0; i < data.length; i++) {
+      var rowValidation = validateRowData(data[i], i);
+      if (!rowValidation.valid) {
+        errors = errors.concat(rowValidation.errors);
+      }
+    }
+    
+    // Verificar duplicados
+    var duplicateCheck = findDuplicates(data);
+    if (duplicateCheck.hasDuplicates) {
+      warnings.push('Se encontraron ' + duplicateCheck.duplicates.length + ' N.V duplicadas en el archivo: ' + duplicateCheck.duplicates.slice(0, 5).join(', ') + (duplicateCheck.duplicates.length > 5 ? '...' : ''));
+    }
+    
+    // Limitar errores mostrados
+    var maxErrors = 10;
+    var truncatedErrors = errors.slice(0, maxErrors);
+    if (errors.length > maxErrors) {
+      truncatedErrors.push('... y ' + (errors.length - maxErrors) + ' errores más');
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors: truncatedErrors,
+      warnings: warnings,
+      totalErrors: errors.length,
+      totalRows: data.length
+    };
+  }
+  
+  // Exponer funciones globales
+  window.initNotasVentaModule = initNotasVentaModule;
+  window.loadNotasVentaData = loadNotasVentaData;
+  window.filterNotasVenta = filterNotasVenta;
+  window.filterNVByStatus = filterNVByStatus;
+  window.limpiarFiltrosNV = limpiarFiltrosNV;
+  window.verDetalleNV = verDetalleNV;
+  window.cerrarDetalleNV = cerrarDetalleNV;
+  window.hacerCambioEstado = hacerCambioEstado;
+  
+  // Exponer funciones de validación de Excel
+  window.validateFileExtension = validateFileExtension;
+  window.validateColumns = validateColumns;
+  window.validateRowData = validateRowData;
+  window.findDuplicates = findDuplicates;
+  window.validateAllData = validateAllData;
+  
+  // ============================================================
+  // PROPERTY TESTS - Validación de Excel (Frontend)
+  // Ejecutar en consola del navegador: runExcelValidationTests()
+  // ============================================================
+  
+  /**
+   * Property Test 1: Validación de Extensión de Archivo
+   * For any nombre de archivo, validateFileExtension debe retornar valid: true
+   * si y solo si el archivo termina en .xlsx o .xls (case-insensitive)
+   * 
+   * **Feature: excel-upload-notas-venta, Property 1: Validación de Extensión**
+   * **Validates: Requirements 1.3, 1.4**
+   */
+  function testProperty1_ValidacionExtension() {
+    console.log('=== Property Test 1: Validación de Extensión ===');
+    
+    var testCases = [
+      // Extensiones válidas
+      { filename: 'archivo.xlsx', expected: true },
+      { filename: 'archivo.xls', expected: true },
+      { filename: 'ARCHIVO.XLSX', expected: true },
+      { filename: 'ARCHIVO.XLS', expected: true },
+      { filename: 'mi archivo.xlsx', expected: true },
+      { filename: 'datos_2024.xls', expected: true },
+      
+      // Extensiones inválidas
+      { filename: 'archivo.csv', expected: false },
+      { filename: 'archivo.txt', expected: false },
+      { filename: 'archivo.pdf', expected: false },
+      { filename: 'archivo', expected: false },
+      { filename: 'archivo.xlsm', expected: false },
+      { filename: '', expected: false },
+      { filename: null, expected: false }
+    ];
+    
+    var passed = 0, failed = 0;
+    
+    testCases.forEach(function(tc) {
+      var result = validateFileExtension(tc.filename);
+      if (result.valid === tc.expected) {
+        passed++;
+        console.log('✓ "' + tc.filename + '" -> valid=' + result.valid);
+      } else {
+        failed++;
+        console.log('✗ FALLO: "' + tc.filename + '" -> valid=' + result.valid + ' (esperado: ' + tc.expected + ')');
+      }
+    });
+    
+    // Generar 100 casos aleatorios
+    var extensions = ['.xlsx', '.xls', '.csv', '.txt', '.pdf', '.doc', '', '.xlsm'];
+    for (var i = 0; i < 100; i++) {
+      var randomName = 'file_' + Math.random().toString(36).substring(7);
+      var randomExt = extensions[Math.floor(Math.random() * extensions.length)];
+      var filename = randomName + randomExt;
+      
+      var result = validateFileExtension(filename);
+      var expected = randomExt === '.xlsx' || randomExt === '.xls';
+      
+      if (result.valid === expected) {
+        passed++;
+      } else {
+        failed++;
+        console.log('✗ FALLO aleatorio: "' + filename + '" -> valid=' + result.valid);
+      }
+    }
+    
+    console.log('=== Resultado: ' + passed + ' pasaron, ' + failed + ' fallaron ===');
+    return { success: failed === 0, passed: passed, failed: failed };
+  }
+  
+  /**
+   * Property Test 2: Validación de Columnas Requeridas
+   * For any conjunto de headers, validateColumns debe retornar valid: true
+   * si y solo si contiene todas las columnas requeridas
+   * 
+   * **Feature: excel-upload-notas-venta, Property 2: Validación de Columnas**
+   * **Validates: Requirements 3.1, 3.2**
+   */
+  function testProperty2_ValidacionColumnas() {
+    console.log('=== Property Test 2: Validación de Columnas ===');
+    
+    var testCases = [
+      // Todas las columnas presentes
+      {
+        headers: ['Fecha Entrega', 'N.Venta', 'Estado', 'Nombre Cliente', 'Nombre Vendedor', 'Cod.Producto', 'Descripción Producto', 'Unidad Medida', 'Pedido'],
+        expected: true
+      },
+      // Solo columnas requeridas
+      {
+        headers: ['Fecha Entrega', 'N.Venta', 'Nombre Cliente', 'Cod.Producto', 'Descripción Producto', 'Pedido'],
+        expected: true
+      },
+      // Falta una columna requerida
+      {
+        headers: ['Fecha Entrega', 'Estado', 'Nombre Cliente', 'Cod.Producto', 'Descripción Producto', 'Pedido'],
+        expected: false
+      },
+      // Headers vacíos
+      {
+        headers: [],
+        expected: false
+      },
+      // Headers en diferente orden
+      {
+        headers: ['Pedido', 'N.Venta', 'Cod.Producto', 'Nombre Cliente', 'Descripción Producto', 'Fecha Entrega'],
+        expected: true
+      }
+    ];
+    
+    var passed = 0, failed = 0;
+    
+    testCases.forEach(function(tc, idx) {
+      var result = validateColumns(tc.headers);
+      if (result.valid === tc.expected) {
+        passed++;
+        console.log('✓ Test ' + (idx + 1) + ' -> valid=' + result.valid);
+      } else {
+        failed++;
+        console.log('✗ FALLO Test ' + (idx + 1) + ' -> valid=' + result.valid + ' (esperado: ' + tc.expected + ')');
+        console.log('  Missing:', result.missing);
+      }
+    });
+    
+    console.log('=== Resultado: ' + passed + ' pasaron, ' + failed + ' fallaron ===');
+    return { success: failed === 0, passed: passed, failed: failed };
+  }
+  
+  /**
+   * Property Test 3: Validación de Datos de Fila
+   * For any fila de datos, validateRowData debe validar correctamente
+   * 
+   * **Feature: excel-upload-notas-venta, Property 3: Validación de Datos**
+   * **Validates: Requirements 3.3, 3.4**
+   */
+  function testProperty3_ValidacionDatos() {
+    console.log('=== Property Test 3: Validación de Datos ===');
+    
+    var testCases = [
+      // Fila válida completa
+      {
+        row: { 'N.Venta': 'NV-001', 'Fecha Entrega': '15/01/2024', 'Pedido': 10, 'Nombre Cliente': 'Cliente 1', 'Cod.Producto': 'P001' },
+        expected: true
+      },
+      // N.Venta vacío
+      {
+        row: { 'N.Venta': '', 'Fecha Entrega': '15/01/2024', 'Pedido': 10, 'Nombre Cliente': 'Cliente 1', 'Cod.Producto': 'P001' },
+        expected: false
+      },
+      // Pedido negativo
+      {
+        row: { 'N.Venta': 'NV-001', 'Fecha Entrega': '15/01/2024', 'Pedido': -5, 'Nombre Cliente': 'Cliente 1', 'Cod.Producto': 'P001' },
+        expected: false
+      },
+      // Pedido no numérico
+      {
+        row: { 'N.Venta': 'NV-001', 'Fecha Entrega': '15/01/2024', 'Pedido': 'abc', 'Nombre Cliente': 'Cliente 1', 'Cod.Producto': 'P001' },
+        expected: false
+      },
+      // Cliente vacío
+      {
+        row: { 'N.Venta': 'NV-001', 'Fecha Entrega': '15/01/2024', 'Pedido': 10, 'Nombre Cliente': '', 'Cod.Producto': 'P001' },
+        expected: false
+      }
+    ];
+    
+    var passed = 0, failed = 0;
+    
+    testCases.forEach(function(tc, idx) {
+      var result = validateRowData(tc.row, idx);
+      if (result.valid === tc.expected) {
+        passed++;
+        console.log('✓ Test ' + (idx + 1) + ' -> valid=' + result.valid);
+      } else {
+        failed++;
+        console.log('✗ FALLO Test ' + (idx + 1) + ' -> valid=' + result.valid + ' (esperado: ' + tc.expected + ')');
+        console.log('  Errors:', result.errors);
+      }
+    });
+    
+    console.log('=== Resultado: ' + passed + ' pasaron, ' + failed + ' fallaron ===');
+    return { success: failed === 0, passed: passed, failed: failed };
+  }
+  
+  /**
+   * Property Test 4: Detección de Duplicados
+   * For any conjunto de datos, findDuplicates debe identificar correctamente
+   * todas las N.Venta que aparecen más de una vez
+   * 
+   * **Feature: excel-upload-notas-venta, Property 4: Detección de Duplicados**
+   * **Validates: Requirements 6.1**
+   */
+  function testProperty4_DeteccionDuplicados() {
+    console.log('=== Property Test 4: Detección de Duplicados ===');
+    
+    var testCases = [
+      // Sin duplicados
+      {
+        data: [
+          { 'N.Venta': 'NV-001' },
+          { 'N.Venta': 'NV-002' },
+          { 'N.Venta': 'NV-003' }
+        ],
+        expectedDuplicates: []
+      },
+      // Con duplicados
+      {
+        data: [
+          { 'N.Venta': 'NV-001' },
+          { 'N.Venta': 'NV-002' },
+          { 'N.Venta': 'NV-001' },
+          { 'N.Venta': 'NV-003' }
+        ],
+        expectedDuplicates: ['NV-001']
+      },
+      // Múltiples duplicados
+      {
+        data: [
+          { 'N.Venta': 'NV-001' },
+          { 'N.Venta': 'NV-002' },
+          { 'N.Venta': 'NV-001' },
+          { 'N.Venta': 'NV-002' },
+          { 'N.Venta': 'NV-003' }
+        ],
+        expectedDuplicates: ['NV-001', 'NV-002']
+      },
+      // Array vacío
+      {
+        data: [],
+        expectedDuplicates: []
+      }
+    ];
+    
+    var passed = 0, failed = 0;
+    
+    testCases.forEach(function(tc, idx) {
+      var result = findDuplicates(tc.data);
+      var expectedHasDuplicates = tc.expectedDuplicates.length > 0;
+      
+      // Verificar que hasDuplicates sea correcto
+      if (result.hasDuplicates !== expectedHasDuplicates) {
+        failed++;
+        console.log('✗ FALLO Test ' + (idx + 1) + ' -> hasDuplicates=' + result.hasDuplicates + ' (esperado: ' + expectedHasDuplicates + ')');
+        return;
+      }
+      
+      // Verificar que los duplicados encontrados sean correctos
+      var allFound = tc.expectedDuplicates.every(function(d) {
+        return result.duplicates.indexOf(d) !== -1;
+      });
+      
+      if (allFound && result.duplicates.length === tc.expectedDuplicates.length) {
+        passed++;
+        console.log('✓ Test ' + (idx + 1) + ' -> duplicados=' + result.duplicates.join(', '));
+      } else {
+        failed++;
+        console.log('✗ FALLO Test ' + (idx + 1) + ' -> duplicados=' + result.duplicates.join(', ') + ' (esperado: ' + tc.expectedDuplicates.join(', ') + ')');
+      }
+    });
+    
+    console.log('=== Resultado: ' + passed + ' pasaron, ' + failed + ' fallaron ===');
+    return { success: failed === 0, passed: passed, failed: failed };
+  }
+  
+  /**
+   * Ejecuta todos los property tests de validación de Excel
+   */
+  function runExcelValidationTests() {
+    console.log('========================================');
+    console.log('EJECUTANDO PROPERTY TESTS DE VALIDACIÓN');
+    console.log('========================================');
+    
+    var results = [];
+    
+    results.push(testProperty1_ValidacionExtension());
+    results.push(testProperty2_ValidacionColumnas());
+    results.push(testProperty3_ValidacionDatos());
+    results.push(testProperty4_DeteccionDuplicados());
+    
+    var allPassed = results.every(function(r) { return r.success; });
+    
+    console.log('========================================');
+    console.log('RESUMEN: ' + (allPassed ? 'TODOS PASARON ✓' : 'ALGUNOS FALLARON ✗'));
+    console.log('========================================');
+    
+    return { success: allPassed, results: results };
+  }
+  
+  // Exponer función de tests
+  window.runExcelValidationTests = runExcelValidationTests;
+  
+  // ============================================================
+  // FUNCIONES DEL MODAL DE CARGA DE EXCEL
+  // ============================================================
+  
+  var excelUploadState = {
+    currentStep: 1,
+    file: null,
+    fileName: '',
+    parsedData: null,
+    headers: null,
+    validationResult: null,
+    duplicatesInFile: null,
+    duplicatesInSheet: null,
+    canUpload: false
+  };
+  
+  /**
+   * Abre el modal de carga de Excel
+   */
+  function openExcelUploadModal() {
+    // Resetear estado
+    excelUploadState = {
+      currentStep: 1,
+      file: null,
+      fileName: '',
+      parsedData: null,
+      headers: null,
+      validationResult: null,
+      duplicatesInFile: null,
+      duplicatesInSheet: null,
+      canUpload: false
+    };
+    
+    // Mostrar modal
+    document.getElementById('excelUploadModal').style.display = 'flex';
+    
+    // Mostrar paso 1
+    showExcelStep(1);
+    
+    // Configurar drag & drop y botón de selección
+    setupDragAndDrop();
+    setupFileSelectButton();
+  }
+  
+  /**
+   * Configura el botón de selección de archivo
+   */
+  function setupFileSelectButton() {
+    var input = document.getElementById('excelFileInput');
+    
+    if (input) {
+      // Asegurar que el input tenga el handler de cambio
+      input.onchange = function(e) {
+        console.log('Excel: Archivo seleccionado via input change');
+        if (e.target.files && e.target.files.length > 0) {
+          handleExcelFile(e.target.files[0]);
+        }
+      };
+      
+      console.log('Excel: Input de archivo configurado');
+    } else {
+      console.error('Excel: No se encontró input de archivo');
+    }
+  }
+  
+  /**
+   * Función global para abrir selector de archivos (fallback)
+   */
+  function selectExcelFile() {
+    var input = document.getElementById('excelFileInput');
+    if (input) {
+      input.value = '';
+      // Simular click en el label que está asociado al input
+      var label = document.querySelector('label[for="excelFileInput"]');
+      if (label) {
+        label.click();
+      } else {
+        input.click();
+      }
+    }
+  }
+  
+  /**
+   * Cierra el modal de carga de Excel
+   */
+  function closeExcelUploadModal() {
+    document.getElementById('excelUploadModal').style.display = 'none';
+    clearExcelFile();
+  }
+  
+  /**
+   * Muestra un paso específico del wizard
+   */
+  function showExcelStep(step) {
+    excelUploadState.currentStep = step;
+    
+    // Ocultar todos los pasos
+    for (var i = 1; i <= 4; i++) {
+      var stepEl = document.getElementById('excelStep' + i);
+      if (stepEl) stepEl.style.display = 'none';
+    }
+    
+    // Mostrar paso actual
+    var currentStepEl = document.getElementById('excelStep' + step);
+    if (currentStepEl) currentStepEl.style.display = 'block';
+    
+    // Actualizar botones
+    updateExcelButtons(step);
+  }
+  
+  /**
+   * Actualiza los botones según el paso actual
+   */
+  function updateExcelButtons(step) {
+    var btnBack = document.getElementById('btnExcelBack');
+    var btnNext = document.getElementById('btnExcelNext');
+    var btnConfirm = document.getElementById('btnExcelConfirm');
+    var btnCancel = document.getElementById('btnExcelCancel');
+    
+    btnBack.style.display = step > 1 && step < 4 ? 'inline-flex' : 'none';
+    btnNext.style.display = step === 1 && excelUploadState.file ? 'inline-flex' : 'none';
+    btnConfirm.style.display = step === 2 && excelUploadState.validationResult && excelUploadState.validationResult.valid ? 'inline-flex' : 'none';
+    btnCancel.style.display = step < 3 ? 'inline-flex' : 'none';
+  }
+  
+  /**
+   * Configura el drag & drop
+   */
+  function setupDragAndDrop() {
+    var dropZone = document.getElementById('excelDropZone');
+    var fileInput = document.getElementById('excelFileInput');
+    
+    if (!dropZone || !fileInput) {
+      console.error('Excel upload: No se encontró dropZone o fileInput');
+      return;
+    }
+    
+    // Listener para cuando se selecciona un archivo
+    fileInput.onchange = function(e) {
+      console.log('File input change event');
+      if (e.target.files && e.target.files.length > 0) {
+        handleExcelFile(e.target.files[0]);
+      }
+    };
+    
+    // Click en la zona de drop también abre el selector
+    dropZone.onclick = function(e) {
+      e.preventDefault();
+      fileInput.click();
+    };
+    
+    // Drag events
+    dropZone.ondragover = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('drag-over');
+    };
+    
+    dropZone.ondragleave = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drag-over');
+    };
+    
+    dropZone.ondrop = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drag-over');
+      
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleExcelFile(files[0]);
+      }
+    };
+    
+    console.log('Excel upload: Drag & drop configurado');
+  }
+  
+  /**
+   * Maneja la selección de archivo desde input (fallback para onchange inline)
+   */
+  function handleExcelFileSelect(event) {
+    console.log('handleExcelFileSelect called');
+    var files = event.target.files;
+    if (files && files.length > 0) {
+      handleExcelFile(files[0]);
+    }
+  }
+  
+  /**
+   * Procesa el archivo Excel seleccionado
+   */
+  function handleExcelFile(file) {
+    console.log('handleExcelFile:', file ? file.name : 'no file');
+    
+    // Validar extensión
+    var extValidation = validateFileExtension(file.name);
+    if (!extValidation.valid) {
+      if (window.WMSToast) WMSToast.error(extValidation.error);
+      return;
+    }
+    
+    excelUploadState.file = file;
+    excelUploadState.fileName = file.name;
+    
+    // Mostrar info del archivo
+    document.getElementById('excelFileName').textContent = file.name;
+    document.getElementById('excelFileSize').textContent = formatFileSize(file.size);
+    document.getElementById('excelFileInfo').style.display = 'flex';
+    
+    // Habilitar botón siguiente
+    updateExcelButtons(1);
+    
+    if (window.WMSToast) WMSToast.success('Archivo seleccionado: ' + file.name);
+  }
+  
+  /**
+   * Limpia el archivo seleccionado
+   */
+  function clearExcelFile() {
+    excelUploadState.file = null;
+    excelUploadState.fileName = '';
+    excelUploadState.parsedData = null;
+    
+    document.getElementById('excelFileInfo').style.display = 'none';
+    document.getElementById('excelFileInput').value = '';
+    
+    updateExcelButtons(1);
+  }
+  
+  /**
+   * Formatea el tamaño del archivo
+   */
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+  
+  /**
+   * Avanza al siguiente paso
+   */
+  function excelUploadNext() {
+    if (excelUploadState.currentStep === 1 && excelUploadState.file) {
+      // Parsear archivo y mostrar vista previa
+      parseAndPreviewExcel();
+    }
+  }
+  
+  /**
+   * Retrocede al paso anterior
+   */
+  function excelUploadBack() {
+    if (excelUploadState.currentStep > 1) {
+      showExcelStep(excelUploadState.currentStep - 1);
+    }
+  }
+  
+  /**
+   * Parsea el archivo Excel y muestra vista previa
+   */
+  function parseAndPreviewExcel() {
+    var file = excelUploadState.file;
+    if (!file) return;
+    
+    // Mostrar loading
+    showExcelStep(2);
+    document.getElementById('excelValidationStatus').innerHTML = '<div class="wms-alert wms-alert-info"><i class="fas fa-spinner fa-spin"></i> Procesando archivo...</div>';
+    
+    var reader = new FileReader();
+    
+    reader.onload = function(e) {
+      try {
+        // Verificar que XLSX esté disponible
+        if (typeof XLSX === 'undefined') {
+          throw new Error('Librería SheetJS no cargada. Por favor recarga la página.');
+        }
+        
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        
+        // Obtener primera hoja
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
+        
+        // Convertir a JSON
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        
+        if (jsonData.length === 0) {
+          throw new Error('El archivo está vacío');
+        }
+        
+        // Extraer headers y datos
+        var headers = jsonData[0];
+        var rows = jsonData.slice(1).filter(function(row) {
+          return row.some(function(cell) { return cell !== ''; });
+        });
+        
+        // Convertir a objetos
+        var dataObjects = rows.map(function(row) {
+          var obj = {};
+          headers.forEach(function(header, idx) {
+            obj[header] = row[idx] !== undefined ? row[idx] : '';
+          });
+          return obj;
+        });
+        
+        excelUploadState.headers = headers;
+        excelUploadState.parsedData = dataObjects;
+        
+        // Validar y mostrar preview
+        validateAndShowPreview(headers, dataObjects);
+        
+      } catch (error) {
+        console.error('Error parsing Excel:', error);
+        document.getElementById('excelValidationStatus').innerHTML = '<div class="wms-alert wms-alert-danger"><i class="fas fa-exclamation-circle"></i> Error al procesar archivo: ' + error.message + '</div>';
+        excelUploadState.validationResult = { valid: false };
+        updateExcelButtons(2);
+      }
+    };
+    
+    reader.onerror = function() {
+      document.getElementById('excelValidationStatus').innerHTML = '<div class="wms-alert wms-alert-danger"><i class="fas fa-exclamation-circle"></i> Error al leer el archivo</div>';
+    };
+    
+    reader.readAsArrayBuffer(file);
+  }
+  
+  /**
+   * Valida los datos y muestra la vista previa
+   */
+  function validateAndShowPreview(headers, data) {
+    var statusEl = document.getElementById('excelValidationStatus');
+    var previewContainer = document.getElementById('excelPreviewContainer');
+    var duplicateOptions = document.getElementById('excelDuplicateOptions');
+    
+    // Validar columnas
+    var colValidation = validateColumns(headers);
+    if (!colValidation.valid) {
+      statusEl.innerHTML = '<div class="wms-alert wms-alert-danger"><i class="fas fa-exclamation-circle"></i> Faltan columnas requeridas: ' + colValidation.missing.join(', ') + '</div>';
+      excelUploadState.validationResult = { valid: false };
+      previewContainer.style.display = 'none';
+      updateExcelButtons(2);
+      return;
+    }
+    
+    // Validar datos
+    var dataValidation = validateAllData(data);
+    excelUploadState.validationResult = dataValidation;
+    
+    // Mostrar estado de validación
+    if (dataValidation.valid) {
+      statusEl.innerHTML = '<div class="wms-alert wms-alert-success"><i class="fas fa-check-circle"></i> Archivo válido - ' + data.length + ' registros encontrados</div>';
+    } else {
+      var errorsHtml = '<div class="wms-alert wms-alert-danger"><i class="fas fa-exclamation-circle"></i> Se encontraron errores:<ul style="margin:8px 0 0 20px;">';
+      dataValidation.errors.forEach(function(err) {
+        errorsHtml += '<li>' + err + '</li>';
+      });
+      errorsHtml += '</ul></div>';
+      statusEl.innerHTML = errorsHtml;
+    }
+    
+    // Mostrar warnings (duplicados)
+    if (dataValidation.warnings && dataValidation.warnings.length > 0) {
+      statusEl.innerHTML += '<div class="wms-alert wms-alert-warning" style="margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> ' + dataValidation.warnings.join('<br>') + '</div>';
+    }
+    
+    // Verificar duplicados en archivo
+    var duplicateCheck = findDuplicates(data);
+    excelUploadState.duplicatesInFile = duplicateCheck;
+    
+    if (duplicateCheck.hasDuplicates) {
+      document.getElementById('excelDuplicateMessage').textContent = 'Se encontraron ' + duplicateCheck.duplicates.length + ' N.V duplicadas en el archivo: ' + duplicateCheck.duplicates.slice(0, 5).join(', ') + (duplicateCheck.duplicates.length > 5 ? '...' : '');
+      duplicateOptions.style.display = 'block';
+    } else {
+      duplicateOptions.style.display = 'none';
+    }
+    
+    // Mostrar vista previa
+    renderExcelPreview(headers, data);
+    previewContainer.style.display = 'block';
+    
+    // Actualizar conteo
+    document.getElementById('excelRowCount').textContent = data.length + ' filas';
+    
+    updateExcelButtons(2);
+  }
+  
+  /**
+   * Renderiza la tabla de vista previa
+   */
+  function renderExcelPreview(headers, data) {
+    var thead = document.getElementById('excelPreviewHead');
+    var tbody = document.getElementById('excelPreviewBody');
+    
+    // Headers
+    var headerHtml = '<tr>';
+    headers.forEach(function(h) {
+      headerHtml += '<th>' + (h || '-') + '</th>';
+    });
+    headerHtml += '</tr>';
+    thead.innerHTML = headerHtml;
+    
+    // Mostrar máximo 10 filas
+    var previewData = data.slice(0, 10);
+    var bodyHtml = '';
+    
+    previewData.forEach(function(row) {
+      bodyHtml += '<tr>';
+      headers.forEach(function(h) {
+        var value = row[h];
+        if (value instanceof Date) {
+          value = value.toLocaleDateString();
+        }
+        bodyHtml += '<td>' + (value !== undefined && value !== null ? value : '-') + '</td>';
+      });
+      bodyHtml += '</tr>';
+    });
+    
+    if (data.length > 10) {
+      bodyHtml += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:var(--wms-text-secondary);">... y ' + (data.length - 10) + ' filas más</td></tr>';
+    }
+    
+    tbody.innerHTML = bodyHtml;
+  }
+  
+  /**
+   * Confirma y ejecuta la carga de datos al servidor
+   */
+  function confirmExcelUpload() {
+    if (!excelUploadState.validationResult || !excelUploadState.validationResult.valid) {
+      if (window.WMSToast) WMSToast.error('Los datos no son válidos');
+      return;
+    }
+    
+    if (!excelUploadState.parsedData || excelUploadState.parsedData.length === 0) {
+      if (window.WMSToast) WMSToast.error('No hay datos para cargar');
+      return;
+    }
+    
+    // Obtener opción de duplicados
+    var duplicateAction = 'omit';
+    var radioOmit = document.querySelector('input[name="duplicateAction"][value="omit"]');
+    var radioOverwrite = document.querySelector('input[name="duplicateAction"][value="overwrite"]');
+    if (radioOverwrite && radioOverwrite.checked) {
+      duplicateAction = 'overwrite';
+    }
+    
+    // Mostrar paso de progreso
+    showExcelStep(3);
+    document.getElementById('excelUploadStatus').textContent = 'Verificando duplicados en la hoja...';
+    document.getElementById('excelProgressBar').style.width = '20%';
+    
+    // Extraer números de N.V para verificar duplicados
+    var nvNumbers = excelUploadState.parsedData.map(function(row) {
+      return String(row['N.Venta'] || row['N.VENTA'] || row['n.venta'] || '').trim();
+    }).filter(function(nv) { return nv !== ''; });
+    
+    // Verificar duplicados en la hoja
+    google.script.run
+      .withSuccessHandler(function(checkResult) {
+        if (!checkResult.success) {
+          showUploadError('Error al verificar duplicados: ' + (checkResult.error || 'Error desconocido'));
+          return;
+        }
+        
+        excelUploadState.duplicatesInSheet = checkResult;
+        
+        // Si hay duplicados en la hoja y la acción es omitir, mostrar advertencia
+        if (checkResult.existing && checkResult.existing.length > 0 && duplicateAction === 'omit') {
+          document.getElementById('excelUploadStatus').textContent = 'Se omitirán ' + checkResult.existing.length + ' N.V que ya existen...';
+        }
+        
+        document.getElementById('excelProgressBar').style.width = '40%';
+        document.getElementById('excelUploadStatus').textContent = 'Cargando datos...';
+        
+        // Preparar opciones
+        var options = {
+          duplicateAction: duplicateAction,
+          fileName: excelUploadState.fileName
+        };
+        
+        // Obtener sessionId si está disponible
+        var sessionId = null;
+        if (window.App && window.App.sessionId) {
+          sessionId = window.App.sessionId;
+        }
+        
+        // Ejecutar carga
+        google.script.run
+          .withSuccessHandler(function(uploadResult) {
+            document.getElementById('excelProgressBar').style.width = '100%';
+            
+            if (uploadResult.success) {
+              showUploadSuccess(uploadResult);
+            } else {
+              showUploadError(uploadResult.error || 'Error al cargar datos');
+            }
+          })
+          .withFailureHandler(function(error) {
+            showUploadError('Error de conexión: ' + error.message);
+          })
+          .uploadExcelData(excelUploadState.parsedData, options, sessionId);
+      })
+      .withFailureHandler(function(error) {
+        showUploadError('Error de conexión: ' + error.message);
+      })
+      .checkExistingNV(nvNumbers);
+  }
+  
+  /**
+   * Muestra resultado exitoso de la carga
+   */
+  function showUploadSuccess(result) {
+    showExcelStep(4);
+    
+    var html = '<div class="excel-result-success">';
+    html += '<div class="excel-result-icon"><i class="fas fa-check-circle"></i></div>';
+    html += '<h3 class="excel-result-title">¡Carga Exitosa!</h3>';
+    html += '<p class="excel-result-message">' + result.message + '</p>';
+    
+    if (result.recordsInserted > 0) {
+      html += '<p><strong>' + result.recordsInserted + '</strong> registros insertados</p>';
+    }
+    
+    if (result.duplicatesFound > 0) {
+      html += '<p><span class="wms-badge wms-badge-warning">' + result.duplicatesFound + ' duplicados encontrados</span></p>';
+    }
+    
+    if (result.skippedDuplicates && result.skippedDuplicates.length > 0) {
+      html += '<p style="font-size:0.85rem;color:var(--wms-text-secondary);">Omitidos: ' + result.skippedDuplicates.slice(0, 5).join(', ') + (result.skippedDuplicates.length > 5 ? '...' : '') + '</p>';
+    }
+    
+    html += '</div>';
+    
+    document.getElementById('excelResultContainer').innerHTML = html;
+    
+    // Actualizar botones
+    document.getElementById('btnExcelCancel').style.display = 'none';
+    document.getElementById('btnExcelBack').style.display = 'none';
+    document.getElementById('btnExcelNext').style.display = 'none';
+    document.getElementById('btnExcelConfirm').style.display = 'none';
+    
+    // Agregar botón de cerrar
+    var footer = document.querySelector('#excelUploadModal .wms-modal-footer');
+    footer.innerHTML = '<button class="wms-btn wms-btn-success" onclick="closeExcelUploadModal(); nvLastLoadTime = 0; loadNotasVentaData(true, true);"><i class="fas fa-check"></i> Cerrar y Actualizar</button>';
+    
+    if (window.WMSToast) WMSToast.success('Datos cargados exitosamente');
+  }
+  
+  /**
+   * Muestra error en la carga
+   */
+  function showUploadError(errorMessage) {
+    showExcelStep(4);
+    
+    var html = '<div class="excel-result-error">';
+    html += '<div class="excel-result-icon"><i class="fas fa-times-circle"></i></div>';
+    html += '<h3 class="excel-result-title">Error en la Carga</h3>';
+    html += '<p class="excel-result-message">' + errorMessage + '</p>';
+    html += '</div>';
+    
+    document.getElementById('excelResultContainer').innerHTML = html;
+    
+    // Actualizar botones para permitir reintentar
+    document.getElementById('btnExcelCancel').style.display = 'inline-flex';
+    document.getElementById('btnExcelBack').style.display = 'inline-flex';
+    document.getElementById('btnExcelBack').onclick = function() { showExcelStep(2); };
+    document.getElementById('btnExcelNext').style.display = 'none';
+    document.getElementById('btnExcelConfirm').style.display = 'none';
+    
+    if (window.WMSToast) WMSToast.error('Error al cargar datos');
+  }
+  
+  /**
+   * Verifica permisos de carga y muestra/oculta el botón
+   */
+  function checkExcelUploadPermission() {
+    var btnCargarExcel = document.getElementById('btnCargarExcel');
+    if (!btnCargarExcel) return;
+    
+    // Verificar rol del usuario actual
+    var userRole = '';
+    if (window.App && window.App.user && window.App.user.rol) {
+      userRole = String(window.App.user.rol).toUpperCase();
+    }
+    
+    // Roles autorizados
+    var authorizedRoles = ['ADMINISTRADOR', 'SUPERVISOR', 'ADMIN'];
+    
+    if (authorizedRoles.indexOf(userRole) !== -1) {
+      btnCargarExcel.style.display = 'inline-flex';
+      console.log('Excel upload: Usuario autorizado (' + userRole + ')');
+    } else {
+      btnCargarExcel.style.display = 'none';
+      console.log('Excel upload: Usuario no autorizado (' + userRole + ')');
+    }
+  }
+  
+  // Modificar initNotasVentaModule para verificar permisos
+  var originalInitNotasVentaModule = initNotasVentaModule;
+  initNotasVentaModule = function() {
+    originalInitNotasVentaModule();
+    // Verificar permisos después de un pequeño delay para asegurar que App.user esté disponible
+    setTimeout(checkExcelUploadPermission, 500);
+  };
+  
+  // Exponer funciones del modal
+  window.openExcelUploadModal = openExcelUploadModal;
+  window.closeExcelUploadModal = closeExcelUploadModal;
+  window.handleExcelFileSelect = handleExcelFileSelect;
+  window.handleExcelFile = handleExcelFile;
+  window.clearExcelFile = clearExcelFile;
+  window.excelUploadNext = excelUploadNext;
+  window.excelUploadBack = excelUploadBack;
+  window.confirmExcelUpload = confirmExcelUpload;
+  window.checkExcelUploadPermission = checkExcelUploadPermission;
+  window.selectExcelFile = selectExcelFile;
+  window.setupFileSelectButton = setupFileSelectButton;
+</script>
+
+
+<style>
+/* ═══════════════════════════════════════════
+   NOTAS DE VENTA - Estilos Específicos
+   ═══════════════════════════════════════════ */
+
+/* Filter Bar */
+.wms-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wms-space-3);
+  padding: var(--wms-space-4);
+  background: var(--wms-bg-surface);
+  border: 1px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-lg);
+  margin-bottom: var(--wms-space-6);
+}
+
+@media (min-width: 768px) {
+  .wms-filter-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.wms-filter-group {
+  display: flex;
+  gap: var(--wms-space-2);
+  flex-wrap: wrap;
+}
+
+/* Detail Panel */
+.wms-detail-panel {
+  background: var(--wms-bg-surface);
+  border: 2px solid var(--wms-primary);
+  border-radius: var(--wms-radius-xl);
+  margin-bottom: var(--wms-space-6);
+  overflow: hidden;
+  box-shadow: var(--wms-shadow-lg);
+  animation: wms-slide-down 0.3s ease-out;
+}
+
+@keyframes wms-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wms-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wms-space-4) var(--wms-space-6);
+  background: var(--wms-primary-light);
+  border-bottom: 1px solid var(--wms-border-light);
+}
+
+.wms-detail-title {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-3);
+}
+
+.wms-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--wms-primary);
+  color: white;
+  border-radius: var(--wms-radius-lg);
+  font-size: var(--wms-text-xl);
+}
+
+.wms-detail-title h3 {
+  margin: 0;
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+  font-weight: var(--wms-font-medium);
+}
+
+.wms-detail-id {
+  font-size: var(--wms-text-2xl);
+  font-weight: var(--wms-font-bold);
+  color: var(--wms-primary);
+  font-family: var(--wms-font-mono);
+}
+
+.wms-detail-body {
+  padding: var(--wms-space-6);
+}
+
+/* Info Cards */
+.wms-info-card {
+  background: var(--wms-gray-50);
+  border: 1px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-lg);
+  padding: var(--wms-space-4);
+}
+
+.wms-info-card-label {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-2);
+  font-size: var(--wms-text-xs);
+  color: var(--wms-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--wms-space-2);
+}
+
+.wms-info-card-value {
+  font-size: var(--wms-text-lg);
+  font-weight: var(--wms-font-semibold);
+  color: var(--wms-text-primary);
+}
+
+/* Badge Large */
+.wms-badge-lg {
+  padding: var(--wms-space-2) var(--wms-space-3);
+  font-size: var(--wms-text-sm);
+}
+
+/* Badge Purple */
+.wms-badge-purple {
+  background: #F3E8FF;
+  color: #7C3AED;
+}
+
+/* Table Icon */
+.wms-table-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--wms-primary-light);
+  color: var(--wms-primary);
+  border-radius: var(--wms-radius-md);
+  font-size: var(--wms-text-sm);
+}
+
+/* Table Row Hover */
+.wms-table-row-hover:hover {
+  background: var(--wms-primary-lighter) !important;
+}
+
+/* Button Info */
+.wms-btn-info {
+  background: var(--wms-info);
+  color: var(--wms-text-inverse);
+  border-color: var(--wms-info);
+}
+.wms-btn-info:hover {
+  background: var(--wms-info-hover);
+  border-color: var(--wms-info-hover);
+  transform: translateY(-1px);
+}
+
+/* Button Outline Danger */
+.wms-btn-outline.wms-btn-danger {
+  background: transparent;
+  color: var(--wms-danger);
+  border-color: var(--wms-danger);
+}
+.wms-btn-outline.wms-btn-danger:hover {
+  background: var(--wms-danger-light);
+}
+
+/* Table Small */
+.wms-table-sm th,
+.wms-table-sm td {
+  padding: var(--wms-space-2) var(--wms-space-3);
+}
+
+/* Margin utilities */
+.wms-mr-1 { margin-right: var(--wms-space-1); }
+.wms-ml-2 { margin-left: var(--wms-space-2); }
+
+/* Premium Header Icon */
+.wms-module-header-premium .wms-header-icon {
+  background: linear-gradient(135deg, var(--wms-primary), var(--wms-primary-hover));
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+}
+
+/* Premium Button */
+.wms-btn-premium {
+  background: linear-gradient(135deg, var(--wms-primary), var(--wms-primary-hover));
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+}
+.wms-btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
+}
+
+/* Premium Stat Card */
+.wms-stat-card-premium {
+  position: relative;
+  overflow: hidden;
+}
+.wms-stat-card-premium::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, var(--stat-bg) 0%, transparent 70%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.wms-stat-card-premium .wms-stat-icon {
+  background: var(--stat-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Grid de 5 columnas para stats */
+.wms-stats-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+@media (max-width: 1024px) {
+  .wms-stats-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .wms-stats-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Badge Secondary (Azul) */
+.wms-badge-secondary {
+  background: #DBEAFE;
+  color: #1D4ED8;
+}
+
+/* Stat card secondary color */
+.wms-stat-card-premium[data-color="secondary"] {
+  --stat-color: #3b82f6;
+  --stat-bg: rgba(59, 130, 246, 0.1);
+}
+
+/* ═══════════════════════════════════════════
+   MODAL DE CARGA DE EXCEL
+   ═══════════════════════════════════════════ */
+
+/* Modal Overlay */
+.wms-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.wms-modal {
+  background: var(--wms-bg-surface);
+  border-radius: var(--wms-radius-xl);
+  box-shadow: var(--wms-shadow-xl);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: wms-modal-in 0.3s ease-out;
+}
+
+.wms-modal-lg {
+  max-width: 800px;
+}
+
+@keyframes wms-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.wms-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wms-space-4) var(--wms-space-6);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.wms-modal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-3);
+  font-size: var(--wms-text-lg);
+  font-weight: var(--wms-font-semibold);
+}
+
+.wms-modal-title i {
+  font-size: var(--wms-text-xl);
+}
+
+.wms-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--wms-radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.wms-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.wms-modal-body {
+  padding: var(--wms-space-6);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.wms-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--wms-space-3);
+  padding: var(--wms-space-4) var(--wms-space-6);
+  background: var(--wms-gray-50);
+  border-top: 1px solid var(--wms-border-light);
+}
+
+/* Drop Zone */
+.excel-drop-zone {
+  border: 2px dashed var(--wms-border-medium);
+  border-radius: var(--wms-radius-xl);
+  padding: var(--wms-space-8);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--wms-gray-50);
+}
+
+.excel-drop-zone:hover,
+.excel-drop-zone.drag-over {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.excel-drop-zone.drag-over {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.excel-drop-icon {
+  font-size: 48px;
+  color: #10b981;
+  margin-bottom: var(--wms-space-4);
+}
+
+.excel-drop-main {
+  font-size: var(--wms-text-lg);
+  font-weight: var(--wms-font-semibold);
+  color: var(--wms-text-primary);
+  margin: 0 0 var(--wms-space-2) 0;
+}
+
+.excel-drop-sub {
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+  margin: 0 0 var(--wms-space-4) 0;
+}
+
+.excel-drop-formats {
+  display: flex;
+  justify-content: center;
+  gap: var(--wms-space-2);
+}
+
+/* File Info */
+.excel-file-info {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-3);
+  padding: var(--wms-space-4);
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: var(--wms-radius-lg);
+  margin-top: var(--wms-space-4);
+}
+
+.excel-file-icon {
+  font-size: 32px;
+  color: #10b981;
+}
+
+.excel-file-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.excel-file-name {
+  font-weight: var(--wms-font-semibold);
+  color: var(--wms-text-primary);
+}
+
+.excel-file-size {
+  font-size: var(--wms-text-sm);
+  color: var(--wms-text-secondary);
+}
+
+/* Validation Status */
+.excel-validation-status {
+  margin-bottom: var(--wms-space-4);
+}
+
+/* Preview Container */
+.excel-preview-container {
+  border: 1px solid var(--wms-border-light);
+  border-radius: var(--wms-radius-lg);
+  overflow: hidden;
+}
+
+.excel-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wms-space-3) var(--wms-space-4);
+  background: var(--wms-gray-100);
+  border-bottom: 1px solid var(--wms-border-light);
+  font-weight: var(--wms-font-medium);
+}
+
+.excel-preview-table-wrapper {
+  max-height: 250px;
+  overflow: auto;
+}
+
+/* Duplicate Options */
+.excel-duplicate-options {
+  margin-top: var(--wms-space-4);
+}
+
+.excel-duplicate-actions {
+  display: flex;
+  gap: var(--wms-space-4);
+  margin-top: var(--wms-space-3);
+}
+
+.wms-radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--wms-space-2);
+  cursor: pointer;
+}
+
+.wms-radio-label input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #10b981;
+}
+
+/* Upload Progress */
+.excel-upload-progress {
+  text-align: center;
+  padding: var(--wms-space-8);
+}
+
+.excel-upload-progress p {
+  margin: var(--wms-space-4) 0;
+  color: var(--wms-text-secondary);
+}
+
+.wms-progress {
+  height: 8px;
+  background: var(--wms-gray-200);
+  border-radius: var(--wms-radius-full);
+  overflow: hidden;
+  margin-top: var(--wms-space-4);
+}
+
+.wms-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: var(--wms-radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Result Container */
+.excel-result-container {
+  text-align: center;
+  padding: var(--wms-space-6);
+}
+
+.excel-result-success {
+  color: #10b981;
+}
+
+.excel-result-error {
+  color: var(--wms-danger);
+}
+
+.excel-result-icon {
+  font-size: 64px;
+  margin-bottom: var(--wms-space-4);
+}
+
+.excel-result-title {
+  font-size: var(--wms-text-xl);
+  font-weight: var(--wms-font-bold);
+  margin-bottom: var(--wms-space-2);
+}
+
+.excel-result-message {
+  color: var(--wms-text-secondary);
+}
+
+/* Button Success */
+.wms-btn-success {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.wms-btn-success:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+}
+
+/* Alert styles */
+.wms-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wms-space-3);
+  padding: var(--wms-space-4);
+  border-radius: var(--wms-radius-lg);
+}
+
+.wms-alert-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.wms-alert-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.wms-alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.wms-alert-info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+</style>

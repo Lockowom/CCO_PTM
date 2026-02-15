@@ -1,0 +1,832 @@
+<script>
+let hojaActiva = "";
+let circulosDock = false;
+let debounceTimer = null;
+let exactMode = false;
+let copyToastTimer = null;
+let currentView = 'buscador';
+const searchCache = new Map();
+
+const hojaColores = {
+  Partidas: '#22c55e',
+  Series: '#38bdf8',
+  Farmapack: '#f97316',
+  Peso: '#a855f7',
+  Ubicaciones: '#facc15'
+};
+
+const escapeHtml = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const escapeRegex = s => String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+function updateSheetChip(nombre){
+  const chip = document.getElementById('sheetChip');
+  if(!chip) return;
+  if(!nombre){
+    chip.style.display = 'none';
+    chip.classList.remove('pulse');
+    return;
+  }
+  const dot = chip.querySelector('.sheet-chip-dot');
+  const label = chip.querySelector('.sheet-chip-label');
+  const color = hojaColores[nombre] || '#e5e7eb';
+  chip.style.display = 'flex';
+  chip.style.borderColor = color + 'cc';
+  chip.style.background = 'linear-gradient(120deg, rgba(15,23,42,0.96), rgba(15,23,42,0.9))';
+  chip.style.boxShadow = '0 10px 22px rgba(15,23,42,0.95), 0 0 16px ' + color + '55';
+  if(dot){
+    dot.style.background = color;
+    dot.style.color = color;
+  }
+  if(label){
+    label.textContent = 'Sheet: ' + nombre;
+  }
+  chip.classList.remove('pulse');
+  void chip.offsetWidth;
+  chip.classList.add('pulse');
+}
+
+function marcarSeleccion(el){
+  document.querySelectorAll('.circulo').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+}
+
+function animatePress(el){
+  if(!el) return;
+  el.classList.remove('pressed');
+  void el.offsetWidth;
+  el.classList.add('pressed');
+}
+
+function setView(view){
+  currentView = view;
+  const searchBox = document.getElementById("searchBox");
+  const resultadosWrap = document.getElementById("resultadosWrap");
+  const ingresoPanel = document.getElementById("ingresoPanel");
+  const circulos = document.getElementById("circulos");
+
+  if(view === 'ingreso'){
+    if(searchBox) searchBox.style.display = 'none';
+    if(resultadosWrap) resultadosWrap.style.display = 'none';
+    if(ingresoPanel) ingresoPanel.style.display = 'block';
+    circulosDock = false;
+    if(circulos) circulos.classList.remove('derecha');
+  } else {
+    if(ingresoPanel) ingresoPanel.style.display = 'none';
+    if(hojaActiva){
+      if(searchBox) searchBox.style.display = 'block';
+      if(resultadosWrap) resultadosWrap.style.display = 'block';
+    } else {
+      if(searchBox) searchBox.style.display = 'none';
+      if(resultadosWrap) resultadosWrap.style.display = 'none';
+    }
+  }
+}
+
+function seleccionarHoja(nombre, el){
+  const circulos = document.getElementById("circulos");
+  const entrada = document.getElementById("entrada");
+  const ingresoPanel = document.getElementById("ingresoPanel");
+
+  animatePress(el);
+
+  if (hojaActiva === nombre && circulosDock){
+    circulosDock = false;
+    circulos.classList.remove("derecha");
+    document.getElementById("searchBox").style.display = "none";
+    document.getElementById("resultadosWrap").style.display = "none";
+    hojaActiva = "";
+    marcarSeleccion(null);
+    updateSheetChip('');
+    return;
+  }
+
+  hojaActiva = nombre;
+  currentView = 'buscador';
+  marcarSeleccion(el);
+  document.getElementById("resultados").innerHTML = "";
+  document.getElementById("resultados").dataset.lastPayload = "";
+  document.getElementById("counter").textContent = "";
+  
+  const wrap = document.getElementById('resultadosWrap');
+  const summary = document.getElementById('summaryBar');
+  if(summary) summary.style.display = 'none';
+  if(wrap) wrap.classList.remove('has-results','no-results','error');
+
+  document.getElementById("searchBox").style.display = "block";
+  document.getElementById("resultadosWrap").style.display = "block";
+  if(ingresoPanel) ingresoPanel.style.display = "none";
+
+  circulosDock = true;
+  circulos.classList.add("derecha");
+  updateSheetChip(nombre);
+
+  if(entrada){
+    entrada.placeholder = `Buscar en ${nombre}...`;
+    entrada.value = '';
+    entrada.focus();
+  }
+
+  const sc = document.querySelector('.search-container');
+  if (sc){
+    sc.classList.remove('pop');
+    void sc.offsetWidth;
+    sc.classList.add('pop');
+  }
+
+  clearTimeout(debounceTimer);
+  if(wrap){
+    wrap.style.display = 'none';
+  }
+  if(document.getElementById("counter")){
+    document.getElementById("counter").textContent = "Ingresa texto para buscar...";
+  }
+}
+
+function onType(){
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(()=>buscar(false),300);
+}
+
+function toggleExact(){
+  exactMode=!exactMode;
+  const b=document.getElementById("exactBtn");
+  b.classList.toggle("active",exactMode);
+  b.setAttribute('aria-pressed', String(exactMode));
+  b.textContent = `🎯 Exact match: ${exactMode ? 'ON' : 'OFF'}`;
+  const entrada = document.getElementById("entrada");
+  if(entrada && entrada.value.trim()){
+    buscar(false);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    const entrada = document.getElementById("entrada");
+    if(entrada && entrada.value){
+      limpiar();
+      return;
+    }
+    if(circulosDock && currentView === 'buscador'){
+      const circulos = document.getElementById("circulos");
+      circulosDock = false;
+      circulos.classList.remove("derecha");
+      document.getElementById("searchBox").style.display = "none";
+      document.getElementById("resultadosWrap").style.display = "none";
+      hojaActiva = "";
+      marcarSeleccion(null);
+      updateSheetChip('');
+    }
+    const panel = document.getElementById('infoPanel');
+    if(panel) panel.classList.remove('open');
+    return;
+  }
+
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='f'){
+    e.preventDefault();
+    const entrada = document.getElementById("entrada");
+    if(entrada && currentView === 'buscador'){
+      entrada.focus();
+      entrada.select();
+    }
+    return;
+  }
+
+  if(document.activeElement && document.activeElement.id === 'entrada'){
+    if(e.key === 'Enter'){
+      clearTimeout(debounceTimer);
+      buscar(false);
+    }
+    return;
+  }
+
+  const activeId = document.activeElement && document.activeElement.id;
+  if(['1','2','3','4','5'].includes(e.key)){
+    if(activeId && activeId.startsWith('ing_')) return;
+    const circulo = document.querySelector(`.circulo[data-key="${e.key}"]`);
+    if(circulo){
+      const nombre = e.key==='1'?'Partidas':e.key==='2'?'Series':e.key==='3'?'Farmapack':e.key==='4'?'Peso':'Ubicaciones';
+      seleccionarHoja(nombre, circulo);
+    }
+  }
+});
+
+function showToast(msg, type='info'){
+  let container = document.getElementById('toastContainer');
+  if(!container){
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast-msg ${type}`;
+  let icon = 'ℹ️';
+  if(type==='success') icon = '✅';
+  if(type==='error') icon = '❌';
+  if(type==='warning') icon = '⚠️';
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${escapeHtml(msg)}</span>`;
+  container.appendChild(toast);
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  setTimeout(()=>{
+    toast.classList.remove('show');
+    setTimeout(()=>toast.remove(), 400);
+  }, 4000);
+}
+
+function showLoader(show){}
+
+function limpiar(){
+  const entrada = document.getElementById('entrada');
+  const resDiv  = document.getElementById('resultados');
+  const counter = document.getElementById('counter');
+  const wrap = document.getElementById('resultadosWrap');
+  const sc = document.querySelector('.search-container');
+  const summary = document.getElementById('summaryBar');
+
+  if(entrada) {
+    entrada.value = '';
+    entrada.focus();
+  }
+  resDiv.innerHTML = '';
+  resDiv.dataset.lastPayload = '';
+  counter.textContent = 'Ingresa texto para buscar...';
+  if(summary) summary.style.display = 'none';
+  if(wrap){
+    wrap.classList.remove('has-results','no-results','error');
+    wrap.style.removeProperty('--wrap-accent');
+    wrap.style.display = 'none';
+  }
+  if(sc) sc.classList.remove('shake','pop');
+}
+</script>
+
+<script>
+function buscar(fromSheetSelection){
+  if(currentView !== 'buscador'){
+    setView('buscador');
+  }
+  const entrada = document.getElementById('entrada');
+  const q = entrada ? entrada.value.trim() : '';
+  const resDiv = document.getElementById('resultados');
+  const counter = document.getElementById('counter');
+  const wrap = document.getElementById('resultadosWrap');
+  const sc = document.querySelector('.search-container');
+  const summary = document.getElementById('summaryBar');
+
+  if(!hojaActiva){
+    alert('Primero selecciona Partidas, Series, Farmapack, Peso o Ubicaciones.');
+    return;
+  }
+
+  if(wrap) wrap.style.display = 'block';
+
+  const cacheKey = `${hojaActiva}::${q}::${exactMode}`;
+  if(searchCache.has(cacheKey)){
+    const cachedData = searchCache.get(cacheKey);
+    if(counter) counter.textContent = q ? 'Buscando...' : 'Cargando últimos registros...';
+    if(!cachedData.rows || !cachedData.rows.length){
+      handleNoResults(q, wrap, counter, sc, summary);
+    } else {
+      handleSuccess(cachedData, q, wrap, counter, sc, summary);
+    }
+    return;
+  }
+
+  showLoader(true);
+  if(counter){
+    counter.textContent = q ? 'Buscando...' : 'Cargando últimos registros...';
+  }
+
+  resDiv.innerHTML = `<div class="quantum-spinner"><div></div><div></div><div></div></div><div class="loading-text">ACCEDIENDO AL NÚCLEO DE DATOS...</div>`;
+  if(summary) summary.style.display='none';
+  if(wrap) wrap.classList.remove('has-results','no-results','error');
+  if(sc) sc.classList.remove('shake');
+
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    setTimeout(()=>{
+      showLoader(false);
+      if(counter) counter.textContent = "Sin conexión con Apps Script (modo prueba).";
+    }, 400);
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(data => {
+      showLoader(false);
+      searchCache.set(cacheKey, data);
+      if(!data || !data.rows || !data.rows.length){
+        handleNoResults(q, wrap, counter, sc, summary);
+        return;
+      }
+      handleSuccess(data, q, wrap, counter, sc, summary);
+    })
+    .withFailureHandler(err => {
+      showLoader(false);
+      if(counter) counter.textContent = 'Error al buscar';
+      resDiv.innerHTML = `<p style="margin:6px 4px;font-size:13px;color:#ffb3b3;">Error desde Apps Script: ${escapeHtml(err && err.message || String(err))}</p>`;
+      if(wrap){
+        wrap.classList.remove('has-results','no-results');
+        wrap.classList.add('error');
+      }
+      const sc2 = document.querySelector('.search-container');
+      if(sc2){
+        sc2.classList.add('shake');
+        setTimeout(()=>sc2.classList.remove('shake'), 450);
+      }
+      const summary = document.getElementById('summaryBar');
+      if(summary) summary.style.display='none';
+    })
+    .buscarMultiHoja(hojaActiva, q, exactMode);
+}
+
+function handleNoResults(q, wrap, counter, sc, summary){
+  const resDiv = document.getElementById('resultados');
+  if(counter) counter.textContent = '0 resultados';
+  resDiv.innerHTML = '<p style="margin:20px; text-align:center; font-size:14px; color:#94a3b8;">Sin resultados para esta búsqueda.</p>';
+  resDiv.dataset.lastPayload = '';
+  if(wrap){
+    wrap.classList.remove('has-results','error');
+    wrap.classList.add('no-results');
+  }
+  if(sc){
+    sc.classList.add('shake');
+    setTimeout(()=>sc.classList.remove('shake'), 450);
+  }
+  if(summary) summary.style.display='none';
+}
+
+function handleSuccess(data, q, wrap, counter, sc, summary){
+  const resDiv = document.getElementById('resultados');
+  const payload = {
+    hoja: data.hoja || hojaActiva,
+    columns: data.columns || [],
+    rows: data.rows || []
+  };
+  resDiv.dataset.lastPayload = JSON.stringify(payload);
+  renderTable(payload, q);
+  if(wrap){
+    const rect = wrap.getBoundingClientRect();
+    if(rect.top > window.innerHeight*0.8){
+      window.scrollTo({top: window.scrollY + rect.top - 120, behavior:'smooth'});
+    }
+  }
+}
+
+function highlight(text, query){
+  if(!query) return escapeHtml(text);
+  try{
+    const pattern = exactMode
+      ? `(^|[^A-Za-z0-9])(${escapeRegex(query)})(?=$|[^A-Za-z0-9])`
+      : escapeRegex(query);
+    const re = new RegExp(pattern, 'gi');
+    return escapeHtml(String(text)).replace(re, m => `<mark>${m}</mark>`);
+  }catch(e){
+    return escapeHtml(text);
+  }
+}
+
+function updateSummaryBar(hoja, totalRows, isExact, hasQuery, accent){
+  const summary = document.getElementById('summaryBar');
+  if(!summary) return;
+  const fecha = fechasActualizacion && (fechasActualizacion[hoja] || fechasActualizacion[hoja.toLowerCase()]) || "—";
+  const heavy = totalRows > 200;
+  const modeLabel = isExact ? 'Exacta' : 'Flexible';
+  const viewLabel = hasQuery ? 'Filtrado' : 'Últimos registros';
+  const color = accent || '#38bdf8';
+  summary.innerHTML = `
+    <span>Hoja: <strong>${escapeHtml(hoja)}</strong></span>
+    <span>Filas: <strong>${totalRows}</strong></span>
+    <span>Vista: <strong>${escapeHtml(viewLabel)}</strong></span>
+    <span>Modo: <strong>${escapeHtml(modeLabel)}</strong></span>
+    <span>Última actualización: <strong>${escapeHtml(fecha)}</strong></span>
+    ${heavy ? '<span class="badge-heavy">+200 resultados · acota búsqueda</span>' : ''}
+  `;
+  summary.style.display = 'flex';
+  summary.style.borderColor = color + '88';
+  summary.style.boxShadow ='0 8px 20px rgba(15,23,42,0.95), 0 0 14px ' + color + '55';
+}
+
+function renderTable(payload, query){
+  const resDiv = document.getElementById('resultados');
+  const counter = document.getElementById('counter');
+  const wrap = document.getElementById('resultadosWrap');
+  const rows = payload.rows || [];
+  const hoja = payload.hoja || hojaActiva;
+  const cols = payload.columns && payload.columns.length
+    ? payload.columns
+    : (rows.length ? rows[0].map((_,i)=>`Col ${i+1}`) : []);
+
+  if(counter){
+    counter.textContent = `${rows.length} resultado(s) en hoja ${hoja}`;
+  }
+
+  const accentColor = hojaColores[hoja] || '#38bdf8';
+  if(wrap){
+    wrap.style.setProperty('--wrap-accent', accentColor);
+  }
+
+  updateSummaryBar(hoja, rows.length, exactMode, !!query, accentColor);
+
+  let html = '<table><thead><tr>';
+  cols.forEach(c => {
+    html += `<th>${escapeHtml(c)}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach((r, idx) => {
+    const singleClass = (rows.length === 1) ? ' class="single-row"' : '';
+    const delay = Math.min(idx * 0.03, 1.0);
+    html += `<tr${idx===0 && rows.length===1 ? singleClass : ''} style="animation-delay:${delay}s">`;
+    r.forEach(cell => {
+      html += `<td>${highlight(cell, query)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  resDiv.innerHTML = html;
+
+  if(wrap){
+    if(rows.length){
+      wrap.classList.remove('no-results','error');
+      wrap.classList.add('has-results');
+    }else{
+      wrap.classList.remove('has-results','error');
+      wrap.classList.add('no-results');
+    }
+  }
+  applyColHoverSetup();
+}
+
+function applyColHover(table,colIndex){
+  if(!table) return;
+  table.querySelectorAll('.col-hover').forEach(el=>el.classList.remove('col-hover'));
+  if(colIndex==null || colIndex<0) return;
+  const rows = table.querySelectorAll('tr');
+  rows.forEach(row=>{
+    const cells = row.children;
+    if(cells[colIndex]) cells[colIndex].classList.add('col-hover');
+  });
+}
+
+function applyColHoverSetup(){
+  const resDiv = document.getElementById('resultados');
+  if(!resDiv) return;
+  const table = resDiv.querySelector('table');
+  if(!table) return;
+  if(table._hoverReady) return;
+  table._hoverReady = true;
+  resDiv.addEventListener('mousemove', function(e){
+    const cell = e.target.closest('th,td');
+    if(!cell){
+      applyColHover(table,null);
+      return;
+    }
+    const row = cell.parentElement;
+    const cells = Array.from(row.children);
+    const colIndex = cells.indexOf(cell);
+    applyColHover(table,colIndex);
+  });
+  resDiv.addEventListener('mouseleave', function(){
+    applyColHover(table,null);
+  });
+}
+
+document.addEventListener('click', function(e){
+  const tr = e.target.closest('#resultados table tbody tr');
+  if(!tr) return;
+  document.querySelectorAll('#resultados table tbody tr.row-selected').forEach(r => r.classList.remove('row-selected'));
+  tr.classList.add('row-selected');
+});
+
+document.addEventListener('dblclick', function(e){
+  const cell = e.target.closest('#resultados td');
+  if(!cell) return;
+  const text = cell.textContent.trim();
+  if(!text) return;
+  const preview = text.length>22 ? text.slice(0,22) + '…' : text;
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(()=>showCopyToast('Copiado: ' + preview))
+      .catch(()=>showCopyToast('Copiado'));
+  } else {
+    showCopyToast('Copiado');
+  }
+});
+
+function showCopyToast(msg){
+  const toast = document.getElementById('copyToast');
+  if(!toast) return;
+  toast.textContent = msg || 'Copiado';
+  toast.classList.add('show');
+  clearTimeout(copyToastTimer);
+  copyToastTimer = setTimeout(()=>toast.classList.remove('show'), 1400);
+}
+
+function handleScrollTopVisibility(){
+  const btn = document.getElementById('scrollTopBtn');
+  if(!btn) return;
+  if(window.scrollY>160){
+    btn.classList.add('visible');
+  }else{
+    btn.classList.remove('visible');
+  }
+}
+
+window.addEventListener('scroll', handleScrollTopVisibility);
+
+window.scrollToTop = function(){
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+</script>
+
+<script>
+function renderInfoPanel(){
+  const panel = document.getElementById('infoPanel');
+  if(!panel) return;
+  const fechas = (typeof fechasActualizacion !== 'undefined') ? fechasActualizacion : {};
+  const hojas = ['Partidas','Series','Farmapack','peso'];
+  hojas.forEach(nombre=>{
+    const el = panel.querySelector(`[data-info-sheet="${nombre}"]`);
+    if(!el) return;
+    const rawVal = fechas && fechas[nombre] ? fechas[nombre] : null;
+    if(!rawVal){
+      el.innerHTML = '<span class="date-empty">—</span>';
+      return;
+    }
+    try {
+      const dateObj = new Date(rawVal);
+      if(isNaN(dateObj.getTime())) throw new Error("Invalid Date");
+      const fmtDate = new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+      }).format(dateObj);
+      const fmtTime = new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        hour: '2-digit', minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(dateObj);
+      el.innerHTML = `
+        <div class="date-wrapper">
+          <span class="date-day">${capitalize(fmtDate)}</span>
+          <span class="date-time">${fmtTime} <span class="date-tz">CLT</span></span>
+        </div>
+      `;
+    } catch(e) {
+      el.textContent = rawVal;
+    }
+  });
+}
+
+function capitalize(s){
+  return s && s[0].toUpperCase() + s.slice(1);
+}
+
+(function initInfoPanel(){
+  function attach(){
+    const info = document.getElementById('info');
+    const panel = document.getElementById('infoPanel');
+    const close = document.getElementById('infoPanelClose');
+    if(!info || !panel) return;
+    info.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const open = panel.classList.contains('open');
+      panel.classList.toggle('open', !open);
+      panel.setAttribute('aria-hidden', open ? 'true' : 'false');
+      if(!open){
+        renderInfoPanel();
+      }
+    });
+    if(close){
+      close.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden','true');
+      });
+    }
+    document.addEventListener('click',(e)=>{
+      if(!panel.classList.contains('open')) return;
+      if(panel.contains(e.target) || e.target===info) return;
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden','true');
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attach);
+  }else{
+    attach();
+  }
+})();
+
+/* ==== Staggered Menu logic ==== */
+(function initStaggerMenu(){
+  function attach(){
+    const btn = document.getElementById('staggerMenuBtn');
+    const overlay = document.getElementById('staggerMenuOverlay');
+    const menu = document.getElementById('staggerMenu');
+    const closeBtn = document.getElementById('staggerClose');
+    if(!btn || !overlay || !menu) return;
+
+    function openMenu(){
+      overlay.classList.add('open');
+      btn.classList.add('open');
+    }
+    function closeMenu(){
+      overlay.classList.remove('open');
+      btn.classList.remove('open');
+    }
+
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(overlay.classList.contains('open')){
+        closeMenu();
+      }else{
+        openMenu();
+      }
+    });
+
+    if(closeBtn){
+      closeBtn.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        closeMenu();
+      });
+    }
+
+    overlay.addEventListener('click',(e)=>{
+      if(!menu.contains(e.target)){
+        closeMenu();
+      }
+    });
+
+    const items = menu.querySelectorAll('.stagger-item');
+    items.forEach(item=>{
+      item.addEventListener('click',()=>{
+        items.forEach(i=>i.classList.remove('active'));
+        item.classList.add('active');
+        const view = item.dataset.view || 'buscador';
+        setView(view);
+        closeMenu();
+      });
+    });
+    setView('buscador');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attach);
+  }else{
+    attach();
+  }
+})();
+
+/* ==== Visual Effects Logic ==== */
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn');
+  if (btn) {
+    const circle = document.createElement('span');
+    const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+    const radius = diameter / 2;
+    const rect = btn.getBoundingClientRect();
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - rect.left - radius}px`;
+    circle.style.top = `${e.clientY - rect.top - radius}px`;
+    circle.classList.add('ripple');
+    const existing = btn.getElementsByClassName('ripple')[0];
+    if (existing) {
+      existing.remove();
+    }
+    btn.appendChild(circle);
+  }
+  createParticles(e.clientX, e.clientY);
+});
+
+function createParticles(x, y) {
+  const container = document.body;
+  const particleCount = 12;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('click-particle');
+    const size = Math.random() * 5 + 2;
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = Math.random() * 60 + 20;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.background = `hsl(${Math.random() * 60 + 180}, 100%, 70%)`;
+    particle.style.position = 'fixed';
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.borderRadius = '50%';
+    particle.style.pointerEvents = 'none';
+    particle.style.zIndex = '9999';
+    particle.style.boxShadow = `0 0 ${size*2}px ${particle.style.background}`;
+    particle.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+    ], {
+      duration: Math.random() * 400 + 400,
+      easing: 'cubic-bezier(0, .9, .57, 1)',
+    }).onfinish = () => particle.remove();
+    container.appendChild(particle);
+  }
+}
+
+/* ==== Ingreso UBICACIONES ==== */
+function getIngresoPayload(){
+  const ubicacion   = document.getElementById('ing_ubicacion')?.value || '';
+  const codigo      = document.getElementById('ing_codigo')?.value || '';
+  const serie       = document.getElementById('ing_serie')?.value || '';
+  const partida     = document.getElementById('ing_partida')?.value || '';
+  const pieza       = document.getElementById('ing_pieza')?.value || '';
+  const fechaVenc   = document.getElementById('ing_fechaVenc')?.value || '';
+  const cantidad    = document.getElementById('ing_cantidad')?.value || '';
+  const color       = document.getElementById('ing_color')?.value || '';
+  return { ubicacion, codigo, serie, partida, pieza, fechaVenc, cantidad, color };
+}
+
+function setIngresoStatus(msg, type){
+  const el = document.getElementById('ingresoStatus');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.remove('ok','error');
+  if(type === 'ok') el.classList.add('ok');
+  if(type === 'error') el.classList.add('error');
+}
+
+function setIngresoLoading(isLoading){
+  const btn = document.getElementById('btnGuardarIngreso');
+  const resetBtn = document.getElementById('btnResetIngreso');
+  const loader = document.getElementById('loaderIngreso');
+  if(btn) btn.disabled = isLoading;
+  if(resetBtn) resetBtn.disabled = isLoading;
+  if(loader) loader.style.display = isLoading ? 'inline-block' : 'none';
+}
+
+function resetIngresoForm(keepStatus){
+  const ids = ['ing_ubicacion','ing_codigo','ing_serie','ing_partida','ing_pieza','ing_fechaVenc','ing_cantidad','ing_color'];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){
+      el.value = '';
+    }
+  });
+  if(!keepStatus) setIngresoStatus('', '');
+}
+
+function validarIngreso(payload){
+  if(!payload.ubicacion.trim()){
+    return 'Ubicación es obligatoria.';
+  }
+  if(!payload.codigo.trim()){
+    return 'Código es obligatorio.';
+  }
+  if(!payload.cantidad || String(payload.cantidad).trim() === ''){
+    return 'Cantidad contada es obligatoria.';
+  }
+  const cant = parseFloat(String(payload.cantidad).replace(/\./g,'').replace(',','.'));
+  if(isNaN(cant) || cant <= 0){
+    return 'Cantidad contada debe ser un número mayor a 0.';
+  }
+  return '';
+}
+
+function guardarUbicacion(){
+  setView('ingreso');
+  const payload = getIngresoPayload();
+  const err = validarIngreso(payload);
+  if(err){
+    setIngresoStatus(err, 'error');
+    return;
+  }
+  setIngresoStatus('Guardando registro en UBICACIONES...', '');
+  setIngresoLoading(true);
+
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    setTimeout(()=>{
+      setIngresoLoading(false);
+      setIngresoStatus('Simulación local: Apps Script no disponible.', 'error');
+    },400);
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      setIngresoLoading(false);
+      if(res && res.ok){
+        resetIngresoForm(true);
+        setIngresoStatus(`✅ REGISTRO GUARDADO CORRECTAMENTE (Fila ${res.row})`, 'ok');
+        setTimeout(() => {
+          const st = document.getElementById('ingresoStatus');
+          if(st && st.classList.contains('ok')) setIngresoStatus('', '');
+        }, 5000);
+      }else{
+        setIngresoStatus(res && res.error ? res.error : 'Error desconocido al guardar.', 'error');
+      }
+    })
+    .withFailureHandler(function(err){
+      setIngresoLoading(false);
+      setIngresoStatus(err && err.message ? err.message : 'Error de Apps Script al guardar.', 'error');
+    })
+    .registrarIngresoUbicaciones(payload);
+}
+</script>

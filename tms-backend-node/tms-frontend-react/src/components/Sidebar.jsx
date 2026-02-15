@@ -1,0 +1,208 @@
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Map, 
+  Satellite, 
+  Users, 
+  Smartphone, 
+  ArrowDownToLine, 
+  Truck, 
+  DollyChart, // Replacing fa-dolly-flatbed
+  ArrowUpFromLine, 
+  FileText, 
+  Hand, 
+  Package, 
+  Ship, 
+  Warehouse, 
+  MapPin, 
+  ArrowLeftRight, 
+  Search, 
+  Barcode, 
+  MapPinned, 
+  Settings, 
+  Shield, 
+  Layers, 
+  FileBarChart,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react';
+
+const Sidebar = () => {
+  const location = useLocation();
+  const [expandedSections, setExpandedSections] = useState({});
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const menuConfig = [
+    {
+      id: 'tms',
+      label: 'TMS',
+      icon: <Map size={20} />,
+      color: 'text-emerald-500',
+      modules: [
+        { id: 'tms-dashboard', label: 'Dashboard TMS', icon: <LayoutDashboard size={18} />, path: '/tms/dashboard' },
+        { id: 'tms-routes', label: 'Planificar Rutas', icon: <MapPinned size={18} />, path: '/tms/planning' },
+        { id: 'tms-control', label: 'Torre de Control', icon: <Satellite size={18} />, path: '/tms/control-tower' },
+        { id: 'tms-drivers', label: 'Conductores', icon: <Users size={18} />, path: '/tms/drivers' },
+        { id: 'tms-mobile', label: 'App Móvil', icon: <Smartphone size={18} />, path: '/tms/mobile' }
+      ]
+    },
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: <FileBarChart size={20} />,
+      color: 'text-indigo-500',
+      isLink: true,
+      path: '/dashboard'
+    },
+    {
+      id: 'inbound',
+      label: 'Inbound',
+      icon: <ArrowDownToLine size={20} />,
+      color: 'text-emerald-500',
+      modules: [
+        { id: 'reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
+        { id: 'ingreso', label: 'Ingreso', icon: <DollyChart size={18} />, path: '/inbound/entry' }
+      ]
+    },
+    {
+      id: 'outbound',
+      label: 'Outbound',
+      icon: <ArrowUpFromLine size={20} />,
+      color: 'text-blue-500',
+      modules: [
+        { id: 'notasventa', label: 'Notas de Venta', icon: <FileText size={18} />, path: '/outbound/sales-orders' },
+        { id: 'picking', label: 'Picking', icon: <Hand size={18} />, path: '/outbound/picking' },
+        { id: 'packing', label: 'Packing', icon: <Package size={18} />, path: '/outbound/packing' },
+        { id: 'shipping', label: 'Despachos', icon: <Ship size={18} />, path: '/outbound/shipping' },
+        { id: 'entregas', label: 'Entregas', icon: <Truck size={18} />, path: '/outbound/deliveries' }
+      ]
+    },
+    {
+      id: 'inventario',
+      label: 'Inventario',
+      icon: <Warehouse size={20} />,
+      color: 'text-amber-500',
+      modules: [
+        { id: 'inventory', label: 'Stock', icon: <Package size={18} />, path: '/inventory/stock' },
+        { id: 'layout', label: 'Layout', icon: <MapPin size={18} />, path: '/inventory/layout' },
+        { id: 'transferencias', label: 'Transferencias', icon: <ArrowLeftRight size={18} />, path: '/inventory/transfers' }
+      ]
+    },
+    {
+      id: 'consultas',
+      label: 'Consultas',
+      icon: <Search size={20} />,
+      color: 'text-violet-500',
+      modules: [
+        { id: 'lotesseries', label: 'Lotes/Series', icon: <Barcode size={18} />, path: '/queries/batches' },
+        { id: 'estadonv', label: 'Estado N.V', icon: <FileText size={18} />, path: '/queries/sales-status' },
+        { id: 'direcciones', label: 'Direcciones', icon: <MapPin size={18} />, path: '/queries/addresses' }
+      ]
+    },
+    {
+      id: 'admin',
+      label: 'Admin',
+      icon: <Settings size={20} />,
+      color: 'text-red-500',
+      modules: [
+        { id: 'users', label: 'Usuarios', icon: <Users size={18} />, path: '/admin/users' },
+        { id: 'roles', label: 'Roles', icon: <Shield size={18} />, path: '/admin/roles' },
+        { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
+        { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' }
+      ]
+    }
+  ];
+
+  return (
+    <aside className="bg-slate-900 text-white w-64 flex-shrink-0 hidden md:flex flex-col h-screen overflow-y-auto border-r border-slate-700">
+      <div className="p-6 border-b border-slate-700 flex flex-col items-center">
+        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg border-2 border-slate-600">
+           <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-10 h-10 object-contain" />
+        </div>
+        <h1 className="text-xl font-bold tracking-tight text-white">TMS CCO</h1>
+        <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Control Logístico</p>
+      </div>
+
+      <nav className="flex-1 p-4 space-y-2">
+        {menuConfig.map((area) => (
+          <div key={area.id} className="mb-2">
+            {area.isLink ? (
+              <Link 
+                to={area.path}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  location.pathname === area.path 
+                    ? 'bg-slate-800 text-white border-l-4 border-indigo-500' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <span className={`${location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}`}>
+                  {area.icon}
+                </span>
+                <span className="font-medium text-sm">{area.label}</span>
+              </Link>
+            ) : (
+              <div>
+                <button 
+                  onClick={() => toggleSection(area.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
+                    expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`${expandedSections[area.id] ? area.color : 'text-slate-500 group-hover:text-white'}`}>
+                      {area.icon}
+                    </span>
+                    <span className="font-medium text-sm">{area.label}</span>
+                  </div>
+                  {expandedSections[area.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+                
+                {/* Dropdown Items */}
+                {expandedSections[area.id] && (
+                  <div className="ml-4 mt-1 pl-4 border-l border-slate-700 space-y-1">
+                    {area.modules.map((module) => (
+                      <Link 
+                        key={module.id}
+                        to={module.path}
+                        className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
+                          location.pathname === module.path
+                            ? 'text-white bg-slate-700 font-medium'
+                            : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                        }`}
+                      >
+                        {module.icon}
+                        <span>{module.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+
+      {/* User Footer */}
+      <div className="p-4 border-t border-slate-700 bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-sm border border-slate-600">
+            AD
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">Admin Usuario</p>
+            <p className="text-xs text-slate-400 truncate">Administrador</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+export default Sidebar;

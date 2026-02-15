@@ -1,0 +1,32 @@
+services:
+  # 1. Backend Service (Node.js API)
+  - type: web
+    name: tms-cco-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: PORT
+        value: 10000
+
+  # 2. Frontend Service (Vite React App)
+  - type: static
+    name: tms-cco-frontend
+    env: static
+    plan: free
+    buildCommand: cd CCO_PTM && npm install && npm run build
+    publishDir: CCO_PTM/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_KEY
+        sync: false

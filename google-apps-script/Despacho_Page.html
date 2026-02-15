@@ -1,0 +1,674 @@
+<section class="view" id="dispatchView">
+    <!-- Header Premium con Identidad Naranja -->
+    <div class="wms-module-header" style="background: linear-gradient(135deg, #FF6B00 0%, #FF8F00 100%); border-bottom: none; box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);">
+        <div class="wms-header-content">
+            <nav class="wms-breadcrumb">
+                <a href="#" onclick="SidebarMenu.goToDashboard()" style="color: rgba(255,255,255,0.8);"><i class="fas fa-home"></i> Inicio</a>
+                <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.5);"></i>
+                <span style="color: white; font-weight: 600;">Despachos</span>
+            </nav>
+            <div class="wms-header-title-row">
+                <div class="wms-header-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <div class="wms-header-text">
+                    <h1 class="wms-module-title" style="color: white;">Gestión de Despachos</h1>
+                    <p class="wms-module-subtitle" style="color: rgba(255,255,255,0.9);">Control de salida y generación de guías</p>
+                </div>
+            </div>
+        </div>
+        <div class="wms-header-actions">
+            <button class="wms-btn" onclick="cargarNVDespacho()" style="background: white; color: #FF6B00; border: none; font-weight: 700;">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Layout Principal: Grid 2 Columnas -->
+    <div class="despacho-layout">
+        
+        <!-- COLUMNA IZQUIERDA: Lista de Pedidos -->
+        <div class="despacho-sidebar">
+            <div class="despacho-panel-header">
+                <h3><i class="fas fa-list"></i> Pendientes (<span id="despacho-nv-count">0</span>)</h3>
+                <div class="despacho-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar N.V, Cliente..." onkeyup="filtrarNVDespacho(this.value)">
+                </div>
+            </div>
+            
+            <div class="despacho-list-container" id="despacho-nv-list">
+                <!-- Loading State -->
+                <div class="wms-loading-state">
+                    <div class="wms-spinner" style="border-color: #FF6B00; border-top-color: transparent;"></div>
+                    <p>Cargando pedidos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Área de Trabajo -->
+        <div class="despacho-workspace">
+            
+            <!-- Empty State (Cuando no hay selección) -->
+            <div class="despacho-empty-state" id="despacho-empty-state">
+                <div class="empty-icon-container">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <h2>Listo para despachar</h2>
+                <p>Selecciona un pedido de la lista izquierda para comenzar el proceso de despacho.</p>
+            </div>
+
+            <!-- Formulario de Despacho -->
+            <div class="despacho-form-container" id="despacho-form" style="display: none;">
+                
+                <!-- Tarjeta 1: Resumen del Pedido (Solo Lectura) -->
+                <div class="despacho-card info-card">
+                    <div class="card-header-orange">
+                        <i class="fas fa-box"></i> Resumen del Pedido
+                    </div>
+                    <div class="card-body-grid">
+                        <div class="field-group">
+                            <label>N.Venta</label>
+                            <input type="text" id="despacho_nv" readonly class="input-readonly big-text">
+                        </div>
+                        <div class="field-group">
+                            <label>Cliente</label>
+                            <input type="text" id="despacho_cliente" readonly class="input-readonly">
+                        </div>
+                        <div class="field-group">
+                            <label>Vendedor</label>
+                            <input type="text" id="despacho_vendedor" readonly class="input-readonly">
+                        </div>
+                        <div class="field-group highlight">
+                            <label>Bultos (Packing)</label>
+                            <input type="text" id="despacho_bultos" readonly class="input-readonly input-bultos">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Datos de Despacho (Editable) -->
+                <form id="form-despacho-real" onsubmit="event.preventDefault(); generarDespachoSubmit();">
+                    <div class="despacho-card action-card">
+                        <div class="card-header-dark">
+                            <i class="fas fa-paper-plane"></i> Datos de Envío
+                        </div>
+                        <div class="card-body">
+                            
+                            <div class="form-row">
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label class="required-label">Dirección de Entrega</label>
+                                    <div class="input-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <input type="text" id="despacho_direccion" required placeholder="Calle, Número, Comuna (Ej: Av. Principal 123, Santiago)">
+                                    </div>
+                                    <small style="color: #718096; font-size: 0.8rem;">* Copiar dirección exacta del documento físico</small>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required-label">Facturas</label>
+                                    <div class="input-icon">
+                                        <i class="fas fa-file-invoice"></i>
+                                        <input type="text" id="despacho_facturas" required placeholder="Ej: 12345, 12346">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="required-label">N° Guía</label>
+                                    <div class="input-icon">
+                                        <i class="fas fa-barcode"></i>
+                                        <input type="text" id="despacho_guia" required placeholder="Escanea o escribe">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required-label">Transporte</label>
+                                    <div class="input-icon">
+                                        <i class="fas fa-truck"></i>
+                                        <input type="text" id="despacho_empresaTransporte" required placeholder="Nombre empresa">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="required-label">Chofer</label>
+                                    <div class="input-icon">
+                                        <i class="fas fa-user-tag"></i>
+                                        <input type="text" id="despacho_transportista" required placeholder="Nombre conductor">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>División / Zona</label>
+                                    <input type="text" id="despacho_division" placeholder="Opcional">
+                                </div>
+                                <div class="form-group">
+                                    <label>Valor Flete ($)</label>
+                                    <input type="text" id="despacho_valorFlete" placeholder="0">
+                                </div>
+                            </div>
+
+                            <div class="form-footer">
+                                <button type="submit" class="btn-despachar" id="despacho_btnGenerar">
+                                    <span class="btn-text">CONFIRMAR DESPACHO</span>
+                                    <span class="btn-icon"><i class="fas fa-check"></i></span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Estilos CSS Modernos -->
+    <style>
+        :root {
+            --orange-brand: #FF6B00;
+            --orange-hover: #e65100;
+            --dark-bg: #1a1a2e;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --border-color: #e2e8f0;
+        }
+
+        .despacho-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 140px);
+            background-color: #f7fafc;
+        }
+
+        /* Sidebar */
+        .despacho-sidebar {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .despacho-panel-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background: #fff;
+        }
+
+        .despacho-panel-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .despacho-search {
+            position: relative;
+        }
+
+        .despacho-search i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .despacho-search input {
+            width: 100%;
+            padding: 8px 10px 8px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .despacho-search input:focus {
+            border-color: var(--orange-brand);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.1);
+        }
+
+        .despacho-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        /* Tarjetas de Pedido en Lista */
+        .order-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-color: #cbd5e0;
+        }
+
+        .order-card.active {
+            border: 2px solid var(--orange-brand);
+            background: #fff8f0;
+        }
+
+        .order-card.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--orange-brand);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .order-nv {
+            font-weight: 700;
+            color: var(--orange-brand);
+            font-size: 1rem;
+        }
+
+        .order-date {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .order-client {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 500;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .meta-tag {
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .meta-tag.bultos {
+            background: #e6fffa;
+            color: #2c7a7b;
+            font-weight: 600;
+        }
+
+        /* Workspace */
+        .despacho-workspace {
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .despacho-empty-state {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .empty-icon-container {
+            width: 100px;
+            height: 100px;
+            background: #fff5eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .empty-icon-container i {
+            font-size: 3rem;
+            color: var(--orange-brand);
+        }
+
+        /* Formularios y Tarjetas de Detalle */
+        .despacho-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header-orange {
+            background: rgba(255, 107, 0, 0.1);
+            color: var(--orange-brand);
+            padding: 12px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.2);
+        }
+
+        .card-header-dark {
+            background: #2d3748;
+            color: white;
+            padding: 12px 20px;
+            font-weight: 600;
+        }
+
+        .card-body-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .input-readonly {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .input-bultos {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            border-color: #bee3f8;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .big-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--orange-brand);
+        }
+
+        /* Form Row Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .required-label::after {
+            content: '*';
+            color: #e53e3e;
+            margin-left: 3px;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .input-icon input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-icon input:focus {
+            border-color: var(--orange-brand);
+            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+            outline: none;
+        }
+
+        /* Botón de Acción */
+        .btn-despachar {
+            background: linear-gradient(135deg, #FF6B00 0%, #FF8F00 100%);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(255, 107, 0, 0.3);
+        }
+
+        .btn-despachar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 107, 0, 0.4);
+        }
+
+        .btn-despachar:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .despacho-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .despacho-sidebar {
+                height: 300px;
+            }
+
+            .card-body-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        // Variables globales
+        var _despachoNVs = [];
+        var _nvSeleccionada = null;
+
+        // Inicializar
+        function initDespachoModule() {
+            cargarNVDespacho();
+        }
+
+        // Cargar datos
+        function cargarNVDespacho() {
+            var container = document.getElementById('despacho-nv-list');
+            container.innerHTML = '<div class="wms-loading-state"><div class="wms-spinner" style="border-color: #FF6B00; border-top-color: transparent;"></div><p>Cargando...</p></div>';
+
+            google.script.run
+                .withSuccessHandler(renderNVList)
+                .withFailureHandler(showError)
+                .getNVPendientesDespacho();
+        }
+
+        function renderNVList(result) {
+            var container = document.getElementById('despacho-nv-list');
+            document.getElementById('despacho-nv-count').innerText = result.total || 0;
+            
+            if (!result.success || !result.notasVenta || result.notasVenta.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#a0aec0;"><i class="fas fa-check-circle" style="font-size:2rem; margin-bottom:10px;"></i><p>Todo despachado</p></div>';
+                return;
+            }
+
+            _despachoNVs = result.notasVenta;
+            var html = '';
+
+            _despachoNVs.forEach(function(nv) {
+                var tieneBultos = nv.bultos > 0;
+                var claseBultos = tieneBultos ? 'bultos' : '';
+                
+                html += `
+                <div class="order-card" onclick="selectNV('${nv.notaVenta}', this)">
+                    <div class="order-header">
+                        <span class="order-nv">N.V ${nv.notaVenta}</span>
+                        <span class="order-date">${formatearFechaCorta(nv.fechaDocto)}</span>
+                    </div>
+                    <div class="order-client">${nv.cliente}</div>
+                    <div class="order-meta">
+                        <span class="meta-tag ${claseBultos}"><i class="fas fa-box"></i> ${nv.bultos} Bultos</span>
+                        <span class="meta-tag"><i class="fas fa-user"></i> ${nv.vendedor.split(' ')[0]}</span>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectNV(nvId, element) {
+            // UI Highlight
+            document.querySelectorAll('.order-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            // Find data
+            var nvData = _despachoNVs.find(n => n.notaVenta === nvId);
+            _nvSeleccionada = nvId;
+
+            // Show workspace
+            document.getElementById('despacho-empty-state').style.display = 'none';
+            document.getElementById('despacho-form').style.display = 'block';
+
+            // Fill Info Card
+            document.getElementById('despacho_nv').value = nvData.notaVenta;
+            document.getElementById('despacho_cliente').value = nvData.cliente;
+            document.getElementById('despacho_vendedor').value = nvData.vendedor;
+            document.getElementById('despacho_bultos').value = nvData.bultos;
+
+            // Reset Form
+            document.getElementById('form-despacho-real').reset();
+            
+            // Focus first field
+            setTimeout(() => document.getElementById('despacho_facturas').focus(), 100);
+        }
+
+        function generarDespachoSubmit() {
+            if (!_nvSeleccionada) return;
+
+            var btn = document.getElementById('despacho_btnGenerar');
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+            btn.disabled = true;
+
+            var datos = {
+                direccion: document.getElementById('despacho_direccion').value,
+                facturas: document.getElementById('despacho_facturas').value,
+                guia: document.getElementById('despacho_guia').value,
+                empresaTransporte: document.getElementById('despacho_empresaTransporte').value,
+                transportista: document.getElementById('despacho_transportista').value,
+                division: document.getElementById('despacho_division').value,
+                valorFlete: document.getElementById('despacho_valorFlete').value
+            };
+
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    if (res.success) {
+                        if(window.WMSToast) WMSToast.success('¡Despacho Exitoso!');
+                        // Reset UI
+                        document.getElementById('despacho-form').style.display = 'none';
+                        document.getElementById('despacho-empty-state').style.display = 'flex';
+                        cargarNVDespacho(); // Refresh list
+                    } else {
+                        if(window.WMSToast) WMSToast.error(res.error);
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    alert('Error: ' + err.message);
+                })
+                .generarDespacho(_nvSeleccionada, datos);
+        }
+
+        function filtrarNVDespacho(texto) {
+            var val = texto.toLowerCase();
+            var cards = document.querySelectorAll('.order-card');
+            
+            cards.forEach(card => {
+                var text = card.innerText.toLowerCase();
+                card.style.display = text.includes(val) ? 'block' : 'none';
+            });
+        }
+
+        function formatearFechaCorta(fechaStr) {
+            if (!fechaStr) return '';
+            var d = new Date(fechaStr);
+            return d.getDate() + '/' + (d.getMonth() + 1);
+        }
+
+        function showError(err) {
+            console.error(err);
+        }
+    </script>
+</section>

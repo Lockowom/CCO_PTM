@@ -1,0 +1,1117 @@
+<section class="view" id="adminviewsView">
+    <!-- AdminViews_Page.html - Administración de Vistas del Sistema -->
+
+    <div class="wms-page-container">
+        <!-- Module Header -->
+        <div class="wms-module-header">
+            <div class="wms-breadcrumb">
+                <a href="#" onclick="showView('dashboard'); return false;">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <i class="fas fa-chevron-right"></i>
+                <span>Administración</span>
+                <i class="fas fa-chevron-right"></i>
+                <span>Vistas</span>
+            </div>
+
+            <div class="wms-header-content">
+                <div class="wms-header-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="wms-header-text">
+                    <h1>Administración de Vistas</h1>
+                    <p>Gestiona los módulos visibles en el menú - Los cambios se aplican en tiempo real</p>
+                </div>
+            </div>
+
+            <div class="wms-quick-actions">
+                <button class="wms-btn wms-btn-secondary" onclick="AdminViewsModule.loadConfig()"
+                    aria-label="Actualizar">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Actualizar</span>
+                </button>
+                <button class="wms-btn wms-btn-warning" onclick="AdminViewsModule.resetConfig()" aria-label="Reiniciar">
+                    <i class="fas fa-undo"></i>
+                    <span>Reiniciar</span>
+                </button>
+                <div class="adminviews-save-indicator" id="adminviewsSaveIndicator">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Sincronizado</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="wms-stats-grid">
+            <div class="wms-stat-card" data-type="info">
+                <div class="wms-stat-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="wms-stat-content">
+                    <span class="wms-stat-value" id="statViewsTotal">0</span>
+                    <span class="wms-stat-label">Total Vistas</span>
+                </div>
+            </div>
+            <div class="wms-stat-card" data-type="success">
+                <div class="wms-stat-icon"><i class="fas fa-eye"></i></div>
+                <div class="wms-stat-content">
+                    <span class="wms-stat-value" id="statViewsEnabled">0</span>
+                    <span class="wms-stat-label">Habilitadas</span>
+                </div>
+            </div>
+            <div class="wms-stat-card" data-type="warning">
+                <div class="wms-stat-icon"><i class="fas fa-eye-slash"></i></div>
+                <div class="wms-stat-content">
+                    <span class="wms-stat-value" id="statViewsDisabled">0</span>
+                    <span class="wms-stat-label">Deshabilitadas</span>
+                </div>
+            </div>
+            <div class="wms-stat-card" data-type="primary">
+                <div class="wms-stat-icon"><i class="fas fa-folder"></i></div>
+                <div class="wms-stat-content">
+                    <span class="wms-stat-value" id="statAreasTotal">0</span>
+                    <span class="wms-stat-label">Categorías</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Views Container -->
+        <div class="adminviews-container" id="adminviewsContainer">
+            <div class="adminviews-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Cargando configuración de vistas...</span>
+            </div>
+        </div>
+
+        <!-- Roles Initial Views Section -->
+        <div class="roles-views-section">
+            <div class="section-header">
+                <div class="section-header-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="section-header-text">
+                    <h2>Vista Inicial por Rol</h2>
+                    <p>Configura qué vista verá cada rol al iniciar sesión</p>
+                </div>
+            </div>
+            <div class="roles-views-container" id="rolesViewsContainer">
+                <div class="adminviews-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Cargando roles...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* ==================== ADMIN VIEWS MODULE ==================== */
+
+        /* Save indicator */
+        .adminviews-save-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #059669;
+            transition: all 0.3s ease;
+        }
+
+        .adminviews-save-indicator.saving {
+            background: #fef3c7;
+            border-color: #fcd34d;
+            color: #d97706;
+        }
+
+        .adminviews-save-indicator.saving i {
+            animation: spin 1s linear infinite;
+        }
+
+        .adminviews-save-indicator.error {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Container */
+        .adminviews-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .adminviews-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 60px;
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .adminviews-loading i {
+            font-size: 1.5rem;
+            color: #FF6B00;
+        }
+
+        /* Area Card */
+        .area-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .area-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-color: #d1d5db;
+        }
+
+        .area-card.disabled {
+            opacity: 0.6;
+        }
+
+        /* Area Header */
+        .area-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .area-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .area-info {
+            flex: 1;
+        }
+
+        .area-info h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+
+        .area-info p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .area-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .area-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #f1f5f9;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch-large {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch-large::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toggle-switch-large.active {
+            background: linear-gradient(135deg, #FF6B00 0%, #ff8534 100%);
+        }
+
+        .toggle-switch-large.active::after {
+            left: 27px;
+        }
+
+        /* Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 24px;
+            background: #f8fafc;
+        }
+
+        /* Module Item */
+        .module-item-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .module-item-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .module-item-card.disabled {
+            opacity: 0.5;
+            background: #f8fafc;
+        }
+
+        .module-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .module-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .module-item-card.active .module-item-icon {
+            background: #fff7ed;
+            color: #FF6B00;
+        }
+
+        .module-item-text h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 2px 0;
+        }
+
+        .module-item-text span {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Module Toggle */
+        .module-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .module-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .module-toggle.active {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+
+        .module-toggle.active::after {
+            left: 23px;
+        }
+
+        .module-toggle.saving {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .area-header {
+                flex-wrap: wrap;
+            }
+
+            .area-toggle {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 12px;
+            }
+        }
+
+        /* ==================== ROLES VIEWS SECTION ==================== */
+        .roles-views-section {
+            margin-top: 40px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .section-header-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .section-header-text h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 4px 0;
+        }
+
+        .section-header-text p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .roles-views-container {
+            padding: 24px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        /* Role Card */
+        .role-view-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .role-view-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .role-view-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .role-view-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .role-view-text h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 2px 0;
+        }
+
+        .role-view-text .current-view {
+            font-size: 0.75rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .role-view-text .current-view i {
+            color: #FF6B00;
+            font-size: 0.65rem;
+        }
+
+        /* View Select */
+        .view-select {
+            min-width: 160px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-select:hover {
+            border-color: #FF6B00;
+        }
+
+        .view-select:focus {
+            outline: none;
+            border-color: #FF6B00;
+            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+        }
+
+        .view-select.saving {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .role-view-card {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .view-select {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+        // ==================== ADMIN VIEWS MODULE ==================== 
+        console.log('🟢 AdminViews_Page.html: Script cargándose...');
+
+        var AdminViewsModule = {
+            config: null,
+            refreshInterval: null,
+
+            // Inicializar
+            init: function () {
+                console.log('🟢 AdminViewsModule.init(): INICIANDO...');
+                this.loadConfig();
+                this.loadRolesViews(); // Cargar roles con sus vistas por defecto
+
+                // Auto-refresh cada 30 segundos para sincronización en tiempo real
+                this.startAutoRefresh();
+                console.log('🟢 AdminViewsModule.init(): COMPLETADO');
+            },
+
+            // Cargar configuración
+            loadConfig: function () {
+                var self = this;
+                var container = document.getElementById('adminviewsContainer');
+
+                container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-spinner fa-spin"></i><span>Cargando configuración...</span></div>';
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        if (result.success) {
+                            self.config = result.config;
+                            self.render();
+                            self.updateStats(result.stats);
+                        } else {
+                            container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><span>Error: ' + (result.error || 'No se pudo cargar') + '</span></div>';
+                        }
+                    })
+                    .withFailureHandler(function (error) {
+                        container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-wifi-slash" style="color:#ef4444;"></i><span>Error de conexión</span></div>';
+                    })
+                    .getViewsConfig();
+            },
+
+            // Renderizar configuración
+            render: function () {
+                var self = this;
+                var container = document.getElementById('adminviewsContainer');
+
+                if (!this.config || !this.config.areas) {
+                    container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-folder-open" style="color:#94a3b8;"></i><span>No hay vistas configuradas</span></div>';
+                    return;
+                }
+
+                var html = this.config.areas.map(function (area) {
+                    return self.renderAreaCard(area);
+                }).join('');
+
+                container.innerHTML = html;
+            },
+
+            // Renderizar tarjeta de área
+            renderAreaCard: function (area) {
+                var self = this;
+                var modulesHtml = '';
+
+                if (area.modules && area.modules.length > 0) {
+                    modulesHtml = '<div class="modules-grid">' +
+                        area.modules.map(function (module) {
+                            return self.renderModuleItem(module, area.id);
+                        }).join('') +
+                        '</div>';
+                }
+
+                var moduleCount = area.modules ? area.modules.length : 0;
+                var enabledCount = area.modules ? area.modules.filter(function (m) { return m.enabled; }).length : 0;
+
+                return '<div class="area-card ' + (area.enabled ? '' : 'disabled') + '" data-area="' + area.id + '">' +
+                    '<div class="area-header">' +
+                    '<div class="area-icon" style="background: ' + (area.color || '#6b7280') + ';">' +
+                    '<i class="fas ' + area.icon + '"></i>' +
+                    '</div>' +
+                    '<div class="area-info">' +
+                    '<h3>' + area.label + '</h3>' +
+                    '<p>' + (moduleCount > 0 ? enabledCount + ' de ' + moduleCount + ' módulos activos' : 'Enlace directo') + '</p>' +
+                    '</div>' +
+                    '<div class="area-toggle">' +
+                    '<div class="area-badge"><i class="fas fa-tag"></i> ' + area.id + '</div>' +
+                    '<div class="toggle-switch-large ' + (area.enabled ? 'active' : '') + '" ' +
+                    'onclick="AdminViewsModule.toggleArea(\'' + area.id + '\', ' + !area.enabled + ')" ' +
+                    'title="' + (area.enabled ? 'Deshabilitar' : 'Habilitar') + ' área"></div>' +
+                    '</div>' +
+                    '</div>' +
+                    modulesHtml +
+                    '</div>';
+            },
+
+            // Renderizar item de módulo
+            renderModuleItem: function (module, areaId) {
+                return '<div class="module-item-card ' + (module.enabled ? 'active' : 'disabled') + '" data-module="' + module.id + '">' +
+                    '<div class="module-item-info">' +
+                    '<div class="module-item-icon"><i class="fas ' + module.icon + '"></i></div>' +
+                    '<div class="module-item-text">' +
+                    '<h4>' + module.label + '</h4>' +
+                    '<span>Vista: ' + module.view + '</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="module-toggle ' + (module.enabled ? 'active' : '') + '" ' +
+                    'onclick="AdminViewsModule.toggleModule(\'' + module.id + '\', ' + !module.enabled + ')" ' +
+                    'title="' + (module.enabled ? 'Deshabilitar' : 'Habilitar') + '"></div>' +
+                    '</div>';
+            },
+
+            // Toggle área
+            toggleArea: function (areaId, enabled) {
+                var self = this;
+                this.showSaving();
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        if (result.success) {
+                            self.showSaved();
+                            self.loadConfig(); // Recargar para reflejar cambios
+                            self.refreshMenu(); // Actualizar menú en tiempo real
+                        } else {
+                            self.showError();
+                        }
+                    })
+                    .withFailureHandler(function () {
+                        self.showError();
+                    })
+                    .updateViewStatus(areaId, enabled);
+            },
+
+            // Toggle módulo
+            toggleModule: function (moduleId, enabled) {
+                var self = this;
+                var toggle = document.querySelector('[data-module="' + moduleId + '"] .module-toggle');
+
+                if (toggle) toggle.classList.add('saving');
+                this.showSaving();
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        if (result.success) {
+                            self.showSaved();
+
+                            // Actualizar UI local inmediatamente
+                            if (toggle) {
+                                toggle.classList.remove('saving');
+                                if (enabled) {
+                                    toggle.classList.add('active');
+                                    toggle.closest('.module-item-card').classList.remove('disabled');
+                                    toggle.closest('.module-item-card').classList.add('active');
+                                } else {
+                                    toggle.classList.remove('active');
+                                    toggle.closest('.module-item-card').classList.add('disabled');
+                                    toggle.closest('.module-item-card').classList.remove('active');
+                                }
+                                toggle.setAttribute('onclick', 'AdminViewsModule.toggleModule(\'' + moduleId + '\', ' + !enabled + ')');
+                            }
+
+                            // Actualizar menú en tiempo real
+                            self.refreshMenu();
+
+                            // Recargar stats
+                            self.loadConfig();
+                        } else {
+                            self.showError();
+                            if (toggle) toggle.classList.remove('saving');
+                        }
+                    })
+                    .withFailureHandler(function () {
+                        self.showError();
+                        if (toggle) toggle.classList.remove('saving');
+                    })
+                    .updateViewStatus(moduleId, enabled);
+            },
+
+            // Actualizar estadísticas
+            updateStats: function (stats) {
+                if (!stats) return;
+
+                var el1 = document.getElementById('statViewsTotal');
+                var el2 = document.getElementById('statViewsEnabled');
+                var el3 = document.getElementById('statViewsDisabled');
+                var el4 = document.getElementById('statAreasTotal');
+
+                if (el1) el1.textContent = stats.total || 0;
+                if (el2) el2.textContent = stats.enabled || 0;
+                if (el3) el3.textContent = stats.disabled || 0;
+                if (el4) el4.textContent = stats.areas || 0;
+            },
+
+            // Refrescar menú en tiempo real
+            refreshMenu: function () {
+                // Recargar configuración del menú y re-renderizar
+                if (typeof SidebarMenu !== 'undefined' && SidebarMenu.render) {
+                    // Obtener nueva configuración y actualizar el menú
+                    var self = this;
+                    google.script.run
+                        .withSuccessHandler(function (result) {
+                            if (result.success && result.config && result.config.areas) {
+                                // Actualizar configuración del SidebarMenu
+                                SidebarMenu.config.areas = self.convertToMenuFormat(result.config.areas);
+                                SidebarMenu.render();
+                                console.log('AdminViewsModule: Menú actualizado en tiempo real');
+                            }
+                        })
+                        .getViewsConfig();
+                }
+            },
+
+            // Convertir formato de config a formato de menú
+            convertToMenuFormat: function (areas) {
+                return areas.filter(function (a) { return a.enabled; }).map(function (area) {
+                    var menuArea = {
+                        id: area.id,
+                        label: area.label,
+                        icon: area.icon,
+                        color: area.color
+                    };
+
+                    if (area.isLink) {
+                        menuArea.isLink = true;
+                        menuArea.view = area.view;
+                        menuArea.permiso = area.permiso;
+                    } else if (area.modules) {
+                        menuArea.modules = area.modules.filter(function (m) { return m.enabled; }).map(function (module) {
+                            return {
+                                id: module.id,
+                                label: module.label,
+                                icon: module.icon,
+                                view: module.view,
+                                permiso: module.permiso
+                            };
+                        });
+                    }
+
+                    if (area.adminOnly) menuArea.adminOnly = true;
+
+                    return menuArea;
+                });
+            },
+
+            // Auto-refresh para sincronización
+            startAutoRefresh: function () {
+                var self = this;
+                this.refreshInterval = setInterval(function () {
+                    // Solo refrescar si la vista está activa
+                    var view = document.getElementById('adminviewsView');
+                    if (view && view.classList.contains('active')) {
+                        self.loadConfig();
+                    }
+                }, 30000); // Cada 30 segundos
+            },
+
+            // Reiniciar configuración
+            resetConfig: function () {
+                if (!confirm('¿Está seguro de reiniciar todas las vistas a su configuración por defecto?')) {
+                    return;
+                }
+
+                var self = this;
+                this.showSaving();
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        if (result.success) {
+                            self.showSaved();
+                            self.loadConfig();
+                            self.refreshMenu();
+                            alert('Configuración reiniciada correctamente');
+                        } else {
+                            self.showError();
+                            alert('Error: ' + result.error);
+                        }
+                    })
+                    .withFailureHandler(function (error) {
+                        self.showError();
+                        alert('Error de conexión');
+                    })
+                    .resetViewsConfig();
+            },
+
+            // Indicadores de estado
+            showSaving: function () {
+                var indicator = document.getElementById('adminviewsSaveIndicator');
+                if (indicator) {
+                    indicator.className = 'adminviews-save-indicator saving';
+                    indicator.innerHTML = '<i class="fas fa-sync-alt"></i><span>Guardando...</span>';
+                }
+            },
+
+            showSaved: function () {
+                var indicator = document.getElementById('adminviewsSaveIndicator');
+                if (indicator) {
+                    indicator.className = 'adminviews-save-indicator';
+                    indicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Sincronizado</span>';
+                }
+            },
+
+            showError: function () {
+                var indicator = document.getElementById('adminviewsSaveIndicator');
+                if (indicator) {
+                    indicator.className = 'adminviews-save-indicator error';
+                    indicator.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                }
+            },
+
+            // ==================== ROLES DEFAULT VIEWS ====================
+
+            rolesData: null,
+            availableViews: [],
+
+            // Cargar roles con sus vistas por defecto
+            loadRolesViews: function () {
+                var self = this;
+                var container = document.getElementById('rolesViewsContainer');
+
+                console.log('AdminViewsModule.loadRolesViews: INICIANDO...');
+
+                if (!container) {
+                    console.error('AdminViewsModule: ❌ Container rolesViewsContainer NO ENCONTRADO');
+                    console.error('AdminViewsModule: Verificar que existe el elemento con id="rolesViewsContainer" en el HTML');
+                    return;
+                }
+
+                console.log('AdminViewsModule: ✅ Container encontrado, mostrando loading...');
+                container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-spinner fa-spin"></i><span>Cargando roles...</span></div>';
+
+                console.log('AdminViewsModule: 📞 Llamando a getAllRoles()...');
+
+                // Definir vistas disponibles por defecto
+                self.availableViews = [
+                    { id: 'dashboard', label: 'Dashboard' },
+                    { id: 'reception', label: 'Recepción' },
+                    { id: 'ingreso', label: 'Ingreso' },
+                    { id: 'notasventa', label: 'Notas de Venta' },
+                    { id: 'picking', label: 'Picking' },
+                    { id: 'packing', label: 'Packing' },
+                    { id: 'shipping', label: 'Despachos' },
+                    { id: 'delivery', label: 'Entregas' },
+                    { id: 'inventory', label: 'Stock' },
+                    { id: 'layout', label: 'Layout' },
+                    { id: 'transferencias', label: 'Transferencias' },
+                    { id: 'lotesseries', label: 'Lotes/Series' },
+                    { id: 'estadonv', label: 'Estado N.V' }
+                ];
+
+                // Usar getAllRoles que ya funciona en el sistema
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        console.log('AdminViewsModule: 📥 getAllRoles RESPUESTA recibida:', result);
+
+                        if (result && result.success) {
+                            console.log('AdminViewsModule: ✅ getAllRoles exitoso!');
+                            console.log('AdminViewsModule: Total roles recibidos:', result.roles ? result.roles.length : 0);
+                            console.log('AdminViewsModule: Roles:', result.roles);
+
+                            // Transformar roles al formato que necesitamos
+                            self.rolesData = (result.roles || []).map(function (role) {
+                                return {
+                                    nombre: role.nombre || 'Sin nombre',
+                                    color: role.color || role.colorBg || '#6366f1',
+                                    icono: role.icono || 'fa-user-shield',
+                                    vistaInicial: 'dashboard' // Por defecto, se cargará desde CONFIG_ROLES_VISTAS después
+                                };
+                            });
+
+                            console.log('AdminViewsModule: ✅ Roles transformados:', self.rolesData.length);
+                            console.log('AdminViewsModule: Datos transformados:', self.rolesData);
+
+                            // Ahora cargar las vistas iniciales configuradas
+                            console.log('AdminViewsModule: 🔄 Llamando a loadRoleViewsConfig()...');
+                            self.loadRoleViewsConfig();
+                        } else {
+                            var errorMsg = result ? (result.error || 'No se pudo cargar') : 'Respuesta vacía';
+                            console.error('AdminViewsModule: ❌ Error en getAllRoles:', errorMsg);
+                            container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><span>Error: ' + errorMsg + '</span></div>';
+                        }
+                    })
+                    .withFailureHandler(function (error) {
+                        console.error('AdminViewsModule: ❌ ERROR DE CONEXIÓN:', error);
+                        console.error('AdminViewsModule: Error message:', error.message || error);
+                        container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-wifi-slash" style="color:#ef4444;"></i><span>Error de conexión: ' + (error.message || error) + '</span></div>';
+                    })
+                    .getAllRoles();
+
+                console.log('AdminViewsModule: ⏳ Esperando respuesta de getAllRoles()...');
+            },
+
+            // Cargar configuración de vistas por rol
+            loadRoleViewsConfig: function () {
+                var self = this;
+
+                google.script.run
+                    .withSuccessHandler(function (configResult) {
+                        console.log('AdminViewsModule: Configuración de vistas por rol:', configResult);
+
+                        if (configResult && configResult.success && configResult.config) {
+                            // Aplicar configuración a los roles
+                            var configMap = {};
+                            (configResult.config || []).forEach(function (item) {
+                                if (item.rol && item.vistaInicial) {
+                                    configMap[item.rol.toUpperCase()] = item.vistaInicial;
+                                }
+                            });
+
+                            self.rolesData.forEach(function (role) {
+                                var key = (role.nombre || '').toUpperCase();
+                                if (configMap[key]) {
+                                    role.vistaInicial = configMap[key];
+                                }
+                            });
+                        }
+
+                        // Renderizar los roles
+                        self.renderRolesViews();
+                    })
+                    .withFailureHandler(function (error) {
+                        console.warn('AdminViewsModule: No se pudo cargar config de vistas, usando defaults');
+                        // Renderizar de todos modos con los defaults
+                        self.renderRolesViews();
+                    })
+                    .getRoleViewsConfig();
+            },
+
+            // Renderizar tarjetas de roles
+            renderRolesViews: function () {
+                var self = this;
+                var container = document.getElementById('rolesViewsContainer');
+
+                if (!this.rolesData || this.rolesData.length === 0) {
+                    container.innerHTML = '<div class="adminviews-loading"><i class="fas fa-user-slash" style="color:#94a3b8;"></i><span>No hay roles configurados</span></div>';
+                    return;
+                }
+
+                var html = '<div class="roles-grid">';
+                this.rolesData.forEach(function (role) {
+                    html += self.renderRoleCard(role);
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+            },
+
+            // Renderizar tarjeta de un rol
+            renderRoleCard: function (role) {
+                var self = this;
+                var optionsHtml = this.availableViews.map(function (view) {
+                    var selected = view.id === role.vistaInicial ? 'selected' : '';
+                    return '<option value="' + view.id + '" ' + selected + '>' + view.label + '</option>';
+                }).join('');
+
+                var currentViewLabel = 'Dashboard';
+                for (var i = 0; i < this.availableViews.length; i++) {
+                    if (this.availableViews[i].id === role.vistaInicial) {
+                        currentViewLabel = this.availableViews[i].label;
+                        break;
+                    }
+                }
+
+                return '<div class="role-view-card" data-role="' + role.nombre + '">' +
+                    '<div class="role-view-info">' +
+                    '<div class="role-view-icon" style="background: ' + (role.color || '#6366f1') + ';">' +
+                    '<i class="fas ' + (role.icono || 'fa-user-shield') + '"></i>' +
+                    '</div>' +
+                    '<div class="role-view-text">' +
+                    '<h4>' + role.nombre + '</h4>' +
+                    '<div class="current-view"><i class="fas fa-circle"></i> Inicio: ' + currentViewLabel + '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<select class="view-select" onchange="AdminViewsModule.changeRoleView(\'' + role.nombre.replace(/'/g, "\\'") + '\', this.value, this)">' +
+                    optionsHtml +
+                    '</select>' +
+                    '</div>';
+            },
+
+            // Cambiar vista inicial de un rol
+            changeRoleView: function (roleName, viewId, selectElement) {
+                var self = this;
+
+                if (selectElement) selectElement.classList.add('saving');
+                this.showSaving();
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        if (result.success) {
+                            self.showSaved();
+                            if (selectElement) selectElement.classList.remove('saving');
+                            // Actualizar el label de vista actual
+                            self.loadRolesViews();
+                            console.log('AdminViewsModule: Vista inicial de "' + roleName + '" cambiada a "' + viewId + '"');
+                        } else {
+                            self.showError();
+                            if (selectElement) selectElement.classList.remove('saving');
+                            alert('Error: ' + result.error);
+                        }
+                    })
+                    .withFailureHandler(function (error) {
+                        self.showError();
+                        if (selectElement) selectElement.classList.remove('saving');
+                        alert('Error de conexión');
+                    })
+                    .updateRoleDefaultView(roleName, viewId);
+            }
+        };
+
+        // Funciones globales
+        function loadAdminViewsConfig() {
+            console.log('🟢 loadAdminViewsConfig() llamada');
+            AdminViewsModule.loadConfig();
+        }
+
+        function initAdminViewsModule() {
+            console.log('🟢 initAdminViewsModule() llamada');
+            AdminViewsModule.init();
+        }
+
+        // Exponer globalmente
+        window.AdminViewsModule = AdminViewsModule;
+        window.loadAdminViewsConfig = loadAdminViewsConfig;
+        window.initAdminViewsModule = initAdminViewsModule;
+
+        console.log('🟢 AdminViews_Page.html: Script cargado completamente');
+        console.log('🟢 AdminViewsModule disponible:', typeof AdminViewsModule);
+        console.log('🟢 initAdminViewsModule disponible:', typeof initAdminViewsModule);
+
+        // Auto-inicialización cuando la vista se vuelve visible
+        (function setupAutoInit() {
+            console.log('🟢 setupAutoInit: Configurando observer para auto-inicialización...');
+
+            // Función para verificar si la vista está activa y cargar
+            function checkAndInit() {
+                var adminViewsView = document.getElementById('adminviewsView');
+                if (adminViewsView && adminViewsView.classList.contains('active')) {
+                    console.log('🟢 Vista adminviewsView está ACTIVA, iniciando módulo...');
+                    if (!AdminViewsModule._initialized) {
+                        AdminViewsModule._initialized = true;
+                        initAdminViewsModule();
+                    }
+                }
+            }
+
+            // Intentar inicializar cada vez que cambie el DOM (por si la vista cambia)
+            var observer = new MutationObserver(function (mutations) {
+                checkAndInit();
+            });
+
+            // Observar cambios en el body
+            if (document.body) {
+                observer.observe(document.body, {
+                    attributes: true,
+                    attributeFilter: ['class'],
+                    subtree: true
+                });
+            }
+
+            // También verificar inmediatamente por si ya está activo
+            setTimeout(checkAndInit, 100);
+            setTimeout(checkAndInit, 500);
+            setTimeout(checkAndInit, 1000);
+
+            console.log('🟢 setupAutoInit: Observer configurado');
+        })();
+    </script>
+</section>
