@@ -574,7 +574,7 @@ const Packing = () => {
           {enPausa && (
             <div className="mt-4 bg-amber-500/30 border border-amber-400 rounded-lg px-4 py-2 inline-flex items-center gap-2">
               <AlertCircle size={16} />
-              <span className="text-sm font-medium">En pausa - El tiempo de ocio se está contando</span>
+              <span className="text-sm font-medium">Proceso Pausado</span>
             </div>
           )}
         </div>
