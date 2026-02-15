@@ -1,113 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../supabase';
+import { useConfig } from '../context/ConfigContext';
 import {
-  LayoutDashboard, Map, Satellite, Users, Smartphone, Loader2,
+  LayoutDashboard, Map, Satellite, Users, Smartphone,
   ArrowDownToLine, Truck, PackagePlus,
   ArrowUpFromLine, FileText, Hand, Package, Ship,
   Warehouse, MapPin, ArrowLeftRight,
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
-  LogOut, ChevronDown, Clock, Menu, X, Lock, Upload
+  LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw
 } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, hasPermission, permissions, isSyncing: authSyncing } = useAuth();
+  
+  // USAR CONTEXTOS COMPARTIDOS
+  const { user, logout, hasPermission, permissions, refreshPermissions } = useAuth();
+  const { isModuleEnabled, refreshConfig } = useConfig();
+  
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [modulesConfig, setModulesConfig] = useState({});
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Debug log
+  console.log('🔄 Navbar render - User:', user?.nombre, '| Permisos:', permissions?.length);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
-
-  // Cargar configuración de módulos desde BD y escuchar cambios
-  useEffect(() => {
-    fetchModulesConfig();
-
-    // REALTIME: Escuchar cambios en tms_modules_config
-    const modulesChannel = supabase
-      .channel('tms_modules_config_navbar')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tms_modules_config'
-        },
-        (payload) => {
-          console.log('🔄 Cambio en módulos (Navbar Realtime):', payload);
-          setIsSyncing(true);
-          fetchModulesConfig();
-          setTimeout(() => setIsSyncing(false), 300);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      modulesChannel.unsubscribe();
-    };
-  }, []);
-
-  // Escuchar cambios en permisos del usuario en tiempo real
-  useEffect(() => {
-    if (!user?.rol) return;
-
-    const rolesChannel = supabase
-      .channel(`role_changes_navbar_${user.rol}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'tms_roles',
-          filter: `id=eq.${user.rol}`
-        },
-        (payload) => {
-          console.log('🔄 Cambios en permisos (Navbar Realtime):', payload);
-          setIsSyncing(true);
-          setTimeout(() => setIsSyncing(false), 300);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      rolesChannel.unsubscribe();
-    };
-  }, [user?.rol]);
-
-  const fetchModulesConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tms_modules_config')
-        .select('id, enabled');
-
-      if (error) throw error;
-
-      const config = {};
-      if (data) {
-        data.forEach(m => {
-          config[m.id] = m.enabled;
-        });
-      }
-      setModulesConfig(config);
-      console.log('✓ Módulos cargados:', config);
-    } catch (err) {
-      console.error('Error fetching modules config:', err);
-    } finally {
-      setLoading(false);
-    }
+  // Refrescar manualmente
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([refreshPermissions(), refreshConfig()]);
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  // Mapeo de módulos a permisos requeridos para acceso
-  const MODULE_PERMISSIONS = {
+  // Permisos por sección
+  const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard'],
     'inbound': ['view_reception', 'view_entry'],
@@ -117,34 +50,30 @@ const Navbar = () => {
     'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
   };
 
-  const isEnabled = (moduleId) => {
-    // 1. Verificar que el módulo esté habilitado en la configuración
-    const configEnabled = modulesConfig[moduleId] !== false;
-    if (!configEnabled) return false;
+  // Verificar si sección está habilitada
+  const isSectionEnabled = (sectionId) => {
+    // Verificar módulo habilitado en config
+    if (!isModuleEnabled(sectionId)) return false;
 
-    // 2. ADMIN rol tiene acceso a todo
+    // ADMIN ve todo
     if (user?.rol === 'ADMIN') return true;
 
-    // 3. Para otros roles, verificar que tengan AL MENOS UN permiso para esta sección
-    const requiredPermissions = MODULE_PERMISSIONS[moduleId] || [];
-    if (requiredPermissions.length === 0) return true; // Si no hay requisitos, mostrar
+    // Para otros roles, verificar permisos
+    const requiredPermissions = SECTION_PERMISSIONS[sectionId] || [];
+    if (requiredPermissions.length === 0) return true;
 
-    // Verificar que el usuario tenga AL MENOS UN permiso de esta sección
-    const hasAccess = requiredPermissions.some(perm => hasPermission(perm));
-    return hasAccess;
+    return requiredPermissions.some(perm => hasPermission(perm));
   };
 
-  // Verificar si el usuario puede ver un módulo específico dentro de una sección
+  // Verificar acceso a módulo específico
   const canAccessModule = (modulePath, sectionId) => {
-    // Admin solo accede si es rol ADMIN
-    if (sectionId === 'admin') {
-      return user?.rol === 'ADMIN';
-    }
+    // Admin solo para rol ADMIN
+    if (sectionId === 'admin') return user?.rol === 'ADMIN';
 
-    // ADMIN rol puede acceder a todo
+    // ADMIN ve todo
     if (user?.rol === 'ADMIN') return true;
 
-    // Mapeo detallado de rutas a permisos específicos
+    // Permisos por ruta
     const pathPermissions = {
       '/dashboard': 'view_dashboard',
       '/tms/dashboard': 'view_tms_dashboard',
@@ -175,7 +104,7 @@ const Navbar = () => {
     };
 
     const requiredPermission = pathPermissions[modulePath];
-    if (!requiredPermission) return true; // Si no tiene requisito específico, permitir
+    if (!requiredPermission) return true;
 
     return hasPermission(requiredPermission);
   };
@@ -197,8 +126,8 @@ const Navbar = () => {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <FileBarChart size={18} />,
-      path: '/dashboard',
-      isLink: true
+      isLink: true,
+      path: '/dashboard'
     },
     {
       id: 'inbound',
@@ -236,11 +165,11 @@ const Navbar = () => {
       label: 'Consultas',
       icon: <Search size={18} />,
       modules: [
+        { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileText size={16} /> },
         { label: 'Lotes/Series', path: '/queries/batches', icon: <Barcode size={16} /> },
-        { label: 'Estado N.V', path: '/queries/sales-status', icon: <FileText size={16} /> },
+        { label: 'Estado N.V.', path: '/queries/sales-status', icon: <FileText size={16} /> },
         { label: 'Direcciones', path: '/queries/addresses', icon: <MapPin size={16} /> },
-        { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPinned size={16} /> },
-        { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileText size={16} /> }
+        { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPinned size={16} /> }
       ]
     },
     {
@@ -258,26 +187,24 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-white border-b-2 border-orange-200 sticky top-0 z-50 shadow-md font-poppins">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-
-        {/* Left: Logo */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-fit">
-          <div className="flex flex-col leading-tight">
-            <span className="text-lg sm:text-2xl font-black text-orange-600 tracking-tighter flex items-center gap-2">
-              C.C.O
-              {(isSyncing || authSyncing) && <Loader2 size={14} className="animate-spin text-green-500" />}
-              {!isSyncing && !authSyncing && !loading && <span className="w-2 h-2 bg-green-500 rounded-full" title="Permisos y módulos sincronizados"></span>}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-bold text-orange-500 uppercase tracking-widest">WMS</span>
+    <header className="bg-white border-b-2 border-orange-200 shadow-lg sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 gap-2 sm:gap-4">
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 min-w-fit">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-orange-300 p-1.5 sm:p-2">
+            <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-        </div>
+          <div className="hidden sm:block">
+            <h1 className="text-base sm:text-lg font-black text-slate-800 leading-none">C.C.O</h1>
+            <p className="text-[8px] sm:text-[9px] text-orange-500 font-bold uppercase tracking-widest">Centro Control</p>
+          </div>
+        </Link>
 
-        {/* Center: Navigation - Desktop */}
-        <nav className="hidden lg:flex items-center gap-0.5 mx-2">
+        {/* Desktop Navigation */}
+        <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center flex-1 px-2 sm:px-4">
           {menuConfig.map((item) => {
-            // Filtrar por módulos habilitados
-            if (!isEnabled(item.id)) return null;
+            // Verificar si la sección está habilitada
+            if (!isSectionEnabled(item.id)) return null;
 
             return (
               <div
@@ -344,8 +271,22 @@ const Navbar = () => {
           })}
         </nav>
 
-        {/* Right: User Profile & Actions */}
+        {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-fit">
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`p-2 rounded-lg transition-all ${
+              isRefreshing 
+                ? 'text-green-500 animate-spin' 
+                : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50'
+            }`}
+            title="Actualizar menú"
+          >
+            <RefreshCw size={18} />
+          </button>
+
           {/* User Profile */}
           {user && (
             <div className="hidden md:flex items-center gap-2 lg:gap-3 pl-3 lg:pl-4 border-l-2 border-orange-200">
@@ -359,7 +300,7 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* WMS Clock - Live */}
+          {/* Clock */}
           {(() => {
             const [now, setNow] = React.useState(new Date());
             React.useEffect(() => {
@@ -395,20 +336,17 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 hover:bg-orange-50 rounded-lg transition-colors duration-150"
           >
-            {mobileMenuOpen ? (
-              <X size={20} className="text-slate-700" />
-            ) : (
-              <Menu size={20} className="text-slate-700" />
-            )}
+            {mobileMenuOpen ? <X size={20} className="text-slate-700" /> : <Menu size={20} className="text-slate-700" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-150">
           {menuConfig.map((item) => {
-            if (!isEnabled(item.id)) return null;
+            if (!isSectionEnabled(item.id)) return null;
+            
             return item.isLink ? (
               <Link
                 key={item.id}
