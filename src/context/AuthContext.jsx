@@ -3,6 +3,19 @@ import { supabase } from '../supabase';
 
 const AuthContext = createContext();
 
+// Evento personalizado para notificar cambios de permisos
+const PERMISSIONS_UPDATED_EVENT = 'permissions-updated';
+const CONFIG_UPDATED_EVENT = 'config-updated';
+
+// Función helper para emitir eventos
+export const emitPermissionsUpdate = () => {
+  window.dispatchEvent(new CustomEvent(PERMISSIONS_UPDATED_EVENT));
+};
+
+export const emitConfigUpdate = () => {
+  window.dispatchEvent(new CustomEvent(CONFIG_UPDATED_EVENT));
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -16,134 +29,81 @@ export const AuthProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [permissionsVersion, setPermissionsVersion] = useState(0);
 
-  // Función para cargar permisos
-  const loadPermissionsForRole = useCallback(async (rolId) => {
+  // Cargar permisos desde la BD
+  const loadPermissions = useCallback(async (rolId) => {
     if (!rolId) {
-      console.log('⚠️ No hay rol ID para cargar permisos');
       setPermissions([]);
-      setLoading(false);
-      return [];
+      return;
     }
 
-    console.log('🔍 Cargando permisos para rol:', rolId);
     try {
-      setIsSyncing(true);
-
-      const { data: roleData, error: roleError } = await supabase
+      console.log('📥 Cargando permisos para rol:', rolId);
+      
+      const { data, error } = await supabase
         .from('tms_roles')
-        .select('id, nombre, permisos_json')
+        .select('permisos_json')
         .eq('id', rolId)
         .single();
 
-      if (roleError) {
-        console.error('❌ Error obteniendo rol:', roleError);
+      if (error) {
+        console.error('Error cargando permisos:', error);
         setPermissions([]);
-        return [];
+        return;
       }
 
-      const permisos = roleData?.permisos_json || [];
-      console.log('✅ Permisos cargados:', permisos.length, 'permisos');
-      
+      const permisos = data?.permisos_json || [];
+      console.log('✅ Permisos cargados:', permisos.length);
       setPermissions(permisos);
-      setPermissionsVersion(v => v + 1);
       
-      return permisos;
-
     } catch (err) {
-      console.error('❌ Error cargando permisos:', err);
+      console.error('Error:', err);
       setPermissions([]);
-      return [];
-    } finally {
-      setIsSyncing(false);
-      setLoading(false);
     }
   }, []);
 
-  // Función pública para refrescar permisos manualmente
+  // Función pública para refrescar permisos
   const refreshPermissions = useCallback(async () => {
     if (user?.rol) {
-      console.log('🔄 Refrescando permisos manualmente...');
-      return await loadPermissionsForRole(user.rol);
+      await loadPermissions(user.rol);
     }
-    return [];
-  }, [user?.rol, loadPermissionsForRole]);
+  }, [user?.rol, loadPermissions]);
 
-  // Restaurar sesión al cargar
+  // Restaurar sesión al iniciar
   useEffect(() => {
     const initSession = async () => {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
+      const stored = localStorage.getItem('currentUser');
+      if (stored) {
         try {
-          const parsed = JSON.parse(storedUser);
-          console.log('🔄 Restaurando sesión para:', parsed.nombre, '| Rol:', parsed.rol);
+          const parsed = JSON.parse(stored);
           setUser(parsed);
-          await loadPermissionsForRole(parsed.rol);
+          await loadPermissions(parsed.rol);
         } catch (err) {
-          console.error('Error restaurando usuario:', err);
           localStorage.removeItem('currentUser');
-          setLoading(false);
         }
-      } else {
-        setLoading(false);
+      }
+      setLoading(false);
+    };
+    initSession();
+  }, [loadPermissions]);
+
+  // Escuchar eventos de actualización de permisos
+  useEffect(() => {
+    const handlePermissionsUpdate = () => {
+      console.log('🔔 Evento de actualización de permisos recibido');
+      if (user?.rol) {
+        loadPermissions(user.rol);
       }
     };
 
-    initSession();
-  }, [loadPermissionsForRole]);
-
-  // Suscripción a Realtime
-  useEffect(() => {
-    if (!user?.rol) return;
-
-    console.log('🔌 Suscribiendo a cambios Realtime para rol:', user.rol);
-
-    const channel = supabase
-      .channel(`role_permissions_${user.rol}_${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'tms_roles',
-          filter: `id=eq.${user.rol}`
-        },
-        (payload) => {
-          console.log('🔄 Cambio Realtime detectado:', payload);
-          if (payload.new?.permisos_json) {
-            console.log('✅ Actualizando permisos desde Realtime');
-            setPermissions(payload.new.permisos_json);
-            setPermissionsVersion(v => v + 1);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Estado suscripción Realtime:', status);
-      });
-
-    return () => {
-      console.log('🔌 Desconectando canal Realtime');
-      supabase.removeChannel(channel);
-    };
-  }, [user?.rol]);
-
-  // Polling como fallback (cada 30 segundos)
-  useEffect(() => {
-    if (!user?.rol) return;
-
-    const pollInterval = setInterval(() => {
-      console.log('⏰ Polling de permisos...');
-      loadPermissionsForRole(user.rol);
-    }, 30000);
-
-    return () => clearInterval(pollInterval);
-  }, [user?.rol, loadPermissionsForRole]);
+    window.addEventListener(PERMISSIONS_UPDATED_EVENT, handlePermissionsUpdate);
+    return () => window.removeEventListener(PERMISSIONS_UPDATED_EVENT, handlePermissionsUpdate);
+  }, [user?.rol, loadPermissions]);
 
   const login = async (email, password) => {
     setLoading(true);
     setError('');
+    
     try {
       const { data, error: queryError } = await supabase
         .from('tms_usuarios')
@@ -164,12 +124,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!data.activo) {
-        setError('❌ Usuario desactivado. Contacta al administrador');
+        setError('❌ Usuario desactivado');
         setLoading(false);
         return false;
       }
-
-      console.log('✓ Login exitoso:', data.nombre, '| Rol:', data.rol);
 
       const userData = {
         id: data.id,
@@ -181,15 +139,13 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
-
-      await loadPermissionsForRole(data.rol);
-
+      await loadPermissions(data.rol);
+      
       setLoading(false);
       return true;
 
     } catch (err) {
-      console.error('Error durante login:', err);
-      setError('❌ Error en el sistema. Intenta más tarde');
+      setError('❌ Error en el sistema');
       setLoading(false);
       return false;
     }
@@ -198,33 +154,25 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setPermissions([]);
-    setPermissionsVersion(0);
     localStorage.removeItem('currentUser');
-    setError('');
   };
 
   const hasPermission = useCallback((permissionId) => {
     return permissions.includes(permissionId);
   }, [permissions]);
 
-  const isAuthenticated = !!user;
-
-  const value = {
-    user,
-    permissions,
-    permissionsVersion,
-    loading,
-    error,
-    login,
-    logout,
-    isAuthenticated,
-    hasPermission,
-    isSyncing,
-    refreshPermissions
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      permissions,
+      loading,
+      error,
+      login,
+      logout,
+      isAuthenticated: !!user,
+      hasPermission,
+      refreshPermissions
+    }}>
       {children}
     </AuthContext.Provider>
   );

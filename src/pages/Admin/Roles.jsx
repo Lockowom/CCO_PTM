@@ -8,18 +8,16 @@ import {
   Satellite, Smartphone, MapPinned, Layers, FileBarChart
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { useAuth } from '../../context/AuthContext';
+import { emitPermissionsUpdate } from '../../context/AuthContext';
 
 const RolesPage = () => {
-  const { refreshPermissions, user } = useAuth(); // Obtener función para refrescar permisos
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
 
-  // Definición COMPLETA de Módulos y Permisos del Sistema
+  // Definición de módulos y permisos
   const modules = [
     {
       id: 'dashboard',
@@ -63,7 +61,7 @@ const RolesPage = () => {
       icon: <ArrowUpFromLine size={16} />,
       permissions: [
         { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
-        { id: 'manage_sales_orders', label: 'Gestionar N.V. (Aprobar/Cambiar Estado)' },
+        { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
         { id: 'view_picking', label: 'Ver Picking' },
         { id: 'process_picking', label: 'Procesar Picking' },
         { id: 'view_packing', label: 'Ver Packing' },
@@ -115,52 +113,30 @@ const RolesPage = () => {
         { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
         { id: 'view_reports', label: 'Ver Reportes' },
         { id: 'manage_data_import', label: 'Carga Masiva de Datos' },
-        { id: 'view_audit', label: 'Ver Auditoría' }
+        { id: 'view_audit', label: 'Ver Auditoría' },
+        { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
+        { id: 'manage_tickets', label: 'Gestionar Tickets' },
+        { id: 'manage_cleanup', label: 'Limpieza de Datos' }
       ]
     }
   ];
 
   useEffect(() => {
-    fetchRolesAndPermissions();
-
-    // REALTIME: Escuchar cambios en la tabla tms_roles
-    const channel = supabase
-      .channel('tms_roles_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Todos los eventos: INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'tms_roles'
-        },
-        (payload) => {
-          console.log('🔄 Cambio detectado en roles (Realtime):', payload);
-          setIsSyncing(true);
-          // Refresco automático cuando hay cambios
-          fetchRolesAndPermissions();
-          // Mostrar indicador de sincronización brevemente
-          setTimeout(() => setIsSyncing(false), 300);
-        }
-      )
-      .subscribe();
-
-    // Limpiar listener al desmontar
-    return () => {
-      channel.unsubscribe();
-    };
+    fetchRoles();
   }, []);
 
-  const fetchRolesAndPermissions = async () => {
+  const fetchRoles = async () => {
     try {
       setLoading(true);
 
-      const { data: rolesData, error: rolesError } = await supabase
+      const { data: rolesData, error } = await supabase
         .from('tms_roles')
         .select('*')
         .order('nombre');
 
-      if (rolesError) throw rolesError;
+      if (error) throw error;
 
+      // Contar usuarios por rol
       const { data: usersData } = await supabase
         .from('tms_usuarios')
         .select('rol');
@@ -172,27 +148,16 @@ const RolesPage = () => {
         });
       }
 
-      // Formatear roles - ahora usando permisos como JSON en la tabla
       const formattedRoles = rolesData.map(rol => ({
         ...rol,
         usuarios: userCounts[rol.id] || 0,
-        // Los permisos están en permisos_json (JSONB) o en un array
-        permisos: rol.permisos_json || rol.permisos || []
+        permisos: rol.permisos_json || []
       }));
 
       setRoles(formattedRoles);
 
     } catch (error) {
       console.error('Error fetching roles:', error);
-      setRoles([
-        {
-          id: 'ADMIN',
-          nombre: 'Administrador',
-          descripcion: 'Acceso total al sistema',
-          usuarios: 1,
-          permisos: modules.flatMap(m => m.permissions.map(p => p.id))
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -214,46 +179,34 @@ const RolesPage = () => {
     try {
       setLoading(true);
 
-      // Si es ADMIN, siempre usar el ID 'ADMIN'
       const roleId = isCreating
         ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_')
         : selectedRole.id;
 
-      // Si es ADMIN, siempre usar el nombre original 'Administrador'
       const roleName = selectedRole.id === 'ADMIN' ? 'Administrador' : selectedRole.nombre;
 
-      // SOLUCIÓN DEFINITIVA: Guardar permisos como JSON en la tabla tms_roles
-      const { error: roleError } = await supabase
+      const { error } = await supabase
         .from('tms_roles')
-        .upsert(
-          {
-            id: roleId,
-            nombre: roleName,
-            descripcion: selectedRole.descripcion,
-            permisos_json: selectedRole.permisos || []  // Guardar permisos como JSON
-          },
-          { onConflict: 'id' }
-        );
+        .upsert({
+          id: roleId,
+          nombre: roleName,
+          descripcion: selectedRole.descripcion,
+          permisos_json: selectedRole.permisos || []
+        }, { onConflict: 'id' });
 
-      if (roleError) {
-        console.error('Error saving role:', roleError);
-        throw new Error(`Error al guardar rol: ${roleError.message}`);
-      }
+      if (error) throw error;
 
-      // PASO 2: Recargar datos
-      await fetchRolesAndPermissions();
+      // Recargar roles
+      await fetchRoles();
       
-      // PASO 3: Si el rol guardado es el rol del usuario actual, refrescar sus permisos
-      if (user?.rol === roleId) {
-        console.log('🔄 Refrescando permisos del usuario actual...');
-        await refreshPermissions();
-      }
+      // ⚡ EMITIR EVENTO PARA ACTUALIZAR EL MENÚ
+      console.log('📢 Emitiendo evento de actualización de permisos...');
+      emitPermissionsUpdate();
       
       setIsEditing(false);
       setIsCreating(false);
 
-      const actionText = selectedRole.id === 'ADMIN' ? 'actualizado' : 'guardado';
-      alert(`✓ Rol ${actionText} exitosamente`);
+      alert('✓ Rol guardado exitosamente. El menú se actualizará automáticamente.');
 
     } catch (error) {
       console.error('Error saving role:', error);
@@ -268,7 +221,7 @@ const RolesPage = () => {
 
     try {
       setLoading(true);
-      // SOLUCIÓN DEFINITIVA: Solo eliminar de tms_roles (permisos están como JSON)
+
       const { error } = await supabase
         .from('tms_roles')
         .delete()
@@ -276,12 +229,16 @@ const RolesPage = () => {
 
       if (error) throw error;
 
-      await fetchRolesAndPermissions();
+      await fetchRoles();
       setSelectedRole(null);
-      alert('✓ Rol eliminado exitosamente');
+      
+      // Emitir evento
+      emitPermissionsUpdate();
+      
+      alert('✓ Rol eliminado');
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Error al eliminar: ' + error.message);
+      alert('❌ Error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -312,7 +269,7 @@ const RolesPage = () => {
     setSelectedRole({ ...selectedRole, permisos: newPerms });
   };
 
-  if (loading) {
+  if (loading && roles.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="animate-spin text-indigo-500" size={40} />
@@ -327,14 +284,12 @@ const RolesPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <Shield className="text-indigo-500" /> Roles y Permisos
-            {isSyncing && <Loader2 size={18} className="animate-spin text-green-500" />}
-            {!isSyncing && <span className="w-2 h-2 bg-green-500 rounded-full" title="Sincronización en tiempo real activa"></span>}
           </h1>
           <p className="text-slate-500 text-sm mt-1">Define qué pueden hacer los usuarios en el sistema</p>
         </div>
         <button
           onClick={handleCreateRole}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"
         >
           <Plus size={18} /> Nuevo Rol
         </button>
@@ -344,27 +299,28 @@ const RolesPage = () => {
         {/* Roles List */}
         <div className="w-full lg:w-1/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50">
-            <h3 className="font-bold text-slate-700">Roles Definidos ({roles.length})</h3>
+            <h3 className="font-bold text-slate-700">Roles ({roles.length})</h3>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {roles.map(role => (
               <div
                 key={role.id}
                 onClick={() => { if (!isEditing) setSelectedRole(role); }}
-                className={`p-4 rounded-lg cursor-pointer border transition-all ${selectedRole?.id === role.id
-                    ? 'bg-indigo-50 border-indigo-200 shadow-sm'
-                    : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'
-                  } ${isEditing && selectedRole?.id !== role.id ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`p-4 rounded-lg cursor-pointer border transition-all ${
+                  selectedRole?.id === role.id
+                    ? 'bg-indigo-50 border-indigo-200'
+                    : 'bg-white border-transparent hover:bg-slate-50'
+                } ${isEditing && selectedRole?.id !== role.id ? 'opacity-50' : ''}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className={`font-bold ${selectedRole?.id === role.id ? 'text-indigo-700' : 'text-slate-800'}`}>
                       {role.nombre}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{role.descripcion}</p>
+                    <p className="text-xs text-slate-500 mt-1">{role.descripcion}</p>
                   </div>
                   {role.id === 'ADMIN' ? (
-                    <Lock size={14} className="text-amber-500 mt-1" title="Rol protegido" />
+                    <Lock size={14} className="text-amber-500" />
                   ) : (
                     <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <Users size={10} /> {role.usuarios}
@@ -391,11 +347,8 @@ const RolesPage = () => {
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
-                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1 focus:border-indigo-500 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
+                          className="w-full text-xl font-bold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1"
                         />
-                        {selectedRole.id === 'ADMIN' && (
-                          <p className="text-xs text-amber-600 mt-1">🔒 El nombre del rol ADMIN no puede cambiar</p>
-                        )}
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-500 uppercase">Descripción</label>
@@ -403,7 +356,7 @@ const RolesPage = () => {
                           type="text"
                           value={selectedRole.descripcion}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
-                          className="w-full text-sm text-slate-600 bg-white border border-slate-300 rounded px-2 py-1 focus:border-indigo-500 outline-none"
+                          className="w-full text-sm text-slate-600 bg-white border border-slate-300 rounded px-2 py-1"
                         />
                       </div>
                     </div>
@@ -411,7 +364,7 @@ const RolesPage = () => {
                     <>
                       <h2 className="text-2xl font-bold text-slate-800">{selectedRole.nombre}</h2>
                       <p className="text-slate-500 mt-1">{selectedRole.descripcion}</p>
-                      <p className="text-xs text-indigo-600 mt-2">{selectedRole.permisos?.length || 0} permisos asignados</p>
+                      <p className="text-xs text-indigo-600 mt-2">{selectedRole.permisos?.length || 0} permisos</p>
                     </>
                   )}
                 </div>
@@ -427,9 +380,11 @@ const RolesPage = () => {
                       </button>
                       <button
                         onClick={handleSaveRole}
+                        disabled={loading}
                         className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold flex items-center gap-2"
                       >
-                        <Save size={18} /> Guardar
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        Guardar
                       </button>
                     </>
                   ) : (
@@ -443,8 +398,7 @@ const RolesPage = () => {
                       <button
                         onClick={() => handleDeleteRole(selectedRole.id)}
                         disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-30"
-                        title={selectedRole.id === 'ADMIN' ? 'No se puede eliminar el rol ADMIN' : selectedRole.usuarios > 0 ? 'No se puede eliminar roles con usuarios' : 'Eliminar rol'}
+                        className="p-2 text-slate-400 hover:text-red-600 rounded-lg disabled:opacity-30"
                       >
                         <Trash2 size={20} />
                       </button>
@@ -453,10 +407,10 @@ const RolesPage = () => {
                 </div>
               </div>
 
-              {/* Permissions Grid */}
+              {/* Permissions */}
               <div className="flex-1 overflow-y-auto p-5">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Lock size={14} /> Permisos de Acceso
+                <h3 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
+                  <Lock size={14} /> Permisos
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,7 +420,7 @@ const RolesPage = () => {
                     const hasAll = enabledCount === allPerms.length;
 
                     return (
-                      <div key={module.id} className="border border-slate-100 rounded-xl p-4 hover:border-slate-200">
+                      <div key={module.id} className="border border-slate-100 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-3 border-b border-slate-50 pb-2">
                           <div className="flex items-center gap-2 text-slate-800 font-bold">
                             <span className="text-indigo-500">{module.icon}</span>
@@ -475,12 +429,11 @@ const RolesPage = () => {
                           {isEditing && (
                             <button
                               onClick={() => selectAllModule(module.id)}
-                              className={`text-xs px-2 py-1 rounded-full font-medium transition-colors ${hasAll
-                                  ? 'bg-indigo-100 text-indigo-700'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                }`}
+                              className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                hasAll ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'
+                              }`}
                             >
-                              {hasAll ? 'Quitar todos' : 'Todos'}
+                              {hasAll ? 'Quitar' : 'Todos'}
                             </button>
                           )}
                           {!isEditing && (
@@ -493,14 +446,12 @@ const RolesPage = () => {
                             return (
                               <label
                                 key={perm.id}
-                                className={`flex items-center gap-2 p-1.5 rounded-lg transition-colors ${isEditing ? 'cursor-pointer hover:bg-slate-50' : 'cursor-default'
-                                  }`}
+                                className={`flex items-center gap-2 p-1.5 rounded-lg ${isEditing ? 'cursor-pointer hover:bg-slate-50' : ''}`}
                                 onClick={() => togglePermission(perm.id)}
                               >
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isEnabled
-                                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                                    : 'bg-white border-slate-300'
-                                  }`}>
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                                  isEnabled ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'
+                                }`}>
                                   {isEnabled && <Check size={10} strokeWidth={4} />}
                                 </div>
                                 <span className={`text-sm ${isEnabled ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
@@ -519,8 +470,7 @@ const RolesPage = () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
               <Shield size={48} className="opacity-20 mb-4" />
-              <h3 className="text-lg font-bold text-slate-600 mb-1">Selecciona un Rol</h3>
-              <p className="text-center max-w-xs">Elige un rol para ver o editar sus permisos</p>
+              <h3 className="text-lg font-bold text-slate-600">Selecciona un Rol</h3>
             </div>
           )}
         </div>
