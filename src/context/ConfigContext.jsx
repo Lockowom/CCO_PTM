@@ -39,11 +39,23 @@ export const ConfigProvider = ({ children }) => {
     const subscription = supabase
       .channel('public:tms_modules_config')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_modules_config' }, (payload) => {
-        // Actualizar estado local inmediatamente al recibir evento
-        setModulesConfig(prev => ({
-          ...prev,
-          [payload.new.id]: payload.new.enabled
-        }));
+        console.log('🔄 Cambio detectado en módulos (ConfigContext):', payload);
+        
+        // Actualizar estado local según el tipo de evento
+        if (payload.eventType === 'DELETE' && payload.old?.id) {
+          // Si se eliminó un módulo, quitarlo del estado
+          setModulesConfig(prev => {
+            const updated = { ...prev };
+            delete updated[payload.old.id];
+            return updated;
+          });
+        } else if (payload.new?.id !== undefined) {
+          // Para INSERT y UPDATE, actualizar el módulo
+          setModulesConfig(prev => ({
+            ...prev,
+            [payload.new.id]: payload.new.enabled
+          }));
+        }
       })
       .subscribe();
 

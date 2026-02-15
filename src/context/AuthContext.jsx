@@ -45,10 +45,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsSyncing(true);
 
-      // 1. Obtener el rol
+      // Obtener el rol con sus permisos desde permisos_json
       const { data: roleData, error: roleError } = await supabase
         .from('tms_roles')
-        .select('*')
+        .select('id, nombre, permisos_json')
         .eq('id', rolId)
         .single();
 
@@ -58,21 +58,9 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // 2. Obtener permisos asociados en la tabla pivote tms_roles_permisos
-      const { data: permisosData, error: permisosError } = await supabase
-        .from('tms_roles_permisos')
-        .select('permiso_id')
-        .eq('rol_id', rolId);
-
-      if (permisosError) {
-        console.error('❌ Error obteniendo permisos:', permisosError);
-        setPermissions([]);
-        return;
-      }
-
-      // 3. Extraer IDs de permisos
-      const permisos = permisosData.map(p => p.permiso_id);
-      console.log('✅ Permisos cargados:', permisos);
+      // Extraer permisos del campo permisos_json (es un array JSONB)
+      const permisos = roleData?.permisos_json || [];
+      console.log('✅ Permisos cargados desde permisos_json:', permisos);
       setPermissions(permisos);
 
     } catch (err) {
@@ -90,6 +78,7 @@ export const AuthProvider = ({ children }) => {
 
     console.log('🔌 Suscribiendo a cambios de permisos para rol:', user.rol);
 
+    // Escuchar cambios en la tabla tms_roles (donde están los permisos_json)
     const channel = supabase
       .channel(`permissions_watch_${user.rol}`)
       .on(
@@ -97,12 +86,19 @@ export const AuthProvider = ({ children }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'tms_roles_permisos',
-          filter: `rol_id=eq.${user.rol}`
+          table: 'tms_roles',
+          filter: `id=eq.${user.rol}`
         },
         (payload) => {
-          console.log('🔄 Cambio en permisos detectado (Realtime):', payload);
-          loadPermissionsForRole(user.rol);
+          console.log('🔄 Cambio en rol/permisos detectado (Realtime):', payload);
+          // Si hay permisos_json en el payload, actualizar directamente
+          if (payload.new?.permisos_json) {
+            console.log('✅ Actualizando permisos en tiempo real:', payload.new.permisos_json);
+            setPermissions(payload.new.permisos_json);
+          } else {
+            // Fallback: recargar permisos
+            loadPermissionsForRole(user.rol);
+          }
         }
       )
       .subscribe();
