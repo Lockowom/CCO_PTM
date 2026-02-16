@@ -38,7 +38,7 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: 'codigo_producto, partida', // Upsert por combinación
+        uniqueKey: 'codigo_producto,partida', // Upsert por combinación
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -83,7 +83,7 @@ const IMPORT_TABS = [
         icon: Package,
         color: 'emerald',
         table: 'tms_farmapack',
-        uniqueKey: 'codigo_producto, lote', // Upsert por combinación
+        uniqueKey: 'codigo_producto,lote', // Upsert por combinación
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -282,6 +282,11 @@ const DataImport = () => {
             let inserted = 0;
             let errors = 0;
             const errorDetails = [];
+
+            console.log(`Iniciando carga a ${currentTab.table}. Estrategia: ${currentTab.smartDedup ? 'INSERT (Ignorar Duplicados)' : 'UPSERT (Actualizar)'}`, {
+                uniqueKey: currentTab.uniqueKey,
+                ignoreDuplicates: currentTab.smartDedup
+            });
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 const batch = newRows.slice(i, i + BATCH_SIZE);
