@@ -61,21 +61,24 @@ const ErrorReportWidget = () => {
 
   return (
     <>
-      {/* Botón Flotante */}
+      {/* Botón Flotante (Circular) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 z-50 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105 border border-slate-600"
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-800 hover:bg-slate-700 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
           title="Reportar Error o Problema"
+          aria-label="Reportar Error"
         >
-          <MessageSquare size={20} className="text-amber-400" />
-          <span className="font-bold text-sm">Informe de Errores</span>
+          <MessageSquare size={24} className="text-amber-400" strokeWidth={2} />
         </button>
       )}
 
       {/* Modal / Formulario */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-4 pointer-events-none">
+          {/* Backdrop for mobile */}
+          <div className="absolute inset-0 bg-black/20 sm:hidden pointer-events-auto" onClick={() => setIsOpen(false)} />
+
           <div className="bg-white w-full sm:w-96 rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 pointer-events-auto animate-in slide-in-from-bottom-10 fade-in duration-200">
             
             {/* Header */}
@@ -86,7 +89,7 @@ const ErrorReportWidget = () => {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-slate-800 rounded-lg"
               >
                 <X size={20} />
               </button>
@@ -95,7 +98,7 @@ const ErrorReportWidget = () => {
             {/* Body */}
             <div className="p-4">
               {status === 'success' ? (
-                <div className="text-center py-6 text-green-600">
+                <div className="text-center py-6 text-green-600 animate-in zoom-in duration-300">
                   <CheckCircle size={48} className="mx-auto mb-2" />
                   <p className="font-bold">¡Reporte Enviado!</p>
                   <p className="text-sm text-slate-500 mt-1">El equipo de TI ha sido notificado.</p>
@@ -110,13 +113,13 @@ const ErrorReportWidget = () => {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe qué pasó, dónde ocurrió y qué esperabas que sucediera..."
-                      className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 resize-none"
+                      className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 resize-none transition-colors focus:bg-white"
                       autoFocus
                     />
                   </div>
                   
                   {status === 'error' && (
-                    <div className="mb-4 p-2 bg-red-50 text-red-600 text-xs rounded flex items-center gap-2">
+                    <div className="mb-4 p-2 bg-red-50 text-red-600 text-xs rounded flex items-center gap-2 animate-pulse">
                       <AlertTriangle size={14} />
                       Error al enviar. Intenta nuevamente.
                     </div>
@@ -126,14 +129,14 @@ const ErrorReportWidget = () => {
                     <button
                       type="button"
                       onClick={() => setIsOpen(false)}
-                      className="px-4 py-2 text-slate-500 text-sm hover:bg-slate-50 rounded-lg"
+                      className="px-4 py-2 text-slate-500 text-sm hover:bg-slate-50 rounded-lg transition-colors font-medium"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={loading || !description.trim()}
-                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-500/20"
                     >
                       {loading ? 'Enviando...' : (
                         <>
@@ -148,8 +151,8 @@ const ErrorReportWidget = () => {
             
             {/* Footer info */}
             <div className="bg-slate-50 p-2 text-center border-t border-slate-100 rounded-b-xl">
-              <p className="text-[10px] text-slate-400">
-                ID Usuario: {user?.nombre || 'Anónimo'} • {new Date().toLocaleDateString()}
+              <p className="text-[10px] text-slate-400 font-mono">
+                ID: {user?.nombre || 'Anónimo'} • {new Date().toLocaleDateString()}
               </p>
             </div>
           </div>
