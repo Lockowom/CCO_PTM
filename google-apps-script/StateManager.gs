@@ -171,19 +171,20 @@
   }
 
   // Mapeo de columnas de N.V DIARIAS
+  // Actualizado: Se desplazan 2 columnas a la derecha debido a cambio en estructura
   var COL_NV_DIARIAS = {
-    FECHA_ENTREGA: 0,    // A
-    N_VENTA: 1,          // B
-    ESTADO: 2,           // C
-    COD_CLIENTE: 3,      // D
-    CLIENTE: 4,          // E
-    COD_VENDEDOR: 5,     // F
-    VENDEDOR: 6,         // G
-    ZONA: 7,             // H
-    COD_PRODUCTO: 8,     // I
-    DESCRIPCION: 9,      // J
-    UNIDAD_MEDIDA: 10,   // K
-    PEDIDO: 11           // L
+    FECHA_ENTREGA: 2,    // C
+    N_VENTA: 3,          // D
+    ESTADO: 4,           // E
+    COD_CLIENTE: 5,      // F
+    CLIENTE: 6,          // G
+    COD_VENDEDOR: 7,     // H
+    VENDEDOR: 8,         // I
+    ZONA: 9,             // J
+    COD_PRODUCTO: 10,    // K
+    DESCRIPCION: 11,     // L
+    UNIDAD_MEDIDA: 12,   // M
+    PEDIDO: 13           // N
   };
 
   /**
