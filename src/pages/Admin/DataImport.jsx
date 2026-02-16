@@ -167,6 +167,8 @@ const DataImport = () => {
                             value = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                         }
                         // Si ya es YYYY-MM-DD, dejarlo
+                    } else {
+                        value = null; // Enviar NULL si está vacío para evitar error de sintaxis
                     }
                 } else {
                     value = value.toString().trim();
