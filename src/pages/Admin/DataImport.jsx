@@ -38,7 +38,7 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: null, // Sin dedup — upsert por combinación
+        uniqueKey: 'codigo_producto, partida', // Upsert por combinación
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -61,7 +61,7 @@ const IMPORT_TABS = [
         icon: Barcode,
         color: 'violet',
         table: 'tms_series',
-        uniqueKey: null,
+        uniqueKey: 'serie', // Upsert por serie (única)
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -74,7 +74,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '🔢 Pega los datos de series. Se reemplazarán los registros existentes del mismo código+serie.',
+        helpText: '🔢 Pega los datos de series. Se reemplazarán los registros existentes de la misma serie.',
         smartDedup: false,
     },
     {
@@ -83,7 +83,7 @@ const IMPORT_TABS = [
         icon: Package,
         color: 'emerald',
         table: 'tms_farmapack',
-        uniqueKey: null,
+        uniqueKey: 'codigo_producto, lote', // Upsert por combinación
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
