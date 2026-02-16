@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabase';
 import { 
-  MessageSquareWarning, 
+  MessageSquare,
   CheckCircle, 
   Clock, 
   AlertTriangle,
@@ -84,7 +84,7 @@ const Tickets = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <MessageSquareWarning className="text-indigo-600" />
+            <MessageSquare className="text-indigo-600" />
             Tickets de Soporte TI
           </h2>
           <p className="text-slate-500 text-sm">Gestión de reportes de errores de usuarios</p>
@@ -186,7 +186,7 @@ const Tickets = () => {
 
         {filteredTickets.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed">
-            <MessageSquareWarning className="mx-auto text-slate-300 mb-2" size={48} />
+            <MessageSquare className="mx-auto text-slate-300 mb-2" size={48} />
             <p className="text-slate-500">No hay tickets que coincidan con el filtro.</p>
           </div>
         )}

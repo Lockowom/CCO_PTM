@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
-  MessageSquareWarning, 
+  MessageSquare,
   X, 
   Send, 
   CheckCircle, 
@@ -68,7 +68,7 @@ const ErrorReportWidget = () => {
           className="fixed bottom-4 right-4 z-50 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105 border border-slate-600"
           title="Reportar Error o Problema"
         >
-          <MessageSquareWarning size={20} className="text-amber-400" />
+          <MessageSquare size={20} className="text-amber-400" />
           <span className="font-bold text-sm">Informe de Errores</span>
         </button>
       )}
@@ -81,7 +81,7 @@ const ErrorReportWidget = () => {
             {/* Header */}
             <div className="bg-slate-900 text-white p-4 rounded-t-xl flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <MessageSquareWarning size={18} className="text-amber-400" />
+                <MessageSquare size={18} className="text-amber-400" />
                 <h3 className="font-bold">Reportar Problema TI</h3>
               </div>
               <button 

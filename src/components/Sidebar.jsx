@@ -33,7 +33,7 @@ import {
   Upload,
   Trash2,
   Clock,
-  MessageSquareWarning,
+  MessageSquare,
   Activity
 } from 'lucide-react';
 
@@ -221,7 +221,7 @@ const Sidebar = () => {
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
         { id: 'admin-active-users', label: 'Usuarios', icon: <Activity size={18} />, path: '/admin/active-users' },
-        { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquareWarning size={18} />, path: '/admin/tickets' },
+        { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquare size={18} />, path: '/admin/tickets' },
         { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]
     }
