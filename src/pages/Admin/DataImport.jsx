@@ -17,18 +17,21 @@ const IMPORT_TABS = [
         icon: FileText,
         color: 'indigo',
         table: 'tms_nv_diarias',
-        uniqueKey: 'nv, codigo_producto', // Campo clave para deduplicación (combinado)
+        uniqueKey: 'nv', // Campo clave para deduplicación
         defaultValues: { estado: 'Pendiente' },
+        // ORDEN DE COLUMNAS SEGÚN EL EXCEL:
+        // Fecha Entrega | N.Venta | Estado | Cod.Cliente | Nombre Cliente | Cod.Vendedor | Nombre Vendedor | Zona | Cod.Producto | Descripcion | Unidad | Pedido
         columns: [
+            { key: 'fecha_emision', label: 'Fecha Entrega', required: false, type: 'date' },
             { key: 'nv', label: 'N.Venta', required: true, type: 'text' },
-            { key: 'estado_erp', label: 'Estado', required: false, type: 'text' },
+            { key: 'estado_erp', label: 'Estado ERP', required: false, type: 'text' },
             { key: 'cod_cliente', label: 'Cod.Cliente', required: false, type: 'text' },
             { key: 'cliente', label: 'Nombre Cliente', required: true, type: 'text' },
             { key: 'cod_vendedor', label: 'Cod.Vendedor', required: false, type: 'text' },
             { key: 'vendedor', label: 'Nombre Vendedor', required: false, type: 'text' },
             { key: 'zona', label: 'Zona', required: false, type: 'text' },
             { key: 'codigo_producto', label: 'Cod.Producto', required: true, type: 'text' },
-            { key: 'descripcion_producto', label: 'Descripcion Producto', required: false, type: 'text' },
+            { key: 'descripcion_producto', label: 'Descripción', required: false, type: 'text' },
             { key: 'unidad', label: 'Unidad Medida', required: false, type: 'text' },
             { key: 'cantidad', label: 'Pedido', required: true, type: 'number' },
         ],
@@ -41,7 +44,7 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: 'codigo_producto,partida', // Upsert por combinación
+        uniqueKey: null, // Sin dedup — upsert por combinación
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -53,6 +56,7 @@ const IMPORT_TABS = [
             { key: 'transitoria', label: 'Transitoria', required: false, type: 'number' },
             { key: 'consignacion', label: 'Consignación', required: false, type: 'number' },
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
+            { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
         helpText: '📦 Pega los datos de partidas. Se reemplazarán los registros existentes del mismo código+partida.',
         smartDedup: false,
@@ -63,7 +67,7 @@ const IMPORT_TABS = [
         icon: Barcode,
         color: 'violet',
         table: 'tms_series',
-        uniqueKey: 'serie', // Upsert por serie (única)
+        uniqueKey: null,
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -76,7 +80,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '🔢 Pega los datos de series. Se reemplazarán los registros existentes de la misma serie.',
+        helpText: '🔢 Pega los datos de series. Se reemplazarán los registros existentes del mismo código+serie.',
         smartDedup: false,
     },
     {
@@ -85,7 +89,7 @@ const IMPORT_TABS = [
         icon: Package,
         color: 'emerald',
         table: 'tms_farmapack',
-        uniqueKey: 'codigo_producto,lote', // Upsert por combinación
+        uniqueKey: null,
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -168,12 +172,8 @@ const DataImport = () => {
                             const [_, d, m, y] = dateMatch;
                             const year = y.length === 2 ? `20${y}` : y;
                             value = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                        } else if (!value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                             // Si NO coincide con formato fecha ni ISO, asumir que es basura (ej: "UNI") y enviar null
-                             value = null;
                         }
-                    } else {
-                        value = null;
+                        // Si ya es YYYY-MM-DD, dejarlo
                     }
                 } else {
                     value = value.toString().trim();
@@ -201,36 +201,31 @@ const DataImport = () => {
 
         // ─── DEDUPLICACIÓN INTELIGENTE (para N.V) ───
         if (currentTab.smartDedup && currentTab.uniqueKey && rows.length > 0) {
-            // Si la llave es compuesta (tiene coma), omitir pre-chequeo para evitar errores de JS
-            if (currentTab.uniqueKey.includes(',')) {
+            try {
+                // Obtener las claves únicas del paste
+                const keys = [...new Set(rows.map(r => r[currentTab.uniqueKey]).filter(Boolean))];
+
+                // Consultar cuáles ya existen en Supabase
+                const { data: existing, error } = await supabase
+                    .from(currentTab.table)
+                    .select(currentTab.uniqueKey)
+                    .in(currentTab.uniqueKey, keys);
+
+                if (error) throw error;
+
+                const existingKeys = new Set((existing || []).map(r => r[currentTab.uniqueKey]?.toString()));
+
+                // Marcar cada fila
+                const statuses = rows.map(row => {
+                    const key = row[currentTab.uniqueKey]?.toString();
+                    if (!key) return 'error';
+                    return existingKeys.has(key) ? 'existing' : 'new';
+                });
+
+                setRowStatuses(statuses);
+            } catch (err) {
+                console.error('Error en deduplicación:', err);
                 setRowStatuses(rows.map(() => 'new'));
-            } else {
-                try {
-                    // Obtener las claves únicas del paste
-                    const keys = [...new Set(rows.map(r => r[currentTab.uniqueKey]).filter(Boolean))];
-
-                    // Consultar cuáles ya existen en Supabase
-                    const { data: existing, error } = await supabase
-                        .from(currentTab.table)
-                        .select(currentTab.uniqueKey)
-                        .in(currentTab.uniqueKey, keys);
-
-                    if (error) throw error;
-
-                    const existingKeys = new Set((existing || []).map(r => r[currentTab.uniqueKey]?.toString()));
-
-                    // Marcar cada fila
-                    const statuses = rows.map(row => {
-                        const key = row[currentTab.uniqueKey]?.toString();
-                        if (!key) return 'error';
-                        return existingKeys.has(key) ? 'existing' : 'new';
-                    });
-
-                    setRowStatuses(statuses);
-                } catch (err) {
-                    console.error('Error en deduplicación:', err);
-                    setRowStatuses(rows.map(() => 'new'));
-                }
             }
         } else {
             setRowStatuses(rows.map(() => 'new'));
@@ -293,11 +288,6 @@ const DataImport = () => {
             let inserted = 0;
             let errors = 0;
             const errorDetails = [];
-
-            console.log(`Iniciando carga a ${currentTab.table}. Estrategia: ${currentTab.smartDedup ? 'INSERT (Ignorar Duplicados)' : 'UPSERT (Actualizar)'}`, {
-                uniqueKey: currentTab.uniqueKey,
-                ignoreDuplicates: currentTab.smartDedup
-            });
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 const batch = newRows.slice(i, i + BATCH_SIZE);
