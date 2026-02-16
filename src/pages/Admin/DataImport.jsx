@@ -201,31 +201,36 @@ const DataImport = () => {
 
         // ─── DEDUPLICACIÓN INTELIGENTE (para N.V) ───
         if (currentTab.smartDedup && currentTab.uniqueKey && rows.length > 0) {
-            try {
-                // Obtener las claves únicas del paste
-                const keys = [...new Set(rows.map(r => r[currentTab.uniqueKey]).filter(Boolean))];
-
-                // Consultar cuáles ya existen en Supabase
-                const { data: existing, error } = await supabase
-                    .from(currentTab.table)
-                    .select(currentTab.uniqueKey)
-                    .in(currentTab.uniqueKey, keys);
-
-                if (error) throw error;
-
-                const existingKeys = new Set((existing || []).map(r => r[currentTab.uniqueKey]?.toString()));
-
-                // Marcar cada fila
-                const statuses = rows.map(row => {
-                    const key = row[currentTab.uniqueKey]?.toString();
-                    if (!key) return 'error';
-                    return existingKeys.has(key) ? 'existing' : 'new';
-                });
-
-                setRowStatuses(statuses);
-            } catch (err) {
-                console.error('Error en deduplicación:', err);
+            // Si la llave es compuesta (tiene coma), omitir pre-chequeo para evitar errores de JS
+            if (currentTab.uniqueKey.includes(',')) {
                 setRowStatuses(rows.map(() => 'new'));
+            } else {
+                try {
+                    // Obtener las claves únicas del paste
+                    const keys = [...new Set(rows.map(r => r[currentTab.uniqueKey]).filter(Boolean))];
+
+                    // Consultar cuáles ya existen en Supabase
+                    const { data: existing, error } = await supabase
+                        .from(currentTab.table)
+                        .select(currentTab.uniqueKey)
+                        .in(currentTab.uniqueKey, keys);
+
+                    if (error) throw error;
+
+                    const existingKeys = new Set((existing || []).map(r => r[currentTab.uniqueKey]?.toString()));
+
+                    // Marcar cada fila
+                    const statuses = rows.map(row => {
+                        const key = row[currentTab.uniqueKey]?.toString();
+                        if (!key) return 'error';
+                        return existingKeys.has(key) ? 'existing' : 'new';
+                    });
+
+                    setRowStatuses(statuses);
+                } catch (err) {
+                    console.error('Error en deduplicación:', err);
+                    setRowStatuses(rows.map(() => 'new'));
+                }
             }
         } else {
             setRowStatuses(rows.map(() => 'new'));
