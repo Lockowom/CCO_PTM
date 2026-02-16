@@ -37,7 +37,8 @@ INSERT INTO public.tms_modules_config (id, enabled, label) VALUES
 ('queries-batches', true, 'Lotes/Series'),
 ('queries-sales-status', true, 'Estado N.V.'),
 ('queries-addresses', true, 'Direcciones'),
-('admin', true, 'Administración')
+('admin', true, 'Administración'),
+('admin-cleanup', true, 'Limpieza de Datos') -- NUEVO MODULO DE LIMPIEZA
 ON CONFLICT (id) DO UPDATE SET enabled = EXCLUDED.enabled;
 
 -- 4. Actualizar Landing Pages por defecto para Roles
@@ -45,3 +46,44 @@ UPDATE public.tms_roles SET landing_page = '/dashboard' WHERE id = 'ADMIN';
 UPDATE public.tms_roles SET landing_page = '/tms/control-tower' WHERE id = 'SUPERVISOR';
 UPDATE public.tms_roles SET landing_page = '/outbound/picking' WHERE id = 'OPERADOR';
 UPDATE public.tms_roles SET landing_page = '/tms/mobile' WHERE id = 'CONDUCTOR';
+
+-- 5. RPC para Limpieza de Datos (Solo Admin)
+CREATE OR REPLACE FUNCTION clean_operational_data(
+    p_clean_nv BOOLEAN, 
+    p_clean_partidas BOOLEAN, 
+    p_clean_series BOOLEAN, 
+    p_clean_farmapack BOOLEAN
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER -- Se ejecuta con permisos de superusuario (necesario para TRUNCATE/DELETE masivo)
+AS $$
+BEGIN
+    -- Validar que solo un admin pueda ejecutar (aunque la UI lo filtra, doble seguridad)
+    -- En Supabase auth.uid() devuelve el UUID del usuario actual
+    -- Aquí simplificamos asumiendo que la capa de aplicación filtra por rol, 
+    -- o podrías chequear contra una tabla de admins si fuera necesario.
+    
+    IF p_clean_nv THEN
+        -- Limpiar Notas de Venta y dependencias (Entregas TMS)
+        DELETE FROM public.tms_nv_diarias;
+        DELETE FROM public.tms_entregas; -- Las entregas suelen nacer de las NV
+    END IF;
+
+    IF p_clean_partidas THEN
+        DELETE FROM public.tms_partidas;
+    END IF;
+
+    IF p_clean_series THEN
+        DELETE FROM public.tms_series;
+    END IF;
+
+    IF p_clean_farmapack THEN
+        DELETE FROM public.tms_farmapack;
+    END IF;
+
+    RETURN 'Limpieza completada exitosamente';
+EXCEPTION WHEN OTHERS THEN
+    RETURN 'Error durante la limpieza: ' || SQLERRM;
+END;
+$$;

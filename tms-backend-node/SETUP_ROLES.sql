@@ -76,7 +76,8 @@ INSERT INTO public.tms_permisos (id, nombre, modulo) VALUES
 ('manage_roles', 'Gestionar Roles y Permisos', 'admin'),
 ('manage_views', 'Configurar Vistas', 'admin'),
 ('view_reports', 'Ver Reportes', 'admin'),
-('view_logs', 'Ver Logs de Auditoría', 'admin')
+('view_logs', 'Ver Logs de Auditoría', 'admin'),
+('manage_cleanup', 'Limpieza de Datos Críticos', 'admin') -- NUEVO PERMISO
 ON CONFLICT (id) DO UPDATE SET 
     nombre = EXCLUDED.nombre,
     modulo = EXCLUDED.modulo;
