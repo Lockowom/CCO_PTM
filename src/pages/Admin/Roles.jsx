@@ -6,7 +6,7 @@ import {
   Warehouse, ArrowDownToLine, ArrowUpFromLine, FileText,
   Hand, Ship, MapPin, Barcode, History, Timer,
   Satellite, Smartphone, MapPinned, Layers, FileBarChart,
-  Clock, Upload, Trash, MessageSquareWarning
+  Clock, Upload, Trash, MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
