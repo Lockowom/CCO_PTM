@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquareWarning
+  Clock, Timer, Trash2, MessageSquare
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -201,7 +201,7 @@ const Navbar = () => {
         { label: 'Carga Datos', path: '/admin/data-import', icon: <Upload size={16} /> },
         { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> },
         { label: 'Tiempos', path: '/admin/time-reports', icon: <Clock size={16} /> },
-        { label: 'Soporte TI', path: '/admin/tickets', icon: <MessageSquareWarning size={16} /> },
+        { label: 'Soporte TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
         { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
       ]
     }
