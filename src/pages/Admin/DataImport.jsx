@@ -17,7 +17,7 @@ const IMPORT_TABS = [
         icon: FileText,
         color: 'indigo',
         table: 'tms_nv_diarias',
-        uniqueKey: 'nv', // Campo clave para deduplicación
+        uniqueKey: 'nv, codigo_producto', // Campo clave para deduplicación (combinado)
         defaultValues: { estado: 'Pendiente' },
         columns: [
             { key: 'nv', label: 'N.V', required: true, type: 'text' },
@@ -165,10 +165,12 @@ const DataImport = () => {
                             const [_, d, m, y] = dateMatch;
                             const year = y.length === 2 ? `20${y}` : y;
                             value = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        } else if (!value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                             // Si NO coincide con formato fecha ni ISO, asumir que es basura (ej: "UNI") y enviar null
+                             value = null;
                         }
-                        // Si ya es YYYY-MM-DD, dejarlo
                     } else {
-                        value = null; // Enviar NULL si está vacío para evitar error de sintaxis
+                        value = null;
                     }
                 } else {
                     value = value.toString().trim();
