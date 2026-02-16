@@ -20,7 +20,6 @@ const IMPORT_TABS = [
         uniqueKey: 'nv, codigo_producto', // Campo clave para deduplicación (combinado)
         defaultValues: { estado: 'Pendiente' },
         columns: [
-            { key: 'fecha_emision', label: 'Fecha', required: false, type: 'date' },
             { key: 'nv', label: 'N.Venta', required: true, type: 'text' },
             { key: 'estado_erp', label: 'Estado', required: false, type: 'text' },
             { key: 'cod_cliente', label: 'Cod.Cliente', required: false, type: 'text' },
