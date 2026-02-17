@@ -75,7 +75,7 @@ const Packing = () => {
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
-        .eq('estado', 'PACKING')
+        .in('estado', ['PACKING', 'QUIEBRE_STOCK']) // Incluir QUIEBRE_STOCK para mostrar parciales
         .order('cliente', { ascending: true });
 
       if (error) throw error;
@@ -89,16 +89,27 @@ const Packing = () => {
             ...item,
             items: [],
             total_items: 0,
-            total_cantidad: 0
+            total_cantidad: 0,
+            has_partial: false,
+            has_stock_break: false
           };
         }
         nvGrouped[nvId].items.push(item);
         nvGrouped[nvId].total_items++;
         nvGrouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
+        
+        if (item.picking_status === 'PARCIAL') nvGrouped[nvId].has_partial = true;
+        if (item.picking_status === 'SIN_STOCK' || item.estado === 'QUIEBRE_STOCK') nvGrouped[nvId].has_stock_break = true;
       });
 
-      const uniqueNVs = Object.values(nvGrouped);
+      // Filtrar NVs que estén completamente en quiebre (no deberían llegar a packing si no hay nada que empacar)
+      // Pero si al menos un item está en PACKING, la NV completa pasa.
+      const uniqueNVs = Object.values(nvGrouped).filter(nv => 
+        nv.items.some(i => i.estado === 'PACKING')
+      );
+      
       setNvData(uniqueNVs); // Lista de NVs únicas
+
       
       // Agrupar por cliente (usando las NVs únicas)
       const groupedByClient = {};
@@ -546,16 +557,16 @@ const Packing = () => {
             </span>
           </div>
 
-          {/* Alerta de Picking Parcial */}
-          {nvActiva?.picking_status === 'PARCIAL' && (
+          {/* Alerta de Picking Parcial o Sin Stock */}
+          {(nvActiva?.has_partial || nvActiva?.has_stock_break) && (
             <div className="mx-auto max-w-lg mb-6 bg-red-500/20 border-2 border-red-400 rounded-xl p-4 flex items-center gap-4 animate-bounce-subtle">
               <div className="bg-red-100 p-2 rounded-full">
                 <AlertCircle size={24} className="text-red-600" />
               </div>
               <div className="text-left">
-                <h4 className="font-bold text-lg text-white">¡ATENCIÓN: Picking Incompleto!</h4>
+                <h4 className="font-bold text-lg text-white">¡ATENCIÓN: Pedido Incompleto!</h4>
                 <p className="text-white/90 text-sm">
-                  Se solicitaron <span className="font-bold">{nvActiva.total_cantidad}</span> pero solo se encontraron <span className="font-bold text-xl underline">{nvActiva.cantidad_real}</span> unidades.
+                  Esta N.V. contiene productos con <span className="font-bold">Quiebre de Stock</span> o <span className="font-bold">Picking Parcial</span>. Verifica los ítems antes de empacar.
                 </p>
               </div>
             </div>
@@ -656,21 +667,49 @@ const Packing = () => {
           </h3>
           
           <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-            {(nvActiva?.items || [nvActiva]).map((item, idx) => (
-              <div key={idx} className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-xs text-indigo-500 font-semibold uppercase mb-1">Código</p>
-                  <p className="text-lg font-mono font-bold text-indigo-700">{item.codigo_producto}</p>
-                  <p className="text-sm text-slate-600 mt-1">{item.descripcion_producto}</p>
-                </div>
-                <div className="text-right">
-                  <div className="bg-white rounded-lg p-2 text-center border border-indigo-100 shadow-sm">
-                    <p className="text-2xl font-black text-indigo-600">{item.cantidad}</p>
-                    <p className="text-[10px] text-indigo-400 font-bold">{item.unidad || 'UNI'}</p>
+            {(nvActiva?.items || [nvActiva]).map((item, idx) => {
+              const isStockBreak = item.estado === 'QUIEBRE_STOCK' || item.picking_status === 'SIN_STOCK';
+              const isPartial = item.picking_status === 'PARCIAL';
+              
+              return (
+                <div key={idx} className={`rounded-xl p-4 border flex items-center gap-4 ${
+                  isStockBreak 
+                    ? 'bg-red-50 border-red-200 opacity-75' 
+                    : isPartial
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-indigo-50 border-indigo-100'
+                }`}>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className={`text-xs font-semibold uppercase ${
+                        isStockBreak ? 'text-red-500' : isPartial ? 'text-amber-600' : 'text-indigo-500'
+                      }`}>Código</p>
+                      {isStockBreak && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">SIN STOCK</span>}
+                      {isPartial && <span className="text-[10px] bg-amber-100 text-amber-600 px-1 rounded font-bold">PARCIAL</span>}
+                    </div>
+                    <p className={`text-lg font-mono font-bold ${
+                      isStockBreak ? 'text-red-700' : isPartial ? 'text-amber-800' : 'text-indigo-700'
+                    }`}>{item.codigo_producto}</p>
+                    <p className="text-sm text-slate-600 mt-1">{item.descripcion_producto}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="bg-white rounded-lg p-2 text-center border shadow-sm">
+                      <p className={`text-2xl font-black ${
+                        isStockBreak ? 'text-red-400 line-through' : 'text-indigo-600'
+                      }`}>{item.cantidad}</p>
+                      
+                      {(isPartial || isStockBreak) && (
+                        <p className="text-sm font-bold text-red-500 mt-1">
+                          Real: {item.cantidad_real || 0}
+                        </p>
+                      )}
+                      
+                      <p className="text-[10px] text-indigo-400 font-bold mt-1">{item.unidad || 'UNI'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
