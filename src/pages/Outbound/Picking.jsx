@@ -187,7 +187,7 @@ const Picking = () => {
     }
 
     const cantidadPickeada = tipoAccion === 'COMPLETO' 
-      ? nvActiva.cantidad 
+      ? nvActiva.total_cantidad 
       : tipoAccion === 'PARCIAL' 
         ? parseInt(cantidadReal) 
         : 0;
