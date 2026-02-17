@@ -65,17 +65,17 @@ const ErrorReportWidget = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-800 hover:bg-slate-700 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+          className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-50 w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/80 hover:bg-slate-800 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-slate-600 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 opacity-50 hover:opacity-100"
           title="Reportar Error o Problema"
           aria-label="Reportar Error"
         >
-          <MessageSquare size={24} className="text-amber-400" strokeWidth={2} />
+          <MessageSquare size={20} className="text-amber-400" strokeWidth={2} />
         </button>
       )}
 
       {/* Modal / Formulario */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-4 pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-start sm:p-4 pointer-events-none">
           {/* Backdrop for mobile */}
           <div className="absolute inset-0 bg-black/20 sm:hidden pointer-events-auto" onClick={() => setIsOpen(false)} />
 
