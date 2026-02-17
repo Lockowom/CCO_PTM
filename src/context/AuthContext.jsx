@@ -147,6 +147,18 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('currentUser', JSON.stringify(userData));
       await loadPermissions(data.rol);
       
+      // Registrar acceso
+      try {
+        await supabase.from('tms_accesos').insert({
+          usuario_id: userData.id,
+          nombre: userData.nombre,
+          email: userData.email,
+          rol: userData.rol
+        });
+      } catch (logErr) {
+        console.error('Error logging access:', logErr);
+      }
+
       setLoading(false);
       return true;
 
