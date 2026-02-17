@@ -219,11 +219,20 @@ const Picking = () => {
     }
 
     try {
-      // Actualizar cada ítem individualmente
-      const updates = items.map(item => {
+      // 1. Determinar el nuevo estado global de la N.V.
+      // Si TODOS los items están en 'SIN_STOCK', el estado es 'QUIEBRE_STOCK'
+      // Si al menos UNO tiene stock (COMPLETO o PARCIAL), el estado es 'PACKING'
+      const hasStock = items.some(item => {
+         const status = itemsPickingStatus[item.id]?.status;
+         return status === 'COMPLETO' || status === 'PARCIAL';
+      });
+      
+      const nuevoEstadoGlobal = hasStock ? 'PACKING' : 'QUIEBRE_STOCK';
+
+      // 2. Actualizar cada ítem individualmente
+      const updates = items.map(async (item) => {
         const state = itemsPickingStatus[item.id];
         let qtyReal = 0;
-        let finalStatus = 'PACKING'; // Default si hay algo pickeado
 
         if (state.status === 'COMPLETO') {
           qtyReal = item.cantidad;
@@ -231,16 +240,13 @@ const Picking = () => {
           qtyReal = parseInt(state.cantidad);
         } else {
           qtyReal = 0; // SIN_STOCK
-          finalStatus = 'QUIEBRE_STOCK'; // Si no hay nada de este item
         }
 
-        // Si es quiebre de stock pero otros items sí pasan, la NV global pasa a PACKING (pero este item queda marcado)
-        // La lógica de estado global se maneja implícitamente: si al menos uno pasa, la NV avanza.
-        
+        // Actualizamos el estado de la fila al nuevo estado global
         return supabase
           .from('tms_nv_diarias')
           .update({ 
-            estado: finalStatus === 'QUIEBRE_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING', // Estado individual
+            estado: nuevoEstadoGlobal, 
             cantidad_real: qtyReal,
             picking_status: state.status,
             usuario_asignado: null, 
@@ -249,10 +255,17 @@ const Picking = () => {
           .eq('id', item.id);
       });
 
-      await Promise.all(updates);
+      // Esperar a que TODAS las actualizaciones terminen
+      const results = await Promise.all(updates);
+      
+      // Verificar errores en las actualizaciones
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        throw new Error(`Falló la actualización de ${errors.length} ítems.`);
+      }
       
       // Actualizar medición
-      await supabase
+      const { error: errorMedicion } = await supabase
         .from('tms_mediciones_tiempos')
         .update({
           fin_at: new Date().toISOString(),
@@ -264,8 +277,10 @@ const Picking = () => {
         .eq('nv', nvActiva.nv)
         .eq('proceso', 'PICKING')
         .eq('estado', 'EN_PROCESO');
+
+      if (errorMedicion) console.error('Error actualizando medición:', errorMedicion);
       
-      // Reset
+      // Reset y recargar
       setNvActiva(null);
       setItemsPickingStatus({});
       setTiempoInicio(null);
@@ -277,9 +292,11 @@ const Picking = () => {
       setCantidadReal('');
       
       await fetchData();
+      alert('Picking finalizado correctamente. La N.V. ha pasado a ' + nuevoEstadoGlobal);
+
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error al finalizar picking');
+      console.error('Error crítico al finalizar picking:', error);
+      alert('Error al finalizar picking: ' + error.message);
     }
   };
 
