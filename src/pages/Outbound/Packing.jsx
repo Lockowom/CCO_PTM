@@ -555,7 +555,7 @@ const Packing = () => {
               <div className="text-left">
                 <h4 className="font-bold text-lg text-white">¡ATENCIÓN: Picking Incompleto!</h4>
                 <p className="text-white/90 text-sm">
-                  Se solicitaron <span className="font-bold">{nvActiva.cantidad}</span> pero solo se encontraron <span className="font-bold text-xl underline">{nvActiva.cantidad_real}</span> unidades.
+                  Se solicitaron <span className="font-bold">{nvActiva.total_cantidad}</span> pero solo se encontraron <span className="font-bold text-xl underline">{nvActiva.cantidad_real}</span> unidades.
                 </p>
               </div>
             </div>
