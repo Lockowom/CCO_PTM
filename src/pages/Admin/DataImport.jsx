@@ -165,7 +165,7 @@ const DataImport = () => {
                     value = parseFloat(value) || 0;
                 } else if (col.type === 'date') {
                     // Intentar parsear fecha
-                    if (value) {
+                    if (value && value.trim() !== '') {
                         // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
                         const dateMatch = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                         if (dateMatch) {
@@ -174,6 +174,9 @@ const DataImport = () => {
                             value = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                         }
                         // Si ya es YYYY-MM-DD, dejarlo
+                    } else {
+                        // Si es string vacío, convertir a null para evitar error de sintaxis en Postgres
+                        value = null;
                     }
                 } else {
                     value = value.toString().trim();
