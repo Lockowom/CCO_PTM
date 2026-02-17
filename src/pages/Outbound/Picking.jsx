@@ -70,7 +70,9 @@ const Picking = () => {
             ...item,
             items: [],
             total_items: 0,
-            total_cantidad: 0
+            total_cantidad: 0,
+            usuario_asignado: item.usuario_asignado, // Tomar del primer registro
+            usuario_nombre: item.usuario_nombre
           };
         }
         grouped[nvId].items.push(item);
