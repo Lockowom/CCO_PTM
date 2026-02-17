@@ -32,6 +32,7 @@ const Picking = () => {
   
   // Picking activo
   const [nvActiva, setNvActiva] = useState(null);
+  const [itemsPickingStatus, setItemsPickingStatus] = useState({}); // Estado local de cada ítem { id: { status: 'COMPLETO' | 'PARCIAL' | 'SIN_STOCK', cantidad: 0 } }
   const [tiempoInicio, setTiempoInicio] = useState(null);
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
@@ -136,6 +137,13 @@ const Picking = () => {
     }
 
     setNvActiva(nv);
+    // Inicializar estado de items
+    const initialStatus = {};
+    (nv.items || [nv]).forEach(item => {
+      initialStatus[item.id] = { status: null, cantidad: '' };
+    });
+    setItemsPickingStatus(initialStatus);
+
     setTiempoInicio(Date.now());
     setTiempoTranscurrido(0);
     setTiempoOcio(0);
@@ -176,52 +184,70 @@ const Picking = () => {
     setEnPausa(!enPausa);
   };
 
+  // Manejar cambio en item individual
+  const handleItemStatusChange = (itemId, status, cantidad = '') => {
+    setItemsPickingStatus(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], status, cantidad }
+    }));
+  };
+
   // Finalizar picking
-  const finalizarPicking = async (tipoAccion) => {
+  const finalizarPicking = async () => {
     if (!nvActiva) return;
     
-    // Validar cantidad si es parcial
-    if (tipoAccion === 'PARCIAL' && (!cantidadReal || parseInt(cantidadReal) <= 0)) {
-      alert('Debes ingresar la cantidad real pickeada');
+    // Validar que todos los items tengan acción
+    const items = nvActiva.items || [nvActiva];
+    const missingAction = items.some(item => !itemsPickingStatus[item.id]?.status);
+    
+    if (missingAction) {
+      alert('Debes indicar el estado (Completo, Parcial o Sin Stock) para cada producto.');
       return;
     }
 
-    // Determinar nuevo estado según acción
-    const nuevoEstado = tipoAccion === 'SIN_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING';
-
-    try {
-      // Actualizar N.V. y LIBERAR ASIGNACIÓN (para que packing la tome)
-    // CORRECCIÓN: Actualizar por ítem individualmente para evitar duplicidad de cantidades
-    const updates = (nvActiva.items || [nvActiva]).map((item, index) => {
-      let qtyReal = 0;
-
-      if (tipoAccion === 'COMPLETO') {
-        qtyReal = item.cantidad; // En completo, cada item se pickea full
-      } else if (tipoAccion === 'PARCIAL') {
-        // En parcial, como no sabemos cuál item faltó, asignamos todo al primero
-        // para mantener la consistencia del total sin duplicar
-        if (index === 0) {
-          qtyReal = parseInt(cantidadReal) || 0;
-        } else {
-          qtyReal = 0;
-        }
-      } else {
-        qtyReal = 0; // Sin stock
-      }
-
-      return supabase
-        .from('tms_nv_diarias')
-        .update({ 
-          estado: nuevoEstado,
-          cantidad_real: qtyReal,
-          picking_status: tipoAccion,
-          usuario_asignado: null, // Liberar para el siguiente proceso
-          usuario_nombre: null
-        })
-        .eq('id', item.id); // Usar ID único de la fila
+    // Validar cantidades parciales
+    const invalidPartial = items.some(item => {
+      const state = itemsPickingStatus[item.id];
+      return state.status === 'PARCIAL' && (!state.cantidad || parseInt(state.cantidad) <= 0);
     });
 
-    await Promise.all(updates);
+    if (invalidPartial) {
+      alert('Debes ingresar una cantidad válida para los productos con picking parcial.');
+      return;
+    }
+
+    try {
+      // Actualizar cada ítem individualmente
+      const updates = items.map(item => {
+        const state = itemsPickingStatus[item.id];
+        let qtyReal = 0;
+        let finalStatus = 'PACKING'; // Default si hay algo pickeado
+
+        if (state.status === 'COMPLETO') {
+          qtyReal = item.cantidad;
+        } else if (state.status === 'PARCIAL') {
+          qtyReal = parseInt(state.cantidad);
+        } else {
+          qtyReal = 0; // SIN_STOCK
+          finalStatus = 'QUIEBRE_STOCK'; // Si no hay nada de este item
+        }
+
+        // Si es quiebre de stock pero otros items sí pasan, la NV global pasa a PACKING (pero este item queda marcado)
+        // La lógica de estado global se maneja implícitamente: si al menos uno pasa, la NV avanza.
+        
+        return supabase
+          .from('tms_nv_diarias')
+          .update({ 
+            estado: finalStatus === 'QUIEBRE_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING', // Estado individual
+            cantidad_real: qtyReal,
+            picking_status: state.status,
+            usuario_asignado: null, 
+            usuario_nombre: null
+          })
+          .eq('id', item.id);
+      });
+
+      await Promise.all(updates);
       
       // Actualizar medición
       await supabase
@@ -239,6 +265,7 @@ const Picking = () => {
       
       // Reset
       setNvActiva(null);
+      setItemsPickingStatus({});
       setTiempoInicio(null);
       setTiempoTranscurrido(0);
       setTiempoOcio(0);
@@ -538,69 +565,99 @@ const Picking = () => {
             </button>
           </div>
 
-          {/* Botones de Acción */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-            {/* 1. Pickeo Completo */}
-            <button
-              onClick={() => finalizarPicking('COMPLETO')}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105"
-            >
-              <div className="bg-white/20 p-2 rounded-full">
-                <CheckCircle size={32} />
-              </div>
-              <span className="font-bold text-lg">Pickeo Completo</span>
-              <span className="text-xs text-emerald-100">
-                {nvActiva?.total_items > 1 ? `Todos los ${nvActiva?.total_items} items` : `Cantidad: ${nvActiva?.cantidad}`}
-              </span>
-            </button>
+          {/* Lista de Items con Acciones Individuales */}
+          <div className="max-w-4xl mx-auto space-y-4">
+            {(nvActiva?.items || [nvActiva]).map((item) => {
+              const status = itemsPickingStatus[item.id]?.status;
+              const cantidad = itemsPickingStatus[item.id]?.cantidad;
 
-            {/* 2. Pickeo Parcial */}
-            <div className="relative group">
-              <button
-                onClick={() => setAction(action === 'PARCIAL' ? null : 'PARCIAL')}
-                className={`w-full h-full ${action === 'PARCIAL' ? 'bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105`}
-              >
-                <div className="bg-white/20 p-2 rounded-full">
-                  <Box size={32} />
-                </div>
-                <span className="font-bold text-lg">Pickeo Parcial</span>
-                <span className="text-xs text-blue-100">Falta Stock / Dañado</span>
-              </button>
-              
-              {/* Popup para ingresar cantidad parcial */}
-              {action === 'PARCIAL' && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl p-4 z-10 animate-in fade-in slide-in-from-top-2">
-                  <label className="block text-xs font-bold text-slate-500 mb-1 text-left">Cantidad Real</label>
-                  <input 
-                    type="number" 
-                    value={cantidadReal}
-                    onChange={(e) => setCantidadReal(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg p-2 text-slate-800 font-bold text-center mb-3"
-                    placeholder="0"
-                    autoFocus
-                  />
-                  <button 
-                    onClick={() => finalizarPicking('PARCIAL')}
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-700"
-                  >
-                    Confirmar
-                  </button>
-                </div>
-              )}
-            </div>
+              return (
+                <div key={item.id} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                  <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                    {/* Info Producto */}
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-white/20 text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
+                          {item.codigo_producto}
+                        </span>
+                        <span className="text-white/60 text-xs">{item.unidad}</span>
+                      </div>
+                      <p className="font-bold text-lg">{item.descripcion_producto}</p>
+                      <p className="text-white/80 text-sm mt-1">
+                        Solicitado: <span className="font-bold text-amber-300 text-xl">{item.cantidad}</span>
+                      </p>
+                    </div>
 
-            {/* 3. Sin Stock */}
+                    {/* Acciones */}
+                    <div className="flex items-center gap-2">
+                      {/* Completo */}
+                      <button
+                        onClick={() => handleItemStatusChange(item.id, 'COMPLETO')}
+                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
+                          status === 'COMPLETO' 
+                            ? 'bg-emerald-500 text-white ring-2 ring-white' 
+                            : 'bg-white/10 text-white/70 hover:bg-emerald-500/50'
+                        }`}
+                      >
+                        <CheckCircle size={20} />
+                        <span className="text-[10px] font-bold">COMPLETO</span>
+                      </button>
+
+                      {/* Parcial */}
+                      <div className="relative">
+                        <button
+                          onClick={() => handleItemStatusChange(item.id, 'PARCIAL')}
+                          className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
+                            status === 'PARCIAL' 
+                              ? 'bg-blue-500 text-white ring-2 ring-white' 
+                              : 'bg-white/10 text-white/70 hover:bg-blue-500/50'
+                          }`}
+                        >
+                          <Box size={20} />
+                          <span className="text-[10px] font-bold">PARCIAL</span>
+                        </button>
+                        
+                        {status === 'PARCIAL' && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white p-2 rounded-lg shadow-xl z-10">
+                            <input
+                              type="number"
+                              value={cantidad}
+                              onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
+                              className="w-full text-slate-800 font-bold text-center border rounded p-1"
+                              placeholder="Cant."
+                              autoFocus
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sin Stock */}
+                      <button
+                        onClick={() => handleItemStatusChange(item.id, 'SIN_STOCK')}
+                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
+                          status === 'SIN_STOCK' 
+                            ? 'bg-red-500 text-white ring-2 ring-white' 
+                            : 'bg-white/10 text-white/70 hover:bg-red-500/50'
+                        }`}
+                      >
+                        <AlertCircle size={20} />
+                        <span className="text-[10px] font-bold">SIN STOCK</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Botón Finalizar Global */}
+          <div className="mt-8">
             <button
-              onClick={() => {
-                if(confirm('¿Seguro que quieres marcar como SIN STOCK?')) finalizarPicking('SIN_STOCK');
-              }}
-              className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-all shadow-lg hover:scale-105"
+              onClick={finalizarPicking}
+              className="bg-white text-indigo-600 px-8 py-3 rounded-xl font-black text-lg shadow-xl hover:bg-indigo-50 hover:scale-105 transition-all flex items-center gap-2 mx-auto"
             >
-              <div className="bg-white/20 p-2 rounded-full">
-                <AlertCircle size={32} />
-              </div>
-              <span className="font-bold text-lg">Sin Stock</span>
-              <span className="text-xs text-red-100">No hay producto</span>
+              <CheckCircle size={24} />
+              FINALIZAR PICKING
             </button>
           </div>
           
