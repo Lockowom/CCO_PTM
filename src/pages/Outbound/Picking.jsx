@@ -186,27 +186,42 @@ const Picking = () => {
       return;
     }
 
-    const cantidadPickeada = tipoAccion === 'COMPLETO' 
-      ? nvActiva.total_cantidad 
-      : tipoAccion === 'PARCIAL' 
-        ? parseInt(cantidadReal) 
-        : 0;
-    
     // Determinar nuevo estado según acción
     const nuevoEstado = tipoAccion === 'SIN_STOCK' ? 'QUIEBRE_STOCK' : 'PACKING';
 
     try {
       // Actualizar N.V. y LIBERAR ASIGNACIÓN (para que packing la tome)
-      await supabase
+    // CORRECCIÓN: Actualizar por ítem individualmente para evitar duplicidad de cantidades
+    const updates = (nvActiva.items || [nvActiva]).map((item, index) => {
+      let qtyReal = 0;
+
+      if (tipoAccion === 'COMPLETO') {
+        qtyReal = item.cantidad; // En completo, cada item se pickea full
+      } else if (tipoAccion === 'PARCIAL') {
+        // En parcial, como no sabemos cuál item faltó, asignamos todo al primero
+        // para mantener la consistencia del total sin duplicar
+        if (index === 0) {
+          qtyReal = parseInt(cantidadReal) || 0;
+        } else {
+          qtyReal = 0;
+        }
+      } else {
+        qtyReal = 0; // Sin stock
+      }
+
+      return supabase
         .from('tms_nv_diarias')
         .update({ 
           estado: nuevoEstado,
-          cantidad_real: cantidadPickeada,
+          cantidad_real: qtyReal,
           picking_status: tipoAccion,
           usuario_asignado: null, // Liberar para el siguiente proceso
           usuario_nombre: null
         })
-        .eq('nv', nvActiva.nv);
+        .eq('id', item.id); // Usar ID único de la fila
+    });
+
+    await Promise.all(updates);
       
       // Actualizar medición
       await supabase
