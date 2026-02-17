@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare
+  Clock, Timer, Trash2, MessageSquare, History
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -84,7 +84,8 @@ const Navbar = () => {
     '/admin/data-import': 'manage_data_import',
     '/admin/cleanup': 'manage_cleanup',
     '/admin/time-reports': 'view_time_reports',
-    '/admin/tickets': 'manage_tickets'
+    '/admin/tickets': 'manage_tickets',
+    '/admin/login-history': 'manage_users'
   };
 
   // ¿Está la sección visible?
@@ -198,6 +199,7 @@ const Navbar = () => {
         { label: 'Usuarios', path: '/admin/users', icon: <Users size={16} /> },
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
         { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
+        { label: 'Historial Accesos', path: '/admin/login-history', icon: <History size={16} /> },
         { label: 'Carga Datos', path: '/admin/data-import', icon: <Upload size={16} /> },
         { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> },
         { label: 'Tiempos', path: '/admin/time-reports', icon: <Clock size={16} /> },
