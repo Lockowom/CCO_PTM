@@ -1,246 +1,141 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '../../supabase';
 
 const LocationsQuery = () => {
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState([]);
-  const [stats, setStats] = useState({ total: 0, ocupadas: 0, vacias: 0 });
-  const [pasillo, setPasillo] = useState('ALL');
-  const [estado, setEstado] = useState('ALL');
-  const [error, setError] = useState(null);
+  const [results, setResults] = useState([]);
+  const [searched, setSearched] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
 
-  const fetchAll = async () => {
+    setLoading(true);
+    setSearched(true);
+    
+    const term = `%${searchTerm.trim()}%`;
+
     try {
-      setLoading(true);
-      setError(null);
-
-      // Intentar cargar desde wms_ubicaciones directamente (tabla de productos en ubicaciones)
-      const { data: ubicaciones, error: e1 } = await supabase
+      // Buscar en wms_ubicaciones por código o descripción
+      const { data, error } = await supabase
         .from('wms_ubicaciones')
         .select('*')
-        .limit(10000);
+        .or(`codigo.ilike.${term},descripcion.ilike.${term},ubicacion.ilike.${term}`)
+        .limit(100);
 
-      if (e1) {
-        console.error('Error cargando ubicaciones:', e1);
-        setError('Error cargando datos: ' + e1.message);
-        return;
-      }
+      if (error) throw error;
 
-      // Agrupar productos por ubicación
-      const mapCantidad = {};
-      const detalles = {};
-      const pasillosSet = new Set();
+      setResults(data || []);
+      setLastUpdated(new Date());
 
-      if (ubicaciones && ubicaciones.length > 0) {
-        ubicaciones.forEach(u => {
-          const ub = u.ubicacion || 'SIN_UBICACION';
-          const cant = u.cantidad || 1;
-          
-          mapCantidad[ub] = (mapCantidad[ub] || 0) + cant;
-          
-          if (!detalles[ub]) detalles[ub] = [];
-          detalles[ub].push(u);
-          
-          // Extraer pasillo de la ubicación (ej: A-01-01 -> A)
-          const pasillo = ub.split('-')[0];
-          if (pasillo) pasillosSet.add(pasillo);
-        });
-
-        const merged = Object.keys(mapCantidad).map((ub) => {
-          const pasillo = ub.split('-')[0] || 'GENERAL';
-          const columna = ub.split('-')[1] || '0';
-          const nivel = ub.split('-')[2] || '0';
-          
-          return {
-            ubicacion: ub,
-            pasillo,
-            columna,
-            nivel,
-            estado: mapCantidad[ub] > 0 ? 'OCUPADO' : 'DISPONIBLE',
-            cantidad: mapCantidad[ub],
-            tieneProductos: mapCantidad[ub] > 0,
-            detalles: detalles[ub] || []
-          };
-        });
-
-        const ocupadas = merged.filter(r => r.tieneProductos).length;
-        setRows(merged.sort((a, b) => a.ubicacion.localeCompare(b.ubicacion)));
-        setStats({ total: merged.length, ocupadas, vacias: merged.length - ocupadas });
-      } else {
-        setRows([]);
-        setStats({ total: 0, ocupadas: 0, vacias: 0 });
-      }
     } catch (err) {
-      console.error('Error en fetchAll:', err);
-      setError('Error cargando ubicaciones: ' + err.message);
+      console.error("Error en búsqueda de ubicaciones:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const filtered = rows.filter(r => {
-    const passPasillo = pasillo === 'ALL' || r.pasillo === pasillo;
-    const passEstado = estado === 'ALL' || r.estado === estado;
-    const txt = search.trim().toLowerCase();
-    const passText = !txt 
-      || r.ubicacion.toLowerCase().includes(txt) 
-      || r.detalles.some(d => 
-        (d.codigo || '').toLowerCase().includes(txt) ||
-        (d.codigo_producto || '').toLowerCase().includes(txt) ||
-        (d.serie || '').toLowerCase().includes(txt) ||
-        (d.partida || '').toLowerCase().includes(txt) ||
-        (d.descripcion || '').toLowerCase().includes(txt)
-      );
-    return passPasillo && passEstado && passText;
-  });
-
-  const pasillosDisponibles = Array.from(new Set(rows.map(r => r.pasillo))).sort();
+  // Configuración de columnas para la tabla de resultados
+  const COLUMNS = [
+    { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100 flex items-center gap-2 w-fit"><MapPin size={14}/>{r.ubicacion}</span> },
+    { header: 'Código', accessor: 'codigo', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo}</span> },
+    { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800">{r.descripcion}</span> },
+    { header: 'Cantidad', accessor: 'cantidad', render: r => <span className="font-black text-slate-900 bg-slate-100 px-2 py-1 rounded">{r.cantidad}</span> },
+    { header: 'Talla', accessor: 'talla', render: r => r.talla || '-' },
+    { header: 'Color', accessor: 'color', render: r => r.color || '-' },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Error Alert */}
-      {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle size={20} className="text-red-600" />
-          <div>
-            <p className="font-bold text-red-900">Error cargando datos</p>
-            <p className="text-sm text-red-700">{error}</p>
+    <div className="h-full flex flex-col bg-slate-50 font-sans">
+      {/* 1. Header de Búsqueda */}
+      <div className="bg-white border-b border-slate-200 p-4 shadow-sm z-10">
+        <div className="max-w-[1600px] mx-auto w-full">
+          <div className="flex justify-between items-center mb-4">
+             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+               <div className="p-2 bg-slate-900 rounded-lg text-white">
+                 <MapPin size={24} />
+               </div>
+               CONSULTA DE UBICACIONES
+             </h1>
+             {searched && (
+               <div className="text-xs font-mono text-slate-400 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded">
+                 <RefreshCw size={12} />
+                 SYNC: {lastUpdated.toLocaleTimeString()}
+               </div>
+             )}
           </div>
-          <button 
-            onClick={fetchAll} 
-            className="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors"
-          >
-            Reintentar
-          </button>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900">Consulta de Ubicaciones</h2>
-          <p className="text-slate-500 text-sm mt-1">Búsqueda por ubicación, código y filtros</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex items-center bg-white border-2 border-slate-200 rounded-lg px-3">
-            <Search size={18} className="text-slate-400 mr-2" />
+          
+          <form onSubmit={handleSearch} className="relative group">
             <input
-              className="h-10 outline-none text-sm font-medium flex-1"
-              placeholder="Buscar ubicación o código (ej: A-01-01, SKU-100)"
-              value={search}
-              onChange={(e)=>setSearch(e.target.value)}
+              type="text"
+              className="w-full pl-14 pr-32 py-4 text-xl bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-inner uppercase font-mono text-slate-800 placeholder:text-slate-400"
+              placeholder="BUSCAR POR CÓDIGO O DESCRIPCIÓN..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              autoFocus
             />
-          </div>
-          <button onClick={fetchAll} disabled={loading} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-orange-400 disabled:to-orange-400 text-white rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/> Actualizar
-          </button>
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={28} />
+            <button 
+              type="submit"
+              disabled={loading}
+              className="absolute right-3 top-3 bottom-3 bg-slate-900 hover:bg-black text-white px-8 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl active:scale-95 flex items-center gap-2"
+            >
+              {loading ? <RefreshCw className="animate-spin" /> : 'BUSCAR'}
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border-2 border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Ubicaciones</div>
-          <div className="text-3xl font-black text-slate-900 mt-2">{stats.total}</div>
-        </div>
-        <div className="bg-white rounded-lg border-2 border-orange-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-orange-600 text-xs font-bold uppercase tracking-wider">Con Productos</div>
-          <div className="text-3xl font-black text-orange-600 mt-2">{stats.ocupadas}</div>
-        </div>
-        <div className="bg-white rounded-lg border-2 border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-slate-400 text-xs font-bold uppercase tracking-wider">Vacías</div>
-          <div className="text-3xl font-black text-slate-900 mt-2">{stats.vacias}</div>
-        </div>
-        <div className="bg-white rounded-lg border-2 border-blue-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-blue-600 text-xs font-bold uppercase tracking-wider">Filtradas</div>
-          <div className="text-3xl font-black text-blue-600 mt-2">{filtered.length}</div>
-        </div>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white rounded-xl border-2 border-slate-200 shadow-md overflow-hidden">
-        <div className="p-4 border-b-2 border-slate-200 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
-          <div className="flex items-center gap-2">
-            <Layers size={20} className="text-orange-600" />
-            <span className="font-black text-slate-900 text-lg">Filtros Avanzados</span>
-          </div>
-          <div className="flex gap-2 flex-wrap items-center">
-            <select className="border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-medium bg-white hover:border-orange-300 transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" value={pasillo} onChange={e=>setPasillo(e.target.value)}>
-              <option value="ALL">Todos los pasillos</option>
-              {pasillosDisponibles.map(p => <option key={p} value={p}>Pasillo {p}</option>)}
-            </select>
-            <select className="border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-medium bg-white hover:border-orange-300 transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" value={estado} onChange={e=>setEstado(e.target.value)}>
-              <option value="ALL">Todos los estados</option>
-              <option value="DISPONIBLE">Disponible</option>
-              <option value="OCUPADO">Ocupado</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-3">
-              <RefreshCw size={20} className="animate-spin" />
-              <span className="font-medium">Cargando ubicaciones...</span>
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
-              <Box size={32} className="mx-auto mb-2 opacity-50" />
-              <p>No hay ubicaciones registradas</p>
+      {/* 2. Área de Contenido */}
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+        <div className="max-w-[1600px] mx-auto w-full">
+          {searched ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               {results.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400 bg-slate-50/50 rounded-lg border border-slate-200 border-dashed backdrop-blur-sm">
+                  <Search size={48} className="mb-4 opacity-20" />
+                  <p className="font-medium">No se encontraron productos en ubicaciones con ese término</p>
+                </div>
+               ) : (
+                <div className="overflow-hidden rounded-lg shadow-lg border border-slate-200 bg-white">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-white uppercase bg-orange-600">
+                        <tr>
+                          {COLUMNS.map((col, i) => (
+                            <th key={i} className="px-4 py-3 font-bold whitespace-nowrap tracking-wider">
+                              {col.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {results.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-orange-50 transition-colors even:bg-slate-50/30">
+                            {COLUMNS.map((col, cIdx) => (
+                              <td key={cIdx} className="px-4 py-2.5 whitespace-nowrap text-slate-700">
+                                {col.render ? col.render(row) : (row[col.accessor] || '-')}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+               )}
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 text-xs uppercase font-bold tracking-wider">
-                  <th className="text-left p-3">Ubicación</th>
-                  <th className="text-center p-3">Pasillo</th>
-                  <th className="text-center p-3">Col.</th>
-                  <th className="text-center p-3">Nivel</th>
-                  <th className="text-center p-3">Estado</th>
-                  <th className="text-center p-3">Cantidad</th>
-                  <th className="text-left p-3">Productos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filtered.map(r => (
-                  <tr key={r.ubicacion} className="hover:bg-orange-50 transition-colors">
-                    <td className="p-3 font-mono font-bold flex items-center gap-2"><MapPin size={16} className="text-orange-500"/>{r.ubicacion}</td>
-                    <td className="p-3 text-center font-medium text-slate-600">{r.pasillo}</td>
-                    <td className="p-3 text-center text-slate-600">{r.columna}</td>
-                    <td className="p-3 text-center text-slate-600">{r.nivel}</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${r.tieneProductos ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {r.estado}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center font-black text-slate-900">{r.cantidad}</td>
-                    <td className="p-3">
-                      {r.detalles.length === 0 ? (
-                        <span className="text-slate-400 text-xs italic">Sin productos</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                          {r.detalles.slice(0, 3).map((d, idx) => (
-                            <span key={idx} className="px-2 py-1 rounded-md bg-blue-100 text-blue-700 border border-blue-200 text-xs font-medium whitespace-nowrap">
-                              <Box size={12} className="inline mr-1"/>
-                              {d.codigo || d.codigo_producto || 'SKU'} {d.cantidad ? `(${d.cantidad})` : ''}
-                            </span>
-                          ))}
-                          {r.detalles.length > 3 && (
-                            <span className="text-xs text-slate-500 font-medium px-2 py-1">+{r.detalles.length - 3}</span>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 mt-20">
+              <div className="p-8 bg-white rounded-full shadow-sm mb-6 border border-slate-100">
+                <MapPin size={64} className="text-orange-200" />
+              </div>
+              <p className="text-xl font-bold text-slate-400">Ingrese código o descripción para buscar ubicación</p>
+              <p className="text-sm text-slate-400 mt-2">Sistema de consulta rápida WMS</p>
+            </div>
           )}
         </div>
       </div>
