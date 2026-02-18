@@ -44,8 +44,7 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: null, // Sin clave única para upsert directo
-        // Estrategia: Manejo manual de duplicados en el código de carga
+        uniqueKey: 'codigo_producto, partida', // Definir la clave compuesta para el upsert
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -59,7 +58,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '📦 Pega los datos de partidas. Se permiten registros duplicados para el mismo código y partida (la información se agregará sin borrar lo anterior).',
+        helpText: '📦 Pega los datos de partidas. Si ya existe un registro con el mismo Código y Partida, se actualizará (Upsert).',
         smartDedup: false,
     },
     {
@@ -316,24 +315,13 @@ const DataImport = () => {
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 const batch = newRows.slice(i, i + BATCH_SIZE);
 
-                // Para PARTIDAS, hacemos insert simple permitiendo duplicados
-                // Si es otra tabla con uniqueKey, usamos upsert
-                let result;
-                
-                if (currentTab.id === 'partidas') {
-                    // Insert simple (sin onConflict)
-                    result = await supabase
-                        .from(currentTab.table)
-                        .insert(batch);
-                } else {
-                    // Upsert normal para otras tablas
-                    result = await supabase
-                        .from(currentTab.table)
-                        .upsert(batch, {
-                            onConflict: currentTab.uniqueKey || undefined,
-                            ignoreDuplicates: currentTab.smartDedup
-                        });
-                }
+                // Upsert normal para todas las tablas
+                const result = await supabase
+                    .from(currentTab.table)
+                    .upsert(batch, {
+                        onConflict: currentTab.uniqueKey || undefined,
+                        ignoreDuplicates: currentTab.smartDedup
+                    });
 
                 const { error } = result;
 
