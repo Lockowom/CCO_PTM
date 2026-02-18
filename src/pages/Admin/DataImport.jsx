@@ -351,7 +351,24 @@ const DataImport = () => {
             const errorDetails = [];
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
-                const batch = newRows.slice(i, i + BATCH_SIZE);
+                let batch = newRows.slice(i, i + BATCH_SIZE);
+
+                // DEDUPLICACIÓN EN EL FRONTEND (CRÍTICO)
+                // Si enviamos claves duplicadas en el mismo lote a Supabase UPSERT, falla con:
+                // "ON CONFLICT DO UPDATE command cannot affect row a second time"
+                if (currentTab.uniqueKey) {
+                    const uniqueMap = new Map();
+                    const keys = currentTab.uniqueKey.split(',').map(k => k.trim());
+                    
+                    batch.forEach(row => {
+                        // Generar clave compuesta
+                        const keyVal = keys.map(k => row[k]).join('|');
+                        // Sobreescribir para quedarse con el último (o el primero si se prefiere)
+                        uniqueMap.set(keyVal, row);
+                    });
+                    
+                    batch = Array.from(uniqueMap.values());
+                }
 
                 let result;
                 
@@ -366,7 +383,7 @@ const DataImport = () => {
                         .from(currentTab.table)
                         .upsert(batch, {
                             onConflict: currentTab.uniqueKey,
-                            ignoreDuplicates: currentTab.smartDedup
+                            ignoreDuplicates: false // IMPORTANTE: False para actualizar (update), True para ignorar
                         });
                 }
 
