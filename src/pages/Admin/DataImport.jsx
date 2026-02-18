@@ -111,7 +111,7 @@ const IMPORT_TABS = [
         icon: Database,
         color: 'orange',
         table: 'wms_ubicaciones',
-        uniqueKey: 'ubicacion, codigo', // Clave compuesta para upsert
+        uniqueKey: null, // Insertar directamente sin upsert para permitir duplicados y evitar errores
         columns: [
             { key: 'ubicacion', label: 'UBICACION', required: true, type: 'text' },
             { key: 'codigo', label: 'CODIGO', required: true, type: 'text' },
@@ -124,7 +124,7 @@ const IMPORT_TABS = [
             { key: 'cantidad', label: 'Cantidad Contada', required: true, type: 'number' },
             { key: 'descripcion', label: 'DESCRIPCION', required: false, type: 'text' },
         ],
-        helpText: '🏭 Pega el inventario completo. Se actualizarán las cantidades si ya existe el producto en esa ubicación (Upsert).',
+        helpText: '🏭 Pega el inventario completo. Se guardará TODO tal cual, permitiendo duplicados y fechas inválidas (se guardarán como vacías).',
         smartDedup: false,
     }
 ];
@@ -197,14 +197,15 @@ const DataImport = () => {
                             if (dateMatch) {
                                 const [_, d, m, y] = dateMatch;
                                 const year = y.length === 2 ? `20${y}` : y;
-                                // Validar que sea fecha válida
+                                // Validar que sea fecha válida (evitar 31 de abril, 30 de febrero, etc.)
                                 const isoDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                                const timestamp = Date.parse(isoDate);
+                                const dateObj = new Date(year, parseInt(m) - 1, d);
                                 
-                                if (!isNaN(timestamp)) {
+                                // Verificar que la fecha generada coincida con la entrada (ej: 2024-02-30 -> 2024-03-01 en JS Date)
+                                if (dateObj.getFullYear() == year && dateObj.getMonth() == parseInt(m) - 1 && dateObj.getDate() == d) {
                                      value = isoDate;
                                 } else {
-                                     value = null;
+                                     value = null; // Fecha inválida lógicamente (ej: 30 de Febrero)
                                 }
                             } else {
                                 // Si ya es YYYY-MM-DD u otro formato que JS entienda
@@ -337,13 +338,22 @@ const DataImport = () => {
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 const batch = newRows.slice(i, i + BATCH_SIZE);
 
-                // Upsert normal para todas las tablas
-                const result = await supabase
-                    .from(currentTab.table)
-                    .upsert(batch, {
-                        onConflict: currentTab.uniqueKey || undefined,
-                        ignoreDuplicates: currentTab.smartDedup
-                    });
+                let result;
+                
+                // Si la tabla no tiene uniqueKey, usamos INSERT directo (permite duplicados)
+                if (!currentTab.uniqueKey) {
+                    result = await supabase
+                        .from(currentTab.table)
+                        .insert(batch);
+                } else {
+                    // Si tiene uniqueKey, usamos UPSERT
+                    result = await supabase
+                        .from(currentTab.table)
+                        .upsert(batch, {
+                            onConflict: currentTab.uniqueKey,
+                            ignoreDuplicates: currentTab.smartDedup
+                        });
+                }
 
                 const { error } = result;
 
