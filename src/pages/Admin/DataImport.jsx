@@ -44,7 +44,8 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: null, // Sin dedup — upsert por combinación
+        uniqueKey: null, // Si no tiene PK única, upsert es difícil sin borrar antes.
+        // ESTRATEGIA: Para partidas, como es snapshot, mejor borrar por lote o usar insert simple ignorando errores
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -58,7 +59,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '📦 Pega los datos de partidas. Se reemplazarán los registros existentes del mismo código+partida.',
+        helpText: '📦 Pega los datos de partidas. Asegúrate de que las fechas tengan formato válido (DD/MM/YYYY o YYYY-MM-DD).',
         smartDedup: false,
     },
     {
@@ -67,7 +68,7 @@ const IMPORT_TABS = [
         icon: Barcode,
         color: 'violet',
         table: 'tms_series',
-        uniqueKey: null,
+        uniqueKey: 'serie', // Definir la clave única para el upsert
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -80,8 +81,8 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '🔢 Pega los datos de series. Se reemplazarán los registros existentes del mismo código+serie.',
-        smartDedup: false,
+        helpText: '🔢 Pega los datos de series. Si una serie ya existe, se actualizarán sus datos (Upsert).',
+        smartDedup: false, // Usar upsert nativo de base de datos
     },
     {
         id: 'farmapack',
@@ -164,18 +165,38 @@ const DataImport = () => {
                     value = value.replace(/[^\d.,\-]/g, '').replace(',', '.');
                     value = parseFloat(value) || 0;
                 } else if (col.type === 'date') {
-                    // Intentar parsear fecha
+                    // Limpieza y validación de fecha robusta
                     if (value && value.trim() !== '') {
-                        // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
-                        const dateMatch = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-                        if (dateMatch) {
-                            const [_, d, m, y] = dateMatch;
-                            const year = y.length === 2 ? `20${y}` : y;
-                            value = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        // Ignorar valores que no son fechas (ej: 'UNI', 'PZA', 'SIN FECHA')
+                        if (value.length < 6 || !/\d/.test(value)) { // Debe tener al menos 6 caracteres y algún número
+                             value = null;
+                        } else {
+                            // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
+                            const dateMatch = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                            if (dateMatch) {
+                                const [_, d, m, y] = dateMatch;
+                                const year = y.length === 2 ? `20${y}` : y;
+                                // Validar que sea fecha válida
+                                const isoDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                                const timestamp = Date.parse(isoDate);
+                                
+                                if (!isNaN(timestamp)) {
+                                     value = isoDate;
+                                } else {
+                                     value = null;
+                                }
+                            } else {
+                                // Si ya es YYYY-MM-DD u otro formato que JS entienda
+                                const timestamp = Date.parse(value);
+                                if (!isNaN(timestamp)) {
+                                    const d = new Date(timestamp);
+                                    value = d.toISOString().split('T')[0];
+                                } else {
+                                    value = null; 
+                                }
+                            }
                         }
-                        // Si ya es YYYY-MM-DD, dejarlo
                     } else {
-                        // Si es string vacío, convertir a null para evitar error de sintaxis en Postgres
                         value = null;
                     }
                 } else {
@@ -303,9 +324,23 @@ const DataImport = () => {
                     });
 
                 if (error) {
-                    console.error('Error en batch:', error);
-                    errors += batch.length;
-                    errorDetails.push(error.message);
+                    // Mejor manejo de errores
+                    if (error.code === '23505' || error.message?.includes('duplicate key')) {
+                        // Error de duplicados
+                        if (currentTab.smartDedup) {
+                             // Si está activado smartDedup, esto no debería pasar, pero por si acaso
+                             errors += batch.length;
+                             errorDetails.push(`Error de duplicados en lote: ${error.message}`);
+                        } else {
+                             // Si no es smartDedup, upsert falló o no está configurado
+                             errors += batch.length;
+                             errorDetails.push(`Registros duplicados detectados. Verifica que la columna clave '${currentTab.uniqueKey || 'id'}' sea única.`);
+                        }
+                    } else {
+                        console.error('Error en batch:', error);
+                        errors += batch.length;
+                        errorDetails.push(error.message);
+                    }
                 } else {
                     inserted += batch.length;
                 }
