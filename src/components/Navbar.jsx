@@ -210,24 +210,29 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-white border-b-2 border-orange-200 shadow-lg sticky top-0 z-40">
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 gap-2 sm:gap-4">
+    <header className="bg-[#0f172a] border-b-4 border-orange-600 shadow-2xl sticky top-0 z-40 font-mono">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 gap-2 sm:gap-4 relative">
+        {/* Glow Effect */}
+        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent"></div>
+
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 min-w-fit">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-orange-300 p-1.5 sm:p-2">
-            <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain" />
+        <Link to="/dashboard" className="flex items-center gap-3 min-w-fit group">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-800 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.3)] border border-slate-700 group-hover:border-orange-500/50 transition-colors p-1.5 sm:p-2 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain relative z-10" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-base sm:text-lg font-black text-slate-800 leading-none">C.C.O</h1>
-            <p className="text-[8px] sm:text-[9px] text-orange-500 font-bold uppercase tracking-widest">Centro Control</p>
+            <h1 className="text-base sm:text-lg font-black text-white leading-none tracking-tight group-hover:text-orange-400 transition-colors">C.C.O</h1>
+            <p className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] group-hover:text-slate-300 transition-colors">Centro Control</p>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center flex-1 px-2 sm:px-4">
+        <nav className="hidden lg:flex items-center gap-1 sm:gap-2 flex-wrap justify-center flex-1 px-4">
           {menuConfig.map((item) => {
-            // Verificar visibilidad de la sección
             if (!isSectionVisible(item.id)) return null;
+
+            const isActive = activeDropdown === item.id || (item.isLink && location.pathname === item.path);
 
             return (
               <div
@@ -239,10 +244,10 @@ const Navbar = () => {
                 {item.isLink ? (
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 uppercase tracking-wide
                       ${location.pathname === item.path
-                        ? 'bg-orange-500 text-white shadow-lg'
-                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-orange-600 text-white shadow-[0_0_15px_rgba(234,88,12,0.4)] border border-orange-500'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700'
                       }`}
                   >
                     {item.icon}
@@ -250,25 +255,27 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <button
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer uppercase tracking-wide
                       ${activeDropdown === item.id
-                        ? 'bg-orange-500 text-white shadow-lg'
-                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-orange-600 text-white shadow-[0_0_15px_rgba(234,88,12,0.4)] border border-orange-500'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700'
                       }`}
                   >
                     {item.icon}
                     <span className="hidden sm:inline">{item.label}</span>
-                    <ChevronDown size={14} className={`transition-transform duration-150 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                   </button>
                 )}
 
-                {/* Dropdown */}
+                {/* Dropdown Dark */}
                 {!item.isLink && activeDropdown === item.id && (
-                  <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 z-50">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-[#1e293b] rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-slate-700 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#1e293b] border-t border-l border-slate-700 rotate-45"></div>
+                    <div className="relative z-10 space-y-1">
                     {item.modules.filter(m => canAccessRoute(m.path, item.id)).length === 0 ? (
-                      <div className="px-3 py-4 text-center text-slate-400 text-xs">
-                        <Lock size={14} className="mx-auto mb-1" />
-                        Sin acceso
+                      <div className="px-3 py-4 text-center text-slate-500 text-xs font-mono">
+                        <Lock size={14} className="mx-auto mb-2 opacity-50" />
+                        SIN ACCESO
                       </div>
                     ) : (
                       item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
@@ -276,17 +283,18 @@ const Navbar = () => {
                           key={module.path}
                           to={module.path}
                           onClick={() => setActiveDropdown(null)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all group/item
                             ${location.pathname === module.path
-                              ? 'bg-orange-500 text-white shadow-md'
-                              : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
+                              ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                              : 'text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-700 border border-transparent'
                             }`}
                         >
-                          <span>{module.icon}</span>
+                          <span className={`${location.pathname === module.path ? 'text-orange-500' : 'text-slate-500 group-hover/item:text-orange-400'} transition-colors`}>{module.icon}</span>
                           {module.label}
                         </Link>
                       ))
                     )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -295,52 +303,52 @@ const Navbar = () => {
         </nav>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-fit">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-fit">
           {/* Botón Refresh */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`p-2 rounded-lg transition-all ${
+            className={`p-2 rounded-lg transition-all border border-transparent ${
               isRefreshing 
-                ? 'text-green-500 animate-spin bg-green-50' 
-                : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50'
+                ? 'text-emerald-400 animate-spin bg-emerald-400/10 border-emerald-400/20' 
+                : 'text-slate-500 hover:text-orange-400 hover:bg-slate-800 hover:border-slate-700'
             }`}
             title="Actualizar menú"
           >
             <RefreshCw size={18} />
           </button>
 
-          {/* User */}
+          {/* User Profile - Matching Image */}
           {user && (
-            <div className="hidden md:flex items-center gap-2 lg:gap-3 pl-3 lg:pl-4 border-l-2 border-orange-200">
-              <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs lg:text-sm shadow-lg">
+            <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-700">
+              <div className="w-10 h-10 bg-[#ea580c] rounded-full flex items-center justify-center text-white font-black text-sm shadow-[0_0_10px_rgba(234,88,12,0.4)] ring-2 ring-[#0f172a]">
                 {user.nombre?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className="hidden lg:block">
-                <span className="text-sm font-bold text-slate-800 leading-none capitalize block">{user.nombre}</span>
-                <span className="text-[10px] font-semibold text-orange-500 uppercase">{user.rol}</span>
+              <div className="hidden lg:block leading-tight">
+                <span className="text-sm font-bold text-white block tracking-tight">{user.nombre}</span>
+                <span className="text-[10px] font-black text-[#ea580c] uppercase tracking-wider">{user.rol}</span>
               </div>
             </div>
           )}
 
-          {/* Clock */}
+          {/* Clock Widget - Matching Image */}
           <ClockWidget />
 
           {/* Logout */}
           <button 
             onClick={handleLogout} 
-            className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold shadow-lg"
+            className="hidden sm:flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800"
+            title="Cerrar Sesión"
           >
-            <LogOut size={16} />
-            <span className="hidden sm:inline">Salir</span>
+            <LogOut size={18} />
           </button>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 hover:bg-orange-50 rounded-lg"
+            className="lg:hidden p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
@@ -361,7 +369,7 @@ const Navbar = () => {
   );
 };
 
-// Clock Widget separado para no re-renderizar todo el Navbar
+// Clock Widget - Industrial Look
 const ClockWidget = () => {
   const [now, setNow] = React.useState(new Date());
   
@@ -370,39 +378,56 @@ const ClockWidget = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const h = now.getHours().toString().padStart(2, '0');
+  const h = now.getHours() % 12 || 12; // 12-hour format
   const m = now.getMinutes().toString().padStart(2, '0');
   const s = now.getSeconds().toString().padStart(2, '0');
   const ampm = now.getHours() < 12 ? 'AM' : 'PM';
-  const day = now.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).toUpperCase();
+  const day = now.getDate().toString().padStart(2, '0');
+  const month = now.toLocaleDateString('es-CL', { month: 'short' }).toUpperCase().replace('.', '');
 
   return (
-    <div className="hidden sm:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
-      <div className="flex items-baseline gap-0.5">
-        <span className="font-mono text-sm font-black text-emerald-400">{h}:{m}</span>
-        <span className="font-mono text-[10px] text-emerald-400/60">{s}</span>
+    <div className="hidden sm:flex items-center bg-[#020617] px-3 py-1.5 rounded-lg border border-slate-800 shadow-inner min-w-[140px] justify-between group hover:border-slate-700 transition-colors">
+      {/* Time Section */}
+      <div className="flex items-baseline gap-1">
+        <span className="font-mono text-base font-black text-[#4ade80] tracking-widest drop-shadow-[0_0_2px_rgba(74,222,128,0.5)]">
+          {h.toString().padStart(2, '0')}:{m}
+        </span>
+        <span className="font-mono text-[10px] font-bold text-[#4ade80]/60">{s}</span>
       </div>
-      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ampm === 'AM' ? 'bg-sky-500/20 text-sky-400' : 'bg-amber-500/20 text-amber-400'}`}>
-        {ampm}
-      </span>
-      <div className="w-px h-4 bg-slate-700" />
-      <span className="text-[10px] font-bold text-slate-400">{day}</span>
+
+      {/* AM/PM Badge */}
+      <div className="bg-[#ea580c]/20 px-1.5 py-0.5 rounded ml-2 border border-[#ea580c]/30">
+        <span className="text-[9px] font-black text-[#fb923c] block leading-none tracking-wider">{ampm}</span>
+      </div>
+
+      <div className="w-[1px] h-5 bg-slate-800 mx-2 group-hover:bg-slate-700 transition-colors" />
+
+      {/* Date Section */}
+      <div className="flex flex-col items-end leading-none">
+        <span className="text-[10px] font-bold text-slate-400">{day}-{month}</span>
+      </div>
     </div>
   );
 };
 
-// Mobile Menu separado
+// Mobile Menu Dark
 const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdown, setActiveDropdown, setMobileMenuOpen, location }) => (
-  <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2">
+  <nav className="lg:hidden bg-[#0f172a] border-t border-slate-800 px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner">
     {menuConfig.map((item) => {
       if (!isSectionVisible(item.id)) return null;
+      
+      const isActive = location.pathname === item.path;
       
       return item.isLink ? (
         <Link
           key={item.id}
           to={item.path}
           onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100"
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
+            ${isActive 
+              ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/20' 
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
         >
           {item.icon}
           {item.label}
@@ -411,22 +436,29 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
         <div key={item.id} className="space-y-1">
           <button
             onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:bg-orange-100"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
+              ${activeDropdown === item.id 
+                ? 'bg-slate-800 text-white' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
           >
             {item.icon}
             {item.label}
-            <ChevronDown size={14} className={`ml-auto transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+            <ChevronDown size={16} className={`ml-auto transition-transform duration-200 ${activeDropdown === item.id ? 'rotate-180 text-orange-500' : ''}`} />
           </button>
+          
           {activeDropdown === item.id && (
-            <div className="ml-4 space-y-1">
+            <div className="ml-4 pl-4 border-l-2 border-slate-700 space-y-1 my-2 animate-in slide-in-from-left-2 fade-in duration-200">
               {item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                 <Link
                   key={module.path}
                   to={module.path}
                   onClick={() => { setMobileMenuOpen(false); setActiveDropdown(null); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
-                    location.pathname === module.path ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-orange-100'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-medium transition-all
+                    ${location.pathname === module.path 
+                      ? 'text-orange-400 bg-orange-500/10 border border-orange-500/20' 
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+                    }`}
                 >
                   {module.icon}
                   {module.label}
