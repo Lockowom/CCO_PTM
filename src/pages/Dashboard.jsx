@@ -1,5 +1,4 @@
-// Dashboard.jsx - Dashboard Principal con datos REALES de Supabase
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { 
   Package, 
   Truck, 
@@ -39,6 +38,7 @@ import {
   AreaChart
 } from 'recharts';
 import { supabase } from '../supabase';
+import gsap from 'gsap';
 
 // Configuración de estados
 const ESTADOS_NV = [
@@ -89,10 +89,66 @@ const Dashboard = () => {
   const [pieData, setPieData] = useState([]);
   const [recentNV, setRecentNV] = useState([]);
 
+  // Refs para animaciones
+  const dashboardRef = useRef(null);
+
+  // Animación Inicial
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Header
+      gsap.from(".dash-header", { y: -30, opacity: 0, duration: 0.8, ease: "power3.out" });
+      
+      // KPI Cards Row 1
+      gsap.from(".kpi-card", { 
+        y: 30, 
+        opacity: 0, 
+        duration: 0.6, 
+        stagger: 0.05, 
+        delay: 0.2,
+        ease: "back.out(1.2)" 
+      });
+
+      // KPI Cards Row 2 (Large cards)
+      gsap.from(".stat-card", { 
+        scale: 0.9, 
+        opacity: 0, 
+        duration: 0.6, 
+        stagger: 0.1, 
+        delay: 0.5,
+        ease: "power2.out" 
+      });
+
+      // Charts
+      gsap.from(".chart-container", { 
+        y: 40, 
+        opacity: 0, 
+        duration: 0.8, 
+        stagger: 0.2, 
+        delay: 0.7,
+        ease: "power3.out" 
+      });
+
+      // Table
+      gsap.from(".recent-table", { 
+        y: 40, 
+        opacity: 0, 
+        duration: 0.8, 
+        delay: 0.9,
+        ease: "power3.out" 
+      });
+
+    }, dashboardRef);
+
+    return () => ctx.revert();
+  }, []);
+
   // Fetch de todos los datos
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Animate refresh icon
+      gsap.to(".refresh-icon", { rotation: 360, duration: 1, repeat: 1 });
 
       // 1. Cargar N.V.
       const { data: nvData } = await supabase
@@ -191,6 +247,8 @@ const Dashboard = () => {
       .channel('dashboard_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
         console.log('📊 Dashboard: N.V. actualizada');
+        // Flash animation for update
+        gsap.fromTo(".dash-header", { backgroundColor: "#d1fae5" }, { backgroundColor: "transparent", duration: 0.5 });
         fetchAllData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, () => {
@@ -219,9 +277,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={dashboardRef} className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-end">
+      <div className="dash-header flex justify-between items-end p-2 -m-2 rounded-xl transition-colors">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Dashboard Operacional</h2>
           <p className="text-slate-500 text-sm">Resumen en tiempo real de la operación</p>
@@ -234,9 +292,9 @@ const Dashboard = () => {
           <button 
             onClick={fetchAllData}
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-transform active:scale-95"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className="refresh-icon" />
             Actualizar
           </button>
         </div>
@@ -287,7 +345,7 @@ const Dashboard = () => {
 
       {/* Segunda fila de KPIs - Entregas y Conductores */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-xl text-white shadow-lg">
+        <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
           <div className="flex justify-between items-start mb-3">
             <Users size={24} className="opacity-80" />
             <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{conductoresStats.enRuta} en ruta</span>
@@ -296,7 +354,7 @@ const Dashboard = () => {
           <p className="text-sm opacity-80">Conductores</p>
         </div>
         
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-xl text-white shadow-lg">
+        <div className="stat-card bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
           <div className="flex justify-between items-start mb-3">
             <CheckCircle size={24} className="opacity-80" />
             <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -307,7 +365,7 @@ const Dashboard = () => {
           <p className="text-sm opacity-80">Entregas Completadas</p>
         </div>
         
-        <div className="bg-gradient-to-br from-amber-500 to-orange-500 p-5 rounded-xl text-white shadow-lg">
+        <div className="stat-card bg-gradient-to-br from-amber-500 to-orange-500 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
           <div className="flex justify-between items-start mb-3">
             <Clock size={24} className="opacity-80" />
           </div>
@@ -315,7 +373,7 @@ const Dashboard = () => {
           <p className="text-sm opacity-80">Entregas Pendientes</p>
         </div>
         
-        <div className="bg-gradient-to-br from-red-500 to-red-600 p-5 rounded-xl text-white shadow-lg">
+        <div className="stat-card bg-gradient-to-br from-red-500 to-red-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
           <div className="flex justify-between items-start mb-3">
             <AlertCircle size={24} className="opacity-80" />
           </div>
@@ -327,7 +385,7 @@ const Dashboard = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico de Barras - Flujo Operativo */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="chart-container lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -374,7 +432,7 @@ const Dashboard = () => {
         </div>
 
         {/* Gráfico Pie - Distribución */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="chart-container bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <h3 className="text-lg font-bold text-slate-800 mb-2">Distribución General</h3>
           <p className="text-sm text-slate-500 mb-4">Estado actual de todas las N.V.</p>
           
@@ -421,7 +479,7 @@ const Dashboard = () => {
       </div>
 
       {/* Tabla de Actividad Reciente */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="recent-table bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
           <div className="flex items-center gap-3">
             <Activity size={20} className="text-indigo-500" />
@@ -507,7 +565,7 @@ function KPICard({ title, value, icon, color, subtitle, trend, trendUp }) {
   };
 
   return (
-    <div className={`p-4 rounded-xl border-2 ${colorClasses[color]} transition-all hover:shadow-md`}>
+    <div className={`kpi-card p-4 rounded-xl border-2 ${colorClasses[color]} transition-all hover:shadow-md hover:scale-[1.02]`}>
       <div className="flex justify-between items-start mb-2">
         <div className="p-2 bg-white rounded-lg shadow-sm">
           {icon}

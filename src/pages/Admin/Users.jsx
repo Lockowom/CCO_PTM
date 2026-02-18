@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { 
   Users, UserPlus, Search, Filter, RefreshCw, 
   MoreVertical, Edit, Trash2, Key, Shield, UserCheck, 
   Crown, Briefcase, Wrench, X, Save, Eye, EyeOff, Loader2 
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import gsap from 'gsap';
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -27,6 +28,11 @@ const UsersPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Refs para animaciones
+  const pageRef = useRef(null);
+  const usersGridRef = useRef(null);
+  const modalRef = useRef(null);
+
   // Stats
   const stats = {
     total: users.length,
@@ -36,6 +42,54 @@ const UsersPage = () => {
   };
 
   const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
+
+  // Animación Inicial
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Header & Stats
+      gsap.from(".page-header", { y: -20, opacity: 0, duration: 0.6, ease: "power3.out" });
+      gsap.from(".stat-card", { 
+        y: 20, 
+        opacity: 0, 
+        duration: 0.5, 
+        stagger: 0.1, 
+        delay: 0.2,
+        ease: "back.out(1.2)" 
+      });
+      
+      // Filters
+      gsap.from(".filters-bar", { 
+        y: 20, 
+        opacity: 0, 
+        duration: 0.5, 
+        delay: 0.4,
+        ease: "power2.out" 
+      });
+
+    }, pageRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Animar Grid de Usuarios cuando cargan
+  useEffect(() => {
+    if (!loading && users.length > 0) {
+      gsap.fromTo(".user-card", 
+        { y: 30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.4, stagger: 0.05, ease: "power2.out" }
+      );
+    }
+  }, [loading, users.length]);
+
+  // Animar Modal
+  useEffect(() => {
+    if (isModalOpen && modalRef.current) {
+      gsap.fromTo(modalRef.current,
+        { scale: 0.9, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.3, ease: "back.out(1.2)" }
+      );
+    }
+  }, [isModalOpen]);
 
   useEffect(() => {
     fetchUsers();
@@ -54,11 +108,14 @@ const UsersPage = () => {
         (payload) => {
           console.log('🔄 Cambio detectado en usuarios (Realtime):', payload);
           setIsSyncing(true);
+          // Flash animation for sync
+          gsap.to(".sync-indicator", { scale: 1.5, opacity: 0.5, duration: 0.3, yoyo: true, repeat: 1 });
           fetchUsers();
           setTimeout(() => setIsSyncing(false), 300);
         }
       )
       .subscribe();
+
 
     // REALTIME: Escuchar cambios en tms_roles
     const rolesChannel = supabase
