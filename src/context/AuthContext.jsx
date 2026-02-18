@@ -155,8 +155,22 @@ export const AuthProvider = ({ children }) => {
           email: userData.email,
           rol: userData.rol
         });
+
+        // ACTUALIZAR INMEDIATAMENTE el estado activo (Heartbeat inicial)
+        // Esto asegura que el usuario aparezca en "Usuarios Activos" al instante
+        await supabase
+          .from('tms_usuarios_activos')
+          .upsert({
+            usuario_id: userData.id,
+            nombre: userData.nombre,
+            rol: userData.rol,
+            ultima_actividad: new Date().toISOString(),
+            modulo_actual: 'Inicio de Sesión',
+            estado: 'ONLINE'
+          }, { onConflict: 'usuario_id' });
+          
       } catch (logErr) {
-        console.error('Error logging access:', logErr);
+        console.error('Error logging access/active status:', logErr);
       }
       
       setLoading(false);
