@@ -44,16 +44,16 @@ const Entry = () => {
   }, [queue]);
 
   // Buscar descripción al cambiar el código (Debounce o Blur)
-  // Usamos un efecto para buscar cuando el código tiene longitud suficiente
   useEffect(() => {
     const fetchDescription = async () => {
       if (!form.codigo || form.codigo.length < 3) return;
       
       setLoadingDesc(true);
+      setError(null);
       try {
-        // 1. Intentar buscar en maestro de productos (tms_inventario_resumen)
+        // 1. Intentar buscar en MATRIZ DE CODIGOS (tms_matriz_codigos) - PRIORIDAD
         let { data, error } = await supabase
-          .from('tms_inventario_resumen')
+          .from('tms_matriz_codigos')
           .select('producto')
           .eq('codigo_producto', form.codigo)
           .maybeSingle();
@@ -61,19 +61,20 @@ const Entry = () => {
         if (data && data.producto) {
           setForm(prev => ({ ...prev, descripcion: data.producto }));
         } else {
-          // 2. Si no está en maestro, buscar en historial de ubicaciones (wms_ubicaciones)
-          // como fallback por si ya existe el producto ahí
+          // 2. Si no está en maestro, buscar en historial de ubicaciones como fallback
           const { data: dataWms } = await supabase
             .from('wms_ubicaciones')
             .select('descripcion')
             .eq('codigo', form.codigo)
-            .limit(1);
+            .limit(1)
+            .maybeSingle();
             
-          if (dataWms && dataWms.length > 0 && dataWms[0].descripcion) {
-             setForm(prev => ({ ...prev, descripcion: dataWms[0].descripcion }));
+          if (dataWms && dataWms.descripcion) {
+             setForm(prev => ({ ...prev, descripcion: dataWms.descripcion }));
           } else {
-             // No encontrado, permitir edición manual o dejar vacío
-             // setForm(prev => ({ ...prev, descripcion: '' }));
+             // NO ENCONTRADO
+             setForm(prev => ({ ...prev, descripcion: '' }));
+             setError("SKU NO ENCONTRADO");
           }
         }
       } catch (err) {
