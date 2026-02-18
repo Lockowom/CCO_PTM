@@ -104,6 +104,27 @@ const IMPORT_TABS = [
         ],
         helpText: '💊 Pega los datos de Farmapack. Se reemplazarán los registros existentes del mismo código+lote.',
         smartDedup: false,
+    },
+    {
+        id: 'inventario',
+        label: 'Inventario (WMS)',
+        icon: Database,
+        color: 'orange',
+        table: 'wms_ubicaciones',
+        uniqueKey: 'ubicacion, codigo', // Clave compuesta para upsert
+        columns: [
+            { key: 'ubicacion', label: 'Ubicación', required: true, type: 'text' },
+            { key: 'codigo', label: 'Código Producto', required: true, type: 'text' },
+            { key: 'descripcion', label: 'Descripción', required: false, type: 'text' },
+            { key: 'cantidad', label: 'Cantidad', required: true, type: 'number' },
+            { key: 'talla', label: 'Talla', required: false, type: 'text' },
+            { key: 'color', label: 'Color', required: false, type: 'text' },
+            { key: 'serie', label: 'Serie', required: false, type: 'text' },
+            { key: 'partida', label: 'Partida', required: false, type: 'text' },
+            { key: 'fecha_vencimiento', label: 'Fecha Venc.', required: false, type: 'date' },
+        ],
+        helpText: '🏭 Pega el inventario completo. Se actualizarán las cantidades si ya existe el producto en esa ubicación (Upsert).',
+        smartDedup: false,
     }
 ];
 
@@ -451,6 +472,7 @@ const DataImport = () => {
                         blue: 'bg-blue-600 text-white shadow-blue-200',
                         violet: 'bg-violet-600 text-white shadow-violet-200',
                         emerald: 'bg-emerald-600 text-white shadow-emerald-200',
+                        orange: 'bg-orange-600 text-white shadow-orange-200',
                     };
 
                     return (
@@ -474,7 +496,7 @@ const DataImport = () => {
             {step === 'paste' && (
                 <div className="flex-1 flex flex-col gap-4">
                     {/* Help text */}
-                    <div className={`bg-${currentTab.color === 'indigo' ? 'indigo' : currentTab.color === 'blue' ? 'blue' : currentTab.color === 'violet' ? 'violet' : 'emerald'}-50 border border-${currentTab.color}-200 rounded-xl p-4 flex items-start gap-3`}>
+                    <div className={`bg-${currentTab.color === 'indigo' ? 'indigo' : currentTab.color === 'blue' ? 'blue' : currentTab.color === 'violet' ? 'violet' : currentTab.color === 'emerald' ? 'emerald' : 'orange'}-50 border border-${currentTab.color}-200 rounded-xl p-4 flex items-start gap-3`}>
                         <Info size={20} className={`text-${currentTab.color}-500 flex-shrink-0 mt-0.5`} />
                         <div>
                             <p className={`text-${currentTab.color}-800 font-medium text-sm`}>{currentTab.helpText}</p>
