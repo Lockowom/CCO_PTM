@@ -44,8 +44,8 @@ const IMPORT_TABS = [
         icon: Layers,
         color: 'blue',
         table: 'tms_partidas',
-        uniqueKey: null, // Si no tiene PK única, upsert es difícil sin borrar antes.
-        // ESTRATEGIA: Para partidas, como es snapshot, mejor borrar por lote o usar insert simple ignorando errores
+        uniqueKey: null, // Sin clave única para upsert directo
+        // Estrategia: Manejo manual de duplicados en el código de carga
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -59,7 +59,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '📦 Pega los datos de partidas. Asegúrate de que las fechas tengan formato válido (DD/MM/YYYY o YYYY-MM-DD).',
+        helpText: '📦 Pega los datos de partidas. El sistema intentará actualizar si ya existe la combinación Código + Partida, o creará uno nuevo.',
         smartDedup: false,
     },
     {
@@ -315,6 +315,22 @@ const DataImport = () => {
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 const batch = newRows.slice(i, i + BATCH_SIZE);
+
+                // Lógica especial para PARTIDAS (Manejo de duplicados manual)
+                if (currentTab.id === 'partidas') {
+                    // Para partidas, intentamos eliminar primero los registros que coincidan con código+partida del lote actual
+                    // Esto simula un UPSERT manual ya que no tenemos una unique constraint simple
+                    const codigos = batch.map(r => r.codigo_producto);
+                    const partidas = batch.map(r => r.partida);
+                    
+                    // Borrar existentes que coincidan (opcional, depende de la estrategia de negocio)
+                    // En este caso, asumimos que la nueva carga reemplaza la info de stock para esa partida
+                    await supabase
+                        .from('tms_partidas')
+                        .delete()
+                        .in('codigo_producto', codigos)
+                        .in('partida', partidas);
+                }
 
                 const { data, error } = await supabase
                     .from(currentTab.table)
