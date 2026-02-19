@@ -14,6 +14,7 @@ const LocationsQuery = () => {
   // Estado para edición
   const [editingId, setEditingId] = useState(null);
   const [editQuantity, setEditQuantity] = useState('');
+  const [editLocation, setEditLocation] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSearch = async (e) => {
@@ -51,12 +52,14 @@ const LocationsQuery = () => {
   const startEdit = (row) => {
     setEditingId(row.id);
     setEditQuantity(row.cantidad);
+    setEditLocation(row.ubicacion);
   };
 
   // Cancelar edición
   const cancelEdit = () => {
     setEditingId(null);
     setEditQuantity('');
+    setEditLocation('');
   };
 
   // Guardar cambios
@@ -65,20 +68,33 @@ const LocationsQuery = () => {
       alert("Por favor ingrese una cantidad válida");
       return;
     }
+    
+    if (!editLocation || !editLocation.trim()) {
+      alert("La ubicación no puede estar vacía");
+      return;
+    }
 
     setSaving(true);
     try {
       const { error } = await supabase
         .from('wms_ubicaciones')
-        .update({ cantidad: Number(editQuantity) })
+        .update({ 
+            cantidad: Number(editQuantity),
+            ubicacion: editLocation.toUpperCase().trim()
+        })
         .eq('id', id);
 
       if (error) throw error;
 
       // Actualizar estado local
-      setResults(prev => prev.map(r => r.id === id ? { ...r, cantidad: Number(editQuantity) } : r));
+      setResults(prev => prev.map(r => r.id === id ? { 
+          ...r, 
+          cantidad: Number(editQuantity),
+          ubicacion: editLocation.toUpperCase().trim()
+      } : r));
+      
       setEditingId(null);
-      alert("✅ Cantidad actualizada correctamente");
+      alert("✅ Registro actualizado correctamente");
     } catch (err) {
       console.error("Error al actualizar:", err);
       alert("❌ Error al actualizar: " + err.message);
@@ -115,7 +131,20 @@ const LocationsQuery = () => {
 
   // Configuración de columnas para la tabla de resultados
   const COLUMNS = [
-    { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100 flex items-center gap-2 w-fit"><MapPin size={14}/>{r.ubicacion}</span> },
+    { 
+      header: 'Ubicación', 
+      accessor: 'ubicacion', 
+      render: r => editingId === r.id ? (
+        <input 
+          type="text" 
+          value={editLocation} 
+          onChange={(e) => setEditLocation(e.target.value)}
+          className="w-32 p-1 border-2 border-orange-400 rounded text-center font-bold font-mono outline-none focus:ring-2 focus:ring-orange-200 uppercase"
+        />
+      ) : (
+        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100 flex items-center gap-2 w-fit"><MapPin size={14}/>{r.ubicacion}</span>
+      ) 
+    },
     { header: 'Código', accessor: 'codigo', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo}</span> },
     { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800 text-xs sm:text-sm">{r.descripcion}</span> },
     { 
