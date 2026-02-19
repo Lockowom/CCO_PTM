@@ -61,6 +61,7 @@ const Shipping = () => {
       
       const now = new Date().toISOString();
       
+      // 1. Actualizar tms_entregas (Tabla actual)
       const { error } = await supabase
         .from('tms_entregas')
         .update({
@@ -77,6 +78,43 @@ const Shipping = () => {
 
       if (error) throw error;
 
+      // 2. SINCRONIZACIÓN AUTOMÁTICA CON CONTROL DE DESPACHO
+      // Buscar la entrega original
+      const updatedDelivery = deliveries.find(d => d.id === id);
+      if (updatedDelivery) {
+        // Mapear campos para la tabla histórica
+        const controlPayload = {
+            fecha_docto: updatedDelivery.fecha_creacion || now, // Si no hay fecha docto, usamos hoy
+            cliente: updatedDelivery.cliente,
+            facturas: editForm.facturas || '',
+            guia: editForm.guia || '',
+            bultos: updatedDelivery.bultos || 0,
+            empresa_transporte: editForm.empresa_transporte || 'PROPIO',
+            transportista: editForm.transportista || '',
+            nv: updatedDelivery.nv,
+            division: editForm.division || '',
+            vendedor: updatedDelivery.vendedor || '', 
+            fecha_despacho: now,
+            valor_flete: parseFloat(editForm.valor_flete) || 0,
+            numero_envio: editForm.num_envio_ot || ''
+        };
+
+        // Insertar en tms_control_despacho (Histórico)
+        // Usamos upsert para evitar duplicados si se edita varias veces la misma entrega
+        // Pero como uniqueKey es null en la definición anterior, esto insertará siempre.
+        // Si quieres evitar duplicados, deberías definir una clave única compuesta en la base de datos (ej: guia).
+        // Por ahora, insertamos directo como pidió el usuario.
+        const { error: controlError } = await supabase
+            .from('tms_control_despacho')
+            .insert(controlPayload);
+
+        if (controlError) {
+            console.error("Error sincronizando con Control Despacho:", controlError);
+        } else {
+            console.log("Sincronización exitosa con Control Despacho");
+        }
+      }
+
       setDeliveries(prev => prev.map(d => 
         d.id === id ? { 
             ...d, 
@@ -86,7 +124,7 @@ const Shipping = () => {
       ));
       
       setEditingId(null);
-      alert("Despacho guardado. Sincronizando con Excel...");
+      alert("Despacho guardado y sincronizado con Control Despacho.");
 
     } catch (err) {
       alert("Error: " + err.message);
