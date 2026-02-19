@@ -401,8 +401,9 @@ const DataImport = () => {
 
                 let result;
                 
-                // Si la tabla no tiene uniqueKey, usamos INSERT directo (permite duplicados)
-                if (!currentTab.uniqueKey) {
+                // Si la tabla no tiene uniqueKey o es Control Despacho, usamos INSERT directo (permite duplicados)
+                if (!currentTab.uniqueKey || currentTab.id === 'control_despacho') {
+                    console.log('Insertando datos sin UPSERT (Modo Insert Directo)...');
                     result = await supabase
                         .from(currentTab.table)
                         .insert(batch);
