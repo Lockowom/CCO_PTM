@@ -50,66 +50,71 @@ const LayoutPage = () => {
         
       if (ubErr) throw ubErr;
 
-      // 3. Procesar resumen de inventario
-      const resumenInventario = {};
-      ubicacionesRows?.forEach(r => {
-        if (!r.ubicacion) return;
-        const key = r.ubicacion.toUpperCase().trim();
-        resumenInventario[key] = (resumenInventario[key] || 0) + (r.cantidad || 0);
-      });
-
-      // 4. Construir Mapa del Layout
-      const layoutMap = {}; 
-      
-      // AHORA: El layout se construye EXCLUSIVAMENTE basado en la tabla wms_ubicaciones (Inventario Real)
-      // Ya no usamos estructuras fijas ni wms_layout antiguo.
-      // La tabla wms_ubicaciones contiene la realidad física actual.
-
-      // Helper para parsear ubicación (Ej: A-01-01)
+      // Helper para parsear ubicación (Ej: A-01-01 o A-1-1)
       const parseUbicacion = (str) => {
-        // Normalizamos: A-1-1 => A-01-01 para consistencia
+        if (!str) return null;
+        
+        // Normalización agresiva: A-1-1 => A-01-01
         const parts = str.split('-');
         if (parts.length >= 3) {
-          // Detectar formato: Pasillo (letra) - Columna (num) - Nivel (num)
           const pasillo = parts[0].trim().toUpperCase();
           const columna = parseInt(parts[1]);
           const nivel = parseInt(parts[2]);
           
           if (pasillo && !isNaN(columna) && !isNaN(nivel)) {
-             return { pasillo, columna, nivel };
+             // Retornamos también la versión normalizada para usar como clave
+             const colStr = columna.toString().padStart(2, '0');
+             const nivStr = nivel.toString().padStart(2, '0');
+             const normalizedKey = `${pasillo}-${colStr}-${nivStr}`;
+             
+             return { pasillo, columna, nivel, normalizedKey };
           }
         }
         return null;
       };
 
+      // 3. Procesar resumen de inventario (Normalizando claves)
+      const resumenInventario = {};
+      ubicacionesRows?.forEach(r => {
+        if (!r.ubicacion) return;
+        const parsed = parseUbicacion(r.ubicacion);
+        if (parsed) {
+            // Usamos la clave normalizada (A-01-01) para sumar cantidades
+            // así A-1-1 y A-01-01 se suman en el mismo lugar
+            resumenInventario[parsed.normalizedKey] = (resumenInventario[parsed.normalizedKey] || 0) + (r.cantidad || 0);
+        }
+      });
+
+      // 4. Construir Mapa del Layout
+      const layoutMap = {}; 
+      
+      // Construir mapa basado en inventario NORMALIZADO
       Object.keys(resumenInventario).forEach(key => {
           const parsed = parseUbicacion(key);
           if (parsed) {
             layoutMap[key] = {
-              ubicacion: key,
+              ubicacion: key, // Usamos la versión normalizada (A-01-01)
               pasillo: parsed.pasillo,
               columna: parsed.columna,
               nivel: parsed.nivel,
-              estado: 'DISPONIBLE', // Por defecto disponible
+              estado: 'DISPONIBLE',
               origen: 'INVENTARIO_REAL',
               cantidad: resumenInventario[key]
             };
           }
       });
 
-      // Si queremos incorporar estados personalizados (ej: NO DISPONIBLE) que NO tienen stock,
-      // debemos leer wms_layout y agregarlos también.
+      // Si queremos incorporar estados personalizados (ej: NO DISPONIBLE)
       layoutRows?.forEach(r => {
         if (!r.ubicacion) return;
-        const key = r.ubicacion.toUpperCase().trim();
+        const parsed = parseUbicacion(r.ubicacion);
         
-        // Si ya existe (porque tiene inventario), actualizamos estado
-        if (layoutMap[key]) {
-            layoutMap[key].estado = r.estado || 'DISPONIBLE';
-        } else {
-            // Si no tiene inventario pero existe en layout (ej: marcada como NO DISPONIBLE), la agregamos
-            const parsed = parseUbicacion(key);
-            if (parsed) {
+        if (parsed) {
+            const key = parsed.normalizedKey; // Clave normalizada
+            
+            if (layoutMap[key]) {
+                layoutMap[key].estado = r.estado || 'DISPONIBLE';
+            } else {
                 layoutMap[key] = {
                     ubicacion: key,
                     pasillo: parsed.pasillo,
@@ -117,7 +122,7 @@ const LayoutPage = () => {
                     nivel: parsed.nivel,
                     estado: r.estado || 'DISPONIBLE',
                     origen: 'DB_LAYOUT',
-                    cantidad: 0 // No tiene stock
+                    cantidad: 0
                 };
             }
         }
