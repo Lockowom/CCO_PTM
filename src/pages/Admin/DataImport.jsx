@@ -17,7 +17,7 @@ const IMPORT_TABS = [
         icon: FileText,
         color: 'indigo',
         table: 'tms_nv_diarias',
-        uniqueKey: 'nv', // Campo clave para deduplicación
+        uniqueKey: 'nv,codigo_producto', // Campo clave para deduplicación (compuesta para permitir múltiples items por NV)
         defaultValues: { estado: 'Pendiente' },
         // ORDEN DE COLUMNAS SEGÚN EL EXCEL:
         // Fecha Entrega | N.Venta | Estado | Cod.Cliente | Nombre Cliente | Cod.Vendedor | Nombre Vendedor | Zona | Cod.Producto | Descripcion | Unidad | Pedido
@@ -263,22 +263,26 @@ const DataImport = () => {
         // ─── DEDUPLICACIÓN INTELIGENTE (para N.V) ───
         if (currentTab.smartDedup && currentTab.uniqueKey && rows.length > 0) {
             try {
+                // Si la clave es compuesta (ej: 'nv,codigo_producto'), usamos la primera parte para verificar existencia (ej: 'nv')
+                // Esto asume que si la NV existe, ya se cargaron todos sus items.
+                const checkKey = currentTab.uniqueKey.split(',')[0].trim();
+                
                 // Obtener las claves únicas del paste
-                const keys = [...new Set(rows.map(r => r[currentTab.uniqueKey]).filter(Boolean))];
+                const keys = [...new Set(rows.map(r => r[checkKey]).filter(Boolean))];
 
                 // Consultar cuáles ya existen en Supabase
                 const { data: existing, error } = await supabase
                     .from(currentTab.table)
-                    .select(currentTab.uniqueKey)
-                    .in(currentTab.uniqueKey, keys);
+                    .select(checkKey)
+                    .in(checkKey, keys);
 
                 if (error) throw error;
 
-                const existingKeys = new Set((existing || []).map(r => r[currentTab.uniqueKey]?.toString()));
+                const existingKeys = new Set((existing || []).map(r => r[checkKey]?.toString()));
 
                 // Marcar cada fila
                 const statuses = rows.map(row => {
-                    const key = row[currentTab.uniqueKey]?.toString();
+                    const key = row[checkKey]?.toString();
                     if (!key) return 'error';
                     return existingKeys.has(key) ? 'existing' : 'new';
                 });
