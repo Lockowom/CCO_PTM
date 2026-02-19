@@ -3,7 +3,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import {
     Upload, FileText, Layers, Barcode, Package, ClipboardPaste,
     CheckCircle, XCircle, AlertCircle, Loader2, Trash2, Download,
-    ArrowRight, SkipForward, RefreshCw, Database, Check, X, Info
+    ArrowRight, SkipForward, RefreshCw, Database, Check, X, Info, Truck
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -140,6 +140,31 @@ const IMPORT_TABS = [
             { key: 'unidad_medida', label: 'Cod. U. Medida', required: false, type: 'text' },
         ],
         helpText: '🏷️ Pega el maestro de códigos. Actualiza descripciones y unidades de medida. Si el código ya existe, se actualiza la información.',
+        smartDedup: false, // Usa upsert
+    },
+    {
+        id: 'control_despacho',
+        label: 'Control Despacho',
+        icon: Truck,
+        color: 'rose',
+        table: 'tms_control_despacho',
+        uniqueKey: 'guia',
+        columns: [
+            { key: 'fecha_docto', label: 'FECHA DOCTO', required: false, type: 'date' },
+            { key: 'cliente', label: 'CLIENTE', required: true, type: 'text' },
+            { key: 'facturas', label: 'FACTURAS', required: false, type: 'text' },
+            { key: 'guia', label: 'GUIA', required: true, type: 'text' },
+            { key: 'bultos', label: 'BULTOS', required: false, type: 'number' },
+            { key: 'empresa_transporte', label: 'EMPRESA TRANSPORTE', required: false, type: 'text' },
+            { key: 'transportista', label: 'TRANSPORTISTA', required: false, type: 'text' },
+            { key: 'nv', label: 'N° NV', required: false, type: 'text' },
+            { key: 'division', label: 'DIVISION', required: false, type: 'text' },
+            { key: 'vendedor', label: 'VENDEDOR', required: false, type: 'text' },
+            { key: 'fecha_despacho', label: 'FECHA DESPACHO', required: false, type: 'date' },
+            { key: 'valor_flete', label: 'VALOR FLETE', required: false, type: 'number' },
+            { key: 'numero_envio', label: 'N° DE ENVIO', required: false, type: 'text' },
+        ],
+        helpText: '🚚 Pega la planilla de Control de Despacho. Se actualizarán los registros basados en el número de GUÍA.',
         smartDedup: false, // Usa upsert
     }
 ];
@@ -521,6 +546,7 @@ const DataImport = () => {
                         emerald: 'bg-emerald-600 text-white shadow-emerald-200',
                         orange: 'bg-orange-600 text-white shadow-orange-200',
                         cyan: 'bg-cyan-600 text-white shadow-cyan-200',
+                        rose: 'bg-rose-600 text-white shadow-rose-200',
                     };
 
                     return (
@@ -544,7 +570,7 @@ const DataImport = () => {
             {step === 'paste' && (
                 <div className="flex-1 flex flex-col gap-4">
                     {/* Help text */}
-                    <div className={`bg-${currentTab.color === 'indigo' ? 'indigo' : currentTab.color === 'blue' ? 'blue' : currentTab.color === 'violet' ? 'violet' : currentTab.color === 'emerald' ? 'emerald' : currentTab.color === 'cyan' ? 'cyan' : 'orange'}-50 border border-${currentTab.color}-200 rounded-xl p-4 flex items-start gap-3`}>
+                    <div className={`bg-${currentTab.color === 'indigo' ? 'indigo' : currentTab.color === 'blue' ? 'blue' : currentTab.color === 'violet' ? 'violet' : currentTab.color === 'emerald' ? 'emerald' : currentTab.color === 'cyan' ? 'cyan' : currentTab.color === 'rose' ? 'rose' : 'orange'}-50 border border-${currentTab.color}-200 rounded-xl p-4 flex items-start gap-3`}>
                         <Info size={20} className={`text-${currentTab.color}-500 flex-shrink-0 mt-0.5`} />
                         <div>
                             <p className={`text-${currentTab.color}-800 font-medium text-sm`}>{currentTab.helpText}</p>
