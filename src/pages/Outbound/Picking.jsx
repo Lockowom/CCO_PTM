@@ -261,7 +261,9 @@ const Picking = () => {
       // Verificar errores en las actualizaciones
       const errors = results.filter(r => r.error);
       if (errors.length > 0) {
-        throw new Error(`Falló la actualización de ${errors.length} ítems.`);
+        console.error("Detalle de errores de actualización:", errors);
+        const firstErrorMsg = errors[0].error?.message || JSON.stringify(errors[0].error);
+        throw new Error(`Falló la actualización de ${errors.length} ítems. Detalle: ${firstErrorMsg}`);
       }
       
       // Actualizar medición
