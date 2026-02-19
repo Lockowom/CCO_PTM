@@ -61,53 +61,67 @@ const LayoutPage = () => {
       // 4. Construir Mapa del Layout
       const layoutMap = {}; 
       
-      // Definición estática de la estructura del almacén según requerimiento EXACTO del usuario
-      // Estructura: Pasillo -> Niveles -> MaxColumna
-      const warehouseStructure = {
-        'A': { levels: 3, maxCol: 50 },
-        'B': { levels: 2, maxCol: 50 },
-        'C': { levels: 2, maxCol: 50 },
-        'D': { levels: 4, maxCol: 44 },
-        'E': { levels: 3, maxCol: 32 },
-        'F': { levels: 4, maxCol: 32 },
-        'G': { levels: 4, maxCol: 32 },
-        'H': { levels: 4, maxCol: 6 },
-        'I': { levels: 3, maxCol: 12 }
-      };
+      // AHORA: El layout se construye EXCLUSIVAMENTE basado en la tabla wms_ubicaciones (Inventario Real)
+      // Ya no usamos estructuras fijas ni wms_layout antiguo.
+      // La tabla wms_ubicaciones contiene la realidad física actual.
 
-      // Generar ubicaciones base según estructura
-      Object.entries(warehouseStructure).forEach(([pasillo, config]) => {
-        for (let nivel = 1; nivel <= config.levels; nivel++) {
-          for (let col = 1; col <= config.maxCol; col++) {
-            // Formato: A-01-01 (Pasillo-Columna-Nivel)
-            // Aseguramos 2 dígitos para columna y nivel
-            const colStr = col.toString().padStart(2, '0');
-            const nivStr = nivel.toString().padStart(2, '0');
-            const ubicacionKey = `${pasillo}-${colStr}-${nivStr}`;
-            
-            // Usamos solo los datos calculados de estructura. 
-            // Ignoramos wms_layout antiguo si no coincide con esta estructura.
-            layoutMap[ubicacionKey] = {
-              ubicacion: ubicacionKey,
-              pasillo: pasillo,
-              columna: col,
-              nivel: nivel,
-              estado: 'DISPONIBLE',
-              origen: 'ESTRUCTURA',
-              cantidad: resumenInventario[ubicacionKey] || 0
-            };
-          }
-        }
-      });
-      
       // Helper para parsear ubicación (Ej: A-01-01)
       const parseUbicacion = (str) => {
+        // Normalizamos: A-1-1 => A-01-01 para consistencia
         const parts = str.split('-');
         if (parts.length >= 3) {
-          return { pasillo: parts[0], columna: parseInt(parts[1]), nivel: parseInt(parts[2]) };
+          // Detectar formato: Pasillo (letra) - Columna (num) - Nivel (num)
+          const pasillo = parts[0].trim().toUpperCase();
+          const columna = parseInt(parts[1]);
+          const nivel = parseInt(parts[2]);
+          
+          if (pasillo && !isNaN(columna) && !isNaN(nivel)) {
+             return { pasillo, columna, nivel };
+          }
         }
         return null;
       };
+
+      Object.keys(resumenInventario).forEach(key => {
+          const parsed = parseUbicacion(key);
+          if (parsed) {
+            layoutMap[key] = {
+              ubicacion: key,
+              pasillo: parsed.pasillo,
+              columna: parsed.columna,
+              nivel: parsed.nivel,
+              estado: 'DISPONIBLE', // Por defecto disponible
+              origen: 'INVENTARIO_REAL',
+              cantidad: resumenInventario[key]
+            };
+          }
+      });
+
+      // Si queremos incorporar estados personalizados (ej: NO DISPONIBLE) que NO tienen stock,
+      // debemos leer wms_layout y agregarlos también.
+      layoutRows?.forEach(r => {
+        if (!r.ubicacion) return;
+        const key = r.ubicacion.toUpperCase().trim();
+        
+        // Si ya existe (porque tiene inventario), actualizamos estado
+        if (layoutMap[key]) {
+            layoutMap[key].estado = r.estado || 'DISPONIBLE';
+        } else {
+            // Si no tiene inventario pero existe en layout (ej: marcada como NO DISPONIBLE), la agregamos
+            const parsed = parseUbicacion(key);
+            if (parsed) {
+                layoutMap[key] = {
+                    ubicacion: key,
+                    pasillo: parsed.pasillo,
+                    columna: parsed.columna,
+                    nivel: parsed.nivel,
+                    estado: r.estado || 'DISPONIBLE',
+                    origen: 'DB_LAYOUT',
+                    cantidad: 0 // No tiene stock
+                };
+            }
+        }
+      });
 
       // 5. Agrupar por Pasillos para renderizar
       // Eliminamos el paso de mezclar con DB antigua o inferencia para limpiar el layout visual
@@ -116,7 +130,6 @@ const LayoutPage = () => {
       let totalUbicaciones = 0;
       let ocupadas = 0;
 
-      // Iteramos SOLO sobre el mapa generado por la estructura definida
       Object.values(layoutMap).forEach(node => {
         const pasillo = node.pasillo;
         const nivel = String(node.nivel);
