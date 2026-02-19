@@ -40,7 +40,7 @@ const Batches = () => {
       const searchTable = async (table, cols) => {
         try {
           // 1. Intentar búsqueda con OR (Code OR Desc)
-          let query = supabase.from(table).select('*').limit(100);
+          let query = supabase.from(table).select('*'); // Sin límite explícito (o default de Supabase)
           const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
           query = query.or(orFilter);
           
@@ -50,7 +50,7 @@ const Batches = () => {
         } catch (err) {
           console.warn(`Error buscando en ${table}, reintentando solo por código:`, err);
           // 2. Fallback: Buscar solo por primera columna (usualmente código)
-          const { data } = await supabase.from(table).select('*').ilike(cols[0], term).limit(100);
+          const { data } = await supabase.from(table).select('*').ilike(cols[0], term);
           return data || [];
         }
       };
