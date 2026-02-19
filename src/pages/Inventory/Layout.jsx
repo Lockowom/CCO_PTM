@@ -35,46 +35,98 @@ const LayoutPage = () => {
   const cargarLayout = async () => {
     try {
       setLoading(true);
+      
+      // 1. Obtener estructura definida (si existe)
       const { data: layoutRows, error: layoutErr } = await supabase
         .from('wms_layout')
         .select('*');
-      if (layoutErr) throw layoutErr;
+      
+      if (layoutErr) console.warn("Aviso: No se pudo cargar wms_layout", layoutErr);
 
+      // 2. Obtener inventario real
       const { data: ubicacionesRows, error: ubErr } = await supabase
         .from('wms_ubicaciones')
         .select('ubicacion, cantidad');
+        
       if (ubErr) throw ubErr;
 
-      const resumen = {};
+      // 3. Procesar resumen de inventario
+      const resumenInventario = {};
       ubicacionesRows?.forEach(r => {
-        const key = (r.ubicacion || '').toUpperCase();
-        resumen[key] = (resumen[key] || 0) + (r.cantidad || 0);
+        if (!r.ubicacion) return;
+        const key = r.ubicacion.toUpperCase().trim();
+        resumenInventario[key] = (resumenInventario[key] || 0) + (r.cantidad || 0);
       });
 
+      // 4. Construir Mapa del Layout
+      // Prioridad: 1. Layout definido en DB, 2. Inferencia desde ubicaciones con stock
+      const layoutMap = {}; 
+      
+      // Helper para parsear ubicación (Ej: A-01-01)
+      const parseUbicacion = (str) => {
+        const parts = str.split('-');
+        if (parts.length >= 3) {
+          return { pasillo: parts[0], columna: parseInt(parts[1]), nivel: parseInt(parts[2]) };
+        }
+        return null;
+      };
+
+      // A. Incorporar estructura base
+      layoutRows?.forEach(r => {
+        if (!r.ubicacion) return;
+        const key = r.ubicacion.toUpperCase().trim();
+        layoutMap[key] = {
+          ...r,
+          ubicacion: key,
+          origen: 'DB',
+          cantidad: resumenInventario[key] || 0
+        };
+      });
+
+      // B. Incorporar ubicaciones detectadas en inventario (que no estén en layout)
+      Object.keys(resumenInventario).forEach(key => {
+        if (!layoutMap[key]) {
+          const parsed = parseUbicacion(key);
+          if (parsed) {
+            layoutMap[key] = {
+              ubicacion: key,
+              pasillo: parsed.pasillo,
+              columna: parsed.columna,
+              nivel: parsed.nivel,
+              estado: 'DISPONIBLE', // Default
+              origen: 'INFERIDO',
+              cantidad: resumenInventario[key]
+            };
+          }
+        }
+      });
+
+      // 5. Agrupar por Pasillos para renderizar
       const pasillosMap = {};
       let totalUbicaciones = 0;
       let ocupadas = 0;
 
-      layoutRows?.forEach(r => {
-        const pasillo = r.pasillo;
-        const nivel = String(r.nivel);
-        const ubicacion = r.ubicacion.toUpperCase();
-        const cantidad = resumen[ubicacion] || 0;
-        const tieneProductos = cantidad > 0;
+      Object.values(layoutMap).forEach(node => {
+        const pasillo = node.pasillo;
+        const nivel = String(node.nivel);
+        
+        if (!pasillo || !nivel) return;
+
         if (!pasillosMap[pasillo]) pasillosMap[pasillo] = { niveles: {} };
         if (!pasillosMap[pasillo].niveles[nivel]) pasillosMap[pasillo].niveles[nivel] = [];
+
+        const tieneProductos = node.cantidad > 0;
+        
         pasillosMap[pasillo].niveles[nivel].push({
-          ubicacion,
-          columna: r.columna,
-          nivel: r.nivel,
-          estado: r.estado,
-          cantidad,
+          ...node,
           tieneProductos
         });
+
         totalUbicaciones++;
         if (tieneProductos) ocupadas++;
       });
 
+      // Ordenar columnas
       for (const p in pasillosMap) {
         for (const n in pasillosMap[p].niveles) {
           pasillosMap[p].niveles[n].sort((a,b) => a.columna - b.columna);
@@ -88,6 +140,7 @@ const LayoutPage = () => {
         vacias: totalUbicaciones - ocupadas,
         ocupacion: totalUbicaciones > 0 ? Math.round((ocupadas/totalUbicaciones)*100) : 0
       });
+
     } catch (e) {
       console.error('Error cargando layout:', e);
     } finally {
@@ -113,12 +166,28 @@ const LayoutPage = () => {
   };
 
   const cambiarEstado = async (ubicacion, nuevoEstado) => {
-    const { error } = await supabase
-      .from('wms_layout')
-      .update({ estado: nuevoEstado, updated_at: new Date() })
-      .eq('ubicacion', ubicacion);
-    if (!error) {
-      cargarLayout();
+    try {
+      // Upsert: Si existe actualiza, si no crea
+      const parsed = ubicacion.split('-');
+      const payload = {
+        ubicacion: ubicacion,
+        estado: nuevoEstado,
+        pasillo: parsed[0],
+        columna: parseInt(parsed[1]) || 0,
+        nivel: parseInt(parsed[2]) || 0,
+        updated_at: new Date()
+      };
+
+      const { error } = await supabase
+        .from('wms_layout')
+        .upsert(payload, { onConflict: 'ubicacion' });
+
+      if (error) throw error;
+      
+      cargarLayout(); // Recargar para reflejar cambios
+    } catch (err) {
+      console.error("Error al cambiar estado:", err);
+      alert("Error al actualizar estado");
     }
   };
 
