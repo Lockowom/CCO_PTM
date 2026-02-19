@@ -59,8 +59,44 @@ const LayoutPage = () => {
       });
 
       // 4. Construir Mapa del Layout
-      // Prioridad: 1. Layout definido en DB, 2. Inferencia desde ubicaciones con stock
       const layoutMap = {}; 
+      
+      // Definición estática de la estructura del almacén según requerimiento
+      // Estructura: Pasillo -> Niveles -> MaxColumna
+      const warehouseStructure = {
+        'A': { levels: 3, maxCol: 50 },
+        'B': { levels: 2, maxCol: 50 },
+        'C': { levels: 2, maxCol: 50 },
+        'D': { levels: 4, maxCol: 44 },
+        'E': { levels: 3, maxCol: 32 },
+        'F': { levels: 4, maxCol: 32 },
+        'G': { levels: 4, maxCol: 32 },
+        'H': { levels: 4, maxCol: 6 },
+        'I': { levels: 3, maxCol: 12 }
+      };
+
+      // Generar ubicaciones base según estructura
+      Object.entries(warehouseStructure).forEach(([pasillo, config]) => {
+        for (let nivel = 1; nivel <= config.levels; nivel++) {
+          for (let col = 1; col <= config.maxCol; col++) {
+            // Formato: A-01-01 (Pasillo-Columna-Nivel)
+            // Aseguramos 2 dígitos para columna y nivel
+            const colStr = col.toString().padStart(2, '0');
+            const nivStr = nivel.toString().padStart(2, '0');
+            const ubicacionKey = `${pasillo}-${colStr}-${nivStr}`;
+            
+            layoutMap[ubicacionKey] = {
+              ubicacion: ubicacionKey,
+              pasillo: pasillo,
+              columna: col,
+              nivel: nivel,
+              estado: 'DISPONIBLE',
+              origen: 'ESTRUCTURA',
+              cantidad: resumenInventario[ubicacionKey] || 0
+            };
+          }
+        }
+      });
       
       // Helper para parsear ubicación (Ej: A-01-01)
       const parseUbicacion = (str) => {
@@ -71,10 +107,12 @@ const LayoutPage = () => {
         return null;
       };
 
-      // A. Incorporar estructura base
+      // A. Incorporar estructura base (Si existen datos en DB, sobreescriben la estructura base)
       layoutRows?.forEach(r => {
         if (!r.ubicacion) return;
         const key = r.ubicacion.toUpperCase().trim();
+        // Solo sobreescribimos si la ubicación existe en nuestro mapa generado
+        // O la agregamos si es una ubicación "extra" fuera de la estructura estándar
         layoutMap[key] = {
           ...r,
           ubicacion: key,
@@ -83,7 +121,7 @@ const LayoutPage = () => {
         };
       });
 
-      // B. Incorporar ubicaciones detectadas en inventario (que no estén en layout)
+      // B. Incorporar ubicaciones detectadas en inventario (que no estén en layout ni estructura)
       Object.keys(resumenInventario).forEach(key => {
         if (!layoutMap[key]) {
           const parsed = parseUbicacion(key);
