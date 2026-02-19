@@ -44,6 +44,7 @@ const Picking = () => {
   
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
+  const lastHiddenTime = useRef(null); // Para tracking silencioso
 
   const [action, setAction] = useState(null); // 'COMPLETO', 'PARCIAL', 'SIN_STOCK'
   const [cantidadReal, setCantidadReal] = useState('');
@@ -106,16 +107,53 @@ const Picking = () => {
     };
   }, [fetchData, nvActiva]);
 
-  // Timer de trabajo
+  // Timer de trabajo - Tracking Silencioso
   useEffect(() => {
+    let intervalId = null;
+
+    const handleVisibilityChange = () => {
+      // 1. Pantalla se apaga / App minimizada
+      if (document.hidden && !enPausa && tiempoInicio) {
+        lastHiddenTime.current = Date.now();
+        console.log("App en segundo plano: Iniciando contador silencioso de inactividad.");
+      } 
+      // 2. Pantalla se enciende / App vuelve a primer plano
+      else if (!document.hidden && lastHiddenTime.current && !enPausa) {
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastHiddenTime.current) / 1000);
+        
+        if (diffSeconds > 0) {
+          // Sumar silenciosamente al tiempo de ocio
+          setTiempoOcio(prev => prev + diffSeconds);
+          console.log(`App activa: Agregados ${diffSeconds}s a tiempo de ocio (silencioso).`);
+        }
+        lastHiddenTime.current = null;
+      }
+    };
+
+    // Escuchar eventos de visibilidad
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Lógica del timer visual (aunque esté oculto, mantiene el estado actualizado)
     if (tiempoInicio && !enPausa) {
-      timerRef.current = setInterval(() => {
-        setTiempoTranscurrido(Math.floor((Date.now() - tiempoInicio) / 1000) - tiempoOcio);
+      intervalId = setInterval(() => {
+        // Recalcular basado en la diferencia real de tiempo, descontando ocio acumulado
+        const now = Date.now();
+        // Si hay un tiempo oculto en curso, lo restamos dinámicamente para que el timer no salte
+        let currentHidden = 0;
+        if (document.hidden && lastHiddenTime.current) {
+             currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
+        }
+        
+        const diffSeconds = Math.floor((now - tiempoInicio) / 1000) - (tiempoOcio + currentHidden);
+        setTiempoTranscurrido(diffSeconds > 0 ? diffSeconds : 0);
       }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [tiempoInicio, enPausa, tiempoOcio]);
 
   // Timer de ocio
@@ -567,14 +605,14 @@ const Picking = () => {
             )}
           </div>
           
-          {/* Mensaje de estado */}
+          {/* Mensaje de estado (Discreto) */}
           <div className="text-center mb-6">
-            <span className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
-              ⏱️ Proceso de picking en curso...
+            <span className="text-white/40 text-xs font-mono">
+              Proceso ID: {nvActiva?.nv}
             </span>
           </div>
           
-          <div className="flex justify-center gap-4 mt-6">
+          <div className="flex justify-center gap-4 mt-6 opacity-0 pointer-events-none h-0">
             <button
               onClick={togglePausa}
               className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 ${
