@@ -48,13 +48,7 @@ const DispatchControl = () => {
       if (error) throw error;
 
       setRecords(data || []);
-      
-      const all = data || [];
-      setStats({
-        total: all.length,
-        totalBultos: all.reduce((sum, r) => sum + (r.bultos || 0), 0),
-        totalFlete: all.reduce((sum, r) => sum + (r.valor_flete || 0), 0)
-      });
+      // NOTA: Ya no calculamos stats aquí, se calculan dinámicamente en el useEffect
       
     } catch (error) {
       console.error("Error:", error);
@@ -64,11 +58,20 @@ const DispatchControl = () => {
     }
   }, [filterFechaDesde, filterFechaHasta]);
 
+  // EFECTO 1: Cargar datos iniciales (o cuando cambian las fechas de la DB)
   useEffect(() => {
     fetchRecords();
   }, [fetchRecords]);
 
-  // Filtrar en cliente
+  // EFECTO 2: Recalcular estadísticas cuando cambian los filtros LOCALES (búsqueda) o los datos
+  useEffect(() => {
+    // Usamos filteredRecords, que ya contiene la lógica de filtrado por texto
+    // Nota: filteredRecords se define más abajo, pero en React funcional, 
+    // necesitamos mover la definición de filteredRecords ARRIBA o duplicar la lógica aquí.
+    // Para evitar referencias circulares, moveremos filteredRecords antes de este efecto.
+  }, [searchTerm, records]); 
+
+  // Definir filteredRecords ANTES de usarlos en efectos o render
   const filteredRecords = records.filter(record => {
     const term = searchTerm.toLowerCase();
     return !searchTerm || 
@@ -78,6 +81,19 @@ const DispatchControl = () => {
       record.transportista?.toLowerCase().includes(term) ||
       record.numero_envio?.toString().toLowerCase().includes(term);
   });
+
+  // AHORA SÍ: Efecto para actualizar stats dinámicamente
+  useEffect(() => {
+    const totalGuias = filteredRecords.length;
+    const totalBultos = filteredRecords.reduce((sum, r) => sum + (parseInt(r.bultos) || 0), 0);
+    const totalFlete = filteredRecords.reduce((sum, r) => sum + (parseInt(r.valor_flete) || 0), 0);
+
+    setStats({
+      total: totalGuias,
+      totalBultos: totalBultos,
+      totalFlete: totalFlete
+    });
+  }, [filteredRecords]); // Se ejecuta cada vez que cambia el resultado filtrado
 
   // Exportar CSV
   const exportToCSV = () => {
