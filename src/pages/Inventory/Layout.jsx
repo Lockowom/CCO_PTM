@@ -61,7 +61,7 @@ const LayoutPage = () => {
       // 4. Construir Mapa del Layout
       const layoutMap = {}; 
       
-      // Definición estática de la estructura del almacén según requerimiento
+      // Definición estática de la estructura del almacén según requerimiento EXACTO del usuario
       // Estructura: Pasillo -> Niveles -> MaxColumna
       const warehouseStructure = {
         'A': { levels: 3, maxCol: 50 },
@@ -85,6 +85,8 @@ const LayoutPage = () => {
             const nivStr = nivel.toString().padStart(2, '0');
             const ubicacionKey = `${pasillo}-${colStr}-${nivStr}`;
             
+            // Usamos solo los datos calculados de estructura. 
+            // Ignoramos wms_layout antiguo si no coincide con esta estructura.
             layoutMap[ubicacionKey] = {
               ubicacion: ubicacionKey,
               pasillo: pasillo,
@@ -107,43 +109,14 @@ const LayoutPage = () => {
         return null;
       };
 
-      // A. Incorporar estructura base (Si existen datos en DB, sobreescriben la estructura base)
-      layoutRows?.forEach(r => {
-        if (!r.ubicacion) return;
-        const key = r.ubicacion.toUpperCase().trim();
-        // Solo sobreescribimos si la ubicación existe en nuestro mapa generado
-        // O la agregamos si es una ubicación "extra" fuera de la estructura estándar
-        layoutMap[key] = {
-          ...r,
-          ubicacion: key,
-          origen: 'DB',
-          cantidad: resumenInventario[key] || 0
-        };
-      });
-
-      // B. Incorporar ubicaciones detectadas en inventario (que no estén en layout ni estructura)
-      Object.keys(resumenInventario).forEach(key => {
-        if (!layoutMap[key]) {
-          const parsed = parseUbicacion(key);
-          if (parsed) {
-            layoutMap[key] = {
-              ubicacion: key,
-              pasillo: parsed.pasillo,
-              columna: parsed.columna,
-              nivel: parsed.nivel,
-              estado: 'DISPONIBLE', // Default
-              origen: 'INFERIDO',
-              cantidad: resumenInventario[key]
-            };
-          }
-        }
-      });
-
       // 5. Agrupar por Pasillos para renderizar
+      // Eliminamos el paso de mezclar con DB antigua o inferencia para limpiar el layout visual
+      
       const pasillosMap = {};
       let totalUbicaciones = 0;
       let ocupadas = 0;
 
+      // Iteramos SOLO sobre el mapa generado por la estructura definida
       Object.values(layoutMap).forEach(node => {
         const pasillo = node.pasillo;
         const nivel = String(node.nivel);
@@ -153,8 +126,13 @@ const LayoutPage = () => {
         if (!pasillosMap[pasillo]) pasillosMap[pasillo] = { niveles: {} };
         if (!pasillosMap[pasillo].niveles[nivel]) pasillosMap[pasillo].niveles[nivel] = [];
 
-        const tieneProductos = node.cantidad > 0;
+        // Verificar si tiene productos cruzando con el inventario real
+        const cantidadReal = resumenInventario[node.ubicacion] || 0;
+        const tieneProductos = cantidadReal > 0;
         
+        // Actualizamos nodo con cantidad real
+        node.cantidad = cantidadReal;
+
         pasillosMap[pasillo].niveles[nivel].push({
           ...node,
           tieneProductos
