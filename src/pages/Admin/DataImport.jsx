@@ -148,7 +148,7 @@ const IMPORT_TABS = [
         icon: Truck,
         color: 'rose',
         table: 'tms_control_despacho',
-        uniqueKey: 'guia',
+        uniqueKey: null, // Insertar siempre, sin verificar duplicados
         columns: [
             { key: 'fecha_docto', label: 'FECHA DOCTO', required: false, type: 'date' },
             { key: 'cliente', label: 'CLIENTE', required: true, type: 'text' },
@@ -164,7 +164,7 @@ const IMPORT_TABS = [
             { key: 'valor_flete', label: 'VALOR FLETE', required: false, type: 'number' },
             { key: 'numero_envio', label: 'N° DE ENVIO', required: false, type: 'text' },
         ],
-        helpText: '🚚 Pega la planilla de Control de Despacho. Se actualizarán los registros basados en el número de GUÍA.',
+        helpText: '🚚 Pega la planilla de Control de Despacho. Se insertarán todos los registros (sin validación de duplicados).',
         smartDedup: false, // Usa upsert
     }
 ];
