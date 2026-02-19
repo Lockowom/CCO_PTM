@@ -75,20 +75,26 @@ const LayoutPage = () => {
 
       // 3. Procesar resumen de inventario (Normalizando claves)
       const resumenInventario = {};
-      ubicacionesRows?.forEach(r => {
-        if (!r.ubicacion) return;
-        const parsed = parseUbicacion(r.ubicacion);
-        if (parsed) {
-            // Usamos la clave normalizada (A-01-01) para sumar cantidades
-            // así A-1-1 y A-01-01 se suman en el mismo lugar
-            resumenInventario[parsed.normalizedKey] = (resumenInventario[parsed.normalizedKey] || 0) + (r.cantidad || 0);
-        }
-      });
+      
+      if (ubicacionesRows && ubicacionesRows.length > 0) {
+        ubicacionesRows.forEach(r => {
+          if (!r.ubicacion) return;
+          const parsed = parseUbicacion(r.ubicacion);
+          if (parsed) {
+              // Usamos la clave normalizada (A-01-01) para sumar cantidades
+              // así A-1-1 y A-01-01 se suman en el mismo lugar
+              resumenInventario[parsed.normalizedKey] = (resumenInventario[parsed.normalizedKey] || 0) + (r.cantidad || 0);
+          }
+        });
+      } else {
+        console.warn("No se encontraron ubicaciones en wms_ubicaciones");
+      }
 
       // 4. Construir Mapa del Layout
       const layoutMap = {}; 
       
-      // Construir mapa basado en inventario NORMALIZADO
+      // AHORA: El layout se construye EXCLUSIVAMENTE basado en la tabla wms_ubicaciones (Inventario Real)
+      // Recorremos las ubicaciones encontradas en el inventario
       Object.keys(resumenInventario).forEach(key => {
           const parsed = parseUbicacion(key);
           if (parsed) {
