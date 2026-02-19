@@ -35,6 +35,7 @@ import SalesStatus from './pages/Queries/SalesStatus';
 import Addresses from './pages/Queries/Addresses';
 import Locations from './pages/Queries/Locations';
 import HistorialNV from './pages/Queries/HistorialNV';
+import DispatchControl from './pages/Queries/DispatchControl';
 
 // Admin Modules
 import Users from './pages/Admin/Users';
@@ -81,6 +82,7 @@ const ROUTE_PERMISSIONS = {
   '/queries/addresses': ['view_addresses'],
   '/queries/locations': ['view_locations'],
   '/queries/historial-nv': ['view_historial_nv'],
+  '/queries/dispatch-control': ['view_dispatch_control'],
 
   // Admin (solo ADMIN)
   '/admin/users': ['manage_users'],
@@ -110,6 +112,7 @@ const ROUTE_PRIORITY = [
   '/queries/batches',
   '/queries/sales-status',
   '/queries/historial-nv',
+  '/queries/dispatch-control',
   '/queries/addresses',
   '/queries/locations',
   '/tms/dashboard',
@@ -271,6 +274,7 @@ function AppContent() {
           <Route path="queries/addresses" element={<Addresses />} />
           <Route path="queries/locations" element={<Locations />} />
           <Route path="queries/historial-nv" element={<HistorialNV />} />
+          <Route path="queries/dispatch-control" element={<DispatchControl />} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
