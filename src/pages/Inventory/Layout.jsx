@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Layers, Box, AlertTriangle } from 'lucide-react';
+import { Search, MapPin, Layers, Box, AlertTriangle, ChevronRight, Filter } from 'lucide-react';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
 
@@ -19,7 +19,10 @@ const LayoutPage = () => {
 
   useEffect(() => {
     if (headerRef.current) {
-      gsap.from(headerRef.current, { y: -20, opacity: 0, duration: 0.6, ease: 'power3.out' });
+      gsap.fromTo(headerRef.current, 
+        { y: -30, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+      );
     }
   }, []);
 
@@ -27,8 +30,16 @@ const LayoutPage = () => {
     if (!loading && pageRef.current) {
       const cards = pageRef.current.querySelectorAll('.pasillo-card');
       const cells = pageRef.current.querySelectorAll('.loc-cell');
-      gsap.from(cards, { y: 16, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.06 });
-      gsap.from(cells, { scale: 0.9, opacity: 0, duration: 0.25, ease: 'power2.out', stagger: 0.005 });
+      
+      gsap.fromTo(cards, 
+        { y: 20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.2)', stagger: 0.1 }
+      );
+      
+      gsap.fromTo(cells, 
+        { scale: 0, opacity: 0 }, 
+        { scale: 1, opacity: 1, duration: 0.3, ease: 'elastic.out(1, 0.5)', stagger: 0.005 }
+      );
     }
   }, [loading, pasillos, pasilloActual]);
 
@@ -86,8 +97,6 @@ const LayoutPage = () => {
               resumenInventario[parsed.normalizedKey] = (resumenInventario[parsed.normalizedKey] || 0) + (r.cantidad || 0);
           }
         });
-      } else {
-        console.warn("No se encontraron ubicaciones en wms_ubicaciones");
       }
 
       // 4. Construir Mapa del Layout
@@ -135,8 +144,6 @@ const LayoutPage = () => {
       });
 
       // 5. Agrupar por Pasillos para renderizar
-      // Eliminamos el paso de mezclar con DB antigua o inferencia para limpiar el layout visual
-      
       const pasillosMap = {};
       let totalUbicaciones = 0;
       let ocupadas = 0;
@@ -248,138 +255,206 @@ const LayoutPage = () => {
   };
 
   return (
-    <div ref={pageRef} className="space-y-6">
-      <div ref={headerRef} className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 rounded-2xl p-6 text-white shadow-lg">
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-wider opacity-80">Inventario</div>
-            <h2 className="text-2xl font-extrabold">Layout de Bodega</h2>
-            <p className="text-sm opacity-90">Visualización 2D de pasillos, niveles y estados</p>
-          </div>
-          <div className="flex gap-2">
-            <div className="flex items-center bg-white/10 rounded-xl px-3 border border-white/20 backdrop-blur">
-              <Search size={18} className="text-white/80 mr-2" />
-              <input
-                className="h-10 outline-none text-sm bg-transparent text-white placeholder:text-white/70"
-                placeholder="Buscar ubicación (A-01-01)"
-                value={searchText}
-                onChange={(e)=>setSearchText(e.target.value)}
-                onKeyDown={(e)=> e.key==='Enter' && buscarUbicacion()}
-              />
+    <div ref={pageRef} className="min-h-screen bg-slate-50/50 pb-20">
+      {/* Top Navigation & Header */}
+      <header ref={headerRef} className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between py-4 gap-4">
+            
+            {/* Title Section */}
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                <Layers size={20} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">WMS Master Map</h1>
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Inventario en Tiempo Real
+                </div>
+              </div>
             </div>
-            <button onClick={cargarLayout} className="px-4 py-2 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 shadow">
-              Actualizar
+
+            {/* Global Stats */}
+            <div className="hidden md:flex items-center gap-8 bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100">
+              <div className="text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total</div>
+                <div className="text-lg font-black text-slate-700">{stats.total}</div>
+              </div>
+              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Ocupadas</div>
+                <div className="text-lg font-black text-indigo-600">{stats.ocupadas}</div>
+              </div>
+              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Libres</div>
+                <div className="text-lg font-black text-emerald-500">{stats.vacias}</div>
+              </div>
+              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="flex flex-col justify-center gap-1 w-24">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>Ocupación</span>
+                  <span>{stats.ocupacion}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                    style={{ width: `${stats.ocupacion}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative group flex-1 md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                <input
+                  type="text"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl text-sm font-medium transition-all outline-none"
+                  placeholder="Buscar ubicación..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && buscarUbicacion()}
+                />
+              </div>
+              <button 
+                onClick={cargarLayout}
+                className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-xl transition-all active:scale-95 shadow-sm"
+                title="Actualizar datos"
+              >
+                <Box size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Filters Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto py-3 no-scrollbar border-t border-slate-100">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 sticky left-0 bg-white/80 backdrop-blur-xl pl-2">Pasillos:</span>
+            <button
+              onClick={() => filtrarPasillo('ALL')}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                pasilloActual === 'ALL'
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                  : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+              }`}
+            >
+              TODOS
             </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border p-4 shadow-sm">
-          <div className="text-slate-400 text-xs">Total Ubicaciones</div>
-          <div className="text-2xl font-extrabold">{stats.total}</div>
-        </div>
-        <div className="bg-white rounded-xl border p-4 shadow-sm">
-          <div className="text-slate-400 text-xs">Con Productos</div>
-          <div className="text-2xl font-extrabold text-indigo-600">{stats.ocupadas}</div>
-        </div>
-        <div className="bg-white rounded-xl border p-4 shadow-sm">
-          <div className="text-slate-400 text-xs">Vacías</div>
-          <div className="text-2xl font-extrabold">{stats.vacias}</div>
-        </div>
-        <div className="bg-white rounded-xl border p-4 shadow-sm">
-          <div className="text-slate-400 text-xs">Ocupación</div>
-          <div className="text-2xl font-extrabold">{stats.ocupacion}%</div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border shadow-sm">
-        <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-2">
-            <Layers size={18} className="text-indigo-600" />
-            <span className="font-extrabold text-slate-800">Seleccionar Pasillo</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={()=>filtrarPasillo('ALL')} className={`px-3 py-1 rounded-lg text-sm font-bold ${pasilloActual==='ALL'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}`}>Todos</button>
             {Object.keys(pasillos).sort().map(p => (
-              <button key={p} onClick={()=>filtrarPasillo(p)} className={`px-3 py-1 rounded-lg text-sm font-bold ${pasilloActual===p?'bg-indigo-600 text-white':'bg-slate-100 text-slate-700'}`}>
-                Pasillo {p}
+              <button
+                key={p}
+                onClick={() => filtrarPasillo(p)}
+                className={`flex-shrink-0 w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all border ${
+                  pasilloActual === p
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/30'
+                    : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600'
+                }`}
+              >
+                {p}
               </button>
             ))}
           </div>
         </div>
-        <div className="p-4">
-          <div className="flex items-center justify-center gap-6 mb-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-4 h-4 rounded-md bg-emerald-500 border border-emerald-600 shadow-sm"></span>
-              <span className="text-slate-600 font-medium">Con productos</span>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Layers size={20} className="text-indigo-500" />
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-4 h-4 rounded-md bg-slate-400 border border-slate-500 shadow-sm"></span>
-              <span className="text-slate-600 font-medium">Vacía</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-4 h-4 rounded-md bg-red-500 border border-red-600 shadow-sm"></span>
-              <span className="text-slate-600 font-medium">No disponible</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-4 h-4 rounded-md bg-yellow-400 border border-yellow-500 shadow-sm"></span>
-              <span className="text-slate-600 font-medium">Ocupado</span>
-            </div>
+            <p className="mt-4 text-slate-400 font-medium animate-pulse">Sincronizando mapa...</p>
           </div>
-          {loading ? (
-            <div className="text-slate-400 flex items-center gap-2"><AlertTriangle size={18}/> Cargando...</div>
-          ) : (
-            <div className="space-y-6">
-              {Object.keys(pasillos).sort().map((letra) => {
-                const pData = pasillos[letra];
-                if (!pData) return null;
-                if (!(pasilloActual==='ALL' || pasilloActual===letra)) return null;
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {Object.keys(pasillos).sort().map((letra) => {
+              const pData = pasillos[letra];
+              if (!pData || !(pasilloActual === 'ALL' || pasilloActual === letra)) return null;
 
-                let totalPasillo = 0; let ocupadasPasillo = 0;
-                Object.values(pData.niveles).forEach(arr => {
-                  totalPasillo += arr.length;
-                  arr.forEach(x => { if (x.tieneProductos) ocupadasPasillo++; });
-                });
-                const porcentaje = totalPasillo>0 ? Math.round((ocupadasPasillo/totalPasillo)*100) : 0;
+              const nivelesOrden = Object.keys(pData.niveles).sort((a, b) => parseInt(b) - parseInt(a));
+              
+              // Stats locales
+              let totalP = 0, ocupadasP = 0;
+              Object.values(pData.niveles).forEach(arr => {
+                totalP += arr.length;
+                arr.forEach(x => { if (x.tieneProductos) ocupadasP++; });
+              });
+              const ocupacionP = totalP > 0 ? Math.round((ocupadasP / totalP) * 100) : 0;
 
-                const nivelesOrden = Object.keys(pData.niveles).sort((a,b)=>parseInt(b)-parseInt(a));
-                return (
-                  <div key={letra} className="border rounded-2xl overflow-hidden pasillo-card">
-                    <div className="p-3 flex items-center justify-between border-b bg-slate-50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500 text-white font-extrabold flex items-center justify-center shadow-sm">{letra}</div>
-                        <div>
-                          <div className="font-extrabold text-slate-800">Pasillo {letra}</div>
-                          <div className="text-xs text-slate-500">{ocupadasPasillo} / {totalPasillo} ubicaciones ocupadas</div>
+              return (
+                <div key={letra} className="pasillo-card bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                  {/* Card Header */}
+                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-900 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-indigo-900/20 group-hover:scale-110 transition-transform">
+                        {letra}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800">Pasillo {letra}</h3>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span className="bg-emerald-100 text-emerald-700 px-1.5 rounded font-bold">{ocupadasP} activos</span>
+                          <span>•</span>
+                          <span>{totalP} total</span>
                         </div>
                       </div>
-                      <div className="text-sm font-extrabold">{porcentaje}%</div>
                     </div>
-                    <div className="p-3 space-y-3">
+                    <div className="flex flex-col items-end">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ocupación</div>
+                      <div className={`text-xl font-black ${ocupacionP > 80 ? 'text-amber-500' : 'text-indigo-600'}`}>
+                        {ocupacionP}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rack Visualization */}
+                  <div className="p-6 bg-slate-50/50">
+                    <div className="space-y-3">
                       {nivelesOrden.map(nivel => {
-                        const ubicaciones = pData.niveles[nivel].slice().sort((a,b)=>a.columna-b.columna);
+                        const ubicaciones = pData.niveles[nivel].slice().sort((a, b) => a.columna - b.columna);
                         return (
-                          <div key={nivel} className="flex items-center gap-3">
-                            <div className="w-20 text-right text-xs text-slate-500 flex items-center justify-end gap-1">
-                              <Box size={12}/> Nivel {nivel}
+                          <div key={nivel} className="flex gap-3">
+                            {/* Nivel Label */}
+                            <div className="w-6 flex items-center justify-center">
+                              <span className="text-[10px] font-black text-slate-300 -rotate-90 whitespace-nowrap">NIVEL {nivel}</span>
                             </div>
-                            <div className="flex gap-2 flex-wrap">
+                            
+                            {/* Cells Track */}
+                            <div className="flex-1 flex gap-1 p-1.5 bg-slate-200/50 rounded-lg border border-slate-200/50 shadow-inner">
                               {ubicaciones.map(ub => {
-                                let bg = 'bg-slate-400';
-                                if (ub.estado==='NO DISPONIBLE') bg='bg-red-500';
-                                else if (ub.estado==='OCUPADO') bg='bg-yellow-400';
-                                else if (ub.tieneProductos) bg='bg-emerald-500';
+                                // Determinar estado visual
+                                let statusClass = 'bg-white border-slate-200 text-slate-300 hover:border-indigo-400 hover:text-indigo-500';
+                                if (ub.estado === 'NO DISPONIBLE') {
+                                  statusClass = 'bg-red-50 border-red-200 text-red-300 cursor-not-allowed';
+                                } else if (ub.estado === 'OCUPADO') {
+                                  statusClass = 'bg-amber-50 border-amber-200 text-amber-500';
+                                } else if (ub.tieneProductos) {
+                                  statusClass = 'bg-indigo-600 border-indigo-700 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500';
+                                }
+
                                 return (
                                   <button
                                     key={ub.ubicacion}
-                                    onClick={()=>abrirDetalle(ub.ubicacion)}
-                                    title={`${ub.ubicacion}${ub.cantidad>0?` (${ub.cantidad})`:''}`}
-                                    className={`w-11 h-11 rounded-lg text-white text-xs font-extrabold flex items-center justify-center ${bg} hover:scale-110 transition-transform relative shadow-sm ring-1 ring-black/10 loc-cell`}
+                                    onClick={() => abrirDetalle(ub.ubicacion)}
+                                    className={`
+                                      loc-cell relative flex-1 min-w-[2rem] h-10 rounded 
+                                      border-[1px] flex flex-col items-center justify-center 
+                                      transition-all duration-200 text-[10px] font-bold
+                                      ${statusClass}
+                                      active:scale-95
+                                    `}
+                                    title={`Ubicación: ${ub.ubicacion}\nCantidad: ${ub.cantidad}`}
                                   >
-                                    {ub.columna}
-                                    {ub.cantidad>0 && (
-                                      <span className="absolute -top-1 -right-1 bg-indigo-600 text-white rounded-full text-[10px] px-1 shadow">{ub.cantidad>99?'99+':ub.cantidad}</span>
+                                    <span>{ub.columna}</span>
+                                    {ub.cantidad > 0 && (
+                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-white flex items-center justify-center">
+                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                      </div>
                                     )}
                                   </button>
                                 );
@@ -390,62 +465,107 @@ const LayoutPage = () => {
                       })}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
 
+      {/* Modal Detalle - Slide Over Style */}
       {modal.open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-3xl overflow-hidden">
-            <div className="p-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="text-indigo-600" size={18}/>
-                <span className="font-extrabold text-slate-800">Ubicación: {modal.ubicacion}</span>
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity"
+            onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
+          ></div>
+
+          {/* Drawer Panel */}
+          <div className="relative w-full max-w-md bg-white shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="px-6 py-6 bg-slate-900 text-white flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+                  <MapPin size={12} />
+                  Detalle de Ubicación
+                </div>
+                <h2 className="text-3xl font-black">{modal.ubicacion}</h2>
               </div>
-              <div className="flex gap-2">
-                <button onClick={()=>cambiarEstado(modal.ubicacion,'DISPONIBLE')} className="px-3 py-1 rounded bg-emerald-600 text-white text-xs font-bold">Disponible</button>
-                <button onClick={()=>cambiarEstado(modal.ubicacion,'NO DISPONIBLE')} className="px-3 py-1 rounded bg-red-600 text-white text-xs font-bold">No Disponible</button>
-                <button onClick={()=>cambiarEstado(modal.ubicacion,'OCUPADO')} className="px-3 py-1 rounded bg-yellow-400 text-xs font-bold">Ocupado</button>
-                <button onClick={()=>setModal({open:false, ubicacion:'', detalle:null})} className="px-3 py-1 rounded bg-slate-200 text-xs font-bold">Cerrar</button>
+              <button 
+                onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Controls */}
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <div className="grid grid-cols-3 gap-2">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                  Disponible
+                </button>
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'NO DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-red-500 hover:text-red-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                  Bloquear
+                </button>
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'OCUPADO')} className="py-2 px-3 bg-white border border-slate-200 hover:border-amber-500 hover:text-amber-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                  Ocupado
+                </button>
               </div>
             </div>
-            <div className="p-4">
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
               {!modal.detalle ? (
-                <div className="text-slate-400">Cargando...</div>
+                <div className="flex flex-col items-center justify-center h-40 text-slate-400">
+                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <span className="text-sm">Cargando datos...</span>
+                </div>
               ) : modal.detalle.cantidadTotal === 0 ? (
-                <div className="text-slate-600 text-sm">Ubicación vacía</div>
+                <div className="text-center py-12 px-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                  <Box className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <h3 className="text-slate-900 font-bold mb-1">Ubicación Vacía</h3>
+                  <p className="text-slate-500 text-sm">No hay productos registrados en esta ubicación actualmente.</p>
+                </div>
               ) : (
-                <div>
-                  <div className="text-sm text-slate-600 mb-2">Cantidad total: <span className="font-extrabold">{modal.detalle.cantidadTotal}</span></div>
-                  <div className="max-h-60 overflow-y-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-slate-500 text-xs uppercase">
-                          <th className="text-left p-2">Código</th>
-                          <th className="text-left p-2">Descripción</th>
-                          <th className="text-center p-2">Cant.</th>
-                          <th className="text-center p-2">Talla</th>
-                          <th className="text-center p-2">Color</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {modal.detalle.registros.map((r)=>(
-                          <tr key={r.id}>
-                            <td className="p-2 font-mono">{r.codigo}</td>
-                            <td className="p-2">{r.descripcion}</td>
-                            <td className="p-2 text-center">{r.cantidad}</td>
-                            <td className="p-2 text-center">{r.talla || '-'}</td>
-                            <td className="p-2 text-center">{r.color || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <span className="text-indigo-900 font-bold text-sm">Total Inventario</span>
+                    <span className="text-2xl font-black text-indigo-600">{modal.detalle.cantidadTotal}</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Productos ({modal.detalle.registros.length})</h4>
+                    {modal.detalle.registros.map((r) => (
+                      <div key={r.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{r.codigo}</span>
+                          <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                            Cant: {r.cantidad}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-800 text-sm mb-2 group-hover:text-indigo-600 transition-colors">
+                          {r.descripcion || 'Sin descripción'}
+                        </h4>
+                        <div className="flex gap-2 text-xs text-slate-500">
+                          {r.talla && <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">T: {r.talla}</span>}
+                          {r.color && <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">C: {r.color}</span>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
+               <button 
+                onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
+                className="w-full py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors"
+               >
+                 Cerrar Panel
+               </button>
             </div>
           </div>
         </div>
