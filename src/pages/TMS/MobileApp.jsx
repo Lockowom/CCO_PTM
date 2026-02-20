@@ -128,29 +128,43 @@ const MobileApp = () => {
   useEffect(() => {
     if (!driver?.id) return;
 
-    // Escuchar cualquier cambio en tms_entregas
-    // Filtramos localmente para asegurarnos de no perder eventos
-    // si el backend cambia la asignación de conductor
+    console.log('📡 Conectando a Supabase Realtime para entregas...');
+
     const channel = supabase
       .channel('mobile_updates')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'tms_entregas' },
         (payload) => {
-          console.log('🔔 Cambio detectado en entregas:', payload);
-          // Recargar siempre que haya un cambio relevante
-          // (Aunque sea ineficiente, asegura consistencia en tiempo real)
-          if (
-             payload.new?.conductor_id === driver.id || 
-             payload.old?.conductor_id === driver.id
-          ) {
-             console.log('🔄 Actualizando lista de entregas...');
+          console.log('🔔 EVENTO REALTIME DETECTADO:', payload);
+          
+          // Lógica de filtrado inteligente para actualizar solo cuando es relevante
+          const isRelevant = 
+            // 1. Nueva asignación: El conductor es el usuario actual
+            (payload.new && payload.new.conductor_id === driver.id) ||
+            // 2. Desasignación: El conductor ERA el usuario actual (ahora null u otro)
+            (payload.old && payload.old.conductor_id === driver.id) ||
+            // 3. Actualización de estado: El registro actual pertenece al conductor
+            (payload.new && payload.new.conductor_id === driver.id);
+
+          if (isRelevant) {
+             console.log('🔄 Actualizando lista de entregas (Evento relevante)...');
              fetchEntregas(driver.id);
+          } else {
+             console.log('ℹ️ Evento ignorado (No afecta a este conductor)');
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📶 Estado de conexión Realtime:', status);
+        if (status === 'SUBSCRIBED') {
+          // Opcional: Mostrar un toast o indicador de "Conectado"
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      console.log('🔌 Desconectando canal Realtime...');
+      supabase.removeChannel(channel); 
+    };
   }, [driver?.id]);
 
   // ==================== FUNCIONES DE DATOS ====================
