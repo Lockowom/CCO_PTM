@@ -101,6 +101,8 @@ const MobileApp = () => {
     const checkDriverStatus = async () => {
       if (!user) return;
 
+      console.log('🔍 Verificando conductor para:', user.email, 'ID:', user.id);
+
       try {
         setLoading(true);
         // Buscar conductor asociado al user_id
@@ -110,12 +112,18 @@ const MobileApp = () => {
           .eq('user_id', user.id)
           .single();
 
-        if (error || !data) {
-          console.warn('Usuario no es conductor:', user.id);
+        if (error) {
+           console.error('❌ Error Supabase:', error);
+        }
+
+        if (!data) {
+          console.warn('⚠️ No se encontró registro en tms_conductores para:', user.id);
           setView('unauthorized');
           setLoading(false);
           return;
         }
+
+        console.log('✅ Conductor encontrado:', data);
 
         // Es conductor, iniciar sesión
         setConductorId(data.id);
