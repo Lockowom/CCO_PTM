@@ -179,6 +179,7 @@ const MobileApp = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('📦 Entregas cargadas:', data?.length);
       setEntregas(data || []);
     } catch (err) {
       console.error('Error cargando entregas:', err);
