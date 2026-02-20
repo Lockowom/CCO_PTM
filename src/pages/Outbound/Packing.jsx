@@ -306,7 +306,8 @@ const Packing = () => {
           bultos: parseInt(formData.bultos) || 0,
           peso: parseFloat(formData.peso) || 0,
           estado: 'PENDIENTE', // Queda lista para ser asignada a ruta
-          fecha_creacion: new Date()
+          fecha_creacion: new Date(),
+          fecha_actualizacion: new Date() // Forzar cambio para disparar realtime
         }, { onConflict: 'nv' });
 
       if (upsertError) throw upsertError;
