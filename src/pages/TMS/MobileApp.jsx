@@ -128,13 +128,24 @@ const MobileApp = () => {
   useEffect(() => {
     if (!driver?.id) return;
 
+    // Escuchar cualquier cambio en tms_entregas
+    // Filtramos localmente para asegurarnos de no perder eventos
+    // si el backend cambia la asignación de conductor
     const channel = supabase
       .channel('mobile_updates')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tms_entregas', filter: `conductor_id=eq.${driver.id}` },
+        { event: '*', schema: 'public', table: 'tms_entregas' },
         (payload) => {
-          console.log('🔔 Cambio detectado en entregas:', payload.eventType);
-          fetchEntregas(driver.id);
+          console.log('🔔 Cambio detectado en entregas:', payload);
+          // Recargar siempre que haya un cambio relevante
+          // (Aunque sea ineficiente, asegura consistencia en tiempo real)
+          if (
+             payload.new?.conductor_id === driver.id || 
+             payload.old?.conductor_id === driver.id
+          ) {
+             console.log('🔄 Actualizando lista de entregas...');
+             fetchEntregas(driver.id);
+          }
         }
       )
       .subscribe();
@@ -448,25 +459,50 @@ const MobileApp = () => {
                     onClick={() => { setSelectedEntrega(entrega); setView('detail'); }}
                     className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
                   >
+                    {/* ENCABEZADO: NV Y ESTADO */}
                     <div className="flex justify-between items-start mb-3">
-                      <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-mono font-bold">
-                        {entrega.nv}
-                      </span>
+                      <div className="flex items-center gap-2">
+                         <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-black tracking-wide border border-indigo-100">
+                           NV: {entrega.nv}
+                         </span>
+                         {entrega.ruta_id && <span className="text-[10px] text-slate-400 font-bold">Ruta Asignada</span>}
+                      </div>
                       <span className={`px-2 py-1 rounded-full text-[10px] font-bold bg-${ESTADOS_ENTREGA[entrega.estado]?.color}-100 text-${ESTADOS_ENTREGA[entrega.estado]?.color}-700`}>
                         {ESTADOS_ENTREGA[entrega.estado]?.label}
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-800 mb-1">{entrega.cliente}</h3>
-                    <div className="flex items-start gap-2 text-slate-500 text-xs mb-3">
-                      <MapPin size={14} className="mt-0.5 shrink-0" />
-                      <p className="line-clamp-2">{entrega.direccion}, {entrega.comuna}</p>
+
+                    {/* CLIENTE */}
+                    <h3 className="text-lg font-black text-slate-800 mb-1 leading-tight">{entrega.cliente}</h3>
+                    
+                    {/* DIRECCIÓN */}
+                    <div className="flex items-start gap-2 text-slate-500 text-xs mb-4">
+                      <MapPin size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                      <p className="line-clamp-2 font-medium">{entrega.direccion}, {entrega.comuna}</p>
                     </div>
-                    <div className="flex items-center gap-4 border-t border-slate-50 pt-3">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
-                        <Box size={14} /> {entrega.bultos} bultos
+
+                    {/* FOOTER: BULTOS Y PESO */}
+                    <div className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 shadow-sm text-slate-600">
+                           <Box size={16} />
+                        </div>
+                        <div>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase">Bultos</p>
+                           <p className="text-sm font-black text-slate-800">{entrega.bultos || 0}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
-                        <Scale size={14} /> {entrega.peso_kg} kg
+                      
+                      <div className="w-px h-8 bg-slate-200"></div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 shadow-sm text-slate-600">
+                           <Scale size={16} />
+                        </div>
+                        <div>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase">Peso</p>
+                           <p className="text-sm font-black text-slate-800">{entrega.peso_kg || 0} kg</p>
+                        </div>
                       </div>
                     </div>
                   </div>
