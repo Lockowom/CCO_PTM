@@ -37,9 +37,10 @@ const ESTADOS_CONFIG = {
 
 const ControlTower = () => {
   const [conductores, setConductores] = useState([]);
+  const [rutas, setRutas] = useState([]); // Nueva variable de estado para rutas
   const [entregas, setEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedConductor, setSelectedConductor] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState(null); // Cambiado de selectedConductor
   const [filterEstado, setFilterEstado] = useState('TODOS');
   const [searchText, setSearchText] = useState('');
   const [expandedEntrega, setExpandedEntrega] = useState(null);
@@ -67,7 +68,18 @@ const ControlTower = () => {
         .order('nombre');
       setConductores(conductoresData || []);
 
-      // Cargar todas las entregas (no solo de hoy, para ver el historial)
+      // Cargar rutas activas (últimos 7 días para no sobrecargar)
+      const { data: rutasData } = await supabase
+        .from('tms_rutas')
+        .select(`
+          *,
+          conductor:tms_conductores(nombre, apellido, vehiculo_patente)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setRutas(rutasData || []);
+
+      // Cargar todas las entregas
       const { data: entregasData } = await supabase
         .from('tms_entregas')
         .select('*')
@@ -112,6 +124,15 @@ const ControlTower = () => {
       })
       .subscribe();
 
+    // Canal para rutas
+    const rutasChannel = supabase
+      .channel('tower_rutas_v2')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_rutas' }, () => {
+        console.log('🛣️ Ruta actualizada');
+        fetchData();
+      })
+      .subscribe();
+
     // Canal para entregas
     const entregasChannel = supabase
       .channel('tower_entregas_v2')
@@ -123,6 +144,7 @@ const ControlTower = () => {
 
     return () => {
       supabase.removeChannel(conductoresChannel);
+      supabase.removeChannel(rutasChannel);
       supabase.removeChannel(entregasChannel);
     };
   }, [fetchData]);
@@ -134,13 +156,13 @@ const ControlTower = () => {
       e.cliente?.toLowerCase().includes(searchText.toLowerCase()) ||
       e.nv?.toLowerCase().includes(searchText.toLowerCase()) ||
       e.direccion?.toLowerCase().includes(searchText.toLowerCase());
-    const matchConductor = !selectedConductor || e.conductor_id === selectedConductor;
+    const matchConductor = !selectedRoute || e.ruta_id === selectedRoute;
     return matchEstado && matchSearch && matchConductor;
   });
 
-  // Agrupar entregas por conductor
-  const entregasPorConductor = (conductorId) => {
-    return entregas.filter(e => e.conductor_id === conductorId);
+  // Agrupar entregas por ruta
+  const entregasPorRuta = (rutaId) => {
+    return entregas.filter(e => e.ruta_id === rutaId);
   };
 
   // Componente Badge de Estado
@@ -248,21 +270,21 @@ const ControlTower = () => {
       {/* Main Content */}
       <div className="flex gap-6 flex-1 overflow-hidden">
         
-        {/* Panel Izquierdo: Conductores */}
+        {/* Panel Izquierdo: Rutas Activas */}
         <div className="w-80 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
             <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-              <User size={18} className="text-indigo-600" />
-              Conductores
+              <MapPin size={18} className="text-indigo-600" />
+              Rutas Activas
             </h3>
           </div>
           
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {/* Opción Todos */}
+            {/* Opción Todas */}
             <button
-              onClick={() => setSelectedConductor(null)}
+              onClick={() => setSelectedRoute(null)}
               className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                !selectedConductor
+                !selectedRoute
                   ? 'bg-indigo-50 border-indigo-300'
                   : 'bg-white border-slate-100 hover:border-indigo-200'
               }`}
@@ -272,23 +294,24 @@ const ControlTower = () => {
                   <Radio size={18} className="text-indigo-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-800">Todos</p>
-                  <p className="text-xs text-slate-400">{entregas.length} entregas</p>
+                  <p className="font-medium text-slate-800">Todas las Rutas</p>
+                  <p className="text-xs text-slate-400">{entregas.length} entregas totales</p>
                 </div>
               </div>
             </button>
 
-            {conductores.map((conductor) => {
-              const entregasC = entregasPorConductor(conductor.id);
-              const completadas = entregasC.filter(e => e.estado === 'ENTREGADO').length;
-              const activas = entregasC.filter(e => ['PENDIENTE', 'EN_RUTA'].includes(e.estado)).length;
+            {rutas.map((ruta) => {
+              const entregasR = entregasPorRuta(ruta.id);
+              const completadas = entregasR.filter(e => e.estado === 'ENTREGADO').length;
+              const pendientes = entregasR.length - completadas;
+              const conductor = ruta.conductor || conductores.find(c => c.id === ruta.conductor_id);
               
               return (
                 <button
-                  key={conductor.id}
-                  onClick={() => setSelectedConductor(conductor.id)}
+                  key={ruta.id}
+                  onClick={() => setSelectedRoute(ruta.id)}
                   className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    selectedConductor === conductor.id
+                    selectedRoute === ruta.id
                       ? 'bg-indigo-50 border-indigo-300'
                       : 'bg-white border-slate-100 hover:border-indigo-200'
                   }`}
@@ -296,34 +319,34 @@ const ControlTower = () => {
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-600">
-                        {conductor.nombre?.charAt(0)}
+                        <Truck size={18} />
                       </div>
                       <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
-                        conductor.estado === 'EN_RUTA' ? 'bg-green-500' :
-                        conductor.estado === 'DISPONIBLE' ? 'bg-blue-500' :
+                        ruta.estado === 'EN_RUTA' ? 'bg-green-500' :
+                        ruta.estado === 'PLANIFICADA' ? 'bg-blue-500' :
                         'bg-slate-400'
                       }`}></span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-800 truncate">
-                        {conductor.nombre} {conductor.apellido}
+                      <p className="font-medium text-slate-800 truncate" title={ruta.nombre}>
+                        {ruta.nombre}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          conductor.estado === 'EN_RUTA' ? 'bg-green-100 text-green-700' :
-                          conductor.estado === 'DISPONIBLE' ? 'bg-blue-100 text-blue-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>
-                          {conductor.estado}
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                           <User size={10} /> {conductor ? `${conductor.nombre} ${conductor.apellido}` : 'Sin Conductor'}
                         </span>
-                        <span className="text-[10px] text-slate-400">{conductor.vehiculo_patente}</span>
+                        <span className={`text-[10px] font-medium ${
+                          ruta.estado === 'EN_RUTA' ? 'text-green-600' : 'text-blue-600'
+                        }`}>
+                          {ruta.estado}
+                        </span>
                       </div>
                     </div>
-                    {entregasC.length > 0 && (
+                    {entregasR.length > 0 && (
                       <div className="text-right">
-                        <p className="text-sm font-bold text-slate-700">{completadas}/{entregasC.length}</p>
-                        {activas > 0 && (
-                          <p className="text-[10px] text-blue-600 font-medium">{activas} activas</p>
+                        <p className="text-sm font-bold text-slate-700">{completadas}/{entregasR.length}</p>
+                        {pendientes > 0 && (
+                          <p className="text-[10px] text-blue-600 font-medium">{pendientes} pend.</p>
                         )}
                       </div>
                     )}
@@ -331,6 +354,12 @@ const ControlTower = () => {
                 </button>
               );
             })}
+
+            {rutas.length === 0 && (
+                <div className="text-center py-4 text-slate-400 text-sm">
+                    No hay rutas recientes
+                </div>
+            )}
           </div>
         </div>
 
@@ -389,7 +418,11 @@ const ControlTower = () => {
               </div>
             ) : (
               entregasFiltradas.map((entrega) => {
-                const conductor = conductores.find(c => c.id === entrega.conductor_id);
+                const ruta = rutas.find(r => r.id === entrega.ruta_id);
+                // Priorizar conductor directo, si no, usar el de la ruta
+                const conductor = conductores.find(c => c.id === entrega.conductor_id) || 
+                                 (ruta ? conductores.find(c => c.id === ruta.conductor_id) : null);
+                
                 const isExpanded = expandedEntrega === entrega.id;
                 
                 return (
@@ -417,10 +450,15 @@ const ControlTower = () => {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
-                                {entrega.nv}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium border border-slate-200">
+                                NV: {entrega.nv}
                               </span>
+                              {ruta && (
+                                <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 truncate max-w-[100px]" title={ruta.nombre}>
+                                  {ruta.nombre}
+                                </span>
+                              )}
                               <EstadoBadge estado={entrega.estado} />
                             </div>
                             {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
@@ -433,11 +471,11 @@ const ControlTower = () => {
                           </p>
                           
                           <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-400">
-                            <span>{entrega.bultos || 0} bultos</span>
+                            <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-600 font-medium">{entrega.bultos || 0} bultos</span>
                             <span>{entrega.peso_kg || 0} kg</span>
                             {conductor && (
                               <span className="flex items-center gap-1 text-indigo-600 font-medium">
-                                <User size={10} /> {conductor.nombre}
+                                <User size={10} /> {conductor.nombre} {conductor.apellido}
                               </span>
                             )}
                           </div>
