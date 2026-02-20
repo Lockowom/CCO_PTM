@@ -131,7 +131,7 @@ const Batches = () => {
   const TABLE_CONFIG = {
     partidas: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo_producto}</span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 max-w-xs truncate block" title={r.producto || r.descripcion}>{r.producto || r.descripcion}</span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 whitespace-normal block" title={r.producto || r.descripcion}>{r.producto || r.descripcion}</span> },
       { header: 'U. Medida', accessor: 'unidad_medida' },
       { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{r.partida}</span> },
       { header: 'Fecha Venc', accessor: 'fecha_vencimiento', render: r => r.fecha_vencimiento ? new Date(r.fecha_vencimiento).toLocaleDateString() : '-' },
@@ -144,7 +144,7 @@ const Batches = () => {
     ],
     series: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo_producto}</span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 max-w-xs truncate block" title={r.producto}>{r.producto}</span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 whitespace-normal block" title={r.producto}>{r.producto}</span> },
       { header: 'U. Medida', accessor: 'unidad_medida' },
       { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">{r.serie}</span> },
       { header: 'Disponible', accessor: 'disponible', render: r => <span className="font-bold text-green-600">{r.disponible}</span> },
@@ -156,7 +156,7 @@ const Batches = () => {
     ],
     farmapack: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo_producto}</span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 max-w-xs truncate block" title={r.producto}>{r.producto}</span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-800 whitespace-normal block" title={r.producto}>{r.producto}</span> },
       { header: 'U. Medida', accessor: 'unidad_medida' },
       { header: 'Lote', accessor: 'lote', render: r => <span className="font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">{r.lote}</span> },
       { header: 'Fecha Venc', accessor: 'fecha_vencimiento', render: r => r.fecha_vencimiento ? new Date(r.fecha_vencimiento).toLocaleDateString() : '-' },
@@ -168,7 +168,7 @@ const Batches = () => {
     ],
     peso: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono font-bold text-slate-700">{r.codigo_producto}</span> },
-      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800">{r.descripcion}</span> },
+      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800 whitespace-normal block">{r.descripcion}</span> },
       { header: 'Peso Unitario (Kg)', accessor: 'peso_unitario', render: r => <span className="font-mono font-bold text-amber-600">{r.peso_unitario}</span> },
       { header: 'Largo', accessor: 'largo' },
       { header: 'Ancho', accessor: 'ancho' },
@@ -177,7 +177,7 @@ const Batches = () => {
     ubicaciones: [
       { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100">{r.ubicacion}</span> },
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-slate-600">{r.codigo_producto}</span> },
-      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800 max-w-xs truncate block">{r.descripcion}</span> },
+      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-800 whitespace-normal block">{r.descripcion}</span> },
       { header: 'Cantidad', accessor: 'cantidad', render: r => <span className="font-bold">{r.cantidad}</span> },
       { header: 'Serie/Lote', accessor: 'serie', render: r => r.serie || r.partida || '-' },
       { header: 'Usuario', accessor: 'usuario', render: r => <span className="text-xs bg-slate-100 px-1 rounded">{r.usuario}</span> },

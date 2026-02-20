@@ -255,7 +255,7 @@ const Stock = () => {
                       filteredItems.map((item, idx) => (
                         <tr key={idx} className="hover:bg-slate-50 transition-colors">
                           <td className="px-6 py-4 font-mono font-bold text-slate-700">{item.codigo_producto}</td>
-                          <td className="px-6 py-4 font-medium text-slate-800 max-w-xs truncate" title={item.producto || item.descripcion}>
+                          <td className="px-6 py-4 font-medium text-slate-800 whitespace-normal" title={item.producto || item.descripcion}>
                             {item.producto || item.descripcion}
                           </td>
                           <td className="px-6 py-4">

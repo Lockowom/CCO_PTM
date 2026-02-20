@@ -545,7 +545,7 @@ const LayoutPage = () => {
                             Cant: {r.cantidad}
                           </span>
                         </div>
-                        <h4 className="font-bold text-slate-800 text-sm mb-2 group-hover:text-indigo-600 transition-colors">
+                        <h4 className="font-bold text-slate-800 text-sm whitespace-normal pr-2" title={r.descripcion}>
                           {r.descripcion || 'Sin descripción'}
                         </h4>
                         <div className="flex gap-2 text-xs text-slate-500">
