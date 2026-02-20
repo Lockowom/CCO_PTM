@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight, Package, Scale } from 'lucide-react';
 import { useConductores } from '../../hooks/useConductores';
+import { supabase } from '../../supabase';
 
 const API_URL = 'https://cco-ptm.onrender.com/api';
 
@@ -17,6 +18,19 @@ const RoutePlanning = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Suscribirse a cambios en tiempo real en tms_entregas
+    // Esto actualizará la lista cuando Packing finalice una NV
+    const channel = supabase
+      .channel('planning_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -141,10 +155,15 @@ const RoutePlanning = () => {
                             </div>
                             <p className="text-sm font-medium text-slate-600 truncate">{entrega.cliente}</p>
                             <p className="text-xs text-slate-400 truncate">{entrega.direccion || 'Sin dirección'}</p>
-                            <div className="mt-2 flex gap-2">
-                                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
-                                    {entrega.bultos} bultos
+                            <div className="mt-2 flex gap-3 text-xs text-slate-500 font-medium">
+                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                    <Package size={12} /> {entrega.bultos} bultos
                                 </span>
+                                {entrega.peso > 0 && (
+                                  <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                      <Scale size={12} /> {entrega.peso} kg
+                                  </span>
+                                )}
                             </div>
                         </div>
                     </div>
