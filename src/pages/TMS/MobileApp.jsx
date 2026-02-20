@@ -110,7 +110,7 @@ const MobileApp = () => {
           .from('tms_conductores')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Cambiado de .single() a .maybeSingle() para evitar error 406
 
         if (error) {
            console.error('❌ Error Supabase:', error);
