@@ -45,6 +45,7 @@ const ESTADOS_NV = [
   { key: 'Pendiente', label: 'Pendiente', color: '#64748b', icon: Hourglass },
   { key: 'Aprobada', label: 'Aprobada', color: '#f59e0b', icon: ThumbsUp },
   { key: 'Pendiente Picking', label: 'Picking', color: '#06b6d4', icon: Hand },
+  { key: 'QUIEBRE_STOCK', label: 'Quiebre Stock', color: '#ef4444', icon: AlertCircle },
   { key: 'PACKING', label: 'Packing', color: '#6366f1', icon: Box },
   { key: 'LISTO_DESPACHO', label: 'Listo Despacho', color: '#a855f7', icon: Send },
   { key: 'Pendiente Shipping', label: 'Shipping', color: '#3b82f6', icon: Ship },
@@ -62,6 +63,7 @@ const Dashboard = () => {
     pendiente: 0,
     aprobada: 0,
     picking: 0,
+    quiebreStock: 0,
     packing: 0,
     listoDespacho: 0,
     shipping: 0,
@@ -162,6 +164,7 @@ const Dashboard = () => {
       const pendiente = nv.filter(n => n.estado === 'Pendiente' || n.estado === 'PENDIENTE').length;
       const aprobada = nv.filter(n => n.estado === 'Aprobada').length;
       const picking = nv.filter(n => n.estado === 'Pendiente Picking').length;
+      const quiebreStock = nv.filter(n => n.estado === 'QUIEBRE_STOCK').length;
       const packing = nv.filter(n => n.estado === 'PACKING').length;
       const listoDespacho = nv.filter(n => n.estado === 'LISTO_DESPACHO').length;
       const shipping = nv.filter(n => n.estado === 'Pendiente Shipping').length;
@@ -173,6 +176,7 @@ const Dashboard = () => {
         pendiente,
         aprobada,
         picking,
+        quiebreStock,
         packing,
         listoDespacho,
         shipping,
@@ -185,6 +189,7 @@ const Dashboard = () => {
         { name: 'Pendiente', valor: pendiente, color: '#64748b' },
         { name: 'Aprobada', valor: aprobada, color: '#f59e0b' },
         { name: 'Picking', valor: picking, color: '#06b6d4' },
+        { name: 'Quiebre Stock', valor: quiebreStock, color: '#ef4444' },
         { name: 'Packing', valor: packing, color: '#6366f1' },
         { name: 'Despacho', valor: listoDespacho, color: '#a855f7' },
         { name: 'Shipping', valor: shipping, color: '#3b82f6' },
@@ -192,9 +197,10 @@ const Dashboard = () => {
       ]);
 
       // Datos para pie (distribución)
-      const enProceso = pendiente + aprobada + picking + packing + listoDespacho + shipping;
+      const enProceso = pendiente + aprobada + picking + packing + listoDespacho + shipping + quiebreStock;
       setPieData([
         { name: 'En Proceso', value: enProceso, color: '#3b82f6' },
+        { name: 'Quiebre Stock', value: quiebreStock, color: '#ef4444' },
         { name: 'Despachados', value: despachado, color: '#10b981' },
         { name: 'Refacturación', value: refacturacion, color: '#f97316' },
       ]);
@@ -320,6 +326,12 @@ const Dashboard = () => {
           value={nvStats.picking}
           icon={<Hand className="text-cyan-600" size={20} />}
           color="cyan"
+        />
+        <KPICard 
+          title="Quiebre Stock" 
+          value={nvStats.quiebreStock}
+          icon={<AlertCircle className="text-red-600" size={20} />}
+          color="red"
         />
         <KPICard 
           title="En Packing" 
