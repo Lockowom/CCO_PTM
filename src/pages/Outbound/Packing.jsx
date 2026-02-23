@@ -76,11 +76,20 @@ const Packing = () => {
   const ocioRef = useRef(null);
   const lastHiddenTime = useRef(null); // Para tracking silencioso
 
+  // Stats
+  const [stats, setStats] = useState({
+    pendientes: 0,
+    itemsPendientes: 0,
+    completadosHoy: 0,
+    tiempoPromedioHoy: 0
+  });
+
   // Cargar N.V. en estado PACKING
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
+      // 1. Cargar N.V. Pendientes
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
@@ -111,17 +120,17 @@ const Packing = () => {
         if (item.picking_status === 'SIN_STOCK' || item.estado === 'QUIEBRE_STOCK') nvGrouped[nvId].has_stock_break = true;
       });
 
-      // Filtrar NVs que estén completamente en quiebre (no deberían llegar a packing si no hay nada que empacar)
-      // Pero si al menos un item está en PACKING, la NV completa pasa.
+      // Filtrar NVs únicas
       const uniqueNVs = Object.values(nvGrouped).filter(nv => 
         nv.items.some(i => i.estado === 'PACKING')
       );
       
-      setNvData(uniqueNVs); // Lista de NVs únicas
+      setNvData(uniqueNVs);
 
-      
-      // Agrupar por cliente (usando las NVs únicas)
+      // Agrupar por cliente
       const groupedByClient = {};
+      let totalItemsPendientes = 0;
+
       uniqueNVs.forEach(nv => {
         const cliente = nv.cliente || 'Sin Cliente';
         if (!groupedByClient[cliente]) {
@@ -133,11 +142,33 @@ const Packing = () => {
           };
         }
         groupedByClient[cliente].nvList.push(nv);
-        groupedByClient[cliente].totalItems++; // Cantidad de NVs
-        groupedByClient[cliente].totalBultos += nv.total_cantidad; // Suma de productos
+        groupedByClient[cliente].totalItems++;
+        groupedByClient[cliente].totalBultos += nv.total_cantidad;
+        totalItemsPendientes += nv.total_cantidad;
       });
       
       setClientesAgrupados(Object.values(groupedByClient));
+
+      // 2. Cargar Stats de Hoy (Completados y Tiempo Promedio)
+      const today = new Date().toISOString().split('T')[0];
+      const { data: metricsData } = await supabase
+        .from('tms_mediciones_tiempos')
+        .select('tiempo_activo')
+        .eq('proceso', 'PACKING')
+        .eq('estado', 'COMPLETADO')
+        .gte('fin_at', `${today}T00:00:00`);
+
+      const completados = metricsData?.length || 0;
+      const totalTiempo = metricsData?.reduce((acc, curr) => acc + (curr.tiempo_activo || 0), 0) || 0;
+      const promedio = completados > 0 ? Math.round(totalTiempo / completados) : 0;
+
+      // Actualizar Stats
+      setStats({
+        pendientes: uniqueNVs.length,
+        itemsPendientes: totalItemsPendientes,
+        completadosHoy: completados,
+        tiempoPromedioHoy: promedio
+      });
       
     } catch (error) {
       console.error('Error:', error);
@@ -149,16 +180,20 @@ const Packing = () => {
   useEffect(() => {
     fetchData();
     
-    // Realtime
-    const channel = supabase
-      .channel('packing_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
-        fetchData();
-      })
+    // Realtime: Escuchar cambios en N.V. y Mediciones
+    const channelNV = supabase
+      .channel('packing_realtime_nv')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => fetchData())
+      .subscribe();
+
+    const channelMetrics = supabase
+      .channel('packing_realtime_metrics')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => fetchData())
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelNV);
+      supabase.removeChannel(channelMetrics);
       if (timerRef.current) clearInterval(timerRef.current);
       if (ocioRef.current) clearInterval(ocioRef.current);
     };
@@ -564,37 +599,54 @@ const Packing = () => {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase mb-2">
-              <Users size={14} /> Clientes
+        {/* Resumen de Clientes (Solicitado por usuario) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Pendientes */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">N.V. Pendientes</p>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.pendientes}</h3>
             </div>
-            <p className="text-2xl font-bold text-slate-800">{clientesAgrupados.length}</p>
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <FileText size={20} />
+            </div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-indigo-200 shadow-sm">
-            <div className="flex items-center gap-2 text-indigo-500 text-xs font-semibold uppercase mb-2">
-              <FileText size={14} /> N.V. en Packing
+
+          {/* Card 2: Carga de Trabajo */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unidades Total</p>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.itemsPendientes}</h3>
             </div>
-            <p className="text-2xl font-bold text-indigo-600">{nvData.length}</p>
+            <div className="w-10 h-10 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600">
+              <Package size={20} />
+            </div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
-            <div className="flex items-center gap-2 text-amber-500 text-xs font-semibold uppercase mb-2">
-              <Package size={14} /> Total Bultos
+
+          {/* Card 3: Completados Hoy */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Empacados Hoy</p>
+              <h3 className="text-2xl font-black text-emerald-600 mt-1">{stats.completadosHoy}</h3>
             </div>
-            <p className="text-2xl font-bold text-amber-600">
-              {nvData.reduce((sum, nv) => sum + (parseInt(nv.cantidad) || 0), 0)}
-            </p>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <CheckCircle size={20} />
+            </div>
           </div>
-          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200 shadow-sm">
-            <div className="flex items-center gap-2 text-emerald-500 text-xs font-semibold uppercase mb-2">
-              <Timer size={14} /> Operador
+
+          {/* Card 4: Tiempo Promedio */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiempo Promedio</p>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">{formatTime(stats.tiempoPromedioHoy)}</h3>
             </div>
-            <p className="text-sm font-bold text-emerald-600 truncate">{user?.nombre || 'Desconocido'}</p>
+            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+              <Clock size={20} />
+            </div>
           </div>
         </div>
 
-        {/* Grid de Clientes */}
+        {/* Grid de Clientes (Detalle) */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <RefreshCw className="animate-spin text-indigo-500" size={32} />
