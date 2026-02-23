@@ -80,8 +80,7 @@ const Packing = () => {
   const [stats, setStats] = useState({
     pendientes: 0,
     itemsPendientes: 0,
-    completadosHoy: 0,
-    tiempoPromedioHoy: 0
+    completadosHoy: 0
   });
 
   // Cargar N.V. en estado PACKING
@@ -149,25 +148,22 @@ const Packing = () => {
       
       setClientesAgrupados(Object.values(groupedByClient));
 
-      // 2. Cargar Stats de Hoy (Completados y Tiempo Promedio)
+      // 2. Cargar Stats de Hoy (Completados)
       const today = new Date().toISOString().split('T')[0];
-      const { data: metricsData } = await supabase
+      const { count: completados, error: countError } = await supabase
         .from('tms_mediciones_tiempos')
-        .select('tiempo_activo')
+        .select('*', { count: 'exact', head: true })
         .eq('proceso', 'PACKING')
         .eq('estado', 'COMPLETADO')
         .gte('fin_at', `${today}T00:00:00`);
 
-      const completados = metricsData?.length || 0;
-      const totalTiempo = metricsData?.reduce((acc, curr) => acc + (curr.tiempo_activo || 0), 0) || 0;
-      const promedio = completados > 0 ? Math.round(totalTiempo / completados) : 0;
+      if (countError) console.error("Error contando completados:", countError);
 
       // Actualizar Stats
       setStats({
         pendientes: uniqueNVs.length,
         itemsPendientes: totalItemsPendientes,
-        completadosHoy: completados,
-        tiempoPromedioHoy: promedio
+        completadosHoy: completados || 0
       });
       
     } catch (error) {
@@ -587,20 +583,28 @@ const Packing = () => {
         <div className="flex gap-2">
           <button 
             onClick={() => setVista('clientes')}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium flex items-center gap-2"
+            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              vista === 'clientes' 
+                ? 'bg-indigo-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
           >
             <LayoutGrid size={18} /> Por Cliente
           </button>
           <button 
-            className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
-            disabled
+            onClick={() => setVista('lista')}
+            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              vista === 'lista' 
+                ? 'bg-indigo-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
           >
             <List size={18} /> Lista N.V.
           </button>
         </div>
 
         {/* Resumen de Clientes (Solicitado por usuario) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Card 1: Pendientes */}
           <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
@@ -633,87 +637,131 @@ const Packing = () => {
               <CheckCircle size={20} />
             </div>
           </div>
-
-          {/* Card 4: Tiempo Promedio */}
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiempo Promedio</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{formatTime(stats.tiempoPromedioHoy)}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-              <Clock size={20} />
-            </div>
-          </div>
         </div>
 
         {/* Grid de Clientes (Detalle) */}
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <RefreshCw className="animate-spin text-indigo-500" size={32} />
-          </div>
-        ) : clientesFiltrados.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
-            <Package size={48} className="mx-auto text-slate-300 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-600">No hay N.V. en Packing</h3>
-            <p className="text-sm text-slate-400">Las notas de venta aparecerán aquí cuando lleguen del Picking</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {clientesFiltrados.map((grupo, index) => (
-              <div 
-                key={index}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
-              >
-                {/* Header del cliente */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                        <User size={20} className="text-indigo-600" />
+        {vista === 'clientes' ? (
+          loading ? (
+            <div className="flex items-center justify-center py-16">
+              <RefreshCw className="animate-spin text-indigo-500" size={32} />
+            </div>
+          ) : clientesFiltrados.length === 0 ? (
+            <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+              <Package size={48} className="mx-auto text-slate-300 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-600">No hay N.V. en Packing</h3>
+              <p className="text-sm text-slate-400">Las notas de venta aparecerán aquí cuando lleguen del Picking</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clientesFiltrados.map((grupo, index) => (
+                <div 
+                  key={index}
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                >
+                  {/* Header del cliente */}
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                          <User size={20} className="text-indigo-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-sm truncate max-w-[180px]" title={grupo.cliente}>
+                            {grupo.cliente}
+                          </h3>
+                          <p className="text-xs text-slate-500">{grupo.totalItems} N.V.</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-800 text-sm truncate max-w-[180px]" title={grupo.cliente}>
-                          {grupo.cliente}
-                        </h3>
-                        <p className="text-xs text-slate-500">{grupo.totalItems} N.V.</p>
-                      </div>
+                      <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">
+                        {grupo.totalBultos} items
+                      </span>
                     </div>
-                    <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">
-                      {grupo.totalBultos} items
-                    </span>
+                  </div>
+                  
+                  {/* Lista de N.V. */}
+                  <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                    {grupo.nvList.map((nv, i) => (
+                      <div 
+                        key={i}
+                        className="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        <div>
+                          <p className="font-mono text-sm font-bold text-indigo-600">#{nv.nv}</p>
+                          <p className="text-xs text-slate-500 truncate max-w-[120px]">
+                            {nv.total_items > 1 ? `${nv.total_items} items` : nv.codigo_producto}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-700">
+                            {nv.total_items > 1 ? `${nv.total_cantidad} un.` : nv.cantidad}
+                          </span>
+                          <button
+                            onClick={() => iniciarPacking(nv)}
+                            className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                            title="Iniciar Packing"
+                          >
+                            <Play size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                
-                {/* Lista de N.V. */}
-                <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto">
-                  {grupo.nvList.map((nv, i) => (
-                    <div 
-                      key={i}
-                      className="flex items-center justify-between p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
-                    >
-                      <div>
-                        <p className="font-mono text-sm font-bold text-indigo-600">#{nv.nv}</p>
-                        <p className="text-xs text-slate-500 truncate max-w-[120px]">
-                          {nv.total_items > 1 ? `${nv.total_items} items` : nv.codigo_producto}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-700">
-                          {nv.total_items > 1 ? `${nv.total_cantidad} un.` : nv.cantidad}
-                        </span>
-                        <button
-                          onClick={() => iniciarPacking(nv)}
-                          className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                          title="Iniciar Packing"
-                        >
-                          <Play size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )
+        ) : (
+          /* VISTA LISTA DE N.V. */
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+             <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">N.V.</th>
+                    <th className="px-4 py-3 text-left font-medium">Cliente</th>
+                    <th className="px-4 py-3 text-center font-medium">Items</th>
+                    <th className="px-4 py-3 text-center font-medium">Total Un.</th>
+                    <th className="px-4 py-3 text-center font-medium">Estado</th>
+                    <th className="px-4 py-3 text-right font-medium">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {nvData.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
+                        No hay notas de venta pendientes
+                      </td>
+                    </tr>
+                  ) : (
+                    nvData.map((nv, index) => (
+                      <tr key={index} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-bold text-indigo-600">#{nv.nv}</td>
+                        <td className="px-4 py-3 text-slate-700 font-medium">{nv.cliente}</td>
+                        <td className="px-4 py-3 text-center text-slate-600">{nv.total_items}</td>
+                        <td className="px-4 py-3 text-center font-bold text-slate-800">{nv.total_cantidad}</td>
+                        <td className="px-4 py-3 text-center">
+                          {nv.has_stock_break ? (
+                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold">Quiebre Stock</span>
+                          ) : nv.has_partial ? (
+                            <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-bold">Parcial</span>
+                          ) : (
+                            <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-xs font-bold">Completo</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => iniciarPacking(nv)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
+                          >
+                            <Play size={14} /> Empacar
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
