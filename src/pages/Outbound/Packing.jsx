@@ -542,8 +542,8 @@ const Packing = () => {
     c.nvList.some(nv => nv.nv.toString().includes(searchTerm))
   );
 
-  // ==================== VISTA: CLIENTES ====================
-  if (vista === 'clientes') {
+  // ==================== VISTA: CLIENTES O LISTA ====================
+  if (vista === 'clientes' || vista === 'lista') {
     return (
       <div className="space-y-6">
         {/* Header */}
