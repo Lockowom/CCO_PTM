@@ -21,7 +21,8 @@ import {
   ThumbsUp,
   Hourglass,
   RotateCcw,
-  Ship
+  Ship,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -234,6 +235,50 @@ const SalesOrders = () => {
       
     } catch (e) {
       alert('Error: ' + e.message);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  // Eliminar orden
+  const handleDeleteOrder = async (nv) => {
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar la N.V. #${nv}?\n\nEsta acción registrará la N.V. como eliminada para evitar que se vuelva a importar en el futuro.`)) {
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+
+      // 1. Obtener el usuario actual
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // 2. Registrar en historial de eliminadas
+      const { error: insertError } = await supabase
+        .from('tms_nv_eliminadas')
+        .insert({
+          nv: nv.toString(),
+          usuario_elimino: user?.id,
+          motivo: 'Eliminación manual desde SalesOrders'
+        });
+
+      if (insertError) throw insertError;
+
+      // 3. Eliminar de la tabla principal
+      const { error: deleteError } = await supabase
+        .from('tms_nv_diarias')
+        .delete()
+        .eq('nv', nv);
+
+      if (deleteError) throw deleteError;
+
+      // 4. Actualizar UI
+      await fetchOrders();
+      setSelectedOrder(null);
+      alert('N.V. eliminada correctamente y registrada para no volver a importarse.');
+
+    } catch (e) {
+      console.error('Error al eliminar:', e);
+      alert('Error al eliminar: ' + e.message);
     } finally {
       setModalLoading(false);
     }
@@ -472,8 +517,16 @@ const SalesOrders = () => {
                           <button 
                             onClick={() => setSelectedOrder(order)}
                             className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1"
+                            title="Ver detalle"
                           >
                             <Eye size={12} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteOrder(order.nv)}
+                            className="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={12} />
                           </button>
                         </div>
                       </td>
@@ -503,12 +556,21 @@ const SalesOrders = () => {
                       <h2 className="text-2xl font-black text-slate-900">{selectedOrder.nv}</h2>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setSelectedOrder(null)}
-                    className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
-                  >
-                    <X size={18} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleDeleteOrder(selectedOrder.nv)}
+                      className="text-red-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg border border-red-200 transition-colors"
+                      title="Eliminar N.V. y bloquear re-importación"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => setSelectedOrder(null)}
+                      className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
                 </div>
               );
             })()}

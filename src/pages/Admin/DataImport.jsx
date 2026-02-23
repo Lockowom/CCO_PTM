@@ -295,13 +295,26 @@ const DataImport = () => {
                 // Obtener las claves únicas del paste
                 const keys = [...new Set(rows.map(r => r[checkKey]).filter(Boolean))];
 
-                // Consultar cuáles ya existen en Supabase
-                const { data: existing, error } = await supabase
+                // Consultar cuáles ya existen en Supabase (tabla principal)
+                const { data: existing, error: errorExisting } = await supabase
                     .from(currentTab.table)
                     .select(checkKey)
                     .in(checkKey, keys);
 
-                if (error) throw error;
+                if (errorExisting) throw errorExisting;
+
+                // Consultar cuáles han sido ELIMINADAS MANUALMENTE (solo para N.V)
+                let deletedKeys = new Set();
+                if (currentTab.id === 'nv') {
+                    const { data: deleted, error: errorDeleted } = await supabase
+                        .from('tms_nv_eliminadas') // Tabla nueva
+                        .select('nv')
+                        .in('nv', keys);
+                    
+                    if (!errorDeleted && deleted) {
+                        deletedKeys = new Set(deleted.map(d => d.nv?.toString()));
+                    }
+                }
 
                 const existingKeys = new Set((existing || []).map(r => r[checkKey]?.toString()));
 
@@ -309,7 +322,11 @@ const DataImport = () => {
                 const statuses = rows.map(row => {
                     const key = row[checkKey]?.toString();
                     if (!key) return 'error';
-                    return existingKeys.has(key) ? 'existing' : 'new';
+                    
+                    if (existingKeys.has(key)) return 'existing';
+                    if (deletedKeys.has(key)) return 'deleted'; // Nueva lógica: N.V eliminada previamente
+                    
+                    return 'new';
                 });
 
                 setRowStatuses(statuses);
@@ -505,6 +522,7 @@ const DataImport = () => {
         total: parsedRows.length,
         new: rowStatuses.filter(s => s === 'new').length,
         existing: rowStatuses.filter(s => s === 'existing').length,
+        deleted: rowStatuses.filter(s => s === 'deleted').length,
         loaded: rowStatuses.filter(s => s === 'loaded').length,
         error: rowStatuses.filter(s => s === 'error').length,
     };
@@ -665,6 +683,12 @@ const DataImport = () => {
                                 <span className="text-sm font-medium text-amber-700">Ya existen: <strong>{stats.existing}</strong></span>
                             </div>
                         )}
+                        {stats.deleted > 0 && (
+                            <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 flex items-center gap-2">
+                                <Trash2 size={16} className="text-rose-500" />
+                                <span className="text-sm font-medium text-rose-700">Eliminadas: <strong>{stats.deleted}</strong> (Ignoradas)</span>
+                            </div>
+                        )}
                         {stats.error > 0 && (
                             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2">
                                 <XCircle size={16} className="text-red-500" />
@@ -706,18 +730,21 @@ const DataImport = () => {
                                         const bgClass = {
                                             'new': 'bg-emerald-50/50',
                                             'existing': 'bg-amber-50/50',
+                                            'deleted': 'bg-rose-50/50',
                                             'loaded': 'bg-blue-50/50',
                                             'error': 'bg-red-50/50',
                                         }[status];
                                         const statusIcon = {
                                             'new': <CheckCircle size={14} className="text-emerald-500" />,
                                             'existing': <SkipForward size={14} className="text-amber-500" />,
+                                            'deleted': <Trash2 size={14} className="text-rose-500" />,
                                             'loaded': <Check size={14} className="text-blue-500" />,
                                             'error': <XCircle size={14} className="text-red-500" />,
                                         }[status];
                                         const statusLabel = {
                                             'new': 'Nueva',
                                             'existing': 'Existe',
+                                            'deleted': 'Eliminada',
                                             'loaded': 'Cargada',
                                             'error': 'Error',
                                         }[status];
@@ -777,6 +804,7 @@ const DataImport = () => {
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                                 <p className="text-3xl font-black text-amber-600">{loadResult.skipped}</p>
                                 <p className="text-xs font-medium text-amber-700">Ignorados</p>
+                                {stats.deleted > 0 && <p className="text-[10px] text-rose-500 mt-1">({stats.deleted} eliminados prev.)</p>}
                             </div>
                             <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                                 <p className="text-3xl font-black text-red-600">{loadResult.errors}</p>
