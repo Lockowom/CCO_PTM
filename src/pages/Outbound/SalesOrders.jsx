@@ -271,7 +271,13 @@ const SalesOrders = () => {
 
       if (deleteError) throw deleteError;
 
-      // 4. Actualizar UI
+      // 4. Eliminar también de entregas (si ya existía en TMS) para evitar huérfanos
+      await supabase
+        .from('tms_entregas')
+        .delete()
+        .eq('nv', nv);
+
+      // 5. Actualizar UI
       await fetchOrders();
       setSelectedOrder(null);
       alert('N.V. eliminada correctamente y registrada para no volver a importarse.');

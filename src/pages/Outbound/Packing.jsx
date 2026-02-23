@@ -20,7 +20,8 @@ import {
   Send,
   LayoutGrid,
   List,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -45,12 +46,19 @@ const Packing = () => {
   const [tiempoOcio, setTiempoOcio] = useState(0);
   const [pausaInicio, setPausaInicio] = useState(null);
 
+  // Estado para Devolver a Picking
+  const [showDevolverModal, setShowDevolverModal] = useState(false);
+  const [motivoDevolucion, setMotivoDevolucion] = useState('');
+  const [loadingDevolucion, setLoadingDevolucion] = useState(false);
+
   // Formulario de Packing (Campos requeridos al finalizar)
   const [formData, setFormData] = useState({
     bultos: '',
     pallets: '',
     peso: '',
-    peso_sobredimensionado: ''
+    peso_sobredimensionado: '',
+    direccion: '',
+    comuna: ''
   });
 
   const handleInputChange = (e) => {
@@ -234,7 +242,37 @@ const Packing = () => {
     setTiempoOcio(0);
     setEnPausa(false);
     setVista('packing');
-    setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '' }); // Reset form
+
+    // Intentar obtener dirección si no viene en la N.V.
+    let direccion = nv.direccion_despacho || '';
+    let comuna = nv.comuna || '';
+
+    if (!direccion && nv.cliente) {
+      try {
+        const { data: addressData } = await supabase
+          .from('tms_direcciones')
+          .select('direccion, comuna')
+          .ilike('razon_social', `%${nv.cliente}%`)
+          .limit(1)
+          .maybeSingle();
+        
+        if (addressData) {
+          direccion = addressData.direccion;
+          comuna = addressData.comuna;
+        }
+      } catch (err) {
+        console.error('Error buscando dirección:', err);
+      }
+    }
+
+    setFormData({ 
+      bultos: '', 
+      pallets: '', 
+      peso: '', 
+      peso_sobredimensionado: '',
+      direccion,
+      comuna
+    }); 
     
     // Asignar usuario
     await supabase
@@ -301,8 +339,8 @@ const Packing = () => {
         .upsert({
           nv: nvActiva.nv.toString(),
           cliente: nvActiva.cliente,
-          direccion: nvActiva.direccion_despacho || 'Dirección por confirmar', // Fallback si no hay dirección
-          comuna: nvActiva.comuna || '',
+          direccion: formData.direccion || nvActiva.direccion_despacho || 'Dirección por confirmar', 
+          comuna: formData.comuna || nvActiva.comuna || '',
           bultos: parseInt(formData.bultos) || 0,
           peso: parseFloat(formData.peso) || 0,
           estado: 'PENDIENTE', // Queda lista para ser asignada a ruta
@@ -333,7 +371,7 @@ const Packing = () => {
       setTiempoOcio(0);
       setEnPausa(false);
       setVista('clientes');
-      setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '' });
+      setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       
       await fetchData();
       
@@ -369,6 +407,91 @@ const Packing = () => {
     setTiempoOcio(0);
     setEnPausa(false);
     setVista('clientes');
+    setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
+  };
+
+  // Devolver a Picking (Error detectado)
+  const handleDevolverPicking = async () => {
+    if (!motivoDevolucion.trim()) {
+      alert("Debes indicar el motivo de la devolución.");
+      return;
+    }
+
+    try {
+      setLoadingDevolucion(true);
+
+      // 1. Encontrar quién hizo el Picking (último registro completado)
+      const { data: pickingData, error: pickingError } = await supabase
+        .from('tms_mediciones_tiempos')
+        .select('usuario_id, usuario_nombre')
+        .eq('nv', nvActiva.nv)
+        .eq('proceso', 'PICKING')
+        .eq('estado', 'COMPLETADO')
+        .order('fin_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (pickingError) console.error("Error buscando picker:", pickingError);
+
+      // 2. Registrar el error en la nueva tabla
+      const { error: errorLog } = await supabase
+        .from('tms_errores_picking')
+        .insert({
+          nv: nvActiva.nv.toString(),
+          usuario_picking_id: pickingData?.usuario_id || null, // Si no se encuentra, queda null
+          usuario_picking_nombre: pickingData?.usuario_nombre || 'Desconocido',
+          usuario_packing_id: user.id,
+          usuario_packing_nombre: user.nombre,
+          motivo: motivoDevolucion
+        });
+
+      if (errorLog) throw errorLog;
+
+      // 3. Devolver N.V. a estado "Pendiente Picking"
+      // Importante: Liberar usuario_asignado para que Picking pueda tomarla de nuevo
+      const { error: updateError } = await supabase
+        .from('tms_nv_diarias')
+        .update({ 
+          estado: 'Pendiente Picking',
+          picking_status: null, // Resetear status de picking
+          usuario_asignado: null,
+          usuario_nombre: null
+        })
+        .eq('nv', nvActiva.nv);
+
+      if (updateError) throw updateError;
+
+      // 4. Cancelar medición de Packing actual (para que no cuente tiempo)
+      await supabase
+        .from('tms_mediciones_tiempos')
+        .update({ 
+          estado: 'RECHAZADO', // Nuevo estado para diferenciar de ABANDONADO
+          updated_at: new Date().toISOString() 
+        })
+        .eq('nv', nvActiva.nv)
+        .eq('proceso', 'PACKING')
+        .eq('estado', 'EN_PROCESO');
+
+      // 5. Resetear UI
+      setNvActiva(null);
+      setTiempoInicio(null);
+      setTiempoTranscurrido(0);
+      setTiempoOcio(0);
+      setEnPausa(false);
+      setVista('clientes');
+      setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
+      setShowDevolverModal(false);
+      setMotivoDevolucion('');
+      
+      await fetchData();
+      alert(`N.V. #${nvActiva.nv} devuelta a Picking correctamente.`);
+
+    } catch (error) {
+      console.error('Error al devolver:', error);
+      alert('Error al devolver a Picking: ' + error.message);
+    } finally {
+      setLoadingDevolucion(false);
+    }
   };
 
   // Formatear tiempo
@@ -551,14 +674,22 @@ const Packing = () => {
       {/* Header con timer */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
         <div className="flex justify-between items-start mb-6">
-          <button 
-            onClick={cancelarPacking}
-            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={20} /> Cancelar
-          </button>
-          <div className="text-right">
-            <p className="text-white/70 text-sm">Operador</p>
+            <div className="flex gap-2">
+              <button 
+                onClick={cancelarPacking}
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-white/10 px-3 py-1.5 rounded-lg"
+              >
+                <ArrowLeft size={16} /> Volver
+              </button>
+              <button 
+                onClick={() => setShowDevolverModal(true)}
+                className="flex items-center gap-2 text-rose-200 hover:text-rose-100 transition-colors bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/30"
+              >
+                <RotateCcw size={16} /> Devolver a Picking
+              </button>
+            </div>
+            <div className="text-right">
+              <p className="text-white/70 text-sm">Operador</p>
             <p className="font-bold">{user?.nombre}</p>
           </div>
         </div>
@@ -628,6 +759,33 @@ const Packing = () => {
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <Package size={20} /> Datos de Despacho
             </h3>
+
+            {/* Dirección (Nuevo) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 border-b border-white/10 pb-4">
+               <div className="md:col-span-2">
+                 <label className="block text-xs text-white/70 mb-1">Dirección de Entrega</label>
+                 <input 
+                   type="text"
+                   name="direccion"
+                   value={formData.direccion}
+                   onChange={handleInputChange}
+                   className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30 font-mono text-sm"
+                   placeholder="Calle, Número..."
+                 />
+               </div>
+               <div>
+                 <label className="block text-xs text-white/70 mb-1">Comuna</label>
+                 <input 
+                   type="text"
+                   name="comuna"
+                   value={formData.comuna}
+                   onChange={handleInputChange}
+                   className="w-full bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:bg-white/30 font-mono text-sm"
+                   placeholder="Comuna"
+                 />
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs text-white/70 mb-1">Bultos *</label>
@@ -777,6 +935,61 @@ const Packing = () => {
           </div>
         </div>
       </div>
+      {/* Modal Devolver a Picking */}
+      {showDevolverModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-rose-50 p-6 border-b border-rose-100 flex items-center gap-4">
+              <div className="bg-rose-100 p-3 rounded-full text-rose-600">
+                <RotateCcw size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-rose-800">Devolver a Picking</h3>
+                <p className="text-rose-600 text-sm">Se registrará como error de picking</p>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 flex items-start gap-3">
+                <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={18} />
+                <p className="text-sm text-amber-800">
+                  Esta acción detendrá tu cronómetro actual (no contará en tus tiempos) y devolverá la N.V. a la lista de pendientes de Picking.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Motivo de la devolución / Error detectado *
+                </label>
+                <textarea
+                  value={motivoDevolucion}
+                  onChange={(e) => setMotivoDevolucion(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none resize-none h-32"
+                  placeholder="Describe el error (ej: Producto incorrecto, Cantidad errónea, Dañado...)"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowDevolverModal(false)}
+                  disabled={loadingDevolucion}
+                  className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDevolverPicking}
+                  disabled={loadingDevolucion || !motivoDevolucion.trim()}
+                  className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-lg shadow-rose-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+                >
+                  {loadingDevolucion ? 'Procesando...' : 'Confirmar Devolución'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

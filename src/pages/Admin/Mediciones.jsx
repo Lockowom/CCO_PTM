@@ -33,6 +33,9 @@ const Mediciones = () => {
   // Resumen por usuario
   const [resumenUsuarios, setResumenUsuarios] = useState([]);
   
+  // Errores de Picking
+  const [erroresPicking, setErroresPicking] = useState([]);
+
   // Stats generales
   const [stats, setStats] = useState({
     totalMediciones: 0,
@@ -76,8 +79,25 @@ const Mediciones = () => {
         tiempoPromedioOcio: completadas.length > 0 ? Math.round(tiempoTotalOcio / completadas.length) : 0
       });
       
+      // Cargar errores de picking
+      const { data: erroresData, error: erroresError } = await supabase
+        .from('tms_errores_picking')
+        .select('*');
+        
+      if (erroresError) console.error("Error cargando errores:", erroresError);
+      setErroresPicking(erroresData || []);
+
       // Agrupar por usuario
       const porUsuario = {};
+      
+      // Procesar errores primero para tener contadores
+      const erroresPorUsuario = {};
+      (erroresData || []).forEach(err => {
+        const nombre = err.usuario_picking_nombre || 'Desconocido';
+        if (!erroresPorUsuario[nombre]) erroresPorUsuario[nombre] = 0;
+        erroresPorUsuario[nombre]++;
+      });
+
       (data || []).forEach(m => {
         const nombre = m.usuario_nombre || 'Sin Usuario';
         if (!porUsuario[nombre]) {
@@ -86,8 +106,12 @@ const Mediciones = () => {
             picking: { cantidad: 0, tiempoActivo: 0, tiempoOcio: 0 },
             packing: { cantidad: 0, tiempoActivo: 0, tiempoOcio: 0 },
             entrega: { cantidad: 0, tiempoActivo: 0, tiempoOcio: 0 },
-            total: { cantidad: 0, tiempoActivo: 0, tiempoOcio: 0 }
+            total: { cantidad: 0, tiempoActivo: 0, tiempoOcio: 0 },
+            errores: erroresPorUsuario[nombre] || 0 // Cargar errores
           };
+        } else {
+           // Asegurar que se actualice si ya existe (por si no hay mediciones pero sí errores, aunque raro)
+           porUsuario[nombre].errores = erroresPorUsuario[nombre] || 0;
         }
         
         if (m.estado === 'COMPLETADO') {
@@ -164,7 +188,8 @@ const Mediciones = () => {
     const configs = {
       'COMPLETADO': { icon: CheckCircle, color: 'emerald', label: 'Completado' },
       'EN_PROCESO': { icon: Clock, color: 'amber', label: 'En Proceso' },
-      'ABANDONADO': { icon: XCircle, color: 'red', label: 'Abandonado' }
+      'ABANDONADO': { icon: XCircle, color: 'red', label: 'Abandonado' },
+      'RECHAZADO': { icon: AlertTriangle, color: 'rose', label: 'Devuelto a Picking' }
     };
     return configs[estado] || { icon: Activity, color: 'slate', label: estado };
   };
@@ -288,6 +313,9 @@ const Mediciones = () => {
                   <span className="text-emerald-600">Entrega</span>
                 </th>
                 <th className="px-4 py-3 text-center font-medium" colSpan="2">
+                  <span className="text-rose-600">Errores</span>
+                </th>
+                <th className="px-4 py-3 text-center font-medium" colSpan="2">
                   <span className="text-slate-600">Total</span>
                 </th>
               </tr>
@@ -302,6 +330,8 @@ const Mediciones = () => {
                 <th className="px-2 py-2 text-center text-emerald-500">Cant</th>
                 <th className="px-2 py-2 text-center text-emerald-500">Activo</th>
                 <th className="px-2 py-2 text-center text-emerald-500">Ocio</th>
+                <th className="px-2 py-2 text-center text-rose-500">Devol.</th>
+                <th className="px-2 py-2 text-center text-rose-500">Total</th>
                 <th className="px-2 py-2 text-center text-slate-500">Cant</th>
                 <th className="px-2 py-2 text-center text-slate-500">Eficiencia</th>
               </tr>
@@ -337,6 +367,10 @@ const Mediciones = () => {
                       <td className="px-2 py-3 text-center font-bold text-emerald-600">{u.entrega.cantidad}</td>
                       <td className="px-2 py-3 text-center text-xs text-emerald-700">{formatTimeShort(u.entrega.tiempoActivo)}</td>
                       <td className="px-2 py-3 text-center text-xs text-red-500">{formatTimeShort(u.entrega.tiempoOcio)}</td>
+
+                      {/* Errores */}
+                      <td className="px-2 py-3 text-center text-xs text-rose-500 font-bold bg-rose-50">{u.errores || 0}</td>
+                      <td className="px-2 py-3 text-center text-xs text-slate-400">{(u.errores / (u.picking.cantidad || 1) * 100).toFixed(1)}%</td>
                       
                       {/* Total */}
                       <td className="px-2 py-3 text-center font-bold text-slate-800">{u.total.cantidad}</td>
@@ -352,6 +386,53 @@ const Mediciones = () => {
                     </tr>
                   );
                 })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Tabla Detalle de Errores (Nueva) */}
+      <div className="bg-white rounded-xl shadow-sm border border-rose-200 overflow-hidden">
+        <div className="p-4 border-b border-rose-100 bg-rose-50 flex justify-between items-center">
+          <h3 className="font-bold text-rose-800 flex items-center gap-2">
+            <AlertTriangle size={18} className="text-rose-600" />
+            Registro de Errores de Picking ({erroresPicking.length})
+          </h3>
+        </div>
+        
+        <div className="overflow-x-auto max-h-64 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-rose-50/50 text-rose-800 uppercase text-xs sticky top-0">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium">N.V.</th>
+                <th className="px-4 py-2 text-left font-medium">Picker (Error)</th>
+                <th className="px-4 py-2 text-left font-medium">Detectado Por</th>
+                <th className="px-4 py-2 text-left font-medium">Fecha</th>
+                <th className="px-4 py-2 text-left font-medium">Motivo</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-rose-100">
+              {erroresPicking.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-4 py-8 text-center text-slate-400">
+                    No hay errores registrados
+                  </td>
+                </tr>
+              ) : (
+                erroresPicking.map((err, idx) => (
+                  <tr key={idx} className="hover:bg-rose-50/30">
+                    <td className="px-4 py-2 font-bold text-rose-600">#{err.nv}</td>
+                    <td className="px-4 py-2 text-slate-700">{err.usuario_picking_nombre}</td>
+                    <td className="px-4 py-2 text-slate-500 text-xs">{err.usuario_packing_nombre}</td>
+                    <td className="px-4 py-2 text-xs text-slate-500">
+                      {new Date(err.fecha_deteccion).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-slate-600 italic">
+                      "{err.motivo}"
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
