@@ -296,28 +296,40 @@ const Picking = () => {
          return status === 'COMPLETO' || status === 'PARCIAL';
       });
       
-      const nuevoEstadoGlobal = hasStock ? 'PACKING' : 'QUIEBRE_STOCK';
+      // Si hay items en 'ESPERA', la N.V. se queda en 'Pendiente Picking' para que la tome otro operario
+      const hasWaiting = items.some(item => itemsPickingStatus[item.id]?.status === 'ESPERA');
+      
+      let nuevoEstadoGlobal = hasStock ? 'PACKING' : 'QUIEBRE_STOCK';
+      
+      if (hasWaiting) {
+        nuevoEstadoGlobal = 'Pendiente Picking'; // Mantiene estado para segunda vuelta
+      }
 
       // 2. Actualizar cada ítem individualmente
       const updates = items.map(async (item) => {
         const state = itemsPickingStatus[item.id];
         let qtyReal = 0;
+        let itemStatus = state.status;
 
         if (state.status === 'COMPLETO') {
           qtyReal = item.cantidad;
         } else if (state.status === 'PARCIAL') {
           qtyReal = parseInt(state.cantidad);
+        } else if (state.status === 'ESPERA') {
+          qtyReal = 0; // No se ha recolectado nada aún
+          itemStatus = null; // Resetear status del item para que el siguiente picker lo vea pendiente
         } else {
           qtyReal = 0; // SIN_STOCK
         }
 
         // Actualizamos el estado de la fila al nuevo estado global
+        // Si es ESPERA, el picking_status queda null para que otro lo procese
         return supabase
           .from('tms_nv_diarias')
           .update({ 
             estado: nuevoEstadoGlobal, 
             cantidad_real: qtyReal,
-            picking_status: state.status,
+            picking_status: itemStatus,
             usuario_asignado: null, 
             usuario_nombre: null
           })
@@ -667,7 +679,11 @@ const Picking = () => {
               const cantidad = itemsPickingStatus[item.id]?.cantidad;
 
               return (
-                <div key={item.id} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                <div key={item.id} className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border transition-colors duration-300 ${
+                  status === 'ESPERA' 
+                    ? 'border-amber-400 bg-amber-500/10' 
+                    : 'border-white/20'
+                }`}>
                   <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     {/* Info Producto */}
                     <div className="flex-1 text-left">
@@ -725,6 +741,19 @@ const Picking = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Espera Otra Zona */}
+                      <button
+                        onClick={() => handleItemStatusChange(item.id, 'ESPERA')}
+                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
+                          status === 'ESPERA' 
+                            ? 'bg-amber-500 text-white ring-2 ring-white' 
+                            : 'bg-white/10 text-white/70 hover:bg-amber-500/50'
+                        }`}
+                      >
+                        <Clock size={20} />
+                        <span className="text-[10px] font-bold text-center leading-tight">ESPERA<br/>OTRA ZONA</span>
+                      </button>
 
                       {/* Sin Stock */}
                       <button
