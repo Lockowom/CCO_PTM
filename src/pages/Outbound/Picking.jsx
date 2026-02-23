@@ -49,6 +49,13 @@ const Picking = () => {
   const [action, setAction] = useState(null); // 'COMPLETO', 'PARCIAL', 'SIN_STOCK'
   const [cantidadReal, setCantidadReal] = useState('');
 
+  // Stats
+  const [stats, setStats] = useState({
+    pendientes: 0,
+    enProceso: 0,
+    completadasHoy: 0
+  });
+
   // Cargar N.V. en estado "Pendiente Picking" o "Aprobada"
   const fetchData = useCallback(async () => {
     try {
@@ -81,7 +88,26 @@ const Picking = () => {
         grouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
       });
 
-      setNvData(Object.values(grouped));
+      const uniqueNVs = Object.values(grouped);
+      setNvData(uniqueNVs);
+
+      // Cargar Stats de Hoy (Completados)
+      const today = new Date().toISOString().split('T')[0];
+      const { count: completados, error: countError } = await supabase
+        .from('tms_mediciones_tiempos')
+        .select('*', { count: 'exact', head: true })
+        .eq('proceso', 'PICKING')
+        .eq('estado', 'COMPLETADO')
+        .gte('fin_at', `${today}T00:00:00`);
+
+      if (countError) console.error("Error contando completados:", countError);
+
+      // Actualizar Stats
+      setStats({
+        pendientes: uniqueNVs.length,
+        enProceso: uniqueNVs.filter(n => n.estado === 'Pendiente Picking').length,
+        completadasHoy: completados || 0
+      });
       
     } catch (error) {
       console.error('Error:', error);
@@ -93,15 +119,20 @@ const Picking = () => {
   useEffect(() => {
     fetchData();
     
-    const channel = supabase
-      .channel('picking_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
-        if (!nvActiva) fetchData();
-      })
+    // Realtime: Escuchar cambios en N.V. y Mediciones
+    const channelNV = supabase
+      .channel('picking_realtime_nv')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => fetchData())
+      .subscribe();
+
+    const channelMetrics = supabase
+      .channel('picking_realtime_metrics')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => fetchData())
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelNV);
+      supabase.removeChannel(channelMetrics);
       if (timerRef.current) clearInterval(timerRef.current);
       if (ocioRef.current) clearInterval(ocioRef.current);
     };
@@ -430,30 +461,35 @@ const Picking = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 border border-slate-200">
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase mb-2">
-              <FileText size={14} /> Total Pendiente
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pendiente</p>
+              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.pendientes}</h3>
             </div>
-            <p className="text-2xl font-bold text-slate-800">{nvData.length}</p>
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <FileText size={20} />
+            </div>
           </div>
-          <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
-            <div className="flex items-center gap-2 text-amber-600 text-xs font-semibold uppercase mb-2">
-              <Clock size={14} /> Aprobadas
+          
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">En Picking</p>
+              <h3 className="text-2xl font-black text-cyan-600 mt-1">{stats.enProceso}</h3>
             </div>
-            <p className="text-2xl font-bold text-amber-600">{aprobadas.length}</p>
+            <div className="w-10 h-10 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600">
+              <Hand size={20} />
+            </div>
           </div>
-          <div className="bg-cyan-50 rounded-xl p-4 border border-cyan-200">
-            <div className="flex items-center gap-2 text-cyan-600 text-xs font-semibold uppercase mb-2">
-              <Hand size={14} /> En Picking
+          
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completados Hoy</p>
+              <h3 className="text-2xl font-black text-emerald-600 mt-1">{stats.completadasHoy}</h3>
             </div>
-            <p className="text-2xl font-bold text-cyan-600">{enPicking.length}</p>
-          </div>
-          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
-            <div className="flex items-center gap-2 text-emerald-600 text-xs font-semibold uppercase mb-2">
-              <Timer size={14} /> Operador
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <CheckCircle size={20} />
             </div>
-            <p className="text-sm font-bold text-emerald-700 truncate">{user?.nombre || 'Desconocido'}</p>
           </div>
         </div>
 
