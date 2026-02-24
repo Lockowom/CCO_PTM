@@ -185,11 +185,69 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setPermissions([]);
     localStorage.removeItem('currentUser');
-  };
+    // Limpiar estado activo al salir
+    if (user?.id) {
+      supabase
+        .from('tms_usuarios_activos')
+        .delete()
+        .eq('usuario_id', user.id)
+        .then(() => console.log('👋 Usuario desconectado'))
+        .catch(err => console.error('Error limpiando usuario activo:', err));
+    }
+  }, [user?.id]);
+
+  // VIGILANTE DE SESIÓN: Escuchar cambios en mi propio usuario
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('👁️ Iniciando vigilancia de sesión para:', user.email);
+
+    const channel = supabase
+      .channel(`session_guard_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuchar UPDATE y DELETE
+          schema: 'public',
+          table: 'tms_usuarios',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('🚨 Cambio crítico en usuario detectado:', payload);
+
+          if (payload.eventType === 'DELETE') {
+            console.warn('❌ USUARIO ELIMINADO - CERRANDO SESIÓN');
+            alert('Tu cuenta ha sido eliminada por un administrador.');
+            logout();
+          } 
+          else if (payload.eventType === 'UPDATE') {
+            const newUser = payload.new;
+            if (!newUser.activo) {
+              console.warn('⛔ USUARIO DESACTIVADO - CERRANDO SESIÓN');
+              alert('Tu sesión ha sido cerrada por un administrador.');
+              logout();
+            } else if (newUser.rol !== user.rol) {
+              console.log('🔄 Rol actualizado, refrescando permisos...');
+              // Si cambia el rol, actualizar el estado local y recargar permisos
+              const updatedUser = { ...user, rol: newUser.rol, nombre: newUser.nombre, email: newUser.email };
+              setUser(updatedUser);
+              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+              loadPermissions(newUser.rol);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🛑 Deteniendo vigilancia de sesión');
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.rol, logout, loadPermissions]);
 
   // Verificar permiso
   const hasPermission = useCallback((permissionId) => {
