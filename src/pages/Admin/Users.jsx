@@ -390,7 +390,7 @@ const UsersPage = () => {
             <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
               <Users className="text-white" size={24} />
             </div>
-            Gestión de Usuarios
+            Gestión de Usuarios (Control de Accesos)
             {isSyncing && (
               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1 animate-pulse">
                 <RefreshCw size={12} className="animate-spin" /> Sincronizando
