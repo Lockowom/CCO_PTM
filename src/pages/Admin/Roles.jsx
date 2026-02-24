@@ -67,6 +67,7 @@ const RolesPage = () => {
       permissions: [
         { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
         { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
+        { id: 'delete_sales_orders', label: 'Eliminar N.V.' },
         { id: 'view_picking', label: 'Ver Picking' },
         { id: 'process_picking', label: 'Procesar Picking' },
         { id: 'view_packing', label: 'Ver Packing' },

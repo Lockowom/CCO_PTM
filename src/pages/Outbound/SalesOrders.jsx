@@ -1,5 +1,6 @@
 // SalesOrders.jsx - Notas de Venta con estados REALES
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Search, 
   Eye, 
@@ -134,6 +135,7 @@ const ACCIONES_ESTADO = {
 };
 
 const SalesOrders = () => {
+  const { hasPermission } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -527,13 +529,15 @@ const SalesOrders = () => {
                           >
                             <Eye size={12} />
                           </button>
-                          <button 
-                            onClick={() => handleDeleteOrder(order.nv)}
-                            className="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          {hasPermission('delete_sales_orders') && (
+                            <button 
+                              onClick={() => handleDeleteOrder(order.nv)}
+                              className="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -563,13 +567,15 @@ const SalesOrders = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => handleDeleteOrder(selectedOrder.nv)}
-                      className="text-red-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg border border-red-200 transition-colors"
-                      title="Eliminar N.V. y bloquear re-importación"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {hasPermission('delete_sales_orders') && (
+                      <button 
+                        onClick={() => handleDeleteOrder(selectedOrder.nv)}
+                        className="text-red-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg border border-red-200 transition-colors"
+                        title="Eliminar N.V. y bloquear re-importación"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                     <button 
                       onClick={() => setSelectedOrder(null)}
                       className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
