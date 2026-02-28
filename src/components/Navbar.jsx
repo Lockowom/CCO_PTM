@@ -226,7 +226,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center flex-1 px-2 sm:px-4">
+        <nav className="hidden xl:flex items-center gap-1 flex-nowrap justify-center flex-1 px-2">
           {menuConfig.map((item) => {
             // Verificar visibilidad de la sección
             if (!isSectionVisible(item.id)) return null;
@@ -241,25 +241,25 @@ const Navbar = () => {
                 {item.isLink ? (
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-150 whitespace-nowrap
                       ${location.pathname === item.path
                         ? 'bg-orange-500 text-white shadow-lg'
                         : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
-                    <span className="hidden sm:inline">{item.label}</span>
+                    <span>{item.label}</span>
                   </Link>
                 ) : (
                   <button
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap
                       ${activeDropdown === item.id
                         ? 'bg-orange-500 text-white shadow-lg'
                         : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
-                    <span className="hidden sm:inline">{item.label}</span>
+                    <span>{item.label}</span>
                     <ChevronDown size={14} className={`transition-transform duration-150 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                   </button>
                 )}
@@ -342,7 +342,7 @@ const Navbar = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 hover:bg-orange-50 rounded-lg text-slate-600"
+            className="xl:hidden p-2 hover:bg-orange-50 rounded-lg text-slate-600"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -408,7 +408,7 @@ const ClockWidget = () => {
 
 // Mobile Menu (Light Theme to match Navbar)
 const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdown, setActiveDropdown, setMobileMenuOpen, location }) => (
-  <nav className="lg:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner">
+  <nav className="xl:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner">
     {menuConfig.map((item) => {
       if (!isSectionVisible(item.id)) return null;
       
