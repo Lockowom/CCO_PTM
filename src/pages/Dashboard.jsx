@@ -22,8 +22,6 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -32,8 +30,6 @@ import {
   PieChart, 
   Pie, 
   Cell,
-  LineChart,
-  Line,
   Area,
   AreaChart
 } from 'recharts';
@@ -52,6 +48,43 @@ const ESTADOS_NV = [
   { key: 'Despachado', label: 'Despachado', color: '#10b981', icon: Truck },
   { key: 'Refacturacion', label: 'Refacturación', color: '#f97316', icon: RotateCcw },
 ];
+
+// Componentes Auxiliares Compactos (Definidos antes para evitar problemas de hoisting/scope)
+const KPICardCompact = ({ title, value, icon, color, subtitle, trend, alert }) => {
+  const colors = {
+    slate: 'text-slate-600 bg-slate-50',
+    amber: 'text-amber-600 bg-amber-50',
+    cyan: 'text-cyan-600 bg-cyan-50',
+    red: 'text-red-600 bg-red-50',
+    indigo: 'text-indigo-600 bg-indigo-50',
+    emerald: 'text-emerald-600 bg-emerald-50'
+  };
+
+  return (
+    <div className={`bg-white p-4 rounded-2xl border ${alert ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} shadow-sm flex items-center justify-between transition-all hover:shadow-md`}>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{title}</p>
+        <h4 className="text-2xl font-black text-slate-800">{value}</h4>
+        {subtitle && <p className="text-[10px] text-slate-400 font-medium">{subtitle}</p>}
+      </div>
+      <div className={`p-3 rounded-xl ${colors[color] || colors.slate}`}>
+        {icon}
+      </div>
+    </div>
+  );
+};
+
+const PipelineStep = ({ label, value, color, icon }) => (
+  <div className="flex flex-col items-center gap-2 z-10">
+    <div className={`w-10 h-10 rounded-full ${color} text-white flex items-center justify-center shadow-lg border-4 border-white transition-transform hover:scale-110`}>
+      {icon}
+    </div>
+    <div className="text-center">
+      <p className="text-lg font-black text-slate-800 leading-none">{value}</p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase">{label}</p>
+    </div>
+  </div>
+);
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -271,11 +304,6 @@ const Dashboard = () => {
     };
   }, [fetchAllData]);
 
-  // Calcular porcentaje de efectividad
-  const efectividad = nvStats.total > 0 
-    ? Math.round((nvStats.despachado / nvStats.total) * 100) 
-    : 0;
-
   // Obtener config de estado
   const getEstadoConfig = (estado) => {
     const normalized = estado === 'PENDIENTE' ? 'Pendiente' : estado;
@@ -303,7 +331,7 @@ const Dashboard = () => {
             disabled={loading}
             className="bg-slate-900 hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-200 transition-all hover:scale-105 active:scale-95"
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={loading ? 'animate-spin refresh-icon' : 'refresh-icon'} />
             Refrescar
           </button>
         </div>
@@ -512,39 +540,4 @@ const Dashboard = () => {
   );
 };
 
-// Componentes Auxiliares Compactos
-const KPICardCompact = ({ title, value, icon, color, subtitle, trend, alert }) => {
-  const colors = {
-    slate: 'text-slate-600 bg-slate-50',
-    amber: 'text-amber-600 bg-amber-50',
-    cyan: 'text-cyan-600 bg-cyan-50',
-    red: 'text-red-600 bg-red-50',
-    indigo: 'text-indigo-600 bg-indigo-50',
-    emerald: 'text-emerald-600 bg-emerald-50'
-  };
-
-  return (
-    <div className={`bg-white p-4 rounded-2xl border ${alert ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} shadow-sm flex items-center justify-between transition-all hover:shadow-md`}>
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{title}</p>
-        <h4 className="text-2xl font-black text-slate-800">{value}</h4>
-        {subtitle && <p className="text-[10px] text-slate-400 font-medium">{subtitle}</p>}
-      </div>
-      <div className={`p-3 rounded-xl ${colors[color] || colors.slate}`}>
-        {icon}
-      </div>
-    </div>
-  );
-};
-
-const PipelineStep = ({ label, value, color, icon }) => (
-  <div className="flex flex-col items-center gap-2 z-10">
-    <div className={`w-10 h-10 rounded-full ${color} text-white flex items-center justify-center shadow-lg border-4 border-white transition-transform hover:scale-110`}>
-      {icon}
-    </div>
-    <div className="text-center">
-      <p className="text-lg font-black text-slate-800 leading-none">{value}</p>
-      <p className="text-[10px] font-bold text-slate-400 uppercase">{label}</p>
-    </div>
-  </div>
-);
+export default Dashboard;
