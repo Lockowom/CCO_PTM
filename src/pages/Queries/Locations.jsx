@@ -211,100 +211,178 @@ const LocationsQuery = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 font-sans">
-      {/* 1. Header de Búsqueda */}
-      <div className="bg-white border-b border-slate-200 p-4 shadow-sm z-10 sticky top-0">
-        <div className="max-w-[1600px] mx-auto w-full">
-          <div className="flex justify-between items-center mb-4">
-             <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-               <div className="p-2 bg-slate-900 rounded-lg text-white shadow-md">
-                 <MapPin size={24} />
-               </div>
-               GESTIÓN DE UBICACIONES
-             </h1>
-             {searched && (
-               <div className="text-xs font-mono text-slate-400 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                 <RefreshCw size={12} />
-                 SYNC: {lastUpdated.toLocaleTimeString()}
-               </div>
-             )}
-          </div>
-          
-          <form onSubmit={handleSearch} className="relative group">
-            <input
-              type="text"
-              className="w-full pl-12 sm:pl-14 pr-32 py-3 sm:py-4 text-lg sm:text-xl bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-inner uppercase font-mono text-slate-800 placeholder:text-slate-400"
-              placeholder="BUSCAR POR CÓDIGO, UBICACIÓN..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              autoFocus
-            />
-            <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={24} />
-            <button 
-              type="submit"
-              disabled={loading}
-              className="absolute right-2 sm:right-3 top-2 sm:top-3 bottom-2 sm:bottom-3 bg-slate-900 hover:bg-black text-white px-4 sm:px-8 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl active:scale-95 flex items-center gap-2 text-sm sm:text-base"
-            >
-              {loading ? <RefreshCw className="animate-spin" /> : 'BUSCAR'}
-            </button>
-          </form>
+    <div className="space-y-8">
+      {/* Header Moderno */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header">
+        <div>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
+              <MapPin className="text-white" size={24} />
+            </div>
+            Gestión de Ubicaciones
+          </h1>
+          <p className="text-slate-500 text-lg mt-2 ml-1">Control de inventario por posición</p>
         </div>
+        
+        {/* Stats Rápidos */}
+        {results.length > 0 && (
+           <div className="flex gap-4">
+              <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                <p className="text-xs text-slate-400 font-bold uppercase">Resultados</p>
+                <p className="text-xl font-black text-slate-800">{results.length}</p>
+              </div>
+              <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                <p className="text-xs text-slate-400 font-bold uppercase">Total Items</p>
+                <p className="text-xl font-black text-indigo-600">
+                  {results.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 0), 0)}
+                </p>
+              </div>
+           </div>
+        )}
       </div>
 
-      {/* 2. Área de Contenido */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
-        <div className="max-w-[1600px] mx-auto w-full">
-          {searched ? (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-               {results.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-slate-400 bg-slate-50/50 rounded-lg border border-slate-200 border-dashed backdrop-blur-sm">
-                  <Search size={48} className="mb-4 opacity-20" />
-                  <p className="font-medium">No se encontraron productos en ubicaciones con ese término</p>
-                </div>
-               ) : (
-                <div className="overflow-hidden rounded-xl shadow-xl border border-slate-200 bg-white ring-1 ring-slate-900/5">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-xs text-white uppercase bg-slate-900">
-                        <tr>
-                          {COLUMNS.map((col, i) => (
-                            <th key={i} className="px-4 py-4 font-bold whitespace-nowrap tracking-wider first:rounded-tl-lg last:rounded-tr-lg">
-                              {col.header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {results.map((row, idx) => (
-                          <tr key={idx} className={`hover:bg-orange-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} ${editingId === row.id ? 'bg-orange-50 ring-2 ring-inset ring-orange-200' : ''}`}>
-                            {COLUMNS.map((col, cIdx) => (
-                              <td key={cIdx} className="px-4 py-3 whitespace-nowrap text-slate-700 align-middle">
-                                {col.render ? col.render(row) : (row[col.accessor] || '-')}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 text-xs text-slate-500 font-medium flex justify-between items-center">
-                    <span>Mostrando {results.length} resultados</span>
-                    {saving && <span className="flex items-center gap-2 text-orange-600"><RefreshCw size={12} className="animate-spin"/> Guardando cambios...</span>}
-                  </div>
-                </div>
-               )}
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-slate-300 mt-20 animate-in zoom-in duration-500">
-              <div className="p-8 bg-white rounded-full shadow-lg mb-6 border border-slate-100 ring-4 ring-slate-50">
-                <MapPin size={64} className="text-slate-200" />
-              </div>
-              <p className="text-xl font-bold text-slate-400">Ingrese código o ubicación para gestionar</p>
-              <p className="text-sm text-slate-400 mt-2 bg-slate-200/50 px-3 py-1 rounded-full">Sistema de Gestión WMS</p>
-            </div>
-          )}
+      {/* Barra de Búsqueda Flotante */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col md:flex-row gap-2 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
+        <div className="flex-1 relative w-full group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+          <form onSubmit={handleSearch} className="w-full">
+            <input 
+              type="text"
+              placeholder="Buscar por código, ubicación o descripción..."
+              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400 font-medium uppercase"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </form>
         </div>
+        <button 
+          onClick={handleSearch}
+          disabled={loading}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 w-full md:w-auto justify-center"
+        >
+          {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
+          Buscar
+        </button>
       </div>
+
+      {/* Resultados Grid */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Box size={20} className="text-indigo-600" />
+            </div>
+          </div>
+          <p className="text-slate-400 font-medium animate-pulse">Buscando en almacén...</p>
+        </div>
+      ) : !searched ? (
+        <div className="flex flex-col items-center justify-center py-32 text-center">
+          <div className="bg-slate-50 p-8 rounded-full border border-slate-100 mb-6">
+            <Layers size={64} className="text-slate-300" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-600">Sistema WMS</h3>
+          <p className="text-slate-400 mt-2 max-w-md">
+            Ingresa un código de producto o una posición de rack para gestionar el inventario.
+          </p>
+        </div>
+      ) : results.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-32 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+          <div className="bg-white p-6 rounded-full shadow-sm mb-4">
+            <AlertCircle size={48} className="text-slate-300" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-600">No se encontraron resultados</h3>
+          <p className="text-slate-400 mt-1">Verifique el código o la ubicación ingresada</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {results.map(row => (
+            <div key={row.id} className={`group bg-white rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
+              editingId === row.id ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200'
+            }`}>
+              {/* Header Card */}
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
+                <div>
+                   {editingId === row.id ? (
+                     <input 
+                       type="text" 
+                       value={editLocation} 
+                       onChange={(e) => setEditLocation(e.target.value)}
+                       className="w-full bg-white border-2 border-indigo-500 rounded-lg px-2 py-1 font-mono font-black text-indigo-700 text-lg uppercase outline-none"
+                       autoFocus
+                     />
+                   ) : (
+                     <div className="flex items-center gap-2 font-mono font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 w-fit">
+                       <MapPin size={16} />
+                       {row.ubicacion}
+                     </div>
+                   )}
+                </div>
+                <div className="flex gap-1">
+                   {editingId === row.id ? (
+                     <>
+                       <button onClick={() => saveEdit(row.id)} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm">
+                         <Check size={18} />
+                       </button>
+                       <button onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-colors">
+                         <X size={18} />
+                       </button>
+                     </>
+                   ) : (
+                     <>
+                       <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                         <Edit size={18} />
+                       </button>
+                       <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                         <Trash2 size={18} />
+                       </button>
+                     </>
+                   )}
+                </div>
+              </div>
+
+              {/* Body Card */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Producto</p>
+                  <p className="font-mono font-bold text-slate-800 text-lg">{row.codigo}</p>
+                  <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-tight mt-1">{row.descripcion}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Cantidad</p>
+                    {editingId === row.id ? (
+                      <input 
+                        type="number" 
+                        value={editQuantity} 
+                        onChange={(e) => setEditQuantity(e.target.value)}
+                        className="w-full bg-white border-2 border-indigo-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
+                      />
+                    ) : (
+                      <p className="text-2xl font-black text-slate-800">{row.cantidad}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase">Talla</p>
+                       <p className="font-bold text-slate-700 text-sm">{row.talla || '-'}</p>
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase">Color</p>
+                       <p className="font-bold text-slate-700 text-sm">{row.color || '-'}</p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer Decoration */}
+              <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
