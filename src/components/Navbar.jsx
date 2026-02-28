@@ -312,22 +312,22 @@ const Navbar = () => {
             <RefreshCw size={18} />
           </button>
 
-          {/* User Profile - DARK INDUSTRIAL THEME */}
+          {/* User Profile - LIGHT THEME */}
           {user && (
-            <div className="hidden md:flex items-center gap-3 pl-4 border-l-2 border-slate-100">
-              <div className="flex items-center gap-3 bg-[#0f172a] pr-4 pl-1 py-1 rounded-full shadow-md border border-slate-700 group hover:border-orange-500/50 transition-colors">
-                <div className="w-9 h-9 bg-[#ea580c] rounded-full flex items-center justify-center text-white font-black text-sm shadow-[0_0_10px_rgba(234,88,12,0.4)] ring-2 ring-[#0f172a] group-hover:scale-105 transition-transform">
+            <div className="hidden md:flex items-center gap-3 pl-4 border-l-2 border-orange-100">
+              <div className="flex items-center gap-3 bg-white pr-4 pl-1 py-1 rounded-full shadow-sm border border-orange-200 group hover:border-orange-400 transition-colors">
+                <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
                   {user.nombre?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="hidden lg:block leading-tight">
-                  <span className="text-xs font-bold text-white block tracking-tight">{user.nombre}</span>
-                  <span className="text-[9px] font-black text-[#ea580c] uppercase tracking-wider">{user.rol}</span>
+                  <span className="text-xs font-bold text-slate-700 block tracking-tight">{user.nombre}</span>
+                  <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider">{user.rol}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Clock Widget - DARK INDUSTRIAL THEME */}
+          {/* Clock Widget - LIGHT THEME */}
           <ClockWidget />
 
           {/* Logout */}
@@ -365,7 +365,7 @@ const Navbar = () => {
   );
 };
 
-// Clock Widget - Industrial Look
+// Clock Widget - Light Theme
 const ClockWidget = () => {
   const [now, setNow] = React.useState(new Date());
   
@@ -382,25 +382,25 @@ const ClockWidget = () => {
   const month = now.toLocaleDateString('es-CL', { month: 'short' }).toUpperCase().replace('.', '');
 
   return (
-    <div className="hidden sm:flex items-center bg-[#020617] px-3 py-1.5 rounded-lg border border-slate-800 shadow-md min-w-[140px] justify-between group hover:border-slate-700 transition-colors">
+    <div className="hidden sm:flex items-center bg-white px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm min-w-[130px] justify-between group hover:border-orange-300 transition-colors">
       {/* Time Section */}
       <div className="flex items-baseline gap-1">
-        <span className="font-mono text-base font-black text-[#4ade80] tracking-widest drop-shadow-[0_0_2px_rgba(74,222,128,0.5)]">
+        <span className="font-mono text-base font-black text-slate-800 tracking-widest">
           {h.toString().padStart(2, '0')}:{m}
         </span>
-        <span className="font-mono text-[10px] font-bold text-[#4ade80]/60">{s}</span>
+        <span className="font-mono text-[10px] font-bold text-slate-400">{s}</span>
       </div>
 
       {/* AM/PM Badge */}
-      <div className="bg-[#ea580c]/20 px-1.5 py-0.5 rounded ml-2 border border-[#ea580c]/30">
-        <span className="text-[9px] font-black text-[#fb923c] block leading-none tracking-wider">{ampm}</span>
+      <div className="bg-orange-100 px-1.5 py-0.5 rounded ml-2 border border-orange-200">
+        <span className="text-[9px] font-black text-orange-600 block leading-none tracking-wider">{ampm}</span>
       </div>
 
-      <div className="w-[1px] h-5 bg-slate-800 mx-2 group-hover:bg-slate-700 transition-colors" />
+      <div className="w-[1px] h-5 bg-slate-200 mx-2" />
 
       {/* Date Section */}
       <div className="flex flex-col items-end leading-none">
-        <span className="text-[10px] font-bold text-slate-400">{day}-{month}</span>
+        <span className="text-[10px] font-bold text-slate-500">{day}-{month}</span>
       </div>
     </div>
   );
