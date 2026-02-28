@@ -284,204 +284,223 @@ const Dashboard = () => {
 
   return (
     <div ref={dashboardRef} className="space-y-6">
-      {/* Header */}
-      <div className="dash-header flex justify-between items-end p-2 -m-2 rounded-xl transition-colors">
+      {/* Header Compacto */}
+      <div className="dash-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Dashboard Operacional</h2>
-          <p className="text-slate-500 text-sm">Resumen en tiempo real de la operación</p>
+          <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+            <Activity className="text-indigo-600" />
+            Dashboard Operacional
+          </h2>
+          <p className="text-slate-500 text-xs font-medium">Vista general del Centro de Control</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border shadow-sm flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            {lastUpdate.toLocaleTimeString()}
+          <div className="hidden md:flex items-center gap-2 text-xs font-bold bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+            <Clock size={14} className="text-slate-400" />
+            <span className="text-slate-600">Actualizado: {lastUpdate.toLocaleTimeString()}</span>
           </div>
           <button 
             onClick={fetchAllData}
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+            className="bg-slate-900 hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-200 transition-all hover:scale-105 active:scale-95"
           >
-            <RefreshCw size={16} className="refresh-icon" />
-            Actualizar
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refrescar
           </button>
         </div>
       </div>
 
-      {/* KPI Cards - Fila Principal */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <KPICard 
-          title="Total N.V." 
-          value={nvStats.total}
-          icon={<FileText className="text-slate-600" size={20} />}
-          color="slate"
-        />
-        <KPICard 
-          title="Pendientes" 
-          value={nvStats.pendiente}
-          icon={<Hourglass className="text-slate-600" size={20} />}
-          color="slate"
-          subtitle="Por aprobar"
-        />
-        <KPICard 
-          title="En Picking" 
-          value={nvStats.picking}
-          icon={<Hand className="text-cyan-600" size={20} />}
-          color="cyan"
-        />
-        <KPICard 
-          title="Quiebre Stock" 
-          value={nvStats.quiebreStock}
-          icon={<AlertCircle className="text-red-600" size={20} />}
-          color="red"
-        />
-        <KPICard 
-          title="En Packing" 
-          value={nvStats.packing}
-          icon={<Box className="text-indigo-600" size={20} />}
-          color="indigo"
-        />
-        <KPICard 
-          title="Listo Despacho" 
-          value={nvStats.listoDespacho + nvStats.shipping}
-          icon={<Send className="text-purple-600" size={20} />}
-          color="purple"
-        />
-        <KPICard 
-          title="Despachados" 
-          value={nvStats.despachado}
-          icon={<Truck className="text-emerald-600" size={20} />}
-          color="emerald"
-          trend={`${efectividad}%`}
-          trendUp={efectividad > 50}
-        />
-      </div>
+      {/* Grid Principal - Bento Box Style */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        
+        {/* Columna 1: KPIs Principales (Vertical) */}
+        <div className="space-y-4 md:col-span-1">
+          <KPICardCompact 
+            title="Total N.V." 
+            value={nvStats.total} 
+            icon={<FileText size={18} />} 
+            color="slate"
+            trend="+12%"
+          />
+          <KPICardCompact 
+            title="Pendientes" 
+            value={nvStats.pendiente} 
+            icon={<Hourglass size={18} />} 
+            color="amber"
+            subtitle="Por aprobar"
+          />
+          <KPICardCompact 
+            title="En Picking" 
+            value={nvStats.picking} 
+            icon={<Hand size={18} />} 
+            color="cyan"
+          />
+          <KPICardCompact 
+            title="Quiebre Stock" 
+            value={nvStats.quiebreStock} 
+            icon={<AlertCircle size={18} />} 
+            color="red"
+            alert={nvStats.quiebreStock > 0}
+          />
+        </div>
 
-      {/* Segunda fila de KPIs - Entregas y Conductores */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
-          <div className="flex justify-between items-start mb-3">
-            <Users size={24} className="opacity-80" />
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{conductoresStats.enRuta} en ruta</span>
-          </div>
-          <p className="text-3xl font-bold">{conductoresStats.total}</p>
-          <p className="text-sm opacity-80">Conductores</p>
-        </div>
-        
-        <div className="stat-card bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
-          <div className="flex justify-between items-start mb-3">
-            <CheckCircle size={24} className="opacity-80" />
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <ArrowUpRight size={12} /> {entregasStats.total > 0 ? Math.round((entregasStats.entregadas / entregasStats.total) * 100) : 0}%
-            </span>
-          </div>
-          <p className="text-3xl font-bold">{entregasStats.entregadas}</p>
-          <p className="text-sm opacity-80">Entregas Completadas</p>
-        </div>
-        
-        <div className="stat-card bg-gradient-to-br from-amber-500 to-orange-500 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
-          <div className="flex justify-between items-start mb-3">
-            <Clock size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">{entregasStats.pendientes}</p>
-          <p className="text-sm opacity-80">Entregas Pendientes</p>
-        </div>
-        
-        <div className="stat-card bg-gradient-to-br from-red-500 to-red-600 p-5 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow cursor-default">
-          <div className="flex justify-between items-start mb-3">
-            <AlertCircle size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">{nvStats.refacturacion}</p>
-          <p className="text-sm opacity-80">Refacturación</p>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gráfico de Barras - Flujo Operativo */}
-        <div className="chart-container lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <BarChart3 size={20} className="text-indigo-500" />
-                Flujo de Notas de Venta
-              </h3>
-              <p className="text-sm text-slate-500">Distribución por estado en el proceso</p>
+        {/* Columna 2 y 3: Gráfico Principal y Pipeline */}
+        <div className="md:col-span-2 lg:col-span-3 xl:col-span-3 space-y-4">
+          {/* Pipeline Visual */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-[140px]">
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Flujo de Pedidos</h3>
+            <div className="flex items-center justify-between relative px-4">
+              {/* Línea conectora */}
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-100 -z-10 rounded-full"></div>
+              
+              <PipelineStep label="Pendiente" value={nvStats.pendiente} color="bg-slate-500" icon={<Hourglass size={14}/>} />
+              <PipelineStep label="Picking" value={nvStats.picking} color="bg-cyan-500" icon={<Hand size={14}/>} />
+              <PipelineStep label="Packing" value={nvStats.packing} color="bg-indigo-500" icon={<Box size={14}/>} />
+              <PipelineStep label="Despacho" value={nvStats.listoDespacho} color="bg-purple-500" icon={<Send size={14}/>} />
+              <PipelineStep label="En Ruta" value={entregasStats.pendientes} color="bg-blue-500" icon={<Truck size={14}/>} />
+              <PipelineStep label="Entregado" value={entregasStats.entregadas} color="bg-emerald-500" icon={<CheckCircle size={14}/>} />
             </div>
           </div>
-          <div className="h-72">
+
+          {/* Gráfico Principal */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-[340px]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800">Actividad Diaria</h3>
+              <div className="flex gap-2">
+                <span className="text-xs font-bold text-slate-400 flex items-center gap-1"><div className="w-2 h-2 bg-indigo-500 rounded-full"></div> N.V.</span>
+              </div>
+            </div>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barSize={40}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorNv" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748b', fontSize: 11 }} 
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748b', fontSize: 12 }} 
-                />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
                 <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '12px', 
-                    border: 'none', 
-                    boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2)',
-                    padding: '12px 16px'
-                  }}
-                  cursor={{ fill: '#f8fafc' }}
-                  formatter={(value) => [`${value} N.V.`, 'Cantidad']}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                  cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
                 />
-                <Bar dataKey="valor" radius={[8, 8, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
+                <Area type="monotone" dataKey="valor" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorNv)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Gráfico Pie - Distribución */}
-        <div className="chart-container bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Distribución General</h3>
-          <p className="text-sm text-slate-500 mb-4">Estado actual de todas las N.V.</p>
-          
-          <div className="h-48 relative">
+        {/* Columna 4: Stats Operativos (Conductores/Entregas) */}
+        <div className="md:col-span-3 lg:col-span-4 xl:col-span-1 grid grid-cols-2 xl:grid-cols-1 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden group">
+            <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Users size={80} className="text-blue-600" />
+            </div>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Conductores</p>
+            <div className="flex items-end gap-2">
+              <h3 className="text-4xl font-black text-slate-800">{conductoresStats.total}</h3>
+              <span className="text-sm font-bold text-emerald-600 mb-1.5">{conductoresStats.enRuta} en ruta</span>
+            </div>
+            <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-blue-500 h-full rounded-full" style={{ width: `${(conductoresStats.enRuta / conductoresStats.total) * 100}%` }}></div>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden group">
+            <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Truck size={80} className="text-emerald-600" />
+            </div>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Entregas Hoy</p>
+            <div className="flex items-end gap-2">
+              <h3 className="text-4xl font-black text-slate-800">{entregasStats.entregadas}</h3>
+              <span className="text-sm font-bold text-slate-400 mb-1.5">/ {entregasStats.total}</span>
+            </div>
+            <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${(entregasStats.entregadas / entregasStats.total) * 100}%` }}></div>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden group col-span-2 xl:col-span-1">
+            <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <AlertCircle size={80} className="text-red-600" />
+            </div>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Refacturación</p>
+            <h3 className="text-4xl font-black text-red-600">{nvStats.refacturacion}</h3>
+            <p className="text-xs text-slate-500 mt-1">Requieren atención inmediata</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Fila Inferior: Tabla Reciente y Distribución */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Tabla Compacta */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="font-bold text-slate-800">Actividad Reciente</h3>
+            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Ver Todo</button>
+          </div>
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+                <tr>
+                  <th className="px-6 py-3 text-left">N.V.</th>
+                  <th className="px-6 py-3 text-left">Cliente</th>
+                  <th className="px-6 py-3 text-center">Estado</th>
+                  <th className="px-6 py-3 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {recentNV.map((nv, i) => {
+                  const config = getEstadoConfig(nv.estado);
+                  return (
+                    <tr key={i} className="hover:bg-slate-50/50">
+                      <td className="px-6 py-3 font-bold text-indigo-600">#{nv.nv}</td>
+                      <td className="px-6 py-3 text-slate-600 font-medium truncate max-w-[180px]">{nv.cliente}</td>
+                      <td className="px-6 py-3 text-center">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-2`} style={{backgroundColor: config.color}}></span>
+                        <span className="text-xs font-bold text-slate-600">{config.label}</span>
+                      </td>
+                      <td className="px-6 py-3 text-right font-mono text-slate-500">{nv.cantidad} un.</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Donut Chart Compacto */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col items-center justify-center">
+          <h3 className="font-bold text-slate-800 mb-4 self-start w-full">Distribución</h3>
+          <div className="h-48 w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={3}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
                   dataKey="value"
+                  cornerRadius={4}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value) => [`${value} N.V.`, '']}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-              <span className="text-2xl font-bold text-slate-800">{nvStats.total}</span>
-              <span className="text-xs text-slate-400">Total</span>
+              <span className="text-3xl font-black text-slate-800">{nvStats.total}</span>
+              <span className="text-xs font-bold text-slate-400 uppercase">Total</span>
             </div>
           </div>
-          
-          <div className="space-y-2 mt-4">
-            {pieData.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
+          <div className="w-full mt-4 space-y-2">
+            {pieData.slice(0, 3).map((item, i) => (
+              <div key={i} className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>
-                  <span className="text-slate-600">{item.name}</span>
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}}></div>
+                  <span className="text-slate-600 font-medium">{item.name}</span>
                 </div>
                 <span className="font-bold text-slate-800">{item.value}</span>
               </div>
@@ -489,113 +508,43 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Tabla de Actividad Reciente */}
-      <div className="recent-table bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
-          <div className="flex items-center gap-3">
-            <Activity size={20} className="text-indigo-500" />
-            <div>
-              <h3 className="font-bold text-slate-800">Notas de Venta Recientes</h3>
-              <p className="text-xs text-slate-500">Últimas N.V. en el sistema</p>
-            </div>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider">
-              <tr>
-                <th className="px-5 py-3 text-left font-medium">N.V.</th>
-                <th className="px-5 py-3 text-left font-medium">Fecha</th>
-                <th className="px-5 py-3 text-left font-medium">Cliente</th>
-                <th className="px-5 py-3 text-left font-medium">Producto</th>
-                <th className="px-5 py-3 text-right font-medium">Cantidad</th>
-                <th className="px-5 py-3 text-center font-medium">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {recentNV.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-5 py-8 text-center text-slate-400">
-                    <Package size={32} className="mx-auto mb-2 opacity-40" />
-                    No hay datos disponibles
-                  </td>
-                </tr>
-              ) : (
-                recentNV.map((nv, index) => {
-                  const config = getEstadoConfig(nv.estado);
-                  return (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-5 py-3 font-bold text-indigo-600">#{nv.nv}</td>
-                      <td className="px-5 py-3 text-slate-500 text-xs">
-                        {nv.fecha_emision ? new Date(nv.fecha_emision).toLocaleDateString() : '-'}
-                      </td>
-                      <td className="px-5 py-3">
-                        <p className="font-medium text-slate-700 truncate max-w-[150px]">{nv.cliente}</p>
-                        <p className="text-xs text-slate-400">{nv.vendedor}</p>
-                      </td>
-                      <td className="px-5 py-3">
-                        <p className="font-mono text-xs text-slate-600">{nv.codigo_producto}</p>
-                      </td>
-                      <td className="px-5 py-3 text-right font-bold text-slate-800">
-                        {nv.cantidad} <span className="text-slate-400 font-normal text-xs">{nv.unidad}</span>
-                      </td>
-                      <td className="px-5 py-3 text-center">
-                        <span 
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
-                          style={{ 
-                            backgroundColor: `${config.color}15`,
-                            color: config.color,
-                            border: `1px solid ${config.color}30`
-                          }}
-                        >
-                          {config.label}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+// Componentes Auxiliares Compactos
+const KPICardCompact = ({ title, value, icon, color, subtitle, trend, alert }) => {
+  const colors = {
+    slate: 'text-slate-600 bg-slate-50',
+    amber: 'text-amber-600 bg-amber-50',
+    cyan: 'text-cyan-600 bg-cyan-50',
+    red: 'text-red-600 bg-red-50',
+    indigo: 'text-indigo-600 bg-indigo-50',
+    emerald: 'text-emerald-600 bg-emerald-50'
+  };
+
+  return (
+    <div className={`bg-white p-4 rounded-2xl border ${alert ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} shadow-sm flex items-center justify-between transition-all hover:shadow-md`}>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{title}</p>
+        <h4 className="text-2xl font-black text-slate-800">{value}</h4>
+        {subtitle && <p className="text-[10px] text-slate-400 font-medium">{subtitle}</p>}
+      </div>
+      <div className={`p-3 rounded-xl ${colors[color] || colors.slate}`}>
+        {icon}
       </div>
     </div>
   );
 };
 
-// Componente KPI Card
-function KPICard({ title, value, icon, color, subtitle, trend, trendUp }) {
-  const colorClasses = {
-    slate: 'bg-slate-50 border-slate-200',
-    cyan: 'bg-cyan-50 border-cyan-200',
-    indigo: 'bg-indigo-50 border-indigo-200',
-    purple: 'bg-purple-50 border-purple-200',
-    emerald: 'bg-emerald-50 border-emerald-200',
-    amber: 'bg-amber-50 border-amber-200',
-    red: 'bg-red-50 border-red-200',
-  };
-
-  return (
-    <div className={`kpi-card p-4 rounded-xl border-2 ${colorClasses[color]} transition-all hover:shadow-md hover:scale-[1.02]`}>
-      <div className="flex justify-between items-start mb-2">
-        <div className="p-2 bg-white rounded-lg shadow-sm">
-          {icon}
-        </div>
-        {trend && (
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
-            trendUp ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-          }`}>
-            {trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-            {trend}
-          </span>
-        )}
-      </div>
-      <p className="text-2xl font-bold text-slate-800">{value}</p>
-      <p className="text-xs text-slate-500 font-medium">{title}</p>
-      {subtitle && <p className="text-[10px] text-slate-400">{subtitle}</p>}
+const PipelineStep = ({ label, value, color, icon }) => (
+  <div className="flex flex-col items-center gap-2 z-10">
+    <div className={`w-10 h-10 rounded-full ${color} text-white flex items-center justify-center shadow-lg border-4 border-white transition-transform hover:scale-110`}>
+      {icon}
     </div>
-  );
-}
-
-export default Dashboard;
+    <div className="text-center">
+      <p className="text-lg font-black text-slate-800 leading-none">{value}</p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase">{label}</p>
+    </div>
+  </div>
+);
