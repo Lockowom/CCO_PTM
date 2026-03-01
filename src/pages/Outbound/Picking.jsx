@@ -1,4 +1,3 @@
-// Picking.jsx - Módulo de Picking con medición de tiempos
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Hand, 
@@ -17,14 +16,16 @@ import {
   Box,
   LayoutGrid,
   AlertCircle,
-  MapPin
+  MapPin,
+  Truck
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { InventoryService } from '../../services/inventoryService'; // NUEVO
-import { useAuth } from '../../context/AuthContext'; // Importar contexto de usuario
+import { InventoryService } from '../../services/inventoryService';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
 
 const Picking = () => {
-  const { user } = useAuth(); // Obtener usuario real
+  const { user } = useAuth();
   const [vista, setVista] = useState('lista'); // 'lista' o 'picking'
   const [nvData, setNvData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,31 +33,24 @@ const Picking = () => {
   
   // Picking activo
   const [nvActiva, setNvActiva] = useState(null);
-  const [itemsPickingStatus, setItemsPickingStatus] = useState({}); // Estado local de cada ítem { id: { status: 'COMPLETO' | 'PARCIAL' | 'SIN_STOCK', cantidad: 0 } }
+  const [itemsPickingStatus, setItemsPickingStatus] = useState({}); 
   const [tiempoInicio, setTiempoInicio] = useState(null);
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
   const [tiempoOcio, setTiempoOcio] = useState(0);
   const [pausaInicio, setPausaInicio] = useState(null);
   
-  // Usuario simulado (ELIMINADO - Usar user del contexto)
-  // const [usuario] = useState({ id: 'user-picking-001', nombre: 'Operador Picking' });
-  
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
-  const lastHiddenTime = useRef(null); // Para tracking silencioso
+  const lastHiddenTime = useRef(null);
 
-  const [action, setAction] = useState(null); // 'COMPLETO', 'PARCIAL', 'SIN_STOCK'
-  const [cantidadReal, setCantidadReal] = useState('');
-
-  // Stats
   const [stats, setStats] = useState({
     pendientes: 0,
     enProceso: 0,
     completadasHoy: 0
   });
 
-  // Cargar N.V. en estado "Pendiente Picking" o "Aprobada"
+  // Cargar N.V.
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -79,7 +73,7 @@ const Picking = () => {
             items: [],
             total_items: 0,
             total_cantidad: 0,
-            usuario_asignado: item.usuario_asignado, // Tomar del primer registro
+            usuario_asignado: item.usuario_asignado,
             usuario_nombre: item.usuario_nombre
           };
         }
@@ -91,18 +85,15 @@ const Picking = () => {
       const uniqueNVs = Object.values(grouped);
       setNvData(uniqueNVs);
 
-      // Cargar Stats de Hoy (Completados)
+      // Cargar Stats de Hoy
       const today = new Date().toISOString().split('T')[0];
-      const { count: completados, error: countError } = await supabase
+      const { count: completados } = await supabase
         .from('tms_mediciones_tiempos')
         .select('*', { count: 'exact', head: true })
         .eq('proceso', 'PICKING')
         .eq('estado', 'COMPLETADO')
         .gte('fin_at', `${today}T00:00:00`);
 
-      if (countError) console.error("Error contando completados:", countError);
-
-      // Actualizar Stats
       setStats({
         pendientes: uniqueNVs.length,
         enProceso: uniqueNVs.filter(n => n.estado === 'Pendiente Picking').length,
@@ -111,6 +102,7 @@ const Picking = () => {
       
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Error cargando datos de picking');
     } finally {
       setLoading(false);
     }
@@ -119,63 +111,45 @@ const Picking = () => {
   useEffect(() => {
     fetchData();
     
-    // Realtime: Escuchar cambios en N.V. y Mediciones
     const channelNV = supabase
       .channel('picking_realtime_nv')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => fetchData())
       .subscribe();
 
-    const channelMetrics = supabase
-      .channel('picking_realtime_metrics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => fetchData())
-      .subscribe();
-
     return () => {
       supabase.removeChannel(channelNV);
-      supabase.removeChannel(channelMetrics);
       if (timerRef.current) clearInterval(timerRef.current);
       if (ocioRef.current) clearInterval(ocioRef.current);
     };
-  }, [fetchData, nvActiva]);
+  }, [fetchData]);
 
   // Timer de trabajo - Tracking Silencioso
   useEffect(() => {
     let intervalId = null;
 
     const handleVisibilityChange = () => {
-      // 1. Pantalla se apaga / App minimizada
       if (document.hidden && !enPausa && tiempoInicio) {
         lastHiddenTime.current = Date.now();
-        console.log("App en segundo plano: Iniciando contador silencioso de inactividad.");
-      } 
-      // 2. Pantalla se enciende / App vuelve a primer plano
-      else if (!document.hidden && lastHiddenTime.current && !enPausa) {
+      } else if (!document.hidden && lastHiddenTime.current && !enPausa) {
         const now = Date.now();
         const diffSeconds = Math.floor((now - lastHiddenTime.current) / 1000);
-        
         if (diffSeconds > 0) {
-          // Sumar silenciosamente al tiempo de ocio
           setTiempoOcio(prev => prev + diffSeconds);
-          console.log(`App activa: Agregados ${diffSeconds}s a tiempo de ocio (silencioso).`);
+          toast.info(`Regresaste: ${diffSeconds}s agregados a tiempo inactivo`);
         }
         lastHiddenTime.current = null;
       }
     };
 
-    // Escuchar eventos de visibilidad
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Lógica del timer visual (aunque esté oculto, mantiene el estado actualizado)
     if (tiempoInicio && !enPausa) {
       intervalId = setInterval(() => {
-        // Recalcular basado en la diferencia real de tiempo, descontando ocio acumulado
         const now = Date.now();
-        // Si hay un tiempo oculto en curso, lo restamos dinámicamente para que el timer no salte
         let currentHidden = 0;
         if (document.hidden && lastHiddenTime.current) {
              currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
         }
-        
         const diffSeconds = Math.floor((now - tiempoInicio) / 1000) - (tiempoOcio + currentHidden);
         setTiempoTranscurrido(diffSeconds > 0 ? diffSeconds : 0);
       }, 1000);
@@ -187,7 +161,7 @@ const Picking = () => {
     };
   }, [tiempoInicio, enPausa, tiempoOcio]);
 
-  // Timer de ocio
+  // Timer de ocio (Pausa explícita)
   useEffect(() => {
     if (enPausa && pausaInicio) {
       ocioRef.current = setInterval(() => {
@@ -201,14 +175,12 @@ const Picking = () => {
 
   // Iniciar picking
   const iniciarPicking = async (nv) => {
-    // Verificar si ya está asignada a otro usuario
     if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
-      alert(`⚠️ Esta N.V. ya está siendo procesada por: ${nv.usuario_nombre}`);
+      toast.warning(`⚠️ Esta N.V. ya está asignada a ${nv.usuario_nombre}`);
       return;
     }
 
     setNvActiva(nv);
-    // Inicializar estado de items
     const initialStatus = {};
     (nv.items || [nv]).forEach(item => {
       initialStatus[item.id] = { status: null, cantidad: '' };
@@ -222,19 +194,16 @@ const Picking = () => {
     setVista('picking');
     
     // Cambiar estado y ASIGNAR USUARIO
-    const updateData = {
-      estado: 'Pendiente Picking',
-      usuario_asignado: user.id,
-      usuario_nombre: user.nombre
-    };
-
-    // Si ya estaba aprobada, cambiar estado, si no solo asignar
     await supabase
       .from('tms_nv_diarias')
-      .update(updateData)
+      .update({
+        estado: 'Pendiente Picking',
+        usuario_asignado: user.id,
+        usuario_nombre: user.nombre
+      })
       .eq('nv', nv.nv);
     
-    // Registrar inicio en mediciones
+    // Registrar inicio medición
     await supabase.from('tms_mediciones_tiempos').insert({
       nv: nv.nv,
       proceso: 'PICKING',
@@ -243,19 +212,21 @@ const Picking = () => {
       inicio_at: new Date().toISOString(),
       estado: 'EN_PROCESO'
     });
+
+    toast.success(`Picking iniciado: NV #${nv.nv}`);
   };
 
-  // Pausar/Reanudar
   const togglePausa = () => {
     if (!enPausa) {
       setPausaInicio(Date.now());
+      toast.warning('Proceso Pausado');
     } else {
       setPausaInicio(null);
+      toast.success('Proceso Reanudado');
     }
     setEnPausa(!enPausa);
   };
 
-  // Manejar cambio en item individual
   const handleItemStatusChange = (itemId, status, cantidad = '') => {
     setItemsPickingStatus(prev => ({
       ...prev,
@@ -263,49 +234,44 @@ const Picking = () => {
     }));
   };
 
-  // Finalizar picking
   const finalizarPicking = async () => {
     if (!nvActiva) return;
     
-    // Validar que todos los items tengan acción
     const items = nvActiva.items || [nvActiva];
     const missingAction = items.some(item => !itemsPickingStatus[item.id]?.status);
     
     if (missingAction) {
-      alert('Debes indicar el estado (Completo, Parcial o Sin Stock) para cada producto.');
+      toast.error('Debes indicar el estado para cada producto');
       return;
     }
 
-    // Validar cantidades parciales
     const invalidPartial = items.some(item => {
       const state = itemsPickingStatus[item.id];
       return state.status === 'PARCIAL' && (!state.cantidad || parseInt(state.cantidad) <= 0);
     });
 
     if (invalidPartial) {
-      alert('Debes ingresar una cantidad válida para los productos con picking parcial.');
+      toast.error('Ingresa una cantidad válida para items parciales');
       return;
     }
 
+    if (!confirm('¿Confirmar finalización de picking y movimientos de stock?')) return;
+
     try {
-      // 1. Determinar el nuevo estado global de la N.V.
-      // Si TODOS los items están en 'SIN_STOCK', el estado es 'QUIEBRE_STOCK'
-      // Si al menos UNO tiene stock (COMPLETO o PARCIAL), el estado es 'PACKING'
+      toast.loading('Procesando movimientos de stock...');
+
+      // 1. Determinar estado global
       const hasStock = items.some(item => {
          const status = itemsPickingStatus[item.id]?.status;
          return status === 'COMPLETO' || status === 'PARCIAL';
       });
       
-      // Si hay items en 'ESPERA', la N.V. se queda en 'Pendiente Picking' para que la tome otro operario
       const hasWaiting = items.some(item => itemsPickingStatus[item.id]?.status === 'ESPERA');
       
       let nuevoEstadoGlobal = hasStock ? 'PACKING' : 'QUIEBRE_STOCK';
-      
-      if (hasWaiting) {
-        nuevoEstadoGlobal = 'Pendiente Picking'; // Mantiene estado para segunda vuelta
-      }
+      if (hasWaiting) nuevoEstadoGlobal = 'Pendiente Picking';
 
-      // 2. Actualizar cada ítem individualmente y MOVER STOCK
+      // 2. Ejecutar Movimientos (Transaccional)
       const updates = items.map(async (item) => {
         const state = itemsPickingStatus[item.id];
         let qtyReal = 0;
@@ -313,20 +279,17 @@ const Picking = () => {
 
         if (state.status === 'COMPLETO') {
           qtyReal = item.cantidad;
-          // MOVIMIENTO FÍSICO DE STOCK
           await InventoryService.moveStock({
             sku: item.codigo_producto,
-            batch: 'PICKING-BATCH', // Idealmente vendría de una selección de lote
-            fromLoc: 'PICKING-ZONA', // Debería venir de la ubicación del item
+            batch: 'PICKING-BATCH',
+            fromLoc: 'PICKING-ZONA',
             toLoc: 'PACKING-STATION', 
             qty: item.cantidad,
             userId: user.id,
             reason: `PICKING NV: ${nvActiva.nv}`
           });
-
         } else if (state.status === 'PARCIAL') {
           qtyReal = parseInt(state.cantidad);
-          // MOVIMIENTO PARCIAL
           await InventoryService.moveStock({
             sku: item.codigo_producto,
             batch: 'PICKING-BATCH',
@@ -336,16 +299,11 @@ const Picking = () => {
             userId: user.id,
             reason: `PICKING PARCIAL NV: ${nvActiva.nv}`
           });
-
         } else if (state.status === 'ESPERA') {
-          qtyReal = 0; // No se ha recolectado nada aún
-          itemStatus = null; // Resetear status del item para que el siguiente picker lo vea pendiente
-        } else {
-          qtyReal = 0; // SIN_STOCK
+          qtyReal = 0;
+          itemStatus = null;
         }
 
-        // Actualizamos el estado de la fila al nuevo estado global
-        // Si es ESPERA, el picking_status queda null para que otro lo procese
         return supabase
           .from('tms_nv_diarias')
           .update({ 
@@ -358,19 +316,10 @@ const Picking = () => {
           .eq('id', item.id);
       });
 
-      // Esperar a que TODAS las actualizaciones terminen
-      const results = await Promise.all(updates);
-      
-      // Verificar errores en las actualizaciones
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        console.error("Detalle de errores de actualización:", errors);
-        const firstErrorMsg = errors[0].error?.message || JSON.stringify(errors[0].error);
-        throw new Error(`Falló la actualización de ${errors.length} ítems. Detalle: ${firstErrorMsg}`);
-      }
+      await Promise.all(updates);
       
       // Actualizar medición
-      const { error: errorMedicion } = await supabase
+      await supabase
         .from('tms_mediciones_tiempos')
         .update({
           fin_at: new Date().toISOString(),
@@ -382,33 +331,26 @@ const Picking = () => {
         .eq('nv', nvActiva.nv)
         .eq('proceso', 'PICKING')
         .eq('estado', 'EN_PROCESO');
-
-      if (errorMedicion) console.error('Error actualizando medición:', errorMedicion);
       
-      // Reset y recargar
+      // Reset
+      toast.dismiss();
       setNvActiva(null);
       setItemsPickingStatus({});
-      setTiempoInicio(null);
-      setTiempoTranscurrido(0);
-      setTiempoOcio(0);
-      setEnPausa(false);
       setVista('lista');
-      setAction(null);
-      setCantidadReal('');
-      
       await fetchData();
-      alert('Picking finalizado correctamente. La N.V. ha pasado a ' + nuevoEstadoGlobal);
+      toast.success(`Picking finalizado. N.V. enviada a ${nuevoEstadoGlobal}`);
 
     } catch (error) {
-      console.error('Error crítico al finalizar picking:', error);
-      alert('Error al finalizar picking: ' + error.message);
+      toast.dismiss();
+      console.error('Error crítico:', error);
+      toast.error('Error al finalizar: ' + error.message);
     }
   };
 
-  // Cancelar
   const cancelarPicking = async () => {
+    if (!confirm('¿Seguro que deseas cancelar? Se registrará como abandono.')) return;
+
     if (nvActiva) {
-      // Registrar abandono
       await supabase
         .from('tms_mediciones_tiempos')
         .update({ estado: 'ABANDONADO', updated_at: new Date().toISOString() })
@@ -416,11 +358,10 @@ const Picking = () => {
         .eq('proceso', 'PICKING')
         .eq('estado', 'EN_PROCESO');
 
-      // Liberar N.V.
       await supabase
         .from('tms_nv_diarias')
         .update({ 
-          estado: 'Aprobada', // Volver a estado anterior
+          estado: 'Aprobada',
           usuario_asignado: null,
           usuario_nombre: null
         })
@@ -428,11 +369,8 @@ const Picking = () => {
     }
     
     setNvActiva(null);
-    setTiempoInicio(null);
-    setTiempoTranscurrido(0);
-    setTiempoOcio(0);
-    setEnPausa(false);
     setVista('lista');
+    toast.info('Picking cancelado');
   };
 
   const formatTime = (seconds) => {
@@ -443,43 +381,33 @@ const Picking = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Filtrar
   const nvFiltradas = nvData.filter(nv =>
     nv.nv?.toString().includes(searchTerm) ||
-    nv.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    // Buscar en los items
-    nv.items?.some(i => 
-      i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    nv.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Agrupar por estado
-  const aprobadas = nvFiltradas.filter(n => n.estado === 'Aprobada');
-  const enPicking = nvFiltradas.filter(n => n.estado === 'Pendiente Picking');
 
   // ==================== VISTA: LISTA ====================
   if (vista === 'lista') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-500">
         {/* Header */}
         <div className="flex justify-between items-end">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200">
               <Hand className="text-white" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">Picking</h2>
-              <p className="text-slate-500 text-sm">Recolección de productos para empaque</p>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">Picking</h2>
+              <p className="text-slate-500 text-sm font-medium">Recolección de productos para empaque</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
+            <div className="bg-white border-2 border-slate-100 rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-cyan-400 transition-colors">
               <Search size={18} className="text-slate-400 mr-2" />
               <input 
                 type="text" 
                 placeholder="Buscar N.V., cliente..." 
-                className="outline-none text-sm w-48"
+                className="outline-none text-sm w-48 font-medium text-slate-600 placeholder:text-slate-400"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -487,7 +415,7 @@ const Picking = () => {
             <button 
               onClick={fetchData}
               disabled={loading}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-cyan-200 transition-all active:scale-95"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -496,134 +424,140 @@ const Picking = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pendiente</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.pendientes}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pendientes</p>
+              <h3 className="text-3xl font-black text-slate-800">{stats.pendientes}</h3>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <FileText size={20} />
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+              <FileText size={24} />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between group hover:border-cyan-200 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">En Picking</p>
-              <h3 className="text-2xl font-black text-cyan-600 mt-1">{stats.enProceso}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">En Proceso</p>
+              <h3 className="text-3xl font-black text-cyan-600">{stats.enProceso}</h3>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600">
-              <Hand size={20} />
+            <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform">
+              <Hand size={24} />
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completados Hoy</p>
-              <h3 className="text-2xl font-black text-emerald-600 mt-1">{stats.completadasHoy}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Completados Hoy</p>
+              <h3 className="text-3xl font-black text-emerald-600">{stats.completadasHoy}</h3>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <CheckCircle size={20} />
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+              <CheckCircle size={24} />
             </div>
           </div>
         </div>
 
         {/* Tabla de N.V. */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-cyan-50 to-blue-50">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
               <LayoutGrid size={18} className="text-cyan-600" />
-              Notas de Venta para Picking
+              Cola de Trabajo
             </h3>
+            <span className="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">{nvFiltradas.length} órdenes</span>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">N.V.</th>
-                  <th className="px-4 py-3 text-left font-medium">Cliente</th>
-                  <th className="px-4 py-3 text-left font-medium">Producto</th>
-                  <th className="px-4 py-3 text-right font-medium">Cantidad</th>
-                  <th className="px-4 py-3 text-center font-medium">Estado</th>
-                  <th className="px-4 py-3 text-left font-medium">Asignado</th>
-                  <th className="px-4 py-3 text-right font-medium">Acción</th>
+                  <th className="px-6 py-4 text-left font-bold tracking-wider">N.V.</th>
+                  <th className="px-6 py-4 text-left font-bold tracking-wider">Cliente</th>
+                  <th className="px-6 py-4 text-left font-bold tracking-wider">Detalle</th>
+                  <th className="px-6 py-4 text-center font-bold tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-left font-bold tracking-wider">Operador</th>
+                  <th className="px-6 py-4 text-right font-bold tracking-wider">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-12 text-center">
-                      <RefreshCw className="animate-spin mx-auto text-cyan-500" size={24} />
+                    <td colSpan="6" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <RefreshCw className="animate-spin text-cyan-500" size={24} />
+                        <span className="text-xs font-medium text-slate-400">Cargando órdenes...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : nvFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-12 text-center text-slate-400">
+                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
                       <Package size={32} className="mx-auto mb-2 opacity-40" />
                       <p>No hay N.V. pendientes de picking</p>
                     </td>
                   </tr>
                 ) : (
                   nvFiltradas.map((nv, index) => (
-                    <tr key={index} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-bold text-cyan-600">#{nv.nv}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-700 truncate max-w-[150px]">{nv.cliente}</p>
-                        <p className="text-xs text-slate-400">{nv.vendedor}</p>
+                    <tr key={index} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4 font-black text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <FileText size={16} className="text-slate-400" />
+                          #{nv.nv}
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        {nv.total_items > 1 ? (
-                          <div className="flex items-center gap-1">
-                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">
-                              {nv.total_items} items
-                            </span>
-                            <span className="text-xs text-slate-400 truncate max-w-[100px]">
-                              {nv.descripcion_producto} ...
-                            </span>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="font-mono text-xs text-slate-600">{nv.codigo_producto}</p>
-                            <p className="text-xs text-slate-400 truncate max-w-[150px]">{nv.descripcion_producto}</p>
-                          </>
-                        )}
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-slate-700">{nv.cliente}</p>
+                        <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                          <User size={10} /> {nv.vendedor || 'Vendedor Web'}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold">
-                        {nv.total_items > 1 ? (
-                           <span>{nv.total_cantidad} <span className="text-[10px] font-normal text-slate-400">Total</span></span>
-                        ) : (
-                           <span>{nv.cantidad} <span className="text-slate-400 font-normal text-xs">{nv.unidad}</span></span>
-                        )}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-md text-xs font-bold border border-indigo-200">
+                            {nv.total_items} items
+                          </span>
+                          <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                            Total: {nv.total_cantidad}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${
                           nv.estado === 'Aprobada' 
-                            ? 'bg-amber-100 text-amber-700' 
-                            : 'bg-cyan-100 text-cyan-700'
+                            ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                            : 'bg-cyan-50 text-cyan-600 border-cyan-200'
                         }`}>
-                          {nv.estado === 'Aprobada' ? 'Aprobada' : 'En Picking'}
+                          {nv.estado === 'Aprobada' ? 'PENDIENTE' : 'EN PROCESO'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                          {nv.usuario_nombre ? (
-                           <span className="flex items-center gap-1 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg w-fit">
-                             <User size={12} /> {nv.usuario_nombre}
-                           </span>
+                           <div className="flex items-center gap-2">
+                             <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                               {nv.usuario_nombre.charAt(0)}
+                             </div>
+                             <span className="text-xs font-medium text-slate-600">
+                               {nv.usuario_nombre}
+                             </span>
+                           </div>
                          ) : (
-                           <span className="text-xs text-slate-400 italic">Sin asignar</span>
+                           <span className="text-xs text-slate-400 italic font-medium px-2 py-1 rounded-md bg-slate-100">Sin asignar</span>
                          )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-6 py-4 text-right">
                         {(!nv.usuario_asignado || nv.usuario_asignado === user.id) ? (
                           <button
                             onClick={() => iniciarPicking(nv)}
-                            className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
+                            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ml-auto shadow-sm transition-all active:scale-95 ${
+                              nv.usuario_asignado === user.id
+                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
+                                : 'bg-white border-2 border-slate-200 hover:border-cyan-500 hover:text-cyan-600 text-slate-600'
+                            }`}
                           >
-                            <Play size={14} /> {nv.usuario_asignado === user.id ? 'Continuar' : 'Iniciar'}
+                            <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} /> 
+                            {nv.usuario_asignado === user.id ? 'CONTINUAR' : 'INICIAR'}
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400 flex items-center justify-end gap-1">
-                            <Users size={12} /> Ocupado
+                          <span className="text-xs text-slate-400 flex items-center justify-end gap-1 opacity-60 cursor-not-allowed">
+                            <Users size={14} /> Ocupado
                           </span>
                         )}
                       </td>
@@ -640,231 +574,218 @@ const Picking = () => {
 
   // ==================== VISTA: PICKING ACTIVO ====================
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in zoom-in-95 duration-300">
       {/* Header con timer */}
-      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl p-6 text-white shadow-xl">
-        <div className="flex justify-between items-start mb-6">
-          <button onClick={cancelarPicking} className="flex items-center gap-2 text-white/80 hover:text-white">
-            <ArrowLeft size={20} /> Cancelar
+      <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden border border-slate-700">
+        {/* Background Pattern */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+        
+        <div className="flex justify-between items-start mb-8 relative z-10">
+          <button 
+            onClick={cancelarPicking} 
+            className="flex items-center gap-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold uppercase tracking-wide"
+          >
+            <ArrowLeft size={16} /> Cancelar / Salir
           </button>
           <div className="text-right">
-            <p className="text-white/70 text-sm">Operador</p>
-            <p className="font-bold">{user?.nombre}</p>
+            <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-xs font-bold">EN VIVO</span>
+            </div>
           </div>
         </div>
         
-        <div className="text-center">
-          <p className="text-white/70 text-sm mb-1">Picking N.V.</p>
-          <h1 className="text-4xl font-black mb-4">#{nvActiva?.nv}</h1>
+        <div className="text-center relative z-10">
+          <p className="text-slate-400 text-sm mb-2 font-medium tracking-wide uppercase">Picking Nota de Venta</p>
+          <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter text-white">
+            #{nvActiva?.nv}
+          </h1>
           
-          <div className="flex justify-center gap-8 opacity-0 pointer-events-none h-0 overflow-hidden">
-            <div className="text-center">
-              <div className={`text-5xl font-mono font-bold ${enPausa ? 'text-amber-300' : ''}`}>
+          <div className="flex justify-center items-end gap-12 mb-8">
+            <div className="text-center group cursor-default">
+              <div className={`text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors ${enPausa ? 'text-amber-400' : 'text-cyan-400'}`}>
                 {formatTime(tiempoTranscurrido)}
               </div>
-              <p className="text-white/70 text-sm mt-1">Tiempo Activo</p>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 group-hover:text-cyan-400 transition-colors">Tiempo Activo</p>
             </div>
             
             {tiempoOcio > 0 && (
-              <div className="text-center">
-                <div className="text-3xl font-mono font-bold text-red-300">
+              <div className="text-center group cursor-default">
+                <div className="text-3xl font-mono font-bold text-rose-400 tracking-tighter tabular-nums opacity-80">
                   {formatTime(tiempoOcio)}
                 </div>
-                <p className="text-white/70 text-sm mt-1">Tiempo Ocio</p>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 group-hover:text-rose-400 transition-colors">Inactividad</p>
               </div>
             )}
           </div>
           
-          {/* Mensaje de estado (Discreto) */}
-          <div className="text-center mb-6">
-            <span className="text-white/40 text-xs font-mono">
-              Proceso ID: {nvActiva?.nv}
-            </span>
-          </div>
-          
-          <div className="flex justify-center gap-4 mt-6 opacity-0 pointer-events-none h-0">
+          <div className="flex justify-center">
             <button
               onClick={togglePausa}
-              className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 ${
-                enPausa ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+              className={`px-8 py-3 rounded-2xl font-black flex items-center gap-3 transition-all active:scale-95 shadow-lg ${
+                enPausa 
+                  ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-amber-900/50' 
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600'
               }`}
             >
-              {enPausa ? <Play size={20} /> : <Pause size={20} />}
-              {enPausa ? 'Reanudar' : 'Pausar'}
+              {enPausa ? <Play size={20} fill="currentColor" /> : <Pause size={20} fill="currentColor" />}
+              {enPausa ? 'REANUDAR TRABAJO' : 'PAUSAR'}
             </button>
           </div>
+        </div>
+      </div>
 
-          {/* Lista de Items con Acciones Individuales */}
-          <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Columna Izquierda: Lista de Items */}
+        <div className="lg:col-span-2 space-y-4">
+            <div className="flex justify-between items-center px-2">
+                <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                    <Box size={20} className="text-cyan-600" />
+                    Productos ({nvActiva?.total_items})
+                </h3>
+            </div>
+
             {(nvActiva?.items || [nvActiva]).map((item) => {
               const status = itemsPickingStatus[item.id]?.status;
               const cantidad = itemsPickingStatus[item.id]?.cantidad;
+              const isComplete = status === 'COMPLETO';
 
               return (
-                <div key={item.id} className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border transition-colors duration-300 ${
-                  status === 'ESPERA' 
-                    ? 'border-amber-400 bg-amber-500/10' 
-                    : 'border-white/20'
+                <div key={item.id} className={`bg-white rounded-2xl p-5 border-2 transition-all shadow-sm group ${
+                  isComplete 
+                    ? 'border-emerald-500 bg-emerald-50/30' 
+                    : status === 'SIN_STOCK' 
+                      ? 'border-rose-200 bg-rose-50' 
+                      : 'border-slate-100 hover:border-cyan-200'
                 }`}>
-                  <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 justify-between">
                     {/* Info Producto */}
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-white/20 text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
                           {item.codigo_producto}
                         </span>
-                        <span className="text-white/60 text-xs">{item.unidad}</span>
+                        <span className="text-slate-400 text-xs font-medium uppercase">{item.unidad || 'UNI'}</span>
                       </div>
-                      <p className="font-bold text-lg">{item.descripcion_producto}</p>
-                      <p className="text-white/80 text-sm mt-1">
-                        Solicitado: <span className="font-bold text-amber-300 text-xl">{item.cantidad}</span>
-                      </p>
+                      <p className="font-bold text-slate-800 text-lg leading-tight mb-2">{item.descripcion_producto}</p>
+                      
+                      <div className="flex items-center gap-4 text-sm text-slate-500">
+                         <div className="flex items-center gap-1">
+                            <MapPin size={14} className="text-cyan-500" />
+                            <span className="font-medium text-slate-700">Pasillo A-04</span> {/* Simulado */}
+                         </div>
+                         <div className="flex items-center gap-1">
+                            <Box size={14} className="text-indigo-500" />
+                            <span className="font-medium text-slate-700">Lote: 23091</span> {/* Simulado */}
+                         </div>
+                      </div>
                     </div>
 
-                    {/* Acciones */}
-                    <div className="flex items-center gap-2">
-                      {/* Completo */}
-                      <button
-                        onClick={() => handleItemStatusChange(item.id, 'COMPLETO')}
-                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
-                          status === 'COMPLETO' 
-                            ? 'bg-emerald-500 text-white ring-2 ring-white' 
-                            : 'bg-white/10 text-white/70 hover:bg-emerald-500/50'
-                        }`}
-                      >
-                        <CheckCircle size={20} />
-                        <span className="text-[10px] font-bold">COMPLETO</span>
-                      </button>
+                    {/* Controles de Acción */}
+                    <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                        <div className="text-right">
+                             <span className="text-xs font-bold text-slate-400 uppercase">Solicitado</span>
+                             <p className="text-3xl font-black text-slate-800">{item.cantidad}</p>
+                        </div>
 
-                      {/* Parcial */}
-                      <div className="relative">
-                        <button
-                          onClick={() => handleItemStatusChange(item.id, 'PARCIAL')}
-                          className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
-                            status === 'PARCIAL' 
-                              ? 'bg-blue-500 text-white ring-2 ring-white' 
-                              : 'bg-white/10 text-white/70 hover:bg-blue-500/50'
-                          }`}
-                        >
-                          <Box size={20} />
-                          <span className="text-[10px] font-bold">PARCIAL</span>
-                        </button>
+                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                             <button
+                               onClick={() => handleItemStatusChange(item.id, 'COMPLETO', item.cantidad)}
+                               title="Completo"
+                               className={`p-2 rounded-md transition-all ${
+                                 status === 'COMPLETO' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-emerald-500'
+                               }`}
+                             >
+                               <CheckCircle size={20} />
+                             </button>
+                             
+                             <button
+                               onClick={() => handleItemStatusChange(item.id, 'PARCIAL')}
+                               title="Parcial"
+                               className={`p-2 rounded-md transition-all ${
+                                 status === 'PARCIAL' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-blue-500'
+                               }`}
+                             >
+                               <Box size={20} />
+                             </button>
+
+                             <button
+                               onClick={() => handleItemStatusChange(item.id, 'SIN_STOCK')}
+                               title="Sin Stock"
+                               className={`p-2 rounded-md transition-all ${
+                                 status === 'SIN_STOCK' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-rose-500'
+                               }`}
+                             >
+                               <AlertCircle size={20} />
+                             </button>
+                        </div>
                         
+                        {/* Input Condicional para Parcial */}
                         {status === 'PARCIAL' && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-white p-2 rounded-lg shadow-xl z-10">
-                            <input
-                              type="number"
-                              value={cantidad}
-                              onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
-                              className="w-full text-slate-800 font-bold text-center border rounded p-1"
-                              placeholder="Cant."
-                              autoFocus
-                            />
-                          </div>
+                             <div className="animate-in slide-in-from-top-2 fade-in">
+                                 <input 
+                                    type="number" 
+                                    placeholder="Cant. Real"
+                                    className="w-full border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-200"
+                                    value={cantidad}
+                                    onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
+                                    autoFocus
+                                 />
+                             </div>
                         )}
-                      </div>
-
-                      {/* Espera Otra Zona */}
-                      <button
-                        onClick={() => handleItemStatusChange(item.id, 'ESPERA')}
-                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
-                          status === 'ESPERA' 
-                            ? 'bg-amber-500 text-white ring-2 ring-white' 
-                            : 'bg-white/10 text-white/70 hover:bg-amber-500/50'
-                        }`}
-                      >
-                        <Clock size={20} />
-                        <span className="text-[10px] font-bold text-center leading-tight">ESPERA<br/>OTRA ZONA</span>
-                      </button>
-
-                      {/* Sin Stock */}
-                      <button
-                        onClick={() => handleItemStatusChange(item.id, 'SIN_STOCK')}
-                        className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all w-24 ${
-                          status === 'SIN_STOCK' 
-                            ? 'bg-red-500 text-white ring-2 ring-white' 
-                            : 'bg-white/10 text-white/70 hover:bg-red-500/50'
-                        }`}
-                      >
-                        <AlertCircle size={20} />
-                        <span className="text-[10px] font-bold">SIN STOCK</span>
-                      </button>
                     </div>
                   </div>
                 </div>
               );
             })}
-          </div>
 
-          {/* Botón Finalizar Global */}
-          <div className="mt-8">
-            <button
-              onClick={finalizarPicking}
-              className="bg-white text-indigo-600 px-8 py-3 rounded-xl font-black text-lg shadow-xl hover:bg-indigo-50 hover:scale-105 transition-all flex items-center gap-2 mx-auto"
-            >
-              <CheckCircle size={24} />
-              FINALIZAR PICKING
-            </button>
-          </div>
-          
-          {enPausa && (
-            <div className="mt-4 bg-amber-500/30 border border-amber-400 rounded-lg px-4 py-2 inline-flex items-center gap-2">
-              <AlertCircle size={16} />
-              <span className="text-sm">Proceso Pausado</span>
+            <div className="pt-6">
+                <button
+                  onClick={finalizarPicking}
+                  className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-slate-800 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                >
+                  <CheckCircle size={24} className="text-emerald-400" />
+                  CONFIRMAR PICKING
+                </button>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Detalle */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Package size={18} className="text-cyan-500" /> Productos a Recolectar ({nvActiva?.total_items || 1})
-          </h3>
-          
-          <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-            {(nvActiva?.items || [nvActiva]).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="bg-cyan-100 p-3 rounded-lg">
-                  <p className="text-xs text-cyan-700 font-bold font-mono">{item.codigo_producto}</p>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-700 font-medium">{item.descripcion_producto}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-black text-emerald-600">{item.cantidad}</p>
-                  <p className="text-[10px] text-emerald-700 font-bold">{item.unidad || 'UNI'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <User size={18} className="text-cyan-500" /> Cliente
-          </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs text-slate-400 font-semibold uppercase">Cliente</p>
-              <p className="text-lg font-bold text-slate-800">{nvActiva?.cliente}</p>
+        {/* Columna Derecha: Resumen Cliente */}
+        <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm sticky top-6">
+                <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-4">
+                    <User size={20} className="text-indigo-500" />
+                    Datos del Cliente
+                </h3>
+                
+                <div className="space-y-5">
+                    <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Cliente Final</p>
+                        <p className="font-bold text-slate-800 text-lg leading-tight">{nvActiva?.cliente}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vendedor</p>
+                            <p className="font-medium text-slate-600 text-sm">{nvActiva?.vendedor || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha Emisión</p>
+                            <p className="font-medium text-slate-600 text-sm">{nvActiva?.fecha_emision || '-'}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                        <div className="flex items-start gap-3">
+                            <Truck className="text-indigo-600 mt-1" size={20} />
+                            <div>
+                                <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Ruta de Despacho</p>
+                                <p className="font-bold text-indigo-900">Ruta Norte - Mañana</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div>
-              <p className="text-xs text-slate-400 font-semibold uppercase">Vendedor</p>
-              <p className="text-slate-700">{nvActiva?.vendedor || '-'}</p>
-            </div>
-            
-            <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-              <p className="text-xs text-indigo-600 font-semibold uppercase mb-1">Siguiente Paso</p>
-              <div className="flex items-center gap-2 text-indigo-700">
-                <Box size={18} />
-                <span className="font-bold">PACKING</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
