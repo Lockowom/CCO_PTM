@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -73,6 +73,7 @@ const Navbar = () => {
     '/inventory/stock': 'view_stock',
     '/inventory/layout': 'view_layout',
     '/inventory/transfers': 'view_transfers',
+    '/inventory/cycle-count': 'view_stock',
     '/quality/inspection': 'view_quality',
     '/queries/batches': 'view_batches',
     '/queries/sales-status': 'view_sales_status',
@@ -81,6 +82,7 @@ const Navbar = () => {
     '/queries/historial-nv': 'view_historial_nv',
     '/queries/dispatch-control': 'view_dispatch_control',
     '/admin/users': 'manage_users',
+    '/admin/wms-settings': 'manage_views',
     '/admin/roles': 'manage_roles',
     '/admin/views': 'manage_views',
     '/admin/reports': 'manage_reports',
@@ -181,7 +183,8 @@ const Navbar = () => {
         { label: 'Stock', path: '/inventory/stock', icon: <Package size={16} /> },
 
         { label: 'Layout', path: '/inventory/layout', icon: <MapPin size={16} /> },
-        { label: 'Transferencias', path: '/inventory/transfers', icon: <ArrowLeftRight size={16} /> }
+        { label: 'Transferencias', path: '/inventory/transfers', icon: <ArrowLeftRight size={16} /> },
+        { label: 'Inv. Cíclico', path: '/inventory/cycle-count', icon: <RotateCcw size={16} /> }
       ]
     },
     {
@@ -210,6 +213,7 @@ const Navbar = () => {
       label: 'Admin',
       icon: <Settings size={18} />,
       modules: [
+        { label: 'Config. WMS', path: '/admin/wms-settings', icon: <Settings size={16} /> },
         { label: 'Mediciones', path: '/admin/mediciones', icon: <Timer size={16} /> },
         { label: 'Usuarios', path: '/admin/users', icon: <Users size={16} /> },
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
