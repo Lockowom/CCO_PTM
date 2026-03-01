@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { 
   Truck, ClipboardCheck, AlertTriangle, Clock, Save, History, 
   CheckCircle, Package, Loader2, ScanBarcode, QrCode, FileCheck, 
-  Camera, Upload, XCircle, Printer
+  Camera, Upload, XCircle, Printer, Search
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
