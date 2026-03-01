@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -84,6 +84,7 @@ const Navbar = () => {
     '/admin/users': 'manage_users',
     '/admin/wms-settings': 'manage_views',
     '/admin/ops-control': 'manage_users',
+    '/admin/audit-logs': 'view_reports',
     '/admin/system-health': 'manage_mediciones',
     '/admin/roles': 'manage_roles',
     '/admin/views': 'manage_views',
@@ -216,6 +217,7 @@ const Navbar = () => {
       icon: <Settings size={18} />,
       modules: [
         { label: 'Control Ops', path: '/admin/ops-control', icon: <Siren size={16} /> },
+        { label: 'Auditoría', path: '/admin/audit-logs', icon: <FileSearch size={16} /> },
         { label: 'Salud Sistema', path: '/admin/system-health', icon: <Activity size={16} /> },
         { label: 'Config. WMS', path: '/admin/wms-settings', icon: <Settings size={16} /> },
         { label: 'Mediciones', path: '/admin/mediciones', icon: <Timer size={16} /> },

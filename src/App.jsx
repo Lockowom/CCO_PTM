@@ -57,6 +57,7 @@ import LoginHistory from './pages/Admin/LoginHistory'; // NUEVO
 import WmsSettings from './pages/Admin/WmsSettings'; // NUEVO
 import SystemHealth from './pages/Admin/SystemHealth'; // NUEVO
 import OpsControl from './pages/Admin/OpsControl'; // NUEVO
+import AuditLogs from './pages/Admin/AuditLogs'; // NUEVO
 
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
@@ -110,6 +111,7 @@ const ROUTE_PERMISSIONS = {
   '/admin/wms-settings': ['manage_views'], // NUEVO (Configuración General)
   '/admin/system-health': ['manage_mediciones'], // NUEVO (Monitoreo)
   '/admin/ops-control': ['manage_users'], // NUEVO (Control de Procesos)
+  '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
   '/admin/data-import': ['manage_data_import'],
   '/admin/cleanup': ['manage_cleanup']
 };
@@ -312,6 +314,7 @@ function AppContent() {
           <Route path="admin/wms-settings" element={<WmsSettings />} />
           <Route path="admin/system-health" element={<SystemHealth />} />
           <Route path="admin/ops-control" element={<OpsControl />} />
+          <Route path="admin/audit-logs" element={<AuditLogs />} />
         </Route>
 
         {/* Fallback */}
