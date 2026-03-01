@@ -57,7 +57,7 @@ import Roles from './pages/Admin/Roles';
 import Views from './pages/Admin/Views';
 import Mediciones from './pages/Admin/Mediciones';
 import DataImport from './pages/Admin/DataImport';
-import Cleanup from './pages/Admin/Cleanup';
+import Cleanup from './pages/Admin/Cleanup'; // NUEVO
 import TimeReports from './pages/Admin/TimeReports';
 import Tickets from './pages/Admin/Tickets';
 import UsuariosActivos from './pages/Admin/UsuariosActivos'; // NUEVO
@@ -124,7 +124,7 @@ const ROUTE_PERMISSIONS = {
   '/admin/mediciones': ['manage_mediciones'],
   '/admin/reports': ['view_reports'],
   '/admin/time-reports': ['view_time_reports'],
-  '/admin/tickets': ['manage_tickets'],
+  '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
   '/admin/active-users': ['manage_users'], // NUEVO (usa permiso de usuarios)
   '/admin/login-history': ['manage_users'], // NUEVO
   '/admin/wms-settings': ['manage_views'], // NUEVO (Configuración General)
@@ -132,7 +132,7 @@ const ROUTE_PERMISSIONS = {
   '/admin/ops-control': ['manage_users'], // NUEVO (Control de Procesos)
   '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
   '/admin/data-import': ['manage_data_import'],
-  '/admin/cleanup': ['manage_cleanup']
+  '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
 };
 
 // Orden de prioridad para la primera ruta disponible
@@ -336,6 +336,7 @@ function AppContent() {
           <Route path="admin/reports" element={<Placeholder title="Reportes Generales" />} />
           <Route path="admin/time-reports" element={<TimeReports />} />
           <Route path="admin/tickets" element={<Tickets />} />
+          <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/active-users" element={<UsuariosActivos />} />
           <Route path="admin/login-history" element={<LoginHistory />} />
           <Route path="admin/wms-settings" element={<WmsSettings />} />

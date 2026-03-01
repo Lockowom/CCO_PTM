@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../supabase';
 import { Trash2, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 
 const Cleanup = () => {
