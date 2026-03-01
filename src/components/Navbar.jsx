@@ -49,6 +49,7 @@ const Navbar = () => {
     'inbound': ['view_reception', 'view_entry'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
+    'quality': ['view_quality'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_dispatch_control'],
     'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import']
   };
@@ -72,6 +73,7 @@ const Navbar = () => {
     '/inventory/stock': 'view_stock',
     '/inventory/layout': 'view_layout',
     '/inventory/transfers': 'view_transfers',
+    '/quality/inspection': 'view_quality',
     '/queries/batches': 'view_batches',
     '/queries/sales-status': 'view_sales_status',
     '/queries/addresses': 'view_addresses',
@@ -180,6 +182,14 @@ const Navbar = () => {
 
         { label: 'Layout', path: '/inventory/layout', icon: <MapPin size={16} /> },
         { label: 'Transferencias', path: '/inventory/transfers', icon: <ArrowLeftRight size={16} /> }
+      ]
+    },
+    {
+      id: 'quality',
+      label: 'Calidad',
+      icon: <ClipboardCheck size={18} />,
+      modules: [
+        { label: 'Inspección', path: '/quality/inspection', icon: <Eye size={16} /> }
       ]
     },
     {
