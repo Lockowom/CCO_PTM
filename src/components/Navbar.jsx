@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -78,6 +78,8 @@ const Navbar = () => {
     '/inventory/transfers': 'view_transfers',
     '/inventory/cycle-count': 'view_stock',
     '/quality/inspection': 'view_quality',
+    '/analytics': 'view_reports',
+    '/analytics/tv': 'view_reports',
     '/queries/kardex': 'view_stock',
     '/queries/productivity': 'view_reports',
     '/queries/batches': 'view_batches',
@@ -204,6 +206,15 @@ const Navbar = () => {
       icon: <ClipboardCheck size={18} />,
       modules: [
         { label: 'Inspección', path: '/quality/inspection', icon: <Eye size={16} /> }
+      ]
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: <FileBarChart size={18} />,
+      modules: [
+        { label: 'Reportes', path: '/analytics', icon: <FileText size={16} /> },
+        { label: 'Modo TV (Live)', path: '/analytics/tv', icon: <Monitor size={16} /> }
       ]
     },
     {

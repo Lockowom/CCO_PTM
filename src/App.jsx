@@ -8,6 +8,8 @@ import { Lock } from 'lucide-react';
 // Login & Dashboard
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics/Analytics';
+import WarehouseTV from './pages/Analytics/WarehouseTV'; // NUEVO
 
 // TMS Modules
 import RoutePlanning from './pages/TMS/RoutePlanning';
@@ -67,6 +69,10 @@ import AuditLogs from './pages/Admin/AuditLogs'; // NUEVO
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
   '/dashboard': ['view_dashboard'],
+
+  // Analytics
+  '/analytics': ['view_reports'],
+  '/analytics/tv': ['view_reports'], // NUEVO (Pantalla TV)
 
   // TMS
   '/tms/dashboard': ['view_tms_dashboard'],
@@ -273,6 +279,8 @@ function AppContent() {
           {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
           <Route index element={<SmartRedirect />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="analytics/tv" element={<WarehouseTV />} />
 
           {/* TMS Modules */}
           <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
