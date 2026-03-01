@@ -56,7 +56,8 @@ const RolesPage = () => {
       permissions: [
         { id: 'view_reception', label: 'Ver Recepciones' },
         { id: 'process_reception', label: 'Procesar Recepciones' },
-        { id: 'view_entry', label: 'Ver Ingresos' },
+        { id: 'view_returns', label: 'Ver Devoluciones' },
+        { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
         { id: 'process_entry', label: 'Procesar Ingresos' }
       ]
     },
@@ -88,7 +89,8 @@ const RolesPage = () => {
         { id: 'view_layout', label: 'Ver Layout Bodega' },
         { id: 'manage_layout', label: 'Editar Layout' },
         { id: 'view_transfers', label: 'Ver Transferencias' },
-        { id: 'manage_transfers', label: 'Gestionar Transferencias' }
+        { id: 'manage_transfers', label: 'Gestionar Transferencias' },
+        { id: 'view_cycle_count', label: 'Conteos Cíclicos' }
       ]
     },
     {
@@ -96,12 +98,33 @@ const RolesPage = () => {
       label: 'Consultas',
       icon: <Search size={16} />,
       permissions: [
+        { id: 'view_kardex', label: 'Ver Kardex (Trazabilidad)' },
+        { id: 'view_productivity', label: 'Ver Rendimiento' },
         { id: 'view_historial_nv', label: 'Ver Historial N.V.' },
+        { id: 'view_dispatch_control', label: 'Control Despacho' },
         { id: 'view_batches', label: 'Ver Lotes/Series' },
         { id: 'view_sales_status', label: 'Ver Estado N.V.' },
         { id: 'view_addresses', label: 'Ver Direcciones' },
         { id: 'view_locations', label: 'Ver Ubicaciones' },
         { id: 'export_data', label: 'Exportar Datos (CSV)' }
+      ]
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: <FileBarChart size={16} />,
+      permissions: [
+        { id: 'view_reports', label: 'Ver Reportes y KPIs' },
+        { id: 'view_tv_mode', label: 'Ver Modo TV (Live)' }
+      ]
+    },
+    {
+      id: 'quality',
+      label: 'Calidad',
+      icon: <Check size={16} />,
+      permissions: [
+        { id: 'view_quality', label: 'Ver Inspecciones' },
+        { id: 'manage_quality', label: 'Gestionar Calidad' }
       ]
     },
     {
