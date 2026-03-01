@@ -1,7 +1,19 @@
 import React from 'react';
 import { FileText, Download, Filter, Calendar } from 'lucide-react';
+import AreaChart from '../../components/Charts/AreaChart';
 
 const Analytics = () => {
+  // Datos simulados para el gráfico de tendencias
+  const trendData = [
+    { name: 'Ene', value: 4000 },
+    { name: 'Feb', value: 3000 },
+    { name: 'Mar', value: 5000 },
+    { name: 'Abr', value: 2780 },
+    { name: 'May', value: 1890 },
+    { name: 'Jun', value: 2390 },
+    { name: 'Jul', value: 3490 },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end border-b border-slate-200 pb-4">
@@ -13,6 +25,14 @@ const Analytics = () => {
             REPORTES Y ANALÍTICA
           </h2>
           <p className="text-slate-500 text-sm mt-1 font-medium ml-1">Descarga de informes históricos y KPIs</p>
+        </div>
+      </div>
+
+      {/* Gráfico de Tendencias */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Tendencia de Operaciones (Semestral)</h3>
+        <div className="h-64">
+            <AreaChart data={trendData} dataKey="value" color="#8b5cf6" height={250} />
         </div>
       </div>
 

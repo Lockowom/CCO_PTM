@@ -4,25 +4,7 @@ import {
   ArrowUpRight, ArrowDownLeft, Move, Download, RefreshCw 
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import BarChart from '../../components/Charts/BarChart';
 
 const Stock = () => {
   const [activeTab, setActiveTab] = useState('products'); // products | movements
@@ -92,36 +74,15 @@ const Stock = () => {
   );
 
   // Configuración del Gráfico
-  const chartData = {
-    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-    datasets: [
-      {
-        label: 'Entradas',
-        data: [12, 19, 3, 5, 2, 3, 10],
-        backgroundColor: 'rgba(16, 185, 129, 0.5)',
-        borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Salidas',
-        data: [2, 3, 20, 5, 1, 4, 7],
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: false },
-    },
-    scales: {
-      y: { beginAtZero: true }
-    }
-  };
+  const chartData = [
+    { name: 'Lun', entradas: 12, salidas: 2 },
+    { name: 'Mar', entradas: 19, salidas: 3 },
+    { name: 'Mié', entradas: 3, salidas: 20 },
+    { name: 'Jue', entradas: 5, salidas: 5 },
+    { name: 'Vie', entradas: 2, salidas: 1 },
+    { name: 'Sáb', entradas: 3, salidas: 4 },
+    { name: 'Dom', entradas: 10, salidas: 7 },
+  ];
 
   return (
     <div className="space-y-6 min-h-screen bg-slate-50/50 p-6">
@@ -299,7 +260,14 @@ const Stock = () => {
               <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="font-bold text-slate-700 mb-4">Actividad Reciente</h3>
                 <div className="h-64">
-                  <Bar data={chartData} options={chartOptions} />
+                  <BarChart 
+                    data={chartData} 
+                    multipleKeys={[
+                        { key: 'entradas', label: 'Entradas', color: '#10b981' },
+                        { key: 'salidas', label: 'Salidas', color: '#ef4444' }
+                    ]}
+                    height={250}
+                  />
                 </div>
               </div>
               

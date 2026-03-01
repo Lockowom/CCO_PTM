@@ -19,22 +19,10 @@ import {
   TrendingUp,
   AlertTriangle
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar
-} from 'recharts';
 import { supabase } from '../supabase';
 import gsap from 'gsap';
+import BarChart from '../components/Charts/BarChart';
+import PieChart from '../components/Charts/PieChart';
 
 // --- CONFIGURACIÓN DE ESTADOS ---
 const ESTADOS_NV = [
@@ -283,6 +271,11 @@ const Dashboard = () => {
             <span className="text-xs font-medium text-slate-400">Tiempo Real</span>
           </div>
           
+          {/* GRÁFICO UNIFICADO */}
+          <div className="mb-6">
+             <BarChart data={chartData} dataKey="valor" color="#6366f1" height={200} />
+          </div>
+
           <div className="flex flex-wrap md:flex-nowrap justify-between gap-4 px-2">
             <PipelineStep label="Pendiente" value={kpis.pendientes} color="bg-slate-500" icon={<Hourglass size={20}/>} />
             <PipelineStep label="Picking" value={kpis.picking} color="bg-cyan-500" icon={<Hand size={20}/>} />

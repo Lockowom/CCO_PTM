@@ -16,24 +16,11 @@ import {
   Box,
   Target
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
-} from 'recharts';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
+import AreaChart from '../../components/Charts/AreaChart';
+import BarChart from '../../components/Charts/BarChart';
+import PieChart from '../../components/Charts/PieChart';
 
 // Componentes Auxiliares
 const StatCard = ({ title, value, icon, trend, color, subtitle, delay }) => {
@@ -259,24 +246,7 @@ const DashboardWMS = () => {
             </h3>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={pickingData}>
-                <defs>
-                  <linearGradient id="colorPicks" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
-                  cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
-                />
-                <Area type="monotone" dataKey="picks" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPicks)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <AreaChart data={pickingData} dataKey="picks" color="#10b981" height={300} />
           </div>
         </div>
 
@@ -324,15 +294,14 @@ const DashboardWMS = () => {
             </h3>
           </div>
           <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ocupacionData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#64748b', fontWeight: 600}} width={80} />
-                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px' }} />
-                <Bar dataKey="ocupado" name="Ocupado %" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart 
+              data={ocupacionData} 
+              dataKey="ocupado" 
+              xKey="name" 
+              color="#6366f1" 
+              height={250}
+              layout="vertical"
+            />
           </div>
         </div>
 
@@ -343,25 +312,17 @@ const DashboardWMS = () => {
           </div>
           
           <div className="relative w-48 h-48 flex items-center justify-center">
-            {/* Simple Pie Chart Placeholder */}
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Correctos', value: 98, color: '#10b981' },
-                    { name: 'Errores', value: 2, color: '#f43f5e' },
-                  ]}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  <Cell fill="#10b981" />
-                  <Cell fill="#f43f5e" />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {/* Simple Pie Chart */}
+            <PieChart 
+              data={[
+                { name: 'Correctos', value: 98, color: '#10b981' },
+                { name: 'Errores', value: 2, color: '#f43f5e' },
+              ]}
+              height={192} // 48 * 4
+              innerRadius={60}
+              outerRadius={80}
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
               <span className="text-3xl font-black text-slate-800">98%</span>
               <span className="text-[10px] font-bold text-emerald-500 uppercase">Precisión</span>
             </div>
