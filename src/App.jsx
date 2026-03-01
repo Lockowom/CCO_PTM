@@ -29,6 +29,7 @@ import Shipping from './pages/Outbound/Shipping';
 import Stock from './pages/Inventory/Stock';
 import InventoryLayout from './pages/Inventory/Layout';
 import DashboardWMS from './pages/Inventory/DashboardWMS';
+import Transfers from './pages/Inventory/Transfers';
 
 // Queries Modules
 import Batches from './pages/Queries/Batches';
@@ -269,7 +270,7 @@ function AppContent() {
           <Route path="inventory/dashboard" element={<DashboardWMS />} />
           <Route path="inventory/stock" element={<Stock />} />
           <Route path="inventory/layout" element={<InventoryLayout />} />
-          <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
+          <Route path="inventory/transfers" element={<Transfers />} />
 
           {/* Queries Modules */}
           <Route path="queries/batches" element={<Batches />} />
