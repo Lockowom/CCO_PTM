@@ -17,6 +17,7 @@ import Drivers from './pages/TMS/Drivers';
 import ControlTower from './pages/TMS/ControlTower';
 import MobileApp from './pages/TMS/MobileApp';
 import YardManagement from './pages/TMS/YardManagement'; // NUEVO
+import WarehousePDA from './pages/Mobile/WarehousePDA'; // NUEVO
 
 // Inbound Modules
 import Reception from './pages/Inbound/Reception';
@@ -81,6 +82,7 @@ const ROUTE_PERMISSIONS = {
   '/tms/drivers': ['view_drivers', 'manage_drivers'],
   '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
   '/tms/yard': ['view_control_tower'], // NUEVO (Usa permiso de torre de control)
+  '/mobile/pda': ['view_stock', 'manage_inventory'], // NUEVO (Permisos de stock)
 
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
@@ -289,6 +291,7 @@ function AppContent() {
           <Route path="tms/drivers" element={<Drivers />} />
           <Route path="tms/mobile" element={<MobileApp />} />
           <Route path="tms/yard" element={<YardManagement />} />
+          <Route path="mobile/pda" element={<WarehousePDA />} />
 
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<Reception />} />

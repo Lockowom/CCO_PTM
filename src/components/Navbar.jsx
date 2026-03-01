@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -81,6 +81,7 @@ const Navbar = () => {
     '/analytics': 'view_reports',
     '/analytics/tv': 'view_reports',
     '/queries/kardex': 'view_stock',
+    '/mobile/pda': 'view_stock',
     '/queries/productivity': 'view_reports',
     '/queries/batches': 'view_batches',
     '/queries/sales-status': 'view_sales_status',
@@ -231,6 +232,11 @@ const Navbar = () => {
         { label: 'Direcciones', path: '/queries/addresses', icon: <MapPin size={16} /> },
         { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPinned size={16} /> }
       ]
+    },
+    {
+      label: 'Operación PDA',
+      path: '/mobile/pda',
+      icon: <Scan size={18} />
     },
     {
       id: 'admin',
