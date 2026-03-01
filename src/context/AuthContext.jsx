@@ -49,12 +49,43 @@ export const AuthProvider = ({ children }) => {
 
   // FUNCIÓN PÚBLICA: Refrescar permisos (llamar desde Roles.jsx)
   const refreshPermissions = useCallback(async () => {
+    // Si hay usuario logueado, recargar sus permisos
     if (user?.rol) {
       console.log('🔄 Refrescando permisos...');
       const perms = await loadPermissions(user.rol);
+      
+      // Notificar a otras pestañas/componentes (opcional)
+      // window.dispatchEvent(new Event('permissions_updated'));
+      
       return perms;
     }
     return [];
+  }, [user?.rol, loadPermissions]);
+
+  // SUSCRIPCIÓN GLOBAL A CAMBIOS DE ROLES
+  useEffect(() => {
+    if (!user?.rol) return;
+
+    const channel = supabase
+      .channel('roles_changes_global')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tms_roles' },
+        async (payload) => {
+          console.log('🎭 Cambio detectado en Roles (DB):', payload);
+          
+          // Si el rol modificado es el mío, recargar permisos
+          if (payload.new && payload.new.id === user.rol) {
+             console.log('🔄 Mi rol fue actualizado, recargando permisos...');
+             await loadPermissions(user.rol);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.rol, loadPermissions]);
 
   // Restaurar sesión al iniciar
