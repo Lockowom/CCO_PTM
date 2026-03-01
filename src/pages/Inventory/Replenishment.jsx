@@ -5,6 +5,7 @@ import {
   MapPin, Truck, History
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { InventoryService } from '../../services/inventoryService'; // NUEVO
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -77,10 +78,33 @@ const Replenishment = () => {
     }
   };
 
-  const confirmTask = (taskId) => {
+  const confirmTask = async (task) => {
     if (confirm('¿Confirmar movimiento físico completado?')) {
-      setTasks(prev => prev.filter(t => t.id !== taskId));
-      alert('Stock actualizado en ubicación de picking.');
+      setLoading(true);
+      try {
+        // Usar servicio transaccional para mover el stock
+        const result = await InventoryService.moveStock({
+            sku: task.sku,
+            batch: 'BATCH-DEFAULT', // En un caso real vendría de la tarea
+            fromLoc: task.origen,
+            toLoc: task.destino,
+            qty: task.cantidad,
+            userId: 'user-uuid', // Debería venir de auth context
+            reason: 'REPLENISHMENT'
+        });
+
+        if (result.success) {
+            setTasks(prev => prev.filter(t => t.id !== task.id));
+            alert('✅ Stock actualizado correctamente en ubicación de picking.');
+        } else {
+            alert('❌ Error al mover stock: ' + result.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -207,7 +231,7 @@ const Replenishment = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button 
-                        onClick={() => confirmTask(task.id)}
+                        onClick={() => confirmTask(task)}
                         className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-emerald-200 transition-all flex items-center gap-2 mx-auto"
                       >
                         <CheckCircle size={14} /> CONFIRMAR

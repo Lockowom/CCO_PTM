@@ -20,7 +20,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-
+import { InventoryService } from '../../services/inventoryService'; // NUEVO
 import { useAuth } from '../../context/AuthContext'; // Importar contexto de usuario
 
 const Picking = () => {
@@ -305,7 +305,7 @@ const Picking = () => {
         nuevoEstadoGlobal = 'Pendiente Picking'; // Mantiene estado para segunda vuelta
       }
 
-      // 2. Actualizar cada ítem individualmente
+      // 2. Actualizar cada ítem individualmente y MOVER STOCK
       const updates = items.map(async (item) => {
         const state = itemsPickingStatus[item.id];
         let qtyReal = 0;
@@ -313,8 +313,30 @@ const Picking = () => {
 
         if (state.status === 'COMPLETO') {
           qtyReal = item.cantidad;
+          // MOVIMIENTO FÍSICO DE STOCK
+          await InventoryService.moveStock({
+            sku: item.codigo_producto,
+            batch: 'PICKING-BATCH', // Idealmente vendría de una selección de lote
+            fromLoc: 'PICKING-ZONA', // Debería venir de la ubicación del item
+            toLoc: 'PACKING-STATION', 
+            qty: item.cantidad,
+            userId: user.id,
+            reason: `PICKING NV: ${nvActiva.nv}`
+          });
+
         } else if (state.status === 'PARCIAL') {
           qtyReal = parseInt(state.cantidad);
+          // MOVIMIENTO PARCIAL
+          await InventoryService.moveStock({
+            sku: item.codigo_producto,
+            batch: 'PICKING-BATCH',
+            fromLoc: 'PICKING-ZONA',
+            toLoc: 'PACKING-STATION',
+            qty: qtyReal,
+            userId: user.id,
+            reason: `PICKING PARCIAL NV: ${nvActiva.nv}`
+          });
+
         } else if (state.status === 'ESPERA') {
           qtyReal = 0; // No se ha recolectado nada aún
           itemStatus = null; // Resetear status del item para que el siguiente picker lo vea pendiente

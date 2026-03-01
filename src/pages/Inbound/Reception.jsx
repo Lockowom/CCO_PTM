@@ -5,6 +5,8 @@ import {
   Camera, Upload, XCircle, Printer, Search
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { InventoryService } from '../../services/inventoryService';
+import { LabelPrinter } from '../../services/labelPrinter'; // NUEVO
 import gsap from 'gsap';
 
 // Generador de ID aleatorio para LPN (License Plate Number)
@@ -104,6 +106,22 @@ const Reception = () => {
     );
   };
 
+  // Imprimir etiqueta individual
+  const printItemLabel = async (item) => {
+    const result = await LabelPrinter.printLabel({
+        sku: item.codigo,
+        desc: 'Producto Recibido',
+        batch: item.lpn,
+        qty: item.cantidad
+    });
+    
+    if (result.success) {
+        alert('🖨️ Etiqueta enviada a impresión');
+    } else {
+        alert('Error impresión: ' + result.message);
+    }
+  };
+
   const removeScannedItem = (id) => {
     setScannedItems(scannedItems.filter(i => i.id !== id));
   };
@@ -135,10 +153,30 @@ const Reception = () => {
 
       if (receptionError) throw receptionError;
 
-      // Aquí idealmente guardaríamos el detalle en una tabla 'tms_recepciones_detalle'
-      // con los LPNs generados para trazabilidad futura.
+      // 2. Mover stock físicamente (Crear inventario inicial)
+      // Iteramos sobre los items escaneados para crear el stock real
+      const movePromises = scannedItems.map(item => 
+        InventoryService.moveStock({
+          sku: item.codigo,
+          batch: item.lpn, // Usamos el LPN como lote/identificador único
+          fromLoc: 'PROVEEDOR', // Origen virtual
+          toLoc: 'RECEPCION', // Destino físico inicial
+          qty: item.cantidad,
+          userId: 'user-uuid', // Debería venir de auth context
+          reason: `RECEPCION OC: ${form.ordenCompra}`
+        })
+      );
+
+      const results = await Promise.all(movePromises);
       
-      alert(`Recepción #${receptionData.id} guardada exitosamente con ${scannedItems.length} bultos.`);
+      // Verificar si hubo errores
+      const errors = results.filter(r => !r.success);
+      if (errors.length > 0) {
+        console.warn('Algunos items no se pudieron ingresar al inventario:', errors);
+        alert(`Atención: ${errors.length} items tuvieron problemas al ingresar al stock.`);
+      } else {
+        alert(`Recepción #${receptionData.id} guardada exitosamente. Stock creado.`);
+      }
       
       // Reset
       setForm({ proveedor: '', ordenCompra: '', notas: '' });
@@ -345,7 +383,11 @@ const Reception = () => {
                       </div>
 
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Imprimir Etiqueta LPN">
+                        <button 
+                            onClick={() => printItemLabel(item)}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" 
+                            title="Imprimir Etiqueta LPN"
+                        >
                           <Printer size={18} />
                         </button>
                         <button onClick={() => removeScannedItem(item.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
