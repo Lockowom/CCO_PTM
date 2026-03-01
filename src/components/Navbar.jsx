@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import {
   LayoutDashboard, Map, Satellite, Users, Smartphone,
-  ArrowDownToLine, Truck, PackagePlus,
+  ArrowDownToLine, Truck,
   ArrowUpFromLine, FileText, Hand, Package, Ship,
   Warehouse, MapPin, ArrowLeftRight,
   Search, Barcode, MapPinned,
@@ -74,6 +74,7 @@ const Navbar = () => {
     '/inventory/dashboard': 'view_stock',
     '/inventory/stock': 'view_stock',
     '/inventory/layout': 'view_layout',
+    '/inventory/replenishment': 'view_stock',
     '/inventory/transfers': 'view_transfers',
     '/inventory/cycle-count': 'view_stock',
     '/quality/inspection': 'view_quality',
@@ -190,6 +191,7 @@ const Navbar = () => {
         { label: 'Stock', path: '/inventory/stock', icon: <Package size={16} /> },
 
         { label: 'Layout', path: '/inventory/layout', icon: <MapPin size={16} /> },
+        { label: 'Reabastecer', path: '/inventory/replenishment', icon: <Layers size={16} /> },
         { label: 'Transferencias', path: '/inventory/transfers', icon: <ArrowLeftRight size={16} /> },
         { label: 'Inv. Cíclico', path: '/inventory/cycle-count', icon: <RotateCcw size={16} /> }
       ]

@@ -33,6 +33,7 @@ import InventoryLayout from './pages/Inventory/Layout';
 import DashboardWMS from './pages/Inventory/DashboardWMS';
 import Transfers from './pages/Inventory/Transfers';
 import CycleCount from './pages/Inventory/CycleCount';
+import Replenishment from './pages/Inventory/Replenishment'; // NUEVO
 
 // Quality Control Modules
 import Inspection from './pages/QualityControl/Inspection';
@@ -90,6 +91,8 @@ const ROUTE_PERMISSIONS = {
   '/inventory/stock': ['view_stock', 'manage_stock'],
   '/inventory/layout': ['view_layout', 'manage_layout'],
   '/inventory/transfers': ['view_transfers', 'manage_transfers'],
+  '/inventory/cycle-count': ['view_stock', 'manage_inventory'],
+  '/inventory/replenishment': ['view_stock', 'manage_inventory'], // NUEVO (Usa mismos permisos que stock)
 
   // Quality Control
   '/quality/inspection': ['view_quality', 'process_quality'],
@@ -293,6 +296,7 @@ function AppContent() {
           <Route path="inventory/layout" element={<InventoryLayout />} />
           <Route path="inventory/transfers" element={<Transfers />} />
           <Route path="inventory/cycle-count" element={<CycleCount />} />
+          <Route path="inventory/replenishment" element={<Replenishment />} />
 
           {/* Quality Control Modules */}
           <Route path="quality/inspection" element={<Inspection />} />
