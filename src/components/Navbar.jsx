@@ -317,13 +317,13 @@ const Navbar = () => {
                 {/* Dropdown */}
                 {!item.isLink && activeDropdown === item.id && (
                   <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 z-50">
-                    {item.modules.filter(m => canAccessRoute(m.path, item.id)).length === 0 ? (
+                    {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).length === 0 ? (
                       <div className="px-3 py-4 text-center text-slate-400 text-xs">
                         <Lock size={14} className="mx-auto mb-1" />
                         Sin acceso
                       </div>
                     ) : (
-                      item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
+                      (item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                         <Link
                           key={module.path}
                           to={module.path}
@@ -495,7 +495,7 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
           
           {activeDropdown === item.id && (
             <div className="ml-4 pl-4 border-l-2 border-slate-100 space-y-1 my-2 animate-in slide-in-from-left-2 fade-in duration-200">
-              {item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
+              {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                 <Link
                   key={module.path}
                   to={module.path}
