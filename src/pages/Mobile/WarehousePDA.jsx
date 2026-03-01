@@ -8,6 +8,8 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import gsap from 'gsap';
 
+import { toast } from 'sonner';
+
 // ============================================================================
 // WMS PDA / HANDHELD MODE
 // Diseñado para pantallas de 320px - 480px (Zebra TC21, Honeywell, etc.)
@@ -17,7 +19,6 @@ const WarehousePDA = () => {
   const { user, signOut } = useAuth();
   const [mode, setMode] = useState('HOME'); // HOME, PICKING, PUTAWAY, INVENTORY
   const [scannedValue, setScannedValue] = useState('');
-  const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
   
   // PICKING STATE
   const [activeTask, setActiveTask] = useState(null);
@@ -42,7 +43,7 @@ const WarehousePDA = () => {
   // Simular carga de tarea
   const loadPickingTask = async () => {
     // En producción: WmsIntelligence.getNextTask(user.id)
-    setStatusMsg({ type: 'INFO', text: 'Buscando tarea...' });
+    toast.loading('Buscando tarea...');
     setTimeout(() => {
       setActiveTask({
         id: 'TASK-9901',
@@ -55,7 +56,8 @@ const WarehousePDA = () => {
       });
       setMode('PICKING');
       setPickStep('SCAN_LOC');
-      setStatusMsg({ type: '', text: '' });
+      toast.dismiss();
+      toast.success('Nueva tarea asignada');
     }, 800);
   };
 
@@ -74,19 +76,19 @@ const WarehousePDA = () => {
         if (val === activeTask.location) {
           playSound('success');
           setPickStep('SCAN_SKU');
-          setStatusMsg({ type: 'SUCCESS', text: 'Ubicación Correcta' });
+          toast.success('Ubicación Correcta');
         } else {
           playSound('error');
-          setStatusMsg({ type: 'ERROR', text: 'Ubicación Incorrecta' });
+          toast.error('Ubicación Incorrecta');
         }
       } else if (pickStep === 'SCAN_SKU') {
         if (val === activeTask.sku || val === activeTask.batch) {
           playSound('success');
           setPickStep('CONFIRM_QTY');
-          setStatusMsg({ type: 'SUCCESS', text: 'Producto Correcto' });
+          toast.success('Producto Correcto');
         } else {
           playSound('error');
-          setStatusMsg({ type: 'ERROR', text: 'Producto Incorrecto' });
+          toast.error('Producto Incorrecto');
         }
       }
     }
@@ -95,11 +97,11 @@ const WarehousePDA = () => {
   const confirmQty = (qty) => {
     if (parseInt(qty) === activeTask.qty_needed) {
       playSound('success');
-      alert('TAREA COMPLETADA');
+      toast.success('TAREA COMPLETADA');
       setActiveTask(null);
       setMode('HOME');
     } else {
-      alert('Cantidad difiere. ¿Confirmar faltante?');
+      toast.warning('Cantidad difiere. ¿Confirmar faltante?');
     }
   };
 
@@ -181,11 +183,8 @@ const WarehousePDA = () => {
         </div>
 
         {/* Status Bar */}
-        <div className={`p-2 text-center text-sm font-bold transition-colors ${
-          statusMsg.type === 'ERROR' ? 'bg-red-600' : 
-          statusMsg.type === 'SUCCESS' ? 'bg-emerald-600' : 'bg-slate-800'
-        }`}>
-          {statusMsg.text || 'ESPERANDO ESCANEO...'}
+        <div className="p-2 text-center text-sm font-bold transition-colors bg-slate-800">
+          ESPERANDO ESCANEO...
         </div>
 
         {/* Main Info */}

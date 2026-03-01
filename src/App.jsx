@@ -352,9 +352,12 @@ function AppContent() {
   );
 }
 
+import { Toaster } from 'sonner';
+
 function App() {
   return (
     <AuthProvider>
+      <Toaster richColors position="top-right" />
       <AppContent />
     </AuthProvider>
   );
