@@ -99,11 +99,9 @@ const ViewsPage = () => {
       if (error) throw error;
 
       console.log('✅ Módulo actualizado en BD');
-
-      // ⭐⭐⭐ ACTUALIZAR EL MENÚ INSTANTÁNEAMENTE ⭐⭐⭐
-      console.log('🔄 Actualizando menú...');
+      // La actualización en Navbar ocurre vía Realtime (ConfigContext)
+      // Pero forzamos un refresh local por si acaso
       await refreshConfig();
-      console.log('✅ Menú actualizado');
 
     } catch (error) {
       console.error('❌ Error:', error);

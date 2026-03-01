@@ -43,9 +43,26 @@ export const ConfigProvider = ({ children }) => {
     return await loadConfig();
   }, [loadConfig]);
 
-  // Cargar al iniciar
+  // Cargar al iniciar y Suscribirse a cambios Realtime
   useEffect(() => {
     loadConfig();
+
+    // Suscripción Realtime
+    const channel = supabase
+      .channel('config_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tms_modules_config' },
+        (payload) => {
+          console.log('🔔 Cambio detectado en configuración:', payload);
+          loadConfig(); // Recargar configuración automáticamente
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [loadConfig]);
 
   // Verificar si módulo está habilitado
