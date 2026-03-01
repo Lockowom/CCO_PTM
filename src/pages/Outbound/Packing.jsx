@@ -24,8 +24,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-
-import { useAuth } from '../../context/AuthContext'; // Importar contexto
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner'; // Importar Sonner
 
 const Packing = () => {
   const { user } = useAuth(); // Usar usuario real
@@ -263,7 +263,7 @@ const Packing = () => {
   const iniciarPacking = async (nv) => {
     // Verificar si ya está asignada a otro usuario
     if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
-      alert(`⚠️ Esta N.V. ya está siendo procesada por: ${nv.usuario_nombre}`);
+      toast.warning(`⚠️ Esta N.V. ya está siendo procesada por: ${nv.usuario_nombre}`);
       return;
     }
 
@@ -341,7 +341,7 @@ const Packing = () => {
 
     // Validación de campos obligatorios
     if (!formData.bultos || !formData.pallets || !formData.peso) {
-      alert("Debes completar Bultos, Pallets y Peso antes de finalizar.");
+      toast.error("Debes completar Bultos, Pallets y Peso antes de finalizar.");
       return;
     }
     
@@ -349,6 +349,8 @@ const Packing = () => {
     const ocioFinal = tiempoOcio;
     
     try {
+      toast.loading('Finalizando packing...');
+
       // 1. Actualizar N.V. con datos de despacho y estado LISTO_DESPACHO
       await supabase
         .from('tms_nv_diarias')
@@ -404,11 +406,14 @@ const Packing = () => {
       setVista('clientes');
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       
+      toast.dismiss();
+      toast.success(`Packing finalizado. N.V. #${nvActiva.nv} lista para despacho.`);
       await fetchData();
       
     } catch (error) {
+      toast.dismiss();
       console.error('Error:', error);
-      alert('Error al finalizar packing: ' + error.message);
+      toast.error('Error al finalizar: ' + error.message);
     }
   };
 
@@ -444,12 +449,13 @@ const Packing = () => {
   // Devolver a Picking (Error detectado)
   const handleDevolverPicking = async () => {
     if (!motivoDevolucion.trim()) {
-      alert("Debes indicar el motivo de la devolución.");
+      toast.warning("Debes indicar el motivo de la devolución.");
       return;
     }
 
     try {
       setLoadingDevolucion(true);
+      toast.loading('Devolviendo a picking...');
 
       // 1. Encontrar quién hizo el Picking (último registro completado)
       const { data: pickingData, error: pickingError } = await supabase
@@ -515,11 +521,13 @@ const Packing = () => {
       setMotivoDevolucion('');
       
       await fetchData();
-      alert(`N.V. #${nvActiva.nv} devuelta a Picking correctamente.`);
+      toast.dismiss();
+      toast.success(`N.V. #${nvActiva.nv} devuelta a Picking correctamente.`);
 
     } catch (error) {
+      toast.dismiss();
       console.error('Error al devolver:', error);
-      alert('Error al devolver a Picking: ' + error.message);
+      toast.error('Error al devolver a Picking: ' + error.message);
     } finally {
       setLoadingDevolucion(false);
     }
