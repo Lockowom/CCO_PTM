@@ -64,6 +64,7 @@ const Navbar = () => {
     '/tms/drivers': 'view_drivers',
     '/tms/mobile': 'view_mobile_app',
     '/inbound/reception': 'view_reception',
+    '/inbound/returns': 'view_reception',
     '/inbound/entry': 'view_entry',
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
@@ -164,7 +165,8 @@ const Navbar = () => {
       icon: <ArrowDownToLine size={18} />,
       modules: [
         { label: 'Recepción', path: '/inbound/reception', icon: <Truck size={16} /> },
-        { label: 'Ingreso', path: '/inbound/entry', icon: <PackagePlus size={16} /> }
+        { label: 'Devoluciones', path: '/inbound/returns', icon: <RotateCcw size={16} /> },
+        { label: 'Ingreso (Putaway)', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> }
       ]
     },
     {

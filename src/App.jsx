@@ -19,6 +19,7 @@ import YardManagement from './pages/TMS/YardManagement'; // NUEVO
 // Inbound Modules
 import Reception from './pages/Inbound/Reception';
 import Entry from './pages/Inbound/Entry';
+import Returns from './pages/Inbound/Returns'; // NUEVO
 
 // Outbound Modules
 import SalesOrders from './pages/Outbound/SalesOrders';
@@ -75,6 +76,7 @@ const ROUTE_PERMISSIONS = {
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
+  '/inbound/returns': ['view_reception', 'process_reception'], // Usa mismos permisos que recepción
 
   // Outbound
   '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
@@ -276,6 +278,7 @@ function AppContent() {
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<Reception />} />
           <Route path="inbound/entry" element={<Entry />} />
+          <Route path="inbound/returns" element={<Returns />} />
 
           {/* Outbound Modules */}
           <Route path="outbound/sales-orders" element={<SalesOrders />} />
