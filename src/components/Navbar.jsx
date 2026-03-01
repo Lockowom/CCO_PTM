@@ -68,6 +68,7 @@ const Navbar = () => {
     '/outbound/packing': 'view_packing',
     '/outbound/shipping': 'view_shipping',
     '/outbound/deliveries': 'view_deliveries',
+    '/inventory/dashboard': 'view_stock',
     '/inventory/stock': 'view_stock',
     '/inventory/layout': 'view_layout',
     '/inventory/transfers': 'view_transfers',
@@ -174,7 +175,9 @@ const Navbar = () => {
       label: 'Inventario',
       icon: <Warehouse size={18} />,
       modules: [
+        { label: 'Dashboard WMS', path: '/inventory/dashboard', icon: <LayoutDashboard size={16} /> },
         { label: 'Stock', path: '/inventory/stock', icon: <Package size={16} /> },
+
         { label: 'Layout', path: '/inventory/layout', icon: <MapPin size={16} /> },
         { label: 'Transferencias', path: '/inventory/transfers', icon: <ArrowLeftRight size={16} /> }
       ]

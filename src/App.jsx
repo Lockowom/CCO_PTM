@@ -28,6 +28,7 @@ import Shipping from './pages/Outbound/Shipping';
 // Inventory Modules
 import Stock from './pages/Inventory/Stock';
 import InventoryLayout from './pages/Inventory/Layout';
+import DashboardWMS from './pages/Inventory/DashboardWMS';
 
 // Queries Modules
 import Batches from './pages/Queries/Batches';
@@ -72,6 +73,7 @@ const ROUTE_PERMISSIONS = {
   '/outbound/deliveries': ['view_deliveries', 'process_deliveries'],
 
   // Inventory
+  '/inventory/dashboard': ['view_stock', 'view_layout'], // Permitir si puede ver stock o layout
   '/inventory/stock': ['view_stock', 'manage_stock'],
   '/inventory/layout': ['view_layout', 'manage_layout'],
   '/inventory/transfers': ['view_transfers', 'manage_transfers'],
@@ -264,6 +266,7 @@ function AppContent() {
           <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
 
           {/* Inventory Modules */}
+          <Route path="inventory/dashboard" element={<DashboardWMS />} />
           <Route path="inventory/stock" element={<Stock />} />
           <Route path="inventory/layout" element={<InventoryLayout />} />
           <Route path="inventory/transfers" element={<Placeholder title="Transferencias" />} />
