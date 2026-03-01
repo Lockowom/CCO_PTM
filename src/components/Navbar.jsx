@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -78,6 +78,8 @@ const Navbar = () => {
     '/inventory/transfers': 'view_transfers',
     '/inventory/cycle-count': 'view_stock',
     '/quality/inspection': 'view_quality',
+    '/queries/kardex': 'view_stock',
+    '/queries/productivity': 'view_reports',
     '/queries/batches': 'view_batches',
     '/queries/sales-status': 'view_sales_status',
     '/queries/addresses': 'view_addresses',
@@ -209,6 +211,8 @@ const Navbar = () => {
       label: 'Consultas',
       icon: <Search size={18} />,
       modules: [
+        { label: 'Kardex (Trazabilidad)', path: '/queries/kardex', icon: <History size={16} /> },
+        { label: 'Rendimiento', path: '/queries/productivity', icon: <TrendingUp size={16} /> },
         { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileText size={16} /> },
         { label: 'Control Despacho', path: '/queries/dispatch-control', icon: <Truck size={16} /> },
         { label: 'Lotes/Series', path: '/queries/batches', icon: <Barcode size={16} /> },

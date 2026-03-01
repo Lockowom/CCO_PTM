@@ -45,6 +45,8 @@ import Addresses from './pages/Queries/Addresses';
 import Locations from './pages/Queries/Locations';
 import HistorialNV from './pages/Queries/HistorialNV';
 import DispatchControl from './pages/Queries/DispatchControl';
+import Kardex from './pages/Queries/Kardex'; // NUEVO
+import Productivity from './pages/Queries/Productivity'; // NUEVO
 
 // Admin Modules
 import Users from './pages/Admin/Users';
@@ -104,6 +106,8 @@ const ROUTE_PERMISSIONS = {
   '/queries/locations': ['view_locations'],
   '/queries/historial-nv': ['view_historial_nv'],
   '/queries/dispatch-control': ['view_dispatch_control'],
+  '/queries/kardex': ['view_stock'], // NUEVO (Usa permiso de stock)
+  '/queries/productivity': ['view_reports'], // NUEVO
 
   // Admin (solo ADMIN)
   '/admin/users': ['manage_users'],
@@ -308,6 +312,8 @@ function AppContent() {
           <Route path="queries/locations" element={<Locations />} />
           <Route path="queries/historial-nv" element={<HistorialNV />} />
           <Route path="queries/dispatch-control" element={<DispatchControl />} />
+          <Route path="queries/kardex" element={<Kardex />} />
+          <Route path="queries/productivity" element={<Productivity />} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
