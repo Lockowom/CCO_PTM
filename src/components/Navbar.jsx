@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye
 } from 'lucide-react';
 
 const Navbar = () => {
