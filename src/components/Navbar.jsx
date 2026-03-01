@@ -401,15 +401,17 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <MobileMenu 
-          menuConfig={menuConfig}
-          isSectionVisible={isSectionVisible}
-          canAccessRoute={canAccessRoute}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          setMobileMenuOpen={setMobileMenuOpen}
-          location={location}
-        />
+        <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b-2 border-orange-100 shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+          <MobileMenu 
+            menuConfig={menuConfig}
+            isSectionVisible={isSectionVisible}
+            canAccessRoute={canAccessRoute}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            setMobileMenuOpen={setMobileMenuOpen}
+            location={location}
+          />
+        </div>
       )}
     </header>
   );
