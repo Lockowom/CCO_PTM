@@ -601,35 +601,33 @@ const Picking = () => {
             #{nvActiva?.nv}
           </h1>
           
-          <div className="flex justify-center items-end gap-12 mb-8">
-            <div className="text-center group cursor-default">
-              <div className={`text-6xl font-mono font-bold tracking-tighter tabular-nums transition-colors ${enPausa ? 'text-amber-400' : 'text-cyan-400'}`}>
+          <div className="flex justify-center gap-8 opacity-0 pointer-events-none h-0 overflow-hidden">
+            <div className="text-center">
+              <div className={`text-5xl font-mono font-bold ${enPausa ? 'text-amber-300' : ''}`}>
                 {formatTime(tiempoTranscurrido)}
               </div>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 group-hover:text-cyan-400 transition-colors">Tiempo Activo</p>
+              <p className="text-white/70 text-sm mt-1">Tiempo Activo</p>
             </div>
             
             {tiempoOcio > 0 && (
-              <div className="text-center group cursor-default">
-                <div className="text-3xl font-mono font-bold text-rose-400 tracking-tighter tabular-nums opacity-80">
+              <div className="text-center">
+                <div className="text-3xl font-mono font-bold text-red-300">
                   {formatTime(tiempoOcio)}
                 </div>
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 group-hover:text-rose-400 transition-colors">Inactividad</p>
+                <p className="text-white/70 text-sm mt-1">Tiempo Ocio</p>
               </div>
             )}
           </div>
           
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4 mt-6 opacity-0 pointer-events-none h-0">
             <button
               onClick={togglePausa}
-              className={`px-8 py-3 rounded-2xl font-black flex items-center gap-3 transition-all active:scale-95 shadow-lg ${
-                enPausa 
-                  ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-amber-900/50' 
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600'
+              className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 ${
+                enPausa ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
               }`}
             >
-              {enPausa ? <Play size={20} fill="currentColor" /> : <Pause size={20} fill="currentColor" />}
-              {enPausa ? 'REANUDAR TRABAJO' : 'PAUSAR'}
+              {enPausa ? <Play size={20} /> : <Pause size={20} />}
+              {enPausa ? 'Reanudar' : 'Pausar'}
             </button>
           </div>
         </div>
