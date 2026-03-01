@@ -1,140 +1,96 @@
-# TMS CCO | Control Logístico
+# TMS CCO | Centro de Control Operacional
 
-Sistema de gestión de transporte y logística (TMS) para operaciones de almacén, distribución y despacho.
+Plataforma integral de gestión logística (WMS + TMS) diseñada para optimizar el flujo de operaciones desde la recepción hasta la última milla.
 
-## 🚀 Stack Tecnológico
+## 🚀 Stack Tecnológico (v2.0)
 
-- **React 18** + **Vite** — Frontend moderno y rápido
-- **Supabase** — Base de datos, autenticación y realtime
-- **TailwindCSS** — Estilos utilitarios
-- **React Router v6** — Navegación SPA
-- **Leaflet** — Mapas interactivos
-- **Chart.js / Recharts** — Gráficos y visualizaciones
-- **Lucide React** — Iconografía moderna
+- **Frontend:** React 18 + Vite
+- **Estilos:** TailwindCSS + Glassmorphism UI
+- **Base de Datos:** Supabase (PostgreSQL + Realtime)
+- **Animaciones:** GSAP (GreenSock)
+- **Mapas:** Leaflet
+- **Gráficos:** Recharts
+- **Iconos:** Lucide React
 
-## 📦 Módulos Principales
+## ✨ Novedades Versión 2.0
 
-### 📊 Dashboard & Control
-| Módulo | Descripción |
-|--------|-------------|
-| **Dashboard** | Panel principal con métricas y KPIs en tiempo real |
-| **Torre de Control** | Monitoreo en vivo de entregas y flota |
-| **Usuarios Activos** | **(Nuevo)** Monitor de sesiones en tiempo real (Heartbeat) |
-| **Reportes de Tiempos** | **(Nuevo)** Análisis detallado de productividad (Activo vs Ocio) |
+### 📊 Dashboard Operacional "Bento Grid"
+Nuevo diseño de alta densidad que permite visualizar toda la operación en una sola pantalla:
+- **KPIs Compactos:** Indicadores clave (N.V., Picking, Despacho) con tendencias.
+- **Pipeline Visual:** Gráfico de flujo de pedidos en tiempo real.
+- **Alertas Inteligentes:** Notificaciones inmediatas de quiebres de stock y refacturaciones.
+- **Modo "Command Center":** Actualización automática cada 30 segundos.
 
-### 🚛 Operaciones Logísticas (TMS)
-| Módulo | Descripción |
-|--------|-------------|
-| **Planificación** | Creación y optimización de rutas de reparto |
-| **Conductores** | Gestión de flota y perfiles de choferes |
-| **App Móvil** | **(Actualizado)** Interfaz para conductores con **Escáner QR** y Auto-Login |
+### 🔐 Seguridad y Accesos
+- **Login Animado:** Nueva interfaz de acceso con fondo dinámico y validación segura.
+- **Session Watchdog:** Sistema de monitoreo que cierra sesiones activas si el usuario es desactivado.
+- **RBAC Estricto:** Control de acceso basado en roles (Admin, Bodega, Transporte) a nivel de componente.
+- **Row Level Security (RLS):** Protección de datos a nivel de base de datos.
+
+### 📱 Módulos Mejorados
+- **Picking Inteligente:**
+  - Botón **"Espera Otra Zona"** para pedidos mixtos (pequeño/grande).
+  - Bloqueo de concurrencia para evitar duplicidad de trabajo.
+- **Consulta Maestra:** (Antiguo Historial N.V.) Buscador avanzado con filtros múltiples y detalles expandidos.
+- **Torre de Control:** Visualización de flota en tiempo real con estados de entrega.
+
+## 📦 Módulos del Sistema
 
 ### 📥 Inbound (Entrada)
 | Módulo | Descripción |
 |--------|-------------|
-| **Recepción** | Control de llegada de mercadería |
-| **Entrada** | Registro y ubicación de productos |
+| **Recepción** | Control de llegada de proveedores y validación de OC. |
+| **Ingreso** | Put-away y ubicación de mercadería en racks. |
 
 ### 📤 Outbound (Salida)
 | Módulo | Descripción |
 |--------|-------------|
-| **Notas de Venta** | **(Mejorado)** Gestión agrupada de pedidos con acciones masivas |
-| **Picking** | **(Mejorado)** Interfaz optimizada, bloqueo de usuario y picking parcial |
-| **Packing** | **(Mejorado)** Alertas de picking incompleto y verificación de items |
-| **Despacho** | Generación de rutas y asignación de transporte |
+| **Notas de Venta** | Gestión de pedidos, priorización y liberación a picking. |
+| **Picking** | Preparación de pedidos con validación de ubicación y producto. |
+| **Packing** | Verificación de bultos, etiquetado y control de calidad. |
+| **Despacho** | Asignación de transporte y generación de manifiestos. |
+
+### 🚛 TMS (Transporte)
+| Módulo | Descripción |
+|--------|-------------|
+| **Planificación** | Optimización de rutas y asignación de conductores. |
+| **Torre de Control** | Monitoreo GPS y gestión de incidencias en ruta. |
+| **Conductores** | Gestión de perfiles y disponibilidad de flota. |
 
 ### 🏢 Administración
 | Módulo | Descripción |
 |--------|-------------|
-| **Usuarios y Roles** | Gestión de permisos y accesos |
-| **Configuración** | Control de vistas y parámetros globales |
-| **Soporte TI** | **(Nuevo)** Sistema de tickets y reportes de errores |
-| **Limpieza** | Herramientas para mantenimiento de base de datos |
+| **Usuarios y Roles** | Gestión de accesos y permisos granulares. |
+| **Vistas** | Configuración de interfaces por perfil. |
+| **Reportes** | Análisis de productividad y tiempos de operación. |
 
-## ✨ Características Destacadas
+## 🛠️ Instalación y Despliegue
 
-### 🔒 Seguridad y Control
-- **Bloqueo de Tareas:** Evita que dos usuarios trabajen en la misma N.V. (Picking/Packing).
-- **Auto-Auth Móvil:** La App de conductores detecta automáticamente si el usuario es un conductor válido.
-- **Permisos Granulares:** Control de acceso por rol a nivel de ruta y componente.
+### Requisitos Previos
+- Node.js v18+
+- Cuenta en Supabase
 
-### 📱 App Móvil para Conductores
-- **Escáner QR Integrado:** Uso de cámara para validar entregas.
-- **Modo Offline/Online:** Sincronización automática.
-- **Gestión de Estados:** Confirmación, rechazo (con motivos) y reprogramación.
-- **Responsive:** Interfaz adaptada a cualquier dispositivo móvil.
-
-### ⚡ Eficiencia Operativa
-- **Agrupación Inteligente:** Las N.V. con múltiples items se muestran consolidadas.
-- **Alertas Visuales:** Notificación inmediata en Packing si un pedido viene incompleto.
-- **Medición de Tiempos:** Registro silencioso de tiempos activos y muertos para análisis posterior.
-
-## ⚙️ Configuración
-
-### 1. Clonar el repositorio
+### Desarrollo Local
 ```bash
+# 1. Clonar repositorio
 git clone https://github.com/Lockowom/CCO_PTM.git
-cd CCO_PTM
-```
 
-### 2. Instalar dependencias
-```bash
+# 2. Instalar dependencias
+cd tms-backend-node/CCO_PTM
 npm install
-```
 
-### 3. Configurar variables de entorno
-Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
-```bash
-cp .env.example .env
-```
+# 3. Configurar variables de entorno (.env)
+VITE_SUPABASE_URL=tu_url
+VITE_SUPABASE_KEY=tu_key
 
-Edita `.env` con tus credenciales de Supabase:
-```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_KEY=tu_anon_key_aqui
-```
-
-### 4. Iniciar en desarrollo
-```bash
+# 4. Iniciar servidor
 npm run dev
 ```
-> **Nota:** El proyecto frontend se encuentra en la carpeta raíz `CCO_PTM`. Asegúrate de estar en el directorio correcto.
 
-### 5. Build para producción
+### Producción
 ```bash
 npm run build
 ```
 
-## 📁 Estructura del Proyecto
-
-```
-CCO_PTM/
-├── public/
-├── src/
-│   ├── components/        # Componentes reutilizables (Layout, Navbar, Sidebar, Widgets)
-│   ├── context/           # Contextos (Auth, Config)
-│   ├── hooks/             # Custom hooks
-│   ├── lib/               # Cliente Supabase
-│   ├── pages/             # Páginas organizadas por módulo
-│   │   ├── Admin/         # Usuarios, Roles, Vistas, Mediciones, Tickets, UsuariosActivos
-│   │   ├── Inbound/       # Entrada, Recepción
-│   │   ├── Inventory/     # Stock, Layout
-│   │   ├── Outbound/      # Notas de Venta, Picking, Packing, Despacho
-│   │   ├── Queries/       # Consultas varias
-│   │   └── TMS/           # Torre de Control, Rutas, Conductores, MobileApp
-│   ├── App.jsx            # Rutas y permisos
-│   ├── main.jsx           # Entry point
-│   └── supabase.js        # Config Supabase
-├── .env.example           # Plantilla de variables de entorno
-├── package.json
-├── tailwind.config.js
-└── vite.config.js
-```
-
-## 🌐 Deploy
-
-Consulta [DEPLOY_RENDER.md](./DEPLOY_RENDER.md) para instrucciones de despliegue en Render.
-
 ## 📄 Licencia
-
-Proyecto privado — Todos los derechos reservados.
+Proyecto privado CCO - Todos los derechos reservados 2026.
