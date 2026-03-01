@@ -10,7 +10,7 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -60,6 +60,7 @@ const Navbar = () => {
     '/tms/dashboard': 'view_tms_dashboard',
     '/tms/planning': 'view_routes',
     '/tms/control-tower': 'view_control_tower',
+    '/tms/yard': 'view_control_tower',
     '/tms/drivers': 'view_drivers',
     '/tms/mobile': 'view_mobile_app',
     '/inbound/reception': 'view_reception',
@@ -145,6 +146,7 @@ const Navbar = () => {
         { label: 'Dashboard TMS', path: '/tms/dashboard', icon: <LayoutDashboard size={16} /> },
         { label: 'Planificar Rutas', path: '/tms/planning', icon: <MapPinned size={16} /> },
         { label: 'Torre de Control', path: '/tms/control-tower', icon: <Satellite size={16} /> },
+        { label: 'Gestión Patios', path: '/tms/yard', icon: <Anchor size={16} /> },
         { label: 'Conductores', path: '/tms/drivers', icon: <Users size={16} /> },
         { label: 'App Móvil', path: '/tms/mobile', icon: <Smartphone size={16} /> }
       ]
