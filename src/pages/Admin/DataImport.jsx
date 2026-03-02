@@ -89,7 +89,7 @@ const IMPORT_TABS = [
         icon: Package,
         color: 'emerald',
         table: 'tms_farmapack',
-        uniqueKey: null,
+        uniqueKey: 'codigo_producto, lote', // Clave compuesta para evitar duplicados
         columns: [
             { key: 'codigo_producto', label: 'Código Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -102,7 +102,7 @@ const IMPORT_TABS = [
             { key: 'consignacion', label: 'Consignación', required: false, type: 'number' },
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
         ],
-        helpText: '💊 Pega los datos de Farmapack. Se reemplazarán los registros existentes del mismo código+lote.',
+        helpText: '💊 Pega los datos de Farmapack. Se actualizarán (Upsert) los registros existentes del mismo código+lote.',
         smartDedup: false,
     },
     {
