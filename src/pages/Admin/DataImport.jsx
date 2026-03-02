@@ -101,6 +101,7 @@ const IMPORT_TABS = [
             { key: 'transitoria', label: 'Transitoria', required: false, type: 'number' },
             { key: 'consignacion', label: 'Consignación', required: false, type: 'number' },
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
+            { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
         helpText: '💊 Pega los datos de Farmapack. Se actualizarán (Upsert) los registros existentes del mismo código+lote.',
         smartDedup: false,
