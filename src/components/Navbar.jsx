@@ -277,7 +277,7 @@ const Navbar = () => {
         </Link>
 
         {/* 2. Desktop Navigation (Se oculta progresivamente) */}
-        <nav className="hidden 2xl:flex items-center gap-1 flex-1 justify-center px-2 overflow-hidden">
+        <nav className="hidden xl:flex items-center gap-1 flex-1 justify-center px-2">
           {menuConfig.map((item) => {
             if (!isSectionVisible(item.id)) return null;
 
@@ -357,10 +357,10 @@ const Navbar = () => {
               )}
            </div>
 
-           {/* Mobile Toggle (Visible < 2xl) */}
+           {/* Mobile Toggle (Visible < xl) */}
            <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="2xl:hidden p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl transition-colors"
+            className="xl:hidden p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl transition-colors"
            >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
            </button>
