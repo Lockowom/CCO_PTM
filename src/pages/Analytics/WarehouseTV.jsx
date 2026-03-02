@@ -4,48 +4,33 @@ import {
   BarChart, Activity, Truck, Package, CheckCircle, 
   AlertTriangle, Clock, TrendingUp, Users 
 } from 'lucide-react';
-import { 
-  BarChart as RechartsBar, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, Cell, PieChart, Pie 
-} from 'recharts';
+import BarChartComponent from '../../components/Charts/BarChart'; // Usar componente unificado
 import gsap from 'gsap';
 
 const WarehouseTV = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
-    pendingOrders: 145,
-    completedOrders: 320,
-    pickingProgress: 68,
-    activeUsers: 12,
-    urgentReplenishments: 3,
-    trucksWaiting: 4
+    pendingOrders: 0,
+    completedOrders: 0,
+    pickingProgress: 0,
+    activeUsers: 0,
+    urgentReplenishments: 0,
+    trucksWaiting: 0
   });
 
-  const [hourlyData, setHourlyData] = useState([
-    { hour: '08:00', picks: 45 },
-    { hour: '09:00', picks: 120 },
-    { hour: '10:00', picks: 156 },
-    { hour: '11:00', picks: 190 },
-    { hour: '12:00', picks: 140 },
-    { hour: '13:00', picks: 80 }, // Lunch
-    { hour: '14:00', picks: 165 },
-    { hour: '15:00', picks: 40 }, // Current
-  ]);
-
-  // Colores para gráficos
-  const BAR_COLORS = ['#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
+  const [hourlyData, setHourlyData] = useState([]);
 
   useEffect(() => {
     // Reloj en tiempo real
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    
+    fetchRealData();
 
-    // Suscripción a cambios en tiempo real (Supabase)
+    // Suscripción Realtime para actualizar métricas
     const subscription = supabase
-      .channel('public:dashboard_metrics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, (payload) => {
-        // Simulación: Actualizar métricas al recibir eventos
-        updateStats(payload);
-      })
+      .channel('tv_dashboard_metrics')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => fetchRealData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => fetchRealData())
       .subscribe();
 
     // Animación de entrada
@@ -60,20 +45,75 @@ const WarehouseTV = () => {
     };
   }, []);
 
-  const updateStats = (payload) => {
-    // Lógica para recalcular stats basada en el evento
-    // Por ahora, simulamos una fluctuación aleatoria para demostración visual
-    setStats(prev => ({
-      ...prev,
-      pendingOrders: prev.pendingOrders + (Math.random() > 0.5 ? -1 : 1),
-      pickingProgress: Math.min(100, prev.pickingProgress + 0.1)
-    }));
+  const fetchRealData = async () => {
+    try {
+      // 1. Pedidos Pendientes y Completados
+      const { data: nvData } = await supabase
+        .from('tms_nv_diarias')
+        .select('estado');
+
+      const total = nvData?.length || 0;
+      const pending = nvData?.filter(n => n.estado === 'Pendiente Picking').length || 0;
+      const completed = nvData?.filter(n => n.estado === 'Despachado' || n.estado === 'Entregado').length || 0;
+      const inProcess = nvData?.filter(n => ['Picking', 'Packing'].includes(n.estado)).length || 0;
+      
+      const progress = total > 0 ? Math.round(((completed + inProcess) / total) * 100) : 0;
+
+      // 2. Usuarios Activos (Simulado basado en mediciones recientes - últimos 15 min)
+      const fifteenMinAgo = new Date(Date.now() - 15 * 60000).toISOString();
+      const { count: activeUsers } = await supabase
+        .from('tms_mediciones_tiempos')
+        .select('*', { count: 'exact', head: true })
+        .gte('updated_at', fifteenMinAgo);
+
+      // 3. Picking por Hora (Gráfico)
+      const { data: pickingData } = await supabase
+        .from('tms_mediciones_tiempos')
+        .select('fin_at')
+        .eq('proceso', 'PICKING')
+        .eq('estado', 'COMPLETADO')
+        .gte('fin_at', new Date().setHours(0,0,0,0)); // Hoy
+
+      // Agrupar por hora
+      const hoursMap = {};
+      (pickingData || []).forEach(item => {
+        const hour = new Date(item.fin_at).getHours();
+        const label = `${hour.toString().padStart(2, '0')}:00`;
+        hoursMap[label] = (hoursMap[label] || 0) + 1;
+      });
+
+      // Llenar huecos de horas laborales (8AM - 6PM)
+      const chartData = [];
+      for (let h = 8; h <= 18; h++) {
+        const label = `${h.toString().padStart(2, '0')}:00`;
+        chartData.push({
+          name: label,
+          picks: hoursMap[label] || 0
+        });
+      }
+
+      setStats(prev => ({
+        ...prev,
+        pendingOrders: pending,
+        completedOrders: completed,
+        pickingProgress: progress,
+        activeUsers: activeUsers || 0,
+        // Datos simulados por falta de tablas específicas
+        urgentReplenishments: Math.floor(Math.random() * 5), 
+        trucksWaiting: Math.floor(Math.random() * 3)
+      }));
+
+      setHourlyData(chartData);
+
+    } catch (error) {
+      console.error("Error fetching TV data:", error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6 overflow-hidden font-sans">
       {/* Top Bar: Reloj y Título */}
-      <div className="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
+      <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
         <div className="flex items-center gap-4">
           <div className="bg-indigo-600 p-3 rounded-xl shadow-lg shadow-indigo-500/30">
             <Activity size={32} className="animate-pulse" />
@@ -93,11 +133,12 @@ const WarehouseTV = () => {
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-160px)]">
+      {/* Main Grid - Altura Ajustada para evitar scroll infinito */}
+      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-140px)]">
         
-        {/* Columna Izquierda: KPIs Críticos (Grande) */}
+        {/* Columna Izquierda: KPIs Críticos */}
         <div className="col-span-3 flex flex-col gap-6">
+          {/* Pedidos Pendientes */}
           <div className="metric-card bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl flex-1 flex flex-col justify-between relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Package size={120} />
@@ -120,6 +161,7 @@ const WarehouseTV = () => {
             </div>
           </div>
 
+          {/* Despachados */}
           <div className="metric-card bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl flex-1 flex flex-col justify-center relative overflow-hidden">
             <div className="flex items-center gap-4 mb-2">
               <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl">
@@ -132,13 +174,14 @@ const WarehouseTV = () => {
             </div>
           </div>
 
+          {/* Urgencias */}
           <div className="metric-card bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl flex-1 flex flex-col justify-center relative overflow-hidden">
              <div className="flex items-center gap-4">
               <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl animate-bounce">
                 <AlertTriangle size={32} />
               </div>
               <div>
-                <p className="text-slate-400 font-bold uppercase text-sm">Urgencias (Stock Bajo)</p>
+                <p className="text-slate-400 font-bold uppercase text-sm">Urgencias</p>
                 <div className="text-4xl font-black text-amber-400">{stats.urgentReplenishments}</div>
               </div>
             </div>
@@ -151,58 +194,40 @@ const WarehouseTV = () => {
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <TrendingUp className="text-indigo-400" /> Rendimiento de Picking por Hora
             </h3>
-            <div className="flex-1 w-full min-h-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsBar data={hourlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-                  <XAxis 
-                    dataKey="hour" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 14, fontWeight: 'bold' }} 
+            <div className="flex-1 w-full min-h-0 relative">
+               {/* Usando componente BarChart con altura fija relativa al contenedor */}
+               <div className="absolute inset-0">
+                  <BarChartComponent 
+                    data={hourlyData} 
+                    dataKey="picks" 
+                    xKey="name" 
+                    color="#6366f1" 
+                    height="100%" // Ocupar todo el alto disponible
                   />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 14 }} 
-                  />
-                  <Tooltip 
-                    cursor={{ fill: '#1e293b' }}
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff' }}
-                  />
-                  <Bar dataKey="picks" radius={[8, 8, 0, 0]} barSize={50}>
-                    {hourlyData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === hourlyData.length - 1 ? '#f43f5e' : '#6366f1'} />
-                    ))}
-                  </Bar>
-                </RechartsBar>
-              </ResponsiveContainer>
+               </div>
             </div>
           </div>
         </div>
 
         {/* Columna Derecha: Estado Operativo */}
         <div className="col-span-3 flex flex-col gap-6">
+          {/* Usuarios Activos */}
           <div className="metric-card bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-20">
               <Users size={80} />
             </div>
-            <p className="font-bold uppercase opacity-80 mb-2">Usuarios Activos</p>
+            <p className="font-bold uppercase opacity-80 mb-2">Usuarios Activos (15m)</p>
             <div className="text-6xl font-black">{stats.activeUsers}</div>
             <div className="mt-4 flex flex-wrap gap-2">
               {Array.from({ length: Math.min(8, stats.activeUsers) }).map((_, i) => (
                 <div key={i} className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-xs font-bold">
-                  {String.fromCharCode(65 + i)}
+                  U{i+1}
                 </div>
               ))}
-              {stats.activeUsers > 8 && (
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-                  +{stats.activeUsers - 8}
-                </div>
-              )}
             </div>
           </div>
 
+          {/* Patio de Camiones (Simulado) */}
           <div className="metric-card bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl flex-1">
             <h3 className="font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
               <Truck size={18} /> Patio de Camiones
