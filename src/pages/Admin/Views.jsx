@@ -29,6 +29,7 @@ const ViewsPage = () => {
     { value: '/outbound/sales-orders', label: 'Outbound - Notas de Venta' },
     { value: '/outbound/picking', label: 'Outbound - Picking' },
     { value: '/outbound/packing', label: 'Outbound - Packing' },
+    { value: '/outbound/packing-tv', label: 'Outbound - Monitor Packing' },
     { value: '/outbound/shipping', label: 'Outbound - Despachos' },
     { value: '/outbound/deliveries', label: 'Outbound - Entregas' },
     { value: '/inventory/stock', label: 'Inventario - Stock' },

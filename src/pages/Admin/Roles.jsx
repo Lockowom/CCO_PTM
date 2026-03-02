@@ -73,6 +73,7 @@ const RolesPage = () => {
         { id: 'process_picking', label: 'Procesar Picking' },
         { id: 'view_packing', label: 'Ver Packing' },
         { id: 'process_packing', label: 'Procesar Packing' },
+        { id: 'view_packing_tv', label: 'Ver Monitor Packing TV' },
         { id: 'view_shipping', label: 'Ver Despachos' },
         { id: 'process_shipping', label: 'Gestionar Despachos' },
         { id: 'view_deliveries', label: 'Ver Entregas' },

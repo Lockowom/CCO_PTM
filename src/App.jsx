@@ -28,6 +28,7 @@ import Returns from './pages/Inbound/Returns'; // NUEVO
 import SalesOrders from './pages/Outbound/SalesOrders';
 import Picking from './pages/Outbound/Picking';
 import Packing from './pages/Outbound/Packing';
+import PackingTV from './pages/Outbound/PackingTV'; // NUEVO
 import Shipping from './pages/Outbound/Shipping';
 
 // Inventory Modules
@@ -93,6 +94,7 @@ const ROUTE_PERMISSIONS = {
   '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
   '/outbound/picking': ['view_picking', 'process_picking'],
   '/outbound/packing': ['view_packing', 'process_packing'],
+  '/outbound/packing-tv': ['view_packing_tv'], // NUEVO (Monitor Packing)
   '/outbound/shipping': ['view_shipping', 'process_shipping'],
   '/outbound/deliveries': ['view_deliveries', 'process_deliveries'],
 
@@ -302,6 +304,7 @@ function AppContent() {
           <Route path="outbound/sales-orders" element={<SalesOrders />} />
           <Route path="outbound/picking" element={<Picking />} />
           <Route path="outbound/packing" element={<Packing />} />
+          <Route path="outbound/packing-tv" element={<PackingTV />} />
           <Route path="outbound/shipping" element={<Shipping />} />
           <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
 
