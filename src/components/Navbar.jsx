@@ -264,22 +264,21 @@ const Navbar = () => {
 
   return (
     <header className="bg-white border-b-2 border-orange-200 shadow-lg sticky top-0 z-40">
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 gap-2 sm:gap-4">
-        {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 min-w-fit">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-orange-300 p-1.5 sm:p-2">
+      <div className="flex items-center justify-between px-2 sm:px-6 py-2 gap-2">
+        {/* 1. Logo Section (Flexible, no se achica) */}
+        <Link to="/dashboard" className="flex items-center gap-2 min-w-fit shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-orange-300 p-1.5">
             <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="hidden sm:block">
-            <h1 className="text-base sm:text-lg font-black text-slate-800 leading-none">C.C.O</h1>
-            <p className="text-[8px] sm:text-[9px] text-orange-500 font-bold uppercase tracking-widest">Centro Control</p>
+          <div className="hidden lg:block">
+            <h1 className="text-base font-black text-slate-800 leading-none">C.C.O</h1>
+            <p className="text-[9px] text-orange-500 font-bold uppercase tracking-widest">Centro Control</p>
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden xl:flex items-center gap-1 flex-nowrap justify-center flex-1 px-2">
+        {/* 2. Desktop Navigation (Se oculta progresivamente) */}
+        <nav className="hidden 2xl:flex items-center gap-1 flex-1 justify-center px-2 overflow-hidden">
           {menuConfig.map((item) => {
-            // Verificar visibilidad de la sección
             if (!isSectionVisible(item.id)) return null;
 
             return (
@@ -292,10 +291,10 @@ const Navbar = () => {
                 {item.isLink ? (
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-150 whitespace-nowrap
+                    className={`flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap
                       ${location.pathname === item.path
-                        ? 'bg-orange-500 text-white shadow-lg'
-                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'text-slate-600 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
@@ -303,10 +302,10 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <button
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap
+                    className={`flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer whitespace-nowrap
                       ${activeDropdown === item.id
-                        ? 'bg-orange-500 text-white shadow-lg'
-                        : 'text-slate-700 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'text-slate-600 hover:text-orange-600 hover:bg-orange-50'
                       }`}
                   >
                     {item.icon}
@@ -314,32 +313,25 @@ const Navbar = () => {
                     <ChevronDown size={14} className={`transition-transform duration-150 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                   </button>
                 )}
-
-                {/* Dropdown */}
+                
+                {/* Dropdown (Mejorado z-index) */}
                 {!item.isLink && activeDropdown === item.id && (
-                  <div className="absolute top-full left-0 mt-0.5 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border-2 border-orange-100 p-2 z-50">
-                    {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).length === 0 ? (
-                      <div className="px-3 py-4 text-center text-slate-400 text-xs">
-                        <Lock size={14} className="mx-auto mb-1" />
-                        Sin acceso
-                      </div>
-                    ) : (
-                      (item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
+                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-2xl border border-orange-100 p-2 z-[60]">
+                    {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                         <Link
                           key={module.path}
                           to={module.path}
                           onClick={() => setActiveDropdown(null)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all
                             ${location.pathname === module.path
                               ? 'bg-orange-500 text-white shadow-md'
-                              : 'text-slate-700 hover:bg-orange-100 hover:text-orange-700'
+                              : 'text-slate-600 hover:bg-orange-50 hover:text-orange-700'
                             }`}
                         >
                           <span>{module.icon}</span>
                           {module.label}
                         </Link>
-                      ))
-                    )}
+                      ))}
                   </div>
                 )}
               </div>
@@ -347,58 +339,43 @@ const Navbar = () => {
           })}
         </nav>
 
-        {/* Right Section - INDUSTRIAL DARK WIDGETS */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-fit">
-          {/* Botón Refresh */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className={`p-2 rounded-lg transition-all ${
-              isRefreshing 
-                ? 'text-green-500 animate-spin bg-green-50' 
-                : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50'
-            }`}
-            title="Actualizar menú"
-          >
-            <RefreshCw size={18} />
-          </button>
-
-          {/* User Profile - LIGHT THEME */}
-          {user && (
-            <div className="hidden md:flex items-center gap-3 pl-4 border-l-2 border-orange-100">
-              <div className="flex items-center gap-3 bg-white pr-4 pl-1 py-1 rounded-full shadow-sm border border-orange-200 group hover:border-orange-400 transition-colors">
-                <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
-                  {user.nombre?.charAt(0).toUpperCase() || 'U'}
+        {/* 3. Right Section (Widgets siempre visibles o colapsables) */}
+        <div className="flex items-center gap-2 shrink-0">
+           {/* Tablet/Desktop: User & Clock */}
+           <div className="hidden lg:flex items-center gap-3">
+              <ClockWidget />
+              {user && (
+                <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-full border border-slate-200">
+                   <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-xs">
+                      {user.nombre?.charAt(0).toUpperCase()}
+                   </div>
+                   <div className="hidden xl:block text-right pr-2">
+                      <p className="text-[10px] font-black text-slate-700 leading-tight">{user.nombre.split(' ')[0]}</p>
+                      <p className="text-[8px] font-bold text-orange-500 uppercase leading-none">{user.rol}</p>
+                   </div>
                 </div>
-                <div className="hidden lg:block leading-tight">
-                  <span className="text-xs font-bold text-slate-700 block tracking-tight">{user.nombre}</span>
-                  <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider">{user.rol}</span>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
+           </div>
 
-          {/* Clock Widget - LIGHT THEME */}
-          <ClockWidget />
-
-          {/* Logout */}
-          <button 
-            onClick={handleLogout} 
-            className="hidden sm:flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
-            title="Cerrar Sesión"
-          >
-            <LogOut size={18} />
-          </button>
-
-          {/* Mobile Menu Toggle */}
-          <button
+           {/* Mobile Toggle (Visible < 2xl) */}
+           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 hover:bg-orange-50 rounded-lg text-slate-600"
-          >
+            className="2xl:hidden p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl transition-colors"
+           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+           </button>
+           
+           {/* Logout (Siempre visible en desktop grande, oculto en mobile) */}
+           <button 
+            onClick={handleLogout} 
+            className="hidden sm:flex p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            title="Salir"
+           >
+            <LogOut size={20} />
+           </button>
         </div>
       </div>
+
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
