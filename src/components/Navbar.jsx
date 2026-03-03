@@ -47,7 +47,7 @@ const Navbar = () => {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard', 'view_kpis'],
     'inbound': ['view_reception', 'view_entry', 'view_returns'],
-    'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
+    'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_packing_tv', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers', 'view_cycle_count'],
     'quality': ['view_quality'],
     'analytics': ['view_reports', 'view_tv_mode'],
@@ -70,6 +70,7 @@ const Navbar = () => {
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
     '/outbound/packing': 'view_packing',
+    '/outbound/packing-tv': 'view_packing_tv',
     '/outbound/shipping': 'view_shipping',
     '/outbound/deliveries': 'view_deliveries',
     '/inventory/dashboard': 'view_stock',
@@ -184,6 +185,7 @@ const Navbar = () => {
         { label: 'Notas de Venta', path: '/outbound/sales-orders', icon: <FileText size={16} /> },
         { label: 'Picking', path: '/outbound/picking', icon: <Hand size={16} /> },
         { label: 'Packing', path: '/outbound/packing', icon: <Package size={16} /> },
+        { label: 'Monitor TV', path: '/outbound/packing-tv', icon: <Monitor size={16} /> },
         { label: 'Despachos', path: '/outbound/shipping', icon: <Ship size={16} /> },
         { label: 'Entregas', path: '/outbound/deliveries', icon: <Truck size={16} /> }
       ]
