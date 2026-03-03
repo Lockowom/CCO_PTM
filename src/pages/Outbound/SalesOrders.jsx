@@ -294,20 +294,22 @@ const SalesOrders = () => {
   };
 
   // Filtrar órdenes (incluir PENDIENTE mayúsculas como Pendiente)
-  const filteredOrders = orders.filter(order => {
-    const estadoNormalizado = order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado;
-    const matchEstado = estadoNormalizado === selectedEstado;
-    const matchSearch = !searchTerm ||
-      order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      // Buscar en los items también
-      order.items?.some(i =>
-        i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
-      ) ||
-      order.vendedor?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchEstado && matchSearch;
-  });
+  const filteredOrders = React.useMemo(() => {
+    return orders.filter(order => {
+      const estadoNormalizado = order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado;
+      const matchEstado = estadoNormalizado === selectedEstado;
+      const matchSearch = !searchTerm ||
+        order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        // Buscar en los items también
+        order.items?.some(i =>
+          i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
+        ) ||
+        order.vendedor?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchEstado && matchSearch;
+    });
+  }, [orders, selectedEstado, searchTerm]);
 
   // Obtener config del estado
   const getEstadoConfig = (estado) => {

@@ -245,9 +245,9 @@ const DispatchControl = () => {
         {(filterFechaDesde || filterFechaHasta || searchTerm) && (
           <button
             onClick={() => { setFilterFechaDesde(''); setFilterFechaHasta(''); setSearchTerm(''); }}
-            className="text-rose-600 hover:text-rose-800 text-xs font-medium flex items-center gap-1"
+            className="bg-white border border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
           >
-            <X size={12} /> Limpiar
+            <X size={14} /> Limpiar Filtros
           </button>
         )}
       </div>

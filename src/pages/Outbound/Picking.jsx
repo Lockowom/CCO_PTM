@@ -390,10 +390,12 @@ const Picking = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const nvFiltradas = nvData.filter(nv =>
-    nv.nv?.toString().includes(searchTerm) ||
-    nv.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const nvFiltradas = React.useMemo(() => {
+    return nvData.filter(nv =>
+      nv.nv?.toString().includes(searchTerm) ||
+      nv.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [nvData, searchTerm]);
 
   // ==================== VISTA: LISTA ====================
   if (vista === 'lista') {

@@ -231,7 +231,7 @@ const DataImport = () => {
                     if (value && value.trim() !== '') {
                         // Ignorar valores que no son fechas (ej: 'UNI', 'PZA', 'SIN FECHA')
                         if (value.length < 6 || !/\d/.test(value)) { // Debe tener al menos 6 caracteres y algún número
-                             value = null;
+                            value = null;
                         } else {
                             // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
                             const dateMatch = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
@@ -241,12 +241,12 @@ const DataImport = () => {
                                 // Validar que sea fecha válida (evitar 31 de abril, 30 de febrero, etc.)
                                 const isoDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                                 const dateObj = new Date(year, parseInt(m) - 1, d);
-                                
+
                                 // Verificar que la fecha generada coincida con la entrada (ej: 2024-02-30 -> 2024-03-01 en JS Date)
                                 if (dateObj.getFullYear() == year && dateObj.getMonth() == parseInt(m) - 1 && dateObj.getDate() == d) {
-                                     value = isoDate;
+                                    value = isoDate;
                                 } else {
-                                     value = null; // Fecha inválida lógicamente (ej: 30 de Febrero)
+                                    value = null; // Fecha inválida lógicamente (ej: 30 de Febrero)
                                 }
                             } else {
                                 // Si ya es YYYY-MM-DD u otro formato que JS entienda
@@ -255,7 +255,7 @@ const DataImport = () => {
                                     const d = new Date(timestamp);
                                     value = d.toISOString().split('T')[0];
                                 } else {
-                                    value = null; 
+                                    value = null;
                                 }
                             }
                         }
@@ -292,7 +292,7 @@ const DataImport = () => {
                 // Si la clave es compuesta (ej: 'nv,codigo_producto'), usamos la primera parte para verificar existencia (ej: 'nv')
                 // Esto asume que si la NV existe, ya se cargaron todos sus items.
                 const checkKey = currentTab.uniqueKey.split(',')[0].trim();
-                
+
                 // Obtener las claves únicas del paste
                 const keys = [...new Set(rows.map(r => r[checkKey]).filter(Boolean))];
 
@@ -311,7 +311,7 @@ const DataImport = () => {
                         .from('tms_nv_eliminadas') // Tabla nueva
                         .select('nv')
                         .in('nv', keys);
-                    
+
                     if (!errorDeleted && deleted) {
                         deletedKeys = new Set(deleted.map(d => d.nv?.toString()));
                     }
@@ -323,10 +323,10 @@ const DataImport = () => {
                 const statuses = rows.map(row => {
                     const key = row[checkKey]?.toString();
                     if (!key) return 'error';
-                    
+
                     if (existingKeys.has(key)) return 'existing';
                     if (deletedKeys.has(key)) return 'deleted'; // Nueva lógica: N.V eliminada previamente
-                    
+
                     return 'new';
                 });
 
@@ -406,19 +406,19 @@ const DataImport = () => {
                 if (currentTab.uniqueKey) {
                     const uniqueMap = new Map();
                     const keys = currentTab.uniqueKey.split(',').map(k => k.trim());
-                    
+
                     batch.forEach(row => {
                         // Generar clave compuesta
                         const keyVal = keys.map(k => row[k]).join('|');
                         // Sobreescribir para quedarse con el último (o el primero si se prefiere)
                         uniqueMap.set(keyVal, row);
                     });
-                    
+
                     batch = Array.from(uniqueMap.values());
                 }
 
                 let result;
-                
+
                 // Si la tabla no tiene uniqueKey o es Control Despacho, usamos INSERT directo (permite duplicados)
                 if (!currentTab.uniqueKey || currentTab.id === 'control_despacho') {
                     console.log('Insertando datos sin UPSERT (Modo Insert Directo)...');
@@ -442,13 +442,13 @@ const DataImport = () => {
                     if (error.code === '23505' || error.message?.includes('duplicate key')) {
                         // Error de duplicados
                         if (currentTab.smartDedup) {
-                             // Si está activado smartDedup, esto no debería pasar, pero por si acaso
-                             errors += batch.length;
-                             errorDetails.push(`Error de duplicados en lote: ${error.message}`);
+                            // Si está activado smartDedup, esto no debería pasar, pero por si acaso
+                            errors += batch.length;
+                            errorDetails.push(`Error de duplicados en lote: ${error.message}`);
                         } else {
-                             // Si no es smartDedup, upsert falló o no está configurado
-                             errors += batch.length;
-                             errorDetails.push(`Registros duplicados detectados. Verifica que la columna clave '${currentTab.uniqueKey || 'id'}' sea única.`);
+                            // Si no es smartDedup, upsert falló o no está configurado
+                            errors += batch.length;
+                            errorDetails.push(`Registros duplicados detectados. Verifica que la columna clave '${currentTab.uniqueKey || 'id'}' sea única.`);
                         }
                     } else {
                         console.error('Error en batch:', error);
@@ -575,8 +575,8 @@ const DataImport = () => {
                             onClick={() => handleTabChange(tab.id)}
                             disabled={isLoading}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition-all ${isActive
-                                    ? `${colorMap[tab.color]} shadow-lg`
-                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                ? `${colorMap[tab.color]} shadow-lg`
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                                 } disabled:opacity-50`}
                         >
                             <Icon size={18} />
@@ -599,8 +599,8 @@ const DataImport = () => {
                                     <span
                                         key={col.key}
                                         className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${col.required
-                                                ? `bg-${currentTab.color}-200 text-${currentTab.color}-800 font-bold`
-                                                : `bg-${currentTab.color}-100 text-${currentTab.color}-600`
+                                            ? `bg-${currentTab.color}-200 text-${currentTab.color}-800 font-bold`
+                                            : `bg-${currentTab.color}-100 text-${currentTab.color}-600`
                                             }`}
                                     >
                                         {col.label}{col.required ? ' *' : ''}
@@ -822,13 +822,25 @@ const DataImport = () => {
                             </div>
                         )}
 
-                        <button
-                            onClick={handleReset}
-                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition-all"
-                        >
-                            <RefreshCw size={16} className="inline mr-2" />
-                            Nueva Carga
-                        </button>
+                        <div className="flex gap-3 justify-center">
+                            {loadResult.success ? (
+                                <button
+                                    onClick={handleReset}
+                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition-all"
+                                >
+                                    <RefreshCw size={16} className="inline mr-2" />
+                                    Nueva Carga
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setStep('paste')}
+                                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg transition-all"
+                                >
+                                    <XCircle size={16} className="inline mr-2" />
+                                    Cerrar Error e Intentar Nuevamente
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

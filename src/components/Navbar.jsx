@@ -17,14 +17,26 @@ import {
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // USAR LOS CONTEXTOS - Esto es la clave
   const { user, logout, hasPermission, permissions, refreshPermissions } = useAuth();
   const { isModuleEnabled, refreshConfig } = useConfig();
-  
+
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // DEBUG: Log cada render para ver los permisos actuales
   console.log('🎨 Navbar render | Usuario:', user?.nombre, '| Rol:', user?.rol, '| Permisos:', permissions?.length);
@@ -136,14 +148,14 @@ const Navbar = () => {
   const canAccessRoute = (path, sectionId) => {
     // ADMIN ve todo
     if (user?.rol === 'ADMIN') return true;
-    
+
     // Sección admin solo ADMIN
     if (sectionId === 'admin') return user?.rol === 'ADMIN';
 
     // Verificar permiso específico de la ruta
     const requiredPerm = ROUTE_PERMISSIONS[path];
     if (!requiredPerm) return true;
-    
+
     return hasPermission(requiredPerm);
   };
 
@@ -318,25 +330,25 @@ const Navbar = () => {
                     <ChevronDown size={14} className={`transition-transform duration-150 ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                   </button>
                 )}
-                
+
                 {/* Dropdown (Mejorado z-index) */}
                 {!item.isLink && activeDropdown === item.id && (
                   <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-2xl border border-orange-100 p-2 z-[60]">
                     {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
-                        <Link
-                          key={module.path}
-                          to={module.path}
-                          onClick={() => setActiveDropdown(null)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all
+                      <Link
+                        key={module.path}
+                        to={module.path}
+                        onClick={() => setActiveDropdown(null)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all
                             ${location.pathname === module.path
-                              ? 'bg-orange-500 text-white shadow-md'
-                              : 'text-slate-600 hover:bg-orange-50 hover:text-orange-700'
-                            }`}
-                        >
-                          <span>{module.icon}</span>
-                          {module.label}
-                        </Link>
-                      ))}
+                            ? 'bg-orange-500 text-white shadow-md'
+                            : 'text-slate-600 hover:bg-orange-50 hover:text-orange-700'
+                          }`}
+                      >
+                        <span>{module.icon}</span>
+                        {module.label}
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
@@ -346,38 +358,44 @@ const Navbar = () => {
 
         {/* 3. Right Section (Widgets siempre visibles o colapsables) */}
         <div className="flex items-center gap-2 shrink-0">
-           {/* Tablet/Desktop: User & Clock */}
-           <div className="hidden lg:flex items-center gap-3">
-              <ClockWidget />
-              {user && (
-                <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-full border border-slate-200">
-                   <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-xs">
-                      {user.nombre?.charAt(0).toUpperCase()}
-                   </div>
-                   <div className="hidden xl:block text-right pr-2">
-                      <p className="text-[10px] font-black text-slate-700 leading-tight">{user.nombre.split(' ')[0]}</p>
-                      <p className="text-[8px] font-bold text-orange-500 uppercase leading-none">{user.rol}</p>
-                   </div>
+          {/* Tablet/Desktop: User & Clock */}
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg" title={isOnline ? "Conectado a Internet" : "Sin Conexión"}>
+              <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${isOnline ? 'text-emerald-700' : 'text-red-700'}`}>
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            <ClockWidget />
+            {user && (
+              <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-full border border-slate-200">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-xs">
+                  {user.nombre?.charAt(0).toUpperCase()}
                 </div>
-              )}
-           </div>
+                <div className="hidden xl:block text-right pr-2">
+                  <p className="text-[10px] font-black text-slate-700 leading-tight">{user.nombre.split(' ')[0]}</p>
+                  <p className="text-[8px] font-bold text-orange-500 uppercase leading-none">{user.rol}</p>
+                </div>
+              </div>
+            )}
+          </div>
 
-           {/* Mobile Toggle (Visible < xl) */}
-           <button
+          {/* Mobile Toggle (Visible < xl) */}
+          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="xl:hidden p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl transition-colors"
-           >
+          >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-           </button>
-           
-           {/* Logout (Siempre visible en desktop grande, oculto en mobile) */}
-           <button 
-            onClick={handleLogout} 
+          </button>
+
+          {/* Logout (Siempre visible en desktop grande, oculto en mobile) */}
+          <button
+            onClick={handleLogout}
             className="hidden sm:flex p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
             title="Salir"
-           >
+          >
             <LogOut size={20} />
-           </button>
+          </button>
         </div>
       </div>
 
@@ -385,7 +403,7 @@ const Navbar = () => {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b-2 border-orange-100 shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
-          <MobileMenu 
+          <MobileMenu
             menuConfig={menuConfig}
             isSectionVisible={isSectionVisible}
             canAccessRoute={canAccessRoute}
@@ -403,7 +421,7 @@ const Navbar = () => {
 // Clock Widget - Light Theme
 const ClockWidget = () => {
   const [now, setNow] = React.useState(new Date());
-  
+
   React.useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
@@ -446,17 +464,17 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
   <nav className="xl:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner">
     {menuConfig.map((item) => {
       if (!isSectionVisible(item.id)) return null;
-      
+
       const isActive = location.pathname === item.path;
-      
+
       return item.isLink ? (
         <Link
           key={item.id}
           to={item.path}
           onClick={() => setMobileMenuOpen(false)}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
-            ${isActive 
-              ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
+            ${isActive
+              ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
               : 'text-slate-600 hover:bg-orange-50 hover:text-orange-600'
             }`}
         >
@@ -468,8 +486,8 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
           <button
             onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
-              ${activeDropdown === item.id 
-                ? 'bg-slate-100 text-slate-800' 
+              ${activeDropdown === item.id
+                ? 'bg-slate-100 text-slate-800'
                 : 'text-slate-600 hover:bg-orange-50 hover:text-orange-600'
               }`}
           >
@@ -477,7 +495,7 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
             {item.label}
             <ChevronDown size={16} className={`ml-auto transition-transform duration-200 ${activeDropdown === item.id ? 'rotate-180 text-orange-500' : ''}`} />
           </button>
-          
+
           {activeDropdown === item.id && (
             <div className="ml-4 pl-4 border-l-2 border-slate-100 space-y-1 my-2 animate-in slide-in-from-left-2 fade-in duration-200">
               {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
@@ -486,8 +504,8 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
                   to={module.path}
                   onClick={() => { setMobileMenuOpen(false); setActiveDropdown(null); }}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-medium transition-all
-                    ${location.pathname === module.path 
-                      ? 'text-orange-600 bg-orange-50 border border-orange-100' 
+                    ${location.pathname === module.path
+                      ? 'text-orange-600 bg-orange-50 border border-orange-100'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                     }`}
                 >

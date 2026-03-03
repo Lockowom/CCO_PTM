@@ -545,10 +545,12 @@ const Packing = () => {
   };
 
   // Filtrar clientes
-  const clientesFiltrados = clientesAgrupados.filter(c =>
-    c.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.nvList.some(nv => nv.nv.toString().includes(searchTerm))
-  );
+  const clientesFiltrados = React.useMemo(() => {
+    return clientesAgrupados.filter(c =>
+      c.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.nvList.some(nv => nv.nv.toString().includes(searchTerm))
+    );
+  }, [clientesAgrupados, searchTerm]);
 
   // ==================== VISTA: CLIENTES O LISTA ====================
   if (vista === 'clientes' || vista === 'lista') {
