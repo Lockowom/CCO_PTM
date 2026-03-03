@@ -49,8 +49,8 @@ const ElapsedTimer = ({ startTime }) => {
 
   return (
     <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-bold text-lg border ${isLate
-        ? 'bg-red-100 text-red-600 border-red-200 animate-pulse'
-        : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+      ? 'bg-red-100 text-red-600 border-red-200 animate-pulse'
+      : 'bg-indigo-50 text-indigo-600 border-indigo-100'
       }`}>
       <Timer size={18} className={isLate ? 'text-red-500' : 'text-indigo-500'} />
       {elapsed}
@@ -376,13 +376,12 @@ const PackingTV = () => {
                 <div key={idx} className="anim-card bg-white border-l-4 border-emerald-500 rounded-r-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
                   <div className="min-w-0 flex-1">
                     <span className="text-2xl font-black text-slate-800 tracking-tight">#{nv.nv}</span>
-                    <p className="text-slate-400 text-xs font-bold truncate">{nv.cliente}</p>
+                    <p className="text-slate-500 text-xs font-bold truncate">{nv.cliente}</p>
                   </div>
-                  <div className="text-right pl-4">
-                    <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black border border-emerald-100 uppercase tracking-wider">
-                      LISTO
+                  <div className="flex-shrink-0 ml-4">
+                    <div className="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-black border border-emerald-100 uppercase tracking-wider flex items-center gap-1">
+                      <CheckCircle size={14} /> LISTO
                     </div>
-                    {/* Hora de finalización oculta */}
                   </div>
                 </div>
               ))
