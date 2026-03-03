@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../supabase';
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  User, 
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  User,
   Box,
   Truck,
   Timer,
@@ -26,13 +26,13 @@ const ElapsedTimer = ({ startTime }) => {
       if (!startTime) return;
       const start = new Date(startTime).getTime();
       if (isNaN(start)) return;
-      
+
       const now = new Date().getTime();
       const diff = now - start;
 
       if (diff < 0) {
-         setElapsed("00:00");
-         return;
+        setElapsed("00:00");
+        return;
       }
 
       const minutes = Math.floor(diff / 60000);
@@ -48,11 +48,10 @@ const ElapsedTimer = ({ startTime }) => {
   }, [startTime]);
 
   return (
-    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-bold text-lg border ${
-      isLate 
-        ? 'bg-red-100 text-red-600 border-red-200 animate-pulse' 
+    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-bold text-lg border ${isLate
+        ? 'bg-red-100 text-red-600 border-red-200 animate-pulse'
         : 'bg-indigo-50 text-indigo-600 border-indigo-100'
-    }`}>
+      }`}>
       <Timer size={18} className={isLate ? 'text-red-500' : 'text-indigo-500'} />
       {elapsed}
     </div>
@@ -63,7 +62,7 @@ const PackingTV = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   const containerRef = useRef(null);
 
   // Actualizar reloj
@@ -83,7 +82,7 @@ const PackingTV = () => {
           stagger: 0.2,
           ease: "power3.out"
         });
-        
+
         gsap.from(".anim-card", {
           scale: 0.9,
           opacity: 0,
@@ -112,7 +111,7 @@ const PackingTV = () => {
         .from('tms_nv_diarias')
         .select('*')
         .eq('estado', 'LISTO_DESPACHO')
-        .order('updated_at', { ascending: false }) // Ordenar por fecha de actualización
+        // ORDEN OCULTO PARA NO REQUERIR updated_at
         .limit(20);
 
       if (finishedError) throw finishedError;
@@ -145,7 +144,7 @@ const PackingTV = () => {
 
   const { pendientes, enProceso, listos, stats } = useMemo(() => {
     const grouped = {};
-    
+
     data.forEach(item => {
       if (!grouped[item.nv]) {
         grouped[item.nv] = {
@@ -157,22 +156,22 @@ const PackingTV = () => {
           has_stock_break: false,
           // Usamos updated_at como inicio si está en packing. 
           // Idealmente deberíamos tener un campo 'packing_start_at', pero usaremos updated_at como proxy
-          start_time: item.updated_at 
+          start_time: item.updated_at
         };
       }
       grouped[item.nv].items.push(item);
       grouped[item.nv].total_items++;
       grouped[item.nv].total_cantidad += parseInt(item.cantidad) || 0;
-      
+
       if (item.picking_status === 'PARCIAL') grouped[item.nv].has_partial = true;
       if (item.picking_status === 'SIN_STOCK' || item.estado === 'QUIEBRE_STOCK') grouped[item.nv].has_stock_break = true;
     });
 
     const nvs = Object.values(grouped);
-    
+
     const _pendientes = nvs.filter(n => ['PACKING', 'QUIEBRE_STOCK'].includes(n.estado) && !n.usuario_asignado);
     const _enProceso = nvs.filter(n => ['PACKING', 'QUIEBRE_STOCK'].includes(n.estado) && n.usuario_asignado);
-    const _listos = nvs.filter(n => n.estado === 'LISTO_DESPACHO').sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    const _listos = nvs.filter(n => n.estado === 'LISTO_DESPACHO');
 
     return {
       pendientes: _pendientes,
@@ -199,7 +198,7 @@ const PackingTV = () => {
 
   return (
     <div ref={containerRef} className="h-screen bg-slate-100 text-slate-800 font-sans overflow-hidden flex flex-col p-6">
-      
+
       {/* HEADER: Estilo WMS Clean */}
       <header className="flex justify-between items-center mb-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20">
         <div className="flex items-center gap-6">
@@ -216,21 +215,21 @@ const PackingTV = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Stats Chips */}
         <div className="flex gap-4">
-           <div className="bg-slate-50 px-8 py-3 rounded-2xl border border-slate-200 flex flex-col items-center min-w-[140px]">
-              <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">En Cola</span>
-              <span className="text-4xl font-black text-slate-700">{stats.totalPendiente}</span>
-           </div>
-           <div className="bg-indigo-50 px-8 py-3 rounded-2xl border border-indigo-100 flex flex-col items-center min-w-[140px]">
-              <span className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">Procesando</span>
-              <span className="text-4xl font-black text-indigo-600">{stats.totalEnProceso}</span>
-           </div>
-           <div className="bg-emerald-50 px-8 py-3 rounded-2xl border border-emerald-100 flex flex-col items-center min-w-[140px]">
-              <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Finalizados</span>
-              <span className="text-4xl font-black text-emerald-600">{stats.totalListo}</span>
-           </div>
+          <div className="bg-slate-50 px-8 py-3 rounded-2xl border border-slate-200 flex flex-col items-center min-w-[140px]">
+            <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">En Cola</span>
+            <span className="text-4xl font-black text-slate-700">{stats.totalPendiente}</span>
+          </div>
+          <div className="bg-indigo-50 px-8 py-3 rounded-2xl border border-indigo-100 flex flex-col items-center min-w-[140px]">
+            <span className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">Procesando</span>
+            <span className="text-4xl font-black text-indigo-600">{stats.totalEnProceso}</span>
+          </div>
+          <div className="bg-emerald-50 px-8 py-3 rounded-2xl border border-emerald-100 flex flex-col items-center min-w-[140px]">
+            <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Finalizados</span>
+            <span className="text-4xl font-black text-emerald-600">{stats.totalListo}</span>
+          </div>
         </div>
 
         {/* Clock */}
@@ -248,7 +247,7 @@ const PackingTV = () => {
 
       {/* MAIN LAYOUT */}
       <div className="flex-1 grid grid-cols-12 gap-6 h-full overflow-hidden pb-2">
-        
+
         {/* COLUMNA 1: EN COLA (3 cols) */}
         <div className="col-span-3 flex flex-col bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden anim-column">
           <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
@@ -277,7 +276,7 @@ const PackingTV = () => {
                     </span>
                   </div>
                   <p className="text-slate-500 font-bold text-xs truncate mb-2">{nv.cliente}</p>
-                  
+
                   <div className="flex gap-2 flex-wrap">
                     {nv.has_stock_break && (
                       <span className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 font-bold flex items-center gap-1">
@@ -299,7 +298,7 @@ const PackingTV = () => {
         {/* COLUMNA 2: PREPARANDO (5 cols) - MAIN FOCUS */}
         <div className="col-span-5 flex flex-col bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 shadow-2xl shadow-indigo-100/50 overflow-hidden relative anim-column">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-violet-500"></div>
-          
+
           <div className="p-6 border-b border-indigo-100 bg-white/60 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
             <h2 className="text-2xl font-black text-indigo-900 flex items-center gap-3">
               <Box size={28} className="text-indigo-600" />
@@ -313,9 +312,9 @@ const PackingTV = () => {
               {enProceso.length}
             </div>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
-             {enProceso.length === 0 ? (
+            {enProceso.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-indigo-200">
                 <Zap size={80} className="mb-6 opacity-50" />
                 <p className="text-2xl font-black tracking-tight opacity-70">ESPERANDO ACTIVIDAD</p>
@@ -328,32 +327,27 @@ const PackingTV = () => {
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-4xl font-black text-slate-800 tracking-tight">#{nv.nv}</span>
                         {(nv.has_stock_break || nv.has_partial) && (
-                           <div className="animate-bounce text-amber-500 bg-amber-50 p-1.5 rounded-full border border-amber-100">
-                             <AlertCircle size={20} />
-                           </div>
+                          <div className="animate-bounce text-amber-500 bg-amber-50 p-1.5 rounded-full border border-amber-100">
+                            <AlertCircle size={20} />
+                          </div>
                         )}
                       </div>
                       <p className="text-slate-500 text-lg font-bold truncate">{nv.cliente}</p>
-                      
+
                       <div className="mt-4 flex items-center gap-3">
-                         <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600 text-xs font-bold uppercase">
-                           <User size={14} />
-                           {nv.usuario_nombre?.split(' ')[0] || 'N/A'}
-                         </div>
-                         <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold uppercase">
-                           <Box size={14} />
-                           {nv.total_cantidad} Unid.
-                         </div>
+                        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600 text-xs font-bold uppercase">
+                          <User size={14} />
+                          {nv.usuario_nombre?.split(' ')[0] || 'N/A'}
+                        </div>
+                        <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold uppercase">
+                          <Box size={14} />
+                          {nv.total_cantidad} Unid.
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
-                       {/* Timer Component */}
-                       <ElapsedTimer startTime={nv.start_time} />
-                       
-                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">
-                         Tiempo en Proceso
-                       </div>
+                    <div className="flex flex-col items-end gap-2 hidden">
+                      {/* Temporizador y tiempo en proceso ocultos temporalmente */}
                     </div>
                   </div>
                 </div>
@@ -366,40 +360,38 @@ const PackingTV = () => {
         <div className="col-span-4 flex flex-col bg-emerald-50/50 rounded-[2.5rem] border border-emerald-100 shadow-xl shadow-emerald-50/50 overflow-hidden anim-column">
           <div className="p-6 border-b border-emerald-100 bg-emerald-50/30 flex justify-between items-center">
             <h2 className="text-xl font-black text-emerald-800 flex items-center gap-3">
-              <CheckCircle size={24} className="text-emerald-600" /> 
+              <CheckCircle size={24} className="text-emerald-600" />
               LISTOS
             </h2>
             <Truck size={24} className="text-emerald-300" />
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-             {listos.length === 0 ? (
-               <div className="h-full flex flex-col items-center justify-center text-emerald-200/50">
-                 <p className="font-bold">Sin finalizados</p>
-               </div>
-             ) : (
-               listos.map((nv, idx) => (
+            {listos.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-emerald-200/50">
+                <p className="font-bold">Sin finalizados</p>
+              </div>
+            ) : (
+              listos.map((nv, idx) => (
                 <div key={idx} className="anim-card bg-white border-l-4 border-emerald-500 rounded-r-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
                   <div className="min-w-0 flex-1">
                     <span className="text-2xl font-black text-slate-800 tracking-tight">#{nv.nv}</span>
                     <p className="text-slate-400 text-xs font-bold truncate">{nv.cliente}</p>
                   </div>
                   <div className="text-right pl-4">
-                     <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black border border-emerald-100 uppercase tracking-wider">
-                       LISTO
-                     </div>
-                     <div className="text-[10px] text-slate-300 font-mono mt-1 text-right">
-                        {new Date(nv.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                     </div>
+                    <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-xs font-black border border-emerald-100 uppercase tracking-wider">
+                      LISTO
+                    </div>
+                    {/* Hora de finalización oculta */}
                   </div>
                 </div>
-               ))
-             )}
+              ))
+            )}
           </div>
         </div>
 
       </div>
-      
+
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
