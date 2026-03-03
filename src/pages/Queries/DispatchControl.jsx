@@ -1,11 +1,11 @@
 // DispatchControl.jsx - Módulo de Consulta Control Despacho
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Search, 
-  Truck, 
-  Calendar, 
+import {
+  Search,
+  Truck,
+  Calendar,
   FileText,
-  RefreshCw, 
+  RefreshCw,
   Download,
   Filter,
   X,
@@ -30,7 +30,7 @@ const DispatchControl = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       let query = supabase
         .from('tms_control_despacho')
         .select('*')
@@ -49,7 +49,7 @@ const DispatchControl = () => {
 
       setRecords(data || []);
       // NOTA: Ya no calculamos stats aquí, se calculan dinámicamente en el useEffect
-      
+
     } catch (error) {
       console.error("Error:", error);
       setError(error.message);
@@ -58,10 +58,13 @@ const DispatchControl = () => {
     }
   }, [filterFechaDesde, filterFechaHasta]);
 
-  // EFECTO 1: Cargar datos iniciales (o cuando cambian las fechas de la DB)
+  // EFECTO 1: Cargar datos iniciales
   useEffect(() => {
     fetchRecords();
   }, [fetchRecords]);
+
+  // Verificar si hay algún filtro activo
+  const isFilterActive = searchTerm.length > 0 || filterFechaDesde || filterFechaHasta;
 
   // EFECTO 2: Recalcular estadísticas cuando cambian los filtros LOCALES (búsqueda) o los datos
   useEffect(() => {
@@ -69,18 +72,18 @@ const DispatchControl = () => {
     // Nota: filteredRecords se define más abajo, pero en React funcional, 
     // necesitamos mover la definición de filteredRecords ARRIBA o duplicar la lógica aquí.
     // Para evitar referencias circulares, moveremos filteredRecords antes de este efecto.
-  }, [searchTerm, records]); 
+  }, [searchTerm, records]);
 
-  // Definir filteredRecords ANTES de usarlos en efectos o render
-  const filteredRecords = records.filter(record => {
+  // Filtrar registros, si no hay filtro activo devolvemos array vacío
+  const filteredRecords = isFilterActive ? records.filter(record => {
     const term = searchTerm.toLowerCase();
-    return !searchTerm || 
+    return !searchTerm ||
       record.nv?.toString().toLowerCase().includes(term) ||
       record.guia?.toString().toLowerCase().includes(term) ||
       record.cliente?.toLowerCase().includes(term) ||
       record.transportista?.toLowerCase().includes(term) ||
       record.numero_envio?.toString().toLowerCase().includes(term);
-  });
+  }) : [];
 
   // AHORA SÍ: Efecto para actualizar stats dinámicamente
   useEffect(() => {
@@ -98,16 +101,16 @@ const DispatchControl = () => {
   // Exportar CSV
   const exportToCSV = () => {
     const headers = [
-      'Fecha Docto', 'Cliente', 'Facturas', 'Guía', 'Bultos', 
-      'Transporte', 'Transportista', 'NV', 'División', 
+      'Fecha Docto', 'Cliente', 'Facturas', 'Guía', 'Bultos',
+      'Transporte', 'Transportista', 'NV', 'División',
       'Vendedor', 'Fecha Despacho', 'Valor Flete', 'N° Envío'
     ];
     const rows = filteredRecords.map(r => [
-      r.fecha_docto, 
-      r.cliente, 
-      r.facturas, 
-      r.guia, 
-      r.bultos, 
+      r.fecha_docto,
+      r.cliente,
+      r.facturas,
+      r.guia,
+      r.bultos,
       r.empresa_transporte,
       r.transportista,
       r.nv,
@@ -117,7 +120,7 @@ const DispatchControl = () => {
       r.valor_flete,
       r.numero_envio
     ]);
-    
+
     const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c || ''}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -144,13 +147,13 @@ const DispatchControl = () => {
           </div>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={exportToCSV}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
           >
             <Download size={16} /> Exportar CSV
           </button>
-          <button 
+          <button
             onClick={fetchRecords}
             disabled={loading}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
@@ -164,7 +167,7 @@ const DispatchControl = () => {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-500 text-xs font-semibold uppercase">Total Guías</span>
+            <span className="text-slate-500 text-xs font-semibold uppercase">Cantidad Guías</span>
             <FileText size={16} className="text-slate-400" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
@@ -196,9 +199,9 @@ const DispatchControl = () => {
             <label className="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
             <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center px-3 py-2">
               <Search size={16} className="text-slate-400 mr-2" />
-              <input 
-                type="text" 
-                placeholder="Guía, NV, Cliente, Transportista..." 
+              <input
+                type="text"
+                placeholder="Guía, NV, Cliente, Transportista..."
                 className="outline-none text-sm bg-transparent w-full"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -230,7 +233,9 @@ const DispatchControl = () => {
       <div className="bg-rose-50 rounded-xl p-3 border border-rose-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Truck size={18} className="text-rose-600" />
-          <p className="font-bold text-rose-800 text-sm">{filteredRecords.length} registros encontrados</p>
+          <p className="font-bold text-rose-800 text-sm">
+            {isFilterActive ? `${filteredRecords.length} registros encontrados en la búsqueda` : 'Aplica un filtro para ver los registros'}
+          </p>
         </div>
         {(filterFechaDesde || filterFechaHasta || searchTerm) && (
           <button
@@ -272,11 +277,19 @@ const DispatchControl = () => {
                     <p className="text-slate-400">Cargando datos...</p>
                   </td>
                 </tr>
+              ) : !isFilterActive ? (
+                <tr>
+                  <td colSpan="8" className="px-4 py-16 text-center text-slate-400">
+                    <Filter size={48} className="mx-auto mb-4 opacity-20" />
+                    <p className="font-bold text-slate-600 text-lg">Módulo de Control</p>
+                    <p className="text-sm">Ingresa un término de búsqueda o selecciona un rango de fechas para cargar las guías de despacho.</p>
+                  </td>
+                </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-12 text-center text-slate-400">
                     <Package size={32} className="mx-auto mb-2 opacity-40" />
-                    <p>No se encontraron registros</p>
+                    <p>No se encontraron registros para tu búsqueda actual</p>
                   </td>
                 </tr>
               ) : (
@@ -300,7 +313,7 @@ const DispatchControl = () => {
                       {record.valor_flete > 0 ? formatCurrency(record.valor_flete) : '-'}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <button 
+                      <button
                         onClick={() => setSelectedRecord(record)}
                         className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1"
                       >
@@ -333,7 +346,7 @@ const DispatchControl = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               {/* Fechas */}
               <div className="grid grid-cols-2 gap-4">
@@ -363,7 +376,7 @@ const DispatchControl = () => {
                   <label className="text-xs text-slate-400 font-bold uppercase">Cliente</label>
                   <p className="text-lg font-bold text-slate-800">{selectedRecord.cliente}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-slate-400 font-bold uppercase">N° NV</label>
