@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Hand, 
-  Package, 
-  User, 
-  Clock, 
-  CheckCircle, 
-  Play, 
-  Pause, 
-  RefreshCw, 
+import {
+  Hand,
+  Package,
+  User,
+  Clock,
+  CheckCircle,
+  Play,
+  Pause,
+  RefreshCw,
   Search,
   Timer,
   Users,
@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   AlertCircle,
   MapPin,
-  Truck
+  Truck,
+  Hourglass
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { InventoryService } from '../../services/inventoryService';
@@ -30,16 +31,16 @@ const Picking = () => {
   const [nvData, setNvData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Picking activo
   const [nvActiva, setNvActiva] = useState(null);
-  const [itemsPickingStatus, setItemsPickingStatus] = useState({}); 
+  const [itemsPickingStatus, setItemsPickingStatus] = useState({});
   const [tiempoInicio, setTiempoInicio] = useState(null);
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
   const [tiempoOcio, setTiempoOcio] = useState(0);
   const [pausaInicio, setPausaInicio] = useState(null);
-  
+
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
   const lastHiddenTime = useRef(null);
@@ -54,7 +55,7 @@ const Picking = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
@@ -99,7 +100,7 @@ const Picking = () => {
         enProceso: uniqueNVs.filter(n => n.estado === 'Pendiente Picking').length,
         completadasHoy: completados || 0
       });
-      
+
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error cargando datos de picking');
@@ -110,7 +111,7 @@ const Picking = () => {
 
   useEffect(() => {
     fetchData();
-    
+
     const channelNV = supabase
       .channel('picking_realtime_nv')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => fetchData())
@@ -148,7 +149,7 @@ const Picking = () => {
         const now = Date.now();
         let currentHidden = 0;
         if (document.hidden && lastHiddenTime.current) {
-             currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
+          currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
         }
         const diffSeconds = Math.floor((now - tiempoInicio) / 1000) - (tiempoOcio + currentHidden);
         setTiempoTranscurrido(diffSeconds > 0 ? diffSeconds : 0);
@@ -183,7 +184,12 @@ const Picking = () => {
     setNvActiva(nv);
     const initialStatus = {};
     (nv.items || [nv]).forEach(item => {
-      initialStatus[item.id] = { status: null, cantidad: '' };
+      // 1. CARGA INICIAL: Leer el status previo de la DB si ya existe
+      initialStatus[item.id] = {
+        status: item.picking_status || null,
+        cantidad: item.picking_status === 'COMPLETO' ? item.cantidad : (item.cantidad_real || ''),
+        locked: ['COMPLETO', 'PARCIAL', 'SIN_STOCK'].includes(item.picking_status) // Si ya lo hizo un compañero, lo bloqueamos
+      };
     });
     setItemsPickingStatus(initialStatus);
 
@@ -192,7 +198,7 @@ const Picking = () => {
     setTiempoOcio(0);
     setEnPausa(false);
     setVista('picking');
-    
+
     // Cambiar estado y ASIGNAR USUARIO
     await supabase
       .from('tms_nv_diarias')
@@ -202,7 +208,7 @@ const Picking = () => {
         usuario_nombre: user.nombre
       })
       .eq('nv', nv.nv);
-    
+
     // Registrar inicio medición
     await supabase.from('tms_mediciones_tiempos').insert({
       nv: nv.nv,
@@ -236,10 +242,10 @@ const Picking = () => {
 
   const finalizarPicking = async () => {
     if (!nvActiva) return;
-    
+
     const items = nvActiva.items || [nvActiva];
     const missingAction = items.some(item => !itemsPickingStatus[item.id]?.status);
-    
+
     if (missingAction) {
       toast.error('Debes indicar el estado para cada producto');
       return;
@@ -262,12 +268,15 @@ const Picking = () => {
 
       // 1. Determinar estado global
       const hasStock = items.some(item => {
-         const status = itemsPickingStatus[item.id]?.status;
-         return status === 'COMPLETO' || status === 'PARCIAL';
+        const status = itemsPickingStatus[item.id]?.status;
+        return status === 'COMPLETO' || status === 'PARCIAL';
       });
-      
-      const hasWaiting = items.some(item => itemsPickingStatus[item.id]?.status === 'ESPERA');
-      
+
+      const hasWaiting = items.some(item => {
+        const status = itemsPickingStatus[item.id]?.status;
+        return status === 'ESPERA' || !status; // Si está explícito en espera o en blanco
+      });
+
       let nuevoEstadoGlobal = hasStock ? 'PACKING' : 'QUIEBRE_STOCK';
       if (hasWaiting) nuevoEstadoGlobal = 'Pendiente Picking';
 
@@ -283,7 +292,7 @@ const Picking = () => {
             sku: item.codigo_producto,
             batch: 'PICKING-BATCH',
             fromLoc: 'PICKING-ZONA',
-            toLoc: 'PACKING-STATION', 
+            toLoc: 'PACKING-STATION',
             qty: item.cantidad,
             userId: user.id,
             reason: `PICKING NV: ${nvActiva.nv}`
@@ -301,23 +310,23 @@ const Picking = () => {
           });
         } else if (state.status === 'ESPERA') {
           qtyReal = 0;
-          itemStatus = null;
+          itemStatus = 'ESPERA'; // Mantenemos el estado de ESPERA en BD para que el próximo lo vea
         }
 
         return supabase
           .from('tms_nv_diarias')
-          .update({ 
-            estado: nuevoEstadoGlobal, 
+          .update({
+            estado: nuevoEstadoGlobal,
             cantidad_real: qtyReal,
             picking_status: itemStatus,
-            usuario_asignado: null, 
+            usuario_asignado: null,
             usuario_nombre: null
           })
           .eq('id', item.id);
       });
 
       await Promise.all(updates);
-      
+
       // Actualizar medición
       await supabase
         .from('tms_mediciones_tiempos')
@@ -331,7 +340,7 @@ const Picking = () => {
         .eq('nv', nvActiva.nv)
         .eq('proceso', 'PICKING')
         .eq('estado', 'EN_PROCESO');
-      
+
       // Reset
       toast.dismiss();
       setNvActiva(null);
@@ -360,14 +369,14 @@ const Picking = () => {
 
       await supabase
         .from('tms_nv_diarias')
-        .update({ 
+        .update({
           estado: 'Aprobada',
           usuario_asignado: null,
           usuario_nombre: null
         })
         .eq('nv', nvActiva.nv);
     }
-    
+
     setNvActiva(null);
     setVista('lista');
     toast.info('Picking cancelado');
@@ -404,15 +413,15 @@ const Picking = () => {
           <div className="flex gap-3">
             <div className="bg-white border-2 border-slate-100 rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-cyan-400 transition-colors">
               <Search size={18} className="text-slate-400 mr-2" />
-              <input 
-                type="text" 
-                placeholder="Buscar N.V., cliente..." 
+              <input
+                type="text"
+                placeholder="Buscar N.V., cliente..."
                 className="outline-none text-sm w-48 font-medium text-slate-600 placeholder:text-slate-400"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <button 
+            <button
               onClick={fetchData}
               disabled={loading}
               className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md shadow-cyan-200 transition-all active:scale-95"
@@ -433,7 +442,7 @@ const Picking = () => {
               <FileText size={24} />
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between group hover:border-cyan-200 transition-all">
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">En Proceso</p>
@@ -443,7 +452,7 @@ const Picking = () => {
               <Hand size={24} />
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Completados Hoy</p>
@@ -464,7 +473,7 @@ const Picking = () => {
             </h3>
             <span className="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">{nvFiltradas.length} órdenes</span>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
@@ -520,39 +529,37 @@ const Picking = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${
-                          nv.estado === 'Aprobada' 
-                            ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${nv.estado === 'Aprobada'
+                            ? 'bg-amber-50 text-amber-600 border-amber-200'
                             : 'bg-cyan-50 text-cyan-600 border-cyan-200'
-                        }`}>
+                          }`}>
                           {nv.estado === 'Aprobada' ? 'PENDIENTE' : 'EN PROCESO'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                         {nv.usuario_nombre ? (
-                           <div className="flex items-center gap-2">
-                             <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                               {nv.usuario_nombre.charAt(0)}
-                             </div>
-                             <span className="text-xs font-medium text-slate-600">
-                               {nv.usuario_nombre}
-                             </span>
-                           </div>
-                         ) : (
-                           <span className="text-xs text-slate-400 italic font-medium px-2 py-1 rounded-md bg-slate-100">Sin asignar</span>
-                         )}
+                        {nv.usuario_nombre ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                              {nv.usuario_nombre.charAt(0)}
+                            </div>
+                            <span className="text-xs font-medium text-slate-600">
+                              {nv.usuario_nombre}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic font-medium px-2 py-1 rounded-md bg-slate-100">Sin asignar</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         {(!nv.usuario_asignado || nv.usuario_asignado === user.id) ? (
                           <button
                             onClick={() => iniciarPicking(nv)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ml-auto shadow-sm transition-all active:scale-95 ${
-                              nv.usuario_asignado === user.id
+                            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ml-auto shadow-sm transition-all active:scale-95 ${nv.usuario_asignado === user.id
                                 ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
                                 : 'bg-white border-2 border-slate-200 hover:border-cyan-500 hover:text-cyan-600 text-slate-600'
-                            }`}
+                              }`}
                           >
-                            <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} /> 
+                            <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} />
                             {nv.usuario_asignado === user.id ? 'CONTINUAR' : 'INICIAR'}
                           </button>
                         ) : (
@@ -579,10 +586,10 @@ const Picking = () => {
       <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden border border-slate-700">
         {/* Background Pattern */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        
+
         <div className="flex justify-between items-start mb-8 relative z-10">
-          <button 
-            onClick={cancelarPicking} 
+          <button
+            onClick={cancelarPicking}
             className="flex items-center gap-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold uppercase tracking-wide"
           >
             <ArrowLeft size={16} /> Cancelar / Salir
@@ -594,13 +601,13 @@ const Picking = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="text-center relative z-10">
           <p className="text-slate-400 text-sm mb-2 font-medium tracking-wide uppercase">Picking Nota de Venta</p>
           <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter text-white">
             #{nvActiva?.nv}
           </h1>
-          
+
           <div className="flex justify-center gap-8 opacity-0 pointer-events-none h-0 overflow-hidden">
             <div className="text-center">
               <div className={`text-5xl font-mono font-bold ${enPausa ? 'text-amber-300' : ''}`}>
@@ -608,7 +615,7 @@ const Picking = () => {
               </div>
               <p className="text-white/70 text-sm mt-1">Tiempo Activo</p>
             </div>
-            
+
             {tiempoOcio > 0 && (
               <div className="text-center">
                 <div className="text-3xl font-mono font-bold text-red-300">
@@ -618,13 +625,12 @@ const Picking = () => {
               </div>
             )}
           </div>
-          
+
           <div className="flex justify-center gap-4 mt-6 opacity-0 pointer-events-none h-0">
             <button
               onClick={togglePausa}
-              className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 ${
-                enPausa ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
+              className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 ${enPausa ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
             >
               {enPausa ? <Play size={20} /> : <Pause size={20} />}
               {enPausa ? 'Reanudar' : 'Pausar'}
@@ -636,154 +642,173 @@ const Picking = () => {
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Columna Izquierda: Lista de Items */}
         <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center px-2">
-                <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                    <Box size={20} className="text-cyan-600" />
-                    Productos ({nvActiva?.total_items})
-                </h3>
-            </div>
+          <div className="flex justify-between items-center px-2">
+            <h3 className="font-bold text-slate-700 flex items-center gap-2">
+              <Box size={20} className="text-cyan-600" />
+              Productos ({nvActiva?.total_items})
+            </h3>
+          </div>
 
-            {(nvActiva?.items || [nvActiva]).map((item) => {
-              const status = itemsPickingStatus[item.id]?.status;
-              const cantidad = itemsPickingStatus[item.id]?.cantidad;
-              const isComplete = status === 'COMPLETO';
+          {(nvActiva?.items || [nvActiva]).map((item) => {
+            const status = itemsPickingStatus[item.id]?.status;
+            const cantidad = itemsPickingStatus[item.id]?.cantidad;
+            const isLocked = itemsPickingStatus[item.id]?.locked; // Viene bloqueado desde BBDD
+            const isComplete = status === 'COMPLETO' || status === 'PARCIAL';
 
-              return (
-                <div key={item.id} className={`bg-white rounded-2xl p-5 border-2 transition-all shadow-sm group ${
-                  isComplete 
-                    ? 'border-emerald-500 bg-emerald-50/30' 
-                    : status === 'SIN_STOCK' 
-                      ? 'border-rose-200 bg-rose-50' 
+            return (
+              <div key={item.id} className={`bg-white rounded-2xl p-5 border-2 transition-all shadow-sm group ${isComplete
+                  ? 'border-emerald-500 bg-emerald-50/30'
+                  : status === 'ESPERA'
+                    ? 'border-amber-400 bg-amber-50/50'
+                    : status === 'SIN_STOCK'
+                      ? 'border-rose-200 bg-rose-50'
                       : 'border-slate-100 hover:border-cyan-200'
                 }`}>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                    {/* Info Producto */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
-                          {item.codigo_producto}
-                        </span>
-                        <span className="text-slate-400 text-xs font-medium uppercase">{item.unidad || 'UNI'}</span>
-                      </div>
-                      <p className="font-bold text-slate-800 text-lg leading-tight mb-2">{item.descripcion_producto}</p>
-                      
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                         <div className="flex items-center gap-1">
-                            <MapPin size={14} className="text-cyan-500" />
-                            <span className="font-medium text-slate-700">Pasillo A-04</span> {/* Simulado */}
-                         </div>
-                         <div className="flex items-center gap-1">
-                            <Box size={14} className="text-indigo-500" />
-                            <span className="font-medium text-slate-700">Lote: 23091</span> {/* Simulado */}
-                         </div>
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                  {/* Info Producto */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
+                        {item.codigo_producto}
+                      </span>
+                      <span className="text-slate-400 text-xs font-medium uppercase">{item.unidad || 'UNI'}</span>
                     </div>
+                    <p className="font-bold text-slate-800 text-lg leading-tight mb-2">{item.descripcion_producto}</p>
 
-                    {/* Controles de Acción */}
-                    <div className="flex flex-col items-end gap-3 min-w-[140px]">
-                        <div className="text-right">
-                             <span className="text-xs font-bold text-slate-400 uppercase">Solicitado</span>
-                             <p className="text-3xl font-black text-slate-800">{item.cantidad}</p>
-                        </div>
-
-                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                             <button
-                               onClick={() => handleItemStatusChange(item.id, 'COMPLETO', item.cantidad)}
-                               title="Completo"
-                               className={`p-2 rounded-md transition-all ${
-                                 status === 'COMPLETO' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-emerald-500'
-                               }`}
-                             >
-                               <CheckCircle size={20} />
-                             </button>
-                             
-                             <button
-                               onClick={() => handleItemStatusChange(item.id, 'PARCIAL')}
-                               title="Parcial"
-                               className={`p-2 rounded-md transition-all ${
-                                 status === 'PARCIAL' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-blue-500'
-                               }`}
-                             >
-                               <Box size={20} />
-                             </button>
-
-                             <button
-                               onClick={() => handleItemStatusChange(item.id, 'SIN_STOCK')}
-                               title="Sin Stock"
-                               className={`p-2 rounded-md transition-all ${
-                                 status === 'SIN_STOCK' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-rose-500'
-                               }`}
-                             >
-                               <AlertCircle size={20} />
-                             </button>
-                        </div>
-                        
-                        {/* Input Condicional para Parcial */}
-                        {status === 'PARCIAL' && (
-                             <div className="animate-in slide-in-from-top-2 fade-in">
-                                 <input 
-                                    type="number" 
-                                    placeholder="Cant. Real"
-                                    className="w-full border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-200"
-                                    value={cantidad}
-                                    onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
-                                    autoFocus
-                                 />
-                             </div>
-                        )}
+                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <MapPin size={14} className="text-cyan-500" />
+                        <span className="font-medium text-slate-700">Pasillo A-04</span> {/* Simulado */}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Box size={14} className="text-indigo-500" />
+                        <span className="font-medium text-slate-700">Lote: 23091</span> {/* Simulado */}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
 
-            <div className="pt-6">
-                <button
-                  onClick={finalizarPicking}
-                  className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-slate-800 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                >
-                  <CheckCircle size={24} className="text-emerald-400" />
-                  CONFIRMAR PICKING
-                </button>
-            </div>
+                  {/* Controles de Acción */}
+                  <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-slate-400 uppercase">Solicitado</span>
+                      <p className="text-3xl font-black text-slate-800">{item.cantidad}</p>
+                    </div>
+
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => !isLocked && handleItemStatusChange(item.id, 'COMPLETO', item.cantidad)}
+                        title="Completo"
+                        disabled={isLocked}
+                        className={`p-2 rounded-md transition-all ${status === 'COMPLETO' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-emerald-500'
+                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                      >
+                        <CheckCircle size={20} />
+                      </button>
+
+                      <button
+                        onClick={() => !isLocked && handleItemStatusChange(item.id, 'PARCIAL')}
+                        title="Parcial"
+                        disabled={isLocked}
+                        className={`p-2 rounded-md transition-all ${status === 'PARCIAL' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-blue-500'
+                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                      >
+                        <Box size={20} />
+                      </button>
+
+                      <button
+                        onClick={() => !isLocked && handleItemStatusChange(item.id, 'ESPERA')}
+                        title="Dejar en Espera para otro Picker"
+                        disabled={isLocked}
+                        className={`p-2 rounded-md transition-all ${status === 'ESPERA' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-amber-500'
+                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                      >
+                        <Hourglass size={20} />
+                      </button>
+
+                      <button
+                        onClick={() => !isLocked && handleItemStatusChange(item.id, 'SIN_STOCK')}
+                        title="Sin Stock"
+                        disabled={isLocked}
+                        className={`p-2 rounded-md transition-all ${status === 'SIN_STOCK' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400 hover:bg-white hover:text-rose-500'
+                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                      >
+                        <AlertCircle size={20} />
+                      </button>
+                    </div>
+
+                    {/* Indicador de bloqueado visible desde BBDD */}
+                    {isLocked && (
+                      <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase mt-1">
+                        Ya procesado
+                      </div>
+                    )}
+
+                    {/* Input Condicional para Parcial */}
+                    {status === 'PARCIAL' && !isLocked && (
+                      <div className="animate-in slide-in-from-top-2 fade-in">
+                        <input
+                          type="number"
+                          placeholder="Cant. Real"
+                          className="w-full border-2 border-blue-400 rounded-lg px-2 py-1 text-center font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-200"
+                          value={cantidad}
+                          onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="pt-6">
+            <button
+              onClick={finalizarPicking}
+              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-slate-800 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+            >
+              <CheckCircle size={24} className="text-emerald-400" />
+              CONFIRMAR PICKING
+            </button>
+          </div>
         </div>
 
         {/* Columna Derecha: Resumen Cliente */}
         <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm sticky top-6">
-                <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-4">
-                    <User size={20} className="text-indigo-500" />
-                    Datos del Cliente
-                </h3>
-                
-                <div className="space-y-5">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Cliente Final</p>
-                        <p className="font-bold text-slate-800 text-lg leading-tight">{nvActiva?.cliente}</p>
-                    </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm sticky top-6">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-4">
+              <User size={20} className="text-indigo-500" />
+              Datos del Cliente
+            </h3>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vendedor</p>
-                            <p className="font-medium text-slate-600 text-sm">{nvActiva?.vendedor || '-'}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha Emisión</p>
-                            <p className="font-medium text-slate-600 text-sm">{nvActiva?.fecha_emision || '-'}</p>
-                        </div>
-                    </div>
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Cliente Final</p>
+                <p className="font-bold text-slate-800 text-lg leading-tight">{nvActiva?.cliente}</p>
+              </div>
 
-                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                        <div className="flex items-start gap-3">
-                            <Truck className="text-indigo-600 mt-1" size={20} />
-                            <div>
-                                <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Ruta de Despacho</p>
-                                <p className="font-bold text-indigo-900">Ruta Norte - Mañana</p>
-                            </div>
-                        </div>
-                    </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vendedor</p>
+                  <p className="font-medium text-slate-600 text-sm">{nvActiva?.vendedor || '-'}</p>
                 </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha Emisión</p>
+                  <p className="font-medium text-slate-600 text-sm">{nvActiva?.fecha_emision || '-'}</p>
+                </div>
+              </div>
+
+              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                <div className="flex items-start gap-3">
+                  <Truck className="text-indigo-600 mt-1" size={20} />
+                  <div>
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Ruta de Despacho</p>
+                    <p className="font-bold text-indigo-900">Ruta Norte - Mañana</p>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
