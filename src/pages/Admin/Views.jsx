@@ -25,6 +25,7 @@ const ViewsPage = () => {
     { value: '/tms/drivers', label: 'TMS - Conductores' },
     { value: '/tms/mobile', label: 'TMS - App Móvil' },
     { value: '/inbound/reception', label: 'Inbound - Recepción' },
+    { value: '/inbound/cubing', label: 'Inbound - Cubicaje (Pesos)' },
     { value: '/inbound/entry', label: 'Inbound - Ingreso' },
     { value: '/outbound/sales-orders', label: 'Outbound - Notas de Venta' },
     { value: '/outbound/picking', label: 'Outbound - Picking' },

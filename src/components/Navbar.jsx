@@ -10,7 +10,8 @@ import {
   Search, Barcode, MapPinned,
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
-  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan
+  Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
+  Scale
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -46,7 +47,7 @@ const Navbar = () => {
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard', 'view_kpis'],
-    'inbound': ['view_reception', 'view_entry', 'view_returns'],
+    'inbound': ['view_reception', 'view_entry', 'view_returns', 'process_reception'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_packing_tv', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers', 'view_cycle_count'],
     'quality': ['view_quality'],
@@ -67,6 +68,7 @@ const Navbar = () => {
     '/inbound/reception': 'view_reception',
     '/inbound/returns': 'view_returns',
     '/inbound/entry': 'view_entry',
+    '/inbound/cubing': 'process_reception',
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
     '/outbound/packing': 'view_packing',
@@ -173,6 +175,7 @@ const Navbar = () => {
       icon: <ArrowDownToLine size={18} />,
       modules: [
         { label: 'Recepción', path: '/inbound/reception', icon: <Truck size={16} /> },
+        { label: 'Cubicaje (Pesos)', path: '/inbound/cubing', icon: <Scale size={16} /> },
         { label: 'Devoluciones', path: '/inbound/returns', icon: <RotateCcw size={16} /> },
         { label: 'Ingreso (Putaway)', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> }
       ]

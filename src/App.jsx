@@ -23,6 +23,7 @@ import WarehousePDA from './pages/Mobile/WarehousePDA'; // NUEVO
 import Reception from './pages/Inbound/Reception';
 import Entry from './pages/Inbound/Entry';
 import Returns from './pages/Inbound/Returns'; // NUEVO
+import CubingRegistry from './pages/Inbound/CubingRegistry'; // NUEVO - Registro Cubicaje
 
 // Outbound Modules
 import SalesOrders from './pages/Outbound/SalesOrders';
@@ -88,7 +89,8 @@ const ROUTE_PERMISSIONS = {
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
-  '/inbound/returns': ['view_reception', 'process_reception'], // Usa mismos permisos que recepción
+  '/inbound/returns': ['view_reception', 'process_reception'],
+  '/inbound/cubing': ['view_reception', 'process_reception'], // Nuevo módulo usa mismos permisos de recepción
 
   // Outbound
   '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
@@ -299,6 +301,7 @@ function AppContent() {
           <Route path="inbound/reception" element={<Reception />} />
           <Route path="inbound/entry" element={<Entry />} />
           <Route path="inbound/returns" element={<Returns />} />
+          <Route path="inbound/cubing" element={<CubingRegistry />} />
 
           {/* Outbound Modules */}
           <Route path="outbound/sales-orders" element={<SalesOrders />} />
