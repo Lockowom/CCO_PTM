@@ -23,7 +23,6 @@ const DispatchControl = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');
-  const [stats, setStats] = useState({ total: 0, totalBultos: 0, totalFlete: 0 });
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   const fetchRecords = useCallback(async () => {
@@ -75,28 +74,28 @@ const DispatchControl = () => {
   }, [searchTerm, records]);
 
   // Filtrar registros, si no hay filtro activo devolvemos array vacío
-  const filteredRecords = isFilterActive ? records.filter(record => {
-    const term = searchTerm.toLowerCase();
-    return !searchTerm ||
-      record.nv?.toString().toLowerCase().includes(term) ||
-      record.guia?.toString().toLowerCase().includes(term) ||
-      record.cliente?.toLowerCase().includes(term) ||
-      record.transportista?.toLowerCase().includes(term) ||
-      record.numero_envio?.toString().toLowerCase().includes(term);
-  }) : [];
+  const filteredRecords = React.useMemo(() => {
+    if (!isFilterActive) return [];
 
-  // AHORA SÍ: Efecto para actualizar stats dinámicamente
-  useEffect(() => {
-    const totalGuias = filteredRecords.length;
-    const totalBultos = filteredRecords.reduce((sum, r) => sum + (parseInt(r.bultos) || 0), 0);
-    const totalFlete = filteredRecords.reduce((sum, r) => sum + (parseInt(r.valor_flete) || 0), 0);
-
-    setStats({
-      total: totalGuias,
-      totalBultos: totalBultos,
-      totalFlete: totalFlete
+    return records.filter(record => {
+      const term = searchTerm.toLowerCase();
+      return !searchTerm ||
+        record.nv?.toString().toLowerCase().includes(term) ||
+        record.guia?.toString().toLowerCase().includes(term) ||
+        record.cliente?.toLowerCase().includes(term) ||
+        record.transportista?.toLowerCase().includes(term) ||
+        record.numero_envio?.toString().toLowerCase().includes(term);
     });
-  }, [filteredRecords]); // Se ejecuta cada vez que cambia el resultado filtrado
+  }, [records, isFilterActive, searchTerm]);
+
+  // AHORA SÍ: Calcular estadísticas dinámicamente sin useEffect
+  const stats = React.useMemo(() => {
+    return {
+      total: filteredRecords.length,
+      totalBultos: filteredRecords.reduce((sum, r) => sum + (parseInt(r.bultos) || 0), 0),
+      totalFlete: filteredRecords.reduce((sum, r) => sum + (parseInt(r.valor_flete) || 0), 0)
+    };
+  }, [filteredRecords]);
 
   // Exportar CSV
   const exportToCSV = () => {
