@@ -45,6 +45,8 @@ const Picking = () => {
   const ocioRef = useRef(null);
   const lastHiddenTime = useRef(null);
 
+  const [productLocations, setProductLocations] = useState({}); // Mapeo de Código -> Array de Ubicaciones
+
   const [stats, setStats] = useState({
     pendientes: 0,
     enProceso: 0,
@@ -183,6 +185,8 @@ const Picking = () => {
 
     setNvActiva(nv);
     const initialStatus = {};
+    const codigosProducto = []; // Recolectar códigos para buscar ubicaciones
+
     (nv.items || [nv]).forEach(item => {
       // 1. CARGA INICIAL: Leer el status previo de la DB si ya existe
       initialStatus[item.id] = {
@@ -190,8 +194,40 @@ const Picking = () => {
         cantidad: item.picking_status === 'COMPLETO' ? item.cantidad : (item.cantidad_real || ''),
         locked: ['COMPLETO', 'PARCIAL', 'SIN_STOCK'].includes(item.picking_status) // Si ya lo hizo un compañero, lo bloqueamos
       };
+      // Extraer código
+      if (item.codigo_producto && !codigosProducto.includes(item.codigo_producto)) {
+        codigosProducto.push(item.codigo_producto);
+      }
     });
     setItemsPickingStatus(initialStatus);
+
+    // 2. BUSCAR UBICACIONES FÍSICAS EN EL WMS
+    if (codigosProducto.length > 0) {
+      try {
+        const { data: ubicacionesResult, error } = await supabase
+          .from('wms_ubicaciones')
+          .select('codigo, ubicacion')
+          .in('codigo', codigosProducto);
+
+        if (!error && ubicacionesResult) {
+          const locMap = {};
+          ubicacionesResult.forEach(u => {
+            if (!locMap[u.codigo]) locMap[u.codigo] = [];
+            // Agregar solo si no está duplicada la misma ubicación textual para el mismo código
+            if (!locMap[u.codigo].includes(u.ubicacion)) {
+              locMap[u.codigo].push(u.ubicacion);
+            }
+          });
+          setProductLocations(locMap);
+        }
+      } catch (err) {
+        console.error("Error cargando ubicaciones:", err);
+        // Fallback silencioso: mostramos array vacío, el proceso no se detiene
+        setProductLocations({});
+      }
+    } else {
+      setProductLocations({});
+    }
 
     setTiempoInicio(Date.now());
     setTiempoTranscurrido(0);
@@ -688,14 +724,23 @@ const Picking = () => {
                     </div>
                     <p className="font-bold text-slate-800 text-lg leading-tight mb-2">{item.descripcion_producto}</p>
 
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={14} className="text-cyan-500" />
-                        <span className="font-medium text-slate-700">Pasillo A-04</span> {/* Simulado */}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Box size={14} className="text-indigo-500" />
-                        <span className="font-medium text-slate-700">Lote: 23091</span> {/* Simulado */}
+                    <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
+                      {productLocations[item.codigo_producto] && productLocations[item.codigo_producto].length > 0 ? (
+                        productLocations[item.codigo_producto].map((loc, idx) => (
+                          <div key={idx} className="flex items-center gap-1 bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-100">
+                            <MapPin size={12} className="text-cyan-500" />
+                            <span className="font-bold text-xs">{loc}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <MapPin size={14} />
+                          <span className="font-medium text-xs">Sin ubicación en WMS</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                        <Box size={12} />
+                        <span className="font-bold text-xs">Cant: {item.cantidad}</span>
                       </div>
                     </div>
                   </div>
