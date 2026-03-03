@@ -13,6 +13,7 @@ import {
   Zap,
   Activity
 } from 'lucide-react';
+import { toast } from 'sonner';
 import gsap from 'gsap';
 
 // Componente para el Temporizador en Tiempo Real
@@ -24,8 +25,15 @@ const ElapsedTimer = ({ startTime }) => {
     const updateTimer = () => {
       if (!startTime) return;
       const start = new Date(startTime).getTime();
+      if (isNaN(start)) return;
+      
       const now = new Date().getTime();
       const diff = now - start;
+
+      if (diff < 0) {
+         setElapsed("00:00");
+         return;
+      }
 
       const minutes = Math.floor(diff / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
@@ -111,10 +119,12 @@ const PackingTV = () => {
 
       const allData = [...(packingData || []), ...(finishedData || [])];
       setData(allData);
-      setLoading(false);
 
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Error cargando datos: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
