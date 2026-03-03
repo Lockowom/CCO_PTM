@@ -204,6 +204,12 @@ const DispatchControl = () => {
                 className="outline-none text-sm bg-transparent w-full"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    fetchRecords();
+                  }
+                }}
               />
             </div>
           </div>

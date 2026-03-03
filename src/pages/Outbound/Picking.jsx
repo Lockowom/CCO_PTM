@@ -416,9 +416,20 @@ const Picking = () => {
               <input
                 type="text"
                 placeholder="Buscar N.V., cliente..."
-                className="outline-none text-sm w-48 font-medium text-slate-600 placeholder:text-slate-400"
+                className="outline-none text-sm w-48 font-medium text-slate-600 placeholder:text-slate-400 bg-transparent"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (nvFiltradas.length === 1) {
+                      iniciarPicking(nvFiltradas[0]);
+                      setSearchTerm('');
+                    } else if (searchTerm) {
+                      fetchData();
+                    }
+                  }
+                }}
               />
             </div>
             <button
@@ -530,8 +541,8 @@ const Picking = () => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${nv.estado === 'Aprobada'
-                            ? 'bg-amber-50 text-amber-600 border-amber-200'
-                            : 'bg-cyan-50 text-cyan-600 border-cyan-200'
+                          ? 'bg-amber-50 text-amber-600 border-amber-200'
+                          : 'bg-cyan-50 text-cyan-600 border-cyan-200'
                           }`}>
                           {nv.estado === 'Aprobada' ? 'PENDIENTE' : 'EN PROCESO'}
                         </span>
@@ -555,8 +566,8 @@ const Picking = () => {
                           <button
                             onClick={() => iniciarPicking(nv)}
                             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ml-auto shadow-sm transition-all active:scale-95 ${nv.usuario_asignado === user.id
-                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
-                                : 'bg-white border-2 border-slate-200 hover:border-cyan-500 hover:text-cyan-600 text-slate-600'
+                              ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200'
+                              : 'bg-white border-2 border-slate-200 hover:border-cyan-500 hover:text-cyan-600 text-slate-600'
                               }`}
                           >
                             <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} />
@@ -657,12 +668,12 @@ const Picking = () => {
 
             return (
               <div key={item.id} className={`bg-white rounded-2xl p-5 border-2 transition-all shadow-sm group ${isComplete
-                  ? 'border-emerald-500 bg-emerald-50/30'
-                  : status === 'ESPERA'
-                    ? 'border-amber-400 bg-amber-50/50'
-                    : status === 'SIN_STOCK'
-                      ? 'border-rose-200 bg-rose-50'
-                      : 'border-slate-100 hover:border-cyan-200'
+                ? 'border-emerald-500 bg-emerald-50/30'
+                : status === 'ESPERA'
+                  ? 'border-amber-400 bg-amber-50/50'
+                  : status === 'SIN_STOCK'
+                    ? 'border-rose-200 bg-rose-50'
+                    : 'border-slate-100 hover:border-cyan-200'
                 }`}>
                 <div className="flex flex-col sm:flex-row gap-4 justify-between">
                   {/* Info Producto */}

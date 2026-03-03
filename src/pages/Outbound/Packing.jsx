@@ -571,9 +571,20 @@ const Packing = () => {
               <input
                 type="text"
                 placeholder="Buscar cliente o N.V..."
-                className="outline-none text-sm w-48"
+                className="outline-none text-sm w-48 bg-transparent"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (clientesFiltrados.length === 1 && clientesFiltrados[0].nvList.length === 1) {
+                      iniciarPacking(clientesFiltrados[0].nvList[0]);
+                      setSearchTerm('');
+                    } else if (searchTerm) {
+                      fetchData();
+                    }
+                  }
+                }}
               />
             </div>
             <button
@@ -592,8 +603,8 @@ const Packing = () => {
           <button
             onClick={() => setVista('clientes')}
             className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${vista === 'clientes'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
           >
             <LayoutGrid size={18} /> Por Cliente
@@ -601,8 +612,8 @@ const Packing = () => {
           <button
             onClick={() => setVista('lista')}
             className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${vista === 'lista'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
           >
             <List size={18} /> Lista N.V.
@@ -850,8 +861,8 @@ const Packing = () => {
             <button
               onClick={togglePausa}
               className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${enPausa
-                  ? 'bg-amber-500 text-white hover:bg-amber-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
             >
               {enPausa ? <Play size={20} /> : <Pause size={20} />}
@@ -972,10 +983,10 @@ const Packing = () => {
 
               return (
                 <div key={idx} className={`rounded-xl p-4 border flex items-center gap-4 ${isStockBreak
-                    ? 'bg-red-50 border-red-200 opacity-75'
-                    : isPartial
-                      ? 'bg-amber-50 border-amber-200'
-                      : 'bg-indigo-50 border-indigo-100'
+                  ? 'bg-red-50 border-red-200 opacity-75'
+                  : isPartial
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-indigo-50 border-indigo-100'
                   }`}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

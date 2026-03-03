@@ -1,15 +1,15 @@
 // SalesOrders.jsx - Notas de Venta con estados REALES
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Search, 
-  Eye, 
-  AlertCircle, 
-  X, 
-  Package, 
-  Truck, 
-  Calendar, 
-  User, 
+import {
+  Search,
+  Eye,
+  AlertCircle,
+  X,
+  Package,
+  Truck,
+  Calendar,
+  User,
   FileText,
   Hand,
   CheckCircle,
@@ -29,90 +29,90 @@ import { supabase } from '../../supabase';
 
 // Estados REALES de la base de datos (en orden del flujo)
 const PIPELINE_ESTADOS = [
-  { 
-    key: 'Pendiente', 
-    label: 'Pendiente', 
-    icon: Hourglass, 
+  {
+    key: 'Pendiente',
+    label: 'Pendiente',
+    icon: Hourglass,
     bgColor: 'bg-slate-500',
     lightBg: 'bg-slate-50',
     textColor: 'text-slate-700',
     borderColor: 'border-slate-300',
     description: 'Esperando aprobación'
   },
-  { 
-    key: 'Aprobada', 
-    label: 'Aprobada', 
-    icon: ThumbsUp, 
+  {
+    key: 'Aprobada',
+    label: 'Aprobada',
+    icon: ThumbsUp,
     bgColor: 'bg-amber-500',
     lightBg: 'bg-amber-50',
     textColor: 'text-amber-700',
     borderColor: 'border-amber-200',
     description: 'Lista para Picking'
   },
-  { 
-    key: 'Pendiente Picking', 
-    label: 'En Picking', 
-    icon: Hand, 
+  {
+    key: 'Pendiente Picking',
+    label: 'En Picking',
+    icon: Hand,
     bgColor: 'bg-cyan-500',
     lightBg: 'bg-cyan-50',
     textColor: 'text-cyan-700',
     borderColor: 'border-cyan-200',
     description: 'Recolectando productos'
   },
-  { 
-    key: 'PACKING', 
-    label: 'Packing', 
-    icon: Box, 
+  {
+    key: 'PACKING',
+    label: 'Packing',
+    icon: Box,
     bgColor: 'bg-indigo-500',
     lightBg: 'bg-indigo-50',
     textColor: 'text-indigo-700',
     borderColor: 'border-indigo-200',
     description: 'Empacando pedido'
   },
-  { 
-    key: 'LISTO_DESPACHO', 
-    label: 'Listo Despacho', 
-    icon: Send, 
+  {
+    key: 'LISTO_DESPACHO',
+    label: 'Listo Despacho',
+    icon: Send,
     bgColor: 'bg-purple-500',
     lightBg: 'bg-purple-50',
     textColor: 'text-purple-700',
     borderColor: 'border-purple-200',
     description: 'Listo para enviar'
   },
-  { 
-    key: 'Pendiente Shipping', 
-    label: 'Pend. Shipping', 
-    icon: Ship, 
+  {
+    key: 'Pendiente Shipping',
+    label: 'Pend. Shipping',
+    icon: Ship,
     bgColor: 'bg-blue-500',
     lightBg: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
     description: 'Pendiente de envío'
   },
-  { 
-    key: 'Despachado', 
-    label: 'Despachado', 
-    icon: Truck, 
+  {
+    key: 'Despachado',
+    label: 'Despachado',
+    icon: Truck,
     bgColor: 'bg-emerald-500',
     lightBg: 'bg-emerald-50',
     textColor: 'text-emerald-700',
     borderColor: 'border-emerald-200',
     description: 'En camino'
   },
-  { 
-    key: 'NULA', 
-    label: 'Nula', 
-    icon: X, 
+  {
+    key: 'NULA',
+    label: 'Nula',
+    icon: X,
     bgColor: 'bg-red-500',
     lightBg: 'bg-red-50',
     textColor: 'text-red-700',
     borderColor: 'border-red-200',
     description: 'Venta anulada'
   },
-  { 
-    key: 'Refacturacion', 
-    label: 'Refacturación', 
-    icon: RotateCcw, 
+  {
+    key: 'Refacturacion',
+    label: 'Refacturación',
+    icon: RotateCcw,
     bgColor: 'bg-orange-500',
     lightBg: 'bg-orange-50',
     textColor: 'text-orange-700',
@@ -150,13 +150,14 @@ const SalesOrders = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Cargar N.V. que NO están despachadas (en proceso)
       const { data, error } = await supabase
         .from('tms_nv_diarias')
         .select('*')
         .not('estado', 'eq', 'Despachado')
-        .order('fecha_emision', { ascending: false });
+        .order('fecha_emision', { ascending: false })
+        .limit(3000);
 
       if (error) throw error;
 
@@ -178,12 +179,12 @@ const SalesOrders = () => {
       });
 
       // Convertir a array
-      const ordersArray = Object.values(grouped).sort((a, b) => 
+      const ordersArray = Object.values(grouped).sort((a, b) =>
         new Date(b.fecha_emision) - new Date(a.fecha_emision)
       );
 
       setOrders(ordersArray);
-      
+
       // Calcular contadores (basado en NVs únicas)
       const counts = {};
       PIPELINE_ESTADOS.forEach(e => {
@@ -192,7 +193,7 @@ const SalesOrders = () => {
       // También contar PENDIENTE en mayúsculas (datos legacy)
       counts['Pendiente'] = (counts['Pendiente'] || 0) + ordersArray.filter(o => o.estado === 'PENDIENTE').length;
       setContadores(counts);
-      
+
     } catch (error) {
       console.error("Error cargando N.V:", error);
       setError(error.message);
@@ -203,7 +204,7 @@ const SalesOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-    
+
     const channel = supabase
       .channel('nv_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
@@ -218,7 +219,7 @@ const SalesOrders = () => {
   const handleUpdateStatus = async (nv, newStatus) => {
     try {
       setModalLoading(true);
-      
+
       const { error } = await supabase
         .from('tms_nv_diarias')
         .update({ estado: newStatus })
@@ -227,14 +228,14 @@ const SalesOrders = () => {
       if (error) throw error;
 
       await fetchOrders();
-      
+
       if (newStatus === 'Despachado') {
         setSelectedOrder(null);
       } else {
         // Actualizar el estado en el modal si está abierto
         setSelectedOrder(prev => prev ? { ...prev, estado: newStatus } : null);
       }
-      
+
     } catch (e) {
       alert('Error: ' + e.message);
     } finally {
@@ -296,11 +297,11 @@ const SalesOrders = () => {
   const filteredOrders = orders.filter(order => {
     const estadoNormalizado = order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado;
     const matchEstado = estadoNormalizado === selectedEstado;
-    const matchSearch = !searchTerm || 
+    const matchSearch = !searchTerm ||
       order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       // Buscar en los items también
-      order.items?.some(i => 
+      order.items?.some(i =>
         i.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         i.descripcion_producto?.toLowerCase().includes(searchTerm.toLowerCase())
       ) ||
@@ -325,15 +326,21 @@ const SalesOrders = () => {
         <div className="flex gap-3">
           <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
             <Search size={18} className="text-slate-400 mr-2" />
-            <input 
-              type="text" 
-              placeholder="Buscar NV, cliente, producto..." 
-              className="outline-none text-sm w-64"
+            <input
+              type="text"
+              placeholder="Buscar NV, cliente, producto..."
+              className="outline-none text-sm w-64 bg-transparent"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  fetchOrders();
+                }
+              }}
             />
           </div>
-          <button 
+          <button
             onClick={fetchOrders}
             disabled={loading}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
@@ -352,7 +359,7 @@ const SalesOrders = () => {
             const Icon = config.icon;
             const isSelected = selectedEstado === estadoKey;
             const count = contadores[estadoKey] || 0;
-            
+
             return (
               <React.Fragment key={estadoKey}>
                 <button
@@ -361,8 +368,8 @@ const SalesOrders = () => {
                 >
                   <div className={`
                     px-4 py-3 rounded-xl border-2 transition-all text-center min-w-[120px]
-                    ${isSelected 
-                      ? `${config.lightBg} ${config.borderColor} shadow-lg` 
+                    ${isSelected
+                      ? `${config.lightBg} ${config.borderColor} shadow-lg`
                       : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }
                   `}>
@@ -383,7 +390,7 @@ const SalesOrders = () => {
                     </div>
                   </div>
                 </button>
-                
+
                 {index < ESTADOS_PIPELINE.length - 1 && (
                   <ChevronRight size={20} className="text-slate-300 flex-shrink-0" />
                 )}
@@ -391,7 +398,7 @@ const SalesOrders = () => {
             );
           })}
         </div>
-        
+
         <p className="text-xs text-slate-400 text-center mt-3 pt-3 border-t border-slate-100">
           💡 Las N.V. <strong>Despachadas</strong> se mueven al <strong>Historial</strong> (Consultas → Historial N.V.)
         </p>
@@ -464,7 +471,7 @@ const SalesOrders = () => {
                 filteredOrders.map((order, index) => {
                   const config = getEstadoConfig(order.estado);
                   const accion = ACCIONES_ESTADO[order.estado] || ACCIONES_ESTADO[order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado];
-                  
+
                   return (
                     <tr key={index} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
@@ -500,9 +507,9 @@ const SalesOrders = () => {
                       </td>
                       <td className="px-4 py-3 text-right">
                         {order.total_items > 1 ? (
-                           <span className="font-bold text-slate-800">{order.total_cantidad} <span className="text-[10px] font-normal text-slate-400">Total</span></span>
+                          <span className="font-bold text-slate-800">{order.total_cantidad} <span className="text-[10px] font-normal text-slate-400">Total</span></span>
                         ) : (
-                           <span className="font-bold text-slate-800">{order.cantidad} <span className="text-xs font-normal text-slate-400">{order.unidad}</span></span>
+                          <span className="font-bold text-slate-800">{order.cantidad} <span className="text-xs font-normal text-slate-400">{order.unidad}</span></span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -513,7 +520,7 @@ const SalesOrders = () => {
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
                           {accion && (
-                            <button 
+                            <button
                               onClick={() => handleUpdateStatus(order.nv, accion.next)}
                               className={`${getEstadoConfig(accion.next).bgColor} hover:opacity-90 text-white px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1`}
                               title={accion.label}
@@ -522,7 +529,7 @@ const SalesOrders = () => {
                               {accion.label}
                             </button>
                           )}
-                          <button 
+                          <button
                             onClick={() => setSelectedOrder(order)}
                             className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1"
                             title="Ver detalle"
@@ -530,7 +537,7 @@ const SalesOrders = () => {
                             <Eye size={12} />
                           </button>
                           {hasPermission('delete_sales_orders') && (
-                            <button 
+                            <button
                               onClick={() => handleDeleteOrder(order.nv)}
                               className="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors"
                               title="Eliminar"
@@ -568,7 +575,7 @@ const SalesOrders = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {hasPermission('delete_sales_orders') && (
-                      <button 
+                      <button
                         onClick={() => handleDeleteOrder(selectedOrder.nv)}
                         className="text-red-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg border border-red-200 transition-colors"
                         title="Eliminar N.V. y bloquear re-importación"
@@ -576,7 +583,7 @@ const SalesOrders = () => {
                         <Trash2 size={18} />
                       </button>
                     )}
-                    <button 
+                    <button
                       onClick={() => setSelectedOrder(null)}
                       className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
                     >
@@ -618,7 +625,7 @@ const SalesOrders = () => {
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
                   <Package size={14} /> Productos ({selectedOrder.total_items || 1})
                 </h3>
-                
+
                 <div className="max-h-60 overflow-y-auto space-y-3">
                   {(selectedOrder.items || [selectedOrder]).map((item, idx) => (
                     <div key={idx} className="flex items-center gap-4 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
@@ -643,21 +650,21 @@ const SalesOrders = () => {
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Cambiar Estado</h3>
                 <div className="flex flex-wrap gap-2">
                   {PIPELINE_ESTADOS.map((estado) => {
-                    const isCurrent = selectedOrder.estado === estado.key || 
-                                     (selectedOrder.estado === 'PENDIENTE' && estado.key === 'Pendiente');
-                    const accion = ACCIONES_ESTADO[selectedOrder.estado] || 
-                                   ACCIONES_ESTADO[selectedOrder.estado === 'PENDIENTE' ? 'Pendiente' : selectedOrder.estado];
+                    const isCurrent = selectedOrder.estado === estado.key ||
+                      (selectedOrder.estado === 'PENDIENTE' && estado.key === 'Pendiente');
+                    const accion = ACCIONES_ESTADO[selectedOrder.estado] ||
+                      ACCIONES_ESTADO[selectedOrder.estado === 'PENDIENTE' ? 'Pendiente' : selectedOrder.estado];
                     const isNext = accion?.next === estado.key;
-                    
+
                     return (
-                      <button 
+                      <button
                         key={estado.key}
                         onClick={() => handleUpdateStatus(selectedOrder.nv, estado.key)}
                         disabled={modalLoading || isCurrent}
                         className={`
                           px-3 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5
-                          ${isCurrent 
-                            ? `${estado.bgColor} text-white opacity-50 cursor-not-allowed` 
+                          ${isCurrent
+                            ? `${estado.bgColor} text-white opacity-50 cursor-not-allowed`
                             : isNext
                               ? `${estado.bgColor} text-white shadow-md hover:opacity-90`
                               : `${estado.lightBg} ${estado.textColor} border ${estado.borderColor} hover:shadow`
