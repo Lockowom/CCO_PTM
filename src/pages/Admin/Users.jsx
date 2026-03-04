@@ -17,6 +17,7 @@ const UsersPage = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
