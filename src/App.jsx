@@ -122,18 +122,18 @@ const ROUTE_PERMISSIONS = {
   '/queries/productivity': ['view_reports'], // NUEVO
 
   // Admin (solo ADMIN)
-  '/admin/users': ['manage_users'],
-  '/admin/roles': ['manage_roles'],
-  '/admin/views': ['manage_views'],
-  '/admin/mediciones': ['manage_mediciones'],
+  '/admin/users': ['manage_users', 'view_users'],
+  '/admin/roles': ['manage_roles', 'view_roles'],
+  '/admin/views': ['manage_views', 'view_views'],
+  '/admin/mediciones': ['manage_mediciones', 'view_mediciones'],
   '/admin/reports': ['view_reports'],
   '/admin/time-reports': ['view_time_reports'],
   '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
-  '/admin/active-users': ['manage_users'], // NUEVO (usa permiso de usuarios)
-  '/admin/login-history': ['manage_users'], // NUEVO
-  '/admin/wms-settings': ['manage_views'], // NUEVO (Configuración General)
-  '/admin/system-health': ['manage_mediciones'], // NUEVO (Monitoreo)
-  '/admin/ops-control': ['manage_users'], // NUEVO (Control de Procesos)
+  '/admin/active-users': ['manage_users', 'view_users'], // NUEVO (usa permiso de usuarios)
+  '/admin/login-history': ['manage_users', 'view_users'], // NUEVO
+  '/admin/wms-settings': ['manage_views', 'view_views'], // NUEVO (Configuración General)
+  '/admin/system-health': ['manage_mediciones', 'view_mediciones'], // NUEVO (Monitoreo)
+  '/admin/ops-control': ['manage_users', 'view_users'], // NUEVO (Control de Procesos)
   '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
   '/admin/data-import': ['manage_data_import'],
   '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
@@ -216,7 +216,7 @@ const SmartRedirect = () => {
   }
 
   // ADMIN tiene acceso a todo → ir al dashboard
-  if (user?.rol === 'ADMIN') {
+  if (user?.rol === 'ADMIN' || user?.es_admin_delegado) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -258,8 +258,8 @@ const ProtectedRoute = () => {
   const requiredPermissions = ROUTE_PERMISSIONS[location.pathname] || [];
 
   // Validar permisos
-  // Si es ADMIN o tiene al menos un permiso requerido, puede acceder
-  const hasAccess = user?.rol === 'ADMIN' || requiredPermissions.length === 0 ||
+  // Si es ADMIN, o tiene poder de delegado, o la ruta no exige nada, o califica a la ruta exigida
+  const hasAccess = user?.rol === 'ADMIN' || user?.es_admin_delegado || requiredPermissions.length === 0 ||
     requiredPermissions.some(perm => hasPermission(perm));
 
   if (!hasAccess) {
