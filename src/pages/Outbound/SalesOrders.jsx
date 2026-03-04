@@ -145,6 +145,9 @@ const SalesOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Emergency RLS Modal
+  const [rlsErrorModal, setRlsErrorModal] = useState(false);
+
   // Cargar órdenes
   const fetchOrders = useCallback(async () => {
     try {
@@ -287,7 +290,11 @@ const SalesOrders = () => {
 
     } catch (e) {
       console.error('Error al eliminar:', e);
-      alert('Error al eliminar: ' + e.message);
+      if (e.message?.includes('violates row-level security policy')) {
+        setRlsErrorModal(true); // Mostrar modal de ayuda para RLS
+      } else {
+        alert('Error al eliminar: ' + e.message);
+      }
     } finally {
       setModalLoading(false);
     }
@@ -681,6 +688,71 @@ const SalesOrders = () => {
                   })}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EMERGENCY RLS FIX MODAL */}
+      {rlsErrorModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-red-50 p-6 border-b border-red-100 flex gap-4 items-start">
+              <div className="bg-red-100 text-red-600 p-3 rounded-xl flex-shrink-0">
+                <AlertCircle size={28} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-red-900 mb-1">Permiso de Seguridad Requerido en Supabase</h2>
+                <p className="text-red-700 text-sm">
+                  Supabase está bloqueando la eliminación porque la nueva tabla <strong>tms_nv_eliminadas</strong> tiene la seguridad activada, pero no le hemos dado permiso a la aplicación para escribir en ella.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="font-bold text-slate-800 text-sm">Para solucionarlo permanentemente, por favor sigue estos 2 pasos rápidos:</p>
+
+              <div className="flex gap-4 items-start">
+                <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center flex-shrink-0">1</span>
+                <div>
+                  <p className="text-slate-600 font-medium mb-2">Entra a tu cuenta de Supabase, ve al proyecto y abre el <strong>SQL Editor</strong>.</p>
+                  <a href="https://supabase.com/dashboard/project/vtrtyzbgpsvqwbfoudaf/sql/new" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-bold text-sm inline-flex items-center gap-1">
+                    Abrir SQL Editor de Supabase Aquí <ArrowRight size={14} />
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start pt-2">
+                <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center flex-shrink-0">2</span>
+                <div className="w-full">
+                  <p className="text-slate-600 font-medium mb-2">Copia y Pega este código exacto, y dale al botón verde <strong>RUN</strong>:</p>
+
+                  <div className="relative group">
+                    <pre className="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs overflow-x-auto font-mono">
+                      {`ALTER TABLE public.tms_nv_eliminadas DISABLE ROW LEVEL SECURITY;`}
+                    </pre>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText("ALTER TABLE public.tms_nv_eliminadas DISABLE ROW LEVEL SECURITY;");
+                        alert("¡Código copiado! Pégalo en Supabase.");
+                      }}
+                      className="absolute top-2 right-2 bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      Copiar Código
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">Este código apaga el bloqueo de seguridad para esa tabla específica, permitiendo que el administrador pueda borrar sin problemas.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setRlsErrorModal(false)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-colors"
+              >
+                Entendido, ya lo haré
+              </button>
             </div>
           </div>
         </div>
