@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log('📥 Cargando permisos para rol:', rolId);
-      
+
       const { data, error } = await supabase
         .from('tms_roles')
         .select('permisos_json')
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Permisos cargados:', perms.length, perms);
       setPermissions(perms);
       return perms;
-      
+
     } catch (err) {
       console.error('❌ Error cargando permisos:', err);
       setPermissions([]);
@@ -53,10 +53,10 @@ export const AuthProvider = ({ children }) => {
     if (user?.rol) {
       console.log('🔄 Refrescando permisos...');
       const perms = await loadPermissions(user.rol);
-      
+
       // Notificar a otras pestañas/componentes (opcional)
       // window.dispatchEvent(new Event('permissions_updated'));
-      
+
       return perms;
     }
     return [];
@@ -73,11 +73,11 @@ export const AuthProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'tms_roles' },
         async (payload) => {
           console.log('🎭 Cambio detectado en Roles (DB):', payload);
-          
+
           // Si el rol modificado es el mío, recargar permisos
           if (payload.new && payload.new.id === user.rol) {
-             console.log('🔄 Mi rol fue actualizado, recargando permisos...');
-             await loadPermissions(user.rol);
+            console.log('🔄 Mi rol fue actualizado, recargando permisos...');
+            await loadPermissions(user.rol);
           }
         }
       )
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     setError('');
-    
+
     try {
       const { data, error: queryError } = await supabase
         .from('tms_usuarios')
@@ -177,7 +177,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
       await loadPermissions(data.rol);
-      
+
       // Registrar acceso
       try {
         await supabase.from('tms_accesos').insert({
@@ -199,11 +199,11 @@ export const AuthProvider = ({ children }) => {
             modulo_actual: 'Inicio de Sesión',
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-          
+
       } catch (logErr) {
         console.error('Error logging access/active status:', logErr);
       }
-      
+
       setLoading(false);
       return true;
 
@@ -254,17 +254,25 @@ export const AuthProvider = ({ children }) => {
             console.warn('❌ USUARIO ELIMINADO - CERRANDO SESIÓN');
             alert('Tu cuenta ha sido eliminada por un administrador.');
             logout();
-          } 
+          }
           else if (payload.eventType === 'UPDATE') {
             const newUser = payload.new;
-            if (!newUser.activo) {
+
+            // FIX: Be defensive against partial payloads (REPLICA IDENTITY DEFAULT)
+            if (newUser.activo === false) {
               console.warn('⛔ USUARIO DESACTIVADO - CERRANDO SESIÓN');
               alert('Tu sesión ha sido cerrada por un administrador.');
               logout();
-            } else if (newUser.rol !== user.rol) {
+            } else if (newUser.rol && newUser.rol !== user.rol) {
               console.log('🔄 Rol actualizado, refrescando permisos...');
-              // Si cambia el rol, actualizar el estado local y recargar permisos
-              const updatedUser = { ...user, rol: newUser.rol, nombre: newUser.nombre, email: newUser.email };
+              // Si cambia el rol, actualizar el estado local preservando variables anteriores si el payload es parcial
+              const updatedUser = {
+                ...user,
+                rol: newUser.rol,
+                nombre: newUser.nombre !== undefined ? newUser.nombre : user.nombre,
+                email: newUser.email !== undefined ? newUser.email : user.email,
+                activo: newUser.activo !== undefined ? newUser.activo : user.activo
+              };
               setUser(updatedUser);
               localStorage.setItem('currentUser', JSON.stringify(updatedUser));
               loadPermissions(newUser.rol);
@@ -282,9 +290,12 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar permiso
   const hasPermission = useCallback((permissionId) => {
+    // ADMIN BYPASS: Acceso global a todas las vistas y acciones
+    if (user?.rol === 'ADMIN') return true;
+
     const has = permissions.includes(permissionId);
     return has;
-  }, [permissions]);
+  }, [permissions, user?.rol]);
 
   return (
     <AuthContext.Provider value={{
