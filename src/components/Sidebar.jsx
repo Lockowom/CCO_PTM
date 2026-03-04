@@ -51,7 +51,7 @@ const Sidebar = () => {
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard'],
-    'inbound': ['view_reception', 'view_entry'],
+    'inbound': ['view_reception', 'view_cubicaje', 'view_returns', 'view_entry'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
@@ -67,6 +67,8 @@ const Sidebar = () => {
     '/tms/drivers': 'view_drivers',
     '/tms/mobile': 'view_mobile_app',
     '/inbound/reception': 'view_reception',
+    '/inbound/cubicaje': 'view_cubicaje',
+    '/inbound/returns': 'view_returns',
     '/inbound/entry': 'view_entry',
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
@@ -166,7 +168,9 @@ const Sidebar = () => {
       color: 'text-emerald-500',
       modules: [
         { id: 'inbound-reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
-        { id: 'inbound-entry', label: 'Ingreso', icon: <PackagePlus size={18} />, path: '/inbound/entry' }
+        { id: 'inbound-cubicaje', label: 'Cubicaje (Pesos)', icon: <Activity size={18} />, path: '/inbound/cubicaje' },
+        { id: 'inbound-returns', label: 'Devoluciones', icon: <History size={18} />, path: '/inbound/returns' },
+        { id: 'inbound-entry', label: 'Ingreso (Putaway)', icon: <PackagePlus size={18} />, path: '/inbound/entry' }
       ]
     },
     {
@@ -251,8 +255,8 @@ const Sidebar = () => {
                 <Link
                   to={area.path}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${location.pathname === area.path
-                      ? 'bg-slate-800 text-white border-l-4 border-indigo-500'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-slate-800 text-white border-l-4 border-indigo-500'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                     }`}
                 >
                   <span className={location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}>
@@ -288,8 +292,8 @@ const Sidebar = () => {
                             key={module.id}
                             to={module.path}
                             className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${location.pathname === module.path
-                                ? 'text-white bg-slate-700 font-medium'
-                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                              ? 'text-white bg-slate-700 font-medium'
+                              : 'text-slate-500 hover:text-white hover:bg-slate-800'
                               }`}
                           >
                             {module.icon}
@@ -319,8 +323,8 @@ const Sidebar = () => {
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={`p-2 rounded-lg transition-all ${isRefreshing
-                ? 'text-green-400 animate-spin'
-                : 'text-slate-500 hover:text-white hover:bg-slate-700'
+              ? 'text-green-400 animate-spin'
+              : 'text-slate-500 hover:text-white hover:bg-slate-700'
               }`}
             title="Actualizar menú"
           >

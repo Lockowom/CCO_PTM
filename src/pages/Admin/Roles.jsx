@@ -14,7 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 const RolesPage = () => {
   // IMPORTANTE: Obtener refreshPermissions del contexto
   const { refreshPermissions } = useAuth();
-  
+
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -56,7 +56,10 @@ const RolesPage = () => {
       permissions: [
         { id: 'view_reception', label: 'Ver Recepciones' },
         { id: 'process_reception', label: 'Procesar Recepciones' },
+        { id: 'view_cubicaje', label: 'Ver Cubicaje (Pesos)' },
+        { id: 'process_cubicaje', label: 'Gestionar Cubicaje' },
         { id: 'view_returns', label: 'Ver Devoluciones' },
+        { id: 'process_returns', label: 'Procesar Devoluciones' },
         { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
         { id: 'process_entry', label: 'Procesar Ingresos' }
       ]
@@ -264,7 +267,7 @@ const RolesPage = () => {
       await fetchRoles();
       await refreshPermissions(); // También actualizar al eliminar
       setSelectedRole(null);
-      
+
     } catch (error) {
       console.error('Error:', error);
       alert('Error: ' + error.message);
@@ -292,7 +295,7 @@ const RolesPage = () => {
     const newPerms = hasAll
       ? currentPerms.filter(p => !allPerms.includes(p))
       : [...new Set([...currentPerms, ...allPerms])];
-    
+
     setSelectedRole({ ...selectedRole, permisos: newPerms });
   };
 
@@ -339,11 +342,10 @@ const RolesPage = () => {
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <Shield size={64} className="text-indigo-600" />
                 </div>
-                
+
                 <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    role.id === 'ADMIN' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-50 text-indigo-600'
-                  }`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-50 text-indigo-600'
+                    }`}>
                     {role.id === 'ADMIN' ? <Lock size={24} /> : <Users size={24} />}
                   </div>
                   {role.id !== 'ADMIN' && (
@@ -371,7 +373,7 @@ const RolesPage = () => {
                 </div>
               </div>
             ))}
-            
+
             {/* Botón para crear nuevo rol (tarjeta) */}
             <button
               onClick={handleCreateRole}
@@ -386,197 +388,191 @@ const RolesPage = () => {
         ) : (
           /* Vista de Edición / Detalle (Pantalla completa) */
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl flex flex-col overflow-hidden h-full animate-in fade-in slide-in-from-bottom-4 duration-300">
-             {/* Header del rol */}
-             <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-slate-50 to-white">
-                <div className="flex items-center gap-4 flex-1">
-                  <button 
-                    onClick={() => {
-                      setSelectedRole(null);
-                      setIsEditing(false);
-                      setIsCreating(false);
-                    }}
-                    className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-slate-400 hover:text-slate-700 transition-all"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                  
-                  <div className="flex-1 mr-8">
-                    {isEditing ? (
-                      <div className="flex gap-4 items-start">
-                        <div className="flex-1">
-                          <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Nombre del Rol</label>
-                          <input
-                            type="text"
-                            value={selectedRole.nombre}
-                            onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
-                            disabled={selectedRole.id === 'ADMIN'}
-                            className="w-full text-2xl font-bold text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors disabled:opacity-50"
-                            placeholder="Nombre del Rol"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="flex-[2]">
-                          <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Descripción</label>
-                          <input
-                            type="text"
-                            value={selectedRole.descripcion || ''}
-                            onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
-                            className="w-full text-lg text-slate-600 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors"
-                            placeholder="Descripción breve del rol"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-3xl font-black text-slate-800">{selectedRole.nombre}</h2>
-                          {selectedRole.id === 'ADMIN' && (
-                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                              <Lock size={12} /> Sistema
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-slate-500 mt-1 text-lg">{selectedRole.descripcion}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {/* Header del rol */}
+            <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-slate-50 to-white">
+              <div className="flex items-center gap-4 flex-1">
+                <button
+                  onClick={() => {
+                    setSelectedRole(null);
+                    setIsEditing(false);
+                    setIsCreating(false);
+                  }}
+                  className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-slate-400 hover:text-slate-700 transition-all"
+                >
+                  <ArrowLeft size={24} />
+                </button>
 
-                <div className="flex gap-3">
+                <div className="flex-1 mr-8">
                   {isEditing ? (
-                    <>
-                      <button
-                        onClick={() => { 
-                          setIsEditing(false); 
-                          setIsCreating(false); 
-                          if (isCreating) setSelectedRole(null); 
-                        }}
-                        className="px-6 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleSaveRole}
-                        disabled={saving}
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:shadow-none"
-                      >
-                        {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                        {saving ? 'Guardando...' : 'Guardar Cambios'}
-                      </button>
-                    </>
+                    <div className="flex gap-4 items-start">
+                      <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Nombre del Rol</label>
+                        <input
+                          type="text"
+                          value={selectedRole.nombre}
+                          onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
+                          disabled={selectedRole.id === 'ADMIN'}
+                          className="w-full text-2xl font-bold text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors disabled:opacity-50"
+                          placeholder="Nombre del Rol"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="flex-[2]">
+                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Descripción</label>
+                        <input
+                          type="text"
+                          value={selectedRole.descripcion || ''}
+                          onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
+                          className="w-full text-lg text-slate-600 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors"
+                          placeholder="Descripción breve del rol"
+                        />
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => handleDeleteRole(selectedRole.id)}
-                        disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
-                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-20"
-                        title="Eliminar Rol"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-6 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-xl font-bold flex items-center gap-2 transition-colors"
-                      >
-                        <Edit size={18} /> Editar Permisos
-                      </button>
-                    </>
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-3xl font-black text-slate-800">{selectedRole.nombre}</h2>
+                        {selectedRole.id === 'ADMIN' && (
+                          <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <Lock size={12} /> Sistema
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-500 mt-1 text-lg">{selectedRole.descripcion}</p>
+                    </div>
                   )}
                 </div>
-             </div>
+              </div>
 
-             {/* Permisos Grid */}
-             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
-                <div className="max-w-7xl mx-auto">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
-                    <Shield size={16} /> Configuración de Accesos por Módulo
-                  </h3>
+              <div className="flex gap-3">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsEditing(false);
+                        setIsCreating(false);
+                        if (isCreating) setSelectedRole(null);
+                      }}
+                      className="px-6 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveRole}
+                      disabled={saving}
+                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:shadow-none"
+                    >
+                      {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleDeleteRole(selectedRole.id)}
+                      disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
+                      className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-20"
+                      title="Eliminar Rol"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-6 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-xl font-bold flex items-center gap-2 transition-colors"
+                    >
+                      <Edit size={18} /> Editar Permisos
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {modules.map(module => {
-                      const allPerms = module.permissions.map(p => p.id);
-                      const enabledCount = allPerms.filter(p => selectedRole.permisos?.includes(p)).length;
-                      const hasAll = enabledCount === allPerms.length;
-                      const isNone = enabledCount === 0;
+            {/* Permisos Grid */}
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+              <div className="max-w-7xl mx-auto">
+                <h3 className="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
+                  <Shield size={16} /> Configuración de Accesos por Módulo
+                </h3>
 
-                      return (
-                        <div 
-                          key={module.id} 
-                          className={`bg-white rounded-xl border shadow-sm transition-all ${
-                            hasAll ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-slate-200'
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {modules.map(module => {
+                    const allPerms = module.permissions.map(p => p.id);
+                    const enabledCount = allPerms.filter(p => selectedRole.permisos?.includes(p)).length;
+                    const hasAll = enabledCount === allPerms.length;
+                    const isNone = enabledCount === 0;
+
+                    return (
+                      <div
+                        key={module.id}
+                        className={`bg-white rounded-xl border shadow-sm transition-all ${hasAll ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-slate-200'
                           }`}
-                        >
-                          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white rounded-t-xl">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${
-                                hasAll ? 'bg-indigo-100 text-indigo-600' : 
+                      >
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white rounded-t-xl">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-indigo-100 text-indigo-600' :
                                 isNone ? 'bg-slate-100 text-slate-400' : 'bg-indigo-50 text-indigo-500'
                               }`}>
-                                {module.icon}
-                              </div>
-                              <div>
-                                <h4 className={`font-bold ${hasAll ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                  {module.label}
-                                </h4>
-                                {!isEditing && (
-                                  <span className="text-xs text-slate-400 font-medium">
-                                    {enabledCount} de {allPerms.length} activos
-                                  </span>
-                                )}
-                              </div>
+                              {module.icon}
                             </div>
-                            
-                            {isEditing && (
-                              <button
-                                onClick={() => selectAllModule(module.id)}
-                                className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                                  hasAll 
-                                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' 
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            <div>
+                              <h4 className={`font-bold ${hasAll ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                {module.label}
+                              </h4>
+                              {!isEditing && (
+                                <span className="text-xs text-slate-400 font-medium">
+                                  {enabledCount} de {allPerms.length} activos
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {isEditing && (
+                            <button
+                              onClick={() => selectAllModule(module.id)}
+                              className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${hasAll
+                                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                 }`}
-                              >
-                                {hasAll ? 'Desmarcar Todo' : 'Marcar Todo'}
-                              </button>
-                            )}
-                          </div>
-                          
-                          <div className="p-4 space-y-3">
-                            {module.permissions.map(perm => {
-                              const isEnabled = selectedRole.permisos?.includes(perm.id);
-                              return (
-                                <label
-                                  key={perm.id}
-                                  className={`flex items-start gap-3 p-2 rounded-lg transition-all ${
-                                    isEditing 
-                                      ? 'cursor-pointer hover:bg-slate-50 active:scale-[0.99]' 
-                                      : 'cursor-default opacity-80'
-                                  }`}
-                                  onClick={() => togglePermission(perm.id)}
-                                >
-                                  <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                    isEnabled 
-                                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm shadow-indigo-200' 
-                                      : 'bg-white border-slate-300'
-                                  }`}>
-                                    {isEnabled && <Check size={12} strokeWidth={4} />}
-                                  </div>
-                                  <div>
-                                    <span className={`text-sm block leading-tight ${
-                                      isEnabled ? 'text-slate-700 font-bold' : 'text-slate-400 font-medium'
-                                    }`}>
-                                      {perm.label}
-                                    </span>
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
+                            >
+                              {hasAll ? 'Desmarcar Todo' : 'Marcar Todo'}
+                            </button>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        <div className="p-4 space-y-3">
+                          {module.permissions.map(perm => {
+                            const isEnabled = selectedRole.permisos?.includes(perm.id);
+                            return (
+                              <label
+                                key={perm.id}
+                                className={`flex items-start gap-3 p-2 rounded-lg transition-all ${isEditing
+                                    ? 'cursor-pointer hover:bg-slate-50 active:scale-[0.99]'
+                                    : 'cursor-default opacity-80'
+                                  }`}
+                                onClick={() => togglePermission(perm.id)}
+                              >
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEnabled
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm shadow-indigo-200'
+                                    : 'bg-white border-slate-300'
+                                  }`}>
+                                  {isEnabled && <Check size={12} strokeWidth={4} />}
+                                </div>
+                                <div>
+                                  <span className={`text-sm block leading-tight ${isEnabled ? 'text-slate-700 font-bold' : 'text-slate-400 font-medium'
+                                    }`}>
+                                    {perm.label}
+                                  </span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-             </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
