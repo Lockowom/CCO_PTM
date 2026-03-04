@@ -75,8 +75,11 @@ export const AuthProvider = ({ children }) => {
           console.log('🎭 Cambio detectado en Roles (DB):', payload);
 
           // Si el rol modificado es el mío, recargar permisos
-          if (payload.new && payload.new.id === user.rol) {
-            console.log('🔄 Mi rol fue actualizado, recargando permisos...');
+          // Nota: Usamos payload.old.id o payload.new.id para soportar casos donde REPLICA IDENTITY no sea FULL
+          const changedRoleId = payload.new?.id || payload.old?.id;
+          
+          if (changedRoleId === user.rol || !changedRoleId) {
+            console.log('🔄 Rol actualizado (posiblemente el mío), recargando permisos...');
             await loadPermissions(user.rol);
           }
         }
