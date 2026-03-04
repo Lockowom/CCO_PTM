@@ -59,13 +59,13 @@ const Navbar = () => {
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard', 'view_kpis'],
-    'inbound': ['view_reception', 'view_entry', 'view_returns', 'process_reception'],
+    'inbound': ['view_reception', 'view_entry', 'view_returns', 'process_reception', 'manage_data_import'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_packing_tv', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers', 'view_cycle_count'],
     'quality': ['view_quality'],
     'analytics': ['view_reports', 'view_tv_mode'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_dispatch_control', 'view_kardex', 'view_productivity'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_data_import']
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
   };
 
   // Permisos por ruta específica
@@ -81,6 +81,7 @@ const Navbar = () => {
     '/inbound/returns': 'view_returns',
     '/inbound/entry': 'view_entry',
     '/inbound/cubing': 'process_reception',
+    '/inbound/data-import': 'manage_data_import',
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
     '/outbound/packing': 'view_packing',
@@ -114,7 +115,6 @@ const Navbar = () => {
     '/admin/views': 'manage_views',
     '/admin/reports': 'manage_reports',
     '/admin/mediciones': 'manage_mediciones',
-    '/admin/data-import': 'manage_data_import',
     '/admin/cleanup': 'manage_cleanup',
     '/admin/time-reports': 'view_time_reports',
     '/admin/tickets': 'manage_tickets',
@@ -189,7 +189,8 @@ const Navbar = () => {
         { label: 'Recepción', path: '/inbound/reception', icon: <Truck size={16} /> },
         { label: 'Cubicaje (Pesos)', path: '/inbound/cubing', icon: <Scale size={16} /> },
         { label: 'Devoluciones', path: '/inbound/returns', icon: <RotateCcw size={16} /> },
-        { label: 'Ingreso (Putaway)', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> }
+        { label: 'Ingreso (Putaway)', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> },
+        { label: 'Carga Masiva', path: '/inbound/data-import', icon: <Upload size={16} /> }
       ]
     },
     {
@@ -270,7 +271,6 @@ const Navbar = () => {
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
         { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
         { label: 'Historial Accesos', path: '/admin/login-history', icon: <History size={16} /> },
-        { label: 'Carga Datos', path: '/admin/data-import', icon: <Upload size={16} /> },
         { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> },
         { label: 'Tiempos', path: '/admin/time-reports', icon: <Clock size={16} /> },
         { label: 'Soporte TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
