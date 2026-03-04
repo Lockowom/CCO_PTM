@@ -35,7 +35,7 @@ const IMPORT_TABS = [
             { key: 'unidad', label: 'Unidad Medida', required: false, type: 'text' },
             { key: 'cantidad', label: 'Pedido', required: true, type: 'number' },
         ],
-        helpText: '💡 Pega TODAS las N.V — el sistema detecta automáticamente cuáles son NUEVAS y solo carga esas. Las que ya existen se ignoran sin cambiar su estado.',
+        helpText: '💡 Pega TODAS las N.V. El sistema detecta automáticamente cuáles son NUEVAS (o si se agregaron nuevos productos a una N.V existente) y solo carga esas. Las líneas que ya existen se ignoran sin cambiar su estado actual en Picking/Packing.',
         smartDedup: true, // Activar deduplicación inteligente
     },
     {
@@ -289,44 +289,54 @@ const DataImport = () => {
         // ─── DEDUPLICACIÓN INTELIGENTE (para N.V) ───
         if (currentTab.smartDedup && currentTab.uniqueKey && rows.length > 0) {
             try {
-                // Si la clave es compuesta (ej: 'nv,codigo_producto'), usamos la primera parte para verificar existencia (ej: 'nv')
-                // Esto asume que si la NV existe, ya se cargaron todos sus items.
-                const checkKey = currentTab.uniqueKey.split(',')[0].trim();
+                // Separar la clave (ej: 'nv,codigo_producto') para poder verificar líneas exactas
+                const keysDef = currentTab.uniqueKey.split(',').map(k => k.trim());
+                const firstKey = keysDef[0]; // 'nv'
 
-                // Obtener las claves únicas del paste
-                const keys = [...new Set(rows.map(r => r[checkKey]).filter(Boolean))];
+                // Extraer las NVs únicas del pegado
+                const firstKeyValues = [...new Set(rows.map(r => r[firstKey]).filter(Boolean))];
 
-                // Consultar cuáles ya existen en Supabase (tabla principal)
+                // Consultar cuáles ya existen en Supabase (traemos todos los campos de la clave)
+                const selectFields = keysDef.join(',');
                 const { data: existing, error: errorExisting } = await supabase
                     .from(currentTab.table)
-                    .select(checkKey)
-                    .in(checkKey, keys);
+                    .select(selectFields)
+                    .in(firstKey, firstKeyValues);
 
                 if (errorExisting) throw errorExisting;
 
-                // Consultar cuáles han sido ELIMINADAS MANUALMENTE (solo para N.V)
+                // Consultar cuáles han sido ELIMINADAS MANUALMENTE (solo verificamos el firstKey 'nv')
                 let deletedKeys = new Set();
                 if (currentTab.id === 'nv') {
                     const { data: deleted, error: errorDeleted } = await supabase
-                        .from('tms_nv_eliminadas') // Tabla nueva
-                        .select('nv')
-                        .in('nv', keys);
+                        .from('tms_nv_eliminadas')
+                        .select(firstKey)
+                        .in(firstKey, firstKeyValues);
 
                     if (!errorDeleted && deleted) {
-                        deletedKeys = new Set(deleted.map(d => d.nv?.toString()));
+                        deletedKeys = new Set(deleted.map(d => d[firstKey]?.toString()));
                     }
                 }
 
-                const existingKeys = new Set((existing || []).map(r => r[checkKey]?.toString()));
+                // Generar Set de claves compuestas (ej: '95924|0AD46651225S')
+                const existingKeys = new Set((existing || []).map(r =>
+                    keysDef.map(k => r[k]?.toString().trim()).join('|')
+                ));
 
-                // Marcar cada fila
+                // Marcar cada fila considerando TODOS los elementos de la clave
                 const statuses = rows.map(row => {
-                    const key = row[checkKey]?.toString();
-                    if (!key) return 'error';
+                    const fkVal = row[firstKey]?.toString();
+                    if (!fkVal) return 'error';
 
-                    if (existingKeys.has(key)) return 'existing';
-                    if (deletedKeys.has(key)) return 'deleted'; // Nueva lógica: N.V eliminada previamente
+                    // Si la NV entera está en la blacklist, ignoramos todas sus líneas
+                    if (deletedKeys.has(fkVal)) return 'deleted';
 
+                    const rowKey = keysDef.map(k => row[k]?.toString().trim()).join('|');
+
+                    // Si esta combinación NV + Producto específico ya existe, se marca existing (se omite)
+                    if (existingKeys.has(rowKey)) return 'existing';
+
+                    // Si no, es nuevo (NV totalmente nueva, o un producto nuevo agregado a una NV existente)
                     return 'new';
                 });
 
