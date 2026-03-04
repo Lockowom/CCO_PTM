@@ -91,6 +91,7 @@ const ROUTE_PERMISSIONS = {
   '/inbound/entry': ['view_entry', 'process_entry'],
   '/inbound/returns': ['view_reception', 'process_reception'],
   '/inbound/cubing': ['view_reception', 'process_reception'], // Nuevo módulo usa mismos permisos de recepción
+  '/inbound/data-import': ['manage_data_import'],
 
   // Outbound
   '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
@@ -135,7 +136,6 @@ const ROUTE_PERMISSIONS = {
   '/admin/system-health': ['manage_mediciones', 'view_mediciones'], // NUEVO (Monitoreo)
   '/admin/ops-control': ['manage_users', 'view_users'], // NUEVO (Control de Procesos)
   '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
-  '/admin/data-import': ['manage_data_import'],
   '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
 };
 
@@ -302,6 +302,7 @@ function AppContent() {
           <Route path="inbound/entry" element={<Entry />} />
           <Route path="inbound/returns" element={<Returns />} />
           <Route path="inbound/cubing" element={<CubingRegistry />} />
+          <Route path="inbound/data-import" element={<DataImport />} />
 
           {/* Outbound Modules */}
           <Route path="outbound/sales-orders" element={<SalesOrders />} />
@@ -337,7 +338,6 @@ function AppContent() {
           <Route path="admin/roles" element={<Roles />} />
           <Route path="admin/views" element={<Views />} />
           <Route path="admin/mediciones" element={<Mediciones />} />
-          <Route path="admin/data-import" element={<DataImport />} />
           <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes Generales" />} />
           <Route path="admin/time-reports" element={<TimeReports />} />

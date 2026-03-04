@@ -51,13 +51,13 @@ const Sidebar = () => {
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard'],
-    'inbound': ['view_reception', 'view_cubicaje', 'view_returns', 'view_entry'],
+    'inbound': ['view_reception', 'view_cubicaje', 'view_returns', 'view_entry', 'manage_data_import'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
     'admin': [
       'manage_users', 'view_users', 'manage_roles', 'view_roles', 'manage_views', 'view_views', 'manage_mediciones', 'view_mediciones',
-      'manage_data_import', 'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
+      'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
     ]
   };
 
@@ -73,6 +73,7 @@ const Sidebar = () => {
     '/inbound/cubicaje': 'view_cubicaje',
     '/inbound/returns': 'view_returns',
     '/inbound/entry': 'view_entry',
+    '/inbound/data-import': 'manage_data_import',
     '/outbound/sales-orders': 'view_sales_orders',
     '/outbound/picking': 'view_picking',
     '/outbound/packing': 'view_packing',
@@ -90,7 +91,6 @@ const Sidebar = () => {
     '/admin/roles': 'view_roles',
     '/admin/views': 'view_views',
     '/admin/mediciones': 'view_mediciones',
-    '/admin/data-import': 'manage_data_import',
     '/admin/cleanup': 'manage_cleanup',
     '/admin/reports': 'view_reports',
     '/admin/time-reports': 'view_time_reports',
@@ -168,7 +168,8 @@ const Sidebar = () => {
         { id: 'inbound-reception', label: 'Recepción', icon: <Truck size={18} />, path: '/inbound/reception' },
         { id: 'inbound-cubicaje', label: 'Cubicaje (Pesos)', icon: <Activity size={18} />, path: '/inbound/cubicaje' },
         { id: 'inbound-returns', label: 'Devoluciones', icon: <History size={18} />, path: '/inbound/returns' },
-        { id: 'inbound-entry', label: 'Ingreso (Putaway)', icon: <PackagePlus size={18} />, path: '/inbound/entry' }
+        { id: 'inbound-entry', label: 'Ingreso (Putaway)', icon: <PackagePlus size={18} />, path: '/inbound/entry' },
+        { id: 'inbound-data-import', label: 'Carga Masiva', icon: <Upload size={18} />, path: '/inbound/data-import' }
       ]
     },
     {
@@ -219,7 +220,6 @@ const Sidebar = () => {
         { id: 'users', label: 'Usuarios', icon: <Users size={18} />, path: '/admin/users' },
         { id: 'roles', label: 'Roles', icon: <Shield size={18} />, path: '/admin/roles' },
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
-        { id: 'admin-data-import', label: 'Carga Datos', icon: <Upload size={18} />, path: '/admin/data-import' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
         { id: 'admin-active-users', label: 'Usuarios', icon: <Activity size={18} />, path: '/admin/active-users' },

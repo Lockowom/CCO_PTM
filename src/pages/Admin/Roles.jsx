@@ -61,7 +61,8 @@ const RolesPage = () => {
         { id: 'view_returns', label: 'Ver Devoluciones' },
         { id: 'process_returns', label: 'Procesar Devoluciones' },
         { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
-        { id: 'process_entry', label: 'Procesar Ingresos' }
+        { id: 'process_entry', label: 'Procesar Ingresos' },
+        { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
       ]
     },
     {
@@ -145,7 +146,6 @@ const RolesPage = () => {
         { id: 'view_views', label: 'Ver Configuración Vistas' },
         { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
         { id: 'view_reports', label: 'Ver Reportes' },
-        { id: 'manage_data_import', label: 'Carga Masiva de Datos' },
         { id: 'view_audit', label: 'Ver Auditoría' },
         { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
         { id: 'manage_tickets', label: 'Gestionar Tickets' },
