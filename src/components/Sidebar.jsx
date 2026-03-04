@@ -96,13 +96,13 @@ const Sidebar = () => {
   const isSectionVisible = (sectionId) => {
     // Verificar módulo habilitado
     if (!isModuleEnabled(sectionId)) return false;
-    
+
     // ADMIN siempre ve todo
-    if (user?.rol === 'ADMIN') return true;
-    
-    // Sección admin solo para rol ADMIN
+    if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
+
+    // Sección admin solo para rol ADMIN o delegado
     if (sectionId === 'admin') return false;
-    
+
     // Verificar que tenga al menos un permiso de la sección
     const sectionPerms = SECTION_PERMISSIONS[sectionId] || [];
     return sectionPerms.some(perm => hasPermission(perm));
@@ -111,14 +111,14 @@ const Sidebar = () => {
   // Verificar si una ruta está accesible
   const isRouteAccessible = (path, sectionId) => {
     // ADMIN ve todo
-    if (user?.rol === 'ADMIN') return true;
-    
-    // Sección admin solo ADMIN
-    if (sectionId === 'admin') return user?.rol === 'ADMIN';
-    
+    if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
+
+    // Sección admin solo ADMIN o delegado
+    if (sectionId === 'admin') return false;
+
     const requiredPerm = ROUTE_PERMISSIONS[path];
     if (!requiredPerm) return true;
-    
+
     return hasPermission(requiredPerm);
   };
 
@@ -250,11 +250,10 @@ const Sidebar = () => {
                 // Link directo (ej: Dashboard)
                 <Link
                   to={area.path}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    location.pathname === area.path
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${location.pathname === area.path
                       ? 'bg-slate-800 text-white border-l-4 border-indigo-500'
                       : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                  }`}
+                    }`}
                 >
                   <span className={location.pathname === area.path ? area.color : 'text-slate-500 group-hover:text-white'}>
                     {area.icon}
@@ -266,9 +265,8 @@ const Sidebar = () => {
                 <div>
                   <button
                     onClick={() => toggleSection(area.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
-                      expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${expandedSections[area.id] ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className={expandedSections[area.id] ? area.color : 'text-slate-500 group-hover:text-white'}>
@@ -289,11 +287,10 @@ const Sidebar = () => {
                           <Link
                             key={module.id}
                             to={module.path}
-                            className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${
-                              location.pathname === module.path
+                            className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-colors ${location.pathname === module.path
                                 ? 'text-white bg-slate-700 font-medium'
                                 : 'text-slate-500 hover:text-white hover:bg-slate-800'
-                            }`}
+                              }`}
                           >
                             {module.icon}
                             <span>{module.label}</span>
@@ -321,11 +318,10 @@ const Sidebar = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`p-2 rounded-lg transition-all ${
-              isRefreshing 
-                ? 'text-green-400 animate-spin' 
+            className={`p-2 rounded-lg transition-all ${isRefreshing
+                ? 'text-green-400 animate-spin'
                 : 'text-slate-500 hover:text-white hover:bg-slate-700'
-            }`}
+              }`}
             title="Actualizar menú"
           >
             <RefreshCw size={16} />

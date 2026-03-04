@@ -171,7 +171,8 @@ export const AuthProvider = ({ children }) => {
         nombre: data.nombre,
         email: data.email,
         rol: data.rol,
-        activo: data.activo
+        activo: data.activo,
+        es_admin_delegado: data.es_admin_delegado || false
       };
 
       setUser(userData);
@@ -271,7 +272,8 @@ export const AuthProvider = ({ children }) => {
                 rol: newUser.rol,
                 nombre: newUser.nombre !== undefined ? newUser.nombre : user.nombre,
                 email: newUser.email !== undefined ? newUser.email : user.email,
-                activo: newUser.activo !== undefined ? newUser.activo : user.activo
+                activo: newUser.activo !== undefined ? newUser.activo : user.activo,
+                es_admin_delegado: newUser.es_admin_delegado !== undefined ? newUser.es_admin_delegado : user.es_admin_delegado
               };
               setUser(updatedUser);
               localStorage.setItem('currentUser', JSON.stringify(updatedUser));
@@ -291,11 +293,11 @@ export const AuthProvider = ({ children }) => {
   // Verificar permiso
   const hasPermission = useCallback((permissionId) => {
     // ADMIN BYPASS: Acceso global a todas las vistas y acciones
-    if (user?.rol === 'ADMIN') return true;
+    if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
 
     const has = permissions.includes(permissionId);
     return has;
-  }, [permissions, user?.rol]);
+  }, [permissions, user?.rol, user?.es_admin_delegado]);
 
   return (
     <AuthContext.Provider value={{

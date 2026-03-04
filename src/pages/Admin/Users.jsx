@@ -17,13 +17,13 @@ const UsersPage = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
     password: '',
     rol: '',
-    activo: true
+    activo: true,
+    es_admin_delegado: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -215,7 +215,8 @@ const UsersPage = () => {
         email: user.email,
         password: '',
         rol: user.rol,
-        activo: user.activo
+        activo: user.activo,
+        es_admin_delegado: user.es_admin_delegado || false
       });
     } else {
       setFormData({
@@ -223,7 +224,8 @@ const UsersPage = () => {
         email: '',
         password: '',
         rol: '',
-        activo: true
+        activo: true,
+        es_admin_delegado: false
       });
     }
     setIsModalOpen(true);
@@ -246,7 +248,8 @@ const UsersPage = () => {
           nombre: formData.nombre,
           email: formData.email,
           rol: formData.rol,
-          activo: formData.activo
+          activo: formData.activo,
+          es_admin_delegado: formData.es_admin_delegado
         };
 
         // Incluir contraseña solo si se cambió
@@ -282,7 +285,8 @@ const UsersPage = () => {
             email: formData.email,
             password_hash: formData.password || '123456',
             rol: formData.rol,
-            activo: formData.activo
+            activo: formData.activo,
+            es_admin_delegado: formData.es_admin_delegado
           }])
           .select();
 
@@ -305,7 +309,8 @@ const UsersPage = () => {
         email: '',
         password: '',
         rol: '',
-        activo: true
+        activo: true,
+        es_admin_delegado: false
       });
 
       // Recargar la lista
@@ -499,14 +504,14 @@ const UsersPage = () => {
 
                   <div className="flex flex-col items-end gap-2">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${user.activo
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      : 'bg-slate-100 text-slate-500 border-slate-200'
                       }`}>
                       {user.activo ? 'Activo' : 'Inactivo'}
                     </span>
 
-                    {user.rol === 'ADMIN' && (
-                      <span className="text-rose-500 bg-rose-50 p-1 rounded-lg" title="Administrador">
+                    {(user.rol === 'ADMIN' || user.es_admin_delegado) && (
+                      <span className={`p-1 rounded-lg ${user.es_admin_delegado ? 'bg-amber-100 text-amber-600' : 'text-rose-500 bg-rose-50'}`} title={user.es_admin_delegado ? "Poderes de Administrador Delegado" : "Administrador Principal"}>
                         <Crown size={14} />
                       </span>
                     )}
@@ -650,8 +655,8 @@ const UsersPage = () => {
                     <div
                       onClick={() => setFormData({ ...formData, activo: !formData.activo })}
                       className={`h-[50px] w-full rounded-xl flex items-center px-4 cursor-pointer transition-all border-2 ${formData.activo
-                          ? 'bg-emerald-50 border-emerald-200'
-                          : 'bg-slate-50 border-slate-200'
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-slate-50 border-slate-200'
                         }`}
                     >
                       <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.activo ? 'bg-emerald-500' : 'bg-slate-300'
@@ -664,6 +669,25 @@ const UsersPage = () => {
                         {formData.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
+                  </div>
+                </div>
+
+                {/* PODERES DE ADMIN (Delegación) */}
+                <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 mt-4 flex items-start gap-3">
+                  <div className="bg-amber-100 text-amber-600 p-2 rounded-lg flex-shrink-0 mt-1">
+                    <Crown size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-sm font-bold text-amber-900 block">Poderes de Administrador</label>
+                      <div
+                        onClick={() => setFormData(prev => ({ ...prev, es_admin_delegado: !prev.es_admin_delegado }))}
+                        className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.es_admin_delegado ? 'bg-amber-500' : 'bg-slate-300'}`}
+                      >
+                        <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${formData.es_admin_delegado ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-amber-700/80 leading-tight">Activa esta opción para otorgar a este usuario todos los accesos del sistema sin quitarle su rol original (ej: Supervisor pero con control total).</p>
                   </div>
                 </div>
               </div>
