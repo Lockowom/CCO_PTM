@@ -55,7 +55,10 @@ const Sidebar = () => {
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views']
+    'admin': [
+      'manage_users', 'view_users', 'manage_roles', 'view_roles', 'manage_views', 'view_views', 'manage_mediciones', 'view_mediciones',
+      'manage_data_import', 'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
+    ]
   };
 
   // Permisos por ruta
@@ -83,15 +86,16 @@ const Sidebar = () => {
     '/queries/addresses': 'view_addresses',
     '/queries/locations': 'view_locations',
     '/queries/historial-nv': 'view_historial_nv',
-    '/admin/users': 'manage_users',
-    '/admin/roles': 'manage_roles',
-    '/admin/views': 'manage_views',
-    '/admin/mediciones': 'manage_mediciones',
+    '/admin/users': 'view_users',
+    '/admin/roles': 'view_roles',
+    '/admin/views': 'view_views',
+    '/admin/mediciones': 'view_mediciones',
     '/admin/data-import': 'manage_data_import',
     '/admin/cleanup': 'manage_cleanup',
+    '/admin/reports': 'view_reports',
     '/admin/time-reports': 'view_time_reports',
     '/admin/tickets': 'manage_tickets',
-    '/admin/active-users': 'manage_users'
+    '/admin/active-users': 'view_users'
   };
 
   // Verificar si una sección está visible
@@ -102,9 +106,6 @@ const Sidebar = () => {
     // ADMIN siempre ve todo
     if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
 
-    // Sección admin solo para rol ADMIN o delegado
-    if (sectionId === 'admin') return false;
-
     // Verificar que tenga al menos un permiso de la sección
     const sectionPerms = SECTION_PERMISSIONS[sectionId] || [];
     return sectionPerms.some(perm => hasPermission(perm));
@@ -114,9 +115,6 @@ const Sidebar = () => {
   const isRouteAccessible = (path, sectionId) => {
     // ADMIN ve todo
     if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
-
-    // Sección admin solo ADMIN o delegado
-    if (sectionId === 'admin') return false;
 
     const requiredPerm = ROUTE_PERMISSIONS[path];
     if (!requiredPerm) return true;
