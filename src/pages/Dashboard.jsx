@@ -34,6 +34,7 @@ const ESTADOS_NV = [
   { key: 'LISTO_DESPACHO', label: 'Despacho', color: '#a855f7', bg: 'bg-purple-100', text: 'text-purple-700' },
   { key: 'Pendiente Shipping', label: 'Shipping', color: '#3b82f6', bg: 'bg-blue-100', text: 'text-blue-700' },
   { key: 'Despachado', label: 'En Ruta', color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { key: 'ENTREGADO', label: 'Entregado', color: '#059669', bg: 'bg-green-100', text: 'text-green-700' },
   { key: 'Refacturacion', label: 'Refact.', color: '#f97316', bg: 'bg-orange-100', text: 'text-orange-700' },
 ];
 
@@ -150,11 +151,11 @@ const Dashboard = () => {
 
       // Datos para gráfico (Actividad por hora simulada o por estado)
       const graphData = [
-        { name: 'Pend.', valor: counts['Pendiente'] || 0, fill: '#64748b' },
-        { name: 'Pick', valor: counts['Pendiente Picking'] || 0, fill: '#06b6d4' },
-        { name: 'Pack', valor: counts['PACKING'] || 0, fill: '#6366f1' },
-        { name: 'Desp.', valor: counts['LISTO_DESPACHO'] || 0, fill: '#a855f7' },
-        { name: 'Ruta', valor: counts['Despachado'] || 0, fill: '#10b981' },
+        { name: 'Pendiente', valor: counts['Pendiente'] || 0, fill: '#64748b' },
+        { name: 'Picking', valor: counts['Pendiente Picking'] || 0, fill: '#06b6d4' },
+        { name: 'Packing', valor: counts['PACKING'] || 0, fill: '#6366f1' },
+        { name: 'Despacho', valor: counts['LISTO_DESPACHO'] || 0, fill: '#a855f7' },
+        { name: 'En Ruta', valor: counts['Despachado'] || 0, fill: '#10b981' },
       ];
       setChartData(graphData);
 
@@ -330,7 +331,7 @@ const Dashboard = () => {
                 <th className="px-6 py-3 text-left">N.V.</th>
                 <th className="px-6 py-3 text-left">Cliente</th>
                 <th className="px-6 py-3 text-center">Estado</th>
-                <th className="px-6 py-3 text-right">Monto</th>
+                <th className="px-6 py-3 text-right">Cantidad</th>
                 <th className="px-6 py-3 text-center">Acción</th>
               </tr>
             </thead>
