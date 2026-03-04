@@ -35,8 +35,9 @@ const IMPORT_TABS = [
             { key: 'unidad', label: 'Unidad Medida', required: false, type: 'text' },
             { key: 'cantidad', label: 'Pedido', required: true, type: 'number' },
         ],
-        helpText: '💡 Pega TODAS las N.V. El sistema detecta automáticamente cuáles son NUEVAS (o si se agregaron nuevos productos a una N.V existente) y solo carga esas. Las líneas que ya existen se ignoran sin cambiar su estado actual en Picking/Packing.',
+        helpText: '💡 Pega TODAS las N.V. El sistema detecta automáticamente cuáles son NUEVAS. Si una línea ya existe, se actualizarán sus datos (ej: cambios en cantidad). Las N.V. eliminadas manualmente NO se volverán a cargar.',
         smartDedup: true, // Activar deduplicación inteligente
+        allowUpdate: true, // Permitir actualizar registros existentes
     },
     {
         id: 'partidas',
@@ -334,7 +335,7 @@ const DataImport = () => {
                     const rowKey = keysDef.map(k => row[k]?.toString().trim()).join('|');
 
                     // Si esta combinación NV + Producto específico ya existe, se marca existing (se omite)
-                    if (existingKeys.has(rowKey)) return 'existing';
+                    if (existingKeys.has(rowKey)) return currentTab.allowUpdate ? 'update' : 'existing';
 
                     // Si no, es nuevo (NV totalmente nueva, o un producto nuevo agregado a una NV existente)
                     return 'new';
@@ -384,8 +385,10 @@ const DataImport = () => {
         setLoadResult(null);
 
         try {
-            // Filtrar solo las filas NUEVAS (no existentes)
-            const newRows = parsedRows.filter((_, idx) => rowStatuses[idx] === 'new');
+            // Filtrar solo las filas NUEVAS o para ACTUALIZAR
+            const newRows = parsedRows.filter((_, idx) => 
+                rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update'
+            );
 
             if (newRows.length === 0) {
                 setLoadResult({
@@ -474,7 +477,7 @@ const DataImport = () => {
             const updatedStatuses = [...rowStatuses];
             let newIdx = 0;
             parsedRows.forEach((_, idx) => {
-                if (rowStatuses[idx] === 'new') {
+                if (rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update') {
                     updatedStatuses[idx] = newIdx < inserted ? 'loaded' : 'error';
                     newIdx++;
                 }
@@ -532,6 +535,7 @@ const DataImport = () => {
     const stats = {
         total: parsedRows.length,
         new: rowStatuses.filter(s => s === 'new').length,
+        update: rowStatuses.filter(s => s === 'update').length,
         existing: rowStatuses.filter(s => s === 'existing').length,
         deleted: rowStatuses.filter(s => s === 'deleted').length,
         loaded: rowStatuses.filter(s => s === 'loaded').length,
@@ -688,6 +692,12 @@ const DataImport = () => {
                             <CheckCircle size={16} className="text-emerald-500" />
                             <span className="text-sm font-medium text-emerald-700">Nuevas: <strong>{stats.new}</strong></span>
                         </div>
+                        {stats.update > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-2">
+                                <RefreshCw size={16} className="text-blue-500" />
+                                <span className="text-sm font-medium text-blue-700">Actualizar: <strong>{stats.update}</strong></span>
+                            </div>
+                        )}
                         {stats.existing > 0 && (
                             <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2">
                                 <SkipForward size={16} className="text-amber-500" />
@@ -709,13 +719,13 @@ const DataImport = () => {
                         <div className="flex-1" />
                         <button
                             onClick={handleUpload}
-                            disabled={isLoading || stats.new === 0}
+                            disabled={isLoading || (stats.new === 0 && stats.update === 0)}
                             className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-200 transition-all disabled:shadow-none"
                         >
                             {isLoading ? (
                                 <><Loader2 size={18} className="animate-spin" /> Cargando...</>
                             ) : (
-                                <><Upload size={18} /> Cargar {stats.new} {stats.new === 1 ? 'registro' : 'registros'}</>
+                                <><Upload size={18} /> Cargar {stats.new + stats.update} {stats.new + stats.update === 1 ? 'registro' : 'registros'}</>
                             )}
                         </button>
                     </div>
@@ -740,6 +750,7 @@ const DataImport = () => {
                                         const status = rowStatuses[idx] || 'new';
                                         const bgClass = {
                                             'new': 'bg-emerald-50/50',
+                                            'update': 'bg-blue-50/50',
                                             'existing': 'bg-amber-50/50',
                                             'deleted': 'bg-rose-50/50',
                                             'loaded': 'bg-blue-50/50',
@@ -747,6 +758,7 @@ const DataImport = () => {
                                         }[status];
                                         const statusIcon = {
                                             'new': <CheckCircle size={14} className="text-emerald-500" />,
+                                            'update': <RefreshCw size={14} className="text-blue-500" />,
                                             'existing': <SkipForward size={14} className="text-amber-500" />,
                                             'deleted': <Trash2 size={14} className="text-rose-500" />,
                                             'loaded': <Check size={14} className="text-blue-500" />,
@@ -754,6 +766,7 @@ const DataImport = () => {
                                         }[status];
                                         const statusLabel = {
                                             'new': 'Nueva',
+                                            'update': 'Actualizar',
                                             'existing': 'Existe',
                                             'deleted': 'Eliminada',
                                             'loaded': 'Cargada',
