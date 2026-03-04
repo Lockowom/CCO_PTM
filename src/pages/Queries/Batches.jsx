@@ -172,7 +172,15 @@ const Batches = () => {
       { header: 'Peso Unitario (Kg)', accessor: 'peso_unitario', render: r => <span className="font-mono font-bold text-amber-600">{r.peso_unitario}</span> },
       { header: 'Largo', accessor: 'largo' },
       { header: 'Ancho', accessor: 'ancho' },
-      { header: 'Alto', accessor: 'alto' }
+      { header: 'Alto', accessor: 'alto' },
+      { header: 'Acciones', accessor: 'actions', render: r => (
+        <button 
+          onClick={() => window.location.href = `/inbound/cubing?code=${r.codigo_producto}`}
+          className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+        >
+          <Scale size={12} /> Modificar
+        </button>
+      )}
     ],
     ubicaciones: [
       { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100">{r.ubicacion}</span> },

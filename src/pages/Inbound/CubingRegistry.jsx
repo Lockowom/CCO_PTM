@@ -61,6 +61,17 @@ const CubingRegistry = () => {
     return () => ctx.revert();
   }, []);
 
+  // Efecto inicial para leer parámetros de URL una sola vez
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeFromUrl = urlParams.get('code');
+    if (codeFromUrl) {
+      setSearchTerm(codeFromUrl);
+      // Limpiar URL
+      window.history.replaceState({}, '', '/inbound/cubing');
+    }
+  }, []);
+
   // Buscar producto al escribir código (con debounce)
   useEffect(() => {
     const fetchProduct = async () => {
@@ -68,6 +79,8 @@ const CubingRegistry = () => {
         setProductData(null);
         return;
       }
+      
+      let termToSearch = searchTerm;
 
       try {
         setLoading(true);
@@ -75,7 +88,7 @@ const CubingRegistry = () => {
         const { data, error } = await supabase
           .from('tms_matriz_codigos')
           .select('*')
-          .ilike('codigo_producto', `%${searchTerm}%`)
+          .ilike('codigo_producto', `%${termToSearch}%`)
           .limit(1)
           .maybeSingle();
 
@@ -91,13 +104,21 @@ const CubingRegistry = () => {
           );
 
           // Auto-rellenar formulario si es una búsqueda exacta
-          if (data.codigo_producto.toUpperCase() === searchTerm.toUpperCase()) {
+          if (data.codigo_producto.toUpperCase() === termToSearch.toUpperCase()) {
             // Buscar si ya tiene pesos registrados previamente
             const { data: pesoData } = await supabase
               .from('tms_pesos')
               .select('*')
               .eq('codigo_producto', data.codigo_producto)
               .maybeSingle();
+
+            // NOTIFICAR SI YA EXISTE
+            if (pesoData) {
+              toast.info(`⚠️ Este producto ya tiene cubicaje registrado. Editando valores actuales.`, {
+                duration: 5000,
+                style: { border: '2px solid #f59e0b', color: '#b45309' }
+              });
+            }
 
             setFormData(prev => ({
               ...prev,
@@ -166,23 +187,27 @@ const CubingRegistry = () => {
 
       if (pesoError) throw pesoError;
 
-      // 2. Guardar en historial de cubicaje (Nueva tabla sugerida)
-      const { error: historyError } = await supabase
-        .from('tms_cubicaje_historial')
-        .insert({
-          codigo_producto: formData.codigo_producto,
-          peso: parseFloat(formData.peso_unitario),
-          largo: parseFloat(formData.largo),
-          ancho: parseFloat(formData.ancho),
-          alto: parseFloat(formData.alto),
-          tipo_empaque: formData.tipo_empaque,
-          usuario_id: (await supabase.auth.getUser()).data.user?.id,
-          observaciones: formData.observaciones
-        });
-
-      if (historyError && historyError.code !== '42P01') { 
-        console.warn('Error guardando historial:', historyError);
-      }
+          // 2. Guardar en historial de cubicaje (Si existe la tabla)
+          try {
+            const { error: historyError } = await supabase
+              .from('tms_cubicaje_historial')
+              .insert({
+                codigo_producto: formData.codigo_producto,
+                peso: parseFloat(formData.peso_unitario),
+                largo: parseFloat(formData.largo) || 0,
+                ancho: parseFloat(formData.ancho) || 0,
+                alto: parseFloat(formData.alto) || 0,
+                tipo_empaque: formData.tipo_empaque,
+                // usuario_id: user?.id, // Descomentar si usas Auth de Supabase real
+                observaciones: formData.observaciones
+              });
+              
+            if (historyError) {
+               console.warn('Advertencia: No se pudo guardar el historial (la tabla podría no existir):', historyError.message);
+            }
+          } catch (histErr) {
+             console.warn('Error silencioso al guardar historial:', histErr);
+          }
 
       setSaveSuccess(true);
       toast.success(`Cubicaje guardado para ${formData.codigo_producto}`);
