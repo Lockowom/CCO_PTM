@@ -134,8 +134,15 @@ const Sidebar = () => {
   // Refrescar todo manualmente
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([refreshPermissions(), refreshConfig()]);
-    setTimeout(() => setIsRefreshing(false), 500);
+    console.log('🔄 Forzando recarga de permisos y configuración...');
+    try {
+      await Promise.all([refreshPermissions(), refreshConfig()]);
+      console.log('✅ Recarga completada');
+    } catch (error) {
+      console.error('❌ Error al recargar:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   // Configuración del menú
