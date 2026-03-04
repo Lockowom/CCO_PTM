@@ -34,7 +34,8 @@ import {
   Trash2,
   Clock,
   MessageSquare,
-  Activity
+  Activity,
+  RefreshCw
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -54,7 +55,7 @@ const Sidebar = () => {
     'inbound': ['view_reception', 'view_cubicaje', 'view_returns', 'view_entry', 'manage_data_import'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
-    'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv'],
+    'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_locations_sheet'],
     'admin': [
       'manage_users', 'view_users', 'manage_roles', 'view_roles', 'manage_views', 'view_views', 'manage_mediciones', 'view_mediciones',
       'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
@@ -86,6 +87,7 @@ const Sidebar = () => {
     '/queries/sales-status': 'view_sales_status',
     '/queries/addresses': 'view_addresses',
     '/queries/locations': 'view_locations',
+    '/queries/locations-sheet': 'view_locations', // Mismo permiso que ubicaciones
     '/queries/historial-nv': 'view_historial_nv',
     '/admin/users': 'view_users',
     '/admin/roles': 'view_roles',
@@ -222,7 +224,7 @@ const Sidebar = () => {
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
-        { id: 'admin-active-users', label: 'Usuarios', icon: <Activity size={18} />, path: '/admin/active-users' },
+        { id: 'admin-active-users', label: 'Usuarios Activos', icon: <Activity size={18} />, path: '/admin/active-users' },
         { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquare size={18} />, path: '/admin/tickets' },
         { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]
