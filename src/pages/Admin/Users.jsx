@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { 
-  Users, UserPlus, Search, Filter, RefreshCw, 
-  MoreVertical, Edit, Trash2, Key, Shield, UserCheck, 
-  Crown, Briefcase, Wrench, X, Save, Eye, EyeOff, Loader2 
+import {
+  Users, UserPlus, Search, Filter, RefreshCw,
+  MoreVertical, Edit, Trash2, Key, Shield, UserCheck,
+  Crown, Briefcase, Wrench, X, Save, Eye, EyeOff, Loader2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
@@ -14,7 +14,7 @@ const UsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -34,12 +34,12 @@ const UsersPage = () => {
   const modalRef = useRef(null);
 
   // Stats
-  const stats = {
+  const stats = React.useMemo(() => ({
     total: users.length,
     active: users.filter(u => u.activo).length,
     admins: users.filter(u => u.rol?.toUpperCase().includes('ADMIN')).length,
     supervisors: users.filter(u => u.rol?.toUpperCase().includes('SUPERVISOR')).length
-  };
+  }), [users]);
 
   const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
 
@@ -48,22 +48,22 @@ const UsersPage = () => {
     const ctx = gsap.context(() => {
       // Header & Stats
       gsap.from(".page-header", { y: -20, opacity: 0, duration: 0.6, ease: "power3.out" });
-      gsap.from(".stat-card", { 
-        y: 20, 
-        opacity: 0, 
-        duration: 0.5, 
-        stagger: 0.1, 
+      gsap.from(".stat-card", {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1,
         delay: 0.2,
-        ease: "back.out(1.2)" 
+        ease: "back.out(1.2)"
       });
-      
+
       // Filters
-      gsap.from(".filters-bar", { 
-        y: 20, 
-        opacity: 0, 
-        duration: 0.5, 
+      gsap.from(".filters-bar", {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
         delay: 0.4,
-        ease: "power2.out" 
+        ease: "power2.out"
       });
 
     }, pageRef);
@@ -74,7 +74,7 @@ const UsersPage = () => {
   // Animar Grid de Usuarios cuando cargan
   useEffect(() => {
     if (!loading && users.length > 0) {
-      gsap.fromTo(".user-card", 
+      gsap.fromTo(".user-card",
         { y: 30, opacity: 0, scale: 0.95 },
         { y: 0, opacity: 1, scale: 1, duration: 0.4, stagger: 0.05, ease: "power2.out" }
       );
@@ -167,7 +167,7 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
+
       // Intentar leer de la tabla 'tms_usuarios'
       const { data, error } = await supabase
         .from('tms_usuarios')
@@ -178,27 +178,27 @@ const UsersPage = () => {
         console.error('Error Supabase fetching users:', error);
         throw error;
       }
-      
+
       // Validar y establecer usuarios
       if (data && Array.isArray(data)) {
         setUsers(data);
       } else {
         setUsers([]);
       }
-      
+
     } catch (error) {
       console.error('Error fetching users:', error);
       alert('⚠ Error al cargar usuarios: ' + error.message);
       // Fallback robusto para evitar pantalla blanca si falla la DB
       setUsers([
-        { 
-          id: 'fallback-1', 
+        {
+          id: 'fallback-1',
           id_usuario: 'USR-FALLBACK-001',
-          nombre: 'Admin Fallback', 
-          email: 'admin@cco.cl', 
-          rol: 'ADMIN', 
-          activo: true, 
-          created_at: new Date().toISOString() 
+          nombre: 'Admin Fallback',
+          email: 'admin@cco.cl',
+          rol: 'ADMIN',
+          activo: true,
+          created_at: new Date().toISOString()
         }
       ]);
     } finally {
@@ -273,10 +273,10 @@ const UsersPage = () => {
       } else {
         // CREATE: Crear nuevo usuario
         const legacyId = `USR-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-        
+
         const { data, error } = await supabase
           .from('tms_usuarios')
-          .insert([{ 
+          .insert([{
             id_usuario: legacyId,
             nombre: formData.nombre,
             email: formData.email,
@@ -297,7 +297,7 @@ const UsersPage = () => {
 
         alert('✓ Nuevo usuario creado exitosamente');
       }
-      
+
       setIsModalOpen(false);
       setEditingUser(null);
       setFormData({
@@ -307,10 +307,10 @@ const UsersPage = () => {
         rol: '',
         activo: true
       });
-      
+
       // Recargar la lista
       await fetchUsers();
-      
+
     } catch (error) {
       console.error('Error saving user:', error);
       alert('❌ Error al guardar usuario: ' + error.message);
@@ -326,7 +326,7 @@ const UsersPage = () => {
         .from('tms_usuarios')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error('Error deleting user:', error);
         throw error;
@@ -341,18 +341,20 @@ const UsersPage = () => {
   };
 
   // Filtrado
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = !searchTerm || 
-      user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = !roleFilter || user.rol === roleFilter;
-    
-    const matchesStatus = !statusFilter || 
-      (statusFilter === 'active' ? user.activo : !user.activo);
+  const filteredUsers = React.useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = !searchTerm ||
+        user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+      const matchesRole = !roleFilter || user.rol === roleFilter;
+
+      const matchesStatus = !statusFilter ||
+        (statusFilter === 'active' ? user.activo : !user.activo);
+
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [users, searchTerm, roleFilter, statusFilter]);
 
   const getRoleBadgeColor = (rol) => {
     switch (rol?.toUpperCase()) {
@@ -400,14 +402,14 @@ const UsersPage = () => {
           <p className="text-slate-500 text-lg mt-2 ml-1">Administración centralizada de accesos y credenciales</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={fetchUsers}
             className="p-3 text-slate-500 hover:bg-white hover:shadow-md hover:text-indigo-600 rounded-xl transition-all border border-transparent hover:border-slate-100"
             title="Actualizar lista"
           >
             <RefreshCw size={24} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button 
+          <button
             onClick={() => handleOpenModal()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95"
           >
@@ -429,7 +431,7 @@ const UsersPage = () => {
       <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col md:flex-row gap-2 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
         <div className="flex-1 relative w-full group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-          <input 
+          <input
             type="text"
             placeholder="Buscar por nombre, email o ID..."
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400 font-medium"
@@ -438,7 +440,7 @@ const UsersPage = () => {
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-          <select 
+          <select
             className="px-4 py-3 bg-slate-50 hover:bg-slate-100 border-transparent rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 font-bold text-slate-600 cursor-pointer transition-colors"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -446,7 +448,7 @@ const UsersPage = () => {
             <option value="">Todos los roles</option>
             {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </select>
-          <select 
+          <select
             className="px-4 py-3 bg-slate-50 hover:bg-slate-100 border-transparent rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 font-bold text-slate-600 cursor-pointer transition-colors"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -482,29 +484,27 @@ const UsersPage = () => {
           {filteredUsers.map(user => (
             <div key={user.id} className="user-card group bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative">
               {/* Background Pattern */}
-              <div className={`h-24 w-full absolute top-0 left-0 opacity-10 transition-colors ${
-                user.activo ? 'bg-indigo-600' : 'bg-slate-400'
-              }`}></div>
-              
+              <div className={`h-24 w-full absolute top-0 left-0 opacity-10 transition-colors ${user.activo ? 'bg-indigo-600' : 'bg-slate-400'
+                }`}></div>
+
               <div className="p-6 relative pt-8">
                 <div className="flex justify-between items-start mb-4">
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300
-                    ${user.rol === 'ADMIN' ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-200' : 
-                      user.rol === 'SUPERVISOR' ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-200' : 
-                      'bg-gradient-to-br from-indigo-500 to-blue-600 shadow-indigo-200'}`}
+                    ${user.rol === 'ADMIN' ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-200' :
+                      user.rol === 'SUPERVISOR' ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-200' :
+                        'bg-gradient-to-br from-indigo-500 to-blue-600 shadow-indigo-200'}`}
                   >
                     {user.nombre?.charAt(0).toUpperCase()}
                   </div>
-                  
+
                   <div className="flex flex-col items-end gap-2">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${
-                      user.activo 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${user.activo
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                         : 'bg-slate-100 text-slate-500 border-slate-200'
-                    }`}>
+                      }`}>
                       {user.activo ? 'Activo' : 'Inactivo'}
                     </span>
-                    
+
                     {user.rol === 'ADMIN' && (
                       <span className="text-rose-500 bg-rose-50 p-1 rounded-lg" title="Administrador">
                         <Crown size={14} />
@@ -530,13 +530,13 @@ const UsersPage = () => {
                 </div>
 
                 <div className="flex gap-2 pt-4 border-t border-slate-100">
-                  <button 
+                  <button
                     onClick={() => handleOpenModal(user)}
                     className="flex-1 py-2.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     <Edit size={16} /> Editar
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(user.id)}
                     className="p-2.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
                     title="Eliminar usuario"
@@ -561,27 +561,27 @@ const UsersPage = () => {
                 </h2>
                 <p className="text-slate-500 text-sm">Completa los datos de acceso</p>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="bg-white p-2 rounded-full shadow-sm text-slate-400 hover:text-rose-500 transition-colors hover:rotate-90 duration-300"
               >
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-8 space-y-6">
               <div className="space-y-4">
                 <div className="group">
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 group-focus-within:text-indigo-500 transition-colors">Nombre Completo</label>
                   <div className="relative">
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       required
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700"
                       placeholder="Ej: Juan Pérez"
                       value={formData.nombre}
-                      onChange={e => setFormData({...formData, nombre: e.target.value})}
+                      onChange={e => setFormData({ ...formData, nombre: e.target.value })}
                     />
                   </div>
                 </div>
@@ -590,13 +590,13 @@ const UsersPage = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 group-focus-within:text-indigo-500 transition-colors">Email Corporativo</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-indigo-500">@</div>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       required
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700"
                       placeholder="juan@empresa.com"
                       value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
                 </div>
@@ -607,16 +607,16 @@ const UsersPage = () => {
                   </label>
                   <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                    <input 
+                    <input
                       type={showPassword ? "text" : "password"}
                       required={!editingUser}
                       minLength={6}
                       className="w-full pl-12 pr-12 py-3 bg-slate-50 border-2 border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700"
                       value={formData.password}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
                       placeholder={editingUser ? "••••••••" : "Mínimo 6 caracteres"}
                     />
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -630,11 +630,11 @@ const UsersPage = () => {
                   <div className="group">
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 group-focus-within:text-indigo-500 transition-colors">Rol de Acceso</label>
                     <div className="relative">
-                      <select 
+                      <select
                         required
                         className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
                         value={formData.rol}
-                        onChange={e => setFormData({...formData, rol: e.target.value})}
+                        onChange={e => setFormData({ ...formData, rol: e.target.value })}
                       >
                         <option value="">Seleccionar...</option>
                         {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
@@ -647,24 +647,20 @@ const UsersPage = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Estado</label>
-                    <div 
-                      onClick={() => setFormData({...formData, activo: !formData.activo})}
-                      className={`h-[50px] w-full rounded-xl flex items-center px-4 cursor-pointer transition-all border-2 ${
-                        formData.activo 
-                          ? 'bg-emerald-50 border-emerald-200' 
+                    <div
+                      onClick={() => setFormData({ ...formData, activo: !formData.activo })}
+                      className={`h-[50px] w-full rounded-xl flex items-center px-4 cursor-pointer transition-all border-2 ${formData.activo
+                          ? 'bg-emerald-50 border-emerald-200'
                           : 'bg-slate-50 border-slate-200'
-                      }`}
+                        }`}
                     >
-                      <div className={`w-10 h-6 rounded-full relative transition-colors ${
-                        formData.activo ? 'bg-emerald-500' : 'bg-slate-300'
-                      }`}>
-                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${
-                          formData.activo ? 'translate-x-4' : 'translate-x-0'
-                        }`}></div>
+                      <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.activo ? 'bg-emerald-500' : 'bg-slate-300'
+                        }`}>
+                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${formData.activo ? 'translate-x-6' : 'translate-x-0'
+                          }`}></div>
                       </div>
-                      <span className={`ml-3 font-bold text-sm ${
-                        formData.activo ? 'text-emerald-700' : 'text-slate-500'
-                      }`}>
+                      <span className={`ml-3 font-bold text-sm ${formData.activo ? 'text-emerald-700' : 'text-slate-500'
+                        }`}>
                         {formData.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
@@ -673,14 +669,14 @@ const UsersPage = () => {
               </div>
 
               <div className="pt-6 flex gap-4">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-3.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={saving}
                   className="flex-[2] py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"

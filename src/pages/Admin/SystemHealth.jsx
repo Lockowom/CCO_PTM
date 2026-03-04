@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Activity, Database, AlertTriangle, ShieldCheck, 
-  Server, Play, CheckCircle, Clock, RefreshCw, 
+import {
+  Activity, Database, AlertTriangle, ShieldCheck,
+  Server, Play, CheckCircle, Clock, RefreshCw,
   HardDrive, AlertOctagon, FileText
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { toast } from 'sonner';
 import gsap from 'gsap';
 
 const SystemHealth = () => {
   const [loading, setLoading] = useState(false);
   const [runningCheck, setRunningCheck] = useState(null);
-  
+
   // Database Stats
   const [dbStats, setDbStats] = useState({
     orders_count: 0,
@@ -22,13 +23,13 @@ const SystemHealth = () => {
 
   // Integrity Issues
   const [issues, setIssues] = useState([]);
-  
+
   // Realtime Events
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
     fetchStats();
-    
+
     // Simular eventos realtime de sistema
     const interval = setInterval(() => {
       const newEvent = generateMockEvent();
@@ -44,7 +45,7 @@ const SystemHealth = () => {
       const { count: orders } = await supabase.from('tms_nv_diarias').select('*', { count: 'exact', head: true });
       const { count: products } = await supabase.from('tms_matriz_codigos').select('*', { count: 'exact', head: true });
       const { count: locs } = await supabase.from('wms_ubicaciones').select('*', { count: 'exact', head: true });
-      
+
       setDbStats(prev => ({
         ...prev,
         orders_count: orders || 0,
@@ -78,12 +79,12 @@ const SystemHealth = () => {
   const runIntegrityCheck = async (checkType) => {
     setRunningCheck(checkType);
     setLoading(true);
-    
+
     // Simular tiempo de ejecución de función de Supabase
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     let result = [];
-    
+
     if (checkType === 'STOCK_CONSISTENCY') {
       // Simulación: Buscar diferencias entre maestro y ubicaciones
       result = [
@@ -101,6 +102,13 @@ const SystemHealth = () => {
     setIssues(result);
     setLoading(false);
     setRunningCheck(null);
+
+    // Lanzar alertas visuales si se encontraron problemas
+    if (result.length > 0) {
+      toast.error(`Verificación finalizada: Se encontraron ${result.length} anomalías.`);
+    } else {
+      toast.success('Integridad verificada. No se encontraron problemas.');
+    }
   };
 
   return (
@@ -123,19 +131,19 @@ const SystemHealth = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Columna 1: Estadísticas de Base de Datos */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
               <Database className="text-indigo-500" /> Métricas de Base de Datos
             </h3>
-            
+
             <div className="space-y-4">
               <StatRow label="Órdenes Totales" value={dbStats.orders_count} icon={<FileText size={16} />} />
               <StatRow label="Maestro Productos" value={dbStats.products_count} icon={<HardDrive size={16} />} />
               <StatRow label="Ubicaciones WMS" value={dbStats.locations_count} icon={<Server size={16} />} />
-              
+
               <div className="pt-4 mt-4 border-t border-slate-100">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase">Almacenamiento (Est.)</span>
@@ -158,11 +166,10 @@ const SystemHealth = () => {
                 <div key={event.id} className="border-l-2 border-slate-700 pl-3 py-1 animate-in slide-in-from-left-2 fade-in">
                   <div className="flex justify-between opacity-50 mb-0.5">
                     <span>{event.timestamp}</span>
-                    <span className={`font-bold ${
-                      event.type === 'ERROR' ? 'text-red-400' : 
-                      event.type === 'WARNING' ? 'text-amber-400' : 
-                      'text-blue-400'
-                    }`}>{event.type}</span>
+                    <span className={`font-bold ${event.type === 'ERROR' ? 'text-red-400' :
+                        event.type === 'WARNING' ? 'text-amber-400' :
+                          'text-blue-400'
+                      }`}>{event.type}</span>
                   </div>
                   <p className="opacity-90 leading-tight">{event.message}</p>
                 </div>
@@ -179,20 +186,20 @@ const SystemHealth = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <CheckCard 
-                title="Consistencia de Stock" 
+              <CheckCard
+                title="Consistencia de Stock"
                 desc="Valida sumas de ubicaciones vs maestro."
                 loading={runningCheck === 'STOCK_CONSISTENCY'}
                 onClick={() => runIntegrityCheck('STOCK_CONSISTENCY')}
               />
-              <CheckCard 
-                title="Procesos Estancados" 
+              <CheckCard
+                title="Procesos Estancados"
                 desc="Detecta órdenes bloqueadas > 24h."
                 loading={runningCheck === 'STUCK_PROCESSES'}
                 onClick={() => runIntegrityCheck('STUCK_PROCESSES')}
               />
-              <CheckCard 
-                title="Registros Huérfanos" 
+              <CheckCard
+                title="Registros Huérfanos"
                 desc="Limpia referencias rotas en DB."
                 loading={runningCheck === 'ORPHAN_RECORDS'}
                 onClick={() => runIntegrityCheck('ORPHAN_RECORDS')}
@@ -202,7 +209,7 @@ const SystemHealth = () => {
             {/* Resultados */}
             <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 min-h-[200px]">
               <h4 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Resultados del Diagnóstico</h4>
-              
+
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-8 text-slate-400">
                   <RefreshCw className="animate-spin mb-2" size={32} />
@@ -230,11 +237,10 @@ const SystemHealth = () => {
                         <Clock className="text-blue-500 shrink-0" />
                       )}
                       <div>
-                        <h5 className={`font-bold text-sm ${
-                          issue.severity === 'HIGH' ? 'text-red-700' : 
-                          issue.severity === 'MEDIUM' ? 'text-amber-700' : 
-                          'text-blue-700'
-                        }`}>
+                        <h5 className={`font-bold text-sm ${issue.severity === 'HIGH' ? 'text-red-700' :
+                            issue.severity === 'MEDIUM' ? 'text-amber-700' :
+                              'text-blue-700'
+                          }`}>
                           {issue.severity === 'HIGH' ? 'ERROR CRÍTICO' : issue.severity === 'MEDIUM' ? 'ADVERTENCIA' : 'INFO'}
                         </h5>
                         <p className="text-slate-600 text-sm mt-1">{issue.message}</p>
@@ -265,7 +271,7 @@ const StatRow = ({ label, value, icon }) => (
 );
 
 const CheckCard = ({ title, desc, loading, onClick }) => (
-  <button 
+  <button
     onClick={onClick}
     disabled={loading}
     className="text-left p-4 rounded-xl border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all bg-white group disabled:opacity-70 disabled:cursor-not-allowed"

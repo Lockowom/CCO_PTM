@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileSearch, Search, Calendar, Filter, Eye, ArrowRightLeft, 
-  Database, User, Clock, AlertTriangle 
+import {
+  FileSearch, Search, Calendar, Filter, Eye, ArrowRightLeft,
+  Database, User, Clock, AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { format } from 'date-fns';
@@ -9,12 +9,12 @@ import { format } from 'date-fns';
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filtros
   const [filterTable, setFilterTable] = useState('ALL');
   const [filterUser, setFilterUser] = useState('');
   const [dateRange, setDateRange] = useState('TODAY'); // TODAY, WEEK, MONTH
-  
+
   // Detalle
   const [selectedLog, setSelectedLog] = useState(null);
 
@@ -28,25 +28,28 @@ const AuditLogs = () => {
       // Simulación: En un entorno real, esto consultaría una tabla 'audit_logs'
       // llenada por Triggers de PostgreSQL.
       await new Promise(resolve => setTimeout(resolve, 800));
-      
       const mockLogs = generateMockLogs();
-      let filtered = mockLogs;
-
-      if (filterTable !== 'ALL') {
-        filtered = filtered.filter(l => l.table_name === filterTable);
-      }
-      
-      if (filterUser) {
-        filtered = filtered.filter(l => l.user_email.toLowerCase().includes(filterUser.toLowerCase()));
-      }
-
-      setLogs(filtered);
+      setLogs(mockLogs);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredLogs = React.useMemo(() => {
+    let filtered = logs;
+
+    if (filterTable !== 'ALL') {
+      filtered = filtered.filter(l => l.table_name === filterTable);
+    }
+
+    if (filterUser) {
+      filtered = filtered.filter(l => l.user_email.toLowerCase().includes(filterUser.toLowerCase()));
+    }
+
+    return filtered;
+  }, [logs, filterTable, filterUser]);
 
   const generateMockLogs = () => {
     return [
@@ -99,11 +102,18 @@ const AuditLogs = () => {
 
   const getActionColor = (action) => {
     switch (action) {
-      case 'INSERT': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'UPDATE': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'DELETE': return 'bg-red-100 text-red-700 border-red-200';
+      case 'INSERT': return 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm shadow-emerald-100';
+      case 'UPDATE': return 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm shadow-blue-100';
+      case 'DELETE': return 'bg-red-100 text-red-700 border-red-200 shadow-sm shadow-red-100';
       default: return 'bg-slate-100 text-slate-700';
     }
+  };
+
+  const getTableBadgeColor = (tableName) => {
+    if (tableName.startsWith('wms_')) return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    if (tableName.startsWith('tms_user') || tableName.startsWith('tms_mod')) return 'bg-purple-50 text-purple-700 border-purple-200';
+    if (tableName.startsWith('tms_')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
   return (
@@ -128,11 +138,11 @@ const AuditLogs = () => {
             <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Filter size={18} /> Filtros de Búsqueda
             </h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Tabla / Entidad</label>
-                <select 
+                <select
                   value={filterTable}
                   onChange={(e) => setFilterTable(e.target.value)}
                   className="w-full p-3 border border-slate-200 rounded-xl font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
@@ -148,7 +158,7 @@ const AuditLogs = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Usuario (Email)</label>
                 <div className="relative">
-                  <input 
+                  <input
                     type="text"
                     value={filterUser}
                     onChange={(e) => setFilterUser(e.target.value)}
@@ -166,9 +176,8 @@ const AuditLogs = () => {
                     <button
                       key={range}
                       onClick={() => setDateRange(range)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${
-                        dateRange === range ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'
-                      }`}
+                      className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${dateRange === range ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'
+                        }`}
                     >
                       {range === 'TODAY' ? 'HOY' : range === 'WEEK' ? 'SEMANA' : 'MES'}
                     </button>
@@ -176,7 +185,7 @@ const AuditLogs = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={fetchLogs}
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
               >
@@ -192,7 +201,7 @@ const AuditLogs = () => {
             </h4>
             <p className="text-sm text-blue-700 leading-relaxed">
               Esta herramienta visualiza los registros capturados por los <strong>Triggers de Auditoría</strong> configurados en PostgreSQL.
-              <br/><br/>
+              <br /><br />
               Cada operación de escritura (INSERT, UPDATE, DELETE) en tablas críticas genera un registro inmutable para trazabilidad y seguridad.
             </p>
           </div>
@@ -215,10 +224,10 @@ const AuditLogs = () => {
                 <tbody className="divide-y divide-slate-100">
                   {loading ? (
                     <tr><td colSpan="5" className="p-8 text-center text-slate-400">Cargando traza...</td></tr>
-                  ) : logs.length === 0 ? (
+                  ) : filteredLogs.length === 0 ? (
                     <tr><td colSpan="5" className="p-8 text-center text-slate-400">No se encontraron registros.</td></tr>
                   ) : (
-                    logs.map(log => (
+                    filteredLogs.map(log => (
                       <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 font-mono text-slate-600">
@@ -230,16 +239,18 @@ const AuditLogs = () => {
                           {log.user_email}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-black border ${getActionColor(log.action)}`}>
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${getActionColor(log.action)}`}>
                             {log.action}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
-                          <span className="block font-bold text-xs">{log.table_name}</span>
-                          <span className="text-xs text-slate-400">ID: {log.record_id}</span>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-bold border ${getTableBadgeColor(log.table_name)}`}>
+                            {log.table_name}
+                          </span>
+                          <span className="block text-[10px] font-mono mt-1 text-slate-400">ID: {log.record_id}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button 
+                          <button
                             onClick={() => setSelectedLog(log)}
                             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                           >
@@ -267,7 +278,7 @@ const AuditLogs = () => {
                 </h3>
                 <p className="text-sm text-slate-500 font-mono mt-1">{selectedLog.id} • {selectedLog.table_name}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedLog(null)}
                 className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
               >
@@ -282,7 +293,7 @@ const AuditLogs = () => {
                   {selectedLog.old_data ? JSON.stringify(selectedLog.old_data, null, 2) : <span className="italic opacity-50">NULL (Insert)</span>}
                 </pre>
               </div>
-              
+
               <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                 <h4 className="font-bold text-emerald-800 mb-2 text-sm uppercase">Valor Nuevo</h4>
                 <pre className="text-xs font-mono text-emerald-900 whitespace-pre-wrap overflow-auto max-h-60">

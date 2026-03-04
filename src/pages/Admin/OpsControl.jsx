@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Unlock, RotateCcw, AlertTriangle, PlayCircle, 
+import {
+  Unlock, RotateCcw, AlertTriangle, PlayCircle,
   Search, UserX, ShieldAlert, CheckCircle2,
   ArrowRightLeft, Siren
 } from 'lucide-react';
@@ -12,7 +12,7 @@ const OpsControl = () => {
   const [activeLocks, setActiveLocks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Estado para modal de cambio de estado forzado
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [targetState, setTargetState] = useState('');
@@ -46,15 +46,15 @@ const OpsControl = () => {
     try {
       const { error } = await supabase
         .from('tms_nv_diarias')
-        .update({ 
-          usuario_asignado: null, 
+        .update({
+          usuario_asignado: null,
           usuario_nombre: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       alert('✅ Orden liberada correctamente');
       fetchLocks();
     } catch (err) {
@@ -64,18 +64,18 @@ const OpsControl = () => {
 
   const handleForceState = async () => {
     if (!selectedOrder || !targetState) return;
-    
+
     // Confirmación de seguridad
     const confirmCode = Math.floor(1000 + Math.random() * 9000);
     const input = prompt(`⚠️ CAMBIO DE ESTADO FORZADO ⚠️\n\nEstás moviendo la Orden #${selectedOrder.nv} a "${targetState}".\nEsto puede afectar la consistencia de datos.\n\nIngresa el código ${confirmCode} para confirmar:`);
-    
+
     if (input !== confirmCode.toString()) {
       alert('Código incorrecto. Acción cancelada.');
       return;
     }
 
     try {
-      const updateData = { 
+      const updateData = {
         estado: targetState,
         updated_at: new Date().toISOString()
       };
@@ -102,10 +102,12 @@ const OpsControl = () => {
     }
   };
 
-  const filteredLocks = activeLocks.filter(item => 
-    item.nv?.toString().includes(searchTerm) || 
-    item.usuario_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLocks = React.useMemo(() => {
+    return activeLocks.filter(item =>
+      item.nv?.toString().includes(searchTerm) ||
+      item.usuario_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [activeLocks, searchTerm]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
@@ -163,7 +165,7 @@ const OpsControl = () => {
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
+              <input
                 type="text"
                 placeholder="Buscar por N.V. o Usuario..."
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-sm"
@@ -204,14 +206,14 @@ const OpsControl = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 flex justify-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleUnlock(item.id)}
                           className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors tooltip-trigger"
                           title="Liberar Bloqueo (Kick User)"
                         >
                           <Unlock size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => setSelectedOrder(item)}
                           className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title="Cambiar Estado Forzado"
@@ -236,7 +238,7 @@ const OpsControl = () => {
               <AlertTriangle size={28} />
               <h3 className="text-xl font-black">Cambio de Estado Forzado</h3>
             </div>
-            
+
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
               <p className="text-sm font-bold text-slate-500 uppercase mb-1">Orden Seleccionada</p>
               <p className="text-2xl font-black text-slate-800">N.V. #{selectedOrder.nv}</p>
@@ -245,33 +247,35 @@ const OpsControl = () => {
 
             <div className="space-y-3">
               <label className="block text-sm font-bold text-slate-700">Nuevo Estado Destino</label>
-              <select 
+              <select
                 value={targetState}
                 onChange={(e) => setTargetState(e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl font-bold text-slate-700 focus:border-amber-500 outline-none"
+                className="w-full p-3 border-2 border-slate-300 rounded-xl font-bold text-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
               >
                 <option value="">Seleccionar estado...</option>
-                <option value="Pendiente Picking">Pendiente Picking (Reiniciar)</option>
-                <option value="Aprobada">Aprobada (Volver a Cola)</option>
-                <option value="PACKING">PACKING (Saltar Picking)</option>
-                <option value="Facturada">Facturada (Finalizar)</option>
-                <option value="Anulada">Anulada (Cancelar)</option>
+                <option value="Aprobada">Aprobada (Libera Usuario)</option>
+                <option value="Pendiente Picking">Pendiente Picking (Libera Usuario)</option>
+                <option value="Pendiente Packing">Pendiente Packing</option>
+                <option value="PK">PK (Completo)</option>
               </select>
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+              <button
+                onClick={() => {
+                  setSelectedOrder(null);
+                  setTargetState('');
+                }}
+                className="flex-1 py-3 text-slate-600 hover:bg-slate-100 font-bold rounded-xl transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={handleForceState}
                 disabled={!targetState}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl shadow-lg shadow-amber-200 transition-all"
+                className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Aplicar Cambio
+                CONFIRMAR
               </button>
             </div>
           </div>

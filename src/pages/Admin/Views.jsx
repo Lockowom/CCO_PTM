@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Layout, RefreshCw, Power, Home, 
+import {
+  Layout, RefreshCw, Power, Home,
   AlertTriangle, Loader2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
@@ -9,11 +9,11 @@ import { useConfig } from '../../context/ConfigContext';
 const ViewsPage = () => {
   // IMPORTANTE: Obtener refreshConfig del contexto
   const { refreshConfig } = useConfig();
-  
+
   const [activeTab, setActiveTab] = useState('modules');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   const [modulesConfig, setModulesConfig] = useState([]);
   const [roles, setRoles] = useState([]);
 
@@ -61,7 +61,7 @@ const ViewsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       const { data: modulesData } = await supabase
         .from('tms_modules_config')
         .select('*')
@@ -87,20 +87,20 @@ const ViewsPage = () => {
     try {
       setSaving(true);
       console.log('💾 Cambiando módulo:', id, '→', !currentStatus);
-      
+
       const newStatus = !currentStatus;
-      
+
       // Actualización optimista local
-      setModulesConfig(prev => prev.map(m => 
+      setModulesConfig(prev => prev.map(m =>
         m.id === id ? { ...m, enabled: newStatus } : m
       ));
 
       // Guardar en BD
       const { error } = await supabase
         .from('tms_modules_config')
-        .update({ 
-          enabled: newStatus, 
-          updated_at: new Date().toISOString() 
+        .update({
+          enabled: newStatus,
+          updated_at: new Date().toISOString()
         })
         .eq('id', id);
 
@@ -123,8 +123,8 @@ const ViewsPage = () => {
   const handleUpdateLandingPage = async (roleId, newPath) => {
     try {
       setSaving(true);
-      
-      setRoles(prev => prev.map(r => 
+
+      setRoles(prev => prev.map(r =>
         r.id === roleId ? { ...r, landing_page: newPath } : r
       ));
 
@@ -166,8 +166,8 @@ const ViewsPage = () => {
             Los cambios se reflejan instantáneamente en el menú
           </p>
         </div>
-        <button 
-          onClick={fetchData} 
+        <button
+          onClick={fetchData}
           className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
         >
           <RefreshCw size={20} />
@@ -178,22 +178,20 @@ const ViewsPage = () => {
       <div className="flex gap-4">
         <button
           onClick={() => setActiveTab('modules')}
-          className={`px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-1 md:flex-none justify-center ${
-            activeTab === 'modules' 
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-[1.02]' 
+          className={`px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-1 md:flex-none justify-center ${activeTab === 'modules'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-[1.02]'
               : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
-          }`}
+            }`}
         >
           <Power size={18} />
           Activar/Desactivar Módulos
         </button>
         <button
           onClick={() => setActiveTab('landing')}
-          className={`px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-1 md:flex-none justify-center ${
-            activeTab === 'landing' 
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-[1.02]' 
+          className={`px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-1 md:flex-none justify-center ${activeTab === 'landing'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-[1.02]'
               : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
-          }`}
+            }`}
         >
           <Home size={18} />
           Página de Inicio por Rol
@@ -201,7 +199,7 @@ const ViewsPage = () => {
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        
+
         {activeTab === 'modules' && (
           <div className="space-y-8">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-start gap-4 text-amber-900 shadow-sm">
@@ -211,7 +209,7 @@ const ViewsPage = () => {
               <div>
                 <h4 className="font-bold text-lg mb-1">Control Global de Módulos</h4>
                 <p className="opacity-90">
-                  Desactivar un módulo aquí lo ocultará para <strong>todos los usuarios del sistema</strong>, independientemente de sus roles. 
+                  Desactivar un módulo aquí lo ocultará para <strong>todos los usuarios del sistema</strong>, independientemente de sus roles.
                   El menú se actualiza <strong>instantáneamente</strong> al cambiar.
                 </p>
               </div>
@@ -219,30 +217,29 @@ const ViewsPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {modulesConfig.map(module => (
-                <div 
-                  key={module.id} 
-                  className={`relative overflow-hidden flex flex-col justify-between p-6 rounded-2xl border-2 transition-all group ${
-                    module.enabled 
-                      ? 'bg-white border-slate-100 shadow-sm hover:border-indigo-200 hover:shadow-md' 
+                <div
+                  key={module.id}
+                  className={`relative overflow-hidden flex flex-col justify-between p-6 rounded-2xl border-2 transition-all group ${module.enabled
+                      ? 'bg-white border-slate-100 shadow-sm hover:border-indigo-200 hover:shadow-md'
                       : 'bg-slate-50 border-slate-100 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                      module.enabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-400'
-                    }`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${module.enabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-400'
+                      }`}>
                       <Layout size={28} />
                     </div>
-                    
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer"
+
+                    <label className="relative inline-flex items-center cursor-pointer w-14 h-7 transition duration-200 ease-in-out">
+                      <input
+                        type="checkbox"
+                        className="peer absolute opacity-0 w-0 h-0"
                         checked={module.enabled}
                         onChange={() => handleToggleModule(module.id, module.enabled)}
                         disabled={saving}
                       />
-                      <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <span className={`block w-full h-full rounded-full transition-colors duration-300 shadow-inner ${module.enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}></span>
+                      <span className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 shadow-sm ${module.enabled ? 'translate-x-7' : 'translate-x-0'}`}></span>
                     </label>
                   </div>
 
@@ -252,7 +249,7 @@ const ViewsPage = () => {
                     </h4>
                     <p className="text-xs text-slate-400 font-mono uppercase tracking-wider">{module.id}</p>
                   </div>
-                  
+
                   {module.enabled && (
                     <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-indigo-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500 pointer-events-none"></div>
                   )}
@@ -289,7 +286,7 @@ const ViewsPage = () => {
                       <p className="text-xs text-slate-500">{role.descripcion || 'Sin descripción'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
                       <Home size={12} /> Página de Inicio

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  History, Search, RefreshCw, Calendar, 
-  Shield, Mail, User, Loader2, Users, LogOut, Clock, Activity 
+import {
+  History, Search, RefreshCw, Calendar,
+  Shield, Mail, User, Loader2, Users, LogOut, Clock, Activity
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -17,7 +17,7 @@ const LoginHistory = () => {
 
   useEffect(() => {
     fetchData();
-    
+
     // Subscribe to realtime changes for active users
     const channel = supabase
       .channel('active_users_changes')
@@ -78,7 +78,7 @@ const LoginHistory = () => {
     try {
       // Opción 1: Usar RPC si está configurado (más seguro)
       // const { error } = await supabase.rpc('force_user_logout', { user_id_param: userId });
-      
+
       // Opción 2: Eliminación directa (si RLS lo permite)
       const { error } = await supabase
         .from('tms_usuarios_activos')
@@ -86,7 +86,7 @@ const LoginHistory = () => {
         .eq('usuario_id', userId);
 
       if (error) throw error;
-      
+
       alert(`Sesión de ${userName} cerrada exitosamente.`);
       fetchActiveUsers();
     } catch (error) {
@@ -95,20 +95,24 @@ const LoginHistory = () => {
     }
   };
 
-  const filteredLogs = logs.filter(log => 
-    log.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.rol?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = React.useMemo(() => {
+    return logs.filter(log =>
+      log.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.rol?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [logs, searchTerm]);
 
-  const filteredActiveUsers = activeUsers.filter(user => 
-    user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.rol?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredActiveUsers = React.useMemo(() => {
+    return activeUsers.filter(user =>
+      user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.rol?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [activeUsers, searchTerm]);
 
   const getRoleBadgeColor = (rol) => {
     switch (rol?.toUpperCase()) {
-      case 'ADMIN': return 'bg-red-50 text-red-700 border-red-100';
+      case 'ADMIN': return 'bg-red-500 text-white border-red-600 shadow-sm shadow-red-200'; // Destacado
       case 'SUPERVISOR': return 'bg-amber-50 text-amber-700 border-amber-100';
       case 'OPERADOR': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
       default: return 'bg-blue-50 text-blue-700 border-blue-100';
@@ -127,7 +131,7 @@ const LoginHistory = () => {
           <p className="text-slate-500 text-sm mt-1">Monitoreo de usuarios y registro de ingresos</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={handleRefresh}
             className={`p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors ${refreshing ? 'animate-spin' : ''}`}
             title="Actualizar lista"
@@ -142,11 +146,10 @@ const LoginHistory = () => {
         <div className="flex gap-2 border-b border-slate-200">
           <button
             onClick={() => setView('active')}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${
-              view === 'active' 
-                ? 'border-orange-500 text-orange-600' 
+            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${view === 'active'
+                ? 'border-orange-500 text-orange-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
+              }`}
           >
             <Activity size={16} />
             Usuarios Activos
@@ -156,11 +159,10 @@ const LoginHistory = () => {
           </button>
           <button
             onClick={() => setView('history')}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${
-              view === 'history' 
-                ? 'border-orange-500 text-orange-600' 
+            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${view === 'history'
+                ? 'border-orange-500 text-orange-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
+              }`}
           >
             <History size={16} />
             Historial
@@ -170,7 +172,7 @@ const LoginHistory = () => {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-1 relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="Buscar por usuario, email o rol..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10"
