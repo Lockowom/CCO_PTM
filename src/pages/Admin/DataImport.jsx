@@ -22,7 +22,7 @@ const IMPORT_TABS = [
         // ORDEN DE COLUMNAS SEGÚN EL EXCEL:
         // Fecha Entrega | N.Venta | Estado | Cod.Cliente | Nombre Cliente | Cod.Vendedor | Nombre Vendedor | Zona | Cod.Producto | Descripcion | Unidad | Pedido
         columns: [
-            { key: 'fecha_emision', label: 'Fecha Entrega', required: false, type: 'date' },
+            { key: 'fecha_emision', label: 'Fecha Entrega', required: false, type: 'date', optional: true },
             { key: 'nv', label: 'N.Venta', required: true, type: 'text' },
             { key: 'estado_erp', label: 'Estado ERP', required: false, type: 'text' },
             { key: 'cod_cliente', label: 'Cod.Cliente', required: false, type: 'text' },
@@ -183,6 +183,7 @@ const DataImport = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [loadResult, setLoadResult] = useState(null);
     const [step, setStep] = useState('paste'); // 'paste' | 'preview' | 'done'
+    const [skipFirstColumn, setSkipFirstColumn] = useState(false); // NEW: Opción para omitir fecha
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -220,8 +221,27 @@ const DataImport = () => {
             const cells = line.split(separator).map(c => c.trim());
             const row = {};
 
-            currentTab.columns.forEach((col, idx) => {
-                let value = cells[idx] || '';
+            // Aplicar lógica de skipFirstColumn si es necesario
+            let cellIdx = 0;
+            
+            // Si skipFirstColumn está activo (significa que NO traen fecha), 
+            // saltamos la columna fecha (idx=0) en el mapeo de destino, PERO leemos desde cells[0] para la columna siguiente
+            // OJO: La lógica es al revés: 
+            // Si el usuario marca "Sin Fecha", significa que su col 0 es NV (idx=1 en config).
+            // Entonces, para la col fecha (idx=0 en config), no asignamos nada.
+            // Y para col NV (idx=1 en config), leemos cells[0].
+            
+            currentTab.columns.forEach((col, colIdx) => {
+                let value = '';
+
+                if (activeTab === 'nv' && skipFirstColumn && col.key === 'fecha_emision') {
+                    // Si estamos saltando fecha, esta columna queda vacía
+                    value = null; 
+                    // NO avanzamos cellIdx porque no consumimos celda del excel
+                } else {
+                    value = cells[cellIdx] || '';
+                    cellIdx++;
+                }
 
                 // Limpiar y convertir tipos
                 if (col.type === 'number') {
@@ -352,7 +372,7 @@ const DataImport = () => {
 
         setStep('preview');
         setIsParsing(false);
-    }, [currentTab]);
+    }, [currentTab, skipFirstColumn]);
 
     // ─── MANEJAR PASTE ───
     const handlePaste = (e) => {
@@ -522,6 +542,7 @@ const DataImport = () => {
         setRowStatuses([]);
         setLoadResult(null);
         setStep('paste');
+        setSkipFirstColumn(false); // Resetear checkbox
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -666,14 +687,34 @@ const DataImport = () => {
                         </label>
 
                         {rawText && (
-                            <button
-                                onClick={() => parseData(rawText)}
-                                disabled={isParsing}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 transition-all disabled:opacity-50"
-                            >
-                                {isParsing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                                Procesar Datos
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {activeTab === 'nv' && (
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={skipFirstColumn}
+                                            onChange={(e) => {
+                                                setSkipFirstColumn(e.target.checked);
+                                                // Si ya hay texto, reparsear automáticamente
+                                                if (rawText) {
+                                                    // Pequeño hack para forzar update
+                                                    setTimeout(() => parseData(rawText), 50);
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                                        />
+                                        <span>Mi Excel <strong>NO</strong> tiene fecha al inicio</span>
+                                    </label>
+                                )}
+                                <button
+                                    onClick={() => parseData(rawText)}
+                                    disabled={isParsing}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 transition-all disabled:opacity-50"
+                                >
+                                    {isParsing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                                    Procesar Datos
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
