@@ -322,7 +322,8 @@ const DataImport = () => {
                 const { data: existing, error: errorExisting } = await supabase
                     .from(currentTab.table)
                     .select(selectFields)
-                    .in(firstKey, firstKeyValues);
+                    .in(firstKey, firstKeyValues)
+                    .limit(2000); // Aumentar límite para evitar falsos negativos en cargas grandes
 
                 if (errorExisting) throw errorExisting;
 
@@ -335,24 +336,25 @@ const DataImport = () => {
                         .in(firstKey, firstKeyValues);
 
                     if (!errorDeleted && deleted) {
-                        deletedKeys = new Set(deleted.map(d => d[firstKey]?.toString()));
+                        // Normalizar a mayúsculas para comparación robusta
+                        deletedKeys = new Set(deleted.map(d => d[firstKey]?.toString().trim().toUpperCase()));
                     }
                 }
 
-                // Generar Set de claves compuestas (ej: '95924|0AD46651225S')
+                // Generar Set de claves compuestas (ej: '95924|0AD46651225S') normalizadas
                 const existingKeys = new Set((existing || []).map(r =>
-                    keysDef.map(k => r[k]?.toString().trim()).join('|')
+                    keysDef.map(k => r[k]?.toString().trim().toUpperCase()).join('|')
                 ));
 
                 // Marcar cada fila considerando TODOS los elementos de la clave
                 const statuses = rows.map(row => {
-                    const fkVal = row[firstKey]?.toString();
+                    const fkVal = row[firstKey]?.toString().trim().toUpperCase();
                     if (!fkVal) return 'error';
 
                     // Si la NV entera está en la blacklist, ignoramos todas sus líneas
                     if (deletedKeys.has(fkVal)) return 'deleted';
 
-                    const rowKey = keysDef.map(k => row[k]?.toString().trim()).join('|');
+                    const rowKey = keysDef.map(k => row[k]?.toString().trim().toUpperCase()).join('|');
 
                     // Si esta combinación NV + Producto específico ya existe, se marca existing (se omite)
                     if (existingKeys.has(rowKey)) return currentTab.allowUpdate ? 'update' : 'existing';
