@@ -115,7 +115,11 @@ app.post('/api/rutas', async (req, res) => {
     if (entregas_ids && entregas_ids.length > 0) {
       const { error: updateError } = await supabase
         .from('tms_entregas')
-        .update({ ruta_id: ruta.id, estado: 'EN_RUTA' })
+        .update({ 
+          ruta_id: ruta.id, 
+          conductor_id: conductor_id, // Asignar también el conductor a las entregas
+          estado: 'EN_RUTA' 
+        })
         .in('id', entregas_ids);
         
       if (updateError) throw updateError;
