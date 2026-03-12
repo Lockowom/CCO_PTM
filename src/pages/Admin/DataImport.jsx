@@ -184,6 +184,7 @@ const DataImport = () => {
     const [loadResult, setLoadResult] = useState(null);
     const [step, setStep] = useState('paste'); // 'paste' | 'preview' | 'done'
     const [skipFirstColumn, setSkipFirstColumn] = useState(false); // NEW: Opción para omitir fecha
+    const [syncDeleted, setSyncDeleted] = useState(false); // NEW: Opción para cancelar ítems eliminados
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -506,6 +507,42 @@ const DataImport = () => {
             });
             setRowStatuses(updatedStatuses);
 
+            // ─── SINCRONIZACIÓN DE ÍTEMS ELIMINADOS ───
+            let syncMessage = '';
+            if (syncDeleted && currentTab.id === 'nv' && inserted > 0) {
+                try {
+                    // Agrupar códigos por NV para enviar al RPC
+                    const nvGroups = {};
+                    newRows.forEach(row => {
+                        const nv = row.nv;
+                        const codigo = row.codigo_producto;
+                        if (nv && codigo) {
+                            if (!nvGroups[nv]) nvGroups[nv] = new Set();
+                            nvGroups[nv].add(codigo);
+                        }
+                    });
+
+                    const payload = Object.entries(nvGroups).map(([nv, codigosSet]) => ({
+                        nv,
+                        codigos: Array.from(codigosSet)
+                    }));
+
+                    if (payload.length > 0) {
+                        const { data: syncData, error: syncError } = await supabase.rpc('sync_deleted_items', { payload });
+                        
+                        if (syncError) {
+                            console.error('Error sincronizando eliminados:', syncError);
+                            errorDetails.push(`Advertencia: No se pudieron sincronizar ítems eliminados. ${syncError.message}`);
+                        } else if (syncData && syncData.length > 0) {
+                            const totalCancelados = syncData.reduce((acc, curr) => acc + (curr.items_cancelados || 0), 0);
+                            syncMessage = ` 🗑️ Se cancelaron ${totalCancelados} ítems que ya no venían en la carga.`;
+                        }
+                    }
+                } catch (errSync) {
+                    console.error('Error en lógica de sync:', errSync);
+                }
+            }
+
             const skipped = parsedRows.length - newRows.length;
 
             setLoadResult({
@@ -515,9 +552,9 @@ const DataImport = () => {
                 skipped,
                 errors,
                 errorDetails,
-                message: errors === 0
+                message: (errors === 0
                     ? `✅ ${inserted} registros cargados exitosamente${skipped > 0 ? ` (${skipped} existentes ignorados)` : ''}`
-                    : `⚠️ ${inserted} cargados, ${errors} con error${skipped > 0 ? `, ${skipped} ignorados` : ''}`
+                    : `⚠️ ${inserted} cargados, ${errors} con error${skipped > 0 ? `, ${skipped} ignorados` : ''}`) + syncMessage
             });
 
             setStep('done');
@@ -545,6 +582,7 @@ const DataImport = () => {
         setLoadResult(null);
         setStep('paste');
         setSkipFirstColumn(false); // Resetear checkbox
+        setSyncDeleted(false); // Resetear checkbox sync
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -706,6 +744,17 @@ const DataImport = () => {
                                             className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
                                         />
                                         <span>Mi Excel <strong>NO</strong> tiene fecha al inicio</span>
+                                    </label>
+                                )}
+                                {activeTab === 'nv' && (
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-rose-50 px-3 py-2 rounded-lg border border-rose-200 cursor-pointer select-none" title="Si activas esto, los ítems de estas N.V. que NO vengan en el Excel se marcarán como CANCELADOS automáticamente.">
+                                        <input
+                                            type="checkbox"
+                                            checked={syncDeleted}
+                                            onChange={(e) => setSyncDeleted(e.target.checked)}
+                                            className="w-4 h-4 text-rose-600 rounded focus:ring-rose-500"
+                                        />
+                                        <span>Sync: <strong>Cancelar</strong> lo que no venga</span>
                                     </label>
                                 )}
                                 <button

@@ -93,6 +93,35 @@ const Tickets = () => {
 
       if (error) throw error;
 
+      // ENVIAR NOTIFICACIÓN PUSH A ADMINS
+      // 1. Obtener tokens de admins (excluyendo al creador si es admin)
+      const { data: adminTokens } = await supabase
+        .from('tms_usuarios')
+        .select('push_token')
+        .eq('rol', 'ADMIN')
+        .neq('push_token', null);
+
+      // 2. Enviar push via Expo API (Client-side trigger)
+      if (adminTokens && adminTokens.length > 0) {
+        const messages = adminTokens.map(u => ({
+          to: u.push_token,
+          sound: 'default',
+          title: '🎟️ Nuevo Ticket de Soporte',
+          body: `${user?.user_metadata?.nombre || 'Usuario'}: ${newTicket.asunto}`,
+          data: { ticketId: ticketData.ticket_id },
+        }));
+
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messages),
+        });
+      }
+
       setIsCreating(false);
       setNewTicket({ asunto: '', descripcion: '', prioridad: 'MEDIA' });
       alert('Ticket creado exitosamente');
