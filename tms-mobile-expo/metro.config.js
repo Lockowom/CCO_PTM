@@ -1,11 +1,7 @@
 // metro.config.js
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver.extraNodeModules = {
-  ...config.resolver.extraNodeModules,
-  'node:sea': require.resolve('react-native-url-polyfill'), // Mock or polyfill
-};
-
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' });
