@@ -50,10 +50,12 @@ export default function WebModuleScreen({ route, navigation }) {
           </View>
         )}
         style={{ flex: 1, backgroundColor: '#0f172a' }}
-        // Inyectar JS para ocultar sidebar si es necesario o ajustar estilos
+        // Inyectar JS para ocultar sidebar nativo de la web y ajustar viewport
         injectedJavaScript={`
-          // Ejemplo: Ocultar navbar nativo de la web si molesta
-          // document.querySelector('nav')?.style.display = 'none';
+          // Ocultar sidebar de escritorio si existe
+          const style = document.createElement('style');
+          style.innerHTML = 'nav { display: none !important; } .ml-64 { margin-left: 0 !important; }'; 
+          document.head.appendChild(style);
           true;
         `}
       />

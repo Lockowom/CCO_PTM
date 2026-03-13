@@ -12,6 +12,7 @@ const MODULES = [
   { id: 'outbound', label: 'Picking & Despacho', icon: ShoppingCart, color: 'amber', route: '/wms/picking' },
   { id: 'tms', label: 'Gestión Transporte', icon: Truck, color: 'purple', route: '/tms/control-tower' },
   { id: 'admin', label: 'Administración', icon: Users, color: 'slate', route: '/admin/users' },
+  { id: 'full', label: 'Plataforma Completa', icon: LayoutDashboard, color: 'rose', route: '/' },
 ];
 
 export default function ModuleSelectorScreen({ navigation }) {
