@@ -436,6 +436,43 @@ const DataImport = () => {
                 return;
             }
 
+            // ─── LÓGICA AVANZADA DE NV: PREPARAR Y RESETEAR ───
+            // Si es NV, llamamos a prepare_nv_import ANTES de los upserts para:
+            // 1. Detectar cambios en NVs en proceso y resetearlas a 'Pendiente'.
+            // 2. Cancelar ítems eliminados (Sync Deleted).
+            if (currentTab.id === 'nv' && newRows.length > 0) {
+                try {
+                    // Enviar payload simplificado para análisis (toda la carga de una vez)
+                    // Nota: Si son demasiados registros (>5000), esto podría necesitar batching,
+                    // pero para cargas típicas de Excel funciona bien.
+                    const litePayload = newRows.map(r => ({
+                        nv: r.nv?.toString(),
+                        codigo_producto: r.codigo_producto?.toString(),
+                        cantidad: r.cantidad,
+                        cliente: r.cliente
+                    }));
+
+                    const { data: prepData, error: prepError } = await supabase.rpc('prepare_nv_import', { 
+                        payload: litePayload,
+                        sync_deleted: syncDeleted 
+                    });
+
+                    if (prepError) {
+                        console.error('Error en prepare_nv_import:', prepError);
+                        errorDetails.push(`Advertencia: No se pudo verificar NVs en proceso. ${prepError.message}`);
+                    } else if (prepData) {
+                        if (prepData.reseteadas > 0) {
+                            errorDetails.push(`ℹ️ Se reiniciaron ${prepData.reseteadas} N.V. que estaban en proceso por cambios detectados.`);
+                        }
+                        if (prepData.items_cancelados > 0) {
+                            errorDetails.push(`🗑️ Se cancelaron ${prepData.items_cancelados} ítems que ya no venían en la carga.`);
+                        }
+                    }
+                } catch (prepErr) {
+                    console.error('Error invocando lógica avanzada NV:', prepErr);
+                }
+            }
+
             // Insertar en lotes de 100
             const BATCH_SIZE = 100;
             let inserted = 0;
@@ -516,8 +553,10 @@ const DataImport = () => {
             });
             setRowStatuses(updatedStatuses);
 
-            // ─── SINCRONIZACIÓN DE ÍTEMS ELIMINADOS ───
+            // ─── SINCRONIZACIÓN DE ÍTEMS ELIMINADOS (LEGACY: YA MANEJADO EN prepare_nv_import) ───
             let syncMessage = '';
+            /* 
+            // COMENTADO PORQUE YA SE MANEJA EN EL PASO PREVIO (prepare_nv_import)
             if (syncDeleted && currentTab.id === 'nv' && inserted > 0) {
                 try {
                     // Agrupar códigos por NV para enviar al RPC
@@ -550,7 +589,8 @@ const DataImport = () => {
                 } catch (errSync) {
                     console.error('Error en lógica de sync:', errSync);
                 }
-            }
+            } 
+            */
 
             const skipped = parsedRows.length - newRows.length;
 
