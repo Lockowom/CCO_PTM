@@ -252,30 +252,39 @@ const DataImport = () => {
                     // Limpieza y validación de fecha robusta
                     if (value && value.trim() !== '') {
                         // Ignorar valores que no son fechas (ej: 'UNI', 'PZA', 'SIN FECHA')
-                        if (value.length < 6 || !/\d/.test(value)) { // Debe tener al menos 6 caracteres y algún número
+                        if (value.length < 6 || !/\d/.test(value)) { 
                             value = null;
                         } else {
+                            // Intentar limpiar formatos extraños como "2024-03-01 00:00:00" o con zona horaria
+                            value = value.split(' ')[0]; // Quedarse solo con la parte YYYY-MM-DD si hay hora
+
                             // Formatos comunes: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
                             const dateMatch = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                             if (dateMatch) {
                                 const [_, d, m, y] = dateMatch;
                                 const year = y.length === 2 ? `20${y}` : y;
-                                // Validar que sea fecha válida (evitar 31 de abril, 30 de febrero, etc.)
                                 const isoDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                                 const dateObj = new Date(year, parseInt(m) - 1, d);
 
-                                // Verificar que la fecha generada coincida con la entrada (ej: 2024-02-30 -> 2024-03-01 en JS Date)
                                 if (dateObj.getFullYear() == year && dateObj.getMonth() == parseInt(m) - 1 && dateObj.getDate() == d) {
                                     value = isoDate;
                                 } else {
-                                    value = null; // Fecha inválida lógicamente (ej: 30 de Febrero)
+                                    value = null; 
                                 }
                             } else {
                                 // Si ya es YYYY-MM-DD u otro formato que JS entienda
+                                // Validar rango para evitar "time zone displacement out of range"
+                                // Postgres acepta años desde 4713 BC hasta 294276 AD, pero JS es más limitado
                                 const timestamp = Date.parse(value);
                                 if (!isNaN(timestamp)) {
                                     const d = new Date(timestamp);
-                                    value = d.toISOString().split('T')[0];
+                                    const year = d.getFullYear();
+                                    // Filtrar años absurdos que rompen la base de datos (ej: año 0, año 200000)
+                                    if (year > 1900 && year < 2100) {
+                                        value = d.toISOString().split('T')[0];
+                                    } else {
+                                        value = null;
+                                    }
                                 } else {
                                     value = null;
                                 }
