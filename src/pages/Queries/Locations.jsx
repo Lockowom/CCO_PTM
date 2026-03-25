@@ -23,18 +23,46 @@ const LocationsQuery = () => {
     try {
       setDownloading(true);
       
-      // Obtener todos los datos sin paginación
-      const { data, error } = await supabase
-        .from('wms_ubicaciones')
-        .select('*')
-        .order('ubicacion', { ascending: true });
+      let allData = [];
+      let lastId = null;
+      let hasMore = true;
+      const pageSize = 1000;
 
-      if (error) throw error;
+      // Obtener todos los datos usando paginación para saltar el límite de 1000 de Supabase
+      while (hasMore) {
+        let query = supabase
+          .from('wms_ubicaciones')
+          .select('*')
+          .order('id', { ascending: true })
+          .limit(pageSize);
 
-      if (!data || data.length === 0) {
+        if (lastId) {
+          query = query.gt('id', lastId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          lastId = data[data.length - 1].id;
+          
+          if (data.length < pageSize) {
+            hasMore = false; // Se trajeron todos
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      if (allData.length === 0) {
         alert('No hay datos para descargar.');
         return;
       }
+
+      // Ordenar al final en memoria por ubicación para que se vea bien en el Excel
+      allData.sort((a, b) => (a.ubicacion || '').localeCompare(b.ubicacion || ''));
 
       // Preparar contenido CSV
       // Truco para Excel: Para evitar que borre los ceros a la izquierda (ej: 0060400305 -> 60400305),
@@ -42,7 +70,7 @@ const LocationsQuery = () => {
       const headers = ['UBICACION', 'CODIGO', 'DESCRIPCION', 'CANTIDAD', 'TALLA', 'COLOR', 'SERIE', 'PARTIDA', 'LOTE'];
       const csvContent = [
         headers.join(';'), // Cabeceras
-        ...data.map(row => {
+        ...allData.map(row => {
           return [
             `"${row.ubicacion || ''}"`,
             `="${row.codigo || ''}"`, // El =" " fuerza a Excel a tratarlo como texto puro
