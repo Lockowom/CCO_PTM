@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle, Edit, Trash2, Save, X, Check } from 'lucide-react';
+import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle, Edit, Trash2, Save, X, Check, Download } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext'; // Importar AuthContext
 
@@ -16,6 +16,62 @@ const LocationsQuery = () => {
   const [editQuantity, setEditQuantity] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  // Función para exportar ubicaciones a CSV (Solo Admin)
+  const handleDownloadExcel = async () => {
+    try {
+      setDownloading(true);
+      
+      // Obtener todos los datos sin paginación
+      const { data, error } = await supabase
+        .from('wms_ubicaciones')
+        .select('*')
+        .order('ubicacion', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        alert('No hay datos para descargar.');
+        return;
+      }
+
+      // Preparar contenido CSV
+      const headers = ['UBICACION', 'CODIGO', 'DESCRIPCION', 'CANTIDAD', 'TALLA', 'COLOR', 'SERIE', 'PARTIDA', 'LOTE'];
+      const csvContent = [
+        headers.join(';'), // Cabeceras
+        ...data.map(row => {
+          return [
+            `"${row.ubicacion || ''}"`,
+            `"${row.codigo || ''}"`,
+            `"${(row.descripcion || '').replace(/"/g, '""')}"`,
+            row.cantidad || 0,
+            `"${row.talla || ''}"`,
+            `"${row.color || ''}"`,
+            `"${row.serie || ''}"`,
+            `"${row.partida || ''}"`,
+            `"${row.lote || ''}"`
+          ].join(';');
+        })
+      ].join('\n');
+
+      // Crear y descargar archivo
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF añade BOM para Excel
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `WMS_Ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (err) {
+      console.error('Error al descargar excel:', err);
+      alert('Error al descargar el archivo: ' + err.message);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
@@ -256,14 +312,27 @@ const LocationsQuery = () => {
             />
           </form>
         </div>
-        <button 
-          onClick={handleSearch}
-          disabled={loading}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 w-full md:w-auto justify-center"
-        >
-          {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
-          Buscar
-        </button>
+        <div className="flex gap-2 w-full md:w-auto">
+          {user?.rol === 'ADMIN' && (
+            <button 
+              onClick={handleDownloadExcel}
+              disabled={downloading}
+              className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
+              title="Descargar toda la base de ubicaciones a Excel"
+            >
+              {downloading ? <RefreshCw className="animate-spin" size={20} /> : <Download size={20} />}
+              <span className="hidden sm:inline">Exportar</span>
+            </button>
+          )}
+          <button 
+            onClick={handleSearch}
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
+          >
+            {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
+            Buscar
+          </button>
+        </div>
       </div>
 
       {/* Resultados Grid */}
