@@ -24,32 +24,30 @@ const LocationsQuery = () => {
       setDownloading(true);
       
       let allData = [];
-      let lastId = null;
+      let page = 0;
       let hasMore = true;
       const pageSize = 1000;
 
-      // Obtener todos los datos usando paginación para saltar el límite de 1000 de Supabase
+      // Obtener todos los datos usando paginación basada en rangos (range)
       while (hasMore) {
-        let query = supabase
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data, error } = await supabase
           .from('wms_ubicaciones')
           .select('*')
           .order('id', { ascending: true })
-          .limit(pageSize);
-
-        if (lastId) {
-          query = query.gt('id', lastId);
-        }
-
-        const { data, error } = await query;
+          .range(from, to);
 
         if (error) throw error;
 
         if (data && data.length > 0) {
           allData = [...allData, ...data];
-          lastId = data[data.length - 1].id;
           
           if (data.length < pageSize) {
             hasMore = false; // Se trajeron todos
+          } else {
+            page++; // Ir a la siguiente página
           }
         } else {
           hasMore = false;
