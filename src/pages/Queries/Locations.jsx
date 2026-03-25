@@ -37,20 +37,22 @@ const LocationsQuery = () => {
       }
 
       // Preparar contenido CSV
+      // Truco para Excel: Para evitar que borre los ceros a la izquierda (ej: 0060400305 -> 60400305),
+      // se envuelve el valor en ="0060400305".
       const headers = ['UBICACION', 'CODIGO', 'DESCRIPCION', 'CANTIDAD', 'TALLA', 'COLOR', 'SERIE', 'PARTIDA', 'LOTE'];
       const csvContent = [
         headers.join(';'), // Cabeceras
         ...data.map(row => {
           return [
             `"${row.ubicacion || ''}"`,
-            `"${row.codigo || ''}"`,
+            `="${row.codigo || ''}"`, // El =" " fuerza a Excel a tratarlo como texto puro
             `"${(row.descripcion || '').replace(/"/g, '""')}"`,
             row.cantidad || 0,
-            `"${row.talla || ''}"`,
+            `="${row.talla || ''}"`,
             `"${row.color || ''}"`,
-            `"${row.serie || ''}"`,
-            `"${row.partida || ''}"`,
-            `"${row.lote || ''}"`
+            `="${row.serie || ''}"`,
+            `="${row.partida || ''}"`,
+            `="${row.lote || ''}"`
           ].join(';');
         })
       ].join('\n');
