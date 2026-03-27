@@ -234,7 +234,8 @@ const Sidebar = () => {
         { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <FileText size={18} />, path: '/admin/upload-history' },
         { id: 'admin-active-users', label: 'Usuarios Activos', icon: <Activity size={18} />, path: '/admin/active-users' },
         { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquare size={18} />, path: '/admin/tickets' },
-        { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
+      { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <FileText size={18} />, path: '/admin/upload-history' },
+      { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]
     }
   ];
