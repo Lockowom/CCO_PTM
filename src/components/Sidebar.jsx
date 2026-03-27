@@ -52,13 +52,13 @@ const Sidebar = () => {
   const SECTION_PERMISSIONS = {
     'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
     'dashboard': ['view_dashboard'],
-    'inbound': ['view_reception', 'view_cubicaje', 'view_returns', 'view_entry', 'manage_data_import'],
+    'inbound': ['view_reception', 'process_reception', 'view_entry', 'process_entry', 'process_cubicaje', 'manage_data_import', 'view_returns', 'process_returns', 'admin_upload_history'],
     'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_shipping', 'view_deliveries'],
     'inventory': ['view_stock', 'view_layout', 'view_transfers'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_locations_sheet'],
     'admin': [
       'manage_users', 'view_users', 'manage_roles', 'view_roles', 'manage_views', 'view_views', 'manage_mediciones', 'view_mediciones',
-      'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets', 'admin_upload_history'
+      'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
     ]
   };
 
@@ -179,7 +179,8 @@ const Sidebar = () => {
         { id: 'inbound-cubicaje', label: 'Cubicaje (Pesos)', icon: <Activity size={18} />, path: '/inbound/cubicaje' },
         { id: 'inbound-returns', label: 'Devoluciones', icon: <History size={18} />, path: '/inbound/returns' },
         { id: 'inbound-entry', label: 'Ingreso (Putaway)', icon: <PackagePlus size={18} />, path: '/inbound/entry' },
-        { id: 'inbound-data-import', label: 'Carga Masiva', icon: <Upload size={18} />, path: '/inbound/data-import' }
+        { id: 'inbound-data-import', label: 'Carga Masiva', icon: <Upload size={18} />, path: '/inbound/data-import' },
+        { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <History size={18} />, path: '/admin/upload-history' }
       ]
     },
     {
@@ -232,7 +233,6 @@ const Sidebar = () => {
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
-        { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <History size={18} />, path: '/admin/upload-history' },
         { id: 'admin-active-users', label: 'Usuarios Activos', icon: <Activity size={18} />, path: '/admin/active-users' },
         { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquare size={18} />, path: '/admin/tickets' },
         { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
