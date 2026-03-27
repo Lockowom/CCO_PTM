@@ -58,7 +58,7 @@ const Sidebar = () => {
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_locations_sheet'],
     'admin': [
       'manage_users', 'view_users', 'manage_roles', 'view_roles', 'manage_views', 'view_views', 'manage_mediciones', 'view_mediciones',
-      'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets'
+      'manage_cleanup', 'view_reports', 'view_time_reports', 'manage_tickets', 'admin_upload_history'
     ]
   };
 
@@ -97,7 +97,8 @@ const Sidebar = () => {
     '/admin/reports': 'view_reports',
     '/admin/time-reports': 'view_time_reports',
     '/admin/tickets': 'manage_tickets',
-    '/admin/active-users': 'view_users'
+    '/admin/active-users': 'view_users',
+    '/admin/upload-history': 'admin_upload_history'
   };
 
   // Verificar si una sección está visible
