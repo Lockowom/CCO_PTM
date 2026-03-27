@@ -295,7 +295,7 @@ const Sidebar = () => {
                     <div className="ml-4 mt-1 pl-4 border-l border-slate-700 space-y-1">
                       {area.modules
                         .filter(module => isRouteAccessible(module.path, area.id))
-                        .filter(module => isModuleEnabled(module.id))
+                        // .filter(module => isModuleEnabled(module.id)) // <--- Temporalmente comentado para descartar bloqueo de BD
                         .map((module) => (
                           <Link
                             key={module.id}
