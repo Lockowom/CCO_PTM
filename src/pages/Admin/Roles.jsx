@@ -62,7 +62,8 @@ const RolesPage = () => {
         { id: 'process_returns', label: 'Procesar Devoluciones' },
         { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
         { id: 'process_entry', label: 'Procesar Ingresos' },
-        { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
+        { id: 'manage_data_import', label: 'Carga Masiva de Datos' },
+        { id: 'view_upload_history', label: 'Historial de Cargas' }
       ]
     },
     {

@@ -231,9 +231,9 @@ const Sidebar = () => {
         { id: 'adminviews', label: 'Vistas', icon: <Layers size={18} />, path: '/admin/views' },
         { id: 'reports', label: 'Reportes', icon: <FileBarChart size={18} />, path: '/admin/reports' },
         { id: 'admin-time-reports', label: 'Tiempos', icon: <Clock size={18} />, path: '/admin/time-reports' },
+        { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <FileText size={18} />, path: '/admin/upload-history' },
         { id: 'admin-active-users', label: 'Usuarios Activos', icon: <Activity size={18} />, path: '/admin/active-users' },
         { id: 'admin-tickets', label: 'Soporte TI', icon: <MessageSquare size={18} />, path: '/admin/tickets' },
-        { id: 'admin-upload-history', label: 'Historial de Cargas', icon: <FileText size={18} />, path: '/admin/upload-history' },
         { id: 'admin-cleanup', label: 'Limpieza', icon: <Trash2 size={18} />, path: '/admin/cleanup' }
       ]
     }
