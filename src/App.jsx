@@ -138,6 +138,7 @@ const ROUTE_PERMISSIONS = {
   '/admin/ops-control': ['manage_users', 'view_users'], // NUEVO (Control de Procesos)
   '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
   '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
+  '/admin/upload-history': ['admin_upload_history'], // NEW: Historial de Cargas
 };
 
 // Orden de prioridad para la primera ruta disponible
