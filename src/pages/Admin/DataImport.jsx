@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
+import { useAuth } from '../../context/AuthContext'; // NEW: Importar para saber quién sube
+
 // ═══════════════════════════════════════════════════════════
 // CONFIGURACIÓN DE TABS Y COLUMNAS ESPERADAS POR TIPO
 // ═══════════════════════════════════════════════════════════
@@ -175,6 +177,7 @@ const IMPORT_TABS = [
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════
 const DataImport = () => {
+    const { user } = useAuth(); // Obtener el usuario actual
     const [activeTab, setActiveTab] = useState('nv');
     const [rawText, setRawText] = useState('');
     const [parsedRows, setParsedRows] = useState([]);
@@ -593,6 +596,24 @@ const DataImport = () => {
             */
 
             const skipped = parsedRows.length - newRows.length;
+
+            // ─── GUARDAR EN HISTORIAL DE CARGAS ───
+            try {
+                if (user && (inserted > 0 || errors > 0)) {
+                    await supabase.from('tms_historial_cargas').insert([{
+                        usuario_id: user.id,
+                        usuario_nombre: user.nombre || user.email || 'Usuario Desconocido',
+                        modulo: currentTab.label,
+                        tabla_destino: currentTab.table,
+                        registros_totales: parsedRows.length,
+                        registros_nuevos: rowStatuses.filter(s => s === 'new').length,
+                        registros_actualizados: rowStatuses.filter(s => s === 'update').length,
+                        registros_error: errors
+                    }]);
+                }
+            } catch (logError) {
+                console.error('No se pudo registrar en el historial de cargas:', logError);
+            }
 
             setLoadResult({
                 success: errors === 0,

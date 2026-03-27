@@ -68,6 +68,7 @@ import WmsSettings from './pages/Admin/WmsSettings'; // NUEVO
 import SystemHealth from './pages/Admin/SystemHealth'; // NUEVO
 import OpsControl from './pages/Admin/OpsControl'; // NUEVO
 import AuditLogs from './pages/Admin/AuditLogs'; // NUEVO
+import UploadHistory from './pages/Admin/UploadHistory'; // NEW: Historial de Cargas
 
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
@@ -341,6 +342,7 @@ function AppContent() {
           <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/reports" element={<Placeholder title="Reportes Generales" />} />
           <Route path="admin/time-reports" element={<TimeReports />} />
+          <Route path="admin/upload-history" element={<UploadHistory />} />
           <Route path="admin/tickets" element={<Tickets />} />
           <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/active-users" element={<UsuariosActivos />} />
