@@ -279,31 +279,39 @@ const RolesPage = () => {
 
   const togglePermission = (permId) => {
     if (!isEditing) return;
-    const perms = selectedRole.permisos || [];
-    const newPerms = perms.includes(permId)
-      ? perms.filter(p => p !== permId)
-      : [...perms, permId];
-    setSelectedRole({ ...selectedRole, permisos: newPerms });
+    
+    // IMPORTANTE: Usar la función de callback en setSelectedRole para asegurar que 
+    // siempre trabajamos con el estado más reciente, evitando problemas de cierres (closures)
+    setSelectedRole(prev => {
+      const perms = prev.permisos || [];
+      const newPerms = perms.includes(permId)
+        ? perms.filter(p => p !== permId)
+        : [...perms, permId];
+      return { ...prev, permisos: newPerms };
+    });
   };
 
   const selectAllModule = (moduleId) => {
     if (!isEditing) return;
     const module = modules.find(m => m.id === moduleId);
     const allPerms = module.permissions.map(p => p.id);
-    const currentPerms = selectedRole.permisos || [];
-    const hasAll = allPerms.every(p => currentPerms.includes(p));
+    
+    setSelectedRole(prev => {
+      const currentPerms = prev.permisos || [];
+      const hasAll = allPerms.every(p => currentPerms.includes(p));
 
-    const newPerms = hasAll
-      ? currentPerms.filter(p => !allPerms.includes(p))
-      : [...new Set([...currentPerms, ...allPerms])];
+      const newPerms = hasAll
+        ? currentPerms.filter(p => !allPerms.includes(p))
+        : [...new Set([...currentPerms, ...allPerms])];
 
-    setSelectedRole({ ...selectedRole, permisos: newPerms });
+      return { ...prev, permisos: newPerms };
+    });
   };
 
   if (loading && roles.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="animate-spin text-indigo-500" size={40} />
+        <Loader2 className="animate-spin text-orange-500" size={40} />
       </div>
     );
   }
@@ -311,21 +319,26 @@ const RolesPage = () => {
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            <Shield className="text-indigo-500" /> Roles y Permisos
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Los cambios se reflejan instantáneamente en el menú
-          </p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        {/* Línea superior decorativa */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+            <Shield size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Roles y <span className="text-orange-500">Permisos</span></h1>
+            <p className="text-slate-500 font-medium mt-1">Los cambios se reflejan instantáneamente en el menú</p>
+          </div>
         </div>
+
         {!selectedRole && !isCreating && (
           <button
             onClick={handleCreateRole}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"
+            className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 relative z-10"
           >
-            <Plus size={18} /> Nuevo Rol
+            <Plus size={20} /> Nuevo Rol
           </button>
         )}
       </div>
@@ -338,14 +351,14 @@ const RolesPage = () => {
               <div
                 key={role.id}
                 onClick={() => setSelectedRole(role)}
-                className="bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer hover:shadow-lg hover:border-indigo-200 hover:-translate-y-1 transition-all group relative overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer hover:shadow-lg hover:border-orange-200 hover:-translate-y-1 transition-all group relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Shield size={64} className="text-indigo-600" />
+                  <Shield size={64} className="text-orange-600" />
                 </div>
 
                 <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-50 text-indigo-600'
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-amber-100 text-amber-600' : 'bg-orange-50 text-orange-600'
                     }`}>
                     {role.id === 'ADMIN' ? <Lock size={24} /> : <Users size={24} />}
                   </div>
@@ -356,7 +369,7 @@ const RolesPage = () => {
                   )}
                 </div>
 
-                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-indigo-700 transition-colors">
+                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-orange-700 transition-colors">
                   {role.nombre}
                 </h3>
                 <p className="text-sm text-slate-500 mb-6 line-clamp-2 h-10">
@@ -368,7 +381,7 @@ const RolesPage = () => {
                     <Shield size={14} />
                     {role.permisos?.length || 0} permisos
                   </div>
-                  <span className="text-indigo-600 text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span className="text-orange-600 text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Editar <Edit size={14} />
                   </span>
                 </div>
@@ -378,9 +391,9 @@ const RolesPage = () => {
             {/* Botón para crear nuevo rol (tarjeta) */}
             <button
               onClick={handleCreateRole}
-              className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group min-h-[240px]"
+              className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-orange-600 hover:border-orange-400 hover:bg-orange-50/50 transition-all group min-h-[240px]"
             >
-              <div className="w-16 h-16 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-indigo-400 transition-colors">
+              <div className="w-16 h-16 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-orange-400 transition-colors">
                 <Plus size={32} />
               </div>
               <span className="font-bold text-lg">Crear Nuevo Rol</span>
@@ -413,7 +426,7 @@ const RolesPage = () => {
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
-                          className="w-full text-2xl font-bold text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors disabled:opacity-50"
+                          className="w-full text-2xl font-bold text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-orange-500 outline-none px-0 py-1 transition-colors disabled:opacity-50"
                           placeholder="Nombre del Rol"
                           autoFocus
                         />
@@ -424,7 +437,7 @@ const RolesPage = () => {
                           type="text"
                           value={selectedRole.descripcion || ''}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
-                          className="w-full text-lg text-slate-600 bg-transparent border-b-2 border-slate-200 focus:border-indigo-500 outline-none px-0 py-1 transition-colors"
+                          className="w-full text-lg text-slate-600 bg-transparent border-b-2 border-slate-200 focus:border-orange-500 outline-none px-0 py-1 transition-colors"
                           placeholder="Descripción breve del rol"
                         />
                       </div>
@@ -461,7 +474,7 @@ const RolesPage = () => {
                     <button
                       onClick={handleSaveRole}
                       disabled={saving}
-                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:shadow-none"
+                      className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all disabled:opacity-50 disabled:shadow-none"
                     >
                       {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                       {saving ? 'Guardando...' : 'Guardar Cambios'}
@@ -479,7 +492,7 @@ const RolesPage = () => {
                     </button>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-6 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-xl font-bold flex items-center gap-2 transition-colors"
+                      className="px-6 py-2.5 bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 rounded-xl font-bold flex items-center gap-2 transition-colors"
                     >
                       <Edit size={18} /> Editar Permisos
                     </button>
@@ -505,18 +518,18 @@ const RolesPage = () => {
                     return (
                       <div
                         key={module.id}
-                        className={`bg-white rounded-xl border shadow-sm transition-all ${hasAll ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-slate-200'
+                        className={`bg-white rounded-xl border shadow-sm transition-all ${hasAll ? 'border-orange-200 ring-1 ring-orange-100' : 'border-slate-200'
                           }`}
                       >
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white rounded-t-xl">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-indigo-100 text-indigo-600' :
-                                isNone ? 'bg-slate-100 text-slate-400' : 'bg-indigo-50 text-indigo-500'
+                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-orange-100 text-orange-600' :
+                                isNone ? 'bg-slate-100 text-slate-400' : 'bg-orange-50 text-orange-500'
                               }`}>
                               {module.icon}
                             </div>
                             <div>
-                              <h4 className={`font-bold ${hasAll ? 'text-indigo-700' : 'text-slate-700'}`}>
+                              <h4 className={`font-bold ${hasAll ? 'text-orange-700' : 'text-slate-700'}`}>
                                 {module.label}
                               </h4>
                               {!isEditing && (
@@ -531,7 +544,7 @@ const RolesPage = () => {
                             <button
                               onClick={() => selectAllModule(module.id)}
                               className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${hasAll
-                                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                  ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                 }`}
                             >
@@ -553,7 +566,7 @@ const RolesPage = () => {
                                 onClick={() => togglePermission(perm.id)}
                               >
                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEnabled
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm shadow-indigo-200'
+                                    ? 'bg-orange-600 border-orange-600 text-white shadow-sm shadow-orange-200'
                                     : 'bg-white border-slate-300'
                                   }`}>
                                   {isEnabled && <Check size={12} strokeWidth={4} />}
