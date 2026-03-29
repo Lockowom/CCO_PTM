@@ -309,9 +309,18 @@ const LocationsQuery = () => {
   }, [results, groupByLocation]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Background Decorativo */}
+      {!searched && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
+          <div className="absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/10 blur-[120px] rounded-full"></div>
+          <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-amber-500/10 blur-[100px] rounded-full"></div>
+          <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-red-500/10 blur-[120px] rounded-full"></div>
+        </div>
+      )}
+
       {/* Header Moderno */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header relative z-10">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
             <div className="bg-orange-600 p-2 rounded-xl shadow-lg shadow-orange-200">
@@ -420,7 +429,7 @@ const LocationsQuery = () => {
 
       {/* Resultados Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <div className="flex flex-col items-center justify-center py-32 space-y-4 relative z-10">
           <div className="relative">
             <div className="w-16 h-16 border-4 border-orange-100 border-t-orange-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -430,12 +439,12 @@ const LocationsQuery = () => {
           <p className="text-slate-400 font-medium animate-pulse">Buscando en almacén...</p>
         </div>
       ) : !searched ? (
-        <div className="flex flex-col items-center justify-center py-32 text-center">
-          <div className="bg-slate-50 p-8 rounded-full border border-slate-100 mb-6">
-            <Layers size={64} className="text-slate-300" />
+        <div className="flex flex-col items-center justify-center py-32 text-center relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="bg-white p-8 rounded-full border border-slate-100 mb-6 shadow-xl shadow-orange-500/10 transform hover:scale-105 transition-transform duration-300">
+            <Layers size={64} className="text-orange-300" />
           </div>
-          <h3 className="text-xl font-bold text-slate-600">Sistema WMS</h3>
-          <p className="text-slate-400 mt-2 max-w-md">
+          <h3 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">Sistema <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">WMS</span></h3>
+          <p className="text-slate-500 mt-2 max-w-md text-lg leading-relaxed">
             Ingresa un código de producto o una posición de rack para gestionar el inventario.
           </p>
         </div>
