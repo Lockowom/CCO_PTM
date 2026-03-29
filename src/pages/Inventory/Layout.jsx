@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Layers, Box, AlertTriangle, ChevronRight, Filter } from 'lucide-react';
+import { Search, MapPin, Layers, Box, AlertTriangle, ChevronRight, Filter, Edit2, Check, X, Trash2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
 
@@ -10,6 +10,9 @@ const LayoutPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [modal, setModal] = useState({ open: false, ubicacion: '', detalle: null });
+  const [editingRow, setEditingRow] = useState(null); // ID del registro en edición
+  const [editForm, setEditForm] = useState({ cantidad: '', ubicacion: '' }); // Estado del formulario de edición
+  const [savingItem, setSavingItem] = useState(false);
   const pageRef = useRef(null);
   const headerRef = useRef(null);
 
@@ -201,6 +204,7 @@ const LayoutPage = () => {
 
   const abrirDetalle = async (ubicacion) => {
     setModal({ open: true, ubicacion, detalle: null });
+    setEditingRow(null); // Limpiar cualquier edición previa al abrir
     const { data, error } = await supabase
       .from('wms_ubicaciones')
       .select('*')
@@ -209,6 +213,100 @@ const LayoutPage = () => {
     if (!error) {
       const cantidadTotal = data.reduce((acc, r) => acc + (r.cantidad || 0), 0);
       setModal({ open: true, ubicacion, detalle: { registros: data, cantidadTotal } });
+    }
+  };
+
+  const startInlineEdit = (row) => {
+    setEditingRow(row.id);
+    setEditForm({ cantidad: row.cantidad, ubicacion: row.ubicacion });
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingRow(null);
+    setEditForm({ cantidad: '', ubicacion: '' });
+  };
+
+  const saveInlineEdit = async (id, codigo) => {
+    if (isNaN(editForm.cantidad) || Number(editForm.cantidad) < 0) {
+      alert("Por favor ingrese una cantidad válida");
+      return;
+    }
+    
+    if (!editForm.ubicacion || !editForm.ubicacion.trim()) {
+      alert("La ubicación no puede estar vacía");
+      return;
+    }
+
+    setSavingItem(true);
+    try {
+      const newUbicacion = editForm.ubicacion.toUpperCase().trim();
+      
+      const { error } = await supabase
+        .from('wms_ubicaciones')
+        .update({ 
+            cantidad: Number(editForm.cantidad),
+            ubicacion: newUbicacion
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Si la ubicación cambió, recargamos el layout completo para que el producto "viaje" visualmente
+      // Si solo cambió la cantidad, solo actualizamos los datos locales del modal y el layout general en background
+      if (newUbicacion !== modal.ubicacion) {
+        alert(`Producto movido a ${newUbicacion}`);
+        abrirDetalle(modal.ubicacion); // Recargar modal actual (el item desaparecerá de aquí)
+      } else {
+        // Actualizar datos del modal localmente
+        const nuevosRegistros = modal.detalle.registros.map(r => 
+          r.id === id ? { ...r, cantidad: Number(editForm.cantidad) } : r
+        );
+        const nuevaCantidadTotal = nuevosRegistros.reduce((acc, r) => acc + (r.cantidad || 0), 0);
+        setModal(prev => ({
+          ...prev,
+          detalle: { registros: nuevosRegistros, cantidadTotal: nuevaCantidadTotal }
+        }));
+      }
+
+      setEditingRow(null);
+      cargarLayout(); // Recargar el mapa en background para actualizar colores/badges
+
+    } catch (err) {
+      console.error("Error al actualizar:", err);
+      alert("Error al actualizar: " + err.message);
+    } finally {
+      setSavingItem(false);
+    }
+  };
+
+  const deleteInlineItem = async (id, codigo) => {
+    if (!window.confirm(`¿Estás seguro de eliminar el producto ${codigo} de esta ubicación?`)) {
+      return;
+    }
+
+    setSavingItem(true);
+    try {
+      const { error } = await supabase
+        .from('wms_ubicaciones')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Actualizar datos del modal localmente
+      const nuevosRegistros = modal.detalle.registros.filter(r => r.id !== id);
+      const nuevaCantidadTotal = nuevosRegistros.reduce((acc, r) => acc + (r.cantidad || 0), 0);
+      setModal(prev => ({
+        ...prev,
+        detalle: { registros: nuevosRegistros, cantidadTotal: nuevaCantidadTotal }
+      }));
+
+      cargarLayout(); // Recargar el mapa general
+    } catch (err) {
+      console.error("Error al eliminar:", err);
+      alert("Error al eliminar: " + err.message);
+    } finally {
+      setSavingItem(false);
     }
   };
 
@@ -577,16 +675,77 @@ const LayoutPage = () => {
                     
                     <div className="space-y-3">
                       {modal.detalle.registros.map((r) => (
-                        <div key={r.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-300 transition-all group">
+                        <div key={r.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all group ${editingRow === r.id ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-200 hover:shadow-md hover:border-orange-300'}`}>
+                          
+                          {/* Header de la tarjeta (Código y Acciones/Cantidad) */}
                           <div className="flex justify-between items-start mb-3">
-                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 group-hover:border-orange-200 transition-colors">{r.codigo}</span>
-                            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1">
-                              {r.cantidad} unds
-                            </div>
+                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">{r.codigo}</span>
+                            
+                            {editingRow === r.id ? (
+                              <div className="flex gap-1">
+                                <button 
+                                  onClick={() => saveInlineEdit(r.id, r.codigo)} 
+                                  disabled={savingItem}
+                                  className="p-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg transition-colors"
+                                  title="Guardar"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button 
+                                  onClick={cancelInlineEdit} 
+                                  disabled={savingItem}
+                                  className="p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                                  title="Cancelar"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                                  <button onClick={() => startInlineEdit(r)} className="p-1 text-slate-400 hover:text-orange-500 bg-slate-50 hover:bg-orange-50 rounded" title="Editar">
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button onClick={() => deleteInlineItem(r.id, r.codigo)} className="p-1 text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 rounded" title="Eliminar">
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1">
+                                  {r.cantidad} unds
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <h4 className="font-bold text-slate-800 text-sm whitespace-normal leading-relaxed mb-3" title={r.descripcion}>
-                            {r.descripcion || 'Sin descripción'}
-                          </h4>
+
+                          {/* Cuerpo de la tarjeta */}
+                          {editingRow === r.id ? (
+                            <div className="space-y-3 mb-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Mover a Ubicación:</label>
+                                <input 
+                                  type="text" 
+                                  value={editForm.ubicacion} 
+                                  onChange={(e) => setEditForm({...editForm, ubicacion: e.target.value})}
+                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono font-bold uppercase focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Nueva Cantidad:</label>
+                                <input 
+                                  type="number" 
+                                  value={editForm.cantidad} 
+                                  onChange={(e) => setEditForm({...editForm, cantidad: e.target.value})}
+                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <h4 className="font-bold text-slate-800 text-sm whitespace-normal leading-relaxed mb-3" title={r.descripcion}>
+                              {r.descripcion || 'Sin descripción'}
+                            </h4>
+                          )}
+
+                          {/* Footer de la tarjeta (Talla, Color, Lote) */}
                           <div className="flex gap-2 text-xs font-medium text-slate-600">
                             {r.talla && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">T:</span> {r.talla}</span>}
                             {r.color && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">C:</span> {r.color}</span>}
