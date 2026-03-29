@@ -478,33 +478,18 @@ const LayoutPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {Object.keys(pasillos).sort().map((letra) => {
-              const pData = pasillos[letra];
-              if (!pData || !(pasilloActual === 'ALL' || pasilloActual === letra)) return null;
-
-              const nivelesOrden = Object.keys(pData.niveles).sort((a, b) => parseInt(b) - parseInt(a));
-              
-              // Stats locales
-              let totalP = 0, ocupadasP = 0;
-              Object.values(pData.niveles).forEach(arr => {
-                totalP += arr.length;
-                arr.forEach(x => { if (x.tieneProductos) ocupadasP++; });
-              });
-              const ocupacionP = totalP > 0 ? Math.round((ocupadasP / totalP) * 100) : 0;
-
               return (
-                <div key={letra} className="pasillo-card bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                  {/* Card Header */}
-                  <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white relative overflow-hidden">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+                <div key={letra} className="pasillo-card bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mb-8">
+                  {/* Card Header - Estilo original limpio */}
+                  <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white relative">
                     <div className="flex items-center gap-5 relative z-10">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-slate-900/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-slate-900/20">
                         {letra}
                       </div>
                       <div>
                         <h3 className="font-black text-2xl text-slate-800 tracking-tight">Pasillo {letra}</h3>
-                        <div className="flex items-center gap-3 text-sm text-slate-500 font-bold mt-1">
-                          <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                        <div className="flex items-center gap-3 text-sm text-emerald-500 font-bold mt-1">
+                          <span className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                             {ocupadasP} activos
                           </span>
@@ -514,41 +499,40 @@ const LayoutPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-col items-end relative z-10">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación</div>
-                      <div className={`text-3xl font-black ${ocupacionP > 85 ? 'text-rose-500' : 'text-orange-600'}`}>
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación</div>
+                      <div className="text-3xl font-black text-orange-500">
                         {ocupacionP}%
                       </div>
                     </div>
                   </div>
 
-                  {/* Rack Visualization */}
-                  <div className="p-6 bg-slate-50/50 overflow-x-auto">
+                  {/* Rack Visualization - Estilo original gris limpio */}
+                  <div className="p-8 bg-white overflow-x-auto">
                     <div className="space-y-4 min-w-max">
                       {nivelesOrden.map(nivel => {
                         const ubicaciones = pData.niveles[nivel].slice().sort((a, b) => a.columna - b.columna);
                         return (
                           <div key={nivel} className="flex gap-4 items-center">
                             {/* Nivel Label */}
-                            <div className="w-10 flex items-center justify-center bg-slate-200/50 py-3 rounded-xl border border-slate-200 shadow-sm self-stretch">
+                            <div className="w-12 flex items-center justify-center bg-slate-100 py-3 rounded-xl border border-slate-200 h-14">
                               <span className="text-xs font-black text-slate-500 -rotate-90 whitespace-nowrap tracking-widest">NVL {nivel}</span>
                             </div>
                             
                             {/* Cells Track */}
-                            <div className="flex-1 flex gap-2 p-2.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-inner">
+                            <div className="flex-1 flex gap-2 p-3 bg-slate-100 rounded-2xl border border-slate-200">
                               {ubicaciones.map(ub => {
-                                // Determinar estado visual
-                                let statusClass = 'bg-white border-slate-200 text-slate-500 hover:border-orange-400 hover:text-orange-600 shadow-sm';
+                                // Determinar estado visual estilo original
+                                let statusClass = 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 shadow-sm';
+                                let badgeClass = '';
+                                
                                 if (ub.estado === 'NO DISPONIBLE') {
-                                  statusClass = 'bg-slate-800 border-slate-900 text-slate-400 cursor-not-allowed opacity-60 shadow-inner';
+                                  statusClass = 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed';
                                 } else if (ub.estado === 'OCUPADO') {
-                                  statusClass = 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm';
+                                  statusClass = 'bg-amber-50 border-amber-200 text-amber-700';
                                 } else if (ub.tieneProductos) {
-                                  // Gradiente según cantidad
-                                  if (ub.cantidad > 50) {
-                                    statusClass = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-600 text-white shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-500';
-                                  } else {
-                                    statusClass = 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100 shadow-sm';
-                                  }
+                                  // Naranja claro con borde naranja fuerte
+                                  statusClass = 'bg-orange-50 border-orange-300 text-orange-800 shadow-sm';
+                                  badgeClass = 'bg-orange-500 text-white';
                                 }
 
                                 return (
@@ -556,8 +540,8 @@ const LayoutPage = () => {
                                     key={ub.ubicacion}
                                     onClick={() => abrirDetalle(ub.ubicacion)}
                                     className={`
-                                      loc-cell relative min-w-[3rem] h-14 rounded-xl 
-                                      border-[1px] flex flex-col items-center justify-center 
+                                      loc-cell relative min-w-[3.5rem] h-14 rounded-xl 
+                                      border-2 flex flex-col items-center justify-center 
                                       transition-all duration-200 text-sm font-black
                                       ${statusClass}
                                       active:scale-95 hover:-translate-y-1
@@ -566,14 +550,14 @@ const LayoutPage = () => {
                                   >
                                     <span>{ub.columna}</span>
                                     {ub.cantidad > 0 && (
-                                      <div className={`absolute -top-2 -right-2 min-w-[1.5rem] h-6 px-1.5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black shadow-md ${ub.cantidad > 50 ? 'bg-slate-900 text-white' : 'bg-orange-500 text-white'}`}>
-                                        {ub.cantidad > 99 ? '+99' : ub.cantidad}
+                                      <div className={`absolute -top-2.5 -right-2.5 min-w-[1.5rem] h-6 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm ${badgeClass}`}>
+                                        {ub.cantidad}
                                       </div>
                                     )}
                                     {ub.estado === 'NO DISPONIBLE' && (
                                       <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-full h-px bg-slate-500 rotate-45 absolute"></div>
-                                        <div className="w-full h-px bg-slate-500 -rotate-45 absolute"></div>
+                                        <div className="w-full h-px bg-slate-400 rotate-45 absolute"></div>
+                                        <div className="w-full h-px bg-slate-400 -rotate-45 absolute"></div>
                                       </div>
                                     )}
                                   </button>
@@ -602,46 +586,42 @@ const LayoutPage = () => {
           ></div>
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200/60">
-            {/* Header */}
-            <div className="px-6 py-10 bg-slate-900 text-white flex items-start justify-between relative overflow-hidden">
-              {/* Decorative elements in header */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 blur-3xl rounded-full translate-x-1/4 -translate-y-1/4"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 blur-3xl rounded-full -translate-x-1/4 translate-y-1/4"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3">
+          <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Header - Estilo oscuro original de la captura */}
+            <div className="px-6 py-6 bg-[#1e2330] text-white flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase tracking-widest mb-1">
                   <MapPin size={12} strokeWidth={3} />
                   Detalle de Posición
                 </div>
-                <h2 className="text-5xl font-black tracking-tight drop-shadow-md">{modal.ubicacion}</h2>
+                <h2 className="text-4xl font-black tracking-tight">{modal.ubicacion}</h2>
               </div>
               <button 
                 onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
-                className="p-2.5 bg-white/5 hover:bg-orange-500 hover:text-white rounded-full text-slate-300 transition-all z-10 backdrop-blur-sm border border-white/10"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-10 mt-1"
               >
-                <X size={20} strokeWidth={2.5} />
+                <X size={20} />
               </button>
             </div>
 
             {/* Controls */}
-            <div className="px-6 py-5 bg-white border-b border-slate-200 shadow-sm z-10">
+            <div className="px-6 py-4 bg-white border-b border-slate-200 shadow-sm z-10">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cambiar Estado Físico</p>
               <div className="grid grid-cols-3 gap-2">
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold transition-all text-slate-800">
                   Disponible
                 </button>
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'NO DISPONIBLE')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'NO DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold transition-all text-slate-800">
                   Bloquear
                 </button>
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'OCUPADO')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-700 rounded-xl text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'OCUPADO')} className="py-2 px-3 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold transition-all text-slate-800">
                   Ocupado
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 no-scrollbar bg-slate-50">
               {!modal.detalle ? (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
                   <div className="w-10 h-10 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4"></div>
@@ -657,13 +637,13 @@ const LayoutPage = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Total Card */}
-                  <div className="flex items-center justify-between p-5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg shadow-orange-500/20 text-white">
+                  {/* Total Card - Estilo naranja sólido original */}
+                  <div className="flex items-center justify-between p-5 bg-[#e8701a] rounded-2xl text-white">
                     <div>
-                      <span className="text-orange-100 font-bold text-xs uppercase tracking-wider block mb-1">Total Unidades</span>
-                      <span className="text-sm font-medium text-orange-50">En esta ubicación</span>
+                      <span className="text-white font-black text-xs uppercase tracking-wider block mb-1">Total Unidades</span>
+                      <span className="text-sm font-medium text-white/90">En esta ubicación</span>
                     </div>
-                    <span className="text-4xl font-black tracking-tight">{modal.detalle.cantidadTotal}</span>
+                    <span className="text-4xl font-black">{modal.detalle.cantidadTotal}</span>
                   </div>
 
                   <div className="space-y-3">
@@ -676,11 +656,11 @@ const LayoutPage = () => {
                     
                     <div className="space-y-3">
                       {modal.detalle.registros.map((r) => (
-                        <div key={r.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all group ${editingRow === r.id ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-200 hover:shadow-md hover:border-orange-300'}`}>
+                        <div key={r.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all group ${editingRow === r.id ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-200 hover:shadow-md'}`}>
                           
-                          {/* Header de la tarjeta (Código y Acciones/Cantidad) */}
+                          {/* Header de la tarjeta */}
                           <div className="flex justify-between items-start mb-3">
-                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">{r.codigo}</span>
+                            <span className="font-mono text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">{r.codigo}</span>
                             
                             {editingRow === r.id ? (
                               <div className="flex gap-1">
@@ -711,7 +691,8 @@ const LayoutPage = () => {
                                     <Trash2 size={14} />
                                   </button>
                                 </div>
-                                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1">
+                                {/* Estilo de badge original de la captura */}
+                                <div className="bg-[#e8f5ed] border border-[#a7e4c0] text-[#059669] text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1">
                                   {r.cantidad} unds
                                 </div>
                               </div>
@@ -741,33 +722,16 @@ const LayoutPage = () => {
                               </div>
                             </div>
                           ) : (
-                            <h4 className="font-bold text-slate-800 text-sm whitespace-normal leading-relaxed mb-3" title={r.descripcion}>
+                            <h4 className="font-black text-slate-800 text-sm whitespace-normal leading-tight mb-1" title={r.descripcion}>
                               {r.descripcion || 'Sin descripción'}
                             </h4>
                           )}
-
-                          {/* Footer de la tarjeta (Talla, Color, Lote) */}
-                          <div className="flex gap-2 text-xs font-medium text-slate-600">
-                            {r.talla && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">T:</span> {r.talla}</span>}
-                            {r.color && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">C:</span> {r.color}</span>}
-                            {r.lote && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">L:</span> {r.lote}</span>}
-                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-            
-            {/* Footer Action */}
-            <div className="p-5 border-t border-slate-200 bg-white">
-               <button 
-                onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
-                className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 active:scale-95"
-               >
-                 Cerrar Panel
-               </button>
             </div>
           </div>
         </div>
