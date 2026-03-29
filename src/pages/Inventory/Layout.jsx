@@ -263,43 +263,50 @@ const LayoutPage = () => {
             
             {/* Title Section */}
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
-                <Layers size={20} />
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/30 transform hover:scale-105 transition-transform">
+                <Layers size={24} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">WMS Master Map</h1>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  WMS <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Master Map</span>
+                </h1>
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
                   Inventario en Tiempo Real
                 </div>
               </div>
             </div>
 
             {/* Global Stats */}
-            <div className="hidden md:flex items-center gap-8 bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100">
+            <div className="hidden md:flex items-center gap-8 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
               <div className="text-center">
                 <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total</div>
-                <div className="text-lg font-black text-slate-700">{stats.total}</div>
+                <div className="text-xl font-black text-slate-700">{stats.total}</div>
               </div>
-              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="w-px h-10 bg-slate-200"></div>
               <div className="text-center">
                 <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Ocupadas</div>
-                <div className="text-lg font-black text-indigo-600">{stats.ocupadas}</div>
+                <div className="text-xl font-black text-orange-600">{stats.ocupadas}</div>
               </div>
-              <div className="w-px h-8 bg-slate-200"></div>
+              <div className="w-px h-10 bg-slate-200"></div>
               <div className="text-center">
                 <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Libres</div>
-                <div className="text-lg font-black text-emerald-500">{stats.vacias}</div>
+                <div className="text-xl font-black text-emerald-500">{stats.vacias}</div>
               </div>
-              <div className="w-px h-8 bg-slate-200"></div>
-              <div className="flex flex-col justify-center gap-1 w-24">
-                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+              <div className="w-px h-10 bg-slate-200"></div>
+              <div className="flex flex-col justify-center gap-1.5 w-32">
+                <div className="flex justify-between text-xs font-bold text-slate-500">
                   <span>Ocupación</span>
-                  <span>{stats.ocupacion}%</span>
+                  <span className={stats.ocupacion > 85 ? 'text-rose-500' : 'text-slate-700'}>{stats.ocupacion}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      stats.ocupacion > 85 ? 'bg-rose-500' : 'bg-gradient-to-r from-orange-400 to-amber-500'
+                    }`}
                     style={{ width: `${stats.ocupacion}%` }}
                   ></div>
                 </div>
@@ -309,10 +316,10 @@ const LayoutPage = () => {
             {/* Actions */}
             <div className="flex items-center gap-3 w-full md:w-auto">
               <div className="relative group flex-1 md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={18} />
                 <input
                   type="text"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl text-sm font-medium transition-all outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl text-sm font-bold uppercase transition-all outline-none placeholder:normal-case placeholder:font-medium"
                   placeholder="Buscar ubicación..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
@@ -321,7 +328,7 @@ const LayoutPage = () => {
               </div>
               <button 
                 onClick={cargarLayout}
-                className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 rounded-xl transition-all active:scale-95 shadow-sm"
+                className="p-3 bg-white border border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 rounded-xl transition-all active:scale-95 shadow-sm"
                 title="Actualizar datos"
               >
                 <Box size={20} />
@@ -334,10 +341,10 @@ const LayoutPage = () => {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 sticky left-0 bg-white/80 backdrop-blur-xl pl-2">Pasillos:</span>
             <button
               onClick={() => filtrarPasillo('ALL')}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                 pasilloActual === 'ALL'
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                  : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                  ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm'
+                  : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
               TODOS
@@ -346,10 +353,10 @@ const LayoutPage = () => {
               <button
                 key={p}
                 onClick={() => filtrarPasillo(p)}
-                className={`flex-shrink-0 w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all border ${
+                className={`flex-shrink-0 w-10 h-10 rounded-xl text-sm font-black flex items-center justify-center transition-all border ${
                   pasilloActual === p
-                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/30'
-                    : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600'
+                    ? 'bg-gradient-to-br from-orange-500 to-amber-600 border-transparent text-white shadow-lg shadow-orange-500/30 transform scale-105'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50'
                 }`}
               >
                 {p}
@@ -364,9 +371,9 @@ const LayoutPage = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin"></div>
+              <div className="w-16 h-16 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <Layers size={20} className="text-indigo-500" />
+                <Layers size={20} className="text-orange-500" />
               </div>
             </div>
             <p className="mt-4 text-slate-400 font-medium animate-pulse">Sincronizando mapa...</p>
@@ -388,25 +395,29 @@ const LayoutPage = () => {
               const ocupacionP = totalP > 0 ? Math.round((ocupadasP / totalP) * 100) : 0;
 
               return (
-                <div key={letra} className="pasillo-card bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                <div key={letra} className="pasillo-card bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
                   {/* Card Header */}
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-900 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-indigo-900/20 group-hover:scale-110 transition-transform">
+                  <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white relative overflow-hidden">
+                    <div className="absolute right-0 top-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+                    <div className="flex items-center gap-5 relative z-10">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-slate-900/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-slate-700">
                         {letra}
                       </div>
                       <div>
-                        <h3 className="font-bold text-slate-800">Pasillo {letra}</h3>
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <span className="bg-emerald-100 text-emerald-700 px-1.5 rounded font-bold">{ocupadasP} activos</span>
-                          <span>•</span>
-                          <span>{totalP} total</span>
+                        <h3 className="font-black text-xl text-slate-800 tracking-tight">Pasillo {letra}</h3>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 font-bold mt-1">
+                          <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100 flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                            {ocupadasP} activos
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-slate-500">{totalP} ubicaciones</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ocupación</div>
-                      <div className={`text-xl font-black ${ocupacionP > 80 ? 'text-amber-500' : 'text-indigo-600'}`}>
+                    <div className="flex flex-col items-end relative z-10">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación</div>
+                      <div className={`text-2xl font-black ${ocupacionP > 85 ? 'text-rose-500' : 'text-orange-600'}`}>
                         {ocupacionP}%
                       </div>
                     </div>
@@ -414,27 +425,32 @@ const LayoutPage = () => {
 
                   {/* Rack Visualization */}
                   <div className="p-6 bg-slate-50/50">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {nivelesOrden.map(nivel => {
                         const ubicaciones = pData.niveles[nivel].slice().sort((a, b) => a.columna - b.columna);
                         return (
-                          <div key={nivel} className="flex gap-3">
+                          <div key={nivel} className="flex gap-4 items-center">
                             {/* Nivel Label */}
-                            <div className="w-6 flex items-center justify-center">
-                              <span className="text-[10px] font-black text-slate-300 -rotate-90 whitespace-nowrap">NIVEL {nivel}</span>
+                            <div className="w-8 flex items-center justify-center bg-slate-200/50 py-2 rounded-lg border border-slate-200 h-full">
+                              <span className="text-[10px] font-black text-slate-500 -rotate-90 whitespace-nowrap tracking-widest">NVL {nivel}</span>
                             </div>
                             
                             {/* Cells Track */}
-                            <div className="flex-1 flex gap-1 p-1.5 bg-slate-200/50 rounded-lg border border-slate-200/50 shadow-inner">
+                            <div className="flex-1 flex gap-1.5 p-2 bg-slate-200/60 rounded-xl border border-slate-200/80 shadow-inner">
                               {ubicaciones.map(ub => {
                                 // Determinar estado visual
-                                let statusClass = 'bg-white border-slate-200 text-slate-300 hover:border-indigo-400 hover:text-indigo-500';
+                                let statusClass = 'bg-white border-slate-200 text-slate-400 hover:border-orange-400 hover:text-orange-500';
                                 if (ub.estado === 'NO DISPONIBLE') {
-                                  statusClass = 'bg-red-50 border-red-200 text-red-300 cursor-not-allowed';
+                                  statusClass = 'bg-slate-800 border-slate-900 text-slate-400 cursor-not-allowed opacity-50';
                                 } else if (ub.estado === 'OCUPADO') {
-                                  statusClass = 'bg-amber-50 border-amber-200 text-amber-500';
+                                  statusClass = 'bg-amber-100 border-amber-300 text-amber-600';
                                 } else if (ub.tieneProductos) {
-                                  statusClass = 'bg-indigo-600 border-indigo-700 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500';
+                                  // Gradiente según cantidad
+                                  if (ub.cantidad > 50) {
+                                    statusClass = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-600 text-white shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-500';
+                                  } else {
+                                    statusClass = 'bg-orange-100 border-orange-300 text-orange-700 hover:bg-orange-200';
+                                  }
                                 }
 
                                 return (
@@ -442,18 +458,24 @@ const LayoutPage = () => {
                                     key={ub.ubicacion}
                                     onClick={() => abrirDetalle(ub.ubicacion)}
                                     className={`
-                                      loc-cell relative flex-1 min-w-[2rem] h-10 rounded 
+                                      loc-cell relative flex-1 min-w-[2.5rem] h-12 rounded-lg 
                                       border-[1px] flex flex-col items-center justify-center 
-                                      transition-all duration-200 text-[10px] font-bold
+                                      transition-all duration-200 text-[11px] font-black
                                       ${statusClass}
-                                      active:scale-95
+                                      active:scale-95 hover:-translate-y-0.5
                                     `}
                                     title={`Ubicación: ${ub.ubicacion}\nCantidad: ${ub.cantidad}`}
                                   >
                                     <span>{ub.columna}</span>
                                     {ub.cantidad > 0 && (
-                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-white flex items-center justify-center">
-                                        <div className="w-1 h-1 bg-white rounded-full"></div>
+                                      <div className={`absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black shadow-sm ${ub.cantidad > 50 ? 'bg-slate-900 text-white' : 'bg-orange-500 text-white'}`}>
+                                        {ub.cantidad > 99 ? '+99' : ub.cantidad}
+                                      </div>
+                                    )}
+                                    {ub.estado === 'NO DISPONIBLE' && (
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-full h-px bg-slate-400 rotate-45 absolute"></div>
+                                        <div className="w-full h-px bg-slate-400 -rotate-45 absolute"></div>
                                       </div>
                                     )}
                                   </button>
@@ -477,92 +499,112 @@ const LayoutPage = () => {
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
             onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
           ></div>
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-md bg-white shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200/60">
             {/* Header */}
-            <div className="px-6 py-6 bg-slate-900 text-white flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
-                  <MapPin size={12} />
-                  Detalle de Ubicación
+            <div className="px-6 py-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-start justify-between relative overflow-hidden">
+              {/* Decorative elements in header */}
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-orange-500/20 blur-2xl rounded-full"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-orange-400 text-xs font-black uppercase tracking-widest mb-2">
+                  <MapPin size={14} />
+                  Detalle de Posición
                 </div>
-                <h2 className="text-3xl font-black">{modal.ubicacion}</h2>
+                <h2 className="text-4xl font-black tracking-tight">{modal.ubicacion}</h2>
               </div>
               <button 
                 onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                className="p-2 bg-white/10 hover:bg-orange-500 hover:text-white rounded-full text-slate-300 transition-all z-10"
               >
-                <ChevronRight size={20} />
+                <X size={20} />
               </button>
             </div>
 
             {/* Controls */}
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <div className="px-6 py-4 bg-white border-b border-slate-200 shadow-sm z-10">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cambiar Estado Físico</p>
               <div className="grid grid-cols-3 gap-2">
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-sm">
                   Disponible
                 </button>
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'NO DISPONIBLE')} className="py-2 px-3 bg-white border border-slate-200 hover:border-red-500 hover:text-red-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'NO DISPONIBLE')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs font-bold transition-all shadow-sm">
                   Bloquear
                 </button>
-                <button onClick={() => cambiarEstado(modal.ubicacion, 'OCUPADO')} className="py-2 px-3 bg-white border border-slate-200 hover:border-amber-500 hover:text-amber-600 rounded-lg text-xs font-bold transition-all shadow-sm">
+                <button onClick={() => cambiarEstado(modal.ubicacion, 'OCUPADO')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-700 rounded-xl text-xs font-bold transition-all shadow-sm">
                   Ocupado
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
               {!modal.detalle ? (
-                <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <span className="text-sm">Cargando datos...</span>
+                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                  <div className="w-10 h-10 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4"></div>
+                  <span className="text-sm font-medium animate-pulse">Consultando inventario...</span>
                 </div>
               ) : modal.detalle.cantidadTotal === 0 ? (
-                <div className="text-center py-12 px-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                  <Box className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <h3 className="text-slate-900 font-bold mb-1">Ubicación Vacía</h3>
-                  <p className="text-slate-500 text-sm">No hay productos registrados en esta ubicación actualmente.</p>
+                <div className="text-center py-16 px-6 bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Box className="w-10 h-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-xl text-slate-800 font-black mb-2">Ubicación Vacía</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">No hay productos registrados en esta posición del almacén actualmente.</p>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <span className="text-indigo-900 font-bold text-sm">Total Inventario</span>
-                    <span className="text-2xl font-black text-indigo-600">{modal.detalle.cantidadTotal}</span>
+                  {/* Total Card */}
+                  <div className="flex items-center justify-between p-5 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg shadow-orange-500/20 text-white">
+                    <div>
+                      <span className="text-orange-100 font-bold text-xs uppercase tracking-wider block mb-1">Total Unidades</span>
+                      <span className="text-sm font-medium text-orange-50">En esta ubicación</span>
+                    </div>
+                    <span className="text-4xl font-black tracking-tight">{modal.detalle.cantidadTotal}</span>
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Productos ({modal.detalle.registros.length})</h4>
-                    {modal.detalle.registros.map((r) => (
-                      <div key={r.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{r.codigo}</span>
-                          <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                            Cant: {r.cantidad}
-                          </span>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Detalle de Productos</h4>
+                      <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-lg">
+                        {modal.detalle.registros.length} SKUs
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {modal.detalle.registros.map((r) => (
+                        <div key={r.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-300 transition-all group">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 group-hover:border-orange-200 transition-colors">{r.codigo}</span>
+                            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1">
+                              {r.cantidad} unds
+                            </div>
+                          </div>
+                          <h4 className="font-bold text-slate-800 text-sm whitespace-normal leading-relaxed mb-3" title={r.descripcion}>
+                            {r.descripcion || 'Sin descripción'}
+                          </h4>
+                          <div className="flex gap-2 text-xs font-medium text-slate-600">
+                            {r.talla && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">T:</span> {r.talla}</span>}
+                            {r.color && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">C:</span> {r.color}</span>}
+                            {r.lote && <span className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1"><span className="text-slate-400">L:</span> {r.lote}</span>}
+                          </div>
                         </div>
-                        <h4 className="font-bold text-slate-800 text-sm whitespace-normal pr-2" title={r.descripcion}>
-                          {r.descripcion || 'Sin descripción'}
-                        </h4>
-                        <div className="flex gap-2 text-xs text-slate-500">
-                          {r.talla && <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">T: {r.talla}</span>}
-                          {r.color && <span className="bg-slate-50 px-2 py-1 rounded border border-slate-100">C: {r.color}</span>}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
+            {/* Footer Action */}
+            <div className="p-5 border-t border-slate-200 bg-white">
                <button 
                 onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
-                className="w-full py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors"
+                className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 active:scale-95"
                >
                  Cerrar Panel
                </button>
