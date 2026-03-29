@@ -480,6 +480,20 @@ const LayoutPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {Object.keys(pasillos).sort().map((letra) => {
+              const pData = pasillos[letra];
+              if (!pData || !(pasilloActual === 'ALL' || pasilloActual === letra)) return null;
+
+              const nivelesOrden = Object.keys(pData.niveles).sort((a, b) => parseInt(b) - parseInt(a));
+              
+              // Stats locales
+              let totalP = 0, ocupadasP = 0;
+              Object.values(pData.niveles).forEach(arr => {
+                totalP += arr.length;
+                arr.forEach(x => { if (x.tieneProductos) ocupadasP++; });
+              });
+              const ocupacionP = totalP > 0 ? Math.round((ocupadasP / totalP) * 100) : 0;
+
               return (
                 <div key={letra} className="pasillo-card bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden mb-8">
                   {/* Card Header - Estilo original limpio */}
