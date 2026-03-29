@@ -19,12 +19,11 @@ const Batches = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [subFilter, setSubFilter] = useState(''); // Estado para la búsqueda rápida interna
 
-  // Definición de Vistas (Tabs) modernizadas sin Ubicaciones
+  // Definición de Vistas (Tabs) modernizadas sin Ubicaciones ni Peso (Peso se muestra como Header)
   const TABS = [
     { id: 'partidas', label: 'Partidas', icon: Layers, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
     { id: 'series', label: 'Series / SN', icon: Barcode, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-    { id: 'farmapack', label: 'Farmapack', icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    { id: 'peso', label: 'Pesos / Dims', icon: Scale, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' }
+    { id: 'farmapack', label: 'Farmapack', icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' }
   ];
 
   const handleSearch = async (e) => {
@@ -318,8 +317,53 @@ const Batches = () => {
       {searched && (
         <div className="flex-1 w-full max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
           
+          {/* HEADER DE PRODUCTO Y PESOS (NUEVO) */}
+          {data.peso && data.peso.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                  <Box size={28} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800">{data.peso[0].descripcion}</h3>
+                  <p className="text-sm font-mono text-slate-500">{data.peso[0].codigo_producto}</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Peso Unitario</span>
+                  <div className="flex items-center gap-2">
+                    <Scale size={16} className="text-amber-500" />
+                    <span className="text-lg font-black text-slate-700">{data.peso[0].peso_unitario} <span className="text-sm font-medium text-slate-500">Kg</span></span>
+                  </div>
+                </div>
+                
+                <div className="w-px h-8 bg-slate-200 hidden md:block"></div>
+                
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Dimensiones (L x A x A)</span>
+                  <div className="flex items-center gap-2">
+                    <Package size={16} className="text-indigo-500" />
+                    <span className="text-lg font-bold text-slate-700">
+                      {data.peso[0].largo || 0} <span className="text-slate-400 font-medium text-sm">x</span> {data.peso[0].ancho || 0} <span className="text-slate-400 font-medium text-sm">x</span> {data.peso[0].alto || 0} <span className="text-sm font-medium text-slate-500">cm</span>
+                    </span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => window.location.href = `/inbound/cubing?code=${data.peso[0].codigo_producto}`} 
+                  className="ml-auto bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                >
+                  Editar
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* KPI Cards / Tabs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {TABS.map(tab => {
               const count = data[tab.id].length;
               const isActive = activeTab === tab.id;
