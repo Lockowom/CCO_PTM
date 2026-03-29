@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2, Calendar, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { useAuth } from '../../context/AuthContext';
 import gsap from 'gsap';
 
 const Entry = () => {
+  const { user } = useAuth();
   const [queue, setQueue] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [loadingDesc, setLoadingDesc] = useState(false);
@@ -257,6 +259,25 @@ const Entry = () => {
         .insert(rowsToInsert);
 
       if (error) throw error;
+
+      // GUARDAR EN HISTORIAL DE CARGAS (AUDITORÍA)
+      if (user) {
+        try {
+          await supabase.from('tms_historial_cargas').insert([{
+            usuario_id: user.id,
+            usuario_nombre: user.nombre || user.email || 'Usuario Desconocido',
+            modulo: 'Ingreso Manual WMS',
+            tabla_destino: 'wms_ubicaciones',
+            registros_totales: queue.length,
+            registros_nuevos: queue.length,
+            registros_actualizados: 0,
+            registros_error: 0
+          }]);
+        } catch (logErr) {
+          console.error('Error guardando en historial:', logErr);
+          // No lanzamos error para no interrumpir el flujo principal si el log falla
+        }
+      }
 
       // Success Animation
       setSuccessMsg(`✅ ${queue.length} registros guardados correctamente.`);
