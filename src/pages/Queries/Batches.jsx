@@ -227,61 +227,88 @@ const Batches = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative overflow-hidden">
+      
+      {/* Elementos decorativos de fondo (solo visibles en estado inicial) */}
+      {!searched && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center">
+          <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/10 blur-[120px] rounded-full"></div>
+          <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full"></div>
+          <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-500/10 blur-[120px] rounded-full"></div>
+          
+          {/* Grid pattern sutil */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDIyNiwgMjMyLCAyNDAsIDAuNSkiIHN0cm9rZS13aWR0aD0iMC41Ii8+PC9wYXR0ZXJuPjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0idXJsKCNzbWFsbEdyaWQpIi8+PHBhdGggZD0iTTQwIDBMMCAwTDAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyMjYsIDIzMiwgMjQwLCAwLjgkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-40"></div>
+        </div>
+      )}
+
       {/* HEADER & SEARCH BAR */}
-      <div className={`transition-all duration-500 ease-in-out ${searched ? 'py-6 bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20' : 'flex-1 flex flex-col items-center justify-center px-4'}`}>
-        <div className={`w-full mx-auto ${searched ? 'max-w-[1600px] px-6 flex items-center gap-6' : 'max-w-2xl'}`}>
+      <div className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-10 ${searched ? 'py-4 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm sticky top-0' : 'flex-1 flex flex-col items-center justify-center px-4 -mt-20'}`}>
+        <div className={`w-full mx-auto ${searched ? 'max-w-[1600px] px-6 flex items-center gap-6' : 'max-w-3xl'}`}>
           
           {!searched && (
-            <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-200 mb-6">
-                <Layers size={32} />
+            <div className="text-center mb-10 animate-in slide-in-from-bottom-8 fade-in duration-700">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-xl shadow-indigo-500/30 mb-8 transform hover:scale-105 transition-transform">
+                <Layers size={40} strokeWidth={1.5} />
               </div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Consulta Maestra</h1>
-              <p className="text-slate-500 text-lg">Busca en todo el inventario: Partidas, Series, Lotes y Ubicaciones simultáneamente.</p>
+              <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
+                Consulta <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600">Maestra</span>
+              </h1>
+              <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+                El motor de búsqueda unificado para tu inventario. Encuentra Partidas, Series, Farmapack y Dimensiones en milisegundos.
+              </p>
             </div>
           )}
 
           {searched && (
-            <div className="hidden lg:flex items-center gap-3 min-w-max">
-              <div className="p-2.5 bg-indigo-600 rounded-xl text-white shadow-md shadow-indigo-200">
+            <div className="hidden lg:flex items-center gap-3 min-w-max group cursor-pointer" onClick={() => {setSearched(false); setSearchTerm(''); setData({partidas:[], series:[], farmapack:[], peso:[]});}}>
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
                 <Layers size={20} />
               </div>
               <div>
-                <h1 className="text-xl font-black text-slate-900 leading-none">Consulta Maestra</h1>
-                <span className="text-xs font-medium text-slate-500">Búsqueda Global</span>
+                <h1 className="text-lg font-black text-slate-900 leading-none group-hover:text-indigo-600 transition-colors">Consulta Maestra</h1>
               </div>
             </div>
           )}
 
-          <form onSubmit={handleSearch} className={`relative group w-full ${searched ? 'max-w-3xl' : ''}`}>
-            <Search className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${searched ? 'text-slate-400' : 'text-indigo-500'} group-focus-within:text-indigo-600`} size={searched ? 20 : 24} />
-            <input
-              type="text"
-              placeholder="Ingrese Código, Producto, Lote o Serie..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className={`w-full bg-white border-2 border-slate-200 outline-none transition-all font-mono uppercase text-slate-800 placeholder:text-slate-400 placeholder:font-sans placeholder:normal-case
-                ${searched 
-                  ? 'pl-12 pr-32 py-3 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-lg' 
-                  : 'pl-14 pr-40 py-5 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-xl shadow-xl shadow-slate-200/50 hover:border-slate-300'
-                }`}
-              autoFocus
-            />
-            <button 
-              type="submit"
-              disabled={loading}
-              className={`absolute right-2 top-2 bottom-2 bg-slate-900 hover:bg-black text-white font-bold transition-all disabled:opacity-50 flex items-center gap-2
-                ${searched ? 'px-6 rounded-lg text-sm' : 'px-8 rounded-xl text-base shadow-lg active:scale-95'}`}
-            >
-              {loading ? <RefreshCw className="animate-spin" size={18} /> : 'BUSCAR'}
-            </button>
+          <form onSubmit={handleSearch} className={`relative group w-full ${searched ? 'max-w-3xl' : 'animate-in slide-in-from-bottom-10 fade-in duration-700 delay-100'}`}>
+            <div className={`absolute inset-0 bg-indigo-500/5 rounded-2xl blur-xl transition-opacity duration-500 ${searched ? 'opacity-0' : 'opacity-100 group-focus-within:opacity-100'}`}></div>
+            
+            <div className="relative flex items-center">
+              <Search className={`absolute left-6 transition-colors duration-300 z-10 ${searched ? 'text-slate-400' : 'text-indigo-400'} group-focus-within:text-indigo-600`} size={searched ? 20 : 28} />
+              <input
+                type="text"
+                placeholder="Escanea o escribe Código, Lote, Serie..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className={`w-full bg-white/90 backdrop-blur-sm border-2 outline-none transition-all duration-300 font-mono uppercase text-slate-800 placeholder:text-slate-400 placeholder:font-sans placeholder:normal-case
+                  ${searched 
+                    ? 'pl-14 pr-32 py-2.5 rounded-xl border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 text-base shadow-sm' 
+                    : 'pl-16 pr-44 py-6 rounded-2xl border-slate-200/80 focus:border-indigo-500 focus:ring-[6px] focus:ring-indigo-500/10 text-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]'
+                  }`}
+                autoFocus
+              />
+              <button 
+                type="submit"
+                disabled={loading || !searchTerm.trim()}
+                className={`absolute right-2 top-2 bottom-2 bg-slate-900 hover:bg-indigo-600 text-white font-bold transition-all duration-300 disabled:opacity-40 disabled:hover:bg-slate-900 flex items-center gap-2 overflow-hidden
+                  ${searched ? 'px-5 rounded-lg text-sm' : 'px-8 rounded-xl text-base shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]'}`}
+              >
+                {loading ? (
+                  <RefreshCw className="animate-spin" size={18} />
+                ) : (
+                  <>
+                    <span className="relative z-10">BUSCAR</span>
+                    {!searched && <ChevronRight size={18} className="relative z-10 -mr-2 opacity-70" />}
+                  </>
+                )}
+              </button>
+            </div>
           </form>
 
           {searched && lastUpdated && (
-             <div className="ml-auto hidden md:flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+             <div className="ml-auto hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/60 backdrop-blur-sm">
                <Activity size={14} className="text-emerald-500" />
-               Actualizado: {lastUpdated.toLocaleTimeString()}
+               {lastUpdated.toLocaleTimeString()}
              </div>
           )}
         </div>
