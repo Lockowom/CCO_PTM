@@ -498,14 +498,14 @@ const LayoutPage = () => {
                   <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
                     <div className="flex items-center gap-5 relative z-10">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-slate-900/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-slate-700">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-slate-900/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                         {letra}
                       </div>
                       <div>
-                        <h3 className="font-black text-xl text-slate-800 tracking-tight">Pasillo {letra}</h3>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 font-bold mt-1">
-                          <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100 flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        <h3 className="font-black text-2xl text-slate-800 tracking-tight">Pasillo {letra}</h3>
+                        <div className="flex items-center gap-3 text-sm text-slate-500 font-bold mt-1">
+                          <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                             {ocupadasP} activos
                           </span>
                           <span className="text-slate-300">•</span>
@@ -514,40 +514,40 @@ const LayoutPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-col items-end relative z-10">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación</div>
-                      <div className={`text-2xl font-black ${ocupacionP > 85 ? 'text-rose-500' : 'text-orange-600'}`}>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación</div>
+                      <div className={`text-3xl font-black ${ocupacionP > 85 ? 'text-rose-500' : 'text-orange-600'}`}>
                         {ocupacionP}%
                       </div>
                     </div>
                   </div>
 
                   {/* Rack Visualization */}
-                  <div className="p-6 bg-slate-50/50">
-                    <div className="space-y-4">
+                  <div className="p-6 bg-slate-50/50 overflow-x-auto">
+                    <div className="space-y-4 min-w-max">
                       {nivelesOrden.map(nivel => {
                         const ubicaciones = pData.niveles[nivel].slice().sort((a, b) => a.columna - b.columna);
                         return (
                           <div key={nivel} className="flex gap-4 items-center">
                             {/* Nivel Label */}
-                            <div className="w-8 flex items-center justify-center bg-slate-200/50 py-2 rounded-lg border border-slate-200 h-full">
-                              <span className="text-[10px] font-black text-slate-500 -rotate-90 whitespace-nowrap tracking-widest">NVL {nivel}</span>
+                            <div className="w-10 flex items-center justify-center bg-slate-200/50 py-3 rounded-xl border border-slate-200 shadow-sm self-stretch">
+                              <span className="text-xs font-black text-slate-500 -rotate-90 whitespace-nowrap tracking-widest">NVL {nivel}</span>
                             </div>
                             
                             {/* Cells Track */}
-                            <div className="flex-1 flex gap-1.5 p-2 bg-slate-200/60 rounded-xl border border-slate-200/80 shadow-inner">
+                            <div className="flex-1 flex gap-2 p-2.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-inner">
                               {ubicaciones.map(ub => {
                                 // Determinar estado visual
-                                let statusClass = 'bg-white border-slate-200 text-slate-400 hover:border-orange-400 hover:text-orange-500';
+                                let statusClass = 'bg-white border-slate-200 text-slate-500 hover:border-orange-400 hover:text-orange-600 shadow-sm';
                                 if (ub.estado === 'NO DISPONIBLE') {
-                                  statusClass = 'bg-slate-800 border-slate-900 text-slate-400 cursor-not-allowed opacity-50';
+                                  statusClass = 'bg-slate-800 border-slate-900 text-slate-400 cursor-not-allowed opacity-60 shadow-inner';
                                 } else if (ub.estado === 'OCUPADO') {
-                                  statusClass = 'bg-amber-100 border-amber-300 text-amber-600';
+                                  statusClass = 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm';
                                 } else if (ub.tieneProductos) {
                                   // Gradiente según cantidad
                                   if (ub.cantidad > 50) {
                                     statusClass = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-600 text-white shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-500';
                                   } else {
-                                    statusClass = 'bg-orange-100 border-orange-300 text-orange-700 hover:bg-orange-200';
+                                    statusClass = 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100 shadow-sm';
                                   }
                                 }
 
@@ -556,24 +556,24 @@ const LayoutPage = () => {
                                     key={ub.ubicacion}
                                     onClick={() => abrirDetalle(ub.ubicacion)}
                                     className={`
-                                      loc-cell relative flex-1 min-w-[2.5rem] h-12 rounded-lg 
+                                      loc-cell relative min-w-[3rem] h-14 rounded-xl 
                                       border-[1px] flex flex-col items-center justify-center 
-                                      transition-all duration-200 text-[11px] font-black
+                                      transition-all duration-200 text-sm font-black
                                       ${statusClass}
-                                      active:scale-95 hover:-translate-y-0.5
+                                      active:scale-95 hover:-translate-y-1
                                     `}
                                     title={`Ubicación: ${ub.ubicacion}\nCantidad: ${ub.cantidad}`}
                                   >
                                     <span>{ub.columna}</span>
                                     {ub.cantidad > 0 && (
-                                      <div className={`absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black shadow-sm ${ub.cantidad > 50 ? 'bg-slate-900 text-white' : 'bg-orange-500 text-white'}`}>
+                                      <div className={`absolute -top-2 -right-2 min-w-[1.5rem] h-6 px-1.5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black shadow-md ${ub.cantidad > 50 ? 'bg-slate-900 text-white' : 'bg-orange-500 text-white'}`}>
                                         {ub.cantidad > 99 ? '+99' : ub.cantidad}
                                       </div>
                                     )}
                                     {ub.estado === 'NO DISPONIBLE' && (
                                       <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-full h-px bg-slate-400 rotate-45 absolute"></div>
-                                        <div className="w-full h-px bg-slate-400 -rotate-45 absolute"></div>
+                                        <div className="w-full h-px bg-slate-500 rotate-45 absolute"></div>
+                                        <div className="w-full h-px bg-slate-500 -rotate-45 absolute"></div>
                                       </div>
                                     )}
                                   </button>
@@ -604,27 +604,28 @@ const LayoutPage = () => {
           {/* Drawer Panel */}
           <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300 border-l border-slate-200/60">
             {/* Header */}
-            <div className="px-6 py-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-start justify-between relative overflow-hidden">
+            <div className="px-6 py-10 bg-slate-900 text-white flex items-start justify-between relative overflow-hidden">
               {/* Decorative elements in header */}
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-orange-500/20 blur-2xl rounded-full"></div>
+              <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 blur-3xl rounded-full translate-x-1/4 -translate-y-1/4"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 blur-3xl rounded-full -translate-x-1/4 translate-y-1/4"></div>
               
               <div className="relative z-10">
-                <div className="flex items-center gap-2 text-orange-400 text-xs font-black uppercase tracking-widest mb-2">
-                  <MapPin size={14} />
+                <div className="flex items-center gap-2 text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3">
+                  <MapPin size={12} strokeWidth={3} />
                   Detalle de Posición
                 </div>
-                <h2 className="text-4xl font-black tracking-tight">{modal.ubicacion}</h2>
+                <h2 className="text-5xl font-black tracking-tight drop-shadow-md">{modal.ubicacion}</h2>
               </div>
               <button 
                 onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
-                className="p-2 bg-white/10 hover:bg-orange-500 hover:text-white rounded-full text-slate-300 transition-all z-10"
+                className="p-2.5 bg-white/5 hover:bg-orange-500 hover:text-white rounded-full text-slate-300 transition-all z-10 backdrop-blur-sm border border-white/10"
               >
-                <X size={20} />
+                <X size={20} strokeWidth={2.5} />
               </button>
             </div>
 
             {/* Controls */}
-            <div className="px-6 py-4 bg-white border-b border-slate-200 shadow-sm z-10">
+            <div className="px-6 py-5 bg-white border-b border-slate-200 shadow-sm z-10">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Cambiar Estado Físico</p>
               <div className="grid grid-cols-3 gap-2">
                 <button onClick={() => cambiarEstado(modal.ubicacion, 'DISPONIBLE')} className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-sm">
