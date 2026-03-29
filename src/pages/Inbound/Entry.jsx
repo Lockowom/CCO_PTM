@@ -322,25 +322,25 @@ const Entry = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Formulario de Ingreso */}
         <div className="xl:col-span-1 space-y-6">
-          <div ref={formRef} className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200 relative overflow-hidden group transition-all duration-300">
+          <div ref={formRef} className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-200 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-amber-500"></div>
             
             <h3 className="font-black text-slate-800 text-lg mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold shadow-inner">1</span>
+              <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white text-sm font-black shadow-md">1</span>
               DATOS DEL PRODUCTO
             </h3>
 
             <form onSubmit={addToQueue} className="space-y-5">
               {/* UBICACION */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-700 uppercase font-black mb-1.5 tracking-wider">
                   Ubicación <span className="text-red-500">*</span> (Max 8)
                 </label>
                 <div className="relative group/input">
                   <input 
                     type="text" 
                     name="ubicacion"
-                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-4 pr-10 py-3.5 bg-white border-2 border-slate-300 rounded-xl text-lg font-mono font-bold text-slate-800 uppercase focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm"
                     placeholder="A-01-01"
                     value={form.ubicacion}
                     onChange={handleInputChange}
@@ -354,7 +354,7 @@ const Entry = () => {
 
               {/* CODIGO */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-700 uppercase font-black mb-1.5 tracking-wider">
                   Código <span className="text-red-500">*</span> (Max 12)
                 </label>
                 <div className="relative group/input">
@@ -362,7 +362,7 @@ const Entry = () => {
                     ref={codigoInputRef}
                     type="text" 
                     name="codigo"
-                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-4 pr-10 py-3.5 bg-white border-2 border-slate-300 rounded-xl text-lg font-mono font-bold text-slate-800 uppercase focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm"
                     placeholder="SKU-123..."
                     value={form.codigo}
                     onChange={handleInputChange}
@@ -379,13 +379,13 @@ const Entry = () => {
 
               {/* DESCRIPCION (AUTO) */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-600 uppercase font-bold mb-1.5 tracking-wider">
                   Descripción (Automático)
                 </label>
                 <textarea 
                   name="descripcion"
                   rows="2"
-                  className="desc-field w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 resize-none focus:outline-none focus:bg-white transition-colors"
+                  className="desc-field w-full p-3 bg-slate-100 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 resize-none focus:outline-none transition-colors"
                   placeholder="Se llenará automáticamente al ingresar el código..."
                   value={form.descripcion}
                   readOnly
@@ -395,14 +395,14 @@ const Entry = () => {
 
               {/* CANTIDAD */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-700 uppercase font-black mb-1.5 tracking-wider">
                   Cantidad Contada <span className="text-red-500">*</span>
                 </label>
                 <input 
                   ref={cantidadInputRef}
                   type="number" 
                   name="cantidad"
-                  className="w-full p-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-xl font-bold text-slate-800 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all"
+                  className="w-full p-3.5 bg-white border-2 border-slate-300 rounded-xl text-xl font-bold text-slate-800 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 outline-none transition-all shadow-sm"
                   placeholder="0"
                   min="0.01"
                   step="0.01"
@@ -414,46 +414,46 @@ const Entry = () => {
 
               {/* CAMPOS OPCIONALES (Accordion style or Grid) */}
               <div className="pt-4 border-t border-slate-100">
-                <p className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider">Detalles Opcionales</p>
+                <p className="text-xs font-bold text-slate-600 uppercase font-bold mb-4 tracking-wider">Detalles Opcionales</p>
                 <div className="grid grid-cols-2 gap-4">
                   
                   {/* SERIE */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Serie</label>
-                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="S/N..." />
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Serie</label>
+                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" placeholder="S/N..." />
                   </div>
 
                   {/* PARTIDA */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Partida</label>
-                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Lote..." />
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Partida</label>
+                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" placeholder="Lote..." />
                   </div>
 
                   {/* PIEZA */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pieza</label>
-                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Ej: Motor..." />
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Pieza</label>
+                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" placeholder="Ej: Motor..." />
                   </div>
 
                   {/* VENCIMIENTO */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vencimiento</label>
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Vencimiento</label>
                     <div className="relative">
-                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" />
+                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" />
                       <Calendar className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                     </div>
                   </div>
 
                   {/* TALLA */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Talla</label>
-                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="S, M, L..." />
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Talla</label>
+                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" placeholder="S, M, L..." />
                   </div>
 
                   {/* COLOR */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Color</label>
-                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Rojo..." />
+                    <label className="block text-[10px] font-bold text-slate-600 uppercase font-bold mb-1">Color</label>
+                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-400 shadow-sm" placeholder="Rojo..." />
                   </div>
                 </div>
               </div>
@@ -465,7 +465,7 @@ const Entry = () => {
                 </div>
               )}
 
-              <button className="add-btn w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden">
+              <button className="add-btn w-full bg-slate-900 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden mt-6">
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <PackagePlus size={24} className="group-hover:scale-110 transition-transform relative z-10" />
                 <span className="relative z-10">AGREGAR A COLA</span>
@@ -476,12 +476,12 @@ const Entry = () => {
 
         {/* Cola de Registros */}
         <div className="xl:col-span-2 h-full">
-          <div ref={listRef} className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
+          <div ref={listRef} className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 to-slate-300"></div>
 
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 backdrop-blur-sm sticky top-0 z-20">
                 <h3 className="font-black text-slate-800 text-lg flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold shadow-inner">2</span>
+                    <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white text-sm font-black shadow-md">2</span>
                     COLA DE PROCESAMIENTO
                     <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold border border-orange-200 shadow-sm">{queue.length} ÍTEMS</span>
                 </h3>
@@ -518,16 +518,16 @@ const Entry = () => {
                             
                             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ubicación</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase font-bold tracking-wider">Ubicación</p>
                                     <p className="font-mono font-bold text-slate-800 text-lg group-hover:text-orange-800 transition-colors">{item.ubicacion}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Código</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase font-bold tracking-wider">Código</p>
                                     <p className="font-mono font-bold text-orange-600 text-lg">{item.codigo}</p>
                                     {item.descripcion && <p className="text-xs text-slate-500 truncate max-w-[150px]">{item.descripcion}</p>}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cantidad</p>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase font-bold tracking-wider">Cantidad</p>
                                     <p className="font-black text-slate-900 text-lg">{item.cantidad}</p>
                                 </div>
                                 <div className="hidden md:block">
@@ -561,7 +561,7 @@ const Entry = () => {
                 <button 
                     onClick={handleSync}
                     disabled={queue.length === 0 || saving}
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white py-4 rounded-2xl font-black text-lg disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 transition-all shadow-lg shadow-orange-500/30 disabled:shadow-none flex items-center justify-center gap-3 active:scale-[0.98]"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg disabled:bg-slate-200 disabled:text-slate-400 transition-all shadow-xl shadow-orange-500/30 disabled:shadow-none flex items-center justify-center gap-3 active:scale-[0.98]"
                 >
                     {saving ? (
                       <>
