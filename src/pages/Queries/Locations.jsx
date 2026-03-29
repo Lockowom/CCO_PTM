@@ -322,13 +322,13 @@ const LocationsQuery = () => {
       {/* Header Moderno */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <div className="bg-orange-600 p-2 rounded-xl shadow-lg shadow-orange-200">
-              <MapPin className="text-white" size={24} />
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-2.5 rounded-2xl shadow-lg shadow-orange-500/30">
+              <MapPin className="text-white" size={28} />
             </div>
-            Gestión de Ubicaciones
+            Ubicaciones <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Productos</span>
           </h1>
-          <p className="text-slate-500 text-lg mt-2 ml-1">Control de inventario por posición</p>
+          <p className="text-slate-500 text-lg mt-2 ml-2 font-medium">Control y trazabilidad de inventario por posición WMS</p>
         </div>
         
         {/* Stats Rápidos */}
@@ -440,12 +440,15 @@ const LocationsQuery = () => {
         </div>
       ) : !searched ? (
         <div className="flex flex-col items-center justify-center py-32 text-center relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="bg-white p-8 rounded-full border border-slate-100 mb-6 shadow-xl shadow-orange-500/10 transform hover:scale-105 transition-transform duration-300">
-            <Layers size={64} className="text-orange-300" />
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-2xl shadow-orange-500/30 mb-8 transform hover:scale-105 hover:rotate-3 transition-all duration-300">
+            <MapPin size={48} strokeWidth={1.5} />
           </div>
-          <h3 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">Sistema <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">WMS</span></h3>
-          <p className="text-slate-500 mt-2 max-w-md text-lg leading-relaxed">
-            Ingresa un código de producto o una posición de rack para gestionar el inventario.
+          <h3 className="text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight flex items-center justify-center gap-3 cursor-default">
+            <span className="inline-block transition-transform duration-300 hover:-translate-y-2">Ubicaciones</span>
+            <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 transition-transform duration-300 hover:-translate-y-2">Productos</span>
+          </h3>
+          <p className="text-slate-500 text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+            Busca y gestiona la posición exacta de tus productos en el almacén.
           </p>
         </div>
       ) : results.length === 0 ? (
