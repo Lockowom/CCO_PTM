@@ -210,9 +210,11 @@ const LayoutPage = () => {
       .select('*')
       .eq('ubicacion', ubicacion)
       .order('updated_at', { ascending: false });
-    if (!error) {
+    if (!error && data) {
       const cantidadTotal = data.reduce((acc, r) => acc + (r.cantidad || 0), 0);
       setModal({ open: true, ubicacion, detalle: { registros: data, cantidadTotal } });
+    } else {
+      setModal({ open: true, ubicacion, detalle: { registros: [], cantidadTotal: 0 } });
     }
   };
 
@@ -655,7 +657,7 @@ const LayoutPage = () => {
                     </div>
                     
                     <div className="space-y-3">
-                      {modal.detalle.registros.map((r) => (
+                      {modal.detalle.registros && modal.detalle.registros.map((r) => (
                         <div key={r.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all group ${editingRow === r.id ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-200 hover:shadow-md'}`}>
                           
                           {/* Header de la tarjeta */}
