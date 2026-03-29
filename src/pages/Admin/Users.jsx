@@ -38,8 +38,8 @@ const UsersPage = () => {
   const stats = React.useMemo(() => ({
     total: users.length,
     active: users.filter(u => u.activo).length,
-    admins: users.filter(u => u.rol?.toUpperCase().includes('ADMIN')).length,
-    supervisors: users.filter(u => u.rol?.toUpperCase().includes('SUPERVISOR')).length
+    admins: users.filter(u => u.rol?.toUpperCase() === 'ADMIN' || u.es_admin_delegado).length,
+    supervisors: users.filter(u => u.rol?.toUpperCase() === 'SUPERVISOR').length
   }), [users]);
 
   const [isSyncing, setIsSyncing] = useState(false); // Indicador de sincronización realtime
