@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Barcode, Box, Package, Layers, Scale, MapPin, 
-  RefreshCw, Download, ChevronRight, FileSpreadsheet, Activity 
+  RefreshCw, Download, ChevronRight, FileSpreadsheet, Activity, X
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -18,6 +18,7 @@ const Batches = () => {
   });
   const [searched, setSearched] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [subFilter, setSubFilter] = useState(''); // Estado para la búsqueda rápida interna
 
   // Definición de Vistas (Tabs) modernizadas
   const TABS = [
@@ -76,6 +77,8 @@ const Batches = () => {
         const firstWithData = TABS.find(t => newData[t.id].length > 0);
         if (firstWithData) setActiveTab(firstWithData.id);
       }
+
+      setSubFilter(''); // Limpiar el filtro rápido al hacer una nueva búsqueda global
 
     } catch (err) {
       console.error("Error en búsqueda global:", err);
@@ -180,6 +183,19 @@ const Batches = () => {
   };
 
   const ResultTable = ({ columns, rows }) => {
+    // Aplicar el filtro rápido (subFilter) a las filas cargadas
+    const filteredRows = React.useMemo(() => {
+      if (!subFilter.trim()) return rows;
+      const lowerFilter = subFilter.toLowerCase().trim();
+      return rows.filter(row => {
+        // Buscar en todas las columnas visibles de esta tabla
+        return columns.some(col => {
+          const val = row[col.accessor];
+          return val && String(val).toLowerCase().includes(lowerFilter);
+        });
+      });
+    }, [rows, subFilter, columns]);
+
     if (rows.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center bg-white rounded-2xl border border-slate-200 border-dashed">
@@ -206,7 +222,7 @@ const Batches = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((row, idx) => (
+              {filteredRows.map((row, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
                   {columns.map((col, cIdx) => (
                     <td key={cIdx} className="px-6 py-4 whitespace-nowrap">
@@ -325,7 +341,7 @@ const Batches = () => {
           </div>
 
           {/* Toolbar de Tabla */}
-          <div className="flex justify-between items-end mb-4 px-1">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 px-1">
             <div>
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
                 {TABS.find(t => t.id === activeTab)?.label}
@@ -334,14 +350,37 @@ const Batches = () => {
                 </span>
               </h2>
             </div>
+            
+            {/* Controles de la Tabla (Búsqueda Rápida y Exportar) */}
             {data[activeTab].length > 0 && (
-              <button 
-                onClick={handleExport}
-                className="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition-colors"
-              >
-                <FileSpreadsheet size={16} />
-                Exportar CSV
-              </button>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="relative flex-1 md:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    placeholder={`Filtrar ${TABS.find(t => t.id === activeTab)?.label.toLowerCase()}...`}
+                    value={subFilter}
+                    onChange={(e) => setSubFilter(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400"
+                  />
+                  {subFilter && (
+                    <button 
+                      onClick={() => setSubFilter('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                
+                <button 
+                  onClick={handleExport}
+                  className="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+                >
+                  <FileSpreadsheet size={16} />
+                  Exportar CSV
+                </button>
+              </div>
             )}
           </div>
 
