@@ -282,16 +282,16 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-white border-b-2 border-orange-200 shadow-lg sticky top-0 z-40">
-      <div className="flex items-center justify-between px-2 sm:px-6 py-2 gap-2">
+    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm sticky top-0 z-50">
+      <div className="flex items-center justify-between px-4 sm:px-8 py-3 gap-4 max-w-[1920px] mx-auto">
         {/* 1. Logo Section (Flexible, no se achica) */}
         <Link to="/dashboard" className="flex items-center gap-2 min-w-fit shrink-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-orange-300 p-1.5">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 p-2 transform transition-transform hover:scale-105">
             <img src="https://i.imgur.com/YJh67CY.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div className="hidden lg:block">
-            <h1 className="text-base font-black text-slate-800 leading-none">C.C.O</h1>
-            <p className="text-[9px] text-orange-500 font-bold uppercase tracking-widest">Centro Control</p>
+            <h1 className="text-lg font-black text-slate-800 leading-none tracking-tight">C.C.O</h1>
+            <p className="text-[10px] text-orange-600 font-black uppercase tracking-widest">Centro Control</p>
           </div>
         </Link>
 
@@ -310,10 +310,10 @@ const Navbar = () => {
                 {item.isLink ? (
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap
                       ${location.pathname === item.path
-                        ? 'bg-orange-500 text-white shadow-md'
-                        : 'text-slate-600 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                   >
                     {item.icon}
@@ -321,10 +321,10 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <button
-                    className={`flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer whitespace-nowrap
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer whitespace-nowrap
                       ${activeDropdown === item.id
-                        ? 'bg-orange-500 text-white shadow-md'
-                        : 'text-slate-600 hover:text-orange-600 hover:bg-orange-50'
+                        ? 'bg-orange-50 text-orange-600 shadow-sm ring-1 ring-orange-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                   >
                     {item.icon}
@@ -335,16 +335,16 @@ const Navbar = () => {
 
                 {/* Dropdown (Mejorado z-index) */}
                 {!item.isLink && activeDropdown === item.id && (
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-2xl border border-orange-100 p-2 z-[60]">
+                  <div className="absolute top-[calc(100%+0.5rem)] left-0 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-[60] animate-in fade-in slide-in-from-top-2">
                     {(item.modules || []).filter(m => canAccessRoute(m.path, item.id)).map((module) => (
                       <Link
                         key={module.path}
                         to={module.path}
                         onClick={() => setActiveDropdown(null)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all
                             ${location.pathname === module.path
-                            ? 'bg-orange-500 text-white shadow-md'
-                            : 'text-slate-600 hover:bg-orange-50 hover:text-orange-700'
+                            ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20'
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                           }`}
                       >
                         <span>{module.icon}</span>
@@ -362,7 +362,7 @@ const Navbar = () => {
         <div className="flex items-center gap-2 shrink-0">
           {/* Tablet/Desktop: User & Clock */}
           <div className="hidden lg:flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg" title={isOnline ? "Conectado a Internet" : "Sin Conexión"}>
+            <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm" title={isOnline ? "Conectado a Internet" : "Sin Conexión"}>
               <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
               <span className={`text-[10px] font-bold uppercase tracking-wider ${isOnline ? 'text-emerald-700' : 'text-red-700'}`}>
                 {isOnline ? 'Online' : 'Offline'}
@@ -370,8 +370,8 @@ const Navbar = () => {
             </div>
             <ClockWidget />
             {user && (
-              <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-full border border-slate-200">
-                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-black text-xs">
+              <div className="flex items-center gap-3 bg-white pl-2 pr-4 py-1.5 rounded-full border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 transition-colors group">
+                <div className="w-9 h-9 bg-gradient-to-br from-slate-800 to-slate-900 group-hover:from-orange-500 group-hover:to-amber-600 rounded-full flex items-center justify-center text-white font-black text-sm shadow-sm transition-all">
                   {user.nombre?.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden xl:block text-right pr-2">
@@ -393,7 +393,7 @@ const Navbar = () => {
           {/* Logout (Siempre visible en desktop grande, oculto en mobile) */}
           <button
             onClick={handleLogout}
-            className="hidden sm:flex p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="hidden sm:flex p-2.5 text-slate-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm hover:shadow-md"
             title="Salir"
           >
             <LogOut size={20} />
@@ -404,7 +404,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b-2 border-orange-100 shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+        <div className="xl:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl z-50 animate-in slide-in-from-top-2 duration-200">
           <MobileMenu
             menuConfig={menuConfig}
             isSectionVisible={isSectionVisible}
@@ -463,7 +463,7 @@ const ClockWidget = () => {
 
 // Mobile Menu (Light Theme to match Navbar)
 const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdown, setActiveDropdown, setMobileMenuOpen, location }) => (
-  <nav className="xl:hidden bg-white border-b-2 border-orange-100 px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto shadow-inner">
+  <nav className="xl:hidden bg-slate-50/50 px-4 py-6 space-y-3 max-h-[85vh] overflow-y-auto">
     {menuConfig.map((item) => {
       if (!isSectionVisible(item.id)) return null;
 
@@ -474,10 +474,10 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
           key={item.id}
           to={item.path}
           onClick={() => setMobileMenuOpen(false)}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
+          className={`flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all
             ${isActive
-              ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
-              : 'text-slate-600 hover:bg-orange-50 hover:text-orange-600'
+              ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20'
+              : 'bg-white text-slate-600 border border-slate-200 hover:border-orange-300'
             }`}
         >
           {item.icon}
@@ -487,10 +487,10 @@ const MobileMenu = ({ menuConfig, isSectionVisible, canAccessRoute, activeDropdo
         <div key={item.id} className="space-y-1">
           <button
             onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all
+            className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all shadow-sm
               ${activeDropdown === item.id
-                ? 'bg-slate-100 text-slate-800'
-                : 'text-slate-600 hover:bg-orange-50 hover:text-orange-600'
+                ? 'bg-orange-50 text-orange-600 border border-orange-200 ring-2 ring-orange-500/20'
+                : 'bg-white text-slate-600 border border-slate-200'
               }`}
           >
             {item.icon}
