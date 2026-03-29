@@ -81,7 +81,8 @@ const HistorialNV = () => {
         query = query.lte('fecha_emision', filterFechaHasta + 'T23:59:59');
       }
 
-      const { data, error } = await query.limit(1000);
+      // AUMENTADO DE 1000 a 5000 para evitar que desaparezcan registros en el histórico
+      const { data, error } = await query.limit(5000);
 
       if (error) throw error;
 

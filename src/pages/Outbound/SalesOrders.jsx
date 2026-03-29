@@ -160,7 +160,7 @@ const SalesOrders = () => {
         .select('*')
         .not('estado', 'eq', 'Despachado')
         .order('fecha_emision', { ascending: false })
-        .limit(3000);
+        .limit(5000);
 
       if (error) throw error;
 
