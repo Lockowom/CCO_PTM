@@ -25,6 +25,7 @@ const ViewsPage = () => {
     { value: '/tms/yard', label: 'TMS - Gestión de Patio' },
     { value: '/tms/drivers', label: 'TMS - Conductores' },
     { value: '/tms/mobile', label: 'TMS - App Móvil' },
+    { value: '/pda', label: 'Operación - PDA Móvil' },
     { value: '/inbound/reception', label: 'Inbound - Recepción' },
     { value: '/inbound/returns', label: 'Inbound - Devoluciones' },
     { value: '/inbound/entry', label: 'Inbound - Ingreso' },
