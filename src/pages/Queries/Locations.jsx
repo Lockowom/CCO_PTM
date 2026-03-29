@@ -309,80 +309,130 @@ const LocationsQuery = () => {
   }, [results, groupByLocation]);
 
   return (
-    <div className="space-y-8 relative">
-      {/* Background Decorativo */}
+    <div className="space-y-8 relative min-h-screen">
+      {/* Background Decorativo más orgánico */}
       {!searched && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
-          <div className="absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/10 blur-[120px] rounded-full"></div>
-          <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-amber-500/10 blur-[100px] rounded-full"></div>
-          <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-red-500/10 blur-[120px] rounded-full"></div>
+          <div className="absolute top-[-20%] w-[1000px] h-[600px] bg-gradient-to-b from-orange-400/20 to-transparent blur-[150px] rounded-[100%]"></div>
+          <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] bg-amber-400/10 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-[20%] right-[-5%] w-[600px] h-[600px] bg-orange-600/10 blur-[150px] rounded-full"></div>
         </div>
       )}
 
-      {/* Header Moderno */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header relative z-10">
-        <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-2.5 rounded-2xl shadow-lg shadow-orange-500/30">
-              <MapPin className="text-white" size={28} />
-            </div>
-            Ubicaciones <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Productos</span>
-          </h1>
-          <p className="text-slate-500 text-lg mt-2 ml-2 font-medium">Control y trazabilidad de inventario por posición WMS</p>
+      {/* Header Compacto si ya se buscó, sino se oculta porque el Hero es principal */}
+      {searched && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+              <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-2 rounded-xl shadow-md shadow-orange-500/20">
+                <MapPin className="text-white" size={20} />
+              </div>
+              Ubicaciones <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Productos</span>
+            </h1>
+          </div>
+          
+          {/* Stats Rápidos */}
+          {results.length > 0 && (
+             <div className="flex gap-3">
+                <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-xl border border-slate-200/60 shadow-sm">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Resultados</p>
+                  <p className="text-xl font-black text-slate-800">{results.length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 px-4 py-2 rounded-xl border border-orange-100 shadow-sm">
+                  <p className="text-[10px] text-orange-600/70 font-bold uppercase tracking-widest">Total Items</p>
+                  <p className="text-xl font-black text-orange-600">
+                    {results.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 0), 0)}
+                  </p>
+                </div>
+             </div>
+          )}
         </div>
+      )}
+
+      {/* Hero y Buscador "Bestial" */}
+      <div className={`relative z-20 flex flex-col items-center justify-center transition-all duration-700 ease-in-out ${searched ? 'pt-2 pb-6' : 'min-h-[70vh]'}`}>
         
-        {/* Stats Rápidos */}
-        {results.length > 0 && (
-           <div className="flex gap-4">
-              <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
-                <p className="text-xs text-slate-400 font-bold uppercase">Resultados</p>
-                <p className="text-xl font-black text-slate-800">{results.length}</p>
-              </div>
-              <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
-                <p className="text-xs text-slate-400 font-bold uppercase">Total Items</p>
-                <p className="text-xl font-black text-orange-600">
-                  {results.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 0), 0)}
-                </p>
-              </div>
-           </div>
+        {!searched && (
+          <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 w-full max-w-4xl mx-auto">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-2xl shadow-orange-500/40 mb-8 transform hover:scale-110 hover:rotate-6 transition-all duration-500 ring-8 ring-orange-500/10">
+              <MapPin size={40} strokeWidth={2} />
+            </div>
+            <h3 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 leading-[1.1] flex flex-wrap items-center justify-center gap-x-4 cursor-default">
+              <span className="inline-block transition-transform duration-500 hover:-translate-y-2 hover:text-orange-600">Ubicaciones</span>
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-amber-500 to-orange-500 transition-transform duration-500 hover:-translate-y-2 hover:scale-105">Productos</span>
+            </h3>
+            <p className="text-slate-500 text-xl md:text-2xl font-medium max-w-2xl mx-auto leading-relaxed">
+              El motor de búsqueda avanzado para tu inventario físico. Localiza posiciones en milisegundos.
+            </p>
+          </div>
         )}
+
+        {/* Buscador Central Orgánico */}
+        <div className={`w-full transition-all duration-700 ease-out ${searched ? 'max-w-7xl' : 'max-w-4xl'}`}>
+          <div className={`relative group bg-white/90 backdrop-blur-xl border-2 transition-all duration-500 flex flex-col md:flex-row items-center p-2 
+            ${searched 
+              ? 'rounded-2xl border-slate-200/80 shadow-lg shadow-slate-200/50 hover:border-orange-300' 
+              : 'rounded-[2.5rem] border-orange-100 shadow-[0_20px_60px_-15px_rgba(249,115,22,0.2)] hover:shadow-[0_30px_70px_-15px_rgba(249,115,22,0.3)] hover:border-orange-300 focus-within:border-orange-500 focus-within:ring-8 focus-within:ring-orange-500/10'
+            }`}>
+            
+            <div className="flex-1 relative w-full flex items-center">
+              <Search className={`absolute transition-all duration-500 ${searched ? 'left-5 text-slate-400 w-6 h-6' : 'left-8 text-orange-500 w-8 h-8 group-focus-within:scale-110'}`} />
+              <form onSubmit={handleSearch} className="w-full">
+                <input 
+                  type="text"
+                  placeholder="ESCRIBE CÓDIGO, LOTE O POSICIÓN (EJ: A-01-01)..."
+                  className={`w-full bg-transparent border-transparent outline-none transition-all placeholder:font-medium placeholder:normal-case font-mono uppercase text-slate-800
+                    ${searched ? 'pl-14 pr-4 py-4 text-lg' : 'pl-20 pr-6 py-6 text-xl md:text-2xl placeholder-slate-400/70'}`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoFocus
+                />
+              </form>
+            </div>
+
+            <div className={`flex gap-2 w-full md:w-auto ${searched ? 'px-2 pb-2 md:p-0' : 'px-3 pb-3 md:p-0'}`}>
+              {user?.rol === 'ADMIN' && (
+                <button 
+                  onClick={handleDownloadExcel}
+                  disabled={downloading}
+                  className={`text-emerald-600 hover:bg-emerald-50 border-2 border-emerald-100 font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50
+                    ${searched ? 'px-6 py-3.5 rounded-xl' : 'px-8 py-5 rounded-[1.5rem] text-lg'}`}
+                  title="Descargar toda la base"
+                >
+                  {downloading ? <RefreshCw className="animate-spin" size={searched ? 20 : 24} /> : <Download size={searched ? 20 : 24} />}
+                  <span className={searched ? 'hidden xl:inline' : 'inline'}>Exportar</span>
+                </button>
+              )}
+              <button 
+                onClick={handleSearch}
+                disabled={loading || !searchTerm.trim()}
+                className={`bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-black flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100
+                  ${searched ? 'px-8 py-3.5 rounded-xl' : 'px-12 py-5 rounded-[1.5rem] text-xl'}`}
+              >
+                {loading ? <RefreshCw className="animate-spin" size={searched ? 20 : 28} /> : <Search size={searched ? 20 : 28} />}
+                Buscar
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Barra de Búsqueda Flotante */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col xl:flex-row gap-3 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
-        <div className="flex-1 relative w-full group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
-          <form onSubmit={handleSearch} className="w-full">
-            <input 
-              type="text"
-              placeholder="Buscar por código, ubicación o descripción..."
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-orange-100 transition-all placeholder-slate-400 font-medium uppercase"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-            />
-          </form>
-        </div>
-        
-        {/* Controles de Vista y Acciones */}
-        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-          {/* Toggle Agrupación */}
-          {results.length > 0 && (
+      {/* Controles de Vista y Acciones (Aparecen después de buscar) */}
+      {searched && results.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-4 w-full relative z-10 animate-in fade-in duration-500">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setGroupByLocation(!groupByLocation)}
-              className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all flex-1 md:flex-none justify-center border ${
+              className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all border ${
                 groupByLocation 
                   ? 'bg-orange-50 text-orange-600 border-orange-200 shadow-sm' 
                   : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Layers size={20} />
-              <span className="hidden sm:inline">Agrupar Pasillos</span>
+              <Layers size={18} />
+              <span>Agrupar Pasillos</span>
             </button>
-          )}
-
-          {/* Toggle Vista */}
-          {results.length > 0 && (
+            
             <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setViewMode('grid')}
@@ -403,29 +453,9 @@ const LocationsQuery = () => {
                 <List size={18} />
               </button>
             </div>
-          )}
-
-          {user?.rol === 'ADMIN' && (
-            <button 
-              onClick={handleDownloadExcel}
-              disabled={downloading}
-              className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
-              title="Descargar toda la base de ubicaciones a Excel"
-            >
-              {downloading ? <RefreshCw className="animate-spin" size={20} /> : <Download size={20} />}
-              <span className="hidden sm:inline">Exportar</span>
-            </button>
-          )}
-          <button 
-            onClick={handleSearch}
-            disabled={loading}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
-          >
-            {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
-            Buscar
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Resultados Grid */}
       {loading ? (
