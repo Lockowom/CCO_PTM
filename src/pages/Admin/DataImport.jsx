@@ -677,75 +677,92 @@ const DataImport = () => {
     // RENDER
     // ═══════════════════════════════════════════════════════════
     return (
-        <div className="h-full flex flex-col space-y-4">
-            {/* ── HEADER ── */}
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <Upload className="text-white" size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Carga de Datos</h1>
-                        <p className="text-slate-500 text-sm">Pega desde Excel → Carga directo a Supabase (sin Google Sheets)</p>
-                    </div>
-                </div>
-                {step !== 'paste' && (
-                    <button
-                        onClick={handleReset}
-                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                    >
-                        <RefreshCw size={16} /> Nueva Carga
-                    </button>
-                )}
+        <div className="space-y-6 relative min-h-screen pb-12">
+            {/* Background Decorativo Sutil */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
+                <div className="absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/5 blur-[100px] rounded-full"></div>
             </div>
 
-            {/* ── TABS ── */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-1 flex gap-1">
-                {IMPORT_TABS.map(tab => {
-                    const Icon = tab.icon;
-                    const isActive = activeTab === tab.id;
-                    const colorMap = {
-                        indigo: 'bg-indigo-600 text-white shadow-indigo-200',
-                        blue: 'bg-blue-600 text-white shadow-blue-200',
-                        violet: 'bg-violet-600 text-white shadow-violet-200',
-                        emerald: 'bg-emerald-600 text-white shadow-emerald-200',
-                        orange: 'bg-orange-600 text-white shadow-orange-200',
-                        cyan: 'bg-cyan-600 text-white shadow-cyan-200',
-                        rose: 'bg-rose-600 text-white shadow-rose-200',
-                    };
+            {/* Panel de Control Principal */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm relative z-10 overflow-hidden">
+                {/* Decorative Top Line */}
+                <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+                
+                <div className="p-6 md:p-8">
+                    {/* ── HEADER ── */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                                <Upload size={28} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Carga de <span className="text-orange-500">Datos</span></h1>
+                                <p className="text-slate-500 font-medium mt-1">Pega desde Excel → Carga directo a Supabase</p>
+                            </div>
+                        </div>
+                        {step !== 'paste' && (
+                            <button
+                                onClick={handleReset}
+                                className="px-5 py-3 bg-slate-50 hover:bg-orange-50 hover:text-orange-600 text-slate-700 rounded-2xl font-bold flex items-center gap-2 transition-all border border-slate-200 hover:border-orange-200"
+                            >
+                                <RefreshCw size={18} /> Nueva Carga
+                            </button>
+                        )}
+                    </div>
 
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => handleTabChange(tab.id)}
-                            disabled={isLoading}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition-all ${isActive
-                                ? `${colorMap[tab.color]} shadow-lg`
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                                } disabled:opacity-50`}
-                        >
-                            <Icon size={18} />
-                            {tab.label}
-                        </button>
-                    );
-                })}
+                    {/* ── TABS ── */}
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 shadow-inner p-1.5 flex gap-1 overflow-x-auto no-scrollbar">
+                        {IMPORT_TABS.map(tab => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            
+                            // Mapeo a tonos naranjas/ámbar/neutros para mantener elegancia
+                            const colorMap = {
+                                indigo: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                blue: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                violet: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                emerald: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                orange: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                cyan: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                rose: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                            };
+
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => handleTabChange(tab.id)}
+                                    disabled={isLoading}
+                                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${isActive
+                                        ? `${colorMap[tab.color]} scale-[1.02]`
+                                        : 'bg-transparent text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-sm'
+                                        } disabled:opacity-50`}
+                                >
+                                    <Icon size={18} />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
             </div>
 
             {/* ── STEP 1: PASTE ── */}
             {step === 'paste' && (
-                <div className="flex-1 flex flex-col gap-4">
+                <div className="flex flex-col gap-6 relative z-10">
                     {/* Help text */}
-                    <div className={`bg-${currentTab.color === 'indigo' ? 'indigo' : currentTab.color === 'blue' ? 'blue' : currentTab.color === 'violet' ? 'violet' : currentTab.color === 'emerald' ? 'emerald' : currentTab.color === 'cyan' ? 'cyan' : currentTab.color === 'rose' ? 'rose' : 'orange'}-50 border border-${currentTab.color}-200 rounded-xl p-4 flex items-start gap-3`}>
-                        <Info size={20} className={`text-${currentTab.color}-500 flex-shrink-0 mt-0.5`} />
+                    <div className="bg-white border border-slate-200 rounded-3xl p-6 flex items-start gap-4 shadow-sm">
+                        <div className="bg-orange-50 p-2.5 rounded-xl text-orange-500 flex-shrink-0 mt-0.5">
+                            <Info size={24} />
+                        </div>
                         <div>
-                            <p className={`text-${currentTab.color}-800 font-medium text-sm`}>{currentTab.helpText}</p>
-                            <div className="mt-2 flex flex-wrap gap-1">
+                            <p className="text-slate-700 font-medium text-base mb-4 leading-relaxed">{currentTab.helpText}</p>
+                            <div className="flex flex-wrap gap-2">
                                 {currentTab.columns.map(col => (
                                     <span
                                         key={col.key}
-                                        className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${col.required
-                                            ? `bg-${currentTab.color}-200 text-${currentTab.color}-800 font-bold`
-                                            : `bg-${currentTab.color}-100 text-${currentTab.color}-600`
+                                        className={`text-xs px-3 py-1.5 rounded-lg font-mono tracking-tight ${col.required
+                                            ? 'bg-orange-100 text-orange-800 font-bold border border-orange-200'
+                                            : 'bg-slate-100 text-slate-600 font-medium border border-slate-200'
                                             }`}
                                     >
                                         {col.label}{col.required ? ' *' : ''}
@@ -757,18 +774,20 @@ const DataImport = () => {
 
                     {/* Paste area */}
                     <div
-                        className="flex-1 relative border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-text group"
+                        className="relative border-2 border-dashed border-slate-300 rounded-3xl bg-white hover:border-orange-400 hover:bg-orange-50/10 transition-all cursor-text group min-h-[400px] flex flex-col shadow-sm"
                         onClick={() => textareaRef.current?.focus()}
                     >
                         {!rawText && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <ClipboardPaste size={36} className="text-indigo-500" />
+                                <div className="w-24 h-24 bg-slate-50 rounded-3xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-orange-50 transition-all duration-300 border border-slate-100">
+                                    <ClipboardPaste size={40} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-700 mb-1">Pega tus datos aquí</h3>
-                                <p className="text-slate-500 text-sm mb-4">Ctrl+V desde Excel, SAP o cualquier hoja de cálculo</p>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs text-slate-400">— o —</span>
+                                <h3 className="text-2xl font-black text-slate-800 mb-2">Pega tus datos aquí</h3>
+                                <p className="text-slate-500 text-base mb-6 font-medium">Ctrl+V desde Excel, SAP o cualquier hoja de cálculo</p>
+                                <div className="flex items-center gap-4 w-64">
+                                    <div className="h-px bg-slate-200 flex-1"></div>
+                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">O</span>
+                                    <div className="h-px bg-slate-200 flex-1"></div>
                                 </div>
                             </div>
                         )}
@@ -777,16 +796,16 @@ const DataImport = () => {
                             value={rawText}
                             onChange={(e) => setRawText(e.target.value)}
                             onPaste={handlePaste}
-                            className="w-full h-full min-h-[300px] bg-transparent p-4 resize-none outline-none font-mono text-xs text-slate-700 placeholder:text-transparent"
+                            className="w-full h-full flex-1 bg-transparent p-6 resize-none outline-none font-mono text-sm text-slate-700 placeholder:text-transparent rounded-3xl"
                             placeholder="Pega datos aquí..."
                         />
                     </div>
 
                     {/* Acciones */}
-                    <div className="flex gap-3 items-center">
-                        <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium text-sm cursor-pointer hover:bg-slate-50 transition-colors">
-                            <Upload size={16} />
-                            Subir CSV
+                    <div className="flex flex-wrap gap-4 items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+                        <label className="flex items-center gap-2 px-6 py-3.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl text-slate-700 font-bold text-sm cursor-pointer hover:bg-slate-100 transition-colors">
+                            <Upload size={18} />
+                            Subir Archivo CSV
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -797,32 +816,30 @@ const DataImport = () => {
                         </label>
 
                         {rawText && (
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-4">
                                 {activeTab === 'nv' && (
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200 cursor-pointer select-none">
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-amber-50 px-4 py-3 rounded-2xl border border-amber-200 cursor-pointer select-none font-medium hover:bg-amber-100 transition-colors">
                                         <input
                                             type="checkbox"
                                             checked={skipFirstColumn}
                                             onChange={(e) => {
                                                 setSkipFirstColumn(e.target.checked);
-                                                // Si ya hay texto, reparsear automáticamente
                                                 if (rawText) {
-                                                    // Pequeño hack para forzar update
                                                     setTimeout(() => parseData(rawText), 50);
                                                 }
                                             }}
-                                            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                                            className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500 border-amber-300"
                                         />
                                         <span>Mi Excel <strong>NO</strong> tiene fecha al inicio</span>
                                     </label>
                                 )}
                                 {activeTab === 'nv' && (
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-rose-50 px-3 py-2 rounded-lg border border-rose-200 cursor-pointer select-none" title="Si activas esto, los ítems de estas N.V. que NO vengan en el Excel se marcarán como CANCELADOS automáticamente.">
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-rose-50 px-4 py-3 rounded-2xl border border-rose-200 cursor-pointer select-none font-medium hover:bg-rose-100 transition-colors" title="Si activas esto, los ítems de estas N.V. que NO vengan en el Excel se marcarán como CANCELADOS automáticamente.">
                                         <input
                                             type="checkbox"
                                             checked={syncDeleted}
                                             onChange={(e) => setSyncDeleted(e.target.checked)}
-                                            className="w-4 h-4 text-rose-600 rounded focus:ring-rose-500"
+                                            className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500 border-rose-300"
                                         />
                                         <span>Sync: <strong>Cancelar</strong> lo que no venga</span>
                                     </label>
@@ -830,9 +847,9 @@ const DataImport = () => {
                                 <button
                                     onClick={() => parseData(rawText)}
                                     disabled={isParsing}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-8 py-3.5 bg-slate-900 hover:bg-orange-600 text-white rounded-2xl font-black text-base shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all disabled:opacity-50"
                                 >
-                                    {isParsing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                                    {isParsing ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
                                     Procesar Datos
                                 </button>
                             </div>
@@ -843,65 +860,65 @@ const DataImport = () => {
 
             {/* ── STEP 2: PREVIEW ── */}
             {step === 'preview' && parsedRows.length > 0 && (
-                <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+                <div className="flex flex-col gap-6 relative z-10">
                     {/* Stats bar */}
-                    <div className="flex gap-3">
-                        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                            <Database size={16} className="text-slate-400" />
-                            <span className="text-sm font-medium text-slate-600">Total: <strong className="text-slate-800">{stats.total}</strong></span>
+                    <div className="flex flex-wrap gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm items-center">
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                            <Database size={20} className="text-slate-400" />
+                            <span className="text-sm font-medium text-slate-600">Total: <strong className="text-lg text-slate-800">{stats.total}</strong></span>
                         </div>
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                            <CheckCircle size={16} className="text-emerald-500" />
-                            <span className="text-sm font-medium text-emerald-700">Nuevas: <strong>{stats.new}</strong></span>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                            <CheckCircle size={20} className="text-emerald-500" />
+                            <span className="text-sm font-medium text-emerald-700">Nuevas: <strong className="text-lg">{stats.new}</strong></span>
                         </div>
                         {stats.update > 0 && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                                <RefreshCw size={16} className="text-blue-500" />
-                                <span className="text-sm font-medium text-blue-700">Actualizar: <strong>{stats.update}</strong></span>
+                            <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                                <RefreshCw size={20} className="text-blue-500" />
+                                <span className="text-sm font-medium text-blue-700">Actualizar: <strong className="text-lg">{stats.update}</strong></span>
                             </div>
                         )}
                         {stats.existing > 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                                <SkipForward size={16} className="text-amber-500" />
-                                <span className="text-sm font-medium text-amber-700">Ya existen: <strong>{stats.existing}</strong></span>
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                                <SkipForward size={20} className="text-amber-500" />
+                                <span className="text-sm font-medium text-amber-700">Ya existen: <strong className="text-lg">{stats.existing}</strong></span>
                             </div>
                         )}
                         {stats.deleted > 0 && (
-                            <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                                <Trash2 size={16} className="text-rose-500" />
-                                <span className="text-sm font-medium text-rose-700">Eliminadas: <strong>{stats.deleted}</strong> (Ignoradas)</span>
+                            <div className="bg-rose-50 border border-rose-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                                <Trash2 size={20} className="text-rose-500" />
+                                <span className="text-sm font-medium text-rose-700">Eliminadas: <strong className="text-lg">{stats.deleted}</strong></span>
                             </div>
                         )}
                         {stats.error > 0 && (
-                            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2">
-                                <XCircle size={16} className="text-red-500" />
-                                <span className="text-sm font-medium text-red-700">Errores: <strong>{stats.error}</strong></span>
+                            <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+                                <XCircle size={20} className="text-red-500" />
+                                <span className="text-sm font-medium text-red-700">Errores: <strong className="text-lg">{stats.error}</strong></span>
                             </div>
                         )}
                         <div className="flex-1" />
                         <button
                             onClick={handleUpload}
                             disabled={isLoading || (stats.new === 0 && stats.update === 0)}
-                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-200 transition-all disabled:shadow-none"
+                            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 text-white rounded-2xl font-black text-lg flex items-center gap-3 shadow-lg shadow-emerald-500/30 transition-all disabled:shadow-none"
                         >
                             {isLoading ? (
-                                <><Loader2 size={18} className="animate-spin" /> Cargando...</>
+                                <><Loader2 size={22} className="animate-spin" /> Cargando a BD...</>
                             ) : (
-                                <><Upload size={18} /> Cargar {stats.new + stats.update} {stats.new + stats.update === 1 ? 'registro' : 'registros'}</>
+                                <><Upload size={22} /> Confirmar Carga ({stats.new + stats.update})</>
                             )}
                         </button>
                     </div>
 
                     {/* Tabla preview */}
-                    <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div className="overflow-auto flex-1">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider sticky top-0 z-10">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[60vh]">
+                        <div className="overflow-auto flex-1 p-2">
+                            <table className="w-full text-sm text-left border-collapse">
+                                <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-black tracking-wider sticky top-0 z-10 rounded-xl">
                                     <tr>
-                                        <th className="px-3 py-2.5 font-medium w-10">#</th>
-                                        <th className="px-3 py-2.5 font-medium w-16">Estado</th>
-                                        {currentTab.columns.map(col => (
-                                            <th key={col.key} className="px-3 py-2.5 font-medium whitespace-nowrap">
+                                        <th className="px-4 py-4 w-12 rounded-tl-xl">#</th>
+                                        <th className="px-4 py-4 w-24">Estado</th>
+                                        {currentTab.columns.map((col, i) => (
+                                            <th key={col.key} className={`px-4 py-4 whitespace-nowrap ${i === currentTab.columns.length - 1 ? 'rounded-tr-xl' : ''}`}>
                                                 {col.label}
                                             </th>
                                         ))}
@@ -911,24 +928,24 @@ const DataImport = () => {
                                     {parsedRows.map((row, idx) => {
                                         const status = rowStatuses[idx] || 'new';
                                         const bgClass = {
-                                            'new': 'bg-emerald-50/50',
-                                            'update': 'bg-blue-50/50',
-                                            'existing': 'bg-amber-50/50',
-                                            'deleted': 'bg-rose-50/50',
-                                            'loaded': 'bg-blue-50/50',
-                                            'error': 'bg-red-50/50',
+                                            'new': 'bg-emerald-50/30 hover:bg-emerald-50',
+                                            'update': 'bg-blue-50/30 hover:bg-blue-50',
+                                            'existing': 'bg-amber-50/30 hover:bg-amber-50',
+                                            'deleted': 'bg-rose-50/30 hover:bg-rose-50',
+                                            'loaded': 'bg-blue-50/30 hover:bg-blue-50',
+                                            'error': 'bg-red-50/30 hover:bg-red-50',
                                         }[status];
                                         const statusIcon = {
-                                            'new': <CheckCircle size={14} className="text-emerald-500" />,
-                                            'update': <RefreshCw size={14} className="text-blue-500" />,
-                                            'existing': <SkipForward size={14} className="text-amber-500" />,
-                                            'deleted': <Trash2 size={14} className="text-rose-500" />,
-                                            'loaded': <Check size={14} className="text-blue-500" />,
-                                            'error': <XCircle size={14} className="text-red-500" />,
+                                            'new': <CheckCircle size={16} className="text-emerald-500" />,
+                                            'update': <RefreshCw size={16} className="text-blue-500" />,
+                                            'existing': <SkipForward size={16} className="text-amber-500" />,
+                                            'deleted': <Trash2 size={16} className="text-rose-500" />,
+                                            'loaded': <Check size={16} className="text-blue-500" />,
+                                            'error': <XCircle size={16} className="text-red-500" />,
                                         }[status];
                                         const statusLabel = {
                                             'new': 'Nueva',
-                                            'update': 'Actualizar',
+                                            'update': 'Actualiza',
                                             'existing': 'Existe',
                                             'deleted': 'Eliminada',
                                             'loaded': 'Cargada',
@@ -936,20 +953,20 @@ const DataImport = () => {
                                         }[status];
 
                                         return (
-                                            <tr key={idx} className={`${bgClass} hover:bg-slate-50 transition-colors`}>
-                                                <td className="px-3 py-2 text-slate-400 text-xs">{idx + 1}</td>
-                                                <td className="px-3 py-2">
-                                                    <div className="flex items-center gap-1" title={statusLabel}>
+                                            <tr key={idx} className={`${bgClass} transition-colors`}>
+                                                <td className="px-4 py-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-1.5" title={statusLabel}>
                                                         {statusIcon}
-                                                        <span className="text-[10px] font-medium">{statusLabel}</span>
+                                                        <span className="text-xs font-bold">{statusLabel}</span>
                                                     </div>
                                                 </td>
                                                 {currentTab.columns.map(col => (
-                                                    <td key={col.key} className="px-3 py-2 text-slate-700 whitespace-nowrap max-w-[200px] truncate" title={String(row[col.key] || '')}>
+                                                    <td key={col.key} className="px-4 py-3 text-slate-700 whitespace-nowrap max-w-[200px] truncate" title={String(row[col.key] || '')}>
                                                         {col.type === 'number' ? (
-                                                            <span className="font-mono">{row[col.key]}</span>
+                                                            <span className="font-mono font-bold bg-white px-2 py-1 rounded border border-slate-200">{row[col.key]}</span>
                                                         ) : (
-                                                            row[col.key] || <span className="text-slate-300">-</span>
+                                                            <span className="font-medium">{row[col.key] || <span className="text-slate-300">-</span>}</span>
                                                         )}
                                                     </td>
                                                 ))}
@@ -965,64 +982,64 @@ const DataImport = () => {
 
             {/* ── STEP 3: RESULTADO ── */}
             {step === 'done' && loadResult && (
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="max-w-lg w-full text-center">
-                        <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${loadResult.success ? 'bg-emerald-100' : 'bg-red-100'
+                <div className="flex flex-col items-center justify-center py-12 relative z-10 animate-in zoom-in-95 duration-500">
+                    <div className="max-w-2xl w-full text-center bg-white p-10 rounded-[3rem] border border-slate-200 shadow-xl">
+                        <div className={`w-28 h-28 mx-auto rounded-[2rem] flex items-center justify-center mb-8 shadow-inner border-4 ${loadResult.success ? 'bg-emerald-50 border-emerald-100 text-emerald-500' : 'bg-red-50 border-red-100 text-red-500'
                             }`}>
                             {loadResult.success ? (
-                                <CheckCircle size={48} className="text-emerald-500" />
+                                <CheckCircle size={56} strokeWidth={2.5} />
                             ) : (
-                                <AlertCircle size={48} className="text-red-500" />
+                                <AlertCircle size={56} strokeWidth={2.5} />
                             )}
                         </div>
 
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                            {loadResult.success ? '¡Carga Completada!' : 'Error en la Carga'}
+                        <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">
+                            {loadResult.success ? '¡Carga Exitosa!' : 'Error en la Carga'}
                         </h2>
-                        <p className="text-slate-600 mb-6">{loadResult.message}</p>
+                        <p className="text-slate-500 text-lg mb-10 font-medium">{loadResult.message}</p>
 
                         {/* Stats cards */}
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                                <p className="text-3xl font-black text-emerald-600">{loadResult.inserted}</p>
-                                <p className="text-xs font-medium text-emerald-700">Cargados</p>
+                        <div className="grid grid-cols-3 gap-6 mb-10">
+                            <div className="bg-emerald-50 border-2 border-emerald-100 rounded-3xl p-6 transform hover:scale-105 transition-transform">
+                                <p className="text-5xl font-black text-emerald-600 mb-1">{loadResult.inserted}</p>
+                                <p className="text-sm font-bold text-emerald-700 uppercase tracking-widest">Cargados</p>
                             </div>
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                <p className="text-3xl font-black text-amber-600">{loadResult.skipped}</p>
-                                <p className="text-xs font-medium text-amber-700">Ignorados</p>
-                                {stats.deleted > 0 && <p className="text-[10px] text-rose-500 mt-1">({stats.deleted} eliminados prev.)</p>}
+                            <div className="bg-amber-50 border-2 border-amber-100 rounded-3xl p-6 transform hover:scale-105 transition-transform">
+                                <p className="text-5xl font-black text-amber-600 mb-1">{loadResult.skipped}</p>
+                                <p className="text-sm font-bold text-amber-700 uppercase tracking-widest">Ignorados</p>
+                                {stats.deleted > 0 && <p className="text-xs font-bold text-rose-500 mt-2 bg-rose-100 py-1 rounded-lg">({stats.deleted} eliminados)</p>}
                             </div>
-                            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                                <p className="text-3xl font-black text-red-600">{loadResult.errors}</p>
-                                <p className="text-xs font-medium text-red-700">Errores</p>
+                            <div className="bg-red-50 border-2 border-red-100 rounded-3xl p-6 transform hover:scale-105 transition-transform">
+                                <p className="text-5xl font-black text-red-600 mb-1">{loadResult.errors}</p>
+                                <p className="text-sm font-bold text-red-700 uppercase tracking-widest">Errores</p>
                             </div>
                         </div>
 
                         {loadResult.errorDetails?.length > 0 && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left mb-6">
-                                <p className="text-xs font-bold text-red-800 mb-2">Detalle de errores:</p>
+                            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-left mb-8 max-h-48 overflow-y-auto">
+                                <p className="text-sm font-black text-red-800 mb-3 uppercase tracking-wider">Detalle Técnico:</p>
                                 {loadResult.errorDetails.map((e, i) => (
-                                    <p key={i} className="text-xs text-red-600 font-mono">{e}</p>
+                                    <p key={i} className="text-xs text-red-600 font-mono mb-1 bg-white p-2 rounded-lg border border-red-100">{e}</p>
                                 ))}
                             </div>
                         )}
 
-                        <div className="flex gap-3 justify-center">
+                        <div className="flex justify-center">
                             {loadResult.success ? (
                                 <button
                                     onClick={handleReset}
-                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition-all"
+                                    className="px-10 py-5 bg-slate-900 hover:bg-orange-600 text-white rounded-2xl font-black text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center gap-3"
                                 >
-                                    <RefreshCw size={16} className="inline mr-2" />
-                                    Nueva Carga
+                                    <RefreshCw size={24} />
+                                    Realizar Nueva Carga
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => setStep('paste')}
-                                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg transition-all"
+                                    className="px-10 py-5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all flex items-center gap-3"
                                 >
-                                    <XCircle size={16} className="inline mr-2" />
-                                    Cerrar Error e Intentar Nuevamente
+                                    <XCircle size={24} />
+                                    Cerrar y Corregir Errores
                                 </button>
                             )}
                         </div>
