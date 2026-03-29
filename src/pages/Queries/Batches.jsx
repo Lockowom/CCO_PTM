@@ -249,12 +249,11 @@ const Batches = () => {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/30 mb-8 transform hover:scale-105 transition-transform">
                 <Layers size={40} strokeWidth={1.5} />
               </div>
-              <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
-                Lotes - <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Series</span>
+              <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-6 leading-tight flex items-center justify-center gap-3 cursor-default">
+                <span className="inline-block transition-transform duration-300 hover:-translate-y-3 hover:-rotate-6 hover:scale-110">Lotes</span>
+                <span className="inline-block text-orange-400 animate-pulse">-</span>
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500 transition-transform duration-300 hover:-translate-y-3 hover:rotate-6 hover:scale-110">Series</span>
               </h1>
-              <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-                El motor de búsqueda unificado para tu inventario. Encuentra Partidas, Series, Farmapack y Dimensiones en milisegundos.
-              </p>
             </div>
           )}
 
