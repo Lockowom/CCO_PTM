@@ -61,7 +61,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '📦 Pega los datos de partidas. Si ya existe un registro con el mismo Código y Partida, se actualizará (Upsert).',
+        helpText: '📦 Ingresa los datos de partidas. Si el registro ya existe, su información se actualizará automáticamente.',
         smartDedup: false,
     },
     {
@@ -83,7 +83,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '🔢 Pega los datos de series. Si una serie ya existe, se actualizarán sus datos (Upsert).',
+        helpText: '🔢 Ingresa los datos de series. El sistema actualizará automáticamente las series existentes.',
         smartDedup: false, // Usar upsert nativo de base de datos
     },
     {
@@ -106,7 +106,7 @@ const IMPORT_TABS = [
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
             { key: 'estado', label: 'Estado', required: false, type: 'text' },
         ],
-        helpText: '💊 Pega los datos de Farmapack. Se actualizarán (Upsert) los registros existentes del mismo código+lote.',
+        helpText: '💊 Ingresa la información de Farmapack. Los registros con el mismo código y lote serán actualizados inteligentemente.',
         smartDedup: false,
     },
     {
@@ -128,7 +128,7 @@ const IMPORT_TABS = [
             { key: 'cantidad', label: 'Cantidad Contada', required: true, type: 'number' },
             { key: 'descripcion', label: 'DESCRIPCION', required: false, type: 'text' },
         ],
-        helpText: '🏭 Pega el inventario completo. Se guardará TODO tal cual, permitiendo duplicados y fechas inválidas (se guardarán como vacías).',
+        helpText: '🏭 Ingresa el inventario completo. Se guardarán todos los registros de forma directa, adaptando las fechas automáticamente.',
         smartDedup: false,
     },
     {
@@ -696,8 +696,8 @@ const DataImport = () => {
                                 <Upload size={28} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Carga de <span className="text-orange-500">Datos</span></h1>
-                                <p className="text-slate-500 font-medium mt-1">Pega desde Excel → Carga directo a Supabase</p>
+                                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Importación <span className="text-orange-500">Inteligente</span></h1>
+                                <p className="text-slate-500 font-medium mt-1">Sincroniza tus datos masivamente de forma segura</p>
                             </div>
                         </div>
                         {step !== 'paste' && (
@@ -748,109 +748,118 @@ const DataImport = () => {
 
             {/* ── STEP 1: PASTE ── */}
             {step === 'paste' && (
-                <div className="flex flex-col gap-6 relative z-10">
-                    {/* Help text */}
-                    <div className="bg-white border border-slate-200 rounded-3xl p-6 flex items-start gap-4 shadow-sm">
-                        <div className="bg-orange-50 p-2.5 rounded-xl text-orange-500 flex-shrink-0 mt-0.5">
-                            <Info size={24} />
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col lg:flex-row relative z-10">
+                    {/* Panel Izquierdo: Instrucciones */}
+                    <div className="lg:w-2/5 bg-slate-50/80 p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
+                        <div className="bg-gradient-to-br from-orange-100 to-amber-50 text-orange-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-8 shadow-sm border border-orange-200/50">
+                            <Info size={28} strokeWidth={2.5} />
                         </div>
-                        <div>
-                            <p className="text-slate-700 font-medium text-base mb-4 leading-relaxed">{currentTab.helpText}</p>
-                            <div className="flex flex-wrap gap-2">
+                        <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">Instrucciones de Carga</h3>
+                        <p className="text-slate-600 text-base leading-relaxed mb-8 flex-1 font-medium">
+                            {currentTab.helpText}
+                        </p>
+
+                        <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Estructura de Columnas</p>
+                            <div className="flex flex-wrap gap-2.5">
                                 {currentTab.columns.map(col => (
                                     <span
                                         key={col.key}
-                                        className={`text-xs px-3 py-1.5 rounded-lg font-mono tracking-tight ${col.required
-                                            ? 'bg-orange-100 text-orange-800 font-bold border border-orange-200'
-                                            : 'bg-slate-100 text-slate-600 font-medium border border-slate-200'
+                                        className={`text-xs px-3 py-1.5 rounded-lg font-mono tracking-tight transition-all hover:scale-105 cursor-default ${col.required
+                                            ? 'bg-orange-50 text-orange-700 font-bold border border-orange-200 shadow-sm'
+                                            : 'bg-slate-50 text-slate-600 border border-slate-200'
                                             }`}
                                     >
-                                        {col.label}{col.required ? ' *' : ''}
+                                        {col.label}{col.required ? <span className="text-orange-500 ml-1">*</span> : ''}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     </div>
 
-                    {/* Paste area */}
-                    <div
-                        className="relative border-2 border-dashed border-slate-300 rounded-3xl bg-white hover:border-orange-400 hover:bg-orange-50/10 transition-all cursor-text group min-h-[400px] flex flex-col shadow-sm"
-                        onClick={() => textareaRef.current?.focus()}
-                    >
-                        {!rawText && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <div className="w-24 h-24 bg-slate-50 rounded-3xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-orange-50 transition-all duration-300 border border-slate-100">
-                                    <ClipboardPaste size={40} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
-                                </div>
-                                <h3 className="text-2xl font-black text-slate-800 mb-2">Pega tus datos aquí</h3>
-                                <p className="text-slate-500 text-base mb-6 font-medium">Ctrl+V desde Excel, SAP o cualquier hoja de cálculo</p>
-                                <div className="flex items-center gap-4 w-64">
-                                    <div className="h-px bg-slate-200 flex-1"></div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">O</span>
-                                    <div className="h-px bg-slate-200 flex-1"></div>
-                                </div>
-                            </div>
-                        )}
-                        <textarea
-                            ref={textareaRef}
-                            value={rawText}
-                            onChange={(e) => setRawText(e.target.value)}
-                            onPaste={handlePaste}
-                            className="w-full h-full flex-1 bg-transparent p-6 resize-none outline-none font-mono text-sm text-slate-700 placeholder:text-transparent rounded-3xl"
-                            placeholder="Pega datos aquí..."
-                        />
-                    </div>
+                    {/* Panel Derecho: Área de Pegado */}
+                    <div className="lg:w-3/5 p-8 md:p-10 flex flex-col bg-white">
+                        <div
+                            className="relative flex-1 min-h-[450px] border-2 border-dashed border-slate-300 hover:border-orange-400 rounded-3xl bg-slate-50/50 hover:bg-orange-50/10 transition-all cursor-text group flex flex-col shadow-inner overflow-hidden"
+                            onClick={() => textareaRef.current?.focus()}
+                        >
+                            {!rawText && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
+                                    <div className="w-20 h-20 bg-white rounded-2xl shadow-md flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-orange-50 group-hover:text-orange-500 transition-all duration-300 border border-slate-100 text-slate-400">
+                                        <ClipboardPaste size={36} strokeWidth={2} />
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-800 mb-2">Haz clic y pega tus datos</h3>
+                                    <p className="text-slate-500 text-sm mb-6 font-medium max-w-xs">Usa <kbd className="bg-slate-100 px-2 py-1 rounded-md border border-slate-200 text-xs mx-1">Ctrl+V</kbd> o <kbd className="bg-slate-100 px-2 py-1 rounded-md border border-slate-200 text-xs mx-1">Cmd+V</kbd> para insertar desde tu hoja de cálculo</p>
+                                    
+                                    <div className="flex items-center gap-4 w-full max-w-[200px]">
+                                        <div className="h-px bg-slate-200 flex-1"></div>
+                                        <span className="text-xs font-black text-slate-300 uppercase tracking-widest">O</span>
+                                        <div className="h-px bg-slate-200 flex-1"></div>
+                                    </div>
 
-                    {/* Acciones */}
-                    <div className="flex flex-wrap gap-4 items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
-                        <label className="flex items-center gap-2 px-6 py-3.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl text-slate-700 font-bold text-sm cursor-pointer hover:bg-slate-100 transition-colors">
-                            <Upload size={18} />
-                            Subir Archivo CSV
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".csv,.tsv,.txt"
-                                onChange={handleFileUpload}
-                                className="hidden"
+                                    <label className="mt-6 flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 hover:border-orange-300 hover:text-orange-600 rounded-xl text-slate-600 font-bold text-sm cursor-pointer shadow-sm transition-all pointer-events-auto">
+                                        <Upload size={18} />
+                                        Subir archivo CSV
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept=".csv,.tsv,.txt"
+                                            onChange={handleFileUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            )}
+                            <textarea
+                                ref={textareaRef}
+                                value={rawText}
+                                onChange={(e) => setRawText(e.target.value)}
+                                onPaste={handlePaste}
+                                className="w-full h-full flex-1 bg-transparent p-6 resize-none outline-none font-mono text-sm text-slate-700 placeholder:text-transparent rounded-3xl z-10"
+                                placeholder="Pega datos aquí..."
                             />
-                        </label>
+                        </div>
 
+                        {/* Controles de Acción (Solo visibles cuando hay texto) */}
                         {rawText && (
-                            <div className="flex flex-wrap items-center gap-4">
-                                {activeTab === 'nv' && (
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-amber-50 px-4 py-3 rounded-2xl border border-amber-200 cursor-pointer select-none font-medium hover:bg-amber-100 transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={skipFirstColumn}
-                                            onChange={(e) => {
-                                                setSkipFirstColumn(e.target.checked);
-                                                if (rawText) {
-                                                    setTimeout(() => parseData(rawText), 50);
-                                                }
-                                            }}
-                                            className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500 border-amber-300"
-                                        />
-                                        <span>Mi Excel <strong>NO</strong> tiene fecha al inicio</span>
-                                    </label>
-                                )}
-                                {activeTab === 'nv' && (
-                                    <label className="flex items-center gap-2 text-sm text-slate-700 bg-rose-50 px-4 py-3 rounded-2xl border border-rose-200 cursor-pointer select-none font-medium hover:bg-rose-100 transition-colors" title="Si activas esto, los ítems de estas N.V. que NO vengan en el Excel se marcarán como CANCELADOS automáticamente.">
-                                        <input
-                                            type="checkbox"
-                                            checked={syncDeleted}
-                                            onChange={(e) => setSyncDeleted(e.target.checked)}
-                                            className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500 border-rose-300"
-                                        />
-                                        <span>Sync: <strong>Cancelar</strong> lo que no venga</span>
-                                    </label>
-                                )}
+                            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <div className="flex flex-wrap gap-3">
+                                    {activeTab === 'nv' && (
+                                        <label className="flex items-center gap-2 text-xs text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200 cursor-pointer select-none font-bold hover:bg-slate-50 transition-colors shadow-sm">
+                                            <input
+                                                type="checkbox"
+                                                checked={skipFirstColumn}
+                                                onChange={(e) => {
+                                                    setSkipFirstColumn(e.target.checked);
+                                                    if (rawText) {
+                                                        setTimeout(() => parseData(rawText), 50);
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 border-slate-300"
+                                            />
+                                            <span>Omitir 1ra columna (Sin fecha)</span>
+                                        </label>
+                                    )}
+                                    {activeTab === 'nv' && (
+                                        <label className="flex items-center gap-2 text-xs text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200 cursor-pointer select-none font-bold hover:bg-slate-50 transition-colors shadow-sm" title="Cancela los ítems que no estén en la selección">
+                                            <input
+                                                type="checkbox"
+                                                checked={syncDeleted}
+                                                onChange={(e) => setSyncDeleted(e.target.checked)}
+                                                className="w-4 h-4 text-rose-500 rounded focus:ring-rose-500 border-slate-300"
+                                            />
+                                            <span>Autocancelar faltantes</span>
+                                        </label>
+                                    )}
+                                </div>
+                                
                                 <button
                                     onClick={() => parseData(rawText)}
                                     disabled={isParsing}
-                                    className="flex items-center gap-2 px-8 py-3.5 bg-slate-900 hover:bg-orange-600 text-white rounded-2xl font-black text-base shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white rounded-xl font-black text-sm shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all disabled:opacity-50 ml-auto"
                                 >
-                                    {isParsing ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
-                                    Procesar Datos
+                                    {isParsing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+                                    Analizar Datos
                                 </button>
                             </div>
                         )}
@@ -902,9 +911,9 @@ const DataImport = () => {
                             className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 text-white rounded-2xl font-black text-lg flex items-center gap-3 shadow-lg shadow-emerald-500/30 transition-all disabled:shadow-none"
                         >
                             {isLoading ? (
-                                <><Loader2 size={22} className="animate-spin" /> Cargando a BD...</>
+                                <><Loader2 size={22} className="animate-spin" /> Sincronizando datos...</>
                             ) : (
-                                <><Upload size={22} /> Confirmar Carga ({stats.new + stats.update})</>
+                                <><Upload size={22} /> Confirmar Sincronización ({stats.new + stats.update})</>
                             )}
                         </button>
                     </div>
