@@ -13,20 +13,18 @@ const Batches = () => {
     partidas: [],
     series: [],
     farmapack: [],
-    peso: [],
-    ubicaciones: []
+    peso: []
   });
   const [searched, setSearched] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [subFilter, setSubFilter] = useState(''); // Estado para la búsqueda rápida interna
 
-  // Definición de Vistas (Tabs) modernizadas
+  // Definición de Vistas (Tabs) modernizadas sin Ubicaciones
   const TABS = [
     { id: 'partidas', label: 'Partidas', icon: Layers, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
     { id: 'series', label: 'Series / SN', icon: Barcode, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
     { id: 'farmapack', label: 'Farmapack', icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    { id: 'peso', label: 'Pesos / Dims', icon: Scale, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-    { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' }
+    { id: 'peso', label: 'Pesos / Dims', icon: Scale, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' }
   ];
 
   const handleSearch = async (e) => {
@@ -37,7 +35,7 @@ const Batches = () => {
     setSearched(true);
     
     const term = `%${searchTerm.trim()}%`;
-    const newData = { partidas: [], series: [], farmapack: [], peso: [], ubicaciones: [] };
+    const newData = { partidas: [], series: [], farmapack: [], peso: [] };
 
     try {
       const searchTable = async (table, cols) => {
@@ -56,19 +54,17 @@ const Batches = () => {
         }
       };
 
-      const [p, s, f, w, u] = await Promise.all([
+      const [p, s, f, w] = await Promise.all([
         searchTable('tms_partidas', ['codigo_producto', 'producto']),
         searchTable('tms_series', ['codigo_producto', 'producto', 'serie']),
         searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']),
-        searchTable('tms_pesos', ['codigo_producto', 'descripcion']),
-        searchTable('tms_ubicaciones_historial', ['codigo_producto', 'descripcion', 'ubicacion'])
+        searchTable('tms_pesos', ['codigo_producto', 'descripcion'])
       ]);
 
       newData.partidas = p;
       newData.series = s;
       newData.farmapack = f;
       newData.peso = w; 
-      newData.ubicaciones = u;
 
       setData(newData);
       setLastUpdated(new Date());
@@ -171,14 +167,6 @@ const Batches = () => {
           Editar <ChevronRight size={14} />
         </button>
       )}
-    ],
-    ubicaciones: [
-      { header: 'Ubicación', accessor: 'ubicacion', render: r => <span className="font-mono text-sm font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 shadow-sm">{r.ubicacion}</span> },
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs text-slate-500">{r.codigo_producto}</span> },
-      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-semibold text-slate-900">{r.descripcion}</span> },
-      { header: 'Cantidad', accessor: 'cantidad', render: r => <span className="font-black text-slate-800 text-base">{r.cantidad}</span> },
-      { header: 'Referencia', accessor: 'serie', render: r => <span className="text-slate-500 text-xs">{r.serie || r.partida || 'Base'}</span> },
-      { header: 'Actualizado', accessor: 'fecha_registro', render: r => <span className="text-xs text-slate-400">{new Date(r.fecha_registro).toLocaleString()}</span> }
     ]
   };
 
