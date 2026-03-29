@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle, Edit, Trash2, Save, X, Check, Download } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle, Edit, Trash2, Save, X, Check, Download, LayoutGrid, List } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext'; // Importar AuthContext
 
@@ -10,6 +10,8 @@ const LocationsQuery = () => {
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'table'
+  const [groupByLocation, setGroupByLocation] = useState(false); // Nuevo filtro de agrupación
 
   // Estado para edición
   const [editingId, setEditingId] = useState(null);
@@ -294,6 +296,18 @@ const LocationsQuery = () => {
     }
   ];
 
+  // Agrupación de datos por ubicación
+  const groupedResults = useMemo(() => {
+    if (!groupByLocation) return { 'Todas': results };
+    
+    return results.reduce((acc, curr) => {
+      const loc = curr.ubicacion || 'SIN UBICACIÓN';
+      if (!acc[loc]) acc[loc] = [];
+      acc[loc].push(curr);
+      return acc;
+    }, {});
+  }, [results, groupByLocation]);
+
   return (
     <div className="space-y-8">
       {/* Header Moderno */}
@@ -326,7 +340,7 @@ const LocationsQuery = () => {
       </div>
 
       {/* Barra de Búsqueda Flotante */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col md:flex-row gap-2 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col xl:flex-row gap-3 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
         <div className="flex-1 relative w-full group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
           <form onSubmit={handleSearch} className="w-full">
@@ -340,7 +354,48 @@ const LocationsQuery = () => {
             />
           </form>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        
+        {/* Controles de Vista y Acciones */}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+          {/* Toggle Agrupación */}
+          {results.length > 0 && (
+            <button
+              onClick={() => setGroupByLocation(!groupByLocation)}
+              className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all flex-1 md:flex-none justify-center border ${
+                groupByLocation 
+                  ? 'bg-orange-50 text-orange-600 border-orange-200 shadow-sm' 
+                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Layers size={20} />
+              <span className="hidden sm:inline">Agrupar Pasillos</span>
+            </button>
+          )}
+
+          {/* Toggle Vista */}
+          {results.length > 0 && (
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
+                  viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'
+                }`}
+                title="Vista Cuadrícula"
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
+                  viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'
+                }`}
+                title="Vista Tabla"
+              >
+                <List size={18} />
+              </button>
+            </div>
+          )}
+
           {user?.rol === 'ADMIN' && (
             <button 
               onClick={handleDownloadExcel}
@@ -393,89 +448,140 @@ const LocationsQuery = () => {
           <p className="text-slate-400 mt-1">Verifique el código o la ubicación ingresada</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {results.map(row => (
-            <div key={row.id} className={`group bg-white rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
-              editingId === row.id ? 'ring-2 ring-orange-500 border-orange-500' : 'border-slate-200'
-            }`}>
-              {/* Header Card */}
-              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
-                <div>
-                   {editingId === row.id ? (
-                     <input 
-                       type="text" 
-                       value={editLocation} 
-                       onChange={(e) => setEditLocation(e.target.value)}
-                       className="w-full bg-white border-2 border-orange-500 rounded-lg px-2 py-1 font-mono font-black text-orange-700 text-lg uppercase outline-none"
-                       autoFocus
-                     />
-                   ) : (
-                     <div className="flex items-center gap-2 font-mono font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 w-fit">
-                       <MapPin size={16} />
-                       {row.ubicacion}
-                     </div>
-                   )}
-                </div>
-                <div className="flex gap-1">
-                   {editingId === row.id ? (
-                     <>
-                       <button onClick={() => saveEdit(row.id)} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm">
-                         <Check size={18} />
-                       </button>
-                       <button onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-colors">
-                         <X size={18} />
-                       </button>
-                     </>
-                   ) : (
-                     <>
-                       <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
-                         <Edit size={18} />
-                       </button>
-                       <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                         <Trash2 size={18} />
-                       </button>
-                     </>
-                   )}
-                </div>
-              </div>
-
-              {/* Body Card */}
-              <div className="p-5 space-y-4">
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Producto</p>
-                  <p className="font-mono font-bold text-slate-800 text-lg">{row.codigo}</p>
-                  <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-tight mt-1">{row.descripcion}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Cantidad</p>
-                    {editingId === row.id ? (
-                      <input 
-                        type="number" 
-                        value={editQuantity} 
-                        onChange={(e) => setEditQuantity(e.target.value)}
-                        className="w-full bg-white border-2 border-orange-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
-                      />
-                    ) : (
-                      <p className="text-2xl font-black text-slate-800">{row.cantidad}</p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                     <div>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase">Talla</p>
-                       <p className="font-bold text-slate-700 text-sm">{row.talla || '-'}</p>
-                     </div>
-                     <div>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase">Color</p>
-                       <p className="font-bold text-slate-700 text-sm">{row.color || '-'}</p>
-                     </div>
-                  </div>
-                </div>
-              </div>
+        <div className="space-y-8">
+          {Object.entries(groupedResults).map(([locationName, locationItems]) => (
+            <div key={locationName} className="space-y-4">
               
-              {/* Footer Decoration */}
-              <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              {/* Header de Agrupación (Solo si está activo) */}
+              {groupByLocation && (
+                <div className="flex items-center gap-4 py-2 border-b-2 border-orange-100">
+                  <div className="bg-orange-100 text-orange-700 p-2 rounded-xl">
+                    <MapPin size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-wide">{locationName}</h2>
+                    <p className="text-sm text-slate-500 font-bold">{locationItems.length} productos en esta ubicación</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Vista Tabla */}
+              {viewMode === 'table' ? (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          {COLUMNS.map((col, i) => (
+                            <th key={i} className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              {col.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {locationItems.map((row, idx) => (
+                          <tr key={row.id || idx} className="hover:bg-slate-50/50 transition-colors">
+                            {COLUMNS.map((col, cIdx) => (
+                              <td key={cIdx} className="px-4 py-3 whitespace-nowrap">
+                                {col.render ? col.render(row) : <span className="text-slate-600 text-sm">{row[col.accessor] || '-'}</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                /* Vista Grid (Tarjetas Originales) */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {locationItems.map(row => (
+                    <div key={row.id} className={`group bg-white rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
+                      editingId === row.id ? 'ring-2 ring-orange-500 border-orange-500' : 'border-slate-200'
+                    }`}>
+                      {/* Header Card */}
+                      <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
+                        <div>
+                           {editingId === row.id ? (
+                             <input 
+                               type="text" 
+                               value={editLocation} 
+                               onChange={(e) => setEditLocation(e.target.value)}
+                               className="w-full bg-white border-2 border-orange-500 rounded-lg px-2 py-1 font-mono font-black text-orange-700 text-lg uppercase outline-none"
+                               autoFocus
+                             />
+                           ) : (
+                             <div className="flex items-center gap-2 font-mono font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 w-fit">
+                               <MapPin size={16} />
+                               {row.ubicacion}
+                             </div>
+                           )}
+                        </div>
+                        <div className="flex gap-1">
+                           {editingId === row.id ? (
+                             <>
+                               <button onClick={() => saveEdit(row.id)} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm">
+                                 <Check size={18} />
+                               </button>
+                               <button onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-colors">
+                                 <X size={18} />
+                               </button>
+                             </>
+                           ) : (
+                             <>
+                               <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
+                                 <Edit size={18} />
+                               </button>
+                               <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                 <Trash2 size={18} />
+                               </button>
+                             </>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* Body Card */}
+                      <div className="p-5 space-y-4">
+                        <div>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Producto</p>
+                          <p className="font-mono font-bold text-slate-800 text-lg">{row.codigo}</p>
+                          <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-tight mt-1">{row.descripcion}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Cantidad</p>
+                            {editingId === row.id ? (
+                              <input 
+                                type="number" 
+                                value={editQuantity} 
+                                onChange={(e) => setEditQuantity(e.target.value)}
+                                className="w-full bg-white border-2 border-orange-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
+                              />
+                            ) : (
+                              <p className="text-2xl font-black text-slate-800">{row.cantidad}</p>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                             <div>
+                               <p className="text-[10px] font-bold text-slate-400 uppercase">Talla</p>
+                               <p className="font-bold text-slate-700 text-sm">{row.talla || '-'}</p>
+                             </div>
+                             <div>
+                               <p className="text-[10px] font-bold text-slate-400 uppercase">Color</p>
+                               <p className="font-bold text-slate-700 text-sm">{row.color || '-'}</p>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Footer Decoration */}
+                      <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
