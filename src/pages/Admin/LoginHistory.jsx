@@ -158,8 +158,15 @@ const LoginHistory = () => {
           >
             <Activity size={16} />
             Usuarios Activos
-            {view === "active" ? <span className="bg-white/20 text-white px-2.5 py-0.5 rounded-full text-xs shadow-inner"> : <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs shadow-sm">
-              {activeUsers.length}</span>}
+            {view === "active" ? (
+              <span className="bg-white/20 text-white px-2.5 py-0.5 rounded-full text-xs shadow-inner">
+                {activeUsers.length}
+              </span>
+            ) : (
+              <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs shadow-sm">
+                {activeUsers.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setView('history')}
