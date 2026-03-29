@@ -576,17 +576,17 @@ const LayoutPage = () => {
         )}
       </main>
 
-      {/* Modal Detalle - Slide Over Style */}
+      {/* Modal Detalle - Slide Over Style Fijo en Pantalla */}
       {modal.open && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
             onClick={() => setModal({ open: false, ubicacion: '', detalle: null })}
           ></div>
 
-          {/* Drawer Panel */}
-          <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+          {/* Drawer Panel - Fixed height */}
+          <div className="relative w-full max-w-md bg-slate-50 shadow-2xl h-[100dvh] flex flex-col animate-in slide-in-from-right duration-300 pointer-events-auto">
             {/* Header - Estilo oscuro original de la captura */}
             <div className="px-6 py-6 bg-[#1e2330] text-white flex items-start justify-between">
               <div>
