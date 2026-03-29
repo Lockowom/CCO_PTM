@@ -78,9 +78,9 @@ const WmsSettings = () => {
   const TabButton = ({ id, icon, label }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-2 px-6 py-4 font-bold text-sm transition-all border-b-2 ${activeTab === id
-          ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
-          : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+      className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${activeTab === id
+          ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
+          : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
         }`}
     >
       {icon}
@@ -104,7 +104,7 @@ const WmsSettings = () => {
         <button
           onClick={saveSettings}
           disabled={loading}
-          className="save-btn bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50"
+          className="save-btn bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all flex items-center gap-2 disabled:opacity-50"
         >
           {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
           GUARDAR CAMBIOS
@@ -112,7 +112,7 @@ const WmsSettings = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-t-2xl border-b border-slate-200 flex overflow-x-auto">
+      <div className="flex gap-4 overflow-x-auto pb-2 pt-4 no-scrollbar">
         <TabButton id="general" icon={<Warehouse size={18} />} label="General" />
         <TabButton id="inbound" icon={<Truck size={18} />} label="Recepción (Inbound)" />
         <TabButton id="outbound" icon={<Package size={18} />} label="Despacho (Outbound)" />
@@ -120,7 +120,7 @@ const WmsSettings = () => {
       </div>
 
       {/* Content */}
-      <div className="settings-card bg-white rounded-b-2xl shadow-sm border border-slate-200 p-8 min-h-[400px]">
+      <div className="settings-card bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200 p-8 min-h-[400px] mt-4">
 
         {/* GENERAL */}
         {activeTab === 'general' && (
@@ -135,7 +135,7 @@ const WmsSettings = () => {
                     name="warehouse_name"
                     value={config.warehouse_name}
                     onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 rounded-lg font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-3.5 bg-slate-50 border-2 border-transparent rounded-xl font-bold text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm"
                   />
                 </div>
                 <div>
@@ -145,7 +145,7 @@ const WmsSettings = () => {
                     name="warehouse_code"
                     value={config.warehouse_code}
                     onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 rounded-lg font-mono font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50"
+                    className="w-full p-3.5 bg-slate-50 border-2 border-transparent rounded-xl font-mono font-bold text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -158,7 +158,7 @@ const WmsSettings = () => {
                     name="timezone"
                     value={config.timezone}
                     onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 rounded-lg font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    className="w-full p-3.5 bg-slate-50 border-2 border-transparent rounded-xl font-bold text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm cursor-pointer"
                   >
                     <option value="America/Santiago">Santiago (UTC-4)</option>
                     <option value="America/Lima">Lima (UTC-5)</option>
@@ -176,11 +176,11 @@ const WmsSettings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Truck className="text-indigo-500" /> Reglas de Recepción
+                  <Truck className="text-orange-500" /> Reglas de Recepción
                 </h3>
 
                 <div className="space-y-4">
-                  <label className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+                  <label className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-orange-400 hover:shadow-md transition-all">
                     <div>
                       <span className="block text-sm font-bold text-slate-800">Permitir Recepción Ciega</span>
                       <span className="block text-xs text-slate-500 mt-1">Ingresar stock sin orden de compra previa.</span>
@@ -193,7 +193,7 @@ const WmsSettings = () => {
                         onChange={handleChange}
                         className="peer absolute opacity-0 w-0 h-0"
                       />
-                      <span className="block bg-slate-200 w-full h-full rounded-full peer-checked:bg-indigo-600 transition-colors duration-300 shadow-inner"></span>
+                      <span className="block bg-slate-200 w-full h-full rounded-full peer-checked:bg-orange-600 transition-colors duration-300 shadow-inner"></span>
                       <span className="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 peer-checked:translate-x-7 shadow-sm"></span>
                     </div>
                   </label>
@@ -220,22 +220,22 @@ const WmsSettings = () => {
 
               <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Warehouse className="text-indigo-500" /> Estrategia de Putaway
+                  <Warehouse className="text-orange-500" /> Estrategia de Putaway
                 </h3>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Algoritmo de Ubicación Sugerida</label>
                   <div className="space-y-2">
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${config.auto_putaway_strategy === 'NEAREST_EMPTY' ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
-                      <input type="radio" name="auto_putaway_strategy" value="NEAREST_EMPTY" checked={config.auto_putaway_strategy === 'NEAREST_EMPTY'} onChange={handleChange} className="accent-indigo-600" />
+                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${config.auto_putaway_strategy === 'NEAREST_EMPTY' ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-500' : 'bg-white border-slate-200'}`}>
+                      <input type="radio" name="auto_putaway_strategy" value="NEAREST_EMPTY" checked={config.auto_putaway_strategy === 'NEAREST_EMPTY'} onChange={handleChange} className="accent-orange-600" />
                       <div>
                         <span className="block text-sm font-bold text-slate-800">Cercanía (Nearest Empty)</span>
                         <span className="block text-xs text-slate-500">Llena vacíos más cercanos a la zona de recepción.</span>
                       </div>
                     </label>
 
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${config.auto_putaway_strategy === 'ABC_ZONING' ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500' : 'bg-white border-slate-200'}`}>
-                      <input type="radio" name="auto_putaway_strategy" value="ABC_ZONING" checked={config.auto_putaway_strategy === 'ABC_ZONING'} onChange={handleChange} className="accent-indigo-600" />
+                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${config.auto_putaway_strategy === 'ABC_ZONING' ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-500' : 'bg-white border-slate-200'}`}>
+                      <input type="radio" name="auto_putaway_strategy" value="ABC_ZONING" checked={config.auto_putaway_strategy === 'ABC_ZONING'} onChange={handleChange} className="accent-orange-600" />
                       <div>
                         <span className="block text-sm font-bold text-slate-800">Zonificación ABC</span>
                         <span className="block text-xs text-slate-500">Ubica según rotación del producto (Alta/Media/Baja).</span>
@@ -291,7 +291,7 @@ const WmsSettings = () => {
                 <h3 className="font-bold text-slate-800 border-b pb-2">Reglas de Proceso</h3>
 
                 <div className="space-y-4">
-                  <label className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all">
+                  <label className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-orange-400 hover:shadow-md transition-all">
                     <div>
                       <span className="block text-sm font-bold text-slate-800">Permitir Picking Parcial</span>
                       <span className="block text-xs text-slate-500 mt-1">Habilita cerrar órdenes aunque existan faltantes físicos.</span>
@@ -304,7 +304,7 @@ const WmsSettings = () => {
                         onChange={handleChange}
                         className="peer absolute opacity-0 w-0 h-0"
                       />
-                      <span className="block bg-slate-200 w-full h-full rounded-full peer-checked:bg-indigo-600 transition-colors duration-300 shadow-inner"></span>
+                      <span className="block bg-slate-200 w-full h-full rounded-full peer-checked:bg-orange-600 transition-colors duration-300 shadow-inner"></span>
                       <span className="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 peer-checked:translate-x-7 shadow-sm"></span>
                     </div>
                   </label>
@@ -337,7 +337,7 @@ const WmsSettings = () => {
                   name="label_printer_ip"
                   value={config.label_printer_ip}
                   onChange={handleChange}
-                  className="w-full p-3 border border-slate-200 rounded-lg font-mono font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full p-3.5 bg-slate-50 border-2 border-transparent rounded-xl font-mono font-bold text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm"
                   placeholder="192.168.x.x"
                 />
               </div>
@@ -348,7 +348,7 @@ const WmsSettings = () => {
                   name="label_size"
                   value={config.label_size}
                   onChange={handleChange}
-                  className="w-full p-3 border border-slate-200 rounded-lg font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                  className="w-full p-3.5 bg-slate-50 border-2 border-transparent rounded-xl font-bold text-slate-700 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm cursor-pointer"
                 >
                   <option value="4x6">4" x 6" (Despacho / Pallet)</option>
                   <option value="4x2">4" x 2" (Ubicación / Caja)</option>
@@ -358,7 +358,7 @@ const WmsSettings = () => {
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex justify-center">
-              <button className="text-indigo-600 font-bold text-sm flex items-center gap-2 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
+              <button className="text-orange-600 font-bold text-sm flex items-center gap-2 hover:bg-orange-50 px-4 py-2 rounded-lg transition-colors">
                 <Printer size={16} /> IMPRIMIR ETIQUETA DE PRUEBA
               </button>
             </div>

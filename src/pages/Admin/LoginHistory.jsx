@@ -122,18 +122,24 @@ const LoginHistory = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <History className="text-orange-600" />
-            Control de Accesos
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">Monitoreo de usuarios y registro de ingresos</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        {/* Línea superior decorativa */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+            <Shield size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Control de <span className="text-orange-500">Accesos</span></h1>
+            <p className="text-slate-500 font-medium mt-1">Monitoreo de usuarios activos y registro de ingresos</p>
+          </div>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex gap-2 relative z-10">
           <button
             onClick={handleRefresh}
-            className={`p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors ${refreshing ? 'animate-spin' : ''}`}
+            className={`p-3 bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200 hover:border-orange-200 rounded-xl transition-all shadow-sm active:scale-95 ${refreshing ? "animate-spin" : ""}`}
             title="Actualizar lista"
           >
             <RefreshCw size={20} />
@@ -142,40 +148,37 @@ const LoginHistory = () => {
       </div>
 
       {/* Tabs & Filters */}
-      <div className="flex flex-col gap-4">
-        <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex flex-col gap-6">
+        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
           <button
             onClick={() => setView('active')}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${view === 'active'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
+            className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${view === 'active' 
+              ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]' 
+              : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'}`}
           >
             <Activity size={16} />
             Usuarios Activos
-            <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">
-              {activeUsers.length}
-            </span>
+            {view === "active" ? <span className="bg-white/20 text-white px-2.5 py-0.5 rounded-full text-xs shadow-inner"> : <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-xs shadow-sm">
+              {activeUsers.length}</span>}
           </button>
           <button
             onClick={() => setView('history')}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 border-b-2 transition-colors ${view === 'history'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
+            className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${view === 'history' 
+              ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]' 
+              : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'}`}
           >
             <History size={16} />
             Historial
           </button>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-1 relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
               placeholder="Buscar por usuario, email o rol..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10"
+              className="w-full md:w-96 pl-11 pr-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium text-slate-700 placeholder-slate-400 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -184,7 +187,7 @@ const LoginHistory = () => {
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 size={40} className="animate-spin text-orange-500" />
@@ -201,7 +204,7 @@ const LoginHistory = () => {
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <tr className="bg-slate-50/80 text-slate-400 uppercase text-[10px] tracking-widest font-black border-b border-slate-200">
                       <th className="px-6 py-4">Usuario</th>
                       <th className="px-6 py-4">Rol</th>
                       <th className="px-6 py-4">Última Actividad</th>
@@ -272,7 +275,7 @@ const LoginHistory = () => {
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <tr className="bg-slate-50/80 text-slate-400 uppercase text-[10px] tracking-widest font-black border-b border-slate-200">
                       <th className="px-6 py-4">Fecha y Hora</th>
                       <th className="px-6 py-4">Usuario</th>
                       <th className="px-6 py-4">Email</th>

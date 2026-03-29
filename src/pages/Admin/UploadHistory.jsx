@@ -52,7 +52,7 @@ const UploadHistory = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <History className="text-indigo-600" />
+                        <History className="text-orange-600" />
                         Historial de Subida de Datos
                     </h1>
                     <p className="text-slate-500 text-sm">Auditoría de quién, cuándo y qué se actualizó en el sistema.</p>
@@ -65,15 +65,15 @@ const UploadHistory = () => {
                         placeholder="Buscar usuario o módulo..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium text-slate-700 placeholder-slate-400 shadow-sm"
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+                        <thead className="bg-slate-50/80 text-slate-400 uppercase text-[10px] tracking-widest font-black border-b border-slate-200">
                             <tr>
                                 <th className="px-6 py-4">Fecha y Hora</th>
                                 <th className="px-6 py-4">Usuario</th>
@@ -111,8 +111,8 @@ const UploadHistory = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
-                                                    <User size={12} className="text-indigo-600" />
+                                                <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                                                    <User size={12} className="text-orange-600" />
                                                 </div>
                                                 <span className="font-bold text-slate-700">{row.usuario_nombre}</span>
                                             </div>
