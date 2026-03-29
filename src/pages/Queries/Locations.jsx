@@ -300,7 +300,7 @@ const LocationsQuery = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
+            <div className="bg-orange-600 p-2 rounded-xl shadow-lg shadow-orange-200">
               <MapPin className="text-white" size={24} />
             </div>
             Gestión de Ubicaciones
@@ -317,7 +317,7 @@ const LocationsQuery = () => {
               </div>
               <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
                 <p className="text-xs text-slate-400 font-bold uppercase">Total Items</p>
-                <p className="text-xl font-black text-indigo-600">
+                <p className="text-xl font-black text-orange-600">
                   {results.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 0), 0)}
                 </p>
               </div>
@@ -328,12 +328,12 @@ const LocationsQuery = () => {
       {/* Barra de Búsqueda Flotante */}
       <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-100/50 flex flex-col md:flex-row gap-2 items-center filters-bar sticky top-4 z-30 backdrop-blur-xl bg-white/90">
         <div className="flex-1 relative w-full group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
           <form onSubmit={handleSearch} className="w-full">
             <input 
               type="text"
               placeholder="Buscar por código, ubicación o descripción..."
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all placeholder-slate-400 font-medium uppercase"
+              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-orange-100 transition-all placeholder-slate-400 font-medium uppercase"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               autoFocus
@@ -355,7 +355,7 @@ const LocationsQuery = () => {
           <button 
             onClick={handleSearch}
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex-1 md:flex-none justify-center"
           >
             {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
             Buscar
@@ -367,9 +367,9 @@ const LocationsQuery = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-orange-100 border-t-orange-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Box size={20} className="text-indigo-600" />
+              <Box size={20} className="text-orange-600" />
             </div>
           </div>
           <p className="text-slate-400 font-medium animate-pulse">Buscando en almacén...</p>
@@ -396,7 +396,7 @@ const LocationsQuery = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {results.map(row => (
             <div key={row.id} className={`group bg-white rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
-              editingId === row.id ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200'
+              editingId === row.id ? 'ring-2 ring-orange-500 border-orange-500' : 'border-slate-200'
             }`}>
               {/* Header Card */}
               <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
@@ -406,11 +406,11 @@ const LocationsQuery = () => {
                        type="text" 
                        value={editLocation} 
                        onChange={(e) => setEditLocation(e.target.value)}
-                       className="w-full bg-white border-2 border-indigo-500 rounded-lg px-2 py-1 font-mono font-black text-indigo-700 text-lg uppercase outline-none"
+                       className="w-full bg-white border-2 border-orange-500 rounded-lg px-2 py-1 font-mono font-black text-orange-700 text-lg uppercase outline-none"
                        autoFocus
                      />
                    ) : (
-                     <div className="flex items-center gap-2 font-mono font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 w-fit">
+                     <div className="flex items-center gap-2 font-mono font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 w-fit">
                        <MapPin size={16} />
                        {row.ubicacion}
                      </div>
@@ -428,7 +428,7 @@ const LocationsQuery = () => {
                      </>
                    ) : (
                      <>
-                       <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                       <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
                          <Edit size={18} />
                        </button>
                        <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
@@ -455,7 +455,7 @@ const LocationsQuery = () => {
                         type="number" 
                         value={editQuantity} 
                         onChange={(e) => setEditQuantity(e.target.value)}
-                        className="w-full bg-white border-2 border-indigo-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
+                        className="w-full bg-white border-2 border-orange-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
                       />
                     ) : (
                       <p className="text-2xl font-black text-slate-800">{row.cantidad}</p>
@@ -475,7 +475,7 @@ const LocationsQuery = () => {
               </div>
               
               {/* Footer Decoration */}
-              <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
           ))}
         </div>
