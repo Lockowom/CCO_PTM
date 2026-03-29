@@ -278,27 +278,31 @@ const Entry = () => {
   return (
     <div ref={containerRef} className="space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div ref={headerRef} className="flex justify-between items-end border-b border-slate-200 pb-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 flex items-center gap-2 tracking-tight">
-            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600 shadow-sm">
-              <PackagePlus size={28} />
-            </div>
-            INGRESO DE MERCANCÍA
-          </h2>
-          <p className="text-slate-500 text-sm mt-1 ml-1">Registro manual de entradas a ubicaciones</p>
+      <div ref={headerRef} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+        {/* Línea superior decorativa */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+            <PackagePlus size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Ingreso de <span className="text-orange-500">Mercancía</span></h2>
+            <p className="text-slate-500 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
+          </div>
         </div>
-        <div className={`flex items-center gap-2 text-sm px-4 py-2 rounded-full border font-bold shadow-sm transition-colors ${isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-           {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
-           {isOnline ? 'CONECTADO' : 'SIN CONEXIÓN'}
+        
+        <div className={`flex items-center gap-2 text-sm px-5 py-2.5 rounded-2xl border font-bold shadow-sm transition-all relative z-10 ${isOnline ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+           {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
+           {isOnline ? 'SISTEMA EN LÍNEA' : 'SIN CONEXIÓN'}
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Formulario de Ingreso */}
         <div className="xl:col-span-1 space-y-6">
-          <div ref={formRef} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+          <div ref={formRef} className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200 relative overflow-hidden group transition-all duration-300">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-amber-500"></div>
             
             <h3 className="font-black text-slate-800 text-lg mb-6 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold shadow-inner">1</span>
@@ -315,7 +319,7 @@ const Entry = () => {
                   <input 
                     type="text" 
                     name="ubicacion"
-                    className="w-full pl-4 pr-10 py-3 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all placeholder:text-slate-300"
                     placeholder="A-01-01"
                     value={form.ubicacion}
                     onChange={handleInputChange}
@@ -323,7 +327,7 @@ const Entry = () => {
                     required 
                     autoFocus
                   />
-                  <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors" size={20} />
+                  <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-orange-500 transition-colors" size={20} />
                 </div>
               </div>
 
@@ -337,7 +341,7 @@ const Entry = () => {
                     ref={codigoInputRef}
                     type="text" 
                     name="codigo"
-                    className="w-full pl-4 pr-10 py-3 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-lg font-mono font-bold uppercase focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all placeholder:text-slate-300"
                     placeholder="SKU-123..."
                     value={form.codigo}
                     onChange={handleInputChange}
@@ -345,9 +349,9 @@ const Entry = () => {
                     required 
                   />
                   {loadingDesc ? (
-                    <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
+                    <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
                   ) : (
-                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors" size={20} />
+                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-orange-500 transition-colors" size={20} />
                   )}
                 </div>
               </div>
@@ -377,7 +381,7 @@ const Entry = () => {
                   ref={cantidadInputRef}
                   type="number" 
                   name="cantidad"
-                  className="w-full p-3 border-2 border-slate-200 rounded-xl text-xl font-bold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all"
+                  className="w-full p-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-xl font-bold text-slate-800 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all"
                   placeholder="0"
                   min="0.01"
                   step="0.01"
@@ -395,26 +399,26 @@ const Entry = () => {
                   {/* SERIE */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Serie</label>
-                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" placeholder="S/N..." />
+                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="S/N..." />
                   </div>
 
                   {/* PARTIDA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Partida</label>
-                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" placeholder="Lote..." />
+                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Lote..." />
                   </div>
 
                   {/* PIEZA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pieza</label>
-                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" placeholder="Ej: Motor..." />
+                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Ej: Motor..." />
                   </div>
 
                   {/* VENCIMIENTO */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vencimiento</label>
                     <div className="relative">
-                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" />
+                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" />
                       <Calendar className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                     </div>
                   </div>
@@ -422,13 +426,13 @@ const Entry = () => {
                   {/* TALLA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Talla</label>
-                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" placeholder="S, M, L..." />
+                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="S, M, L..." />
                   </div>
 
                   {/* COLOR */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Color</label>
-                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-emerald-400 outline-none transition-all" placeholder="Rojo..." />
+                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 outline-none transition-all" placeholder="Rojo..." />
                   </div>
                 </div>
               </div>
@@ -440,7 +444,7 @@ const Entry = () => {
                 </div>
               )}
 
-              <button className="add-btn w-full bg-slate-900 text-white py-4 rounded-xl font-black text-lg hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden">
+              <button className="add-btn w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <PackagePlus size={24} className="group-hover:scale-110 transition-transform relative z-10" />
                 <span className="relative z-10">AGREGAR A COLA</span>
@@ -451,14 +455,14 @@ const Entry = () => {
 
         {/* Cola de Registros */}
         <div className="xl:col-span-2 h-full">
-          <div ref={listRef} className="bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
+          <div ref={listRef} className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 to-slate-300"></div>
 
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 backdrop-blur-sm sticky top-0 z-20">
                 <h3 className="font-black text-slate-800 text-lg flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold shadow-inner">2</span>
                     COLA DE PROCESAMIENTO
-                    <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 shadow-sm">{queue.length} ÍTEMS</span>
+                    <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold border border-orange-200 shadow-sm">{queue.length} ÍTEMS</span>
                 </h3>
                 <button 
                   onClick={clearQueue} 
@@ -483,22 +487,22 @@ const Entry = () => {
                         <div 
                           key={item.id} 
                           ref={el => queueItemsRef.current[index] = el}
-                          className="group bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden"
+                          className="group bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden"
                         >
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 rounded-l-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             
-                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500 shrink-0 shadow-inner group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500 shrink-0 shadow-inner group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
                                 {queue.length - index}
                             </div>
                             
                             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ubicación</p>
-                                    <p className="font-mono font-bold text-slate-800 text-lg group-hover:text-emerald-800 transition-colors">{item.ubicacion}</p>
+                                    <p className="font-mono font-bold text-slate-800 text-lg group-hover:text-orange-800 transition-colors">{item.ubicacion}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Código</p>
-                                    <p className="font-mono font-bold text-emerald-600 text-lg">{item.codigo}</p>
+                                    <p className="font-mono font-bold text-orange-600 text-lg">{item.codigo}</p>
                                     {item.descripcion && <p className="text-xs text-slate-500 truncate max-w-[150px]">{item.descripcion}</p>}
                                 </div>
                                 <div>
@@ -527,7 +531,7 @@ const Entry = () => {
 
             <div className="p-6 border-t border-slate-100 bg-white relative z-20">
                 {successMsg && (
-                  <div className="absolute -top-12 left-0 right-0 mx-6 bg-emerald-600 text-white py-2 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 animate-in slide-in-from-bottom-4 fade-in duration-300">
+                  <div className="absolute -top-12 left-0 right-0 mx-6 bg-orange-600 text-white py-2 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 animate-in slide-in-from-bottom-4 fade-in duration-300">
                     <CheckCircle2 size={18} />
                     <span className="font-bold text-sm">{successMsg}</span>
                   </div>
@@ -536,7 +540,7 @@ const Entry = () => {
                 <button 
                     onClick={handleSync}
                     disabled={queue.length === 0 || saving}
-                    className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 transition-all shadow-lg shadow-emerald-200 disabled:shadow-none flex items-center justify-center gap-3 active:scale-[0.98]"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white py-4 rounded-2xl font-black text-lg disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 transition-all shadow-lg shadow-orange-500/30 disabled:shadow-none flex items-center justify-center gap-3 active:scale-[0.98]"
                 >
                     {saving ? (
                       <>
