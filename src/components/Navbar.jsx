@@ -65,7 +65,7 @@ const Navbar = () => {
     'quality': ['view_quality'],
     'analytics': ['view_reports', 'view_tv_mode'],
     'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_dispatch_control', 'view_kardex', 'view_productivity'],
-    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports']
+    'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'admin_upload_history']
   };
 
   // Permisos por ruta específica
@@ -118,7 +118,8 @@ const Navbar = () => {
     '/admin/cleanup': 'manage_cleanup',
     '/admin/time-reports': 'view_time_reports',
     '/admin/tickets': 'manage_tickets',
-    '/admin/login-history': 'manage_users'
+    '/admin/login-history': 'manage_users',
+    '/admin/upload-history': 'admin_upload_history'
   };
 
   // ¿Está la sección visible?
@@ -271,6 +272,7 @@ const Navbar = () => {
         { label: 'Roles', path: '/admin/roles', icon: <Shield size={16} /> },
         { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
         { label: 'Historial Accesos', path: '/admin/login-history', icon: <History size={16} /> },
+        { label: 'Historial de Cargas', path: '/admin/upload-history', icon: <Upload size={16} /> },
         { label: 'Reportes', path: '/admin/reports', icon: <FileBarChart size={16} /> },
         { label: 'Tiempos', path: '/admin/time-reports', icon: <Clock size={16} /> },
         { label: 'Soporte TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
