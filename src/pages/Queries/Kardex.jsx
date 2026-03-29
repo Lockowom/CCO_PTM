@@ -17,29 +17,125 @@ const Kardex = () => {
     if (!searchTerm) return;
 
     setLoading(true);
+    setProductInfo(null);
+    setMovements([]);
+
     try {
-      // Simular búsqueda de producto
-      // En producción: SELECT * FROM tms_matriz_codigos WHERE codigo = searchTerm
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // Mock Product Data
+      const codigoBuscado = searchTerm.toUpperCase().trim();
+
+      // 1. Buscar en Ubicaciones (para obtener la descripción real y stock base)
+      const { data: ubicData, error: ubicError } = await supabase
+        .from('wms_ubicaciones')
+        .select('*')
+        .eq('codigo', codigoBuscado);
+
+      if (ubicError) throw ubicError;
+
+      // 2. Buscar en Partidas
+      const { data: partidasData, error: partError } = await supabase
+        .from('tms_partidas')
+        .select('*')
+        .eq('codigo_producto', codigoBuscado);
+
+      // 3. Buscar en Series
+      const { data: seriesData, error: serError } = await supabase
+        .from('tms_series')
+        .select('*')
+        .eq('codigo_producto', codigoBuscado);
+
+      // 4. Buscar en Farmapack
+      const { data: farmaData, error: farmError } = await supabase
+        .from('tms_farmapack')
+        .select('*')
+        .eq('codigo_producto', codigoBuscado);
+
+      // 5. Construir Info del Producto
+      let totalStock = 0;
+      let desc = 'PRODUCTO SIN DESCRIPCIÓN';
+      let ubicPrincipal = 'NO ASIGNADA';
+
+      if (ubicData && ubicData.length > 0) {
+        desc = ubicData[0].descripcion || desc;
+        ubicPrincipal = ubicData[0].ubicacion || ubicPrincipal;
+        totalStock += ubicData.reduce((acc, curr) => acc + (curr.cantidad || 0), 0);
+      }
+
+      if (partidasData) totalStock += partidasData.reduce((acc, curr) => acc + (curr.cantidad || 0), 0);
+      if (seriesData) totalStock += seriesData.length;
+      if (farmaData) totalStock += farmaData.reduce((acc, curr) => acc + (curr.cantidad || 0), 0);
+
+      // Si no existe en ningún lado
+      if (totalStock === 0 && (!ubicData || ubicData.length === 0)) {
+         setLoading(false);
+         return; // Mostramos el mensaje de "No encontrado"
+      }
+
       setProductInfo({
-        codigo: searchTerm.toUpperCase(),
-        descripcion: 'PARACETAMOL 500MG CAJA 20 COMPRIMIDOS',
-        categoria: 'FARMACIA',
-        stock_total: 1500,
-        ubicacion_principal: 'A-04-02',
-        precio_promedio: 1250
+        codigo: codigoBuscado,
+        descripcion: desc,
+        categoria: 'INVENTARIO WMS',
+        stock_total: totalStock,
+        ubicacion_principal: ubicPrincipal,
       });
 
-      // Mock Movements Data
-      // En producción: SELECT * FROM tms_kardex WHERE codigo = searchTerm ORDER BY fecha DESC
-      setMovements([
-        { id: 1, tipo: 'SALIDA', motivo: 'VENTA', fecha: new Date().toISOString(), cantidad: 50, doc_ref: 'NV-10234', usuario: 'juan.perez', origen: 'A-04-02', destino: 'DESPACHO' },
-        { id: 2, tipo: 'ENTRADA', motivo: 'COMPRA', fecha: new Date(Date.now() - 86400000).toISOString(), cantidad: 1000, doc_ref: 'OC-5001', usuario: 'maria.soto', origen: 'PROVEEDOR', destino: 'RECEPCION' },
-        { id: 3, tipo: 'TRASLADO', motivo: 'REABASTECIMIENTO', fecha: new Date(Date.now() - 172800000).toISOString(), cantidad: 200, doc_ref: 'TASK-99', usuario: 'pedro.diaz', origen: 'R-01-01', destino: 'A-04-02' },
-        { id: 4, tipo: 'SALIDA', motivo: 'MERMA', fecha: new Date(Date.now() - 259200000).toISOString(), cantidad: 5, doc_ref: 'AJUSTE-01', usuario: 'admin', origen: 'A-04-02', destino: 'DESTRUCCION' },
-      ]);
+      // 6. Construir Historial de Movimientos (Uniendo las 3 tablas)
+      let history = [];
+
+      // Partidas
+      if (partidasData) {
+        partidasData.forEach(p => {
+          history.push({
+            id: `P-${p.id}`,
+            tipo: p.estado === 'Despachado' ? 'SALIDA' : 'ENTRADA',
+            motivo: 'PARTIDA',
+            fecha: p.fecha_recepcion || p.created_at || new Date().toISOString(),
+            cantidad: p.cantidad,
+            doc_ref: p.partida || 'S/N',
+            usuario: 'Sistema',
+            origen: p.estado === 'Despachado' ? 'BODEGA' : 'RECEPCIÓN',
+            destino: p.estado === 'Despachado' ? 'CLIENTE' : 'BODEGA'
+          });
+        });
+      }
+
+      // Series
+      if (seriesData) {
+        seriesData.forEach(s => {
+          history.push({
+            id: `S-${s.id}`,
+            tipo: s.estado === 'Despachado' ? 'SALIDA' : 'ENTRADA',
+            motivo: 'SERIE',
+            fecha: s.fecha_recepcion || s.created_at || new Date().toISOString(),
+            cantidad: 1, // Las series son unitarias
+            doc_ref: s.serie || 'S/N',
+            usuario: 'Sistema',
+            origen: s.estado === 'Despachado' ? 'BODEGA' : 'RECEPCIÓN',
+            destino: s.estado === 'Despachado' ? 'CLIENTE' : 'BODEGA'
+          });
+        });
+      }
+
+      // Farmapack
+      if (farmaData) {
+        farmaData.forEach(f => {
+          history.push({
+            id: `F-${f.id}`,
+            tipo: f.estado === 'Despachado' ? 'SALIDA' : 'ENTRADA',
+            motivo: 'FARMAPACK',
+            fecha: f.fecha_recepcion || f.created_at || new Date().toISOString(),
+            cantidad: f.cantidad,
+            doc_ref: f.lote || 'S/N',
+            usuario: 'Sistema',
+            origen: f.estado === 'Despachado' ? 'BODEGA' : 'RECEPCIÓN',
+            destino: f.estado === 'Despachado' ? 'CLIENTE' : 'BODEGA'
+          });
+        });
+      }
+
+      // Ordenar cronológicamente (más reciente primero)
+      history.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+      setMovements(history);
 
     } catch (err) {
       console.error(err);
