@@ -28,11 +28,11 @@ const Stock = () => {
       setLoading(true);
       
       // 1. Obtener Inventario Consolidado (Partidas + Series + Farmapack)
-      // Por simplicidad, uniremos las tablas principales
+      // Aumentado a 5000 para evitar que el límite de 1000 corte resultados silenciosamente
       const [partidas, series, farmapack] = await Promise.all([
-        supabase.from('tms_partidas').select('*'),
-        supabase.from('tms_series').select('*'),
-        supabase.from('tms_farmapack').select('*')
+        supabase.from('tms_partidas').select('*').limit(5000),
+        supabase.from('tms_series').select('*').limit(5000),
+        supabase.from('tms_farmapack').select('*').limit(5000)
       ]);
 
       // Unificar datos
