@@ -88,85 +88,54 @@ const Stock = () => {
     <div className="space-y-6 min-h-screen bg-slate-50/50 p-6">
       {/* Header & KPIs */}
       <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Inventario General</h2>
-            <p className="text-slate-500 text-sm mt-1">Gestión consolidada de existencias</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+          {/* Línea superior decorativa */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+          
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+              <Package size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Inventario <span className="text-orange-500">General</span></h1>
+              <p className="text-slate-500 font-medium mt-1">Gestión consolidada de existencias</p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
-              <Download size={16} /> Exportar
+          
+          <div className="flex gap-3 relative z-10">
+            <button className="bg-white border-2 border-slate-200 hover:border-orange-300 text-slate-600 hover:text-orange-600 px-5 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm">
+              <Download size={18} /> Exportar
             </button>
             <button 
               onClick={fetchData}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
+              disabled={loading}
+              className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 disabled:opacity-50"
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Actualizar
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Actualizar
             </button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Unidades</span>
-              <Package size={18} className="text-blue-500" />
-            </div>
-            <div className="text-2xl font-black text-slate-800">{stats.totalItems.toLocaleString()}</div>
-            <div className="text-xs text-green-500 font-medium mt-1 flex items-center gap-1">
-              <ArrowUpRight size={12} /> +12% vs mes anterior
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Refs. Activas</span>
-              <Filter size={18} className="text-indigo-500" />
-            </div>
-            <div className="text-2xl font-black text-slate-800">{stats.totalValue.toLocaleString()}</div>
-            <div className="text-xs text-slate-400 font-medium mt-1">SKUs únicos en almacén</div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Bajo</span>
-              <AlertTriangle size={18} className="text-amber-500" />
-            </div>
-            <div className="text-2xl font-black text-slate-800">{stats.lowStock}</div>
-            <div className="text-xs text-amber-600 font-medium mt-1">Requiere reabastecimiento</div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Agotados</span>
-              <AlertTriangle size={18} className="text-red-500" />
-            </div>
-            <div className="text-2xl font-black text-slate-800">{stats.outOfStock}</div>
-            <div className="text-xs text-red-600 font-medium mt-1">Sin stock disponible</div>
           </div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="border-b border-slate-100 flex">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-200 flex flex-col relative overflow-hidden mt-2">
+        <div className="flex gap-4 overflow-x-auto p-6 border-b border-slate-100 bg-slate-50/50 no-scrollbar">
           <button
             onClick={() => setActiveTab('products')}
-            className={`px-6 py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+            className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${
               activeTab === 'products' 
-                ? 'border-blue-500 text-blue-600 bg-blue-50/50' 
-                : 'border-transparent text-slate-500 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]' 
+                : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
             }`}
           >
             <Package size={18} /> Productos
           </button>
           <button
             onClick={() => setActiveTab('movements')}
-            className={`px-6 py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+            className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${
               activeTab === 'movements' 
-                ? 'border-blue-500 text-blue-600 bg-blue-50/50' 
-                : 'border-transparent text-slate-500 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]' 
+                : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
             }`}
           >
             <Move size={18} /> Movimientos
@@ -183,20 +152,20 @@ const Stock = () => {
                   <input
                     type="text"
                     placeholder="Buscar por código, descripción o ubicación..."
-                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full md:w-96 pl-11 pr-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium text-slate-700 placeholder-slate-400 shadow-sm"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <button className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors flex items-center gap-2">
+                <button className="px-5 py-3.5 bg-white border-2 border-slate-200 hover:border-orange-300 text-slate-600 hover:text-orange-600 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2">
                   <Filter size={18} /> Filtros Avanzados
                 </button>
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider">
+                  <thead className="bg-slate-50/80 text-slate-400 uppercase text-[10px] tracking-widest font-black border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4">Código</th>
                       <th className="px-6 py-4">Producto</th>
@@ -242,7 +211,7 @@ const Stock = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="text-blue-600 hover:text-blue-800 font-medium text-xs hover:underline">
+                            <button className="text-orange-600 hover:text-orange-800 font-medium text-xs hover:underline">
                               Editar
                             </button>
                           </td>
@@ -257,7 +226,7 @@ const Stock = () => {
 
           {activeTab === 'movements' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-md shadow-slate-200/40">
                 <h3 className="font-bold text-slate-700 mb-4">Actividad Reciente</h3>
                 <div className="h-64">
                   <BarChart 
@@ -271,7 +240,7 @@ const Stock = () => {
                 </div>
               </div>
               
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-inner">
                 <h3 className="font-bold text-slate-700 mb-4">Últimos Movimientos</h3>
                 <div className="space-y-3">
                   {[1,2,3,4,5].map((_, i) => (
