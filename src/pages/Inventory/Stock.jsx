@@ -109,11 +109,11 @@ const Stock = () => {
         <div className="flex gap-4 overflow-x-auto p-6 border-b border-slate-100 bg-slate-50/50 no-scrollbar">
           <button
             onClick={() => setActiveTab('products')}
-            className={\`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 \${
+            className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${
               activeTab === 'products' 
                 ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]' 
                 : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
-            }\`}
+            }`}
           >
             <Package size={18} /> Stock Consolidado
           </button>
