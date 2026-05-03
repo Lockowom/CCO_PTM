@@ -9,9 +9,23 @@ import { toast } from 'sonner';
  */
 export const initOTAUpdates = async () => {
   try {
-    // Le dice a Capgo que la app arrancó bien. Si fallara, Capgo haría un rollback automático.
+    // Le dice a Capgo que la app arrancó bien.
     await CapacitorUpdater.notifyAppReady();
     console.log('✅ Capgo OTA Updater inicializado.');
+
+    // Escuchar si hay una actualización disponible (ej. descargada en segundo plano)
+    CapacitorUpdater.addListener('updateAvailable', async (info) => {
+      console.log('🔄 Actualización OTA disponible:', info);
+      toast.info('Nueva actualización disponible', {
+        description: 'La aplicación se reiniciará para aplicar los cambios.',
+        duration: 5000,
+      });
+      // Aplicar la actualización y reiniciar la app automáticamente
+      setTimeout(async () => {
+        await CapacitorUpdater.set(info.version);
+      }, 3000);
+    });
+
   } catch (error) {
     console.error('Error inicializando OTA Updates:', error);
   }

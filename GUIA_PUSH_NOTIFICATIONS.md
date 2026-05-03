@@ -44,7 +44,7 @@ Si ya tienes la CLI de Supabase instalada y logueada, ejecuta estos comandos en 
 1. Abre el archivo `database/push_trigger.sql`.
 2. Reemplaza `<TU_PROYECTO_REF>` con el ID real de tu proyecto Supabase.
 3. Reemplaza `<TU_SUPABASE_ANON_KEY>` con la Anon Key pública de tu proyecto.
-4. Ajusta la línea `on public.tms_tareas_picking` al nombre real de la tabla donde guardas las órdenes o tareas (ej: `wms_notas_venta`).
+4. Ajusta la línea `on public.tms_nv_diarias` al nombre real de la tabla donde guardas las órdenes o tareas. (Ya lo dejé ajustado para tu tabla `tms_nv_diarias`).
 5. Copia todo el código SQL y pégalo en el **SQL Editor** dentro de la web de Supabase y dale a **Run**.
 
 ---

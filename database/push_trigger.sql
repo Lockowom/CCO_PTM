@@ -44,12 +44,11 @@ begin
 end;
 $$ language plpgsql security definer;
 
--- 3. Crear el Trigger en la tabla deseada (por ejemplo, tms_tareas_picking o wms_notas_venta)
--- Reemplaza 'tms_tareas_picking' con el nombre de tu tabla real de órdenes
-drop trigger if exists on_task_assigned_push on public.tms_tareas_picking;
+-- 3. Crear el Trigger en la tabla deseada (tms_nv_diarias)
+drop trigger if exists on_task_assigned_push on public.tms_nv_diarias;
 
 create trigger on_task_assigned_push
-after insert or update on public.tms_tareas_picking
+after insert or update on public.tms_nv_diarias
 for each row execute function public.trigger_push_notification();
 
 -- Mensaje de éxito
