@@ -1,5 +1,11 @@
 {
   "appId": "com.cco.wms",
   "appName": "WMS CCO",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": true,
+      "appId": "com.cco.wms"
+    }
+  }
 }
