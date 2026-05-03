@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "664879638651",
+    "project_id": "cco-ptm",
+    "storage_bucket": "cco-ptm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664879638651:android:42ee7d3544918afe71dade",
+        "android_client_info": {
+          "package_name": "com.cco.wms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZrR3vWeauw-0npYdi4xJVRNZG3kU1tHQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
