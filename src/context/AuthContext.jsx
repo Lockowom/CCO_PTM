@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '../supabase';
 import { wmsToast } from '../lib/notifications';
 import { processSyncQueue } from '../lib/db';
+import { Capacitor } from '@capacitor/core';
+import { initPushNotifications } from '../services/mobileService';
 
 const AuthContext = createContext();
 
@@ -215,6 +217,11 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
       await loadPermissions(data.rol);
+
+      // Inicializar notificaciones push si estamos en móvil
+      if (Capacitor.isNativePlatform()) {
+        initPushNotifications(userData.id);
+      }
 
       // Registrar acceso
       try {

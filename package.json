@@ -14,6 +14,8 @@
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/push-notifications": "^7.0.0",
+    "@capgo/capacitor-updater": "^7.0.0",
     "@gsap/react": "^2.1.1",
     "@supabase/supabase-js": "^2.98.0",
     "@tanstack/react-query": "^5.50.0",

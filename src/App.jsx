@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Placeholder from './components/Placeholder';
 import { Lock } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { initOTAUpdates } from './services/mobileService';
 
 // Login & Dashboard
 import Login from './pages/Login';
@@ -276,6 +278,13 @@ const ProtectedRoute = () => {
 };
 
 function AppContent() {
+  // Inicializar OTA Updates al arrancar la app en dispositivos móviles
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      initOTAUpdates();
+    }
+  }, []);
+
   return (
     <Router>
       <Routes>
