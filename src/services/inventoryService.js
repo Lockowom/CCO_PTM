@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { addToSyncQueue } from '../lib/db';
 
 // ==============================================================================
 // WMS TRANSACTIONAL SERVICE (ACID GUARANTEE)
@@ -65,7 +66,7 @@ export const useMoveStock = () => {
 
   return useMutation({
     mutationFn: async ({ sku, batch, fromLoc, toLoc, qty, userId, reason }) => {
-      const { data, error } = await supabase.rpc('wms_move_stock', {
+      const payload = {
         p_sku: sku,
         p_batch: batch,
         p_from_location: fromLoc,
@@ -73,7 +74,17 @@ export const useMoveStock = () => {
         p_qty: qty,
         p_user_id: userId,
         p_reason: reason
-      });
+      };
+
+      if (!navigator.onLine) {
+        await addToSyncQueue('move_stock', payload);
+        toast.warning('Sin conexión: Movimiento guardado offline.', { 
+          description: 'Se sincronizará automáticamente al recuperar la conexión.' 
+        });
+        return { success: true, offline: true };
+      }
+
+      const { data, error } = await supabase.rpc('wms_move_stock', payload);
       if (error) throw error;
       return data;
     },

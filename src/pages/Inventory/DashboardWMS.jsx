@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { 
   BarChart3, 
   Activity, 
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { useQuery } from '@tanstack/react-query';
 import AreaChart from '../../components/Charts/AreaChart';
 import BarChart from '../../components/Charts/BarChart';
 import PieChart from '../../components/Charts/PieChart';
@@ -70,26 +72,13 @@ const StatCard = ({ title, value, icon, trend, color, subtitle, delay }) => {
 };
 
 const DashboardWMS = () => {
-  const [loading, setLoading] = useState(true);
-  const [kpis, setKpis] = useState({
-    totalItems: 0,
-    ocupacion: 0,
-    pickingRate: 0,
-    errores: 0,
-    pickingPendiente: 0
-  });
-  
-  const [ocupacionData, setOcupacionData] = useState([]);
-  const [pickingData, setPickingData] = useState([]);
-  const [topPickers, setTopPickers] = useState([]);
   const containerRef = useRef(null);
 
-  // Cargar datos
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // 1. Ocupación de Almacén (Simulada basada en Layout)
+  // Fetch Dashboard Data via React Query
+  const { data: dashboardData, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['dashboard_wms'],
+    queryFn: async () => {
+      // 1. Ocupación de Almacén
       const { data: ubicaciones } = await supabase.from('wms_ubicaciones').select('ubicacion, cantidad');
       const totalUbicaciones = 2000;
       const ubicacionesOcupadas = new Set(ubicaciones?.map(u => u.ubicacion)).size;
@@ -102,7 +91,6 @@ const DashboardWMS = () => {
         ocupado: Math.floor(Math.random() * 80) + 10,
         libre: 100 - (Math.floor(Math.random() * 80) + 10)
       }));
-      setOcupacionData(ocupacionPorPasillo);
 
       // 2. Productividad de Picking (Últimas 24h)
       const hoy = new Date().toISOString().split('T')[0];
@@ -127,7 +115,6 @@ const DashboardWMS = () => {
         { hour: '14:00', picks: 110 },
         { hour: '15:00', picks: 135 },
       ];
-      setPickingData(hourlyData);
 
       // 3. Top Pickers
       const pickersMap = {};
@@ -147,31 +134,45 @@ const DashboardWMS = () => {
           ...p,
           avgTime: p.picks > 0 ? Math.round(p.time / p.picks) : 0
         }));
-      setTopPickers(sortedPickers);
 
       // 4. Errores
       const { count: erroresCount } = await supabase
         .from('tms_errores_picking')
         .select('*', { count: 'exact', head: true });
 
-      setKpis({
-        totalItems: ubicaciones?.reduce((acc, curr) => acc + (curr.cantidad || 0), 0) || 0,
-        ocupacion: ocupacionPct,
-        pickingRate,
-        errores: erroresCount || 0,
-        pickingPendiente: pickingTotal - pickingCompletado
-      });
+      return {
+        kpis: {
+          totalItems: ubicaciones?.reduce((acc, curr) => acc + (curr.cantidad || 0), 0) || 0,
+          ocupacion: ocupacionPct,
+          pickingRate,
+          errores: erroresCount || 0,
+          pickingPendiente: pickingTotal - pickingCompletado
+        },
+        ocupacionData: ocupacionPorPasillo,
+        pickingData: hourlyData,
+        topPickers: sortedPickers
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-    } catch (error) {
-      console.error("Error cargando dashboard WMS:", error);
-    } finally {
-      setLoading(false);
-    }
+  useGSAP(() => {
+    gsap.from(containerRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+      clearProps: 'all'
+    });
+  }, { scope: containerRef });
+
+  const loading = isLoading || isFetching;
+  const data = dashboardData || {
+    kpis: { totalItems: 0, ocupacion: 0, pickingRate: 0, errores: 0, pickingPendiente: 0 },
+    ocupacionData: [],
+    pickingData: [],
+    topPickers: []
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-wms-dark text-slate-300 p-6 space-y-6">
@@ -185,8 +186,9 @@ const DashboardWMS = () => {
           <p className="text-slate-400 text-sm mt-1 font-medium">Métricas de Almacén y Productividad</p>
         </div>
         <button 
-          onClick={fetchData}
-          className="bg-wms-panel/80 border border-wms-border text-slate-300 hover:text-wms-neon hover:border-wms-neon hover:shadow-neon-green px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
+          onClick={() => refetch()}
+          disabled={loading}
+          className="bg-wms-panel/80 border border-wms-border text-slate-300 hover:text-wms-neon hover:border-wms-neon hover:shadow-neon-green px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           Sincronizar
@@ -197,16 +199,16 @@ const DashboardWMS = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Ocupación Almacén" 
-          value={`${kpis.ocupacion}%`} 
+          value={`${data.kpis.ocupacion}%`} 
           icon={<Box size={20} />} 
-          color={kpis.ocupacion > 85 ? 'rose' : 'indigo'}
-          subtitle={`${kpis.totalItems.toLocaleString()} unidades totales`}
-          trend={kpis.ocupacion > 85 ? 'Crítico' : 'Estable'}
+          color={data.kpis.ocupacion > 85 ? 'rose' : 'indigo'}
+          subtitle={`${data.kpis.totalItems.toLocaleString()} unidades totales`}
+          trend={data.kpis.ocupacion > 85 ? 'Crítico' : 'Estable'}
           delay={0.1}
         />
         <StatCard 
           title="Tasa de Picking" 
-          value={kpis.pickingRate} 
+          value={data.kpis.pickingRate} 
           icon={<Zap size={20} />} 
           color="emerald"
           subtitle="Picks / Hora (Promedio)"
@@ -215,7 +217,7 @@ const DashboardWMS = () => {
         />
         <StatCard 
           title="Picking Pendiente" 
-          value={kpis.pickingPendiente} 
+          value={data.kpis.pickingPendiente} 
           icon={<Clock size={20} />} 
           color="amber"
           subtitle="Órdenes en cola"
@@ -224,7 +226,7 @@ const DashboardWMS = () => {
         />
         <StatCard 
           title="Errores Detectados" 
-          value={kpis.errores} 
+          value={data.kpis.errores} 
           icon={<AlertTriangle size={20} />} 
           color="rose"
           subtitle="Últimos 30 días"
@@ -245,7 +247,7 @@ const DashboardWMS = () => {
             </h3>
           </div>
           <div className="h-[300px] w-full relative z-10">
-            <AreaChart data={pickingData} dataKey="picks" color="#10b981" height={300} />
+            <AreaChart data={data.pickingData} dataKey="picks" color="#10b981" height={300} />
           </div>
         </div>
 
@@ -257,10 +259,10 @@ const DashboardWMS = () => {
             Top Operarios
           </h3>
           <div className="flex-1 overflow-y-auto pr-2 space-y-3 relative z-10">
-            {topPickers.length === 0 ? (
+            {data.topPickers.length === 0 ? (
               <div className="text-center text-slate-500 py-8 text-sm">No hay datos de hoy</div>
             ) : (
-              topPickers.map((picker, idx) => (
+              data.topPickers.map((picker, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-wms-dark/60 border border-wms-border">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
                     idx === 0 ? 'bg-wms-alert/20 text-wms-alert border border-wms-alert/50 shadow-neon-orange' : 
@@ -296,7 +298,7 @@ const DashboardWMS = () => {
           </div>
           <div className="h-[250px] w-full relative z-10">
             <BarChart 
-              data={ocupacionData} 
+              data={data.ocupacionData} 
               dataKey="ocupado" 
               xKey="name" 
               color="#6366f1" 

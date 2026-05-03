@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { toast } from 'sonner';
 import { 
   Truck, MapPin, CheckCircle, Navigation, Phone, Package, Camera,
   XCircle, Clock, Menu, LogOut, ChevronRight, ChevronLeft,
@@ -8,7 +12,6 @@ import {
   Box, Scale, Send, Ban, Play, Barcode, ShieldAlert
 } from 'lucide-react';
 
-// ==================== CONFIGURACIÓN ====================
 const ESTADOS_ENTREGA = {
   PENDIENTE: { label: 'Pendiente', color: 'amber', icon: Clock },
   EN_RUTA: { label: 'En Ruta', color: 'blue', icon: Truck },
@@ -28,274 +31,173 @@ const MOTIVOS_REPROGRAMACION = [
 ];
 
 const MobileApp = () => {
-  // 1. AUTH & CONTEXT
   const { user, signOut, hasPermission, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const containerRef = useRef(null);
 
-  // 2. ESTADOS GLOBALES
-  const [view, setView] = useState('loading'); // loading, unauthorized, onboard, home, history, profile, detail, scanner
-  const [driver, setDriver] = useState(null);
-  const [entregas, setEntregas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-
-  // 3. ESTADOS UI
+  const [view, setView] = useState('loading');
   const [showMenu, setShowMenu] = useState(false);
   const [selectedEntrega, setSelectedEntrega] = useState(null);
   const [filterEstado, setFilterEstado] = useState('TODOS');
-  const [actionModal, setActionModal] = useState(null); // 'ENTREGADO', 'RECHAZADO', 'REPROGRAMADO'
+  const [actionModal, setActionModal] = useState(null);
   const [motivo, setMotivo] = useState('');
   const [obs, setObs] = useState('');
+  const [newDriverData, setNewDriverData] = useState({ rut: '', telefono: '', patente: '' });
 
-  // 4. ESTADOS ONBOARDING (Crear Perfil)
-  const [newDriverData, setNewDriverData] = useState({
-    rut: '', telefono: '', patente: ''
+  useGSAP(() => {
+    if (view === 'home' || view === 'detail') {
+      gsap.from(containerRef.current, {
+        x: view === 'detail' ? 20 : -20,
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        clearProps: 'all'
+      });
+    }
+  }, [view]);
+
+  // Query: Obtener Perfil del Conductor
+  const { data: driver, isLoading: loadingDriver, error: driverError } = useQuery({
+    queryKey: ['driver_profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tms_conductores')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !authLoading && (hasPermission('view_mobile_app') || user.rol === 'CONDUCTOR' || user.rol === 'ADMIN'),
+    onSuccess: (data) => {
+      if (data) {
+        setView('home');
+        // Actualizar a EN_RUTA si estaba disponible
+        if (data.estado === 'DISPONIBLE') {
+          supabase.from('tms_conductores').update({ estado: 'EN_RUTA', updated_at: new Date().toISOString() }).eq('id', data.id).then();
+        }
+      } else {
+        setView('onboard');
+      }
+    }
   });
 
-  // ==================== EFECTOS PRINCIPALES ====================
-
-  // A. VERIFICACIÓN INICIAL DE ACCESO
-  useEffect(() => {
-    if (authLoading) return;
-
-    const initApp = async () => {
-      console.log('📱 Iniciando App Móvil para:', user?.email);
-      
-      // 1. Verificar Usuario
-      if (!user) {
-        setView('unauthorized');
-        setError('Debes iniciar sesión para acceder.');
-        setLoading(false);
-        return;
-      }
-
-      // 2. Verificar Permisos (RBAC)
-      // El usuario debe tener rol CONDUCTOR o permiso explícito 'view_mobile_app'
-      const canAccess = hasPermission('view_mobile_app') || user.rol === 'CONDUCTOR' || user.rol === 'ADMIN';
-      
-      if (!canAccess) {
-        console.warn('⛔ Acceso denegado por roles/permisos');
-        setView('unauthorized');
-        setError('No tienes permisos para acceder a la aplicación móvil.');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Buscar Perfil de Conductor
-      try {
-        setLoading(true);
-        const { data: driverData, error: driverError } = await supabase
-          .from('tms_conductores')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle(); // Usamos maybeSingle para evitar error 406
-
-        if (driverError) throw driverError;
-
-        if (driverData) {
-          console.log('✅ Perfil conductor encontrado:', driverData);
-          setDriver(driverData);
-          
-          // Actualizar estado a EN_RUTA si estaba DISPONIBLE
-          if (driverData.estado === 'DISPONIBLE') {
-             await supabase.from('tms_conductores')
-               .update({ estado: 'EN_RUTA', updated_at: new Date().toISOString() })
-               .eq('id', driverData.id);
-          }
-          
-          await fetchEntregas(driverData.id);
-          setView('home');
-        } else {
-          console.warn('⚠️ Usuario tiene permisos pero NO tiene perfil de conductor.');
-          // Si es ADMIN, permitir entrar sin perfil (modo visor) o pedir crear uno
-          // Para esta app, mostraremos pantalla de creación de perfil (Onboarding)
-          setView('onboard');
-        }
-
-      } catch (err) {
-        console.error('❌ Error inicializando app:', err);
-        setError('Error de conexión al verificar perfil.');
-        setView('unauthorized');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initApp();
-  }, [user, authLoading, hasPermission]);
-
-  // B. REALTIME SUBSCRIPTION
-  useEffect(() => {
-    if (!driver?.id) return;
-
-    console.log('📡 Conectando a Supabase Realtime para entregas...');
-
-    const channel = supabase
-      .channel('mobile_updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tms_entregas' },
-        (payload) => {
-          console.log('🔔 EVENTO REALTIME DETECTADO:', payload);
-          
-          // Lógica de filtrado inteligente para actualizar solo cuando es relevante
-          const isRelevant = 
-            // 1. Nueva asignación: El conductor es el usuario actual
-            (payload.new && payload.new.conductor_id === driver.id) ||
-            // 2. Desasignación: El conductor ERA el usuario actual (ahora null u otro)
-            (payload.old && payload.old.conductor_id === driver.id) ||
-            // 3. Actualización de estado: El registro actual pertenece al conductor
-            (payload.new && payload.new.conductor_id === driver.id);
-
-          if (isRelevant) {
-             console.log('🔄 Actualizando lista de entregas (Evento relevante)...');
-             fetchEntregas(driver.id);
-          } else {
-             console.log('ℹ️ Evento ignorado (No afecta a este conductor)');
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('📶 Estado de conexión Realtime:', status);
-        if (status === 'SUBSCRIBED') {
-          // Opcional: Mostrar un toast o indicador de "Conectado"
-        }
-      });
-
-    return () => { 
-      console.log('🔌 Desconectando canal Realtime...');
-      supabase.removeChannel(channel); 
-    };
-  }, [driver?.id]);
-
-  // ==================== FUNCIONES DE DATOS ====================
-
-  const fetchEntregas = async (driverId) => {
-    try {
-      setRefreshing(true);
+  // Query: Obtener Entregas
+  const { data: entregas = [], isLoading: loadingEntregas } = useQuery({
+    queryKey: ['mobile_entregas', driver?.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_entregas')
         .select('*')
-        .eq('conductor_id', driverId)
+        .eq('conductor_id', driver.id)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
-      console.log('📦 Entregas cargadas:', data?.length);
-      setEntregas(data || []);
-    } catch (err) {
-      console.error('Error cargando entregas:', err);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+      return data || [];
+    },
+    enabled: !!driver?.id
+  });
 
-  const createDriverProfile = async () => {
-    if (!newDriverData.rut || !newDriverData.patente) {
-      alert('Por favor completa RUT y Patente');
-      return;
-    }
-
-    try {
-      setLoading(true);
+  // Mutation: Crear Perfil
+  const createProfileMutation = useMutation({
+    mutationFn: async () => {
       const { data, error } = await supabase
         .from('tms_conductores')
         .insert({
           user_id: user.id,
           nombre: user.nombre || 'Conductor',
-          apellido: '', // Opcional
+          apellido: '',
           rut: newDriverData.rut,
           telefono: newDriverData.telefono,
           vehiculo_patente: newDriverData.patente.toUpperCase(),
-          estado: 'DISPONIBLE'
+          estado: 'EN_RUTA'
         })
         .select()
         .single();
-
       if (error) throw error;
-
-      setDriver(data);
-      setView('home');
-      fetchEntregas(data.id);
-
-    } catch (err) {
-      console.error('Error creando perfil:', err);
-      alert('Error al crear perfil: ' + err.message);
-    } finally {
-      setLoading(false);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['driver_profile', user.id]);
+      toast.success('Perfil creado exitosamente');
+    },
+    onError: (err) => {
+      toast.error('Error al crear perfil: ' + err.message);
     }
-  };
+  });
 
-  const updateEntregaStatus = async () => {
-    if (!selectedEntrega || !actionModal) return;
-    
-    // Validaciones
-    if ((actionModal === 'RECHAZADO' || actionModal === 'REPROGRAMADO') && !motivo) {
-      alert('Debes seleccionar un motivo');
-      return;
-    }
+  // Mutation: Actualizar Entrega
+  const updateEntregaMutation = useMutation({
+    mutationFn: async ({ id, estado, observaciones, fecha_entrega_real }) => {
+      const updateData = { estado, updated_at: new Date().toISOString() };
+      if (observaciones) updateData.observaciones = observaciones;
+      if (fecha_entrega_real) updateData.fecha_entrega_real = fecha_entrega_real;
 
-    try {
-      setLoading(true);
-      const updateData = {
-        estado: actionModal,
-        updated_at: new Date().toISOString()
-      };
-
-      if (actionModal === 'ENTREGADO') {
-        updateData.fecha_entrega_real = new Date().toISOString();
-      }
-
-      // Construir observación
-      let finalObs = selectedEntrega.observaciones || '';
-      if (motivo || obs) {
-        const newEntry = `[${actionModal}] ${motivo} ${obs ? '- ' + obs : ''}`;
-        finalObs = finalObs ? `${finalObs}\n${newEntry}` : newEntry;
-        updateData.observaciones = finalObs;
-      }
-
-      const { error } = await supabase
-        .from('tms_entregas')
-        .update(updateData)
-        .eq('id', selectedEntrega.id);
-
+      const { error } = await supabase.from('tms_entregas').update(updateData).eq('id', id);
       if (error) throw error;
-
-      // Reset y recargar
+    },
+    onMutate: async (newEntrega) => {
+      await queryClient.cancelQueries(['mobile_entregas', driver?.id]);
+      const previousEntregas = queryClient.getQueryData(['mobile_entregas', driver?.id]);
+      
+      queryClient.setQueryData(['mobile_entregas', driver?.id], old => 
+        old.map(e => e.id === newEntrega.id ? { ...e, ...newEntrega } : e)
+      );
+      
+      return { previousEntregas };
+    },
+    onError: (err, newEntrega, context) => {
+      queryClient.setQueryData(['mobile_entregas', driver?.id], context.previousEntregas);
+      toast.error('Error al actualizar: ' + err.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['mobile_entregas', driver?.id]);
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`Entrega marcada como ${variables.estado}`);
       setActionModal(null);
       setMotivo('');
       setObs('');
       setSelectedEntrega(null);
-      setView('home'); // Volver al inicio
-      await fetchEntregas(driver.id);
-
-    } catch (err) {
-      console.error('Error actualizando entrega:', err);
-      alert('Error al actualizar: ' + err.message);
-    } finally {
-      setLoading(false);
+      setView('home');
     }
-  };
+  });
+
+  // Suscripción Realtime
+  useEffect(() => {
+    if (!driver?.id) return;
+    const channel = supabase
+      .channel('mobile_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas', filter: `conductor_id=eq.${driver.id}` }, () => {
+        queryClient.invalidateQueries(['mobile_entregas', driver.id]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [driver?.id, queryClient]);
+
+  // Auth Checks
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setView('unauthorized');
+    } else if (driverError) {
+      setView('unauthorized');
+    }
+  }, [user, authLoading, driverError]);
 
   const handleLogout = async () => {
     if (driver?.id) {
-      await supabase.from('tms_conductores')
-        .update({ estado: 'DISPONIBLE' })
-        .eq('id', driver.id);
+      await supabase.from('tms_conductores').update({ estado: 'DISPONIBLE' }).eq('id', driver.id);
     }
     signOut();
   };
 
-  // ==================== HELPERS DE UI ====================
-  
   const getFilteredEntregas = () => {
     if (filterEstado === 'TODOS') return entregas;
     return entregas.filter(e => e.estado === filterEstado);
   };
 
-  const activeDeliveriesCount = entregas.filter(e => ['PENDIENTE', 'EN_RUTA'].includes(e.estado)).length;
-
-  // ==================== VISTAS (COMPONENTES INTERNOS) ====================
-
-  if (view === 'loading' || authLoading) {
+  if (view === 'loading' || authLoading || loadingDriver) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
@@ -312,7 +214,7 @@ const MobileApp = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
           <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h2>
-          <p className="text-slate-500 mb-6">{error || 'No tienes permisos para acceder.'}</p>
+          <p className="text-slate-500 mb-6">No tienes permisos para acceder o debes iniciar sesión.</p>
           <button onClick={handleLogout} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold">
             Cerrar Sesión
           </button>
@@ -330,7 +232,7 @@ const MobileApp = () => {
               <Truck className="text-indigo-600" size={32} />
             </div>
             <h2 className="text-2xl font-bold text-slate-800">Perfil de Conductor</h2>
-            <p className="text-slate-500">Completa tus datos para activar tu cuenta de conductor.</p>
+            <p className="text-slate-500">Completa tus datos para activar tu cuenta.</p>
           </div>
           
           <div className="space-y-4">
@@ -367,11 +269,14 @@ const MobileApp = () => {
             </div>
             
             <button 
-              onClick={createDriverProfile}
-              disabled={loading}
+              onClick={() => {
+                if(!newDriverData.rut || !newDriverData.patente) return toast.error("RUT y Patente son requeridos");
+                createProfileMutation.mutate();
+              }}
+              disabled={createProfileMutation.isPending}
               className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl mt-4 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Activando...' : 'Activar Perfil'}
+              {createProfileMutation.isPending ? 'Activando...' : 'Activar Perfil'}
             </button>
           </div>
         </div>
@@ -379,80 +284,77 @@ const MobileApp = () => {
     );
   }
 
-  // ==================== MAIN UI (HOME & DETAIL) ====================
-  
   return (
-    <div className="min-h-screen bg-slate-100 pb-20">
-      {/* HEADER */}
+    <div ref={containerRef} className="min-h-screen bg-slate-100 pb-20">
       <header className="bg-slate-900 text-white p-4 sticky top-0 z-40 shadow-lg">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-lg">
               {driver?.nombre?.charAt(0)}
             </div>
             <div>
               <h1 className="font-bold text-sm leading-tight">{driver?.nombre}</h1>
-              <p className="text-[10px] text-slate-400">{driver?.vehiculo_patente}</p>
+              <p className="text-[10px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded mt-0.5 w-fit">{driver?.vehiculo_patente}</p>
             </div>
           </div>
-          <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-white/10">
+          <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
             <Menu size={24} />
           </button>
         </div>
       </header>
 
-      {/* MENU DRAWER */}
       {showMenu && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowMenu(false)} />
-          <div className="relative bg-white w-3/4 max-w-xs h-full shadow-2xl p-6 flex flex-col">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMenu(false)} />
+          <div className="relative bg-white w-3/4 max-w-xs h-full shadow-2xl p-6 flex flex-col animate-in slide-in-from-right">
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-slate-800">Menú</h2>
-              <p className="text-sm text-slate-500">{user?.email}</p>
+              <h2 className="text-xl font-black text-slate-800">Opciones</h2>
+              <p className="text-xs font-medium text-slate-500 bg-slate-100 p-2 rounded-lg mt-2 break-all">{user?.email}</p>
             </div>
             <nav className="space-y-2 flex-1">
-              <button onClick={() => { setView('home'); setShowMenu(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium">
-                <List size={20} /> Mis Entregas
+              <button onClick={() => { setView('home'); setShowMenu(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 text-slate-700 font-bold transition-colors">
+                <List size={20} className="text-indigo-500" /> Mis Entregas
               </button>
-              <button onClick={() => { setView('history'); setShowMenu(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium">
-                <History size={20} /> Historial
+              <button onClick={() => { setView('history'); setShowMenu(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 text-slate-700 font-bold transition-colors">
+                <History size={20} className="text-indigo-500" /> Historial
               </button>
             </nav>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 rounded-xl bg-red-50 text-red-600 font-bold mt-auto">
-              <LogOut size={20} /> Cerrar Sesión
+            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-red-50 text-red-600 font-black hover:bg-red-100 transition-colors">
+              <LogOut size={20} /> Salir
             </button>
           </div>
         </div>
       )}
 
-      {/* CONTENT AREA */}
       <main className="p-4">
         {view === 'home' && (
           <>
-            {/* STATS CARDS */}
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <p className="text-slate-400 text-xs uppercase font-bold">Pendientes</p>
-                <p className="text-2xl font-black text-indigo-600">
-                  {entregas.filter(e => ['PENDIENTE', 'EN_RUTA'].includes(e.estado)).length}
-                </p>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-indigo-500">
+                <p className="text-slate-500 text-[10px] uppercase font-black tracking-wider">Pendientes</p>
+                <div className="flex items-end gap-2 mt-1">
+                  <p className="text-3xl font-black text-slate-800">
+                    {entregas.filter(e => ['PENDIENTE', 'EN_RUTA'].includes(e.estado)).length}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <p className="text-slate-400 text-xs uppercase font-bold">Completadas</p>
-                <p className="text-2xl font-black text-emerald-500">
-                  {entregas.filter(e => e.estado === 'ENTREGADO').length}
-                </p>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-emerald-500">
+                <p className="text-slate-500 text-[10px] uppercase font-black tracking-wider">Completadas</p>
+                <div className="flex items-end gap-2 mt-1">
+                  <p className="text-3xl font-black text-slate-800">
+                    {entregas.filter(e => e.estado === 'ENTREGADO').length}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* FILTERS */}
             <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
               {['TODOS', 'PENDIENTE', 'EN_RUTA'].map(st => (
                 <button
                   key={st}
                   onClick={() => setFilterEstado(st)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                    filterEstado === st ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-slate-200'
+                  className={`px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all shadow-sm ${
+                    filterEstado === st ? 'bg-slate-800 text-white scale-105' : 'bg-white text-slate-600 border border-slate-200'
                   }`}
                 >
                   {st === 'TODOS' ? 'Todas' : ESTADOS_ENTREGA[st]?.label || st}
@@ -460,46 +362,41 @@ const MobileApp = () => {
               ))}
             </div>
 
-            {/* LIST */}
-            <div className="space-y-3">
-              {getFilteredEntregas().length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  <Package size={48} className="mx-auto mb-2 opacity-20" />
-                  <p>No hay entregas disponibles</p>
+            <div className="space-y-4">
+              {loadingEntregas ? (
+                <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-indigo-500" /></div>
+              ) : getFilteredEntregas().length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                  <Package size={48} className="mx-auto mb-3 text-slate-300" />
+                  <p className="font-bold text-slate-500">Sin entregas asignadas</p>
                 </div>
               ) : (
                 getFilteredEntregas().map(entrega => (
                   <div 
                     key={entrega.id}
                     onClick={() => { setSelectedEntrega(entrega); setView('detail'); }}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
+                    className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 active:scale-[0.98] transition-transform cursor-pointer relative overflow-hidden group"
                   >
-                    {/* ENCABEZADO: NV Y ESTADO */}
+                    <div className="absolute top-0 left-0 w-1 h-full bg-slate-200 group-hover:bg-indigo-500 transition-colors"></div>
                     <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                         <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-black tracking-wide border border-indigo-100">
-                           NV: {entrega.nv}
-                         </span>
-                         {entrega.ruta_id && <span className="text-[10px] text-slate-400 font-bold">Ruta Asignada</span>}
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold bg-${ESTADOS_ENTREGA[entrega.estado]?.color}-100 text-${ESTADOS_ENTREGA[entrega.estado]?.color}-700`}>
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-black font-mono border border-slate-200">
+                        NV: {entrega.nv}
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border bg-${ESTADOS_ENTREGA[entrega.estado]?.color}-50 text-${ESTADOS_ENTREGA[entrega.estado]?.color}-700 border-${ESTADOS_ENTREGA[entrega.estado]?.color}-200`}>
                         {ESTADOS_ENTREGA[entrega.estado]?.label}
                       </span>
                     </div>
 
-                    {/* CLIENTE */}
                     <h3 className="text-lg font-black text-slate-800 mb-1 leading-tight">{entrega.cliente}</h3>
                     
-                    {/* DIRECCIÓN */}
                     <div className="flex items-start gap-2 text-slate-500 text-xs mb-4">
                       <MapPin size={14} className="mt-0.5 shrink-0 text-slate-400" />
                       <p className="line-clamp-2 font-medium">{entrega.direccion}, {entrega.comuna}</p>
                     </div>
 
-                    {/* FOOTER: BULTOS Y PESO */}
-                    <div className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 shadow-sm text-slate-600">
+                    <div className="flex items-center justify-between bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-400">
                            <Box size={16} />
                         </div>
                         <div>
@@ -507,11 +404,9 @@ const MobileApp = () => {
                            <p className="text-sm font-black text-slate-800">{entrega.bultos || 0}</p>
                         </div>
                       </div>
-                      
                       <div className="w-px h-8 bg-slate-200"></div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-200 shadow-sm text-slate-600">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-400">
                            <Scale size={16} />
                         </div>
                         <div>
@@ -528,35 +423,41 @@ const MobileApp = () => {
         )}
 
         {view === 'detail' && selectedEntrega && (
-          <div className="animate-in slide-in-from-right duration-200">
+          <div>
             <button 
               onClick={() => setView('home')}
-              className="mb-4 flex items-center gap-2 text-slate-500 font-medium hover:text-slate-800"
+              className="mb-4 flex items-center gap-2 text-slate-500 font-black hover:text-slate-800 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 w-fit transition-all active:scale-95"
             >
-              <ChevronLeft size={20} /> Volver
+              <ChevronLeft size={18} /> Volver
             </button>
 
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-              <div className="bg-slate-50 p-6 border-b border-slate-100">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 relative">
+              <div className={`h-2 w-full bg-${ESTADOS_ENTREGA[selectedEntrega.estado]?.color}-500`}></div>
+              <div className="p-6 border-b border-slate-100">
                 <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-2xl font-black text-slate-800">{selectedEntrega.cliente}</h2>
+                  <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedEntrega.cliente}</h2>
                 </div>
-                <p className="font-mono text-sm text-slate-500">NV: {selectedEntrega.nv}</p>
+                <div className="flex gap-2 items-center">
+                  <p className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">NV: {selectedEntrega.nv}</p>
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-black bg-${ESTADOS_ENTREGA[selectedEntrega.estado]?.color}-100 text-${ESTADOS_ENTREGA[selectedEntrega.estado]?.color}-700`}>
+                    {ESTADOS_ENTREGA[selectedEntrega.estado]?.label}
+                  </span>
+                </div>
               </div>
               
               <div className="p-6 space-y-6">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Dirección</label>
-                  <div className="flex gap-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Destino</label>
+                  <div className="flex gap-4">
                     <div className="flex-1">
-                      <p className="text-slate-800 font-medium">{selectedEntrega.direccion}</p>
-                      <p className="text-slate-500 text-sm">{selectedEntrega.comuna}, {selectedEntrega.region}</p>
+                      <p className="text-slate-800 font-bold">{selectedEntrega.direccion}</p>
+                      <p className="text-slate-500 text-sm font-medium">{selectedEntrega.comuna}, {selectedEntrega.region}</p>
                     </div>
                     <a 
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEntrega.direccion + ', ' + selectedEntrega.comuna)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0"
+                      className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100 active:scale-95 transition-transform"
                     >
                       <Navigation size={24} />
                     </a>
@@ -564,36 +465,34 @@ const MobileApp = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-3 rounded-xl">
-                    <p className="text-xs text-slate-400 mb-1">Contacto</p>
-                    <p className="font-bold text-slate-700">{selectedEntrega.telefono || 'Sin teléfono'}</p>
-                  </div>
-                  <div className="bg-slate-50 p-3 rounded-xl">
-                    <p className="text-xs text-slate-400 mb-1">Horario</p>
-                    <p className="font-bold text-slate-700">09:00 - 18:00</p>
+                  <a href={`tel:${selectedEntrega.telefono}`} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 active:bg-slate-100 transition-colors block text-center">
+                    <Phone size={20} className="mx-auto mb-2 text-slate-400" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Llamar</p>
+                  </a>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <Clock size={20} className="mx-auto mb-2 text-slate-400" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Horario</p>
+                    <p className="font-bold text-slate-700 text-sm">09:00 - 18:00</p>
                   </div>
                 </div>
 
                 {selectedEntrega.observaciones && (
-                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm">
-                    <strong>Nota:</strong> {selectedEntrega.observaciones}
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Notas Internas</p>
+                    <p className="text-amber-800 text-sm font-medium">{selectedEntrega.observaciones}</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* ACTION BUTTONS */}
             <div className="space-y-3">
               {selectedEntrega.estado === 'PENDIENTE' && (
                 <button 
-                  onClick={async () => {
-                    await supabase.from('tms_entregas').update({ estado: 'EN_RUTA' }).eq('id', selectedEntrega.id);
-                    setSelectedEntrega({...selectedEntrega, estado: 'EN_RUTA'});
-                    fetchEntregas(driver.id);
-                  }}
-                  className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                  onClick={() => updateEntregaMutation.mutate({ id: selectedEntrega.id, estado: 'EN_RUTA' })}
+                  disabled={updateEntregaMutation.isPending}
+                  className="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-[0_10px_20px_rgba(79,70,229,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-all text-lg"
                 >
-                  <Play size={24} /> Iniciar Ruta
+                  <Play size={24} fill="currentColor" /> INICIAR RUTA
                 </button>
               )}
 
@@ -601,20 +500,20 @@ const MobileApp = () => {
                 <>
                   <button 
                     onClick={() => setActionModal('ENTREGADO')}
-                    className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+                    className="w-full py-5 bg-emerald-500 text-white font-black rounded-3xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-all text-lg mb-4"
                   >
-                    <CheckCircle size={24} /> Confirmar Entrega
+                    <CheckCircle size={24} /> ENTREGAR PEDIDO
                   </button>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => setActionModal('RECHAZADO')}
-                      className="py-3 bg-white border-2 border-red-100 text-red-600 font-bold rounded-xl"
+                      className="py-4 bg-white border-2 border-red-100 text-red-500 font-black rounded-2xl active:scale-95 transition-transform"
                     >
                       Rechazar
                     </button>
                     <button 
                       onClick={() => setActionModal('REPROGRAMADO')}
-                      className="py-3 bg-white border-2 border-purple-100 text-purple-600 font-bold rounded-xl"
+                      className="py-4 bg-white border-2 border-purple-100 text-purple-500 font-black rounded-2xl active:scale-95 transition-transform"
                     >
                       Reprogramar
                     </button>
@@ -626,26 +525,26 @@ const MobileApp = () => {
         )}
       </main>
 
-      {/* ACTION MODAL */}
       {actionModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setActionModal(null)} />
-          <div className="relative bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
-            <h3 className="text-xl font-black text-slate-800 mb-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setActionModal(null)} />
+          <div className="relative bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 animate-in slide-in-from-bottom duration-300 shadow-2xl">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+            
+            <h3 className="text-2xl font-black text-slate-800 mb-6 text-center">
               {actionModal === 'ENTREGADO' ? 'Confirmar Entrega' : 
-               actionModal === 'RECHAZADO' ? 'Reportar Rechazo' : 'Reprogramar Pedido'}
+               actionModal === 'RECHAZADO' ? 'Motivo de Rechazo' : 'Reprogramar'}
             </h3>
 
             {(actionModal === 'RECHAZADO' || actionModal === 'REPROGRAMADO') && (
-              <div className="mb-4 space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase">Motivo</label>
-                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+              <div className="mb-6 space-y-2">
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {(actionModal === 'RECHAZADO' ? MOTIVOS_RECHAZO : MOTIVOS_REPROGRAMACION).map(m => (
                     <button
                       key={m}
                       onClick={() => setMotivo(m)}
-                      className={`p-3 rounded-xl text-left text-sm font-medium transition-colors ${
-                        motivo === m ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+                      className={`p-4 rounded-2xl text-left text-sm font-bold transition-all ${
+                        motivo === m ? 'bg-indigo-50 border-2 border-indigo-500 text-indigo-700' : 'bg-slate-50 border-2 border-transparent text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {m}
@@ -655,22 +554,34 @@ const MobileApp = () => {
               </div>
             )}
 
-            <div className="mb-6">
-              <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Observaciones</label>
+            <div className="mb-8">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Observaciones adicionales</label>
               <textarea
                 value={obs}
                 onChange={e => setObs(e.target.value)}
-                placeholder="Comentarios adicionales..."
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl resize-none h-24 focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="Escribe aquí..."
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl resize-none h-28 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
               />
             </div>
 
             <button
-              onClick={updateEntregaStatus}
-              disabled={loading || ((actionModal !== 'ENTREGADO') && !motivo)}
-              className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl disabled:opacity-50"
+              onClick={() => {
+                let finalObs = selectedEntrega.observaciones || '';
+                if (motivo || obs) {
+                  const newEntry = `[${actionModal}] ${motivo} ${obs ? '- ' + obs : ''}`;
+                  finalObs = finalObs ? `${finalObs}\n${newEntry}` : newEntry;
+                }
+                updateEntregaMutation.mutate({ 
+                  id: selectedEntrega.id, 
+                  estado: actionModal, 
+                  observaciones: finalObs,
+                  fecha_entrega_real: actionModal === 'ENTREGADO' ? new Date().toISOString() : undefined
+                });
+              }}
+              disabled={updateEntregaMutation.isPending || ((actionModal !== 'ENTREGADO') && !motivo)}
+              className="w-full py-5 bg-slate-900 text-white font-black text-lg rounded-2xl disabled:opacity-50 active:scale-95 transition-transform"
             >
-              {loading ? 'Procesando...' : 'Confirmar Acción'}
+              {updateEntregaMutation.isPending ? 'Procesando...' : 'Confirmar'}
             </button>
           </div>
         </div>

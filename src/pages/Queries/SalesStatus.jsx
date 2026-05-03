@@ -6,15 +6,95 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 const SalesStatus = () => {
+    const queryClient = useQueryClient();
+    const containerRef = useRef(null);
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [results, setResults] = useState([]);
-    const [selectedNV, setSelectedNV] = useState(null);
+    const [debouncedTerm, setDebouncedTerm] = useState('');
+    const [selectedNVId, setSelectedNVId] = useState(null);
+
+    useGSAP(() => {
+        gsap.from(containerRef.current, {
+            y: 20,
+            opacity: 0,
+            duration: 0.4,
+            ease: 'power3.out',
+            clearProps: 'all'
+        });
+    }, { scope: containerRef });
+
+    // Búsqueda con debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchTerm.length >= 3) {
+                setDebouncedTerm(searchTerm);
+            } else if (searchTerm.length === 0) {
+                setDebouncedTerm('');
+                setSelectedNVId(null);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // TanStack Query para Resultados
+    const { data: results = [], isLoading: loading } = useQuery({
+        queryKey: ['sales_search', debouncedTerm],
+        queryFn: async () => {
+            if (!debouncedTerm) return [];
+            const { data, error } = await supabase
+                .from('tms_nv_diarias')
+                .select('*')
+                .or(`nv.ilike.%${debouncedTerm}%,cliente.ilike.%${debouncedTerm}%,codigo_producto.ilike.%${debouncedTerm}%`)
+                .order('fecha_emision', { ascending: false })
+                .limit(20);
+
+            if (error) throw error;
+            
+            // Auto-seleccionar si es coincidencia exacta
+            if (data && data.length === 1 && data[0].nv.toLowerCase() === debouncedTerm.toLowerCase()) {
+                setSelectedNVId(data[0].nv);
+            }
+            return data || [];
+        },
+        enabled: !!debouncedTerm,
+    });
+
+    // TanStack Query para Detalles (incluyendo entrega)
+    const { data: selectedNV, isLoading: loadingDetails } = useQuery({
+        queryKey: ['sales_details', selectedNVId],
+        queryFn: async () => {
+            if (!selectedNVId) return null;
+            
+            const nvBase = results.find(r => r.nv === selectedNVId) || null;
+            
+            const { data: entrega, error } = await supabase
+                .from('tms_entregas')
+                .select(`
+                    *,
+                    tms_rutas ( nombre, fecha_inicio ),
+                    tms_conductores ( nombre, apellido, vehiculo_patente )
+                `)
+                .eq('nv', selectedNVId)
+                .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error(error);
+            }
+
+            return {
+                ...nvBase,
+                entrega: entrega || null
+            };
+        },
+        enabled: !!selectedNVId && results.length > 0,
+    });
 
     const selectedNVRef = useRef(null);
-
     useEffect(() => {
         selectedNVRef.current = selectedNV;
     }, [selectedNV]);
@@ -24,35 +104,23 @@ const SalesStatus = () => {
         const channel = supabase
             .channel('sales_status_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, (payload) => {
-                // 1. Actualizar la lista lateral si el pedido afectado está ahí
-                setResults(prev => {
-                    const index = prev.findIndex(item => item.nv === payload.new.nv);
-                    if (index !== -1) {
-                        const newResults = [...prev];
-                        newResults[index] = { ...newResults[index], ...payload.new };
-                        return newResults;
-                    }
-                    return prev;
-                });
-
-                // 2. Si es el pedido que el usuario está viendo, recargar detalles completos
+                queryClient.invalidateQueries(['sales_search']);
                 if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
-                    fetchDetails(payload.new);
-
-                    // Notificación visual opcional para que el usuario sepa que algo cambió
+                    queryClient.invalidateQueries(['sales_details', payload.new.nv]);
                     toast('Actualización WMS', {
                         description: `El estado cambió a ${payload.new.estado}`,
-                        icon: <Activity className="text-blue-500" />
+                        icon: <Activity className="text-wms-neon" />,
+                        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
                     });
                 }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, (payload) => {
-                // Actualización de logística
                 if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
-                    fetchDetails(selectedNVRef.current);
+                    queryClient.invalidateQueries(['sales_details', selectedNVRef.current.nv]);
                     toast('Actualización Logística', {
                         description: `Datos de ruta/despacho modificados para la NV`,
-                        icon: <Truck className="text-emerald-500 animate-bounce" />
+                        icon: <Truck className="text-wms-neon animate-bounce" />,
+                        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
                     });
                 }
             })
@@ -61,78 +129,12 @@ const SalesStatus = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, []);
-
-    // Búsqueda con debounce
-    useEffect(() => {
-        if (searchTerm.length >= 3) {
-            const delayDebounceFn = setTimeout(() => {
-                handleSearch();
-            }, 500);
-            return () => clearTimeout(delayDebounceFn);
-        } else if (searchTerm.length === 0) {
-            setResults([]);
-            setSelectedNV(null);
-        }
-    }, [searchTerm]);
-
-    const handleSearch = async () => {
-        if (!searchTerm) return;
-        setLoading(true);
-
-        try {
-            const { data, error } = await supabase
-                .from('tms_nv_diarias')
-                .select('*')
-                .or(`nv.ilike.%${searchTerm}%,cliente.ilike.%${searchTerm}%,codigo_producto.ilike.%${searchTerm}%`)
-                .order('fecha_emision', { ascending: false })
-                .limit(20);
-
-            if (error) throw error;
-            setResults(data || []);
-
-            // Auto-seleccionar si es coincidencia exacta por número de NV
-            if (data && data.length === 1 && data[0].nv.toLowerCase() === searchTerm.toLowerCase()) {
-                fetchDetails(data[0]);
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error('Error al realizar la búsqueda');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [queryClient]);
 
     const handleClear = () => {
         setSearchTerm('');
-        setResults([]);
-        setSelectedNV(null);
-    };
-
-    const fetchDetails = async (nv) => {
-        try {
-            setLoading(true);
-            const { data: entrega, error } = await supabase
-                .from('tms_entregas')
-                .select(`
-            *,
-            tms_rutas ( nombre, fecha_inicio ),
-            tms_conductores ( nombre, apellido, vehiculo_patente )
-        `)
-                .eq('nv', nv.nv)
-                .maybeSingle();
-
-            setSelectedNV({
-                ...nv,
-                entrega: entrega || null
-            });
-
-        } catch (err) {
-            console.error(err);
-            setSelectedNV({ ...nv, entrega: null });
-        } finally {
-            setLoading(false);
-        }
+        setDebouncedTerm('');
+        setSelectedNVId(null);
     };
 
     const getStatusColor = (status) => {
@@ -220,45 +222,46 @@ const SalesStatus = () => {
     };
 
     return (
-        <div className="h-full flex flex-col font-sans p-2 md:p-6 bg-slate-50/50 min-h-screen">
+        <div ref={containerRef} className="h-full flex flex-col font-sans p-2 md:p-6 bg-wms-dark min-h-screen text-slate-300">
 
             {/* HEADER WMS AESTHETIC INTEGRADO CON BÚSQUEDA */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/40 relative z-20">
-                <div className="flex items-center gap-5">
-                    <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 rounded-2xl shadow-lg shadow-indigo-200 text-white transform hover:scale-105 transition-transform">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-wms-panel/80 backdrop-blur-xl p-5 rounded-3xl border border-wms-border shadow-2xl relative z-20 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
+                <div className="flex items-center gap-5 relative z-10">
+                    <div className="bg-wms-neon/10 p-4 rounded-2xl border border-wms-neon/20 shadow-neon-green text-wms-neon transform hover:scale-105 transition-transform">
                         <Search size={28} strokeWidth={3} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black tracking-tighter text-slate-800 leading-none mb-1">
-                            CONSULTAS <span className="text-indigo-600">WMS</span>
+                        <h1 className="text-3xl font-black tracking-tighter text-white leading-none mb-1">
+                            CONSULTAS <span className="text-wms-neon">WMS</span>
                         </h1>
-                        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] md:text-xs tracking-wider uppercase">
-                            <Activity size={14} className="text-emerald-500" />
+                        <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px] md:text-xs tracking-wider uppercase">
+                            <Activity size={14} className="text-wms-neon" />
                             <span>Trazabilidad de Venta • En Vivo</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Barra de Búsqueda Flotante */}
-                <div className="mt-5 md:mt-0 w-full md:w-[450px] relative group">
+                <div className="mt-5 md:mt-0 w-full md:w-[450px] relative group z-10">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                         {loading ? (
-                            <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-5 h-5 border-2 border-wms-neon border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                            <Search className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} strokeWidth={2.5} />
+                            <Search className="text-slate-500 group-focus-within:text-wms-neon transition-colors" size={20} strokeWidth={2.5} />
                         )}
                     </div>
                     <input
                         type="text"
                         placeholder="Buscar por N.V, Cliente o SKU..."
-                        className="w-full pl-12 pr-12 py-3.5 bg-slate-100 hover:bg-slate-200/50 rounded-2xl border-2 border-transparent focus:bg-white focus:border-indigo-400 outline-none text-slate-700 font-bold tracking-wide transition-all shadow-inner focus:shadow-lg focus:shadow-indigo-100/50"
+                        className="w-full pl-12 pr-12 py-3.5 bg-slate-900/50 hover:bg-slate-900/80 rounded-2xl border-2 border-wms-border focus:bg-slate-900 focus:border-wms-neon outline-none text-white font-bold tracking-wide transition-all shadow-inner focus:shadow-neon-green"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     {searchTerm && (
                         <button
                             onClick={handleClear}
-                            className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600 bg-white shadow-sm my-2 px-1.5 rounded-lg border border-slate-200"
+                            className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-wms-alert bg-slate-800 shadow-sm my-2 px-1.5 rounded-lg border border-wms-border"
                             title="Limpiar Búsqueda"
                         >
                             <AlertCircle size={16} className="transform rotate-45" />
@@ -271,54 +274,54 @@ const SalesStatus = () => {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-4">
 
                 {/* ====== LISTA LATERAL RESULTADOS (4 Cols) ====== */}
-                <div className="lg:col-span-4 flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden relative">
-                    <div className="p-5 border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm z-10 flex justify-between items-center sticky top-0">
-                        <h3 className="font-black text-slate-700 tracking-tight flex items-center gap-2">
-                            <Clock size={18} className="text-slate-400" />
+                <div className="lg:col-span-4 flex flex-col bg-wms-panel/80 backdrop-blur-xl rounded-[2rem] border border-wms-border shadow-2xl overflow-hidden relative">
+                    <div className="p-5 border-b border-wms-border bg-slate-900/50 z-10 flex justify-between items-center sticky top-0">
+                        <h3 className="font-black text-white tracking-tight flex items-center gap-2">
+                            <Clock size={18} className="text-wms-neon" />
                             COINCIDENCIAS
                         </h3>
-                        <span className="bg-slate-200 text-slate-600 font-black px-3 py-1 rounded-lg text-xs">
+                        <span className="bg-wms-neon/10 border border-wms-neon/20 text-wms-neon font-black px-3 py-1 rounded-lg text-xs shadow-neon-green">
                             {results.length} res.
                         </span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-900/20">
                         {results.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-300 p-6 text-center">
-                                <Zap size={64} className="mb-4 opacity-50 text-indigo-300" />
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 p-6 text-center">
+                                <Zap size={64} className="mb-4 opacity-50 text-wms-neon" />
                                 <p className="font-black text-xl tracking-tight text-slate-400">EN ESPERA</p>
                                 <p className="text-xs font-bold mt-1 opacity-60">Ingresa una Nota de Venta para rastrear</p>
                             </div>
                         ) : (
                             results.map(item => {
-                                const isSelected = selectedNV?.id === item.id;
+                                const isSelected = selectedNVId === item.nv;
                                 return (
                                     <div
                                         key={item.id}
-                                        onClick={() => fetchDetails(item)}
+                                        onClick={() => setSelectedNVId(item.nv)}
                                         className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 relative overflow-hidden group ${isSelected
-                                                ? 'bg-indigo-50 border-indigo-400 shadow-md shadow-indigo-100/50'
-                                                : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-sm'
+                                                ? 'bg-wms-neon/10 border-wms-neon shadow-neon-green'
+                                                : 'bg-slate-900/50 border-wms-border hover:border-wms-neon/50'
                                             }`}
                                     >
-                                        {isSelected && <div className="absolute left-0 top-0 bottom-0 w-2 bg-indigo-500 rounded-l-2xl"></div>}
+                                        {isSelected && <div className="absolute left-0 top-0 bottom-0 w-2 bg-wms-neon rounded-l-2xl"></div>}
 
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className={`text-xl font-black tracking-tight ${isSelected ? 'text-indigo-900 ml-1' : 'text-slate-800'}`}>
+                                            <span className={`text-xl font-black tracking-tight ${isSelected ? 'text-wms-neon ml-1' : 'text-white'}`}>
                                                 #{item.nv}
                                             </span>
                                             <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border ${getStatusColor(item.estado)}`}>
                                                 {item.estado}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-slate-500 font-bold truncate mb-3">{item.cliente}</p>
+                                        <p className="text-sm text-slate-400 font-bold truncate mb-3">{item.cliente}</p>
 
                                         <div className="flex items-center justify-between text-xs font-bold mt-3">
-                                            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-100/80 px-2 py-1 rounded-md">
+                                            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-800/80 px-2 py-1 rounded-md border border-wms-border">
                                                 <Calendar size={12} />
                                                 <span>{new Date(item.fecha_emision).toLocaleDateString()}</span>
                                             </div>
-                                            {isSelected && <ArrowRight size={16} className="text-indigo-500 animate-pulse" />}
+                                            {isSelected && <ArrowRight size={16} className="text-wms-neon animate-pulse" />}
                                         </div>
                                     </div>
                                 )
@@ -328,31 +331,36 @@ const SalesStatus = () => {
                 </div>
 
                 {/* ====== PANEL CENTRAL DETALLES (8 Cols) ====== */}
-                <div className="lg:col-span-8 bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden flex flex-col relative w-full h-full">
-                    {selectedNV ? (
+                <div className="lg:col-span-8 bg-wms-panel/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-wms-border overflow-hidden flex flex-col relative w-full h-full">
+                    {loadingDetails ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-900/20 p-10">
+                            <div className="w-16 h-16 border-4 border-wms-border border-t-wms-neon rounded-full animate-spin mb-4"></div>
+                            <p className="font-bold">Cargando detalles...</p>
+                        </div>
+                    ) : selectedNV ? (
                         <div className="flex-1 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-right-4 duration-300">
 
                             {/* Dark Header de Pedido */}
                             <div className="bg-slate-900 p-8 shadow-inner relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
+                                <div className="absolute top-0 right-0 w-96 h-96 bg-wms-neon/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
 
                                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                                     <div>
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="bg-indigo-500/20 p-2 rounded-xl border border-indigo-500/30">
-                                                <FileText size={24} className="text-indigo-300" />
+                                            <div className="bg-wms-neon/20 p-2 rounded-xl border border-wms-neon/30">
+                                                <FileText size={24} className="text-wms-neon" />
                                             </div>
-                                            <span className="text-indigo-300 font-black tracking-widest uppercase text-xs">Información de N.V.</span>
+                                            <span className="text-wms-neon font-black tracking-widest uppercase text-xs">Información de N.V.</span>
                                         </div>
                                         <h2 className="text-6xl font-black tracking-tighter text-white mb-2 ml-[-3px]">#{selectedNV.nv}</h2>
                                         <p className="text-slate-300 font-bold text-lg flex items-center gap-2">
-                                            <User size={18} className="text-indigo-400" />
+                                            <User size={18} className="text-wms-neon" />
                                             {selectedNV.cliente}
                                         </p>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
-                                        <div className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border border-white/20 shadow-lg ${getStatusColor(selectedNV.estado).replace('bg-', 'bg-white/10 text-white ')}`}>
+                                        <div className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border border-white/20 shadow-lg ${getStatusColor(selectedNV.estado).replace('bg-', 'bg-slate-800 text-white border-')}`}>
                                             <span className="opacity-70 mr-2">ESTADO ACTUAL:</span>
                                             {selectedNV.estado}
                                         </div>
@@ -369,67 +377,67 @@ const SalesStatus = () => {
                             </div>
 
                             {/* Timeline Logístico */}
-                            <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+                            <div className="p-8 border-b border-wms-border bg-slate-900/30">
                                 <h4 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">
-                                    <Activity size={14} className="text-slate-400" /> Trazabilidad Operativa
+                                    <Activity size={14} className="text-wms-neon" /> Trazabilidad Operativa
                                 </h4>
                                 <Timeline data={selectedNV} />
                             </div>
 
                             {/* Cards de Detalle Expandido */}
-                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-white">
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-wms-panel/50">
 
                                 {/* 1. PRODUCTO */}
-                                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                                    <h4 className="font-black text-slate-800 flex items-center gap-2 mb-6 text-lg tracking-tight">
-                                        <Box size={22} className="text-indigo-500" />
+                                <div className="bg-slate-900/50 rounded-3xl border border-wms-border p-6 shadow-sm hover:shadow-neon-green transition-shadow">
+                                    <h4 className="font-black text-white flex items-center gap-2 mb-6 text-lg tracking-tight">
+                                        <Box size={22} className="text-wms-neon" />
                                         Especificaciones del Ítem
                                     </h4>
                                     <div className="space-y-4">
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center font-bold text-slate-400 border border-slate-200">
+                                        <div className="bg-slate-800/80 p-4 rounded-xl border border-wms-border flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-900 rounded-xl shadow-sm flex items-center justify-center font-bold text-slate-400 border border-wms-border">
                                                 SKU
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Código Único</p>
-                                                <span className="font-mono font-black text-slate-800 text-lg tracking-tight">{selectedNV.codigo_producto}</span>
+                                                <span className="font-mono font-black text-white text-lg tracking-tight">{selectedNV.codigo_producto}</span>
                                             </div>
                                         </div>
 
                                         <div>
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Descripción Registrada</p>
-                                            <p className="font-bold text-slate-600 bg-slate-50 border border-slate-100 p-3 rounded-xl leading-snug">{selectedNV.descripcion_producto}</p>
+                                            <p className="font-bold text-slate-300 bg-slate-800/80 border border-wms-border p-3 rounded-xl leading-snug">{selectedNV.descripcion_producto}</p>
                                         </div>
 
-                                        <div className="flex items-center justify-between bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                            <span className="font-black text-indigo-900 text-xs uppercase tracking-widest">Cant. Solicitada</span>
-                                            <div className="flex items-baseline gap-1 bg-white px-3 py-1 rounded-lg shadow-sm border border-indigo-100">
-                                                <span className="font-black text-2xl text-indigo-600">{selectedNV.cantidad}</span>
-                                                <span className="font-bold text-indigo-400 text-[10px] uppercase tracking-wider">{selectedNV.unidad}</span>
+                                        <div className="flex items-center justify-between bg-wms-neon/10 p-4 rounded-xl border border-wms-neon/20">
+                                            <span className="font-black text-wms-neon text-xs uppercase tracking-widest">Cant. Solicitada</span>
+                                            <div className="flex items-baseline gap-1 bg-slate-900 px-3 py-1 rounded-lg shadow-sm border border-wms-neon/30">
+                                                <span className="font-black text-2xl text-wms-neon">{selectedNV.cantidad}</span>
+                                                <span className="font-bold text-wms-neon/70 text-[10px] uppercase tracking-wider">{selectedNV.unidad}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* 2. LOGÍSTICA / ENTREGA */}
-                                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -z-10"></div>
+                                <div className="bg-slate-900/50 rounded-3xl border border-wms-border p-6 shadow-sm hover:shadow-neon-green transition-shadow relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/5 rounded-bl-full -z-10"></div>
 
-                                    <h4 className="font-black text-slate-800 flex items-center gap-2 mb-6 text-lg tracking-tight">
-                                        <Truck size={22} className="text-emerald-500" />
+                                    <h4 className="font-black text-white flex items-center gap-2 mb-6 text-lg tracking-tight">
+                                        <Truck size={22} className="text-wms-neon" />
                                         Manifiesto de Despacho
                                     </h4>
 
                                     {selectedNV.entrega ? (
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
+                                                <div className="bg-slate-800/80 p-4 rounded-xl border border-wms-border flex flex-col justify-center">
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bultos Tot.</p>
-                                                    <p className="font-black text-3xl text-slate-700">{selectedNV.entrega.bultos || '0'}</p>
+                                                    <p className="font-black text-3xl text-white">{selectedNV.entrega.bultos || '0'}</p>
                                                 </div>
-                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center">
+                                                <div className="bg-slate-800/80 p-4 rounded-xl border border-wms-border flex flex-col justify-center">
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vol / Peso</p>
-                                                    <p className="font-black text-3xl text-slate-700 flex items-baseline gap-1">
+                                                    <p className="font-black text-3xl text-white flex items-baseline gap-1">
                                                         {selectedNV.entrega.peso_kg || '0'}
                                                         <span className="text-xs text-slate-400 tracking-wider">KG</span>
                                                     </p>
@@ -437,28 +445,28 @@ const SalesStatus = () => {
                                             </div>
 
                                             {selectedNV.entrega.tms_rutas && (
-                                                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center gap-4 group">
-                                                    <div className="bg-white p-2.5 rounded-xl border border-emerald-100 text-emerald-600 shadow-sm group-hover:scale-110 transition-transform">
+                                                <div className="bg-wms-neon/10 p-4 rounded-xl border border-wms-neon/20 flex items-center gap-4 group">
+                                                    <div className="bg-slate-900 p-2.5 rounded-xl border border-wms-neon/30 text-wms-neon shadow-sm group-hover:scale-110 transition-transform">
                                                         <MapPin size={24} strokeWidth={2.5} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-[10px] font-black text-emerald-600/70 uppercase tracking-widest mb-0.5">Ruta Operativa</p>
-                                                        <p className="font-black text-emerald-900 text-lg leading-tight">{selectedNV.entrega.tms_rutas.nombre}</p>
+                                                        <p className="text-[10px] font-black text-wms-neon/70 uppercase tracking-widest mb-0.5">Ruta Operativa</p>
+                                                        <p className="font-black text-wms-neon text-lg leading-tight">{selectedNV.entrega.tms_rutas.nombre}</p>
                                                     </div>
                                                 </div>
                                             )}
 
                                             {selectedNV.entrega.tms_conductores && (
-                                                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                                    <div className="w-12 h-12 bg-white border border-slate-200 text-indigo-600 rounded-xl flex items-center justify-center font-black shadow-sm">
+                                                <div className="flex items-center gap-4 bg-slate-800/80 p-4 rounded-xl border border-wms-border">
+                                                    <div className="w-12 h-12 bg-slate-900 border border-wms-border text-wms-neon rounded-xl flex items-center justify-center font-black shadow-sm">
                                                         <User size={20} />
                                                     </div>
                                                     <div>
                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Chofer Asignado</p>
-                                                        <p className="font-black text-slate-800 text-sm">
+                                                        <p className="font-black text-white text-sm">
                                                             {selectedNV.entrega.tms_conductores.nombre} {selectedNV.entrega.tms_conductores.apellido}
                                                         </p>
-                                                        <div className="bg-slate-200/60 text-slate-600 px-2 py-0.5 rounded text-[10px] font-mono font-bold inline-block mt-1">
+                                                        <div className="bg-slate-900 text-slate-400 border border-wms-border px-2 py-0.5 rounded text-[10px] font-mono font-bold inline-block mt-1">
                                                             PT: {selectedNV.entrega.tms_conductores.vehiculo_patente}
                                                         </div>
                                                     </div>
@@ -466,28 +474,28 @@ const SalesStatus = () => {
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center">
-                                            <div className="w-16 h-16 bg-white shadow-sm rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                                                <Package size={28} className="text-slate-300" />
+                                        <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-slate-400 bg-slate-900/50 rounded-2xl border-2 border-dashed border-wms-border p-6 text-center">
+                                            <div className="w-16 h-16 bg-slate-800 shadow-sm rounded-full flex items-center justify-center mb-4 border border-wms-border">
+                                                <Package size={28} className="text-slate-500" />
                                             </div>
-                                            <p className="font-black text-slate-600 text-base tracking-tight">Sin Datos de Despacho</p>
-                                            <p className="text-xs font-bold text-slate-400 mt-2 max-w-[200px]">El pedido aún no ha sido planificado para entrega en ruta.</p>
+                                            <p className="font-black text-slate-300 text-base tracking-tight">Sin Datos de Despacho</p>
+                                            <p className="text-xs font-bold text-slate-500 mt-2 max-w-[200px]">El pedido aún no ha sido planificado para entrega en ruta.</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-slate-50/30 p-10 relative">
-                            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 p-10 relative">
+                            <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none">
                                 <Search size={400} />
                             </div>
                             <div className="relative z-10 text-center flex flex-col items-center">
-                                <div className="w-24 h-24 bg-white rounded-full shadow-xl shadow-indigo-100 border border-indigo-50 flex items-center justify-center mb-6 animate-bounce">
-                                    <Search size={40} className="text-indigo-400" strokeWidth={2.5} />
+                                <div className="w-24 h-24 bg-slate-800 rounded-full shadow-xl shadow-wms-neon/10 border border-wms-neon/20 flex items-center justify-center mb-6 animate-bounce">
+                                    <Search size={40} className="text-wms-neon" strokeWidth={2.5} />
                                 </div>
-                                <h3 className="font-black text-3xl tracking-tight text-slate-700 mb-3">Auditoría WMS</h3>
-                                <p className="font-bold text-slate-500 max-w-sm">
+                                <h3 className="font-black text-3xl tracking-tight text-white mb-3">Auditoría WMS</h3>
+                                <p className="font-bold text-slate-400 max-w-sm">
                                     Selecciona una Nota de Venta de la lista para inspeccionar toda su trazabilidad en tiempo real.
                                 </p>
                             </div>

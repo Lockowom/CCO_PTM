@@ -1,51 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight, Package, Scale } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, Truck, Calendar, User, CheckSquare, Square, Save, ArrowRight, Package, Scale, Activity } from 'lucide-react';
 import { useConductores } from '../../hooks/useConductores';
 import { supabase } from '../../supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 const API_URL = 'https://cco-ptm.onrender.com/api';
 
 const RoutePlanning = () => {
-  const [entregas, setEntregas] = useState([]);
+  const queryClient = useQueryClient();
+  const containerRef = useRef(null);
+  
   const { conductores, loading: loadingConductores } = useConductores(); // Conductores reales de Supabase
   const [selectedEntregas, setSelectedEntregas] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
 
   // Estado para creación de ruta
   const [rutaNombre, setRutaNombre] = useState(`Ruta-${new Date().toLocaleDateString().replace(/\//g, '-')}`);
   const [selectedConductor, setSelectedConductor] = useState('');
 
-  useEffect(() => {
-    fetchData();
+  useGSAP(() => {
+    gsap.from(containerRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+      clearProps: 'all'
+    });
+  }, { scope: containerRef });
 
-    // Suscribirse a cambios en tiempo real en tms_entregas
-    // Esto actualizará la lista cuando Packing finalice una NV
+  // TanStack Query para Entregas Pendientes
+  const { data: entregas = [], isLoading: loading } = useQuery({
+    queryKey: ['entregas_pendientes'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/entregas?estado=PENDIENTE&limit=200`);
+      if (!res.ok) throw new Error('Error fetching entregas');
+      return res.json();
+    },
+  });
+
+  // Suscribirse a cambios en tiempo real en tms_entregas
+  useEffect(() => {
     const channel = supabase
       .channel('planning_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
-        fetchData();
+        queryClient.invalidateQueries(['entregas_pendientes']);
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      // Cargar entregas pendientes
-      const res = await fetch(`${API_URL}/entregas?estado=PENDIENTE&limit=200`);
-      const data = await res.json();
-      setEntregas(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [queryClient]);
 
   const toggleSelection = (id) => {
     if (selectedEntregas.includes(id)) {
@@ -55,38 +63,47 @@ const RoutePlanning = () => {
     }
   };
 
-  const handleCreateRoute = async () => {
-    if (selectedEntregas.length === 0 || !selectedConductor) {
-      alert("Selecciona entregas y un conductor");
-      return;
-    }
-
-    try {
-      const payload = {
-        nombre: rutaNombre,
-        conductor_id: selectedConductor,
-        entregas_ids: selectedEntregas
-      };
-
+  // TanStack Mutation para Crear Ruta
+  const createRouteMutation = useMutation({
+    mutationFn: async (payload) => {
       const res = await fetch(`${API_URL}/rutas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const result = await res.json();
-      if (result.success) {
-        alert("¡Ruta creada con éxito!");
-        // Recargar datos para limpiar los ya asignados
-        fetchData();
-        setSelectedEntregas([]);
-      } else {
-        alert("Error creando ruta");
-      }
-    } catch (e) {
+      if (!result.success) throw new Error('Error creando ruta');
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("¡Ruta creada con éxito!", {
+        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
+      });
+      queryClient.invalidateQueries(['entregas_pendientes']);
+      setSelectedEntregas([]);
+      setRutaNombre(`Ruta-${new Date().toLocaleDateString().replace(/\//g, '-')}`);
+    },
+    onError: (e) => {
       console.error(e);
-      alert("Error de conexión");
+      toast.error("Error al crear la ruta", {
+        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
+      });
     }
+  });
+
+  const handleCreateRoute = () => {
+    if (selectedEntregas.length === 0 || !selectedConductor) {
+      toast.warning("Selecciona entregas y un conductor", {
+        style: { background: '#1e293b', border: '1px solid #f97316', color: '#f8fafc' }
+      });
+      return;
+    }
+
+    createRouteMutation.mutate({
+      nombre: rutaNombre,
+      conductor_id: selectedConductor,
+      entregas_ids: selectedEntregas
+    });
   };
 
   const filteredEntregas = entregas.filter(e => 
@@ -95,19 +112,28 @@ const RoutePlanning = () => {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Planificador de Rutas</h2>
-          <p className="text-slate-500 text-sm">Asigna entregas pendientes a tus conductores</p>
+    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-wms-dark text-slate-300 p-6 min-h-screen">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-wms-panel/80 backdrop-blur-xl p-5 rounded-3xl border border-wms-border shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10 flex items-center gap-4 mb-4 md:mb-0">
+          <div className="bg-wms-neon/10 p-3.5 rounded-2xl border border-wms-neon/20 text-wms-neon shadow-neon-green">
+            <Truck size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white tracking-tight">Planificador de Rutas</h2>
+            <p className="text-slate-400 text-sm font-medium mt-1 flex items-center gap-2">
+              <Activity size={14} className="text-wms-neon" />
+              Asigna entregas pendientes a tus conductores
+            </p>
+          </div>
         </div>
-        <div className="flex gap-3">
-            <div className="bg-white border rounded-lg flex items-center px-3 py-2 shadow-sm">
+        <div className="flex gap-3 relative z-10 w-full md:w-auto">
+            <div className="bg-slate-900/50 border border-wms-border rounded-2xl flex items-center px-4 py-3 shadow-sm focus-within:border-wms-neon focus-within:shadow-neon-green transition-all flex-1">
                 <Search size={18} className="text-slate-400 mr-2" />
                 <input 
                     type="text" 
                     placeholder="Filtrar por Cliente o NV..." 
-                    className="outline-none text-sm w-64"
+                    className="outline-none text-sm w-full md:w-64 bg-transparent text-white placeholder-slate-500 font-medium"
                     value={filterText}
                     onChange={e => setFilterText(e.target.value)}
                 />
@@ -115,53 +141,62 @@ const RoutePlanning = () => {
         </div>
       </div>
 
-      <div className="flex gap-6 h-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
         
         {/* Panel Izquierdo: Lista de Entregas */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-            <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-              <MapPin size={18} />
+        <div className="flex-1 bg-wms-panel/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-wms-border flex flex-col overflow-hidden relative">
+          <div className="p-5 border-b border-wms-border bg-slate-900/50 flex justify-between items-center z-10 sticky top-0">
+            <h3 className="font-black text-white flex items-center gap-2 tracking-tight">
+              <MapPin size={18} className="text-wms-neon" />
               Pendientes ({filteredEntregas.length})
             </h3>
-            <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+            <span className="text-xs font-black bg-wms-neon/10 text-wms-neon border border-wms-neon/20 px-3 py-1 rounded-lg shadow-neon-green">
                {selectedEntregas.length} seleccionados
             </span>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-900/20">
             {loading ? (
-                <div className="text-center py-10 text-slate-400">Cargando entregas...</div>
+                <div className="text-center py-10 text-slate-400 font-bold flex flex-col items-center gap-3">
+                  <div className="w-10 h-10 border-4 border-wms-border border-t-wms-neon rounded-full animate-spin"></div>
+                  Cargando entregas...
+                </div>
             ) : filteredEntregas.length === 0 ? (
-                <div className="text-center py-10 text-slate-400">No hay entregas pendientes</div>
+                <div className="text-center py-16 text-slate-400">
+                  <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-wms-border">
+                    <CheckSquare size={24} className="text-slate-500" />
+                  </div>
+                  <p className="font-bold text-lg text-white">No hay entregas pendientes</p>
+                </div>
             ) : (
                 filteredEntregas.map(entrega => (
                     <div 
                         key={entrega.id}
                         onClick={() => toggleSelection(entrega.id)}
-                        className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 ${
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-4 group ${
                             selectedEntregas.includes(entrega.id) 
-                            ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' 
-                            : 'bg-white border-slate-100 hover:border-indigo-200'
+                            ? 'bg-wms-neon/10 border-wms-neon shadow-neon-green' 
+                            : 'bg-slate-900/50 border-wms-border hover:border-wms-neon/50'
                         }`}
                     >
-                        <div className={`mt-1 ${selectedEntregas.includes(entrega.id) ? 'text-indigo-600' : 'text-slate-300'}`}>
-                            {selectedEntregas.includes(entrega.id) ? <CheckSquare size={20} /> : <Square size={20} />}
+                        <div className={`mt-1 transition-colors ${selectedEntregas.includes(entrega.id) ? 'text-wms-neon' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                            {selectedEntregas.includes(entrega.id) ? <CheckSquare size={22} strokeWidth={2.5} /> : <Square size={22} />}
                         </div>
                         <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                                <span className="font-bold text-slate-700 text-sm">NV: {entrega.nv}</span>
-                                <span className="text-xs text-slate-400">{new Date(entrega.fecha_creacion).toLocaleDateString()}</span>
+                            <div className="flex justify-between items-start mb-1">
+                                <span className={`font-black text-lg tracking-tight ${selectedEntregas.includes(entrega.id) ? 'text-wms-neon' : 'text-white'}`}>NV: {entrega.nv}</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded border border-wms-border">{new Date(entrega.fecha_creacion).toLocaleDateString()}</span>
                             </div>
-                            <p className="text-sm font-medium text-slate-600 truncate">{entrega.cliente}</p>
-                            <p className="text-xs text-slate-400 truncate">{entrega.direccion || 'Sin dirección'}</p>
-                            <div className="mt-2 flex gap-3 text-xs text-slate-500 font-medium">
-                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                                    <Package size={12} /> {entrega.bultos} bultos
+                            <p className="text-sm font-bold text-slate-300 truncate mb-1">{entrega.cliente}</p>
+                            <p className="text-xs font-medium text-slate-500 truncate mb-3">{entrega.direccion || 'Sin dirección'}</p>
+                            
+                            <div className="flex gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <span className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-md border border-wms-border">
+                                    <Package size={14} className="text-wms-neon" /> {entrega.bultos} bultos
                                 </span>
                                 {entrega.peso > 0 && (
-                                  <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                                      <Scale size={12} /> {entrega.peso} kg
+                                  <span className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-md border border-wms-border">
+                                      <Scale size={14} className="text-wms-neon" /> {entrega.peso} kg
                                   </span>
                                 )}
                             </div>
@@ -173,27 +208,29 @@ const RoutePlanning = () => {
         </div>
 
         {/* Flecha Central */}
-        <div className="flex flex-col justify-center items-center text-slate-300">
-             <ArrowRight size={32} />
+        <div className="hidden lg:flex flex-col justify-center items-center text-wms-border">
+             <ArrowRight size={40} className="animate-pulse" />
         </div>
 
         {/* Panel Derecho: Configuración de Ruta */}
-        <div className="w-96 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
-            <div className="p-4 border-b border-slate-100 bg-slate-50">
-                <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-                    <Truck size={18} />
+        <div className="w-full lg:w-[400px] bg-wms-panel/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-wms-border flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            
+            <div className="p-5 border-b border-wms-border bg-slate-900/50 z-10">
+                <h3 className="font-black text-white flex items-center gap-2 tracking-tight">
+                    <Truck size={18} className="text-emerald-400" />
                     Nueva Ruta
                 </h3>
             </div>
             
-            <div className="p-6 space-y-6 flex-1">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar z-10">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Nombre de Ruta</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Nombre de Ruta</label>
                     <div className="relative">
-                        <Calendar className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                        <Calendar className="absolute left-4 top-3.5 text-slate-500" size={18} />
                         <input 
                             type="text" 
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            className="w-full pl-12 pr-4 py-3 bg-slate-900 border-2 border-wms-border rounded-xl focus:ring-0 focus:border-emerald-400 outline-none text-sm font-bold text-white transition-all shadow-inner"
                             value={rutaNombre}
                             onChange={e => setRutaNombre(e.target.value)}
                         />
@@ -201,60 +238,66 @@ const RoutePlanning = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Asignar Conductor</label>
-                    <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Asignar Conductor</label>
+                    <div className="space-y-3">
                         {loadingConductores ? (
-                          <div className="text-center py-4 text-slate-400 text-sm">Cargando conductores...</div>
+                          <div className="text-center py-4 text-slate-400 text-sm font-medium">Cargando conductores...</div>
                         ) : conductores.filter(c => c.estado === 'DISPONIBLE').length === 0 ? (
-                          <div className="text-center py-4 text-slate-400 text-sm">No hay conductores disponibles</div>
+                          <div className="text-center py-6 bg-slate-900/50 rounded-xl border border-wms-border text-slate-400 text-sm font-bold">No hay conductores disponibles</div>
                         ) : (
                           conductores.filter(c => c.estado === 'DISPONIBLE').map(c => (
                             <div 
                                 key={c.id}
                                 onClick={() => setSelectedConductor(c.id)}
-                                className={`p-3 rounded-lg border cursor-pointer flex justify-between items-center ${
+                                className={`p-4 rounded-xl border-2 cursor-pointer flex justify-between items-center transition-all ${
                                     selectedConductor === c.id 
-                                    ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' 
-                                    : 'hover:bg-slate-50 border-slate-200'
+                                    ? 'bg-emerald-500/10 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)]' 
+                                    : 'bg-slate-900/50 border-wms-border hover:border-emerald-400/50'
                                 }`}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <User size={16} className="text-slate-500" />
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${selectedConductor === c.id ? 'bg-emerald-500/20 border-emerald-400/30' : 'bg-slate-800 border-wms-border'}`}>
+                                        <User size={18} className={selectedConductor === c.id ? 'text-emerald-400' : 'text-slate-400'} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-slate-700">{c.nombre} {c.apellido}</p>
-                                        <p className="text-xs text-slate-400">{c.vehiculo_patente || 'Sin vehículo'}</p>
+                                        <p className={`text-sm font-black ${selectedConductor === c.id ? 'text-emerald-400' : 'text-white'}`}>{c.nombre} {c.apellido}</p>
+                                        <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">{c.vehiculo_patente || 'Sin vehículo'}</p>
                                     </div>
                                 </div>
-                                {selectedConductor === c.id && <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>}
+                                {selectedConductor === c.id && <div className="w-3 h-3 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>}
                             </div>
                           ))
                         )}
                     </div>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Resumen</h4>
-                    <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-600">Entregas:</span>
-                        <span className="font-bold text-slate-800">{selectedEntregas.length}</span>
+                <div className="bg-slate-900/80 p-5 rounded-2xl border border-wms-border">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Activity size={14}/> Resumen
+                    </h4>
+                    <div className="flex justify-between text-sm mb-2">
+                        <span className="text-slate-400 font-bold">Entregas Seleccionadas:</span>
+                        <span className="font-black text-white bg-slate-800 px-2 py-0.5 rounded border border-wms-border">{selectedEntregas.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Estado:</span>
-                        <span className="text-orange-600 font-medium">Borrador</span>
+                        <span className="text-slate-400 font-bold">Estado:</span>
+                        <span className="text-wms-alert font-black uppercase tracking-widest text-[10px] bg-wms-alert/10 px-2 py-1 rounded-md border border-wms-alert/20">Borrador</span>
                     </div>
                 </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100">
+            <div className="p-5 border-t border-wms-border bg-slate-900/50 z-10">
                 <button 
                     onClick={handleCreateRoute}
-                    disabled={selectedEntregas.length === 0 || !selectedConductor}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-md"
+                    disabled={selectedEntregas.length === 0 || !selectedConductor || createRouteMutation.isPending}
+                    className="w-full bg-emerald-500 text-slate-900 py-4 rounded-xl font-black hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] disabled:shadow-none uppercase tracking-widest text-sm"
                 >
-                    <Save size={18} />
-                    Crear y Asignar Ruta
+                    {createRouteMutation.isPending ? (
+                      <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Save size={20} strokeWidth={2.5} />
+                    )}
+                    {createRouteMutation.isPending ? 'Creando...' : 'Crear y Asignar Ruta'}
                 </button>
             </div>
         </div>

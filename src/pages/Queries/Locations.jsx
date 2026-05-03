@@ -1,24 +1,103 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Search, MapPin, Box, Layers, RefreshCw, AlertCircle, Edit, Trash2, Save, X, Check, Download, LayoutGrid, List } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { useAuth } from '../../context/AuthContext'; // Importar AuthContext
+import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 const LocationsQuery = () => {
-  const { user } = useAuth(); // Obtener usuario para verificar permisos
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const containerRef = useRef(null);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState([]);
+  const [submittedTerm, setSubmittedTerm] = useState('');
   const [searched, setSearched] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'table'
-  const [groupByLocation, setGroupByLocation] = useState(false); // Nuevo filtro de agrupación
+  const [viewMode, setViewMode] = useState('grid');
+  const [groupByLocation, setGroupByLocation] = useState(false);
 
   // Estado para edición
   const [editingId, setEditingId] = useState(null);
   const [editQuantity, setEditQuantity] = useState('');
   const [editLocation, setEditLocation] = useState('');
-  const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  useGSAP(() => {
+    gsap.from(containerRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+      clearProps: 'all'
+    });
+  }, { scope: containerRef });
+
+  // TanStack Query para Búsqueda
+  const { data: results = [], isLoading: loading } = useQuery({
+    queryKey: ['locations', submittedTerm],
+    queryFn: async () => {
+      const term = `%${submittedTerm.trim()}%`;
+      const { data, error } = await supabase
+        .from('wms_ubicaciones')
+        .select('*')
+        .or(`codigo.ilike.${term},descripcion.ilike.${term},ubicacion.ilike.${term}`)
+        .order('ubicacion', { ascending: true })
+        .limit(100);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!submittedTerm,
+  });
+
+  // TanStack Mutation para Actualizar
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, cantidad, ubicacion }) => {
+      const { error } = await supabase
+        .from('wms_ubicaciones')
+        .update({ cantidad, ubicacion })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['locations', submittedTerm]);
+      setEditingId(null);
+      toast.success("✅ Registro actualizado correctamente", {
+        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
+      });
+    },
+    onError: (err) => {
+      console.error("Error al actualizar:", err);
+      toast.error(`❌ Error al actualizar: ${err.message}`, {
+        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
+      });
+    }
+  });
+
+  // TanStack Mutation para Eliminar
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('wms_ubicaciones')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['locations', submittedTerm]);
+      toast.success("🗑️ Registro eliminado correctamente", {
+        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
+      });
+    },
+    onError: (err) => {
+      console.error("Error al eliminar:", err);
+      toast.error(`❌ Error al eliminar: ${err.message}`, {
+        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
+      });
+    }
+  });
 
   // Función para exportar ubicaciones a CSV (Solo Admin)
   const handleDownloadExcel = async () => {
@@ -103,35 +182,13 @@ const LocationsQuery = () => {
     }
   };
 
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     if (e) e.preventDefault();
     if (!searchTerm.trim()) return;
 
-    setLoading(true);
     setSearched(true);
-    setEditingId(null); // Cancelar edición si se busca de nuevo
-    
-    const term = `%${searchTerm.trim()}%`;
-
-    try {
-      // Buscar en wms_ubicaciones por código o descripción
-      const { data, error } = await supabase
-        .from('wms_ubicaciones')
-        .select('*')
-        .or(`codigo.ilike.${term},descripcion.ilike.${term},ubicacion.ilike.${term}`)
-        .order('ubicacion', { ascending: true })
-        .limit(100);
-
-      if (error) throw error;
-
-      setResults(data || []);
-      setLastUpdated(new Date());
-
-    } catch (err) {
-      console.error("Error en búsqueda de ubicaciones:", err);
-    } finally {
-      setLoading(false);
-    }
+    setEditingId(null);
+    setSubmittedTerm(searchTerm);
   };
 
   // Iniciar edición
@@ -149,70 +206,31 @@ const LocationsQuery = () => {
   };
 
   // Guardar cambios
-  const saveEdit = async (id) => {
+  const saveEdit = (id) => {
     if (!editQuantity || isNaN(editQuantity) || Number(editQuantity) < 0) {
-      alert("Por favor ingrese una cantidad válida");
+      toast.error("Por favor ingrese una cantidad válida", {
+        style: { background: '#1e293b', border: '1px solid #f97316', color: '#f8fafc' }
+      });
       return;
     }
     
     if (!editLocation || !editLocation.trim()) {
-      alert("La ubicación no puede estar vacía");
+      toast.error("La ubicación no puede estar vacía", {
+        style: { background: '#1e293b', border: '1px solid #f97316', color: '#f8fafc' }
+      });
       return;
     }
 
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('wms_ubicaciones')
-        .update({ 
-            cantidad: Number(editQuantity),
-            ubicacion: editLocation.toUpperCase().trim()
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Actualizar estado local
-      setResults(prev => prev.map(r => r.id === id ? { 
-          ...r, 
-          cantidad: Number(editQuantity),
-          ubicacion: editLocation.toUpperCase().trim()
-      } : r));
-      
-      setEditingId(null);
-      alert("✅ Registro actualizado correctamente");
-    } catch (err) {
-      console.error("Error al actualizar:", err);
-      alert("❌ Error al actualizar: " + err.message);
-    } finally {
-      setSaving(false);
-    }
+    updateMutation.mutate({ id, cantidad: Number(editQuantity), ubicacion: editLocation.toUpperCase().trim() });
   };
 
   // Eliminar registro
-  const handleDelete = async (id, ubicacion, codigo) => {
+  const handleDelete = (id, ubicacion, codigo) => {
     if (!window.confirm(`¿Estás seguro de eliminar el producto ${codigo} de la ubicación ${ubicacion}?`)) {
       return;
     }
 
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('wms_ubicaciones')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Eliminar del estado local
-      setResults(prev => prev.filter(r => r.id !== id));
-      alert("🗑️ Registro eliminado correctamente");
-    } catch (err) {
-      console.error("Error al eliminar:", err);
-      alert("❌ Error al eliminar: " + err.message);
-    } finally {
-      setSaving(false);
-    }
+    deleteMutation.mutate(id);
   };
 
   // Configuración de columnas para la tabla de resultados
@@ -258,7 +276,7 @@ const LocationsQuery = () => {
             <>
               <button 
                 onClick={() => saveEdit(r.id)} 
-                disabled={saving}
+                disabled={updateMutation.isPending}
                 className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
                 title="Guardar"
               >
@@ -266,7 +284,7 @@ const LocationsQuery = () => {
               </button>
               <button 
                 onClick={cancelEdit}
-                disabled={saving}
+                disabled={updateMutation.isPending}
                 className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
                 title="Cancelar"
               >
@@ -309,43 +327,43 @@ const LocationsQuery = () => {
   }, [results, groupByLocation]);
 
   return (
-    <div className="space-y-6 relative min-h-screen pb-12">
+    <div ref={containerRef} className="space-y-6 relative min-h-screen pb-12 bg-wms-dark text-slate-300 p-6">
       {/* Background Decorativo Sutil */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
-        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/5 blur-[100px] rounded-full"></div>
+        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-wms-neon/5 blur-[100px] rounded-full"></div>
       </div>
 
       {/* Panel de Control Principal (Header + Búsqueda) */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm relative z-10 overflow-hidden">
+      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-3xl border border-wms-border shadow-2xl relative z-10 overflow-hidden">
         {/* Decorative Top Line */}
-        <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+        <div className="h-1 w-full bg-gradient-to-r from-wms-neon via-emerald-500 to-wms-neon"></div>
         
         <div className="p-6 md:p-8">
           {/* Fila 1: Título y Stats */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-4">
-              <div className="bg-orange-50 p-3.5 rounded-2xl border border-orange-100 text-orange-600">
+              <div className="bg-wms-neon/10 p-3.5 rounded-2xl border border-wms-neon/20 text-wms-neon shadow-neon-green">
                 <MapPin size={28} strokeWidth={2.5} />
               </div>
               <div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-                  Ubicaciones <span className="text-orange-500">Productos</span>
+                <h1 className="text-3xl font-black text-white tracking-tight">
+                  Ubicaciones <span className="text-wms-neon">Productos</span>
                 </h1>
-                <p className="text-slate-500 font-medium mt-1">Control de inventario por posición en almacén</p>
+                <p className="text-slate-400 font-medium mt-1">Control de inventario por posición en almacén</p>
               </div>
             </div>
 
             {/* Stats Rápidos */}
             {results.length > 0 && (
-              <div className="flex items-center gap-6 bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100">
+              <div className="flex items-center gap-6 bg-slate-900/50 px-6 py-3 rounded-2xl border border-wms-border">
                 <div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Resultados</p>
-                  <p className="text-2xl font-black text-slate-800 leading-none">{results.length}</p>
+                  <p className="text-2xl font-black text-white leading-none">{results.length}</p>
                 </div>
-                <div className="w-px h-10 bg-slate-200"></div>
+                <div className="w-px h-10 bg-wms-border"></div>
                 <div>
-                  <p className="text-[10px] text-orange-500 font-bold uppercase tracking-widest mb-0.5">Total Unidades</p>
-                  <p className="text-2xl font-black text-orange-600 leading-none">
+                  <p className="text-[10px] text-wms-neon font-bold uppercase tracking-widest mb-0.5">Total Unidades</p>
+                  <p className="text-2xl font-black text-wms-neon leading-none">
                     {results.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 0), 0)}
                   </p>
                 </div>
@@ -357,13 +375,13 @@ const LocationsQuery = () => {
           <div className="flex flex-col xl:flex-row gap-4 items-center">
             <div className="flex-1 relative w-full group">
               <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <Search className="text-slate-400 group-focus-within:text-orange-500 transition-colors" size={22} />
+                <Search className="text-slate-400 group-focus-within:text-wms-neon transition-colors" size={22} />
               </div>
               <form onSubmit={handleSearch} className="w-full">
                 <input 
                   type="text"
                   placeholder="Buscar por código, ubicación o descripción..."
-                  className="w-full pl-14 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all placeholder-slate-400 font-mono uppercase text-lg text-slate-800 shadow-inner group-focus-within:shadow-none"
+                  className="w-full pl-14 pr-4 py-4 bg-slate-900/50 border-2 border-wms-border rounded-2xl outline-none focus:bg-slate-900 focus:border-wms-neon focus:ring-4 focus:ring-wms-neon/10 transition-all placeholder-slate-500 font-mono uppercase text-lg text-white shadow-inner group-focus-within:shadow-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   autoFocus
@@ -378,19 +396,19 @@ const LocationsQuery = () => {
                     onClick={() => setGroupByLocation(!groupByLocation)}
                     className={`px-5 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all border-2 ${
                       groupByLocation 
-                        ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' 
-                        : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+                        ? 'bg-wms-neon/10 border-wms-neon/30 text-wms-neon shadow-sm' 
+                        : 'bg-slate-900/50 border-wms-border text-slate-400 hover:border-slate-600 hover:text-white'
                     }`}
                   >
                     <Layers size={20} />
                     <span className="hidden sm:inline">Agrupar Pasillos</span>
                   </button>
                   
-                  <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                  <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-wms-border">
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`p-2.5 rounded-xl flex items-center gap-2 transition-all ${
-                        viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'
+                        viewMode === 'grid' ? 'bg-wms-panel text-wms-neon shadow-sm font-bold border border-wms-border' : 'text-slate-500 hover:text-slate-300'
                       }`}
                       title="Vista Cuadrícula"
                     >
@@ -399,7 +417,7 @@ const LocationsQuery = () => {
                     <button
                       onClick={() => setViewMode('table')}
                       className={`p-2.5 rounded-xl flex items-center gap-2 transition-all ${
-                        viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'
+                        viewMode === 'table' ? 'bg-wms-panel text-wms-neon shadow-sm font-bold border border-wms-border' : 'text-slate-500 hover:text-slate-300'
                       }`}
                       title="Vista Tabla"
                     >
@@ -413,7 +431,7 @@ const LocationsQuery = () => {
                 <button 
                   onClick={handleDownloadExcel}
                   disabled={downloading}
-                  className="bg-white text-emerald-600 hover:bg-emerald-50 border-2 border-emerald-100 px-5 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                  className="bg-slate-900/50 text-emerald-400 hover:bg-emerald-500/10 border-2 border-emerald-500/20 px-5 py-4 rounded-2xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
                   title="Descargar base completa"
                 >
                   {downloading ? <RefreshCw className="animate-spin" size={20} /> : <Download size={20} />}
@@ -424,7 +442,7 @@ const LocationsQuery = () => {
               <button 
                 onClick={handleSearch}
                 disabled={loading || !searchTerm.trim()}
-                className="bg-slate-900 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:hover:bg-slate-900 flex-1 md:flex-none"
+                className="bg-wms-neon hover:bg-emerald-400 text-slate-900 px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-neon-green disabled:opacity-50 disabled:hover:bg-wms-neon flex-1 md:flex-none"
               >
                 {loading ? <RefreshCw className="animate-spin" size={20} /> : <Search size={20} />}
                 Buscar
@@ -437,25 +455,25 @@ const LocationsQuery = () => {
       {/* Resultados Grid */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4 relative z-10">
-          <div className="w-12 h-12 border-4 border-slate-200 border-t-orange-500 rounded-full animate-spin"></div>
-          <p className="text-slate-500 font-medium animate-pulse">Consultando posiciones...</p>
+          <div className="w-12 h-12 border-4 border-wms-border border-t-wms-neon rounded-full animate-spin"></div>
+          <p className="text-slate-400 font-medium animate-pulse">Consultando posiciones...</p>
         </div>
       ) : !searched ? (
         <div className="flex flex-col items-center justify-center py-20 text-center relative z-10">
-          <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-sm">
-            <Box size={32} className="text-slate-300" />
+          <div className="w-24 h-24 bg-slate-900/50 rounded-full flex items-center justify-center mb-6 border-4 border-wms-border shadow-sm">
+            <Box size={32} className="text-slate-500" />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-2 tracking-tight">Listo para buscar</h3>
-          <p className="text-slate-500 max-w-md text-lg">
+          <h3 className="text-2xl font-black text-white mb-2 tracking-tight">Listo para buscar</h3>
+          <p className="text-slate-400 max-w-md text-lg">
             Ingresa un código de producto, lote o posición exacta para visualizar su inventario.
           </p>
         </div>
       ) : results.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-          <div className="bg-white p-6 rounded-full shadow-sm mb-4">
-            <AlertCircle size={48} className="text-slate-300" />
+        <div className="flex flex-col items-center justify-center py-32 text-center bg-wms-panel/50 rounded-3xl border-2 border-dashed border-wms-border">
+          <div className="bg-slate-900/80 p-6 rounded-full shadow-sm mb-4 border border-wms-border">
+            <AlertCircle size={48} className="text-wms-alert" />
           </div>
-          <h3 className="text-xl font-bold text-slate-600">No se encontraron resultados</h3>
+          <h3 className="text-xl font-bold text-white">No se encontraron resultados</h3>
           <p className="text-slate-400 mt-1">Verifique el código o la ubicación ingresada</p>
         </div>
       ) : (
@@ -465,37 +483,37 @@ const LocationsQuery = () => {
               
               {/* Header de Agrupación (Solo si está activo) */}
               {groupByLocation && (
-                <div className="flex items-center gap-4 py-2 border-b-2 border-orange-100">
-                  <div className="bg-orange-100 text-orange-700 p-2 rounded-xl">
+                <div className="flex items-center gap-4 py-2 border-b-2 border-wms-neon/20">
+                  <div className="bg-wms-neon/10 text-wms-neon p-2 rounded-xl border border-wms-neon/20">
                     <MapPin size={24} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-wide">{locationName}</h2>
-                    <p className="text-sm text-slate-500 font-bold">{locationItems.length} productos en esta ubicación</p>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-wide">{locationName}</h2>
+                    <p className="text-sm text-slate-400 font-bold">{locationItems.length} productos en esta ubicación</p>
                   </div>
                 </div>
               )}
 
               {/* Vista Tabla */}
               {viewMode === 'table' ? (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200">
+                        <tr className="bg-slate-900/80 border-b border-wms-border">
                           {COLUMNS.map((col, i) => (
-                            <th key={i} className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <th key={i} className="px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">
                               {col.header}
                             </th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-wms-border">
                         {locationItems.map((row, idx) => (
-                          <tr key={row.id || idx} className="hover:bg-slate-50/50 transition-colors">
+                          <tr key={row.id || idx} className="hover:bg-slate-800/50 transition-colors">
                             {COLUMNS.map((col, cIdx) => (
                               <td key={cIdx} className="px-4 py-3 whitespace-nowrap">
-                                {col.render ? col.render(row) : <span className="text-slate-600 text-sm">{row[col.accessor] || '-'}</span>}
+                                {col.render ? col.render(row) : <span className="text-slate-300 text-sm">{row[col.accessor] || '-'}</span>}
                               </td>
                             ))}
                           </tr>
@@ -508,22 +526,22 @@ const LocationsQuery = () => {
                 /* Vista Grid (Tarjetas Originales) */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {locationItems.map(row => (
-                    <div key={row.id} className={`group bg-white rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
-                      editingId === row.id ? 'ring-2 ring-orange-500 border-orange-500' : 'border-slate-200'
+                    <div key={row.id} className={`group bg-wms-panel/80 backdrop-blur-md rounded-3xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden relative ${
+                      editingId === row.id ? 'ring-2 ring-wms-alert border-wms-alert' : 'border-wms-border'
                     }`}>
                       {/* Header Card */}
-                      <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
+                      <div className="p-5 border-b border-wms-border bg-slate-900/50 flex justify-between items-start">
                         <div>
                            {editingId === row.id ? (
                              <input 
                                type="text" 
                                value={editLocation} 
                                onChange={(e) => setEditLocation(e.target.value)}
-                               className="w-full bg-white border-2 border-orange-500 rounded-lg px-2 py-1 font-mono font-black text-orange-700 text-lg uppercase outline-none"
+                               className="w-full bg-slate-900 border-2 border-wms-alert rounded-lg px-2 py-1 font-mono font-black text-wms-alert text-lg uppercase outline-none"
                                autoFocus
                              />
                            ) : (
-                             <div className="flex items-center gap-2 font-mono font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 w-fit">
+                             <div className="flex items-center gap-2 font-mono font-black text-wms-neon bg-wms-neon/10 px-3 py-1.5 rounded-lg border border-wms-neon/20 w-fit">
                                <MapPin size={16} />
                                {row.ubicacion}
                              </div>
@@ -532,19 +550,19 @@ const LocationsQuery = () => {
                         <div className="flex gap-1">
                            {editingId === row.id ? (
                              <>
-                               <button onClick={() => saveEdit(row.id)} className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm">
+                               <button onClick={() => saveEdit(row.id)} className="p-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-colors shadow-sm">
                                  <Check size={18} />
                                </button>
-                               <button onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-colors">
+                               <button onClick={cancelEdit} className="p-2 bg-slate-800 text-slate-400 border border-wms-border rounded-lg hover:bg-slate-700 transition-colors">
                                  <X size={18} />
                                </button>
                              </>
                            ) : (
                              <>
-                               <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
+                               <button onClick={() => startEdit(row)} className="p-2 text-slate-400 hover:text-wms-alert hover:bg-wms-alert/10 rounded-lg transition-colors">
                                  <Edit size={18} />
                                </button>
-                               <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                               <button onClick={() => handleDelete(row.id, row.ubicacion, row.codigo)} className="p-2 text-slate-400 hover:text-wms-danger hover:bg-wms-danger/10 rounded-lg transition-colors">
                                  <Trash2 size={18} />
                                </button>
                              </>
@@ -555,40 +573,40 @@ const LocationsQuery = () => {
                       {/* Body Card */}
                       <div className="p-5 space-y-4">
                         <div>
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Producto</p>
-                          <p className="font-mono font-bold text-slate-800 text-lg">{row.codigo}</p>
-                          <p className="text-sm text-slate-600 font-medium line-clamp-2 leading-tight mt-1">{row.descripcion}</p>
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Producto</p>
+                          <p className="font-mono font-bold text-white text-lg">{row.codigo}</p>
+                          <p className="text-sm text-slate-400 font-medium line-clamp-2 leading-tight mt-1">{row.descripcion}</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-2">
-                          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase">Cantidad</p>
+                          <div className="bg-slate-900/50 p-3 rounded-xl border border-wms-border">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase">Cantidad</p>
                             {editingId === row.id ? (
                               <input 
                                 type="number" 
                                 value={editQuantity} 
                                 onChange={(e) => setEditQuantity(e.target.value)}
-                                className="w-full bg-white border-2 border-orange-500 rounded px-1 py-0.5 font-bold text-slate-800 outline-none mt-1"
+                                className="w-full bg-slate-900 border-2 border-wms-alert rounded px-1 py-0.5 font-bold text-white outline-none mt-1"
                               />
                             ) : (
-                              <p className="text-2xl font-black text-slate-800">{row.cantidad}</p>
+                              <p className="text-2xl font-black text-white">{row.cantidad}</p>
                             )}
                           </div>
                           <div className="space-y-1">
                              <div>
-                               <p className="text-[10px] font-bold text-slate-400 uppercase">Talla</p>
-                               <p className="font-bold text-slate-700 text-sm">{row.talla || '-'}</p>
+                               <p className="text-[10px] font-bold text-slate-500 uppercase">Talla</p>
+                               <p className="font-bold text-slate-300 text-sm">{row.talla || '-'}</p>
                              </div>
                              <div>
-                               <p className="text-[10px] font-bold text-slate-400 uppercase">Color</p>
-                               <p className="font-bold text-slate-700 text-sm">{row.color || '-'}</p>
+                               <p className="text-[10px] font-bold text-slate-500 uppercase">Color</p>
+                               <p className="font-bold text-slate-300 text-sm">{row.color || '-'}</p>
                              </div>
                           </div>
                         </div>
                       </div>
                       
                       {/* Footer Decoration */}
-                      <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="h-1 w-full bg-gradient-to-r from-wms-neon via-emerald-500 to-wms-neon opacity-0 group-hover:opacity-100 transition-opacity shadow-neon-green"></div>
                     </div>
                   ))}
                 </div>

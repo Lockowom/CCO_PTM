@@ -1,5 +1,5 @@
 // DispatchControl.jsx - Módulo de Consulta Control Despacho
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Search,
   Truck,
@@ -12,24 +12,34 @@ import {
   Package,
   MapPin,
   DollarSign,
-  Hash
+  Hash,
+  Activity
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { useQuery } from '@tanstack/react-query';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 
 const DispatchControl = () => {
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const containerRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  const fetchRecords = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  useGSAP(() => {
+    gsap.from(containerRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+      clearProps: 'all'
+    });
+  }, { scope: containerRef });
 
+  const { data: records = [], isLoading: loading, error, refetch, isFetching } = useQuery({
+    queryKey: ['dispatch_control', filterFechaDesde, filterFechaHasta],
+    queryFn: async () => {
       let query = supabase
         .from('tms_control_despacho')
         .select('*')
@@ -45,35 +55,12 @@ const DispatchControl = () => {
       const { data, error } = await query.limit(1000);
 
       if (error) throw error;
-
-      setRecords(data || []);
-      // NOTA: Ya no calculamos stats aquí, se calculan dinámicamente en el useEffect
-
-    } catch (error) {
-      console.error("Error:", error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      return data || [];
     }
-  }, [filterFechaDesde, filterFechaHasta]);
+  });
 
-  // EFECTO 1: Cargar datos iniciales
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
-
-  // Verificar si hay algún filtro activo
   const isFilterActive = searchTerm.length > 0 || filterFechaDesde || filterFechaHasta;
 
-  // EFECTO 2: Recalcular estadísticas cuando cambian los filtros LOCALES (búsqueda) o los datos
-  useEffect(() => {
-    // Usamos filteredRecords, que ya contiene la lógica de filtrado por texto
-    // Nota: filteredRecords se define más abajo, pero en React funcional, 
-    // necesitamos mover la definición de filteredRecords ARRIBA o duplicar la lógica aquí.
-    // Para evitar referencias circulares, moveremos filteredRecords antes de este efecto.
-  }, [searchTerm, records]);
-
-  // Filtrar registros, si no hay filtro activo devolvemos array vacío
   const filteredRecords = React.useMemo(() => {
     if (!isFilterActive) return [];
 
@@ -88,7 +75,6 @@ const DispatchControl = () => {
     });
   }, [records, isFilterActive, searchTerm]);
 
-  // AHORA SÍ: Calcular estadísticas dinámicamente sin useEffect
   const stats = React.useMemo(() => {
     return {
       total: filteredRecords.length,
@@ -97,7 +83,6 @@ const DispatchControl = () => {
     };
   }, [filteredRecords]);
 
-  // Exportar CSV
   const exportToCSV = () => {
     const headers = [
       'Fecha Docto', 'Cliente', 'Facturas', 'Guía', 'Bultos',
@@ -120,8 +105,8 @@ const DispatchControl = () => {
       r.numero_envio
     ]);
 
-    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c || ''}"`).join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = [headers.join(';'), ...rows.map(r => r.map(c => `"${c || ''}"`).join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `control_despacho_${new Date().toISOString().split('T')[0]}.csv`;
@@ -133,119 +118,128 @@ const DispatchControl = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6 relative">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
+        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-rose-500/10 blur-[120px] rounded-full"></div>
+      </div>
+
       {/* Header */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
-            <Truck className="text-white" size={24} />
+          <div className="w-14 h-14 bg-rose-500/20 border border-rose-500/30 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+            <Truck className="text-rose-400" size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Control Despacho</h2>
-            <p className="text-slate-500 text-sm">Registro y seguimiento de despachos</p>
+            <h2 className="text-3xl font-black text-white tracking-tight">Control Despacho</h2>
+            <p className="text-slate-400 font-medium">Registro y seguimiento de guías y envíos</p>
           </div>
         </div>
         <div className="flex gap-3">
           <button
             onClick={exportToCSV}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
+            disabled={filteredRecords.length === 0}
+            className="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
           >
-            <Download size={16} /> Exportar CSV
+            <Download size={18} /> Exportar CSV
           </button>
           <button
-            onClick={fetchRecords}
-            disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm"
+            onClick={() => refetch()}
+            disabled={loading || isFetching}
+            className="bg-wms-panel hover:bg-slate-800 border border-wms-border text-slate-400 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Actualizar
+            <RefreshCw size={18} className={loading || isFetching ? 'animate-spin' : ''} /> Actualizar
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-500 text-xs font-semibold uppercase">Cantidad Guías</span>
-            <FileText size={16} className="text-slate-400" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Cantidad Guías</span>
+            <div className="p-2 bg-slate-800 rounded-lg">
+              <FileText size={18} className="text-slate-400" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
+          <p className="text-3xl font-black text-white">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-amber-600 text-xs font-semibold uppercase">Total Bultos</span>
-            <Package size={16} className="text-amber-500" />
+        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+          <div className="absolute -right-4 -bottom-4 bg-amber-500/10 w-24 h-24 rounded-full blur-xl"></div>
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">Total Bultos</span>
+            <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+              <Package size={18} className="text-amber-400" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-amber-600">{stats.totalBultos}</p>
+          <p className="text-3xl font-black text-amber-400 relative z-10">{stats.totalBultos}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-emerald-600 text-xs font-semibold uppercase">Total Flete</span>
-            <DollarSign size={16} className="text-emerald-500" />
+        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+          <div className="absolute -right-4 -bottom-4 bg-emerald-500/10 w-24 h-24 rounded-full blur-xl"></div>
+          <div className="flex items-center justify-between mb-3 relative z-10">
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Total Flete</span>
+            <div className="p-2 bg-emerald-500/20 border border-emerald-500/30 rounded-lg">
+              <DollarSign size={18} className="text-emerald-400" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(stats.totalFlete)}</p>
+          <p className="text-3xl font-black text-emerald-400 relative z-10">{formatCurrency(stats.totalFlete)}</p>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={18} className="text-slate-400" />
-          <h3 className="font-semibold text-slate-700">Filtros</h3>
+      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-6 border border-wms-border shadow-xl relative z-10">
+        <div className="flex items-center gap-2 mb-4 text-wms-neon">
+          <Filter size={18} />
+          <h3 className="font-bold uppercase tracking-wider text-sm">Filtros de Búsqueda</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="col-span-2">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center px-3 py-2">
-              <Search size={16} className="text-slate-400 mr-2" />
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Búsqueda Rápida</label>
+            <div className="bg-slate-900 border border-wms-border rounded-xl flex items-center px-4 py-3 focus-within:border-wms-neon focus-within:ring-2 focus-within:ring-wms-neon/20 transition-all">
+              <Search size={18} className="text-slate-400 mr-3" />
               <input
                 type="text"
                 placeholder="Guía, NV, Cliente, Transportista..."
-                className="outline-none text-sm bg-transparent w-full"
+                className="outline-none text-base bg-transparent w-full text-white placeholder-slate-600"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    fetchRecords();
-                  }
-                }}
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Desde (Fecha Despacho)</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Desde (Despacho)</label>
             <input
               type="date"
               value={filterFechaDesde}
               onChange={e => setFilterFechaDesde(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              className="w-full bg-slate-900 border border-wms-border rounded-xl px-4 py-3 text-base text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Hasta (Fecha Despacho)</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Hasta (Despacho)</label>
             <input
               type="date"
               value={filterFechaHasta}
               onChange={e => setFilterFechaHasta(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              className="w-full bg-slate-900 border border-wms-border rounded-xl px-4 py-3 text-base text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
             />
           </div>
         </div>
       </div>
 
-      {/* Resultados */}
-      <div className="bg-rose-50 rounded-xl p-3 border border-rose-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Truck size={18} className="text-rose-600" />
-          <p className="font-bold text-rose-800 text-sm">
+      {/* Toolbar Resultados */}
+      <div className="bg-rose-500/10 rounded-xl p-4 border border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400">
+            <Activity size={18} />
+          </div>
+          <p className="font-bold text-rose-400 text-sm">
             {isFilterActive ? `${filteredRecords.length} registros encontrados en la búsqueda` : 'Aplica un filtro para ver los registros'}
           </p>
         </div>
         {(filterFechaDesde || filterFechaHasta || searchTerm) && (
           <button
             onClick={() => { setFilterFechaDesde(''); setFilterFechaHasta(''); setSearchTerm(''); }}
-            className="bg-white border border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
+            className="bg-wms-dark border border-wms-border text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
           >
             <X size={14} /> Limpiar Filtros
           </button>
@@ -253,76 +247,81 @@ const DispatchControl = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-          <X size={20} /> {error}
+        <div className="bg-rose-500/10 text-rose-400 p-4 rounded-xl border border-rose-500/20 flex items-center gap-3 relative z-10">
+          <X size={20} /> <span className="font-bold">{error.message || error}</span>
         </div>
       )}
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-wms-border overflow-hidden relative z-10">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider">
+            <thead className="bg-slate-900/80 text-slate-400 uppercase text-xs tracking-wider border-b border-wms-border">
               <tr>
-                <th className="px-4 py-3 font-medium">Fecha Desp.</th>
-                <th className="px-4 py-3 font-medium">Guía</th>
-                <th className="px-4 py-3 font-medium">NV</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Transporte</th>
-                <th className="px-4 py-3 font-medium text-right">Bultos</th>
-                <th className="px-4 py-3 font-medium text-right">Flete</th>
-                <th className="px-4 py-3 font-medium text-center">Detalle</th>
+                <th className="px-6 py-4 font-bold">Fecha Desp.</th>
+                <th className="px-6 py-4 font-bold">Guía</th>
+                <th className="px-6 py-4 font-bold">NV</th>
+                <th className="px-6 py-4 font-bold">Cliente</th>
+                <th className="px-6 py-4 font-bold">Transporte</th>
+                <th className="px-6 py-4 font-bold text-right">Bultos</th>
+                <th className="px-6 py-4 font-bold text-right">Flete</th>
+                <th className="px-6 py-4 font-bold text-center">Detalle</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-wms-border">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-12 text-center">
-                    <RefreshCw className="animate-spin mx-auto text-slate-400 mb-2" size={24} />
-                    <p className="text-slate-400">Cargando datos...</p>
+                  <td colSpan="8" className="px-6 py-20 text-center">
+                    <RefreshCw className="animate-spin mx-auto text-wms-neon mb-4" size={32} />
+                    <p className="text-slate-400 font-bold animate-pulse">Cargando datos de despacho...</p>
                   </td>
                 </tr>
               ) : !isFilterActive ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-16 text-center text-slate-400">
-                    <Filter size={48} className="mx-auto mb-4 opacity-20" />
-                    <p className="font-bold text-slate-600 text-lg">Módulo de Control</p>
-                    <p className="text-sm">Ingresa un término de búsqueda o selecciona un rango de fechas para cargar las guías de despacho.</p>
+                  <td colSpan="8" className="px-6 py-24 text-center text-slate-500">
+                    <div className="bg-slate-900/50 p-6 rounded-full w-fit mx-auto mb-4 border border-wms-border">
+                      <Filter size={48} className="text-slate-600" />
+                    </div>
+                    <p className="font-black text-white text-xl mb-2">Módulo de Control</p>
+                    <p className="text-sm font-medium max-w-md mx-auto">Ingresa un término de búsqueda o selecciona un rango de fechas para cargar las guías de despacho.</p>
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-12 text-center text-slate-400">
-                    <Package size={32} className="mx-auto mb-2 opacity-40" />
-                    <p>No se encontraron registros para tu búsqueda actual</p>
+                  <td colSpan="8" className="px-6 py-24 text-center text-slate-500">
+                    <div className="bg-slate-900/50 p-6 rounded-full w-fit mx-auto mb-4 border border-wms-border">
+                      <Package size={48} className="text-slate-600" />
+                    </div>
+                    <p className="font-bold text-white text-lg">No se encontraron registros</p>
+                    <p className="text-sm mt-1">Intenta con otros términos o fechas</p>
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((record, index) => (
-                  <tr key={index} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-500 text-xs font-mono">
+                  <tr key={index} className="hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-6 py-4 text-slate-400 text-xs font-mono font-bold">
                       {record.fecha_despacho ? new Date(record.fecha_despacho).toLocaleDateString() : '-'}
                     </td>
-                    <td className="px-4 py-3 font-bold text-rose-600">{record.guia}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{record.nv}</td>
-                    <td className="px-4 py-3 font-medium text-slate-700 truncate max-w-[150px]" title={record.cliente}>
+                    <td className="px-6 py-4 font-black text-rose-400 text-base">{record.guia}</td>
+                    <td className="px-6 py-4 font-mono text-xs font-bold text-indigo-400">#{record.nv}</td>
+                    <td className="px-6 py-4 font-bold text-white truncate max-w-[200px]" title={record.cliente}>
                       {record.cliente}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 truncate max-w-[120px]">
+                    <td className="px-6 py-4 text-xs font-bold text-slate-400 truncate max-w-[150px]">
                       {record.empresa_transporte || record.transportista}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-slate-800">
+                    <td className="px-6 py-4 text-right font-black text-white text-lg">
                       {record.bultos}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-emerald-600">
+                    <td className="px-6 py-4 text-right font-mono font-bold text-emerald-400">
                       {record.valor_flete > 0 ? formatCurrency(record.valor_flete) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => setSelectedRecord(record)}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1"
+                        className="bg-wms-dark hover:bg-rose-500/20 border border-wms-border hover:border-rose-500/30 text-slate-400 hover:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-all"
                       >
-                        <FileText size={12} /> Ver
+                        <FileText size={14} /> Ver
                       </button>
                     </td>
                   </tr>
@@ -335,97 +334,101 @@ const DispatchControl = () => {
 
       {/* Modal Detalle */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-rose-50 p-5 flex justify-between items-center border-b border-rose-100">
-              <div className="flex items-center gap-3">
-                <div className="bg-rose-500 p-2 rounded-lg text-white">
-                  <Truck size={20} />
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-wms-panel w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-wms-border transform transition-all">
+            <div className="bg-wms-dark p-6 flex justify-between items-center border-b border-wms-border relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl"></div>
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="bg-rose-500/20 border border-rose-500/30 p-3 rounded-2xl text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+                  <Truck size={24} />
                 </div>
                 <div>
-                  <p className="text-xs text-rose-600 font-bold uppercase">Guía de Despacho</p>
-                  <h2 className="text-xl font-black text-slate-900">{selectedRecord.guia}</h2>
+                  <p className="text-xs text-rose-400 font-bold uppercase tracking-wider mb-1">Guía de Despacho</p>
+                  <h2 className="text-3xl font-black text-white">{selectedRecord.guia}</h2>
                 </div>
               </div>
-              <button onClick={() => setSelectedRecord(null)} className="p-1 hover:bg-slate-200 rounded text-slate-500">
+              <button onClick={() => setSelectedRecord(null)} className="p-2 bg-slate-800 hover:bg-slate-700 border border-wms-border rounded-xl text-slate-400 hover:text-white transition-colors relative z-10">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
               {/* Fechas */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar size={14} className="text-slate-400" />
-                    <span className="text-xs font-bold text-slate-500 uppercase">Fecha Despacho</span>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-slate-900/50 p-4 rounded-2xl border border-wms-border shadow-inner">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar size={16} className="text-slate-500" />
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Despacho</span>
                   </div>
-                  <p className="font-mono font-bold text-slate-800">
+                  <p className="font-mono font-black text-white text-lg">
                     {selectedRecord.fecha_despacho ? new Date(selectedRecord.fecha_despacho).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileText size={14} className="text-slate-400" />
-                    <span className="text-xs font-bold text-slate-500 uppercase">Fecha Documento</span>
+                <div className="bg-slate-900/50 p-4 rounded-2xl border border-wms-border shadow-inner">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText size={16} className="text-slate-500" />
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Documento</span>
                   </div>
-                  <p className="font-mono font-bold text-slate-800">
+                  <p className="font-mono font-black text-white text-lg">
                     {selectedRecord.fecha_docto ? new Date(selectedRecord.fecha_docto).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>
 
               {/* Info Principal */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="text-xs text-slate-400 font-bold uppercase">Cliente</label>
-                  <p className="text-lg font-bold text-slate-800">{selectedRecord.cliente}</p>
+                  <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Cliente Destino</label>
+                  <p className="text-2xl font-black text-white">{selectedRecord.cliente}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="text-xs text-slate-400 font-bold uppercase">N° NV</label>
+                    <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Nota de Venta</label>
                     <div className="flex items-center gap-2">
-                      <Hash size={14} className="text-indigo-500" />
-                      <p className="font-bold text-indigo-700">{selectedRecord.nv || 'S/N'}</p>
+                      <Hash size={16} className="text-indigo-400" />
+                      <p className="font-black text-indigo-400 text-xl">{selectedRecord.nv || 'S/N'}</p>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 font-bold uppercase">Facturas</label>
-                    <p className="font-medium text-slate-700">{selectedRecord.facturas || '-'}</p>
+                    <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Facturas Asoc.</label>
+                    <p className="font-bold text-slate-300 text-lg">{selectedRecord.facturas || '-'}</p>
                   </div>
                 </div>
               </div>
 
               {/* Logística */}
-              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                <h4 className="text-xs font-bold text-indigo-800 uppercase mb-3 flex items-center gap-2">
-                  <MapPin size={14} /> Información Logística
+              <div className="bg-indigo-500/10 p-6 rounded-2xl border border-indigo-500/20 relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.05)]">
+                <div className="absolute -right-10 -bottom-10 opacity-5 text-indigo-400">
+                  <MapPin size={150} />
+                </div>
+                <h4 className="text-xs font-black text-indigo-400 uppercase tracking-wider mb-6 flex items-center gap-2 relative z-10">
+                  <MapPin size={16} /> Información Logística
                 </h4>
-                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                <div className="grid grid-cols-2 gap-y-6 gap-x-8 relative z-10">
                   <div>
-                    <p className="text-xs text-indigo-400 mb-1">Empresa Transporte</p>
-                    <p className="font-bold text-indigo-900">{selectedRecord.empresa_transporte || '-'}</p>
+                    <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">Empresa Transporte</p>
+                    <p className="font-black text-indigo-300 text-lg leading-tight">{selectedRecord.empresa_transporte || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-indigo-400 mb-1">Transportista</p>
-                    <p className="font-bold text-indigo-900">{selectedRecord.transportista || '-'}</p>
+                    <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">Chofer / Transp.</p>
+                    <p className="font-black text-indigo-300 text-lg leading-tight">{selectedRecord.transportista || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-indigo-400 mb-1">N° Envío / Seguimiento</p>
-                    <p className="font-mono font-bold text-indigo-900">{selectedRecord.numero_envio || '-'}</p>
+                    <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">N° Seguimiento</p>
+                    <p className="font-mono font-black text-white text-lg">{selectedRecord.numero_envio || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-indigo-400 mb-1">Bultos</p>
-                    <p className="font-bold text-indigo-900 text-lg">{selectedRecord.bultos}</p>
+                    <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">Total Bultos</p>
+                    <p className="font-black text-white text-3xl">{selectedRecord.bultos}</p>
                   </div>
                 </div>
               </div>
 
               {/* Flete */}
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                <span className="text-sm font-bold text-slate-500">Valor Flete</span>
-                <span className="text-2xl font-black text-emerald-600">{formatCurrency(selectedRecord.valor_flete)}</span>
+              <div className="flex justify-between items-center p-6 bg-slate-900/80 rounded-2xl border border-wms-border">
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Costo Flete Declarado</span>
+                <span className="text-3xl font-black text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">{formatCurrency(selectedRecord.valor_flete)}</span>
               </div>
             </div>
           </div>

@@ -1,121 +1,101 @@
 // useConductores.js - Hook con Realtime para actualizaciones instantáneas
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useConductores() {
-  const [conductores, setConductores] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
 
-  // Cargar conductores inicial
-  const fetchConductores = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: conductores = [], isLoading: loading, error } = useQuery({
+    queryKey: ['conductores'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_conductores')
         .select('*')
         .order('nombre', { ascending: true });
 
       if (error) throw error;
-      setConductores(data || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      return data || [];
+    },
+  });
+
+  const crearMutation = useMutation({
+    mutationFn: async (conductor) => {
+      const { data, error } = await supabase
+        .from('tms_conductores')
+        .insert(conductor)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries(['conductores']),
+  });
+
+  const actualizarMutation = useMutation({
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase
+        .from('tms_conductores')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries(['conductores']);
+      const previousConductores = queryClient.getQueryData(['conductores']);
+      queryClient.setQueryData(['conductores'], old => 
+        old?.map(c => c.id === id ? { ...c, ...updates } : c)
+      );
+      return { previousConductores };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(['conductores'], context.previousConductores);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['conductores']);
     }
-  }, []);
+  });
 
-  // Crear conductor
-  const crearConductor = async (conductor) => {
-    const { data, error } = await supabase
-      .from('tms_conductores')
-      .insert(conductor)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  // Actualizar conductor
-  const actualizarConductor = async (id, updates) => {
-    const { data, error } = await supabase
-      .from('tms_conductores')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  // Eliminar conductor
-  const eliminarConductor = async (id) => {
-    const { error } = await supabase
-      .from('tms_conductores')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    return true;
-  };
+  const eliminarMutation = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('tms_conductores')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => queryClient.invalidateQueries(['conductores']),
+  });
 
   // Suscripción Realtime
   useEffect(() => {
-    fetchConductores();
-
-    // Configurar canal Realtime
     const channel = supabase
       .channel('tms_conductores_changes')
       .on(
         'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'tms_conductores',
-        },
+        { event: '*', schema: 'public', table: 'tms_conductores' },
         (payload) => {
-          console.log('🔄 Realtime event:', payload.eventType, payload);
-
-          switch (payload.eventType) {
-            case 'INSERT':
-              setConductores((prev) => [...prev, payload.new]);
-              break;
-
-            case 'UPDATE':
-              setConductores((prev) =>
-                prev.map((c) =>
-                  c.id === payload.new.id ? payload.new : c
-                )
-              );
-              break;
-
-            case 'DELETE':
-              setConductores((prev) =>
-                prev.filter((c) => c.id !== payload.old.id)
-              );
-              break;
-          }
+          queryClient.invalidateQueries(['conductores']);
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Realtime status:', status);
-      });
+      .subscribe();
 
-    // Cleanup al desmontar
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchConductores]);
+  }, [queryClient]);
 
   return {
     conductores,
     loading,
-    error,
-    crearConductor,
-    actualizarConductor,
-    eliminarConductor,
-    refetch: fetchConductores,
+    error: error?.message || null,
+    crearConductor: (conductor) => crearMutation.mutateAsync(conductor),
+    actualizarConductor: (id, updates) => actualizarMutation.mutateAsync({ id, updates }),
+    eliminarConductor: (id) => eliminarMutation.mutateAsync(id),
+    refetch: () => queryClient.invalidateQueries(['conductores']),
   };
 }

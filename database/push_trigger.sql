@@ -1,67 +1,56 @@
--- ==============================================================================
--- EDGE FUNCTION / TRIGGER: NOTIFICACIONES PUSH NATIVAS
--- ==============================================================================
--- Este script crea una función y un trigger en Supabase para enviar
--- notificaciones push automáticas cuando ocurren eventos críticos en el WMS.
--- ==============================================================================
+-- ====================================================================================
+-- SCRIPT: TRIGGER DE BASE DE DATOS PARA DISPARAR EDGE FUNCTION (PUSH NOTIFICATIONS)
+-- ====================================================================================
+-- Este script crea un Webhook nativo en PostgreSQL (usando la extensión pg_net)
+-- que escucha actualizaciones en tus tablas y dispara la Edge Function "send-push".
+-- ====================================================================================
 
--- 1. Asegúrate de tener activada la extensión 'http' en tu proyecto Supabase
-create extension if not exists http with schema extensions;
+-- 1. Asegurarnos de que la extensión http/net esté habilitada en Supabase
+create extension if not exists pg_net;
 
--- 2. Crear la función que envía el Push usando la API de FCM (Firebase)
-create or replace function public.notify_wms_critical_event()
+-- 2. Crear la función que envía el Payload a la Edge Function
+create or replace function public.trigger_push_notification()
 returns trigger as $$
 declare
-  user_token text;
-  fcm_server_key text := 'TU_CLAVE_DE_SERVIDOR_FCM_AQUI'; -- Reemplazar con la Server Key de Firebase
-  payload json;
-  request_body text;
+  edge_function_url text := 'https://<TU_PROYECTO_REF>.supabase.co/functions/v1/send-push';
+  anon_key text := '<TU_SUPABASE_ANON_KEY>';
+  payload jsonb;
 begin
-  -- Ejemplo: Notificar si el stock de un producto cae por debajo de 10
-  if TG_OP = 'UPDATE' and NEW.stock_total <= 10 and OLD.stock_total > 10 then
-    
-    -- Obtener el token del usuario (ejemplo: Jefe de Bodega o el usuario asociado a la ubicación)
-    -- Aquí asumo que tienes una tabla tms_usuarios con una columna 'fcm_token'
-    select fcm_token into user_token 
-    from public.tms_usuarios 
-    where rol = 'JEFE_BODEGA' 
-    limit 1;
+  -- Solo disparamos si se ha asignado un nuevo operario o si cambia el estado a algo urgente
+  -- (Ajusta la lógica de 'asignado_a' según el nombre real de tu columna en tu tabla de órdenes/tareas)
+  if (TG_OP = 'UPDATE' and new.asignado_a is distinct from old.asignado_a and new.asignado_a is not null) or 
+     (TG_OP = 'INSERT' and new.asignado_a is not null) then
 
-    if user_token is not null then
-      -- Construir el JSON de la notificación
-      payload := json_build_object(
-        'to', user_token,
-        'notification', json_build_object(
-          'title', '⚠️ Alerta de Quiebre de Stock',
-          'body', 'El producto ' || NEW.codigo_producto || ' ha bajado a ' || NEW.stock_total || ' unidades en ' || NEW.bodega,
-          'sound', 'default'
-        ),
-        'data', json_build_object(
-          'sku', NEW.codigo_producto,
-          'bodega', NEW.bodega,
-          'action', 'REPLENISHMENT_REQUIRED'
-        )
-      );
+    -- Construimos el payload JSON que enviaremos a Deno
+    payload := jsonb_build_object(
+      'type', TG_OP,
+      'table', TG_TABLE_NAME,
+      'record', row_to_json(new)
+    );
 
-      request_body := payload::text;
+    -- Hacemos la petición HTTP POST a nuestra propia Edge Function
+    perform net.http_post(
+      url := edge_function_url,
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer ' || anon_key
+      ),
+      body := payload
+    );
 
-      -- Hacer el POST request a Firebase Cloud Messaging
-      perform http_post(
-        'https://fcm.googleapis.com/fcm/send',
-        request_body,
-        'application/json',
-        'key=' || fcm_server_key
-      );
-    end if;
   end if;
 
-  return NEW;
+  return new;
 end;
 $$ language plpgsql security definer;
 
--- 3. Crear el Trigger para que se dispare cuando el inventario cambia
-drop trigger if exists on_stock_critical on public.tms_inventario_general;
-create trigger on_stock_critical
-  after update on public.tms_inventario_general
-  for each row
-  execute function public.notify_wms_critical_event();
+-- 3. Crear el Trigger en la tabla deseada (por ejemplo, tms_tareas_picking o wms_notas_venta)
+-- Reemplaza 'tms_tareas_picking' con el nombre de tu tabla real de órdenes
+drop trigger if exists on_task_assigned_push on public.tms_tareas_picking;
+
+create trigger on_task_assigned_push
+after insert or update on public.tms_tareas_picking
+for each row execute function public.trigger_push_notification();
+
+-- Mensaje de éxito
+-- Ejecuta este script en el SQL Editor de Supabase.

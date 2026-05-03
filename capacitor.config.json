@@ -6,6 +6,9 @@
     "CapacitorUpdater": {
       "autoUpdate": true,
       "appId": "com.cco.wms"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }

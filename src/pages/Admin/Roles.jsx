@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../supabase';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
@@ -8,192 +14,230 @@ import {
   Satellite, Smartphone, MapPinned, Layers, FileBarChart,
   Clock, Upload, Trash, MessageSquare, ArrowLeft
 } from 'lucide-react';
-import { supabase } from '../../supabase';
-import { useAuth } from '../../context/AuthContext';
+
+const modules = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: <LayoutDashboard size={16} />,
+    permissions: [
+      { id: 'view_dashboard', label: 'Ver Dashboard Principal' },
+      { id: 'view_kpis', label: 'Ver KPIs y Estadísticas' }
+    ]
+  },
+  {
+    id: 'tms',
+    label: 'TMS (Transporte)',
+    icon: <Truck size={16} />,
+    permissions: [
+      { id: 'view_tms_dashboard', label: 'Ver Dashboard TMS' },
+      { id: 'view_routes', label: 'Ver Rutas' },
+      { id: 'create_routes', label: 'Planificar Rutas' },
+      { id: 'view_control_tower', label: 'Ver Torre de Control' },
+      { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
+      { id: 'view_drivers', label: 'Ver Conductores' },
+      { id: 'manage_drivers', label: 'Gestionar Conductores' },
+      { id: 'view_mobile_app', label: 'Acceder App Móvil' },
+      { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' }
+    ]
+  },
+  {
+    id: 'inbound',
+    label: 'Inbound (Entrada)',
+    icon: <ArrowDownToLine size={16} />,
+    permissions: [
+      { id: 'view_reception', label: 'Ver Recepciones' },
+      { id: 'process_reception', label: 'Procesar Recepciones' },
+      { id: 'view_cubicaje', label: 'Ver Cubicaje (Pesos)' },
+      { id: 'process_cubicaje', label: 'Gestionar Cubicaje' },
+      { id: 'view_returns', label: 'Ver Devoluciones' },
+      { id: 'process_returns', label: 'Procesar Devoluciones' },
+      { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
+      { id: 'process_entry', label: 'Procesar Ingresos' },
+      { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
+    ]
+  },
+  {
+    id: 'outbound',
+    label: 'Outbound (Salida)',
+    icon: <ArrowUpFromLine size={16} />,
+    permissions: [
+      { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
+      { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
+      { id: 'delete_sales_orders', label: 'Eliminar N.V.' },
+      { id: 'view_picking', label: 'Ver Picking' },
+      { id: 'process_picking', label: 'Procesar Picking' },
+      { id: 'view_packing', label: 'Ver Packing' },
+      { id: 'process_packing', label: 'Procesar Packing' },
+      { id: 'view_packing_tv', label: 'Ver Monitor Packing TV' },
+      { id: 'view_shipping', label: 'Ver Despachos' },
+      { id: 'process_shipping', label: 'Gestionar Despachos' },
+      { id: 'view_deliveries', label: 'Ver Entregas' },
+      { id: 'manage_deliveries', label: 'Gestionar Entregas' }
+    ]
+  },
+  {
+    id: 'inventory',
+    label: 'Inventario',
+    icon: <Warehouse size={16} />,
+    permissions: [
+      { id: 'view_stock', label: 'Ver Stock' },
+      { id: 'manage_stock', label: 'Gestionar Inventario' },
+      { id: 'view_layout', label: 'Ver Layout Bodega' },
+      { id: 'manage_layout', label: 'Editar Layout' },
+      { id: 'view_transfers', label: 'Ver Transferencias' },
+      { id: 'manage_transfers', label: 'Gestionar Transferencias' },
+      { id: 'view_cycle_count', label: 'Conteos Cíclicos' }
+    ]
+  },
+  {
+    id: 'queries',
+    label: 'Consultas',
+    icon: <Search size={16} />,
+    permissions: [
+      { id: 'view_kardex', label: 'Ver Kardex (Trazabilidad)' },
+      { id: 'view_productivity', label: 'Ver Rendimiento' },
+      { id: 'view_historial_nv', label: 'Ver Historial N.V.' },
+      { id: 'view_dispatch_control', label: 'Control Despacho' },
+      { id: 'view_batches', label: 'Ver Lotes/Series' },
+      { id: 'view_sales_status', label: 'Ver Estado N.V.' },
+      { id: 'view_addresses', label: 'Ver Direcciones' },
+      { id: 'view_locations', label: 'Ver Ubicaciones' },
+      { id: 'export_data', label: 'Exportar Datos (CSV)' }
+    ]
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    icon: <FileBarChart size={16} />,
+    permissions: [
+      { id: 'view_reports', label: 'Ver Reportes y KPIs' },
+      { id: 'view_tv_mode', label: 'Ver Modo TV (Live)' }
+    ]
+  },
+  {
+    id: 'quality',
+    label: 'Calidad',
+    icon: <Check size={16} />,
+    permissions: [
+      { id: 'view_quality', label: 'Ver Inspecciones' },
+      { id: 'manage_quality', label: 'Gestionar Calidad' }
+    ]
+  },
+  {
+    id: 'admin',
+    label: 'Administración',
+    icon: <Settings size={16} />,
+    permissions: [
+      { id: 'view_mediciones', label: 'Ver Mediciones de Tiempo' },
+      { id: 'manage_mediciones', label: 'Gestionar Mediciones' },
+      { id: 'view_users', label: 'Ver Usuarios' },
+      { id: 'manage_users', label: 'Gestionar Usuarios' },
+      { id: 'view_roles', label: 'Ver Roles' },
+      { id: 'manage_roles', label: 'Gestionar Roles' },
+      { id: 'view_views', label: 'Ver Configuración Vistas' },
+      { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
+      { id: 'view_reports', label: 'Ver Reportes' },
+      { id: 'view_audit', label: 'Ver Auditoría' },
+      { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
+      { id: 'manage_tickets', label: 'Gestionar Tickets' },
+      { id: 'admin_upload_history', label: 'Historial de Cargas' },
+      { id: 'manage_cleanup', label: 'Limpieza de Datos' }
+    ]
+  }
+];
 
 const RolesPage = () => {
-  // IMPORTANTE: Obtener refreshPermissions del contexto
   const { refreshPermissions } = useAuth();
+  const queryClient = useQueryClient();
+  const containerRef = React.useRef();
 
-  const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // Definición de módulos y permisos
-  const modules = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: <LayoutDashboard size={16} />,
-      permissions: [
-        { id: 'view_dashboard', label: 'Ver Dashboard Principal' },
-        { id: 'view_kpis', label: 'Ver KPIs y Estadísticas' }
-      ]
-    },
-    {
-      id: 'tms',
-      label: 'TMS (Transporte)',
-      icon: <Truck size={16} />,
-      permissions: [
-        { id: 'view_tms_dashboard', label: 'Ver Dashboard TMS' },
-        { id: 'view_routes', label: 'Ver Rutas' },
-        { id: 'create_routes', label: 'Planificar Rutas' },
-        { id: 'view_control_tower', label: 'Ver Torre de Control' },
-        { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
-        { id: 'view_drivers', label: 'Ver Conductores' },
-        { id: 'manage_drivers', label: 'Gestionar Conductores' },
-        { id: 'view_mobile_app', label: 'Acceder App Móvil' },
-        { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' }
-      ]
-    },
-    {
-      id: 'inbound',
-      label: 'Inbound (Entrada)',
-      icon: <ArrowDownToLine size={16} />,
-      permissions: [
-        { id: 'view_reception', label: 'Ver Recepciones' },
-        { id: 'process_reception', label: 'Procesar Recepciones' },
-        { id: 'view_cubicaje', label: 'Ver Cubicaje (Pesos)' },
-        { id: 'process_cubicaje', label: 'Gestionar Cubicaje' },
-        { id: 'view_returns', label: 'Ver Devoluciones' },
-        { id: 'process_returns', label: 'Procesar Devoluciones' },
-        { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
-        { id: 'process_entry', label: 'Procesar Ingresos' },
-        { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
-      ]
-    },
-    {
-      id: 'outbound',
-      label: 'Outbound (Salida)',
-      icon: <ArrowUpFromLine size={16} />,
-      permissions: [
-        { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
-        { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
-        { id: 'delete_sales_orders', label: 'Eliminar N.V.' },
-        { id: 'view_picking', label: 'Ver Picking' },
-        { id: 'process_picking', label: 'Procesar Picking' },
-        { id: 'view_packing', label: 'Ver Packing' },
-        { id: 'process_packing', label: 'Procesar Packing' },
-        { id: 'view_packing_tv', label: 'Ver Monitor Packing TV' },
-        { id: 'view_shipping', label: 'Ver Despachos' },
-        { id: 'process_shipping', label: 'Gestionar Despachos' },
-        { id: 'view_deliveries', label: 'Ver Entregas' },
-        { id: 'manage_deliveries', label: 'Gestionar Entregas' }
-      ]
-    },
-    {
-      id: 'inventory',
-      label: 'Inventario',
-      icon: <Warehouse size={16} />,
-      permissions: [
-        { id: 'view_stock', label: 'Ver Stock' },
-        { id: 'manage_stock', label: 'Gestionar Inventario' },
-        { id: 'view_layout', label: 'Ver Layout Bodega' },
-        { id: 'manage_layout', label: 'Editar Layout' },
-        { id: 'view_transfers', label: 'Ver Transferencias' },
-        { id: 'manage_transfers', label: 'Gestionar Transferencias' },
-        { id: 'view_cycle_count', label: 'Conteos Cíclicos' }
-      ]
-    },
-    {
-      id: 'queries',
-      label: 'Consultas',
-      icon: <Search size={16} />,
-      permissions: [
-        { id: 'view_kardex', label: 'Ver Kardex (Trazabilidad)' },
-        { id: 'view_productivity', label: 'Ver Rendimiento' },
-        { id: 'view_historial_nv', label: 'Ver Historial N.V.' },
-        { id: 'view_dispatch_control', label: 'Control Despacho' },
-        { id: 'view_batches', label: 'Ver Lotes/Series' },
-        { id: 'view_sales_status', label: 'Ver Estado N.V.' },
-        { id: 'view_addresses', label: 'Ver Direcciones' },
-        { id: 'view_locations', label: 'Ver Ubicaciones' },
-        { id: 'export_data', label: 'Exportar Datos (CSV)' }
-      ]
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: <FileBarChart size={16} />,
-      permissions: [
-        { id: 'view_reports', label: 'Ver Reportes y KPIs' },
-        { id: 'view_tv_mode', label: 'Ver Modo TV (Live)' }
-      ]
-    },
-    {
-      id: 'quality',
-      label: 'Calidad',
-      icon: <Check size={16} />,
-      permissions: [
-        { id: 'view_quality', label: 'Ver Inspecciones' },
-        { id: 'manage_quality', label: 'Gestionar Calidad' }
-      ]
-    },
-    {
-      id: 'admin',
-      label: 'Administración',
-      icon: <Settings size={16} />,
-      permissions: [
-        { id: 'view_mediciones', label: 'Ver Mediciones de Tiempo' },
-        { id: 'manage_mediciones', label: 'Gestionar Mediciones' },
-        { id: 'view_users', label: 'Ver Usuarios' },
-        { id: 'manage_users', label: 'Gestionar Usuarios' },
-        { id: 'view_roles', label: 'Ver Roles' },
-        { id: 'manage_roles', label: 'Gestionar Roles' },
-        { id: 'view_views', label: 'Ver Configuración Vistas' },
-        { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
-        { id: 'view_reports', label: 'Ver Reportes' },
-        { id: 'view_audit', label: 'Ver Auditoría' },
-        { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
-        { id: 'manage_tickets', label: 'Gestionar Tickets' },
-        { id: 'admin_upload_history', label: 'Historial de Cargas' },
-        { id: 'manage_cleanup', label: 'Limpieza de Datos' }
-      ]
-    }
-  ];
+  useGSAP(() => {
+    gsap.from(containerRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+      clearProps: 'all'
+    });
+  }, { scope: containerRef });
 
-  useEffect(() => {
-    fetchRoles();
-  }, []);
-
-  const fetchRoles = async () => {
-    try {
-      setLoading(true);
-
-      const { data: rolesData, error } = await supabase
-        .from('tms_roles')
-        .select('*')
-        .order('nombre');
-
-      if (error) throw error;
-
-      // Contar usuarios por rol
-      const { data: usersData } = await supabase
-        .from('tms_usuarios')
-        .select('rol');
-
+  const { data: roles = [], isLoading } = useQuery({
+    queryKey: ['admin_roles'],
+    queryFn: async () => {
+      const { data: rolesData, error: rolesError } = await supabase.from('tms_roles').select('*').order('nombre');
+      if (rolesError) throw rolesError;
+      
+      const { data: usersData } = await supabase.from('tms_usuarios').select('rol');
       const userCounts = {};
       (usersData || []).forEach(u => {
         userCounts[u.rol] = (userCounts[u.rol] || 0) + 1;
       });
 
-      const formattedRoles = (rolesData || []).map(rol => ({
+      return rolesData.map(rol => ({
         ...rol,
         usuarios: userCounts[rol.id] || 0,
         permisos: rol.permisos_json || []
       }));
-
-      setRoles(formattedRoles);
-
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  });
+
+  const saveRoleMutation = useMutation({
+    mutationFn: async (roleData) => {
+      const roleId = isCreating ? roleData.nombre.toUpperCase().replace(/\s+/g, '_') : roleData.id;
+      const roleName = roleData.id === 'ADMIN' ? 'Administrador' : roleData.nombre;
+
+      const { error } = await supabase
+        .from('tms_roles')
+        .upsert({
+          id: roleId,
+          nombre: roleName,
+          descripcion: roleData.descripcion,
+          permisos_json: roleData.permisos || []
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
+      return roleData;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(['admin_roles']);
+      await refreshPermissions();
+      toast.success('Rol guardado exitosamente', {
+        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
+      });
+      setIsEditing(false);
+      setIsCreating(false);
+    },
+    onError: (error) => {
+      toast.error(`Error al guardar: ${error.message}`, {
+        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
+      });
+    }
+  });
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: async (roleId) => {
+      const { error } = await supabase.from('tms_roles').delete().eq('id', roleId);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(['admin_roles']);
+      await refreshPermissions();
+      toast.success('Rol eliminado', {
+        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
+      });
+      setSelectedRole(null);
+    },
+    onError: (error) => {
+      toast.error(`Error al eliminar: ${error.message}`, {
+        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
+      });
+    }
+  });
 
   const handleCreateRole = () => {
     setSelectedRole({
@@ -207,86 +251,20 @@ const RolesPage = () => {
     setIsEditing(true);
   };
 
-  // ⭐ FUNCIÓN PRINCIPAL: Guardar rol y actualizar menú
-  const handleSaveRole = async () => {
-    try {
-      setSaving(true);
-      console.log('💾 Guardando rol...');
-
-      const roleId = isCreating
-        ? selectedRole.nombre.toUpperCase().replace(/\s+/g, '_')
-        : selectedRole.id;
-
-      const roleName = selectedRole.id === 'ADMIN' ? 'Administrador' : selectedRole.nombre;
-
-      // Guardar en BD
-      const { error } = await supabase
-        .from('tms_roles')
-        .upsert({
-          id: roleId,
-          nombre: roleName,
-          descripcion: selectedRole.descripcion,
-          permisos_json: selectedRole.permisos || []
-        }, { onConflict: 'id' });
-
-      if (error) throw error;
-
-      console.log('✅ Rol guardado en BD');
-
-      // Recargar lista de roles
-      await fetchRoles();
-
-      // ⭐⭐⭐ ACTUALIZAR EL MENÚ INSTANTÁNEAMENTE ⭐⭐⭐
-      console.log('🔄 Actualizando menú...');
-      await refreshPermissions();
-      console.log('✅ Menú actualizado');
-
-      setIsEditing(false);
-      setIsCreating(false);
-
-    } catch (error) {
-      console.error('❌ Error:', error);
-      alert('Error al guardar: ' + error.message);
-    } finally {
-      setSaving(false);
-    }
+  const handleSaveRole = () => {
+    saveRoleMutation.mutate(selectedRole);
   };
 
-  const handleDeleteRole = async (roleId) => {
+  const handleDeleteRole = (roleId) => {
     if (!confirm('¿Eliminar este rol?')) return;
-
-    try {
-      setLoading(true);
-
-      const { error } = await supabase
-        .from('tms_roles')
-        .delete()
-        .eq('id', roleId);
-
-      if (error) throw error;
-
-      await fetchRoles();
-      await refreshPermissions(); // También actualizar al eliminar
-      setSelectedRole(null);
-
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    deleteRoleMutation.mutate(roleId);
   };
 
   const togglePermission = (permId) => {
     if (!isEditing) return;
-    
-    // IMPORTANTE: Usar la función de callback en setSelectedRole para asegurar que 
-    // siempre trabajamos con el estado más reciente, evitando problemas de cierres (closures)
     setSelectedRole(prev => {
       const perms = prev.permisos || [];
-      const newPerms = perms.includes(permId)
-        ? perms.filter(p => p !== permId)
-        : [...perms, permId];
+      const newPerms = perms.includes(permId) ? perms.filter(p => p !== permId) : [...perms, permId];
       return { ...prev, permisos: newPerms };
     });
   };
@@ -299,44 +277,42 @@ const RolesPage = () => {
     setSelectedRole(prev => {
       const currentPerms = prev.permisos || [];
       const hasAll = allPerms.every(p => currentPerms.includes(p));
-
       const newPerms = hasAll
         ? currentPerms.filter(p => !allPerms.includes(p))
         : [...new Set([...currentPerms, ...allPerms])];
-
       return { ...prev, permisos: newPerms };
     });
   };
 
-  if (loading && roles.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="animate-spin text-orange-500" size={40} />
+        <Loader2 className="animate-spin text-wms-neon" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div ref={containerRef} className="h-full flex flex-col space-y-4 bg-wms-dark text-slate-300 p-6 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-        {/* Línea superior decorativa */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400"></div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-wms-panel/80 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-wms-border shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-wms-neon via-emerald-500 to-teal-400"></div>
         
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+          <div className="w-14 h-14 bg-wms-dark border border-wms-neon/30 rounded-2xl flex items-center justify-center text-wms-neon shadow-[0_0_15px_rgba(16,185,129,0.3)]">
             <Shield size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Roles y <span className="text-orange-500">Permisos</span></h1>
-            <p className="text-slate-500 font-medium mt-1">Los cambios se reflejan instantáneamente en el menú</p>
+            <h1 className="text-3xl font-black text-white tracking-tight">Roles y <span className="text-wms-neon">Permisos</span></h1>
+            <p className="text-slate-400 font-medium mt-1">Gestión de accesos y perfiles de usuario</p>
           </div>
         </div>
 
         {!selectedRole && !isCreating && (
           <button
             onClick={handleCreateRole}
-            className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all active:scale-95 relative z-10"
+            className="bg-wms-neon text-wms-dark px-6 py-3 rounded-2xl font-black flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] transition-all active:scale-95 relative z-10"
           >
             <Plus size={20} /> Nuevo Rol
           </button>
@@ -344,66 +320,61 @@ const RolesPage = () => {
       </div>
 
       <div className="flex flex-col gap-6 flex-1 overflow-hidden">
-        {/* Vista de Tarjetas (Grid) si no hay rol seleccionado o si estamos creando */}
         {(!selectedRole || isCreating) && !isEditing ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto p-2">
             {roles.map(role => (
               <div
                 key={role.id}
                 onClick={() => setSelectedRole(role)}
-                className="bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer hover:shadow-lg hover:border-orange-200 hover:-translate-y-1 transition-all group relative overflow-hidden"
+                className="bg-wms-panel/60 backdrop-blur-md rounded-2xl border border-wms-border p-6 cursor-pointer hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:border-wms-neon/50 hover:-translate-y-1 transition-all group relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Shield size={64} className="text-orange-600" />
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Shield size={64} className="text-wms-neon" />
                 </div>
 
                 <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-amber-100 text-amber-600' : 'bg-orange-50 text-orange-600'
-                    }`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-wms-alert/20 text-wms-alert border border-wms-alert/30' : 'bg-wms-neon/20 text-wms-neon border border-wms-neon/30'}`}>
                     {role.id === 'ADMIN' ? <Lock size={24} /> : <Users size={24} />}
                   </div>
                   {role.id !== 'ADMIN' && (
-                    <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                    <span className="bg-wms-dark text-slate-400 border border-wms-border text-xs font-bold px-2.5 py-1 rounded-full">
                       {role.usuarios} usuarios
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-orange-700 transition-colors">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-wms-neon transition-colors">
                   {role.nombre}
                 </h3>
-                <p className="text-sm text-slate-500 mb-6 line-clamp-2 h-10">
+                <p className="text-sm text-slate-400 mb-6 line-clamp-2 h-10">
                   {role.descripcion || 'Sin descripción'}
                 </p>
 
-                <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <div className="flex items-center justify-between border-t border-wms-border pt-4 mt-auto">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
                     <Shield size={14} />
                     {role.permisos?.length || 0} permisos
                   </div>
-                  <span className="text-orange-600 text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span className="text-wms-neon text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Editar <Edit size={14} />
                   </span>
                 </div>
               </div>
             ))}
 
-            {/* Botón para crear nuevo rol (tarjeta) */}
             <button
               onClick={handleCreateRole}
-              className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center gap-4 text-slate-400 hover:text-orange-600 hover:border-orange-400 hover:bg-orange-50/50 transition-all group min-h-[240px]"
+              className="bg-wms-panel/30 rounded-2xl border-2 border-dashed border-wms-border p-6 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-wms-neon hover:border-wms-neon/50 hover:bg-wms-neon/5 transition-all group min-h-[240px]"
             >
-              <div className="w-16 h-16 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-orange-400 transition-colors">
+              <div className="w-16 h-16 rounded-full bg-wms-dark border-2 border-wms-border flex items-center justify-center group-hover:border-wms-neon/50 transition-colors">
                 <Plus size={32} />
               </div>
               <span className="font-bold text-lg">Crear Nuevo Rol</span>
             </button>
           </div>
         ) : (
-          /* Vista de Edición / Detalle (Pantalla completa) */
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl flex flex-col overflow-hidden h-full animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {/* Header del rol */}
-            <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-slate-50 to-white">
+          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex flex-col overflow-hidden h-full">
+            <div className="p-6 border-b border-wms-border flex justify-between items-start bg-wms-dark/50">
               <div className="flex items-center gap-4 flex-1">
                 <button
                   onClick={() => {
@@ -411,7 +382,7 @@ const RolesPage = () => {
                     setIsEditing(false);
                     setIsCreating(false);
                   }}
-                  className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-slate-400 hover:text-slate-700 transition-all"
+                  className="p-2 hover:bg-wms-dark rounded-lg text-slate-400 hover:text-white transition-all border border-transparent hover:border-wms-border"
                 >
                   <ArrowLeft size={24} />
                 </button>
@@ -420,24 +391,24 @@ const RolesPage = () => {
                   {isEditing ? (
                     <div className="flex gap-4 items-start">
                       <div className="flex-1">
-                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Nombre del Rol</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre del Rol</label>
                         <input
                           type="text"
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
-                          className="w-full text-2xl font-bold text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-orange-500 outline-none px-0 py-1 transition-colors disabled:opacity-50"
+                          className="w-full text-2xl font-bold text-white bg-transparent border-b-2 border-wms-border focus:border-wms-neon outline-none px-0 py-1 transition-colors disabled:opacity-50"
                           placeholder="Nombre del Rol"
                           autoFocus
                         />
                       </div>
                       <div className="flex-[2]">
-                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Descripción</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
                         <input
                           type="text"
                           value={selectedRole.descripcion || ''}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
-                          className="w-full text-lg text-slate-600 bg-transparent border-b-2 border-slate-200 focus:border-orange-500 outline-none px-0 py-1 transition-colors"
+                          className="w-full text-lg text-slate-300 bg-transparent border-b-2 border-wms-border focus:border-wms-neon outline-none px-0 py-1 transition-colors"
                           placeholder="Descripción breve del rol"
                         />
                       </div>
@@ -445,14 +416,14 @@ const RolesPage = () => {
                   ) : (
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-black text-slate-800">{selectedRole.nombre}</h2>
+                        <h2 className="text-3xl font-black text-white">{selectedRole.nombre}</h2>
                         {selectedRole.id === 'ADMIN' && (
-                          <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                          <span className="bg-wms-alert/20 border border-wms-alert/30 text-wms-alert px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                             <Lock size={12} /> Sistema
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-500 mt-1 text-lg">{selectedRole.descripcion}</p>
+                      <p className="text-slate-400 mt-1 text-lg">{selectedRole.descripcion}</p>
                     </div>
                   )}
                 </div>
@@ -467,17 +438,17 @@ const RolesPage = () => {
                         setIsCreating(false);
                         if (isCreating) setSelectedRole(null);
                       }}
-                      className="px-6 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
+                      className="px-6 py-2.5 text-slate-400 hover:bg-wms-dark hover:text-white border border-transparent hover:border-wms-border rounded-xl font-bold transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleSaveRole}
-                      disabled={saving}
-                      className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all disabled:opacity-50 disabled:shadow-none"
+                      disabled={saveRoleMutation.isPending}
+                      className="px-6 py-2.5 bg-wms-neon hover:bg-emerald-400 text-wms-dark rounded-xl font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all disabled:opacity-50 disabled:shadow-none"
                     >
-                      {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                      {saveRoleMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                      {saveRoleMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                   </>
                 ) : (
@@ -485,14 +456,14 @@ const RolesPage = () => {
                     <button
                       onClick={() => handleDeleteRole(selectedRole.id)}
                       disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
-                      className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-20"
+                      className="p-3 text-slate-500 hover:text-wms-danger hover:bg-wms-danger/10 border border-transparent hover:border-wms-danger/30 rounded-xl transition-all disabled:opacity-20 disabled:hover:border-transparent disabled:hover:bg-transparent"
                       title="Eliminar Rol"
                     >
                       <Trash2 size={20} />
                     </button>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-6 py-2.5 bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 rounded-xl font-bold flex items-center gap-2 transition-colors"
+                      className="px-6 py-2.5 bg-wms-neon/10 text-wms-neon hover:bg-wms-neon/20 border border-wms-neon/30 rounded-xl font-bold flex items-center gap-2 transition-colors"
                     >
                       <Edit size={18} /> Editar Permisos
                     </button>
@@ -501,8 +472,7 @@ const RolesPage = () => {
               </div>
             </div>
 
-            {/* Permisos Grid */}
-            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+            <div className="flex-1 overflow-y-auto bg-wms-dark/30 p-8">
               <div className="max-w-7xl mx-auto">
                 <h3 className="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
                   <Shield size={16} /> Configuración de Accesos por Módulo
@@ -518,22 +488,19 @@ const RolesPage = () => {
                     return (
                       <div
                         key={module.id}
-                        className={`bg-white rounded-xl border shadow-sm transition-all ${hasAll ? 'border-orange-200 ring-1 ring-orange-100' : 'border-slate-200'
-                          }`}
+                        className={`bg-wms-panel/50 backdrop-blur-sm rounded-xl border transition-all ${hasAll ? 'border-wms-neon/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-wms-border'}`}
                       >
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white rounded-t-xl">
+                        <div className="p-4 border-b border-wms-border flex items-center justify-between bg-wms-panel/80 rounded-t-xl">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-orange-100 text-orange-600' :
-                                isNone ? 'bg-slate-100 text-slate-400' : 'bg-orange-50 text-orange-500'
-                              }`}>
+                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-wms-neon/20 text-wms-neon border border-wms-neon/30' : isNone ? 'bg-wms-dark text-slate-500 border border-wms-border' : 'bg-wms-alert/20 text-wms-alert border border-wms-alert/30'}`}>
                               {module.icon}
                             </div>
                             <div>
-                              <h4 className={`font-bold ${hasAll ? 'text-orange-700' : 'text-slate-700'}`}>
+                              <h4 className={`font-bold ${hasAll ? 'text-wms-neon' : 'text-slate-200'}`}>
                                 {module.label}
                               </h4>
                               {!isEditing && (
-                                <span className="text-xs text-slate-400 font-medium">
+                                <span className="text-xs text-slate-500 font-medium">
                                   {enabledCount} de {allPerms.length} activos
                                 </span>
                               )}
@@ -544,8 +511,8 @@ const RolesPage = () => {
                             <button
                               onClick={() => selectAllModule(module.id)}
                               className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${hasAll
-                                  ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                  ? 'bg-wms-neon/20 text-wms-neon hover:bg-wms-neon/30 border border-wms-neon/30'
+                                  : 'bg-wms-dark text-slate-400 hover:text-white border border-wms-border hover:border-slate-500'
                                 }`}
                             >
                               {hasAll ? 'Desmarcar Todo' : 'Marcar Todo'}
@@ -560,20 +527,19 @@ const RolesPage = () => {
                               <label
                                 key={perm.id}
                                 className={`flex items-start gap-3 p-2 rounded-lg transition-all ${isEditing
-                                    ? 'cursor-pointer hover:bg-slate-50 active:scale-[0.99]'
+                                    ? 'cursor-pointer hover:bg-wms-dark/50 active:scale-[0.99]'
                                     : 'cursor-default opacity-80'
                                   }`}
                                 onClick={() => togglePermission(perm.id)}
                               >
-                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEnabled
-                                    ? 'bg-orange-600 border-orange-600 text-white shadow-sm shadow-orange-200'
-                                    : 'bg-white border-slate-300'
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${isEnabled
+                                    ? 'bg-wms-neon border-wms-neon text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                                    : 'bg-wms-dark border-wms-border'
                                   }`}>
                                   {isEnabled && <Check size={12} strokeWidth={4} />}
                                 </div>
                                 <div>
-                                  <span className={`text-sm block leading-tight ${isEnabled ? 'text-slate-700 font-bold' : 'text-slate-400 font-medium'
-                                    }`}>
+                                  <span className={`text-sm block leading-tight ${isEnabled ? 'text-slate-200 font-bold' : 'text-slate-500 font-medium'}`}>
                                     {perm.label}
                                   </span>
                                 </div>
