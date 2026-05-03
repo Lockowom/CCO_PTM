@@ -34,6 +34,18 @@ export default defineConfig({
     assetsDir: 'assets',
     // Copiar archivos de public al build
     copyPublicDir: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'ui-vendor': ['lucide-react', 'sonner', 'recharts', 'gsap', '@gsap/react'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
+          'query-vendor': ['@tanstack/react-query']
+        }
+      }
+    }
   },
   // Importante para SPA routing
   preview: {

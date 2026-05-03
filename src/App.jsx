@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -8,69 +8,69 @@ import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates } from './services/mobileService';
 
 // Login & Dashboard
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Analytics from './pages/Analytics/Analytics';
-import WarehouseTV from './pages/Analytics/WarehouseTV'; // NUEVO
+const Login = React.lazy(() => import('./pages/Login'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Analytics = React.lazy(() => import('./pages/Analytics/Analytics'));
+const WarehouseTV = React.lazy(() => import('./pages/Analytics/WarehouseTV')); // NUEVO
 
 // TMS Modules
-import RoutePlanning from './pages/TMS/RoutePlanning';
-import Drivers from './pages/TMS/Drivers';
-import ControlTower from './pages/TMS/ControlTower';
-import MobileApp from './pages/TMS/MobileApp';
-import YardManagement from './pages/TMS/YardManagement'; // NUEVO
-import WarehousePDA from './pages/Mobile/WarehousePDA'; // NUEVO
+const RoutePlanning = React.lazy(() => import('./pages/TMS/RoutePlanning'));
+const Drivers = React.lazy(() => import('./pages/TMS/Drivers'));
+const ControlTower = React.lazy(() => import('./pages/TMS/ControlTower'));
+const MobileApp = React.lazy(() => import('./pages/TMS/MobileApp'));
+const YardManagement = React.lazy(() => import('./pages/TMS/YardManagement')); // NUEVO
+const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA')); // NUEVO
 
 // Inbound Modules
-import Reception from './pages/Inbound/Reception';
-import Entry from './pages/Inbound/Entry';
-import Returns from './pages/Inbound/Returns'; // NUEVO
-import CubingRegistry from './pages/Inbound/CubingRegistry'; // NUEVO - Registro Cubicaje
+const Reception = React.lazy(() => import('./pages/Inbound/Reception'));
+const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
+const Returns = React.lazy(() => import('./pages/Inbound/Returns')); // NUEVO
+const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry')); // NUEVO - Registro Cubicaje
 
 // Outbound Modules
-import SalesOrders from './pages/Outbound/SalesOrders';
-import Picking from './pages/Outbound/Picking';
-import Packing from './pages/Outbound/Packing';
-import PackingTV from './pages/Outbound/PackingTV'; // NUEVO
-import Shipping from './pages/Outbound/Shipping';
+const SalesOrders = React.lazy(() => import('./pages/Outbound/SalesOrders'));
+const Picking = React.lazy(() => import('./pages/Outbound/Picking'));
+const Packing = React.lazy(() => import('./pages/Outbound/Packing'));
+const PackingTV = React.lazy(() => import('./pages/Outbound/PackingTV')); // NUEVO
+const Shipping = React.lazy(() => import('./pages/Outbound/Shipping'));
 
 // Inventory Modules
-import Stock from './pages/Inventory/Stock';
-import InventoryLayout from './pages/Inventory/Layout';
-import DashboardWMS from './pages/Inventory/DashboardWMS';
-import Transfers from './pages/Inventory/Transfers';
-import CycleCount from './pages/Inventory/CycleCount';
-import Replenishment from './pages/Inventory/Replenishment'; // NUEVO
+const Stock = React.lazy(() => import('./pages/Inventory/Stock'));
+const InventoryLayout = React.lazy(() => import('./pages/Inventory/Layout'));
+const DashboardWMS = React.lazy(() => import('./pages/Inventory/DashboardWMS'));
+const Transfers = React.lazy(() => import('./pages/Inventory/Transfers'));
+const CycleCount = React.lazy(() => import('./pages/Inventory/CycleCount'));
+const Replenishment = React.lazy(() => import('./pages/Inventory/Replenishment')); // NUEVO
 
 // Quality Control Modules
-import Inspection from './pages/QualityControl/Inspection';
+const Inspection = React.lazy(() => import('./pages/QualityControl/Inspection'));
 
 // Queries Modules
-import Batches from './pages/Queries/Batches';
-import SalesStatus from './pages/Queries/SalesStatus';
-import Addresses from './pages/Queries/Addresses';
-import Locations from './pages/Queries/Locations';
-import HistorialNV from './pages/Queries/HistorialNV';
-import DispatchControl from './pages/Queries/DispatchControl';
-import Kardex from './pages/Queries/Kardex'; // NUEVO
-import Productivity from './pages/Queries/Productivity'; // NUEVO
+const Batches = React.lazy(() => import('./pages/Queries/Batches'));
+const SalesStatus = React.lazy(() => import('./pages/Queries/SalesStatus'));
+const Addresses = React.lazy(() => import('./pages/Queries/Addresses'));
+const Locations = React.lazy(() => import('./pages/Queries/Locations'));
+const HistorialNV = React.lazy(() => import('./pages/Queries/HistorialNV'));
+const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl'));
+const Kardex = React.lazy(() => import('./pages/Queries/Kardex')); // NUEVO
+const Productivity = React.lazy(() => import('./pages/Queries/Productivity')); // NUEVO
 
 // Admin Modules
-import Users from './pages/Admin/Users';
-import Roles from './pages/Admin/Roles';
-import Views from './pages/Admin/Views';
-import Mediciones from './pages/Admin/Mediciones';
-import DataImport from './pages/Admin/DataImport';
-import Cleanup from './pages/Admin/Cleanup'; // NUEVO
-import TimeReports from './pages/Admin/TimeReports';
-import Tickets from './pages/Admin/Tickets';
-import UsuariosActivos from './pages/Admin/UsuariosActivos'; // NUEVO
-import LoginHistory from './pages/Admin/LoginHistory'; // NUEVO
-import WmsSettings from './pages/Admin/WmsSettings'; // NUEVO
-import SystemHealth from './pages/Admin/SystemHealth'; // NUEVO
-import OpsControl from './pages/Admin/OpsControl'; // NUEVO
-import AuditLogs from './pages/Admin/AuditLogs'; // NUEVO
-import UploadHistory from './pages/Admin/UploadHistory'; // NEW: Historial de Cargas
+const Users = React.lazy(() => import('./pages/Admin/Users'));
+const Roles = React.lazy(() => import('./pages/Admin/Roles'));
+const Views = React.lazy(() => import('./pages/Admin/Views'));
+const Mediciones = React.lazy(() => import('./pages/Admin/Mediciones'));
+const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
+const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
+const TimeReports = React.lazy(() => import('./pages/Admin/TimeReports'));
+const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
+const UsuariosActivos = React.lazy(() => import('./pages/Admin/UsuariosActivos')); // NUEVO
+const LoginHistory = React.lazy(() => import('./pages/Admin/LoginHistory')); // NUEVO
+const WmsSettings = React.lazy(() => import('./pages/Admin/WmsSettings')); // NUEVO
+const SystemHealth = React.lazy(() => import('./pages/Admin/SystemHealth')); // NUEVO
+const OpsControl = React.lazy(() => import('./pages/Admin/OpsControl')); // NUEVO
+const AuditLogs = React.lazy(() => import('./pages/Admin/AuditLogs')); // NUEVO
+const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
@@ -171,6 +171,21 @@ const ROUTE_PRIORITY = [
   '/admin/mediciones',
   '/admin/reports',
 ];
+
+
+// Global Suspense Loader Cyber-Logístico
+const SuspenseLoader = () => (
+  <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
+    <div className="relative w-24 h-24 mb-4">
+      <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+      <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 bg-orange-500/20 rounded-full animate-ping"></div>
+      </div>
+    </div>
+    <h2 className="text-orange-400 font-black tracking-[0.2em] uppercase text-sm animate-pulse">Inicializando Módulo...</h2>
+  </div>
+);
 
 // Componente de Acceso Denegado
 const AccessDenied = ({ requiredPermissions, route }) => {
@@ -287,7 +302,7 @@ function AppContent() {
 
   return (
     <Router>
-      <Routes>
+      <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
 
@@ -365,7 +380,7 @@ function AppContent() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      </Routes></Suspense>
     </Router>
   );
 }
