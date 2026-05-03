@@ -1,6 +1,7 @@
-import React, { useLayoutEffect, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Navbar from './Navbar';
 import ErrorReportWidget from './ErrorReportWidget';
+import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
@@ -77,16 +78,12 @@ const Layout = ({ children }) => {
   }, []);
 
   // Animate page transitions when route changes
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      // Fade out previous content (handled by React rendering), Fade IN new content
-      gsap.fromTo(mainRef.current, 
-        { opacity: 0, y: 15 }, 
-        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
-      );
-    }, mainRef);
-
-    return () => ctx.revert();
+  useGSAP(() => {
+    // Fade out previous content (handled by React rendering), Fade IN new content
+    gsap.fromTo(mainRef.current, 
+      { opacity: 0, y: 15 }, 
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", clearProps: 'all' }
+    );
   }, [location.pathname]); // Re-run on route change
 
   return (

@@ -1,36 +1,34 @@
 import React, { useLayoutEffect, useRef } from 'react';
+import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
-const AnimatedPage = ({ children, className = '' }) => {
-  const comp = useRef(null);
+export const AnimatedPage = ({ children, className = '' }) => {
+  const container = useRef(null);
 
-  useLayoutEffect(() => {
-    let ctx = gsap.context(() => {
-      // Animate main container fade in and slide up
-      gsap.from(comp.current, {
-        opacity: 0,
-        y: 20,
-        duration: 0.5,
-        ease: "power3.out"
-      });
+  useGSAP(() => {
+    // Transición de módulo estilo "Tablet Industrial"
+    gsap.from(container.current, {
+      y: 30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+      clearProps: 'all' // Vital para evitar bugs de z-index en Tailwind
+    });
 
-      // Stagger children elements if they have 'animate-item' class
-      gsap.from(".animate-item", {
-        opacity: 0,
-        y: 20,
-        duration: 0.4,
-        stagger: 0.1,
-        delay: 0.2,
-        ease: "power2.out"
-      });
-      
-    }, comp);
-
-    return () => ctx.revert();
-  }, []);
+    // Animar elementos internos en cascada
+    gsap.from(".animate-item", {
+      opacity: 0,
+      y: 15,
+      duration: 0.4,
+      stagger: 0.05,
+      delay: 0.15,
+      ease: "power2.out",
+      clearProps: 'all'
+    });
+  }, { scope: container });
 
   return (
-    <div ref={comp} className={`w-full ${className}`}>
+    <div ref={container} className={`w-full ${className}`}>
       {children}
     </div>
   );

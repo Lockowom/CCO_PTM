@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
+import { wmsToast } from '../lib/notifications';
+import { processSyncQueue } from '../lib/db';
 
 const AuthContext = createContext();
 
@@ -111,11 +113,39 @@ export const AuthProvider = ({ children }) => {
     initSession();
   }, [loadPermissions]);
 
-  // Heartbeat: Actualizar estado 'ONLINE' en BD
+  // Heartbeat: Actualizar estado 'ONLINE' en BD y Manejo de Conexión Offline
   useEffect(() => {
     if (!user?.id) return;
 
+    // --- MANEJO DE CONEXIÓN (OFFLINE/ONLINE) ---
+    const handleOffline = () => {
+      console.warn('📡 Sistema OFFLINE');
+      wmsToast.systemOffline();
+      // Actualizar localmente si se desea
+    };
+
+    const handleOnline = async () => {
+      console.log('⚡ Sistema ONLINE');
+      wmsToast.systemOnline();
+      
+      // Intentar sincronizar operaciones guardadas en Dexie
+      await processSyncQueue(async (action, payload) => {
+        console.log(`Ejecutando acción offline pendiente: ${action}`, payload);
+        // Aquí se puede enrutar la acción a la función RPC correspondiente
+        if (action === 'move_stock') {
+          const { error } = await supabase.rpc('wms_move_stock', payload);
+          if (error) throw error;
+        }
+      });
+    };
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    // --- HEARTBEAT REGULAR ---
     const updateHeartbeat = async () => {
+      if (!navigator.onLine) return; // No intentar si estamos offline
+
       try {
         await supabase
           .from('tms_usuarios_activos')
@@ -136,7 +166,11 @@ export const AuthProvider = ({ children }) => {
     updateHeartbeat();
     const interval = setInterval(updateHeartbeat, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
   }, [user?.id, window.location.pathname]); // Se actualiza al cambiar de ruta también
 
   // Login
