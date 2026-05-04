@@ -398,10 +398,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Toaster richColors position="top-right" />
-        <AppContent />
-      </AuthProvider>
+      <Toaster richColors position="top-right" />
+      <AppContent />
     </ErrorBoundary>
   );
 }
