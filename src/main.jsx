@@ -5,6 +5,10 @@ import './index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ConfigProvider } from './context/ConfigContext.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { initSentry } from './lib/sentry'
+
+// Inicializar Sentry (Monitoreo de Errores)
+initSentry();
 
 const queryClient = new QueryClient();
 

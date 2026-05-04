@@ -19,7 +19,8 @@ export const syncOfflineData = async () => {
   for (const item of pendingItems) {
     try {
       if (item.action === 'move_stock') {
-        const { error } = await supabase.rpc('move_stock', item.payload);
+        // Corregido el nombre del RPC para coincidir con inventoryService.js
+        const { error } = await supabase.rpc('wms_move_stock', item.payload);
         if (error) throw error;
       } else if (item.action === 'update_picking') {
         const { error } = await supabase.from('tms_mediciones_tiempos').update(item.payload.data).eq('id', item.payload.id);
