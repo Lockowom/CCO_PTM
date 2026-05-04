@@ -4,6 +4,7 @@ import { wmsToast } from '../lib/notifications';
 import { processSyncQueue } from '../lib/db';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '../services/mobileService';
+import { setUserForTracking } from '../lib/sentry';
 
 const AuthContext = createContext();
 
@@ -104,6 +105,7 @@ export const AuthProvider = ({ children }) => {
           const parsed = JSON.parse(stored);
           console.log('🔄 Restaurando sesión:', parsed.nombre);
           setUser(parsed);
+          setUserForTracking(parsed); // Restaurar también en Sentry
           await loadPermissions(parsed.rol);
         } catch (err) {
           console.error('Error restaurando sesión:', err);
@@ -217,6 +219,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
       await loadPermissions(data.rol);
+      
+      // Enviar identidad del usuario a Sentry
+      setUserForTracking(userData);
 
       // Inicializar notificaciones push si estamos en móvil
       if (Capacitor.isNativePlatform()) {

@@ -75,6 +75,9 @@ const OpsControl = React.lazy(() => import('./pages/Admin/OpsControl')); // NUEV
 const AuditLogs = React.lazy(() => import('./pages/Admin/AuditLogs')); // NUEVO
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 
+// Fallback 404
+const NotFound = React.lazy(() => import('./pages/NotFound'));
+
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
   '/dashboard': ['view_dashboard'],
@@ -380,8 +383,8 @@ function AppContent() {
           <Route path="admin/audit-logs" element={<AuditLogs />} />
         </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Fallback 404 en lugar de Navigate al login */}
+        <Route path="*" element={<NotFound />} />
       </Routes></Suspense>
     </Router>
   );

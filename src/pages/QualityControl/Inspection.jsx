@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   ClipboardCheck, Search, Filter, AlertTriangle, CheckCircle, 
   XCircle, Camera, Package, Truck, ArrowRight, Eye, FileText,
-  Thermometer, Scale, Ruler, ScanLine, Save
+  Thermometer, Scale, Ruler, ScanLine, Save, Beaker, ShieldAlert
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +12,7 @@ import gsap from 'gsap';
 
 const Inspection = () => {
   const container = useRef();
-  const [activeTab, setActiveTab] = useState('pending'); // pending | history
+  const [activeTab, setActiveTab] = useState('pending'); // pending | quarantine | history
   const [searchTerm, setSearchTerm] = useState('');
   
   // Inspection Mode
@@ -48,8 +48,10 @@ const Inspection = () => {
 
       if (activeTab === 'pending') {
         query = query.in('estado', ['VERIFICADA', 'PENDING_QC']);
+      } else if (activeTab === 'quarantine') {
+        query = query.eq('estado', 'CUARENTENA');
       } else {
-        query = query.in('estado', ['QC_APROBADO', 'QC_RECHAZADO']);
+        query = query.in('estado', ['QC_APROBADO', 'QC_RECHAZADO', 'LIBERADO']);
       }
 
       const { data, error } = await query;
@@ -61,7 +63,10 @@ const Inspection = () => {
   // 2. Mutación para guardar inspección
   const submitMutation = useMutation({
     mutationFn: async ({ item, result, notes }) => {
-      const newState = result === 'PASSED' ? 'QC_APROBADO' : 'QC_RECHAZADO';
+      let newState = 'QC_APROBADO';
+      if (result === 'FAILED') newState = 'QC_RECHAZADO';
+      if (result === 'QUARANTINE') newState = 'CUARENTENA';
+      if (result === 'RELEASE') newState = 'LIBERADO';
       
       const { data, error } = await supabase
         .from('tms_recepciones')
@@ -77,7 +82,13 @@ const Inspection = () => {
       return { data, result };
     },
     onSuccess: (response) => {
-      toast.success(`Inspección registrada: ${response.result === 'PASSED' ? 'APROBADA' : 'RECHAZADA'}`, {
+      const msgMap = {
+        'PASSED': 'APROBADA',
+        'FAILED': 'RECHAZADA',
+        'QUARANTINE': 'ENVIADA A CUARENTENA',
+        'RELEASE': 'LIBERADA DE CUARENTENA'
+      };
+      toast.success(`Inspección registrada: ${msgMap[response.result]}`, {
         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' },
       });
       setInspectingItem(null);
@@ -235,7 +246,7 @@ const Inspection = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
               <button
                 onClick={() => submitMutation.mutate({ item: inspectingItem, result: 'FAILED', notes: inspectionNotes })}
                 disabled={submitMutation.isLoading}
@@ -244,6 +255,29 @@ const Inspection = () => {
                 <XCircle size={24} />
                 RECHAZAR
               </button>
+              
+              {activeTab !== 'quarantine' && (
+                <button
+                  onClick={() => submitMutation.mutate({ item: inspectingItem, result: 'QUARANTINE', notes: inspectionNotes })}
+                  disabled={submitMutation.isLoading}
+                  className="py-4 bg-wms-dark border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  <ShieldAlert size={24} />
+                  CUARENTENA
+                </button>
+              )}
+
+              {activeTab === 'quarantine' && (
+                <button
+                  onClick={() => submitMutation.mutate({ item: inspectingItem, result: 'RELEASE', notes: inspectionNotes })}
+                  disabled={!Object.values(checklist).every(Boolean) || submitMutation.isLoading}
+                  className="py-4 bg-wms-dark border-2 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-400 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  <Beaker size={24} />
+                  LIBERAR LOTE
+                </button>
+              )}
+
               <button
                 onClick={() => submitMutation.mutate({ item: inspectingItem, result: 'PASSED', notes: inspectionNotes })}
                 disabled={!Object.values(checklist).every(Boolean) || submitMutation.isLoading}
@@ -274,7 +308,8 @@ const Inspection = () => {
         </div>
         
         <div className="flex gap-2 bg-wms-panel p-1 rounded-xl border border-wms-border shadow-inner">
-          <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} label="Pendientes" count={receptions.length} />
+          <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} label="Pendientes" count={receptions.filter(r => ['VERIFICADA', 'PENDING_QC'].includes(r.estado)).length} />
+          <TabButton active={activeTab === 'quarantine'} onClick={() => setActiveTab('quarantine')} label="Cuarentena" count={receptions.filter(r => r.estado === 'CUARENTENA').length} />
           <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} label="Historial" />
         </div>
       </div>
@@ -319,6 +354,8 @@ const Inspection = () => {
               <div className={`h-2 w-full ${
                 item.estado === 'QC_APROBADO' ? 'bg-wms-neon shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 
                 item.estado === 'QC_RECHAZADO' ? 'bg-wms-danger shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 
+                item.estado === 'CUARENTENA' ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]' : 
+                item.estado === 'LIBERADO' ? 'bg-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.8)]' : 
                 'bg-blue-500'
               }`}></div>
               
@@ -330,6 +367,8 @@ const Inspection = () => {
                   <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${
                     item.estado === 'QC_APROBADO' ? 'bg-wms-neon/10 text-wms-neon border-wms-neon/30' : 
                     item.estado === 'QC_RECHAZADO' ? 'bg-wms-danger/10 text-wms-danger border-wms-danger/30' : 
+                    item.estado === 'CUARENTENA' ? 'bg-orange-500/10 text-orange-500 border-orange-500/30' : 
+                    item.estado === 'LIBERADO' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' : 
                     'bg-blue-500/10 text-blue-400 border-blue-500/30'
                   }`}>
                     {item.estado.replace('_', ' ')}
@@ -356,13 +395,17 @@ const Inspection = () => {
                   </div>
                 </div>
 
-                {activeTab === 'pending' ? (
+                {activeTab === 'pending' || activeTab === 'quarantine' ? (
                   <button 
                     onClick={() => startInspection(item)}
-                    className="w-full py-3 bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/50 text-indigo-300 hover:text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all group-hover:scale-[1.02]"
+                    className={`w-full py-3 border rounded-xl font-bold flex items-center justify-center gap-2 transition-all group-hover:scale-[1.02] ${
+                      activeTab === 'quarantine' 
+                        ? 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 text-orange-400'
+                        : 'bg-indigo-600/20 hover:bg-indigo-600 border-indigo-500/50 text-indigo-300 hover:text-white'
+                    }`}
                   >
                     <Eye size={18} />
-                    INICIAR INSPECCIÓN
+                    {activeTab === 'quarantine' ? 'REVISAR CUARENTENA' : 'INICIAR INSPECCIÓN'}
                   </button>
                 ) : (
                    <div className="text-center p-2 bg-wms-dark rounded-xl border border-wms-border text-xs font-bold text-slate-500">
