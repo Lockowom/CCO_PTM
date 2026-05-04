@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "start": "node server.js",
     "deploy": "node deploy.js",
-    "deploy:mobile": "vite build && npx @capgo/cli bundle upload"
+    "deploy:mobile": "node scripts/deploy_mobile.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",

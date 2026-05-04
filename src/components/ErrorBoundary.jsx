@@ -1,0 +1,61 @@
+import React, { Component } from 'react';
+import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { logError } from '../lib/sentry';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    // Enviar el error a Sentry (si está configurado)
+    logError(error, { extra: errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-8 max-w-lg w-full shadow-[0_0_30px_rgba(239,68,68,0.1)] relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
+            
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-white text-center mb-2">Error del Sistema</h1>
+            <p className="text-slate-400 text-center mb-6">
+              Ha ocurrido un fallo crítico en este módulo. El equipo técnico ha sido notificado.
+            </p>
+            
+            <div className="bg-slate-950 rounded-lg p-4 mb-6 overflow-auto max-h-32 border border-slate-800">
+              <p className="text-red-400 font-mono text-sm whitespace-pre-wrap">
+                {this.state.error && this.state.error.toString()}
+              </p>
+            </div>
+            
+            <button
+              onClick={() => window.location.href = '/dashboard'}
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl font-bold transition-colors"
+            >
+              <RefreshCcw className="w-5 h-5" />
+              Reiniciar Módulo
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;

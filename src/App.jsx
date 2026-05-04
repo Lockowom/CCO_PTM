@@ -15,6 +15,7 @@ const WarehouseTV = React.lazy(() => import('./pages/Analytics/WarehouseTV')); /
 
 // TMS Modules
 const RoutePlanning = React.lazy(() => import('./pages/TMS/RoutePlanning'));
+const DashboardTMS = React.lazy(() => import('./pages/TMS/Dashboard'));
 const Drivers = React.lazy(() => import('./pages/TMS/Drivers'));
 const ControlTower = React.lazy(() => import('./pages/TMS/ControlTower'));
 const MobileApp = React.lazy(() => import('./pages/TMS/MobileApp'));
@@ -33,6 +34,7 @@ const Picking = React.lazy(() => import('./pages/Outbound/Picking'));
 const Packing = React.lazy(() => import('./pages/Outbound/Packing'));
 const PackingTV = React.lazy(() => import('./pages/Outbound/PackingTV')); // NUEVO
 const Shipping = React.lazy(() => import('./pages/Outbound/Shipping'));
+const Deliveries = React.lazy(() => import('./pages/Outbound/Deliveries'));
 
 // Inventory Modules
 const Stock = React.lazy(() => import('./pages/Inventory/Stock'));
@@ -62,6 +64,7 @@ const Views = React.lazy(() => import('./pages/Admin/Views'));
 const Mediciones = React.lazy(() => import('./pages/Admin/Mediciones'));
 const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
 const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
+const Reports = React.lazy(() => import('./pages/Admin/Reports'));
 const TimeReports = React.lazy(() => import('./pages/Admin/TimeReports'));
 const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UsuariosActivos = React.lazy(() => import('./pages/Admin/UsuariosActivos')); // NUEVO
@@ -315,7 +318,7 @@ function AppContent() {
           <Route path="analytics/tv" element={<WarehouseTV />} />
 
           {/* TMS Modules */}
-          <Route path="tms/dashboard" element={<Placeholder title="Dashboard TMS" />} />
+          <Route path="tms/dashboard" element={<DashboardTMS />} />
           <Route path="tms/planning" element={<RoutePlanning />} />
           <Route path="tms/control-tower" element={<ControlTower />} />
           <Route path="tms/drivers" element={<Drivers />} />
@@ -336,7 +339,7 @@ function AppContent() {
           <Route path="outbound/packing" element={<Packing />} />
           <Route path="outbound/packing-tv" element={<PackingTV />} />
           <Route path="outbound/shipping" element={<Shipping />} />
-          <Route path="outbound/deliveries" element={<Placeholder title="Entregas" />} />
+          <Route path="outbound/deliveries" element={<Deliveries />} />
 
           {/* Inventory Modules */}
           <Route path="inventory/dashboard" element={<DashboardWMS />} />
@@ -365,11 +368,10 @@ function AppContent() {
           <Route path="admin/views" element={<Views />} />
           <Route path="admin/mediciones" element={<Mediciones />} />
           <Route path="admin/cleanup" element={<Cleanup />} />
-          <Route path="admin/reports" element={<Placeholder title="Reportes Generales" />} />
+          <Route path="admin/reports" element={<Reports />} />
           <Route path="admin/time-reports" element={<TimeReports />} />
           <Route path="admin/upload-history" element={<UploadHistory />} />
           <Route path="admin/tickets" element={<Tickets />} />
-          <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/active-users" element={<UsuariosActivos />} />
           <Route path="admin/login-history" element={<LoginHistory />} />
           <Route path="admin/wms-settings" element={<WmsSettings />} />
@@ -386,13 +388,16 @@ function AppContent() {
 }
 
 import { Toaster } from 'sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
-      <Toaster richColors position="top-right" />
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Toaster richColors position="top-right" />
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

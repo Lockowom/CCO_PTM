@@ -10,6 +10,12 @@ import { useEffect, useRef } from 'react';
 export const useScanner = (onScanCallback, timeoutMs = 30) => {
   const barcodeBuffer = useRef('');
   const lastKeyTime = useRef(Date.now());
+  const callbackRef = useRef(onScanCallback);
+
+  // Mantener la referencia actualizada sin causar re-renders ni re-binds del event listener
+  useEffect(() => {
+    callbackRef.current = onScanCallback;
+  }, [onScanCallback]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -25,7 +31,7 @@ export const useScanner = (onScanCallback, timeoutMs = 30) => {
       // a menos que sea el 'Enter' que indica el final del escaneo
       if (e.key === 'Enter') {
         if (barcodeBuffer.current.length > 3) { // Asumimos que un código tiene al menos 4 caracteres
-          onScanCallback(barcodeBuffer.current);
+          callbackRef.current(barcodeBuffer.current);
           barcodeBuffer.current = '';
           e.preventDefault(); // Evitar que el Enter envíe formularios accidentalmente
         }
@@ -41,7 +47,7 @@ export const useScanner = (onScanCallback, timeoutMs = 30) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onScanCallback, timeoutMs]);
+  }, [timeoutMs]);
 };
 
 export default useScanner;
