@@ -6,6 +6,10 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { ConfigProvider } from './context/ConfigContext.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { initSentry } from './lib/sentry'
+import { validateEnv } from './lib/env'
+
+// Validar variables de entorno críticas antes de hacer nada
+validateEnv();
 
 // Inicializar Sentry (Monitoreo de Errores)
 initSentry();

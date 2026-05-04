@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
+import { useSyncQueueCount } from '../hooks/useSyncQueueCount';
 import {
   LayoutDashboard, Map, Satellite, Users, Smartphone,
   ArrowDownToLine, Truck,
@@ -11,7 +12,7 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale
+  Scale, CloudOff
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -21,6 +22,7 @@ const Navbar = () => {
   // USAR LOS CONTEXTOS - Esto es la clave
   const { user, logout, hasPermission, permissions, refreshPermissions } = useAuth();
   const { isModuleEnabled, refreshConfig } = useConfig();
+  const syncQueueCount = useSyncQueueCount();
 
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -360,6 +362,16 @@ const Navbar = () => {
 
         {/* 3. Right Section (Widgets siempre visibles o colapsables) */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Offline Sync Queue Indicator */}
+          {syncQueueCount > 0 && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-xl shadow-sm text-orange-600 animate-pulse" title={`${syncQueueCount} operaciones en cola offline`}>
+              <CloudOff size={16} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                {syncQueueCount} EN COLA
+              </span>
+            </div>
+          )}
+
           {/* Tablet/Desktop: User & Clock */}
           <div className="hidden lg:flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm" title={isOnline ? "Conectado a Internet" : "Sin Conexión"}>

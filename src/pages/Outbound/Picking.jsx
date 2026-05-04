@@ -488,7 +488,7 @@ const Picking = () => {
             <span className="text-xs font-bold bg-wms-dark text-slate-300 px-2 py-1 rounded-md border border-wms-border">{nvFiltradas.length} órdenes</span>
           </div>
 
-          <div className="overflow-x-auto relative z-10">
+          <div className="hidden md:block overflow-x-auto relative z-10">
             <table className="w-full text-sm">
               <thead className="bg-wms-dark text-slate-400 uppercase text-xs">
                 <tr>
@@ -587,6 +587,89 @@ const Picking = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Vista Móvil (Cards Apiladas) */}
+          <div className="md:hidden flex flex-col gap-4 p-4 relative z-10">
+            {loading ? (
+              <div className="py-12 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <RefreshCw className="animate-spin text-wms-neon" size={24} />
+                  <span className="text-xs font-medium text-slate-400">Cargando órdenes...</span>
+                </div>
+              </div>
+            ) : nvFiltradas.length === 0 ? (
+              <div className="py-12 text-center text-slate-500">
+                <Package size={32} className="mx-auto mb-2 opacity-40" />
+                <p>No hay N.V. pendientes de picking</p>
+              </div>
+            ) : (
+              nvFiltradas.map((nv, index) => (
+                <div key={index} className="bg-wms-dark border border-wms-border rounded-xl p-4 shadow-md flex flex-col gap-3">
+                  <div className="flex justify-between items-start border-b border-wms-border pb-3">
+                    <div className="flex items-center gap-2">
+                      <FileText size={16} className="text-slate-500" />
+                      <span className="font-black text-white text-lg">#{nv.nv}</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border ${nv.estado === 'Aprobada'
+                      ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                      : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                      }`}>
+                      {nv.estado === 'Aprobada' ? 'PENDIENTE' : 'EN PROCESO'}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <p className="font-bold text-white text-sm mb-1">{nv.cliente}</p>
+                    <p className="text-xs text-slate-400 font-medium flex items-center gap-1 mb-2">
+                      <User size={10} /> {nv.vendedor || 'Vendedor Web'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-md text-xs font-bold border border-indigo-500/30">
+                        {nv.total_items} items
+                      </span>
+                      <span className="text-xs font-mono text-slate-400 bg-wms-dark px-2 py-0.5 rounded border border-wms-border">
+                        Total: {nv.total_cantidad}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-wms-border mt-1">
+                    <div className="flex items-center gap-2">
+                      {nv.usuario_nombre ? (
+                        <>
+                          <div className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xs font-bold">
+                            {nv.usuario_nombre.charAt(0)}
+                          </div>
+                          <span className="text-xs font-medium text-slate-300 line-clamp-1">
+                            {nv.usuario_nombre.split(' ')[0]}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-wms-panel border border-wms-border">Sin asignar</span>
+                      )}
+                    </div>
+                    
+                    {(!nv.usuario_asignado || nv.usuario_asignado === user.id) ? (
+                      <button
+                        onClick={() => iniciarPicking(nv)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 ${nv.usuario_asignado === user.id
+                          ? 'bg-wms-neon hover:bg-emerald-400 text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                          : 'bg-wms-dark border border-wms-border hover:border-wms-neon hover:text-wms-neon text-slate-300'
+                          }`}
+                      >
+                        <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} />
+                        {nv.usuario_asignado === user.id ? 'CONTINUAR' : 'INICIAR'}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-500 flex items-center gap-1 opacity-60 cursor-not-allowed">
+                        <Users size={14} /> Ocupado
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

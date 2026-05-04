@@ -23,6 +23,8 @@ import { supabase } from '../supabase';
 import gsap from 'gsap';
 import BarChart from '../components/Charts/BarChart';
 import PieChart from '../components/Charts/PieChart';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import ExportButton from '../components/ui/ExportButton';
 
 // --- CONFIGURACIÓN DE ESTADOS ---
 const ESTADOS_NV = [
@@ -40,7 +42,17 @@ const ESTADOS_NV = [
 
 // --- COMPONENTES AUXILIARES (DEFINIDOS PRIMERO) ---
 
-const StatCard = ({ title, value, icon, trend, colorClass, delay }) => (
+const Sparkline = ({ data, color }) => (
+  <div className="h-10 w-24 ml-auto opacity-70">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data}>
+        <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+const StatCard = ({ title, value, icon, trend, colorClass, delay, sparklineData, sparklineColor }) => (
   <div className={`stat-card bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all`}>
     <div className="flex justify-between items-start z-10 relative">
       <div>
@@ -51,14 +63,17 @@ const StatCard = ({ title, value, icon, trend, colorClass, delay }) => (
         {icon}
       </div>
     </div>
-    {trend && (
-      <div className="mt-3 flex items-center gap-1.5">
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colorClass} bg-opacity-10`}>
-          {trend}
-        </span>
-        <span className="text-[10px] text-slate-400 font-medium">vs ayer</span>
-      </div>
-    )}
+    <div className="mt-3 flex items-center justify-between">
+      {trend && (
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colorClass} bg-opacity-10`}>
+            {trend}
+          </span>
+          <span className="text-[10px] text-slate-400 font-medium">vs ayer</span>
+        </div>
+      )}
+      {sparklineData && <Sparkline data={sparklineData} color={sparklineColor || "#94a3b8"} />}
+    </div>
     {/* Decoración de fondo */}
     <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500`}>
       {React.cloneElement(icon, { size: 80 })}
@@ -236,6 +251,8 @@ const Dashboard = () => {
           icon={<FileText size={20} />} 
           colorClass="text-slate-600 bg-slate-500" 
           trend="+5%"
+          sparklineData={[{value: 10}, {value: 12}, {value: 8}, {value: 15}, {value: 18}, {value: 14}, {value: kpis.total}]}
+          sparklineColor="#475569"
         />
         <StatCard 
           title="Pendientes" 
@@ -243,6 +260,8 @@ const Dashboard = () => {
           icon={<Hourglass size={20} />} 
           colorClass="text-amber-600 bg-amber-500" 
           trend={kpis.pendientes > 10 ? "Atención" : "Normal"}
+          sparklineData={[{value: 5}, {value: 8}, {value: 12}, {value: 7}, {value: 10}, {value: 15}, {value: kpis.pendientes}]}
+          sparklineColor="#d97706"
         />
         <StatCard 
           title="En Picking" 
@@ -250,6 +269,8 @@ const Dashboard = () => {
           icon={<Hand size={20} />} 
           colorClass="text-cyan-600 bg-cyan-500" 
           trend="Activo"
+          sparklineData={[{value: 2}, {value: 5}, {value: 4}, {value: 8}, {value: 10}, {value: 9}, {value: kpis.picking}]}
+          sparklineColor="#0891b2"
         />
         <StatCard 
           title="Quiebres" 
@@ -257,6 +278,8 @@ const Dashboard = () => {
           icon={<AlertTriangle size={20} />} 
           colorClass="text-red-600 bg-red-500" 
           trend={kpis.quiebres > 0 ? "Crítico" : "Ok"}
+          sparklineData={[{value: 0}, {value: 1}, {value: 0}, {value: 2}, {value: 1}, {value: 3}, {value: kpis.quiebres}]}
+          sparklineColor="#dc2626"
         />
       </div>
 
@@ -320,9 +343,12 @@ const Dashboard = () => {
       <div className="dash-element bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 min-h-[300px]">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <h3 className="font-bold text-slate-700">Últimas Notas de Venta</h3>
-          <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-            Ver todas <ChevronRight size={14} />
-          </button>
+          <div className="flex items-center gap-3">
+            <ExportButton data={recentNV} filename="nv_recientes" />
+            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+              Ver todas <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

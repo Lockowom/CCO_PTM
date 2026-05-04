@@ -1,3 +1,5 @@
+import tokens from './src/styles/tokens.js';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -7,21 +9,18 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['Inter', 'sans-serif'], // Inter como fuente por defecto para la UI
+        mono: ['JetBrains Mono', 'monospace'], // JetBrains para números y SKUs
         poppins: ['Poppins', 'sans-serif'],
       },
       colors: {
         primary: '#f97316',
         secondary: '#0f172a',
-        wms: {
-          dark: '#0f172a',    // bg-slate-900 profundo
-          panel: '#1e293b',   // bg-slate-800
-          border: '#334155',  // bg-slate-700
-          neon: '#10b981',    // Emerald brillante (Success)
-          alert: '#f97316',   // Orange original (Alertas)
-          danger: '#ef4444',  // Red original
-        }
+        wms: tokens.colors.wms
       },
+      spacing: tokens.spacing,
       boxShadow: {
+        ...tokens.boxShadow,
         'neon-green': '0 0 15px rgba(16, 185, 129, 0.4)',
         'neon-orange': '0 0 15px rgba(249, 115, 22, 0.4)',
       },

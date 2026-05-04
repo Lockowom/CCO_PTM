@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Truck, MapPin, AlertCircle, Clock } from 'lucide-react';
+import { Activity, Truck, MapPin, AlertCircle, Clock, TrendingUp } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { supabase } from '../../supabase';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Fix para los iconos de Leaflet en React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,12 +49,24 @@ const fetchTmsData = async () => {
     eta: `${15 + Math.floor(Math.random() * 30)} min`
   }));
 
+  // Timeline de entregas (Simulado para gráfica)
+  const timelineData = [
+    { hora: '08:00', entregas: 5 },
+    { hora: '09:00', entregas: 12 },
+    { hora: '10:00', entregas: 25 },
+    { hora: '11:00', entregas: 18 },
+    { hora: '12:00', entregas: 30 },
+    { hora: '13:00', entregas: 45 },
+    { hora: '14:00', entregas: 22 },
+  ];
+
   return {
     vehiculosEnRuta: vehiculosEnRuta || 0,
     entregasPendientes: entregasPendientes || 0,
     alertasRetraso: 0, // Placeholder
     tiempoPromedio: '45m', // Placeholder
-    conductoresActivos: conductoresConGPS
+    conductoresActivos: conductoresConGPS,
+    timelineData
   };
 };
 
@@ -118,7 +131,7 @@ const DashboardTMS = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl flex flex-col">
           <h2 className="text-lg font-bold text-white mb-4">Mapa de Operaciones en Vivo</h2>
           <div className="flex-1 min-h-[400px] bg-slate-800/50 rounded-xl border border-slate-700/50 relative overflow-hidden z-0">
@@ -151,31 +164,62 @@ const DashboardTMS = () => {
           </div>
         </div>
 
-        <div className="tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl">
-          <h2 className="text-lg font-bold text-white mb-4">Conductores Activos ({tmsData?.conductoresActivos?.length || 0})</h2>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-            {tmsData?.conductoresActivos?.length > 0 ? (
-              tmsData.conductoresActivos.map((driver, index) => (
-                <div key={driver.usuario_id || index} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-blue-500/30 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold uppercase">
-                      {driver.nombre ? driver.nombre.substring(0, 2) : 'C'}
-                    </div>
-                    <div>
-                      <p className="text-white font-medium text-sm capitalize">{driver.nombre || 'Desconocido'}</p>
-                      <p className="text-emerald-400 text-xs flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> En Ruta
-                      </p>
+        <div className="flex flex-col gap-6">
+          <div className="tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl flex-1">
+            <h2 className="text-lg font-bold text-white mb-4">Conductores Activos ({tmsData?.conductoresActivos?.length || 0})</h2>
+            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+              {tmsData?.conductoresActivos?.length > 0 ? (
+                tmsData.conductoresActivos.map((driver, index) => (
+                  <div key={driver.usuario_id || index} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-blue-500/30 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold uppercase">
+                        {driver.nombre ? driver.nombre.substring(0, 2) : 'C'}
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm capitalize">{driver.nombre || 'Desconocido'}</p>
+                        <p className="text-emerald-400 text-xs flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> En Ruta
+                        </p>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center p-8 border border-dashed border-slate-700 rounded-xl text-slate-500">
+                  No hay conductores activos (ONLINE) en este momento.
                 </div>
-              ))
-            ) : (
-              <div className="text-center p-8 border border-dashed border-slate-700 rounded-xl text-slate-500">
-                No hay conductores activos (ONLINE) en este momento.
-              </div>
-            )}
+              )}
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Timeline Gráfica */}
+      <div className="tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <TrendingUp size={20} className="text-emerald-400" />
+            Timeline de Entregas
+          </h2>
+        </div>
+        <div className="h-[250px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={tmsData?.timelineData}>
+              <defs>
+                <linearGradient id="colorEntregas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="hora" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '0.5rem', color: '#f8fafc' }}
+                itemStyle={{ color: '#10b981' }}
+              />
+              <Area type="monotone" dataKey="entregas" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorEntregas)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

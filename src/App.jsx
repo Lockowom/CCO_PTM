@@ -2,6 +2,7 @@ import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
+import CommandPalette from './components/ui/CommandPalette';
 import Placeholder from './components/Placeholder';
 import { Lock } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
@@ -308,6 +309,7 @@ function AppContent() {
 
   return (
     <Router>
+      <CommandPalette />
       <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />

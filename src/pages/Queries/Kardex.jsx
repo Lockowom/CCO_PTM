@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { useMutation } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import ExportButton from '../../components/ui/ExportButton';
 
 const Kardex = () => {
   const container = useRef();
@@ -241,6 +242,10 @@ const Kardex = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="flex justify-end">
+            <ExportButton data={movements} filename={`kardex_${productInfo.codigo}`} />
           </div>
 
           {/* Timeline */}
