@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 import { wmsToast } from '../lib/notifications';
-import { processSyncQueue } from '../lib/db';
+import { db } from '../lib/db';
+import { syncOfflineData } from '../lib/syncManager';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '../services/mobileService';
 import { setUserForTracking } from '../lib/sentry';
@@ -132,15 +133,8 @@ export const AuthProvider = ({ children }) => {
       console.log('⚡ Sistema ONLINE');
       wmsToast.systemOnline();
       
-      // Intentar sincronizar operaciones guardadas en Dexie
-      await processSyncQueue(async (action, payload) => {
-        console.log(`Ejecutando acción offline pendiente: ${action}`, payload);
-        // Aquí se puede enrutar la acción a la función RPC correspondiente
-        if (action === 'move_stock') {
-          const { error } = await supabase.rpc('wms_move_stock', payload);
-          if (error) throw error;
-        }
-      });
+      // Intentar sincronizar operaciones guardadas en Dexie usando syncManager
+      await syncOfflineData();
     };
 
     window.addEventListener('offline', handleOffline);

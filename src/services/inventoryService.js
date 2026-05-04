@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { addToSyncQueue } from '../lib/db';
+import { enqueueOfflineAction } from '../lib/syncManager';
 
 // ==============================================================================
 // WMS TRANSACTIONAL SERVICE (ACID GUARANTEE)
@@ -77,7 +77,7 @@ export const useMoveStock = () => {
       };
 
       if (!navigator.onLine) {
-        await addToSyncQueue('move_stock', payload);
+        await enqueueOfflineAction('move_stock', payload);
         toast.warning('Sin conexión: Movimiento guardado offline.', { 
           description: 'Se sincronizará automáticamente al recuperar la conexión.' 
         });
