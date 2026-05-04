@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 /**
  * Hook global para interceptar lecturas de escáneres de hardware (PDAs, Zebra, Honeywell)
@@ -17,6 +18,16 @@ export const useScanner = (onScanCallback, timeoutMs = 30) => {
     callbackRef.current = onScanCallback;
   }, [onScanCallback]);
 
+  const triggerFeedback = async () => {
+    try {
+      await Haptics.impact({ style: ImpactStyle.Heavy });
+      // Opcional: Sonido tipo "beep" nativo si hubiera un archivo audio
+      // const audio = new Audio('/beep.mp3'); audio.play();
+    } catch (error) {
+      // Ignorar si no está en dispositivo nativo o no tiene soporte
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       const currentTime = Date.now();
@@ -31,6 +42,7 @@ export const useScanner = (onScanCallback, timeoutMs = 30) => {
       // a menos que sea el 'Enter' que indica el final del escaneo
       if (e.key === 'Enter') {
         if (barcodeBuffer.current.length > 3) { // Asumimos que un código tiene al menos 4 caracteres
+          triggerFeedback();
           callbackRef.current(barcodeBuffer.current);
           barcodeBuffer.current = '';
           e.preventDefault(); // Evitar que el Enter envíe formularios accidentalmente

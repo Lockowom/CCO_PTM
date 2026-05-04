@@ -15,6 +15,7 @@
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^7.0.0",
     "@capacitor/push-notifications": "^7.0.0",
     "@capgo/capacitor-updater": "^7.0.0",
     "@gsap/react": "^2.1.1",
