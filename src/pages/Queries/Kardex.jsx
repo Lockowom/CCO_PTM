@@ -9,13 +9,23 @@ import { useMutation } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ExportButton from '../../components/ui/ExportButton';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const Kardex = () => {
   const container = useRef();
+  const parentRef = useRef();
   const [searchTerm, setSearchTerm] = useState('');
   const [productInfo, setProductInfo] = useState(null);
   const [movements, setMovements] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // Virtualizador para manejar miles de registros en el Kardex
+  const rowVirtualizer = useVirtualizer({
+    count: movements.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100, // Altura estimada de la tarjeta
+    overscan: 5,
+  });
 
   useGSAP(() => {
     gsap.from(container.current, {
@@ -248,55 +258,83 @@ const Kardex = () => {
             <ExportButton data={movements} filename={`kardex_${productInfo.codigo}`} />
           </div>
 
-          {/* Timeline */}
-          <div className="relative border-l-2 border-wms-border ml-4 space-y-8 pl-8 py-2">
-            {movements.map((mov) => (
-              <div key={mov.id} className="relative group">
-                {/* Dot */}
-                <div className={`absolute -left-[41px] top-0 w-6 h-6 rounded-full border-4 border-wms-dark shadow-sm flex items-center justify-center ${
-                  mov.tipo === 'ENTRADA' ? 'bg-wms-neon shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 
-                  mov.tipo === 'SALIDA' ? 'bg-wms-danger shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                }`}>
-                </div>
-
-                {/* Card */}
-                <div className={`bg-wms-panel/90 backdrop-blur-md rounded-xl border p-4 shadow-lg hover:shadow-xl hover:border-slate-600 transition-all ${getMovementColor(mov.tipo)} relative overflow-hidden`}>
-                  <div className="flex justify-between items-start mb-2 relative z-10">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-black text-sm ${
-                        mov.tipo === 'ENTRADA' ? 'text-emerald-400' : 
-                        mov.tipo === 'SALIDA' ? 'text-wms-danger' : 'text-blue-400'
+          {/* Timeline (Virtualizada) */}
+          <div 
+            ref={parentRef} 
+            className="h-[600px] overflow-auto relative border-l-2 border-wms-border ml-4 pl-8 py-2 custom-scrollbar"
+          >
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const mov = movements[virtualRow.index];
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    className="pb-6" // Espaciado entre tarjetas
+                  >
+                    <div className="relative group">
+                      {/* Dot */}
+                      <div className={`absolute -left-[41px] top-0 w-6 h-6 rounded-full border-4 border-wms-dark shadow-sm flex items-center justify-center ${
+                        mov.tipo === 'ENTRADA' ? 'bg-wms-neon shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 
+                        mov.tipo === 'SALIDA' ? 'bg-wms-danger shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
                       }`}>
-                        {mov.tipo} por {mov.motivo}
-                      </span>
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
-                        <Calendar size={12} /> {format(new Date(mov.fecha), 'dd/MM/yyyy HH:mm')}
-                      </span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-slate-300 bg-wms-dark px-2 py-1 rounded border border-wms-border">
-                      {mov.doc_ref}
-                    </span>
-                  </div>
+                      </div>
 
-                  <div className="flex items-center gap-4 mb-3 relative z-10">
-                    <div className="flex items-center gap-2 font-mono text-sm font-bold text-slate-300">
-                      <span className="text-slate-500">{mov.origen}</span>
-                      <ArrowRight size={14} className="text-slate-600" />
-                      <span className="text-white">{mov.destino}</span>
-                    </div>
-                    <div className="flex-1 h-px bg-wms-border border-t border-dashed"></div>
-                    <span className="text-lg font-black text-white">
-                      {mov.tipo === 'SALIDA' ? '-' : '+'}{mov.cantidad}
-                    </span>
-                  </div>
+                      {/* Card */}
+                      <div className={`bg-wms-panel/90 backdrop-blur-md rounded-xl border p-4 shadow-lg hover:shadow-xl hover:border-slate-600 transition-all ${getMovementColor(mov.tipo)} relative overflow-hidden`}>
+                        <div className="flex justify-between items-start mb-2 relative z-10">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-black text-sm ${
+                              mov.tipo === 'ENTRADA' ? 'text-emerald-400' : 
+                              mov.tipo === 'SALIDA' ? 'text-wms-danger' : 'text-blue-400'
+                            }`}>
+                              {mov.tipo} por {mov.motivo}
+                            </span>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
+                              <Calendar size={12} /> {format(new Date(mov.fecha), 'dd/MM/yyyy HH:mm')}
+                            </span>
+                          </div>
+                          <span className="font-mono text-xs font-bold text-slate-300 bg-wms-dark px-2 py-1 rounded border border-wms-border">
+                            {mov.doc_ref}
+                          </span>
+                        </div>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500 relative z-10">
-                    <User size={12} />
-                    <span className="font-medium text-slate-400">{mov.usuario}</span>
+                        <div className="flex items-center gap-4 mb-3 relative z-10">
+                          <div className="flex items-center gap-2 font-mono text-sm font-bold text-slate-300">
+                            <span className="text-slate-500">{mov.origen}</span>
+                            <ArrowRight size={14} className="text-slate-600" />
+                            <span className="text-white">{mov.destino}</span>
+                          </div>
+                          <div className="flex-1 h-px bg-wms-border border-t border-dashed"></div>
+                          <span className="text-lg font-black text-white">
+                            {mov.tipo === 'SALIDA' ? '-' : '+'}{mov.cantidad}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-slate-500 relative z-10">
+                          <User size={12} />
+                          <span className="font-medium text-slate-400">{mov.usuario}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

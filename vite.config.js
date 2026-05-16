@@ -41,16 +41,38 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
+            // Estrategia StaleWhileRevalidate para datos de referencia (GET)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(tms_skus|tms_ubicaciones|tms_conductores|tms_vehiculos).*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'supabase-reference-data',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 semana
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // NetworkFirst para el resto de la API de Supabase
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 semana
+                maxAgeSeconds: 60 * 60 * 24 // 1 día
               },
               cacheableResponse: {
                 statuses: [0, 200]
+              },
+              backgroundSync: {
+                name: 'supabase-background-sync',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retener peticiones fallidas por 24h
+                }
               }
             }
           }

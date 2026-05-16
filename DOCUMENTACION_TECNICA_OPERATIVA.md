@@ -112,10 +112,7 @@ moveStockMutation.mutate({
   sku: 'PRD-123',
   fromLoc: 'A-01',
   toLoc: 'B-02',
-  qty: 50,
-  batch: 'LOTE-001', // Requerido para productos con trazabilidad
-  userId: 'uuid-del-operador', // Para logs de auditoría
-  reason: 'Reabastecimiento manual' // Motivo del movimiento
+  qty: 50
 });
 ```
 *Si falla la conexión, la UI muestra éxito inmediatamente, y el Hook encola la petición en Dexie.js (IndexedDB).*

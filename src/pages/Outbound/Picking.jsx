@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { usePickingStore } from '../../stores/pickingStore';
 
 const Picking = () => {
   const { user } = useAuth();
@@ -16,14 +17,28 @@ const Picking = () => {
   const [vista, setVista] = useState('lista'); 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [nvActiva, setNvActiva] = useState(null);
-  const [itemsPickingStatus, setItemsPickingStatus] = useState({});
+  // Estado global de Zustand persistente
+  const { activeSession: nvActiva, itemsStatus: itemsPickingStatus, startSession, updateItemStatus, completePicking: clearSession, cancelPicking: clearSessionCancel, updateTime, tiempoTranscurrido: storedTiempo, tiempoOcio: storedOcio } = usePickingStore();
+
   const [tiempoInicio, setTiempoInicio] = useState(null);
-  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
+  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(storedTiempo || 0);
   const [enPausa, setEnPausa] = useState(false);
-  const [tiempoOcio, setTiempoOcio] = useState(0);
+  const [tiempoOcio, setTiempoOcio] = useState(storedOcio || 0);
   const [pausaInicio, setPausaInicio] = useState(null);
   const [productLocations, setProductLocations] = useState({}); 
+
+  // Efecto para restaurar vista si hay sesión activa
+  useEffect(() => {
+    if (nvActiva && vista === 'lista') {
+      setVista('picking');
+      setTiempoInicio(Date.now() - (storedTiempo * 1000));
+    }
+  }, [nvActiva, vista, storedTiempo]);
+
+  // Sincronizar tiempos con Zustand
+  useEffect(() => {
+    updateTime(tiempoTranscurrido, tiempoOcio);
+  }, [tiempoTranscurrido, tiempoOcio, updateTime]);
 
   const timerRef = useRef(null);
   const ocioRef = useRef(null);
@@ -157,7 +172,6 @@ const Picking = () => {
       return;
     }
 
-    setNvActiva(nv);
     const initialStatus = {};
     const codigosProducto = [];
 
@@ -171,7 +185,8 @@ const Picking = () => {
         codigosProducto.push(item.codigo_producto);
       }
     });
-    setItemsPickingStatus(initialStatus);
+
+    startSession(nv, initialStatus);
 
     if (codigosProducto.length > 0) {
       try {
@@ -237,10 +252,25 @@ const Picking = () => {
   };
 
   const handleItemStatusChange = (itemId, status, cantidad = '') => {
-    setItemsPickingStatus(prev => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], status, cantidad }
-    }));
+    updateItemStatus(itemId, status, cantidad);
+    
+    // TanStack Query Optimistic Update here (conceptual, since we are doing batch updates usually,
+    // but the user wanted Optimistic Updates for picking. We can apply it here to the queryClient)
+    queryClient.setQueryData(['picking_data'], (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        nvData: oldData.nvData.map(nv => {
+          if (nv.nv === nvActiva?.nv) {
+            return {
+              ...nv,
+              items: nv.items.map(item => item.id === itemId ? { ...item, picking_status: status, cantidad_real: cantidad } : item)
+            };
+          }
+          return nv;
+        })
+      };
+    });
   };
 
   const finalizarMutation = useMutation({
@@ -322,8 +352,7 @@ const Picking = () => {
       return nuevoEstadoGlobal;
     },
     onSuccess: (nuevoEstadoGlobal) => {
-      setNvActiva(null);
-      setItemsPickingStatus({});
+      clearSession();
       setVista('lista');
       queryClient.invalidateQueries(['picking_data']);
       toast.success(`Picking finalizado. N.V. enviada a ${nuevoEstadoGlobal}`);
@@ -381,7 +410,7 @@ const Picking = () => {
         .eq('nv', nvActiva.nv);
     }
 
-    setNvActiva(null);
+    clearSessionCancel();
     setVista('lista');
     toast.info('Picking cancelado');
   };
