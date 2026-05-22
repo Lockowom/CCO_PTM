@@ -158,19 +158,13 @@ const IMPORT_TABS = [
         color: 'orange',
         table: 'wms_ubicaciones',
         uniqueKey: null, // Insertar directamente sin upsert para permitir duplicados y evitar errores
+        defaultValues: { cantidad: 1 },
         columns: [
             { key: 'ubicacion', label: 'UBICACION', required: true, type: 'text' },
             { key: 'codigo', label: 'CODIGO', required: true, type: 'text' },
-            { key: 'serie', label: 'SERIE', required: false, type: 'text' },
-            { key: 'partida', label: 'PARTIDA', required: false, type: 'text' },
-            { key: 'pieza', label: 'PIEZA DEL PRODUCTO', required: false, type: 'text' },
-            { key: 'fecha_vencimiento', label: 'FECHA DE VENCIMIENTO', required: false, type: 'date' },
-            { key: 'talla', label: 'Talla del producto', required: false, type: 'text' },
-            { key: 'color', label: 'Color del Producto', required: false, type: 'text' },
-            { key: 'cantidad', label: 'Cantidad Contada', required: true, type: 'number' },
             { key: 'descripcion', label: 'DESCRIPCION', required: false, type: 'text' },
         ],
-        helpText: '🏭 Ingresa el inventario completo. Se guardarán todos los registros de forma directa, adaptando las fechas automáticamente.',
+        helpText: '🏭 Ingresa el inventario con el orden: UBICACION | CODIGO | DESCRIPCION. El sistema asignará cantidad 1 automáticamente.',
         smartDedup: false,
     },
     {
