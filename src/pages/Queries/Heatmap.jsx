@@ -16,9 +16,9 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 const RACK_MATRICES = {
-  'A': { levels: 4, positions: 28, color: 'indigo' },
-  'B': { levels: 4, positions: 28, color: 'purple' },
-  'C': { levels: 4, positions: 50, color: 'emerald' },
+  'A': { levels: 3, positions: 28, color: 'indigo' },
+  'B': { levels: 3, positions: 28, color: 'purple' },
+  'C': { levels: 3, positions: 50, color: 'emerald' },
   'D': { levels: 4, positions: 50, color: 'orange' },
   'E': { levels: 4, positions: 50, color: 'rose' },
   'F': { levels: 4, positions: 50, color: 'fuchsia' },
@@ -56,6 +56,9 @@ const Heatmap = () => {
     const unmapped = [];
 
     Object.entries(RACK_MATRICES).forEach(([rackId, config]) => {
+      // Solo procesar racks que existen físicamente en el nivel seleccionado
+      if (selectedLevel > config.levels) return;
+
       racks[rackId] = {
         config,
         positions: [],
@@ -102,14 +105,23 @@ const Heatmap = () => {
   }, [layout, selectedLevel]);
 
   const { racks, unmapped } = heatmapData;
+    const maxLevels = useMemo(() => {
+      const matrixMax = Math.max(...Object.values(RACK_MATRICES).map(r => r.levels));
+      const dataMax = Object.values(layout).reduce((max, node) => {
+        const parts = node.ubicacion.split('-');
+        const level = parts.length >= 2 ? parseInt(parts[1]) : 0;
+        return !isNaN(level) && level > max ? level : max;
+      }, 0);
+      return Math.max(matrixMax, dataMax, 1);
+    }, [layout]);
 
-  // Usar las estadísticas globales calculadas en el Store para mayor precisión
-  const totalSystemPositions = stats.total || 1031;
-  const totalOccupiedCount = stats.ocupadas || 0;
-  const globalOccupancyPercent = stats.ocupacion || 0;
-  const totalLoadedLocations = Object.keys(layout).length;
+    // Usar las estadísticas globales calculadas en el Store para mayor precisión
+    const totalSystemPositions = stats.total || 1031;
+    const totalOccupiedCount = stats.ocupadas || 0;
+    const globalOccupancyPercent = stats.ocupacion || 0;
+    const totalLoadedLocations = Object.keys(layout).length;
 
-  return (
+    return (
     <div ref={containerRef} className="bg-slate-50 min-h-screen p-8 space-y-8 font-sans">
       
       {/* Header & Global Stats */}
@@ -133,7 +145,7 @@ const Heatmap = () => {
           <div className="mt-8 flex items-center gap-4">
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Nivel de Rack:</span>
             <div className="flex bg-slate-100 p-1 rounded-xl">
-              {[1, 2, 3, 4].map(lvl => (
+              {Array.from({ length: maxLevels }, (_, i) => i + 1).map(lvl => (
                 <button
                   key={lvl}
                   onClick={() => setSelectedLevel(lvl)}
