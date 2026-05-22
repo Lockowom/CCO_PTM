@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, X, Download, MapPin, Box, RefreshCw, 
-  Filter, ChevronRight, LayoutGrid, List, ArrowUpDown, 
-  ExternalLink, Layers, MoreHorizontal
+  Filter, ChevronRight, LayoutGrid, List, ArrowRight,
+  Database, Zap, Hash, Archive, ExternalLink, SlidersHorizontal
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useWarehouseStore } from '../../store/warehouseStore';
 
 const WmsLocations = () => {
-  const { inventory, loading, fetchWarehouseData } = useWarehouseStore();
+  const { inventory, stats, loading, fetchWarehouseData } = useWarehouseStore();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [viewMode, setViewMode] = useState('list'); // 'list' is more 'detailed' for enterprise
   const [activeAisle, setActiveAisle] = useState('Todos');
+  const containerRef = useRef(null);
 
   useEffect(() => {
     fetchWarehouseData();
   }, []);
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(search), 100);
+    const handler = setTimeout(() => setDebouncedSearch(search), 80);
     return () => clearTimeout(handler);
   }, [search]);
 
@@ -48,227 +48,192 @@ const WmsLocations = () => {
   }, [allItems, debouncedSearch, activeAisle]);
 
   useGSAP(() => {
-    gsap.fromTo('.data-row', 
-      { opacity: 0, x: -10 },
-      { opacity: 1, x: 0, duration: 0.3, stagger: 0.01, ease: 'power2.out' }
+    gsap.fromTo('.row-animate', 
+      { opacity: 0, y: 10, filter: 'blur(4px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, stagger: 0.005, ease: 'power3.out' }
     );
-  }, [filteredData.length, viewMode]);
+  }, [filteredData.length]);
 
   const exportCSV = () => {
     const headers = ['Ubicacion', 'Codigo', 'Descripcion', 'Cantidad'];
     const rows = filteredData.map(item => [
-      item.ubicacion,
-      item.codigo,
-      item.descripcion,
+      `"${item.ubicacion}"`,
+      `"${item.codigo}"`,
+      `"${item.descripcion}"`,
       item.cantidad
     ]);
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `wms_ubicaciones_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("download", `WMS_INVENTARIO_${new Date().getTime()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-slate-900 font-jakarta flex selection:bg-orange-100 selection:text-orange-700">
+    <div ref={containerRef} className="min-h-screen bg-[#F1F3F6] text-[#1A1C1E] font-jakarta flex overflow-hidden">
       
-      {/* Dynamic Command Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-[88px] bg-white border-r border-slate-100 flex flex-col items-center py-10 z-50">
-        <div className="w-14 h-14 rounded-2xl bg-slate-900 mb-12 flex items-center justify-center shadow-2xl shadow-slate-200 group cursor-pointer active:scale-95 transition-all">
-          <Layers size={24} className="text-white group-hover:rotate-12 transition-transform" />
+      {/* Sidebar Compacta de Pasillos */}
+      <aside className="w-[100px] bg-[#1A1C1E] flex flex-col items-center py-10 z-50 shrink-0">
+        <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center mb-12 shadow-lg shadow-orange-900/20">
+          <Database size={24} className="text-white" />
         </div>
-        <nav className="flex-1 flex flex-col gap-10">
-          {[
-            { icon: Box, label: 'WMS', active: true },
-            { icon: MapPin, label: 'MAPA', active: false },
-            { icon: RefreshCw, label: 'SYNC', active: false },
-          ].map((item, i) => (
-            <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer">
-              <div className={`p-4 rounded-2xl transition-all ${item.active ? 'bg-orange-50 text-orange-600 shadow-inner' : 'text-slate-300 group-hover:text-slate-500'}`}>
-                <item.icon size={22} strokeWidth={2.5} />
-              </div>
-              <span className={`text-[9px] font-black uppercase tracking-widest ${item.active ? 'text-orange-600' : 'text-slate-300'}`}>{item.label}</span>
-            </div>
+        
+        <div className="flex-1 flex flex-col gap-4 w-full px-2 overflow-y-auto no-scrollbar">
+          {aisles.map(aisle => (
+            <button 
+              key={aisle}
+              onClick={() => setActiveAisle(aisle)}
+              className={`w-full py-4 rounded-2xl flex flex-col items-center gap-1 transition-all ${activeAisle === aisle ? 'bg-orange-500 text-white shadow-xl scale-105' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}
+            >
+              <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Pasillo</span>
+              <span className="text-xl font-black leading-none">{aisle === 'Todos' ? 'ALL' : aisle}</span>
+            </button>
           ))}
-        </nav>
+        </div>
       </aside>
 
-      {/* Main Interface */}
-      <div className="flex-1 ml-[88px] flex flex-col h-screen overflow-hidden">
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
-        {/* Dynamic Header */}
-        <header className="h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-12 shrink-0 z-40">
-          <div className="flex items-center gap-6">
-            <div className="w-1 h-12 bg-orange-500 rounded-full" />
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">CENTRO DE UBICACIONES</h1>
-              <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <span className="text-orange-500">PRODUCCIÓN</span>
-                <span className="w-1 h-1 bg-slate-200 rounded-full" />
-                <span>BODEGA PRINCIPAL</span>
+        {/* Header Tecnológico */}
+        <header className="h-28 bg-white border-b border-slate-200 flex items-center justify-between px-12 shrink-0 z-40 shadow-sm">
+          <div className="flex items-center gap-8">
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-black tracking-tighter text-[#1A1C1E] leading-none mb-2">EXPLORADOR WMS</h1>
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">Sincronizado</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bodega Principal • CCO Project</span>
+              </div>
+            </div>
+
+            {/* Micro Stats Bar */}
+            <div className="hidden xl:flex items-center gap-8 bg-slate-50 px-8 py-4 rounded-[2rem] border border-slate-100">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resultados</span>
+                <span className="text-xl font-black text-slate-900 leading-none">{filteredData.length}</span>
+              </div>
+              <div className="w-[1px] h-8 bg-slate-200" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Stock Total</span>
+                <span className="text-xl font-black text-orange-600 leading-none">{filteredData.reduce((acc, curr) => acc + (curr.cantidad || 0), 0).toLocaleString()}</span>
+              </div>
+              <div className="w-[1px] h-8 bg-slate-200" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ocupación</span>
+                <span className="text-xl font-black text-blue-600 leading-none">{stats.ocupacion}%</span>
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <button 
               onClick={exportCSV}
-              className="flex items-center gap-3 bg-slate-900 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-orange-600 transition-all shadow-xl shadow-slate-200 active:scale-95"
+              className="group flex items-center gap-3 bg-[#1A1C1E] text-white px-8 py-4 rounded-[1.5rem] text-sm font-black hover:bg-orange-600 transition-all shadow-xl shadow-slate-200 active:scale-95"
             >
-              <Download size={18} /> EXPORTAR REPORTE
+              <Download size={20} className="group-hover:-translate-y-1 transition-transform" /> 
+              DESCARGAR INVENTARIO
             </button>
-            <div className="w-[1px] h-8 bg-slate-100 mx-2" />
             <button 
               onClick={() => fetchWarehouseData()}
-              className="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-orange-600 transition-all hover:shadow-lg active:scale-90"
+              className="w-14 h-14 flex items-center justify-center bg-white border-2 border-slate-100 rounded-[1.5rem] text-slate-400 hover:text-orange-500 hover:border-orange-200 transition-all active:rotate-180 duration-500 shadow-sm"
             >
-              <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={24} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
         </header>
 
-        {/* Command Center Bar */}
-        <div className="bg-white border-b border-slate-100 px-12 py-6 flex flex-col gap-6 shrink-0 shadow-sm z-30">
-          <div className="flex items-center gap-4">
-            {/* Search Engine */}
-            <div className="flex-1 relative flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus-within:border-orange-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-50 transition-all group">
-              <Search className="text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
-              <input 
-                type="text" 
-                placeholder="Busca por ubicación, SKU o descripción técnica..."
-                className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-bold text-slate-900 placeholder-slate-400"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button onClick={() => setSearch('')} className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors">
-                  <X size={16} />
-                </button>
-              )}
+        {/* Dynamic Search Engine */}
+        <div className="bg-white px-12 py-8 border-b border-slate-200 shadow-sm z-30">
+          <div className="relative flex items-center group">
+            <div className="absolute left-8 text-slate-300 group-focus-within:text-orange-500 transition-colors">
+              <Search size={28} strokeWidth={3} />
             </div>
-
-            {/* View Toggles */}
-            <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
-              <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}><List size={20} /></button>
-              <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid size={20} /></button>
-            </div>
-          </div>
-
-          {/* Aisle Quick Selector */}
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-xl border border-orange-100">
-              <Filter size={14} />
-              <span className="text-[10px] font-black uppercase tracking-widest">PASILLO</span>
-            </div>
-            {aisles.map(aisle => (
+            <input 
+              type="text" 
+              placeholder="Escribe para buscar ubicación, SKU o descripción..."
+              className="w-full bg-slate-50 border-2 border-slate-50 rounded-[2.5rem] pl-20 pr-12 py-7 text-2xl font-bold text-[#1A1C1E] placeholder-slate-300 focus:bg-white focus:border-orange-500 focus:shadow-2xl focus:shadow-orange-100 transition-all outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
               <button 
-                key={aisle}
-                onClick={() => setActiveAisle(aisle)}
-                className={`px-6 py-2 rounded-xl text-xs font-black transition-all border whitespace-nowrap ${activeAisle === aisle ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'}`}
+                onClick={() => setSearch('')}
+                className="absolute right-8 w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
               >
-                {aisle}
+                <X size={20} />
               </button>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* Dynamic Content Area */}
-        <main className="flex-1 overflow-y-auto px-12 py-10 no-scrollbar bg-[#fafafa]/50">
+        {/* High Density Content Feed */}
+        <main className="flex-1 overflow-y-auto px-12 py-10 no-scrollbar bg-[#F1F3F6]">
           
           {loading && filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32">
-              <div className="w-16 h-16 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-6" />
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Analizando Inventario...</p>
+            <div className="flex flex-col items-center justify-center py-40">
+              <div className="w-20 h-20 border-8 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-8" />
+              <p className="text-sm font-black text-slate-400 uppercase tracking-[0.4em] animate-pulse">Analizando Datos Reales...</p>
             </div>
           ) : filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] border border-dashed border-slate-200 shadow-inner">
-              <div className="w-20 h-20 rounded-[2rem] bg-slate-50 flex items-center justify-center mb-6">
-                <Search size={32} className="text-slate-200" />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">SIN COINCIDENCIAS</h3>
-              <p className="text-sm font-bold text-slate-400">Prueba con otro SKU o selecciona un pasillo diferente.</p>
-            </div>
-          ) : viewMode === 'list' ? (
-            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden mb-20">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Localización</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Producto / Identificador</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Stock Disp.</th>
-                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredData.map((item, idx) => (
-                    <tr key={idx} className="data-row group hover:bg-orange-50/30 transition-all duration-300">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg">
-                            <MapPin size={16} />
-                          </div>
-                          <span className="text-lg font-black text-slate-900 tracking-tighter group-hover:text-orange-600 transition-colors">
-                            {item.ubicacion}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-1 max-w-[450px]">
-                          <span className="text-xs font-black text-orange-600 bg-orange-50 w-fit px-2 py-0.5 rounded-md border border-orange-100 uppercase tracking-tight">
-                            {item.codigo}
-                          </span>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors leading-tight">
-                            {item.descripcion}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-center">
-                        <div className="inline-flex flex-col items-center">
-                          <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{item.cantidad || 0}</span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase mt-1">unidades</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                          <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-300 shadow-sm transition-all"><Edit2 size={16} /></button>
-                          <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-300 shadow-sm transition-all"><ExternalLink size={16} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex flex-col items-center justify-center py-40 bg-white rounded-[4rem] border-4 border-dashed border-slate-200 shadow-inner mx-auto max-w-4xl">
+              <Archive size={64} className="text-slate-200 mb-8" />
+              <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-2 uppercase">Sin Coincidencias</h3>
+              <p className="text-lg font-bold text-slate-400 tracking-tight">No encontramos nada con "{search}" en el pasillo {activeAisle}.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 pb-32">
+            <div className="flex flex-col gap-4 pb-40 max-w-[1600px] mx-auto">
               {filteredData.map((item, idx) => (
-                <div key={idx} className="data-row group bg-white border border-slate-100 rounded-[2rem] p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:scale-125 transition-transform duration-700" />
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-8">
-                      <span className="px-4 py-1.5 bg-slate-900 text-white rounded-xl font-mono text-xs font-black shadow-lg">
-                        {item.ubicacion}
-                      </span>
-                      <button className="text-slate-300 hover:text-orange-600 transition-colors"><MoreHorizontal size={20} /></button>
+                <div 
+                  key={idx} 
+                  className="row-animate group bg-white border border-slate-200 rounded-[2rem] p-4 flex items-center justify-between hover:shadow-2xl hover:shadow-orange-900/5 transition-all duration-300 hover:-translate-x-1"
+                >
+                  {/* Location Core */}
+                  <div className="flex items-center gap-6 min-w-[240px]">
+                    <div className="w-16 h-16 rounded-3xl bg-[#1A1C1E] flex flex-col items-center justify-center text-white shadow-xl group-hover:bg-orange-600 transition-colors">
+                      <span className="text-[8px] font-black uppercase tracking-tighter opacity-50 mb-0.5">Posición</span>
+                      <span className="text-xl font-black tracking-tighter leading-none">{item.ubicacion}</span>
                     </div>
-                    <div className="mb-8 min-h-[70px]">
-                      <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2">{item.codigo}</p>
-                      <h4 className="text-sm font-bold text-slate-800 leading-snug line-clamp-2">{item.descripcion}</h4>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">{item.codigo}</span>
+                      <h4 className="text-base font-black text-slate-900 leading-tight group-hover:text-orange-600 transition-colors line-clamp-1">{item.descripcion}</h4>
                     </div>
-                    <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                      <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">STOCK</p>
-                        <p className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{item.cantidad || 0}</p>
+                  </div>
+
+                  {/* Tech Specs */}
+                  <div className="hidden lg:flex items-center gap-12 flex-1 px-12">
+                     <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Pasillo</span>
+                        <span className="text-lg font-black text-slate-900 tracking-tighter leading-none">{item.ubicacion?.split('-')[0]}</span>
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nivel</span>
+                        <span className="text-lg font-black text-slate-900 tracking-tighter leading-none">{item.ubicacion?.split('-')[1]}</span>
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Columna</span>
+                        <span className="text-lg font-black text-slate-900 tracking-tighter leading-none">{item.ubicacion?.split('-')[2]}</span>
+                     </div>
+                  </div>
+
+                  {/* Stock Metrics */}
+                  <div className="flex items-center gap-8">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock Disponible</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-4xl font-black text-[#1A1C1E] tracking-tighter leading-none">{item.cantidad || 0}</span>
+                        <Zap size={20} className={`text-emerald-500 ${item.cantidad > 0 ? 'animate-pulse' : 'opacity-20'}`} />
                       </div>
-                      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-inner">
-                        <Box size={22} />
-                      </div>
                     </div>
+                    
+                    <div className="w-[1px] h-12 bg-slate-100 mx-2" />
+                    
+                    <button className="w-14 h-14 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300 hover:bg-[#1A1C1E] hover:text-white transition-all shadow-sm">
+                      <ArrowRight size={24} />
+                    </button>
                   </div>
                 </div>
               ))}
