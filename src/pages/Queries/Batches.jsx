@@ -216,27 +216,61 @@ const Batches = () => {
 
   const TABLE_CONFIG = {
     partidas: [
+      { header: 'Disponibilidad', accessor: 'disponible', render: r => {
+        const isAvailable = (r.disponible || 0) > 0;
+        return (
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-400 opacity-60'}`}>
+            {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Apto para Venta' : 'Sin Stock Disp.'}</span>
+              <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+            </div>
+          </div>
+        );
+      }},
       { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
       { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
-      { header: 'Cod. U. Medida', accessor: 'unidad_medida', render: r => <span className="text-xs font-bold text-slate-500">{r.unidad_medida || '-'}</span> },
-      { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-200 px-3 py-1.5 rounded-lg text-slate-900 border border-slate-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
-      { header: 'Fecha Venc', accessor: 'fecha_vencimiento', render: r => <span className="text-xs font-black text-slate-700">{r.fecha_vencimiento || '-'}</span> },
-      { header: 'Disponible', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
-      { header: 'Reserva', accessor: 'reserva', render: r => <span className="text-sm font-bold text-amber-600">{r.reserva || 0}</span> },
-      { header: 'Transitoria', accessor: 'transitoria', render: r => <span className="text-sm font-bold text-blue-600">{r.transitoria || 0}</span> },
-      { header: 'Consignación', accessor: 'consignacion', render: r => <span className="text-sm font-bold text-indigo-600">{r.consignacion || 0}</span> },
+      { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg border border-slate-700 uppercase tracking-tight whitespace-nowrap shadow-md"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
+      { header: 'Ubicación / Estado', render: r => (
+        <div className="space-y-2">
+          {r.reserva > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg border border-amber-200 text-[10px] font-black uppercase">
+              <Clock size={12} /> Reserva: {r.reserva}
+            </div>
+          )}
+          {r.transitoria > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg border border-blue-200 text-[10px] font-black uppercase">
+              <Activity size={12} /> Tránsito: {r.transitoria}
+            </div>
+          )}
+          {(!r.reserva && !r.transitoria) && <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">Sin Reservas</span>}
+        </div>
+      )},
       { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total || r.cantidad_inicial}</span> }
     ],
     series: [
+      { header: 'Disponibilidad', accessor: 'disponible', render: r => {
+        const isAvailable = (r.disponible || 0) > 0;
+        return (
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-400 opacity-60'}`}>
+            {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'No Disponible'}</span>
+              <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+            </div>
+          </div>
+        );
+      }},
       { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
       { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
-      { header: 'Cod. U. Medida', accessor: 'unidad_medida', render: r => <span className="text-xs font-bold text-slate-500">{r.unidad_medida || '-'}</span> },
-      { header: 'Serie', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-amber-100 px-3 py-1.5 rounded-lg text-amber-900 border border-amber-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
-      { header: 'Disponible', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
-      { header: 'Reserva', accessor: 'reserva', render: r => <span className="text-sm font-bold text-amber-600">{r.reserva || 0}</span> },
-      { header: 'Transitoria', accessor: 'transitoria', render: r => <span className="text-sm font-bold text-blue-600">{r.transitoria || 0}</span> },
-      { header: 'Consignación', accessor: 'consignacion', render: r => <span className="text-sm font-bold text-indigo-600">{r.consignacion || 0}</span> },
-      { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total}</span> }
+      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg border border-slate-700 uppercase tracking-tight whitespace-nowrap shadow-md"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
+      { header: 'Info Adicional', render: r => (
+        <div className="space-y-1">
+          {r.reserva > 0 && <span className="block text-[10px] font-black text-amber-600 uppercase tracking-widest">⚠️ En Reserva ({r.reserva})</span>}
+          {r.transitoria > 0 && <span className="block text-[10px] font-black text-blue-600 uppercase tracking-widest">🚚 En Tránsito ({r.transitoria})</span>}
+          {!r.reserva && !r.transitoria && <span className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">Sin Observaciones</span>}
+        </div>
+      )}
     ],
     farmapack: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
