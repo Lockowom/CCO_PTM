@@ -84,9 +84,22 @@ export const useWarehouseStore = create((set, get) => ({
         return [];
       });
 
+      // Definición física de la bodega para validación
+      const PHYSICAL_LIMITS = {
+        'A': { levels: 3, positions: 28 },
+        'B': { levels: 3, positions: 28 },
+        'C': { levels: 3, positions: 50 },
+        'D': { levels: 4, positions: 50 },
+        'E': { levels: 4, positions: 50 },
+        'F': { levels: 4, positions: 50 },
+        'G': { levels: 4, positions: 50 },
+        'H': { levels: 4, positions: 50 },
+        'I': { levels: 4, positions: 36 }
+      };
+
       const inventoryMap = {};
       const layoutMap = {};
-      const uniqueOccupiedLocations = new Set();
+      const validOccupiedLocations = new Set();
       
       // Procesar Inventario: Capturar TODO el stock disponible
       (ubicacionesRows || []).forEach(row => {
@@ -100,9 +113,17 @@ export const useWarehouseStore = create((set, get) => ({
           ubicacion: normUbic
         });
 
-        // Una ubicación está ocupada si tiene cantidad > 0
-        if (Number(row.cantidad) > 0) {
-          uniqueOccupiedLocations.add(normUbic);
+        // Validar si la ubicación es físicamente posible antes de contarla en estadísticas
+        const parts = normUbic.split('-');
+        const rackId = parts[0];
+        const level = parseInt(parts[1]);
+        const pos = parseInt(parts[2]);
+        const config = PHYSICAL_LIMITS[rackId];
+
+        const isValid = config && level <= config.levels && pos <= config.positions;
+
+        if (Number(row.cantidad) > 0 && isValid) {
+          validOccupiedLocations.add(normUbic);
         }
       });
 
@@ -114,9 +135,16 @@ export const useWarehouseStore = create((set, get) => ({
           ubicacion: normUbic,
           cantidad: (inventoryMap[normUbic] || []).reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0)
         };
-        // Si el layout dice que está ocupada explícitamente, la contamos
-        if (row.estado === 'OCUPADA') {
-          uniqueOccupiedLocations.add(normUbic);
+        
+        const parts = normUbic.split('-');
+        const rackId = parts[0];
+        const level = parseInt(parts[1]);
+        const pos = parseInt(parts[2]);
+        const config = PHYSICAL_LIMITS[rackId];
+        const isValid = config && level <= config.levels && pos <= config.positions;
+
+        if (row.estado === 'OCUPADA' && isValid) {
+          validOccupiedLocations.add(normUbic);
         }
       });
 
@@ -137,7 +165,7 @@ export const useWarehouseStore = create((set, get) => ({
 
       // Stats Globales: El usuario especificó 1031 posiciones totales
       const totalSystemPositions = 1031; 
-      const occupiedCount = uniqueOccupiedLocations.size;
+      const occupiedCount = validOccupiedLocations.size;
 
       set({
         layout: layoutMap,

@@ -105,18 +105,10 @@ const Heatmap = () => {
   }, [layout, selectedLevel]);
 
   const { racks, unmapped } = heatmapData;
-    const maxLevels = useMemo(() => {
-      const matrixMax = Math.max(...Object.values(RACK_MATRICES).map(r => r.levels));
-      const dataMax = Object.values(layout).reduce((max, node) => {
-        const parts = node.ubicacion.split('-');
-        const level = parts.length >= 2 ? parseInt(parts[1]) : 0;
-        return !isNaN(level) && level > max ? level : max;
-      }, 0);
-      return Math.max(matrixMax, dataMax, 1);
-    }, [layout]);
+    const maxLevels = 4; // Nivel máximo físico real de la bodega
 
     // Usar las estadísticas globales calculadas en el Store para mayor precisión
-    const totalSystemPositions = stats.total || 1031;
+    const totalSystemPositions = 1031;
     const totalOccupiedCount = stats.ocupadas || 0;
     const globalOccupancyPercent = stats.ocupacion || 0;
     const totalLoadedLocations = Object.keys(layout).length;
