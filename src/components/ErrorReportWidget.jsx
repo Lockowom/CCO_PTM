@@ -65,7 +65,7 @@ const ErrorReportWidget = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-50 w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/80 hover:bg-slate-800 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-slate-600 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 opacity-50 hover:opacity-100"
+          className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-50 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-slate-900 shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-slate-600 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 opacity-50 hover:opacity-100"
           title="Reportar Error o Problema"
           aria-label="Reportar Error"
         >
@@ -89,7 +89,7 @@ const ErrorReportWidget = () => {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-slate-800 rounded-lg"
+                className="text-slate-500 hover:text-slate-900 transition-colors p-1 hover:bg-white rounded-lg"
               >
                 <X size={20} />
               </button>
@@ -151,7 +151,7 @@ const ErrorReportWidget = () => {
             
             {/* Footer info */}
             <div className="bg-slate-50 p-2 text-center border-t border-slate-100 rounded-b-xl">
-              <p className="text-[10px] text-slate-400 font-mono">
+              <p className="text-[10px] text-slate-500 font-mono">
                 ID: {user?.nombre || 'Anónimo'} • {new Date().toLocaleDateString()}
               </p>
             </div>

@@ -118,7 +118,7 @@ const DispatchControl = () => {
   };
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6 relative">
+    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6 relative">
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-rose-500/10 blur-[120px] rounded-full"></div>
       </div>
@@ -130,8 +130,8 @@ const DispatchControl = () => {
             <Truck className="text-rose-400" size={28} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-white tracking-tight">Control Despacho</h2>
-            <p className="text-slate-400 font-medium">Registro y seguimiento de guías y envíos</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Control Despacho</h2>
+            <p className="text-slate-500 font-medium">Registro y seguimiento de guías y envíos</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -145,7 +145,7 @@ const DispatchControl = () => {
           <button
             onClick={() => refetch()}
             disabled={loading || isFetching}
-            className="bg-wms-panel hover:bg-slate-800 border border-wms-border text-slate-400 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+            className="bg-white hover:bg-white border border-slate-200 text-slate-500 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
           >
             <RefreshCw size={18} className={loading || isFetching ? 'animate-spin' : ''} /> Actualizar
           </button>
@@ -154,16 +154,16 @@ const DispatchControl = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300">
+        <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-xl hover:-translate-y-1 transition-transform duration-300">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Cantidad Guías</span>
-            <div className="p-2 bg-slate-800 rounded-lg">
-              <FileText size={18} className="text-slate-400" />
+            <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Cantidad Guías</span>
+            <div className="p-2 bg-white rounded-lg">
+              <FileText size={18} className="text-slate-500" />
             </div>
           </div>
-          <p className="text-3xl font-black text-white">{stats.total}</p>
+          <p className="text-3xl font-black text-slate-900">{stats.total}</p>
         </div>
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+        <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
           <div className="absolute -right-4 -bottom-4 bg-amber-500/10 w-24 h-24 rounded-full blur-xl"></div>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">Total Bultos</span>
@@ -173,7 +173,7 @@ const DispatchControl = () => {
           </div>
           <p className="text-3xl font-black text-amber-400 relative z-10">{stats.totalBultos}</p>
         </div>
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+        <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-xl hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
           <div className="absolute -right-4 -bottom-4 bg-emerald-500/10 w-24 h-24 rounded-full blur-xl"></div>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Total Flete</span>
@@ -186,7 +186,7 @@ const DispatchControl = () => {
       </div>
 
       {/* Filtros */}
-      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-6 border border-wms-border shadow-xl relative z-10">
+      <div className="bg-white backdrop-blur-xl rounded-2xl p-6 border border-slate-200 shadow-xl relative z-10">
         <div className="flex items-center gap-2 mb-4 text-wms-neon">
           <Filter size={18} />
           <h3 className="font-bold uppercase tracking-wider text-sm">Filtros de Búsqueda</h3>
@@ -194,12 +194,12 @@ const DispatchControl = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="col-span-2">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Búsqueda Rápida</label>
-            <div className="bg-slate-900 border border-wms-border rounded-xl flex items-center px-4 py-3 focus-within:border-wms-neon focus-within:ring-2 focus-within:ring-wms-neon/20 transition-all">
-              <Search size={18} className="text-slate-400 mr-3" />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl flex items-center px-4 py-3 focus-within:border-wms-neon focus-within:ring-2 focus-within:ring-wms-neon/20 transition-all">
+              <Search size={18} className="text-slate-500 mr-3" />
               <input
                 type="text"
                 placeholder="Guía, NV, Cliente, Transportista..."
-                className="outline-none text-base bg-transparent w-full text-white placeholder-slate-600"
+                className="outline-none text-base bg-transparent w-full text-slate-900 placeholder-slate-600"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -211,7 +211,7 @@ const DispatchControl = () => {
               type="date"
               value={filterFechaDesde}
               onChange={e => setFilterFechaDesde(e.target.value)}
-              className="w-full bg-slate-900 border border-wms-border rounded-xl px-4 py-3 text-base text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
+              className="w-full bg-slate-900 text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
             />
           </div>
           <div>
@@ -220,7 +220,7 @@ const DispatchControl = () => {
               type="date"
               value={filterFechaHasta}
               onChange={e => setFilterFechaHasta(e.target.value)}
-              className="w-full bg-slate-900 border border-wms-border rounded-xl px-4 py-3 text-base text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
+              className="w-full bg-slate-900 text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ const DispatchControl = () => {
         {(filterFechaDesde || filterFechaHasta || searchTerm) && (
           <button
             onClick={() => { setFilterFechaDesde(''); setFilterFechaHasta(''); setSearchTerm(''); }}
-            className="bg-wms-dark border border-wms-border text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
+            className="bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
           >
             <X size={14} /> Limpiar Filtros
           </button>
@@ -253,10 +253,10 @@ const DispatchControl = () => {
       )}
 
       {/* Tabla */}
-      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-wms-border overflow-hidden relative z-10">
+      <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative z-10">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-900/80 text-slate-400 uppercase text-xs tracking-wider border-b border-wms-border">
+            <thead className="bg-slate-50/80 text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
               <tr>
                 <th className="px-6 py-4 font-bold">Fecha Desp.</th>
                 <th className="px-6 py-4 font-bold">Guía</th>
@@ -273,44 +273,44 @@ const DispatchControl = () => {
                 <tr>
                   <td colSpan="8" className="px-6 py-20 text-center">
                     <RefreshCw className="animate-spin mx-auto text-wms-neon mb-4" size={32} />
-                    <p className="text-slate-400 font-bold animate-pulse">Cargando datos de despacho...</p>
+                    <p className="text-slate-500 font-bold animate-pulse">Cargando datos de despacho...</p>
                   </td>
                 </tr>
               ) : !isFilterActive ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-24 text-center text-slate-500">
-                    <div className="bg-slate-900/50 p-6 rounded-full w-fit mx-auto mb-4 border border-wms-border">
+                    <div className="bg-slate-50/50 p-6 rounded-full w-fit mx-auto mb-4 border border-slate-200">
                       <Filter size={48} className="text-slate-600" />
                     </div>
-                    <p className="font-black text-white text-xl mb-2">Módulo de Control</p>
+                    <p className="font-black text-slate-900 text-xl mb-2">Módulo de Control</p>
                     <p className="text-sm font-medium max-w-md mx-auto">Ingresa un término de búsqueda o selecciona un rango de fechas para cargar las guías de despacho.</p>
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-24 text-center text-slate-500">
-                    <div className="bg-slate-900/50 p-6 rounded-full w-fit mx-auto mb-4 border border-wms-border">
+                    <div className="bg-slate-50/50 p-6 rounded-full w-fit mx-auto mb-4 border border-slate-200">
                       <Package size={48} className="text-slate-600" />
                     </div>
-                    <p className="font-bold text-white text-lg">No se encontraron registros</p>
+                    <p className="font-bold text-slate-900 text-lg">No se encontraron registros</p>
                     <p className="text-sm mt-1">Intenta con otros términos o fechas</p>
                   </td>
                 </tr>
               ) : (
                 filteredRecords.map((record, index) => (
-                  <tr key={index} className="hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-6 py-4 text-slate-400 text-xs font-mono font-bold">
+                  <tr key={index} className="hover:bg-white/50 transition-colors group">
+                    <td className="px-6 py-4 text-slate-500 text-xs font-mono font-bold">
                       {record.fecha_despacho ? new Date(record.fecha_despacho).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-6 py-4 font-black text-rose-400 text-base">{record.guia}</td>
                     <td className="px-6 py-4 font-mono text-xs font-bold text-indigo-400">#{record.nv}</td>
-                    <td className="px-6 py-4 font-bold text-white truncate max-w-[200px]" title={record.cliente}>
+                    <td className="px-6 py-4 font-bold text-slate-900 truncate max-w-[200px]" title={record.cliente}>
                       {record.cliente}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-400 truncate max-w-[150px]">
+                    <td className="px-6 py-4 text-xs font-bold text-slate-500 truncate max-w-[150px]">
                       {record.empresa_transporte || record.transportista}
                     </td>
-                    <td className="px-6 py-4 text-right font-black text-white text-lg">
+                    <td className="px-6 py-4 text-right font-black text-slate-900 text-lg">
                       {record.bultos}
                     </td>
                     <td className="px-6 py-4 text-right font-mono font-bold text-emerald-400">
@@ -319,7 +319,7 @@ const DispatchControl = () => {
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => setSelectedRecord(record)}
-                        className="bg-wms-dark hover:bg-rose-500/20 border border-wms-border hover:border-rose-500/30 text-slate-400 hover:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-all"
+                        className="bg-slate-50 hover:bg-rose-500/20 border border-slate-200 hover:border-rose-500/30 text-slate-500 hover:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-all"
                       >
                         <FileText size={14} /> Ver
                       </button>
@@ -334,9 +334,9 @@ const DispatchControl = () => {
 
       {/* Modal Detalle */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-wms-panel w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-wms-border transform transition-all">
-            <div className="bg-wms-dark p-6 flex justify-between items-center border-b border-wms-border relative overflow-hidden">
+        <div className="fixed inset-0 bg-slate-50/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 transform transition-all">
+            <div className="bg-slate-50 p-6 flex justify-between items-center border-b border-slate-200 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl"></div>
               <div className="flex items-center gap-4 relative z-10">
                 <div className="bg-rose-500/20 border border-rose-500/30 p-3 rounded-2xl text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
@@ -344,10 +344,10 @@ const DispatchControl = () => {
                 </div>
                 <div>
                   <p className="text-xs text-rose-400 font-bold uppercase tracking-wider mb-1">Guía de Despacho</p>
-                  <h2 className="text-3xl font-black text-white">{selectedRecord.guia}</h2>
+                  <h2 className="text-3xl font-black text-slate-900">{selectedRecord.guia}</h2>
                 </div>
               </div>
-              <button onClick={() => setSelectedRecord(null)} className="p-2 bg-slate-800 hover:bg-slate-700 border border-wms-border rounded-xl text-slate-400 hover:text-white transition-colors relative z-10">
+              <button onClick={() => setSelectedRecord(null)} className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 transition-colors relative z-10">
                 <X size={20} />
               </button>
             </div>
@@ -355,21 +355,21 @@ const DispatchControl = () => {
             <div className="p-8 space-y-8">
               {/* Fechas */}
               <div className="grid grid-cols-2 gap-6">
-                <div className="bg-slate-900/50 p-4 rounded-2xl border border-wms-border shadow-inner">
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 shadow-inner">
                   <div className="flex items-center gap-2 mb-2">
                     <Calendar size={16} className="text-slate-500" />
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Despacho</span>
                   </div>
-                  <p className="font-mono font-black text-white text-lg">
+                  <p className="font-mono font-black text-slate-900 text-lg">
                     {selectedRecord.fecha_despacho ? new Date(selectedRecord.fecha_despacho).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
-                <div className="bg-slate-900/50 p-4 rounded-2xl border border-wms-border shadow-inner">
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 shadow-inner">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText size={16} className="text-slate-500" />
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Documento</span>
                   </div>
-                  <p className="font-mono font-black text-white text-lg">
+                  <p className="font-mono font-black text-slate-900 text-lg">
                     {selectedRecord.fecha_docto ? new Date(selectedRecord.fecha_docto).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
@@ -379,7 +379,7 @@ const DispatchControl = () => {
               <div className="space-y-6">
                 <div>
                   <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Cliente Destino</label>
-                  <p className="text-2xl font-black text-white">{selectedRecord.cliente}</p>
+                  <p className="text-2xl font-black text-slate-900">{selectedRecord.cliente}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -392,7 +392,7 @@ const DispatchControl = () => {
                   </div>
                   <div>
                     <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Facturas Asoc.</label>
-                    <p className="font-bold text-slate-300 text-lg">{selectedRecord.facturas || '-'}</p>
+                    <p className="font-bold text-slate-700 text-lg">{selectedRecord.facturas || '-'}</p>
                   </div>
                 </div>
               </div>
@@ -416,18 +416,18 @@ const DispatchControl = () => {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">N° Seguimiento</p>
-                    <p className="font-mono font-black text-white text-lg">{selectedRecord.numero_envio || '-'}</p>
+                    <p className="font-mono font-black text-slate-900 text-lg">{selectedRecord.numero_envio || '-'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">Total Bultos</p>
-                    <p className="font-black text-white text-3xl">{selectedRecord.bultos}</p>
+                    <p className="font-black text-slate-900 text-3xl">{selectedRecord.bultos}</p>
                   </div>
                 </div>
               </div>
 
               {/* Flete */}
-              <div className="flex justify-between items-center p-6 bg-slate-900/80 rounded-2xl border border-wms-border">
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Costo Flete Declarado</span>
+              <div className="flex justify-between items-center p-6 bg-slate-50/80 rounded-2xl border border-slate-200">
+                <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Costo Flete Declarado</span>
                 <span className="text-3xl font-black text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">{formatCurrency(selectedRecord.valor_flete)}</span>
               </div>
             </div>

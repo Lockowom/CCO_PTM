@@ -137,24 +137,24 @@ const CommandPalette = () => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 sm:px-0">
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+      <div className="fixed inset-0 bg-slate-50/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
       
       <div 
-        className="bg-slate-800 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl relative overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-4"
+        className="bg-white border border-slate-300 w-full max-w-2xl rounded-2xl shadow-2xl relative overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-4"
         onKeyDown={handleKeyDown}
       >
         {/* Input */}
-        <div className="flex items-center px-4 border-b border-slate-700">
-          <Search size={20} className="text-slate-400" />
+        <div className="flex items-center px-4 border-b border-slate-300">
+          <Search size={20} className="text-slate-500" />
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-transparent border-none text-white px-4 py-4 outline-none placeholder-slate-500 font-medium text-lg"
+            className="w-full bg-transparent border-none text-slate-900 px-4 py-4 outline-none placeholder-slate-500 font-medium text-lg"
             placeholder="Buscar notas de venta, SKU o acciones..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button onClick={() => setIsOpen(false)} className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={() => setIsOpen(false)} className="p-1 text-slate-500 hover:text-slate-700 transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -162,13 +162,13 @@ const CommandPalette = () => {
         {/* Results */}
         <div className="max-h-96 overflow-y-auto p-2">
           {isLoading ? (
-            <div className="p-4 text-center text-slate-400 text-sm">Buscando...</div>
+            <div className="p-4 text-center text-slate-500 text-sm">Buscando...</div>
           ) : results.length > 0 ? (
             results.map((result, index) => (
               <div
                 key={index}
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                  index === selectedIndex ? 'bg-slate-700' : 'hover:bg-slate-700/50'
+                  index === selectedIndex ? 'bg-slate-100' : 'hover:bg-slate-100/50'
                 }`}
                 onClick={() => {
                   result.action();
@@ -176,28 +176,28 @@ const CommandPalette = () => {
                 }}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
-                <div className="p-2 bg-slate-900 rounded-lg shadow-inner">
+                <div className="p-2 bg-slate-50 rounded-lg shadow-inner">
                   {result.icon}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">{result.title}</h4>
-                  <p className="text-xs text-slate-400">{result.subtitle}</p>
+                  <h4 className="text-sm font-bold text-slate-900">{result.title}</h4>
+                  <p className="text-xs text-slate-500">{result.subtitle}</p>
                 </div>
               </div>
             ))
           ) : query ? (
-            <div className="p-4 text-center text-slate-400 text-sm">No se encontraron resultados para "{query}"</div>
+            <div className="p-4 text-center text-slate-500 text-sm">No se encontraron resultados para "{query}"</div>
           ) : (
             <div className="p-4 text-center text-slate-500 text-sm">Empieza a escribir para buscar...</div>
           )}
         </div>
         
         {/* Footer */}
-        <div className="bg-slate-900/50 p-3 border-t border-slate-700 flex justify-between items-center text-xs text-slate-500">
+        <div className="bg-slate-50/50 p-3 border-t border-slate-300 flex justify-between items-center text-xs text-slate-500">
           <div className="flex gap-4">
-            <span className="flex items-center gap-1"><kbd className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">↑</kbd> <kbd className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">↓</kbd> Navegar</span>
-            <span className="flex items-center gap-1"><kbd className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">Enter</kbd> Seleccionar</span>
-            <span className="flex items-center gap-1"><kbd className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">Esc</kbd> Cerrar</span>
+            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↑</kbd> <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↓</kbd> Navegar</span>
+            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Enter</kbd> Seleccionar</span>
+            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Esc</kbd> Cerrar</span>
           </div>
         </div>
       </div>

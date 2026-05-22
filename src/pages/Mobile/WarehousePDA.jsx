@@ -117,7 +117,7 @@ const WarehousePDA = () => {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex flex-col">
         {/* Top Bar */}
-        <div className="bg-slate-800 p-4 flex justify-between items-center shadow-md">
+        <div className="bg-white p-4 flex justify-between items-center shadow-md">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold">
               {user?.email?.charAt(0).toUpperCase()}
@@ -129,7 +129,7 @@ const WarehousePDA = () => {
               </div>
             </div>
           </div>
-          <button onClick={signOut} className="p-2 bg-slate-700 rounded-lg">
+          <button onClick={signOut} className="p-2 bg-slate-100 rounded-lg">
             <LogOut size={18} />
           </button>
         </div>
@@ -173,17 +173,17 @@ const WarehousePDA = () => {
 
   if (mode === 'PICKING' && activeTask) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col font-mono">
+      <div className="min-h-screen bg-black text-slate-900 flex flex-col font-mono">
         {/* Task Header */}
-        <div className="bg-slate-900 p-2 border-b border-slate-700 flex justify-between items-center">
-          <span className="text-xs font-bold text-slate-400">TASK: {activeTask.id}</span>
-          <button onClick={() => setMode('HOME')} className="text-slate-400">
+        <div className="bg-slate-50 p-2 border-b border-slate-300 flex justify-between items-center">
+          <span className="text-xs font-bold text-slate-500">TASK: {activeTask.id}</span>
+          <button onClick={() => setMode('HOME')} className="text-slate-500">
             <ArrowLeft size={20} />
           </button>
         </div>
 
         {/* Status Bar */}
-        <div className="p-2 text-center text-sm font-bold transition-colors bg-slate-800">
+        <div className="p-2 text-center text-sm font-bold transition-colors bg-white">
           ESPERANDO ESCANEO...
         </div>
 
@@ -191,32 +191,32 @@ const WarehousePDA = () => {
         <div className="flex-1 p-4 flex flex-col gap-4">
           {/* STEP 1: LOCATION */}
           <div className={`p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'SCAN_LOC' ? 'border-yellow-400 bg-slate-900' : 'border-slate-800 opacity-50'
+            pickStep === 'SCAN_LOC' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
           }`}>
-            <label className="block text-[10px] text-slate-400 uppercase">IR A UBICACIÓN</label>
+            <label className="block text-[10px] text-slate-500 uppercase">IR A UBICACIÓN</label>
             <div className="text-4xl font-black text-yellow-400">{activeTask.location}</div>
           </div>
 
           {/* STEP 2: PRODUCT */}
           <div className={`p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'SCAN_SKU' ? 'border-yellow-400 bg-slate-900' : 'border-slate-800 opacity-50'
+            pickStep === 'SCAN_SKU' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
           }`}>
-            <label className="block text-[10px] text-slate-400 uppercase">PRODUCTO / LOTE</label>
-            <div className="text-xl font-bold text-white mb-1">{activeTask.sku}</div>
-            <div className="text-sm text-slate-300 truncate">{activeTask.desc}</div>
-            <div className="mt-2 inline-block bg-slate-800 px-2 py-1 rounded text-xs text-cyan-400">
+            <label className="block text-[10px] text-slate-500 uppercase">PRODUCTO / LOTE</label>
+            <div className="text-xl font-bold text-slate-900 mb-1">{activeTask.sku}</div>
+            <div className="text-sm text-slate-700 truncate">{activeTask.desc}</div>
+            <div className="mt-2 inline-block bg-white px-2 py-1 rounded text-xs text-cyan-400">
               LOTE: {activeTask.batch}
             </div>
           </div>
 
           {/* STEP 3: QTY */}
           <div className={`p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'CONFIRM_QTY' ? 'border-yellow-400 bg-slate-900' : 'border-slate-800 opacity-50'
+            pickStep === 'CONFIRM_QTY' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
           }`}>
             <div className="flex justify-between items-end">
               <div>
-                <label className="block text-[10px] text-slate-400 uppercase">CANTIDAD REQUERIDA</label>
-                <div className="text-5xl font-black text-white">{activeTask.qty_needed}</div>
+                <label className="block text-[10px] text-slate-500 uppercase">CANTIDAD REQUERIDA</label>
+                <div className="text-5xl font-black text-slate-900">{activeTask.qty_needed}</div>
               </div>
               {pickStep === 'CONFIRM_QTY' && (
                 <button 
@@ -231,7 +231,7 @@ const WarehousePDA = () => {
         </div>
 
         {/* Hidden Input for Scanner */}
-        <form onSubmit={handleScan} className="p-2 bg-slate-900">
+        <form onSubmit={handleScan} className="p-2 bg-slate-50">
           <div className="relative">
             <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
             <input 
@@ -239,7 +239,7 @@ const WarehousePDA = () => {
               type="text" 
               value={scannedValue}
               onChange={e => setScannedValue(e.target.value)}
-              className="w-full bg-black border border-slate-700 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500"
+              className="w-full bg-black border border-slate-300 rounded-lg py-3 pl-10 text-slate-900 font-bold outline-none focus:border-indigo-500"
               placeholder="Escanear aquí..."
               autoComplete="off"
             />
@@ -253,7 +253,7 @@ const WarehousePDA = () => {
     <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
       <div className="text-center p-8">
         <Package size={64} className="mx-auto mb-4 text-slate-700" />
-        <h2 className="text-xl font-bold text-slate-400">Módulo en Construcción</h2>
+        <h2 className="text-xl font-bold text-slate-500">Módulo en Construcción</h2>
         <button onClick={() => setMode('HOME')} className="mt-4 text-indigo-400">Volver</button>
       </div>
     </div>
@@ -263,7 +263,7 @@ const WarehousePDA = () => {
 const MenuButton = ({ icon, label, color, onClick }) => (
   <button 
     onClick={onClick}
-    className={`${color} text-white p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center gap-3 h-40`}
+    className={`${color} text-slate-900 p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center gap-3 h-40`}
   >
     {icon}
     <span className="font-bold text-sm tracking-wide">{label}</span>

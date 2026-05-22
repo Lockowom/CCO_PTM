@@ -427,24 +427,24 @@ const Packing = () => {
 
   if (vista === 'clientes' || vista === 'lista') {
     return (
-      <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6">
+      <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
         <div className="flex justify-between items-end relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-wms-panel border border-wms-border rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+            <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
               <Box className="text-indigo-400" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Packing</h2>
-              <p className="text-slate-400 text-sm">Empaque de notas de venta por cliente</p>
+              <h2 className="text-2xl font-bold text-slate-900">Packing</h2>
+              <p className="text-slate-500 text-sm">Empaque de notas de venta por cliente</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-wms-panel border border-wms-border rounded-lg flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors">
-              <Search size={18} className="text-slate-400 mr-2" />
+            <div className="bg-white border border-slate-200 rounded-lg flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors">
+              <Search size={18} className="text-slate-500 mr-2" />
               <input
                 type="text"
                 placeholder="Buscar cliente o N.V..."
-                className="outline-none text-sm w-48 bg-transparent text-white placeholder:text-slate-500"
+                className="outline-none text-sm w-48 bg-transparent text-slate-900 placeholder:text-slate-500"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 autoFocus
@@ -463,7 +463,7 @@ const Packing = () => {
             <button
               onClick={() => refetch()}
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               Actualizar
@@ -476,7 +476,7 @@ const Packing = () => {
             onClick={() => setVista('clientes')}
             className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${vista === 'clientes'
               ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]'
-              : 'bg-wms-panel text-slate-400 border border-wms-border hover:text-white'
+              : 'bg-white text-slate-500 border border-slate-200 hover:text-white'
               }`}
           >
             <LayoutGrid size={18} /> Por Cliente
@@ -485,7 +485,7 @@ const Packing = () => {
             onClick={() => setVista('lista')}
             className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${vista === 'lista'
               ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]'
-              : 'bg-wms-panel text-slate-400 border border-wms-border hover:text-white'
+              : 'bg-white text-slate-500 border border-slate-200 hover:text-white'
               }`}
           >
             <List size={18} /> Lista N.V.
@@ -493,29 +493,29 @@ const Packing = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl p-4 border border-wms-border shadow-2xl flex items-center justify-between">
+          <div className="bg-white backdrop-blur-xl rounded-xl p-4 border border-slate-200 shadow-2xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">N.V. Pendientes</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.pendientes}</h3>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">N.V. Pendientes</p>
+              <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.pendientes}</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
               <FileText size={20} />
             </div>
           </div>
 
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl p-4 border border-wms-border shadow-2xl flex items-center justify-between">
+          <div className="bg-white backdrop-blur-xl rounded-xl p-4 border border-slate-200 shadow-2xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unidades Total</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.itemsPendientes}</h3>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unidades Total</p>
+              <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.itemsPendientes}</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
               <Package size={20} />
             </div>
           </div>
 
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl p-4 border border-wms-border shadow-2xl flex items-center justify-between">
+          <div className="bg-white backdrop-blur-xl rounded-xl p-4 border border-slate-200 shadow-2xl flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Empacados Hoy</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Empacados Hoy</p>
               <h3 className="text-2xl font-black text-emerald-400 mt-1">{stats.completadosHoy}</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
@@ -530,9 +530,9 @@ const Packing = () => {
               <RefreshCw className="animate-spin text-indigo-500" size={32} />
             </div>
           ) : clientesFiltrados.length === 0 ? (
-            <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl p-12 text-center border border-wms-border relative z-10">
+            <div className="bg-white backdrop-blur-xl rounded-xl p-12 text-center border border-slate-200 relative z-10">
               <Package size={48} className="mx-auto text-slate-600 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-300">No hay N.V. en Packing</h3>
+              <h3 className="text-lg font-semibold text-slate-700">No hay N.V. en Packing</h3>
               <p className="text-sm text-slate-500">Las notas de venta aparecerán aquí cuando lleguen del Picking</p>
             </div>
           ) : (
@@ -540,19 +540,19 @@ const Packing = () => {
               {clientesFiltrados.map((grupo, index) => (
                 <div
                   key={index}
-                  className="bg-wms-panel/80 backdrop-blur-xl rounded-xl border border-wms-border shadow-2xl hover:border-indigo-500/50 transition-all overflow-hidden"
+                  className="bg-white backdrop-blur-xl rounded-xl border border-slate-200 shadow-2xl hover:border-indigo-500/50 transition-all overflow-hidden"
                 >
-                  <div className="bg-indigo-900/20 p-4 border-b border-wms-border">
+                  <div className="bg-indigo-900/20 p-4 border-b border-slate-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
                           <User size={20} className="text-indigo-400" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-white text-sm truncate max-w-[180px]" title={grupo.cliente}>
+                          <h3 className="font-bold text-slate-900 text-sm truncate max-w-[180px]" title={grupo.cliente}>
                             {grupo.cliente}
                           </h3>
-                          <p className="text-xs text-slate-400">{grupo.totalItems} N.V.</p>
+                          <p className="text-xs text-slate-500">{grupo.totalItems} N.V.</p>
                         </div>
                       </div>
                       <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-1 rounded-full text-xs font-bold">
@@ -565,16 +565,16 @@ const Packing = () => {
                     {grupo.nvList.map((nv, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-2 bg-wms-dark rounded-lg border border-wms-border hover:border-indigo-500/30 transition-colors"
+                        className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200 hover:border-indigo-500/30 transition-colors"
                       >
                         <div>
                           <p className="font-mono text-sm font-bold text-wms-neon">#{nv.nv}</p>
-                          <p className="text-xs text-slate-400 truncate max-w-[120px]">
+                          <p className="text-xs text-slate-500 truncate max-w-[120px]">
                             {nv.total_items > 1 ? `${nv.total_items} items` : nv.codigo_producto}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-white">
+                          <span className="text-sm font-bold text-slate-900">
                             {nv.total_items > 1 ? `${nv.total_cantidad} un.` : nv.cantidad}
                           </span>
                           <button
@@ -593,10 +593,10 @@ const Packing = () => {
             </div>
           )
         ) : (
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl shadow-2xl border border-wms-border overflow-hidden relative z-10">
+          <div className="bg-white backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200 overflow-hidden relative z-10">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-wms-dark text-slate-400 uppercase text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">N.V.</th>
                     <th className="px-4 py-3 text-left font-medium">Cliente</th>
@@ -615,11 +615,11 @@ const Packing = () => {
                     </tr>
                   ) : (
                     nvData.map((nv, index) => (
-                      <tr key={index} className="hover:bg-wms-dark/50">
+                      <tr key={index} className="hover:bg-slate-50/50">
                         <td className="px-4 py-3 font-bold text-wms-neon">#{nv.nv}</td>
-                        <td className="px-4 py-3 text-slate-300 font-medium">{nv.cliente}</td>
-                        <td className="px-4 py-3 text-center text-slate-400">{nv.total_items}</td>
-                        <td className="px-4 py-3 text-center font-bold text-white">{nv.total_cantidad}</td>
+                        <td className="px-4 py-3 text-slate-700 font-medium">{nv.cliente}</td>
+                        <td className="px-4 py-3 text-center text-slate-500">{nv.total_items}</td>
+                        <td className="px-4 py-3 text-center font-bold text-slate-900">{nv.total_cantidad}</td>
                         <td className="px-4 py-3 text-center">
                           {nv.has_stock_break ? (
                             <span className="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-1 rounded-full text-xs font-bold">Quiebre Stock</span>
@@ -632,7 +632,7 @@ const Packing = () => {
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => iniciarPacking(nv)}
-                            className="bg-indigo-600 hover:bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
+                            className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ml-auto"
                           >
                             <Play size={14} /> Empacar
                           </button>
@@ -650,15 +650,15 @@ const Packing = () => {
   }
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6">
-      <div className="bg-wms-panel/80 backdrop-blur-xl border border-wms-border rounded-2xl p-6 text-white shadow-2xl relative overflow-hidden">
+    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
+      <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-2xl p-6 text-slate-900 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
         <div className="flex justify-between items-start mb-6 relative z-10">
           <div className="flex gap-2">
             <button
               onClick={cancelarPacking}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors bg-wms-dark border border-wms-border px-3 py-1.5 rounded-lg text-xs font-bold"
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold"
             >
               <ArrowLeft size={16} /> Volver
             </button>
@@ -670,14 +670,14 @@ const Packing = () => {
             </button>
           </div>
           <div className="text-right">
-            <p className="text-slate-400 text-xs uppercase font-bold tracking-wider">Operador</p>
+            <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Operador</p>
             <p className="font-bold text-wms-neon">{user?.nombre}</p>
           </div>
         </div>
 
         <div className="text-center relative z-10">
-          <p className="text-slate-400 text-sm mb-1 font-bold uppercase tracking-wider">Empacando N.V.</p>
-          <h1 className="text-4xl font-black mb-4 text-white">#{nvActiva?.nv}</h1>
+          <p className="text-slate-500 text-sm mb-1 font-bold uppercase tracking-wider">Empacando N.V.</p>
+          <h1 className="text-4xl font-black mb-4 text-slate-900">#{nvActiva?.nv}</h1>
 
           <div className="text-center mb-6">
             <span className="text-slate-500 text-xs font-mono">
@@ -693,37 +693,37 @@ const Packing = () => {
               <div className="text-left">
                 <h4 className="font-bold text-lg text-rose-300">¡ATENCIÓN: Pedido Incompleto!</h4>
                 <p className="text-rose-200/80 text-sm">
-                  Esta N.V. contiene productos con <span className="font-bold text-white">Quiebre de Stock</span> o <span className="font-bold text-white">Picking Parcial</span>. Verifica los ítems antes de empacar.
+                  Esta N.V. contiene productos con <span className="font-bold text-slate-900">Quiebre de Stock</span> o <span className="font-bold text-slate-900">Picking Parcial</span>. Verifica los ítems antes de empacar.
                 </p>
               </div>
             </div>
           )}
 
-          <div className="mt-8 bg-wms-dark/80 p-6 rounded-xl text-left border border-wms-border max-w-2xl mx-auto shadow-inner">
-            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+          <div className="mt-8 bg-slate-50/80 p-6 rounded-xl text-left border border-slate-200 max-w-2xl mx-auto shadow-inner">
+            <h3 className="text-slate-900 font-bold mb-4 flex items-center gap-2">
               <Package size={20} className="text-indigo-400" /> Datos de Despacho
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 border-b border-wms-border pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 border-b border-slate-200 pb-4">
               <div className="md:col-span-2">
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Dirección de Entrega</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Dirección de Entrega</label>
                 <input
                   type="text"
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm transition-colors"
                   placeholder="Calle, Número..."
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Comuna</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Comuna</label>
                 <input
                   type="text"
                   name="comuna"
                   value={formData.comuna}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm transition-colors"
                   placeholder="Comuna"
                 />
               </div>
@@ -731,46 +731,46 @@ const Packing = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Bultos *</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Bultos *</label>
                 <input
                   type="number"
                   name="bultos"
                   value={formData.bultos}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Pallets *</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Pallets *</label>
                 <input
                   type="number"
                   name="pallets"
                   value={formData.pallets}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Peso (kg) *</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Peso (kg) *</label>
                 <input
                   type="number"
                   name="peso"
                   value={formData.peso}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
                   placeholder="0.0"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Peso Sobredim.</label>
+                <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Peso Sobredim.</label>
                 <input
                   type="number"
                   name="peso_sobredimensionado"
                   value={formData.peso_sobredimensionado}
                   onChange={handleInputChange}
-                  className="w-full bg-wms-panel border border-wms-border rounded-lg px-3 py-2 text-white placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-600 focus:outline-none focus:border-wms-neon transition-colors"
                   placeholder="0.0"
                 />
               </div>
@@ -789,8 +789,8 @@ const Packing = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl border border-wms-border shadow-2xl p-6">
-          <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white backdrop-blur-xl rounded-xl border border-slate-200 shadow-2xl p-6">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Package size={18} className="text-indigo-400" />
             Detalle de Productos ({nvActiva?.total_items || 1})
           </h3>
@@ -805,7 +805,7 @@ const Packing = () => {
                   ? 'bg-rose-500/10 border-rose-500/30'
                   : isPartial
                     ? 'bg-amber-500/10 border-amber-500/30'
-                    : 'bg-wms-dark border-wms-border'
+                    : 'bg-slate-50 border-slate-200'
                   }`}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -816,11 +816,11 @@ const Packing = () => {
                     </div>
                     <p className={`text-lg font-mono font-bold ${isStockBreak ? 'text-rose-300 line-through opacity-70' : isPartial ? 'text-amber-300' : 'text-wms-neon'
                       }`}>{item.codigo_producto}</p>
-                    <p className="text-sm text-slate-400 mt-1">{item.descripcion_producto}</p>
+                    <p className="text-sm text-slate-500 mt-1">{item.descripcion_producto}</p>
                   </div>
                   <div className="text-right">
-                    <div className="bg-wms-panel rounded-lg p-2 text-center border border-wms-border shadow-inner">
-                      <p className={`text-2xl font-black ${isStockBreak ? 'text-rose-400/50 line-through' : 'text-white'
+                    <div className="bg-white rounded-lg p-2 text-center border border-slate-200 shadow-inner">
+                      <p className={`text-2xl font-black ${isStockBreak ? 'text-rose-400/50 line-through' : 'text-slate-900'
                         }`}>{item.cantidad}</p>
 
                       {(isPartial || isStockBreak) && (
@@ -838,8 +838,8 @@ const Packing = () => {
           </div>
         </div>
 
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl border border-wms-border shadow-2xl p-6">
-          <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white backdrop-blur-xl rounded-xl border border-slate-200 shadow-2xl p-6">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
             <User size={18} className="text-indigo-400" />
             Información del Cliente
           </h3>
@@ -847,12 +847,12 @@ const Packing = () => {
           <div className="space-y-4">
             <div>
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Cliente</p>
-              <p className="text-lg font-bold text-white">{nvActiva?.cliente}</p>
+              <p className="text-lg font-bold text-slate-900">{nvActiva?.cliente}</p>
             </div>
 
             <div>
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Vendedor</p>
-              <p className="text-slate-300 font-medium">{nvActiva?.vendedor || '-'}</p>
+              <p className="text-slate-700 font-medium">{nvActiva?.vendedor || '-'}</p>
             </div>
 
             <div className="bg-amber-500/10 rounded-lg p-4 border border-amber-500/30">
@@ -868,7 +868,7 @@ const Packing = () => {
 
       {showDevolverModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-wms-panel w-full max-w-md rounded-2xl shadow-2xl border border-wms-border overflow-hidden">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             <div className="bg-rose-500/20 p-6 border-b border-rose-500/30 flex items-center gap-4">
               <div className="bg-rose-500/20 border border-rose-500/50 p-3 rounded-full text-rose-400">
                 <RotateCcw size={24} />
@@ -888,13 +888,13 @@ const Packing = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">
+                <label className="block text-sm font-bold text-slate-700 mb-2">
                   Motivo de la devolución / Error detectado *
                 </label>
                 <textarea
                   value={motivoDevolucion}
                   onChange={(e) => setMotivoDevolucion(e.target.value)}
-                  className="w-full bg-wms-dark border border-wms-border rounded-lg p-3 text-sm text-white focus:border-rose-500 outline-none resize-none h-32"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-900 focus:border-rose-500 outline-none resize-none h-32"
                   placeholder="Describe el error (ej: Producto incorrecto, Cantidad errónea, Dañado...)"
                   autoFocus
                 />
@@ -904,14 +904,14 @@ const Packing = () => {
                 <button
                   onClick={() => setShowDevolverModal(false)}
                   disabled={devolverMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-wms-dark border border-wms-border hover:bg-slate-800 text-slate-300 rounded-xl font-bold transition-colors"
+                  className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 hover:bg-white text-slate-700 rounded-xl font-bold transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDevolverPicking}
                   disabled={devolverMutation.isPending || !motivoDevolucion.trim()}
-                  className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {devolverMutation.isPending ? 'Procesando...' : 'Confirmar Devolución'}
                 </button>

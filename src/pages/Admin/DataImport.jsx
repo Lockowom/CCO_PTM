@@ -34,6 +34,27 @@ const IMPORT_TABS = [
         helpText: '📦 Ingresa el inventario consolidado. Asegúrate de incluir la columna "Bodega" (ej. BD 21, BD 5). Si el registro (Bodega + Producto) ya existe, se actualizará automáticamente.',
         smartDedup: false,
     },
+    ...['BD 21', 'BD 5', 'BD 24', 'BD 3', 'BD 7', 'BD 99', 'BD 22'].map(bodega => ({
+        id: `inv_${bodega.replace(' ', '').toLowerCase()}`,
+        label: `Inv. ${bodega}`,
+        icon: Package,
+        color: 'emerald',
+        table: 'tms_inventario_general',
+        uniqueKey: 'bodega,codigo_producto',
+        defaultValues: { bodega: bodega },
+        columns: [
+            { key: 'codigo_producto', label: 'Cod. Producto', required: true, type: 'text' },
+            { key: 'producto', label: 'Producto', required: false, type: 'text' },
+            { key: 'unidad_medida', label: 'Cod. U. Medida', required: false, type: 'text' },
+            { key: 'disponible', label: 'Disponible', required: false, type: 'number' },
+            { key: 'reserva', label: 'Reserva', required: false, type: 'number' },
+            { key: 'transitoria', label: 'Transitoria', required: false, type: 'number' },
+            { key: 'consignacion', label: 'Consignación', required: false, type: 'number' },
+            { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
+        ],
+        helpText: `📦 Ingresa el inventario específico de la ${bodega}. La bodega se asignará automáticamente. Si el producto ya existe en esta bodega, se actualizará su información.`,
+        smartDedup: false,
+    })),
     {
         id: 'nv',
         label: 'N.V Diarias',
@@ -497,11 +518,16 @@ const DataImport = () => {
                 }
             }
 
-            // Insertar en lotes de 100
-            const BATCH_SIZE = 100;
+            // Insertar en lotes optimizados para grandes volúmenes
+            const BATCH_SIZE = 1000; // Incrementado de 100 a 1000 para reducir peticiones HTTP
             let inserted = 0;
             let errors = 0;
             const errorDetails = [];
+
+            // Liberar memoria del texto crudo si es una carga masiva (>10k filas)
+            if (parsedRows.length > 10000) {
+                setRawText('');
+            }
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
                 let batch = newRows.slice(i, i + BATCH_SIZE);
@@ -713,7 +739,7 @@ const DataImport = () => {
                     {/* ── HEADER ── */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-orange-500/30">
                                 <Upload size={28} strokeWidth={2.5} />
                             </div>
                             <div>
@@ -739,13 +765,13 @@ const DataImport = () => {
                             
                             // Mapeo a tonos naranjas/ámbar/neutros para mantener elegancia
                             const colorMap = {
-                                indigo: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                blue: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                violet: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                emerald: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                orange: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                cyan: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
-                                rose: 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20',
+                                indigo: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                blue: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                violet: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                emerald: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                orange: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                cyan: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
+                                rose: 'bg-gradient-to-br from-orange-500 to-amber-600 text-slate-900 shadow-md shadow-orange-500/20',
                             };
 
                             return (
@@ -781,7 +807,7 @@ const DataImport = () => {
                         </p>
 
                         <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Estructura de Columnas</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estructura de Columnas</p>
                             <div className="flex flex-wrap gap-2.5">
                                 {currentTab.columns.map(col => (
                                     <span
@@ -806,7 +832,7 @@ const DataImport = () => {
                         >
                             {!rawText && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-                                    <div className="w-20 h-20 bg-white rounded-2xl shadow-md flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-orange-50 group-hover:text-orange-500 transition-all duration-300 border border-slate-100 text-slate-400">
+                                    <div className="w-20 h-20 bg-white rounded-2xl shadow-md flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-orange-50 group-hover:text-orange-500 transition-all duration-300 border border-slate-100 text-slate-500">
                                         <ClipboardPaste size={36} strokeWidth={2} />
                                     </div>
                                     <h3 className="text-xl font-black text-slate-800 mb-2">Haz clic y pega tus datos</h3>
@@ -814,7 +840,7 @@ const DataImport = () => {
                                     
                                     <div className="flex items-center gap-4 w-full max-w-[200px]">
                                         <div className="h-px bg-slate-200 flex-1"></div>
-                                        <span className="text-xs font-black text-slate-300 uppercase tracking-widest">O</span>
+                                        <span className="text-xs font-black text-slate-700 uppercase tracking-widest">O</span>
                                         <div className="h-px bg-slate-200 flex-1"></div>
                                     </div>
 
@@ -877,7 +903,7 @@ const DataImport = () => {
                                 <button
                                     onClick={() => parseData(rawText)}
                                     disabled={isParsing}
-                                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-white rounded-xl font-black text-sm shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all disabled:opacity-50 ml-auto"
+                                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-600 text-slate-900 rounded-xl font-black text-sm shadow-lg shadow-slate-900/20 hover:shadow-orange-500/30 transition-all disabled:opacity-50 ml-auto"
                                 >
                                     {isParsing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
                                     Analizar Datos
@@ -894,7 +920,7 @@ const DataImport = () => {
                     {/* Stats bar */}
                     <div className="flex flex-wrap gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm items-center">
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
-                            <Database size={20} className="text-slate-400" />
+                            <Database size={20} className="text-slate-500" />
                             <span className="text-sm font-medium text-slate-600">Total: <strong className="text-lg text-slate-800">{stats.total}</strong></span>
                         </div>
                         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
@@ -929,7 +955,7 @@ const DataImport = () => {
                         <button
                             onClick={handleUpload}
                             disabled={isLoading || (stats.new === 0 && stats.update === 0)}
-                            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 text-white rounded-2xl font-black text-lg flex items-center gap-3 shadow-lg shadow-emerald-500/30 transition-all disabled:shadow-none"
+                            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 text-slate-900 rounded-2xl font-black text-lg flex items-center gap-3 shadow-lg shadow-emerald-500/30 transition-all disabled:shadow-none"
                         >
                             {isLoading ? (
                                 <><Loader2 size={22} className="animate-spin" /> Sincronizando datos...</>
@@ -955,7 +981,7 @@ const DataImport = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {parsedRows.map((row, idx) => {
+                                    {parsedRows.slice(0, 500).map((row, idx) => {
                                         const status = rowStatuses[idx] || 'new';
                                         const bgClass = {
                                             'new': 'bg-emerald-50/30 hover:bg-emerald-50',
@@ -983,8 +1009,8 @@ const DataImport = () => {
                                         }[status];
 
                                         return (
-                                            <tr key={idx} className={`${bgClass} transition-colors`}>
-                                                <td className="px-4 py-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
+                                            <tr key={idx} className={`${bgClass} transition-colors group`}>
+                                                <td className="px-4 py-3 text-slate-500 font-mono text-xs">{idx + 1}</td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-1.5" title={statusLabel}>
                                                         {statusIcon}
@@ -996,13 +1022,30 @@ const DataImport = () => {
                                                         {col.type === 'number' ? (
                                                             <span className="font-mono font-bold bg-white px-2 py-1 rounded border border-slate-200">{row[col.key]}</span>
                                                         ) : (
-                                                            <span className="font-medium">{row[col.key] || <span className="text-slate-300">-</span>}</span>
+                                                            <span className="font-medium">{row[col.key] || <span className="text-slate-400">-</span>}</span>
                                                         )}
                                                     </td>
                                                 ))}
                                             </tr>
                                         );
                                     })}
+                                    {parsedRows.length > 500 && (
+                                        <tr>
+                                            <td colSpan={currentTab.columns.length + 2} className="px-6 py-10 bg-slate-50 text-center border-t border-slate-200">
+                                                <div className="flex flex-col items-center gap-2 opacity-60">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400">
+                                                        <SkipForward size={24} />
+                                                    </div>
+                                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest">
+                                                        Vista previa limitada a las primeras 500 filas de {parsedRows.length.toLocaleString()}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400 font-bold">
+                                                        (Se procesarán todas las filas al confirmar la sincronización)
+                                                    </p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -1058,7 +1101,7 @@ const DataImport = () => {
                             {loadResult.success ? (
                                 <button
                                     onClick={handleReset}
-                                    className="px-10 py-5 bg-slate-900 hover:bg-orange-600 text-white rounded-2xl font-black text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center gap-3"
+                                    className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-lg hover:shadow-orange-500/30 transition-all flex items-center gap-3"
                                 >
                                     <RefreshCw size={24} />
                                     Realizar Nueva Carga
@@ -1066,7 +1109,7 @@ const DataImport = () => {
                             ) : (
                                 <button
                                     onClick={() => setStep('paste')}
-                                    className="px-10 py-5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all flex items-center gap-3"
+                                    className="px-10 py-5 bg-red-600 hover:bg-red-700 text-slate-900 rounded-2xl font-black text-lg shadow-lg transition-all flex items-center gap-3"
                                 >
                                     <XCircle size={24} />
                                     Cerrar y Corregir Errores

@@ -204,17 +204,17 @@ const CubingRegistry = () => {
   };
 
   return (
-    <div ref={containerRef} className="max-w-[1600px] mx-auto pb-20 space-y-8 min-h-screen bg-wms-dark p-6 text-slate-300">
+    <div ref={containerRef} className="max-w-[1600px] mx-auto pb-20 space-y-8 min-h-screen bg-slate-50 p-6 text-slate-700">
       {/* Header Moderno Glassmorphism */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-wms-border pb-6 anim-stagger bg-wms-panel/80 backdrop-blur-xl p-6 rounded-3xl shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 pb-6 anim-stagger bg-white backdrop-blur-xl p-6 rounded-3xl shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="p-4 bg-wms-dark border border-blue-500/50 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.4)] text-blue-400">
+          <div className="p-4 bg-slate-50 border border-blue-500/50 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.4)] text-blue-400">
             <Scale size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Registro de Cubicaje</h1>
-            <p className="text-slate-400 font-medium mt-1 flex items-center gap-2">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Registro de Cubicaje</h1>
+            <p className="text-slate-500 font-medium mt-1 flex items-center gap-2">
               <Ruler size={16} /> Maestro de Pesos y Dimensiones
             </p>
           </div>
@@ -229,10 +229,10 @@ const CubingRegistry = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <div className="lg:col-span-4 space-y-6 anim-stagger">
-          <div className="bg-wms-panel/80 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-wms-border relative overflow-hidden group">
+          <div className="bg-white backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
             
-            <h3 className="font-black text-white mb-6 flex items-center gap-3 text-lg">
+            <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3 text-lg">
               <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400">
                 <Search size={20} />
               </div>
@@ -247,7 +247,7 @@ const CubingRegistry = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
                   placeholder="Escanear Código SKU..."
-                  className="w-full pl-12 pr-4 py-4 bg-wms-dark border-2 border-wms-border rounded-2xl font-mono font-bold text-xl text-white focus:border-blue-500 outline-none transition-all uppercase placeholder:text-slate-600"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-mono font-bold text-xl text-slate-900 focus:border-blue-500 outline-none transition-all uppercase placeholder:text-slate-600"
                   autoFocus
                 />
                 <QrCode className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-blue-500 transition-colors" size={24} />
@@ -267,8 +267,8 @@ const CubingRegistry = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-wms-neon uppercase tracking-widest mb-1">Producto Identificado</p>
-                      <p className="font-bold text-white text-lg leading-tight mb-1">{productData.producto}</p>
-                      <span className="inline-block bg-wms-dark px-2 py-1 rounded text-xs font-mono font-bold text-slate-400 border border-wms-border">
+                      <p className="font-bold text-slate-900 text-lg leading-tight mb-1">{productData.producto}</p>
+                      <span className="inline-block bg-slate-50 px-2 py-1 rounded text-xs font-mono font-bold text-slate-500 border border-slate-200">
                         {productData.codigo_producto}
                       </span>
                     </div>
@@ -285,7 +285,7 @@ const CubingRegistry = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-wms-dark/50 border border-wms-border rounded-2xl p-8 text-center">
+                <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-8 text-center">
                   <Package size={48} className="mx-auto text-slate-600 mb-3" />
                   <p className="text-slate-500 font-bold text-sm">Escanee un código para comenzar</p>
                 </div>
@@ -293,7 +293,7 @@ const CubingRegistry = () => {
             </div>
           </div>
 
-          <div ref={infoRef} className="bg-wms-panel p-6 rounded-3xl text-slate-300 shadow-xl relative overflow-hidden border border-wms-border">
+          <div ref={infoRef} className="bg-white p-6 rounded-3xl text-slate-700 shadow-xl relative overflow-hidden border border-slate-200">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Box size={120} />
             </div>
@@ -325,10 +325,10 @@ const CubingRegistry = () => {
           <form 
             ref={formRef} 
             onSubmit={handleSave} 
-            className="bg-wms-panel/80 backdrop-blur-xl rounded-3xl shadow-xl border border-wms-border overflow-hidden flex flex-col h-full"
+            className="bg-white backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full"
           >
-            <div className="p-8 border-b border-wms-border bg-wms-dark/40 flex justify-between items-center">
-              <h3 className="font-black text-white text-xl flex items-center gap-2">
+            <div className="p-8 border-b border-slate-200 bg-slate-50/40 flex justify-between items-center">
+              <h3 className="font-black text-slate-900 text-xl flex items-center gap-2">
                 <Ruler className="text-blue-400" />
                 DETALLES DE DIMENSIONES
               </h3>
@@ -349,7 +349,7 @@ const CubingRegistry = () => {
                       type="text" 
                       value={formData.codigo_producto} 
                       readOnly 
-                      className="w-full p-3 bg-wms-dark border-2 border-wms-border rounded-xl font-mono text-white font-bold"
+                      className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-mono text-slate-900 font-bold"
                       placeholder="---"
                     />
                     {formData.codigo_producto && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-wms-neon" size={16} />}
@@ -361,7 +361,7 @@ const CubingRegistry = () => {
                     type="text" 
                     value={formData.unidad_medida} 
                     readOnly 
-                    className="w-full p-3 bg-wms-dark border-2 border-wms-border rounded-xl font-bold text-slate-400 text-center"
+                    className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-slate-500 text-center"
                     placeholder="-"
                   />
                 </div>
@@ -371,7 +371,7 @@ const CubingRegistry = () => {
                     type="text" 
                     value={formData.descripcion} 
                     readOnly 
-                    className="w-full p-3 bg-wms-dark border-2 border-wms-border rounded-xl font-medium text-white"
+                    className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium text-slate-900"
                     placeholder="Esperando selección..."
                   />
                 </div>
@@ -391,7 +391,7 @@ const CubingRegistry = () => {
                     name="peso_unitario"
                     value={formData.peso_unitario}
                     onChange={handleInputChange}
-                    className="w-full p-3 bg-wms-dark border-2 border-blue-500/50 rounded-xl text-2xl font-black text-blue-400 focus:border-blue-400 outline-none transition-all placeholder:text-slate-600"
+                    className="w-full p-3 bg-slate-50 border-2 border-blue-500/50 rounded-xl text-2xl font-black text-blue-400 focus:border-blue-400 outline-none transition-all placeholder:text-slate-600"
                     placeholder="0.000"
                     required
                   />
@@ -408,7 +408,7 @@ const CubingRegistry = () => {
                       name={dim}
                       value={formData[dim]}
                       onChange={handleInputChange}
-                      className="w-full p-4 bg-wms-dark border-2 border-wms-border rounded-xl font-bold text-lg text-white focus:border-blue-500 outline-none transition-all placeholder:text-slate-600"
+                      className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-lg text-slate-900 focus:border-blue-500 outline-none transition-all placeholder:text-slate-600"
                       placeholder="0.0"
                     />
                   </div>
@@ -418,7 +418,7 @@ const CubingRegistry = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 <div>
                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Tipo de Empaque</label>
-                   <div className="flex bg-wms-dark p-1 rounded-xl border border-wms-border">
+                   <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
                       {['UNIDAD', 'CAJA', 'BOLSA'].map(type => (
                         <button
                           key={type}
@@ -426,8 +426,8 @@ const CubingRegistry = () => {
                           onClick={() => setFormData({...formData, tipo_empaque: type})}
                           className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
                             formData.tipo_empaque === type 
-                              ? 'bg-wms-panel text-blue-400 shadow-md border border-wms-border transform scale-100' 
-                              : 'text-slate-500 hover:text-slate-300'
+                              ? 'bg-white text-blue-400 shadow-md border border-slate-200 transform scale-100' 
+                              : 'text-slate-500 hover:text-slate-700'
                           }`}
                         >
                           {type}
@@ -442,7 +442,7 @@ const CubingRegistry = () => {
                     name="observaciones"
                     value={formData.observaciones}
                     onChange={handleInputChange}
-                    className="w-full p-3 bg-wms-dark border-2 border-wms-border rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-colors placeholder:text-slate-600"
+                    className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm text-slate-900 focus:border-blue-500 outline-none transition-colors placeholder:text-slate-600"
                     placeholder="Notas adicionales..."
                   />
                 </div>
@@ -450,7 +450,7 @@ const CubingRegistry = () => {
 
             </div>
 
-            <div className="p-6 bg-wms-dark/40 border-t border-wms-border flex justify-end gap-4">
+            <div className="p-6 bg-slate-50/40 border-t border-slate-200 flex justify-end gap-4">
               <button 
                 type="button"
                 onClick={() => {
@@ -461,7 +461,7 @@ const CubingRegistry = () => {
                    });
                    setProductData(null);
                 }}
-                className="px-6 py-4 text-slate-400 font-bold hover:bg-wms-panel hover:text-white rounded-xl transition-colors text-sm uppercase tracking-wider"
+                className="px-6 py-4 text-slate-500 font-bold hover:bg-white hover:text-slate-900 rounded-xl transition-colors text-sm uppercase tracking-wider"
               >
                 Cancelar / Limpiar
               </button>
@@ -473,7 +473,7 @@ const CubingRegistry = () => {
                   px-8 py-4 rounded-xl font-black text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl
                   ${saveMutation.isSuccess 
                     ? 'bg-wms-neon text-wms-dark scale-105 shadow-neon-green' 
-                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:-translate-y-1 active:scale-95'
+                    : 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:-translate-y-1 active:scale-95'
                   }
                   disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none
                 `}

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useConfig } from '../../context/ConfigContext';
+import { APP_MODULES, APP_ROUTES } from '../../config/modules';
 
 const ViewsPage = () => {
   // IMPORTANTE: Obtener refreshConfig del contexto
@@ -17,58 +18,8 @@ const ViewsPage = () => {
   const [modulesConfig, setModulesConfig] = useState([]);
   const [roles, setRoles] = useState([]);
 
-  const availableRoutes = [
-    { value: '/dashboard', label: 'Dashboard General' },
-    { value: '/tms/dashboard', label: 'TMS - Dashboard' },
-    { value: '/tms/planning', label: 'TMS - Planificación' },
-    { value: '/tms/control-tower', label: 'TMS - Torre de Control' },
-    { value: '/tms/yard', label: 'TMS - Gestión de Patio' },
-    { value: '/tms/drivers', label: 'TMS - Conductores' },
-    { value: '/tms/mobile', label: 'TMS - App Móvil' },
-    { value: '/pda', label: 'Operación - PDA Móvil' },
-    { value: '/inbound/reception', label: 'Inbound - Recepción' },
-    { value: '/inbound/returns', label: 'Inbound - Devoluciones' },
-    { value: '/inbound/entry', label: 'Inbound - Ingreso' },
-    { value: '/inbound/cubing', label: 'Inbound - Cubicaje (Pesos)' },
-    { value: '/inbound/data-import', label: 'Inbound - Importación de Datos' },
-    { value: '/outbound/sales-orders', label: 'Outbound - Notas de Venta' },
-    { value: '/outbound/picking', label: 'Outbound - Picking' },
-    { value: '/outbound/packing', label: 'Outbound - Packing' },
-    { value: '/outbound/packing-tv', label: 'Outbound - Monitor Packing' },
-    { value: '/outbound/shipping', label: 'Outbound - Despachos' },
-    { value: '/outbound/deliveries', label: 'Outbound - Entregas' },
-    { value: '/inventory/dashboard', label: 'Inventario - Dashboard' },
-    { value: '/inventory/stock', label: 'Inventario - Stock' },
-    { value: '/inventory/layout', label: 'Inventario - Layout' },
-    { value: '/inventory/replenishment', label: 'Inventario - Reposición' },
-    { value: '/inventory/transfers', label: 'Inventario - Transferencias' },
-    { value: '/inventory/cycle-count', label: 'Inventario - Conteo Cíclico' },
-    { value: '/quality/inspection', label: 'Calidad - Inspección' },
-    { value: '/analytics', label: 'Analytics - Reportes' },
-    { value: '/analytics/tv', label: 'Analytics - Modo TV' },
-    { value: '/queries/kardex', label: 'Consultas - Kardex' },
-    { value: '/queries/productivity', label: 'Consultas - Rendimiento' },
-    { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho' },
-    { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.' },
-    { value: '/queries/batches', label: 'Consultas - Lotes/Series' },
-    { value: '/queries/sales-status', label: 'Consultas - Estado N.V.' },
-    { value: '/queries/addresses', label: 'Consultas - Direcciones' },
-    { value: '/queries/locations', label: 'Consultas - Ubicaciones' },
-    { value: '/admin/users', label: 'Admin - Usuarios' },
-    { value: '/admin/roles', label: 'Admin - Roles' },
-    { value: '/admin/views', label: 'Admin - Vistas' },
-    { value: '/admin/reports', label: 'Admin - Reportes' },
-    { value: '/admin/wms-settings', label: 'Admin - Ajustes WMS' },
-    { value: '/admin/ops-control', label: 'Admin - Control de Operaciones' },
-    { value: '/admin/audit-logs', label: 'Admin - Logs de Auditoría' },
-    { value: '/admin/system-health', label: 'Admin - Salud del Sistema' },
-    { value: '/admin/mediciones', label: 'Admin - Mediciones' },
-    { value: '/admin/cleanup', label: 'Admin - Limpieza' },
-    { value: '/admin/time-reports', label: 'Admin - Reportes de Tiempo' },
-    { value: '/admin/tickets', label: 'Admin - Tickets' },
-    { value: '/admin/login-history', label: 'Admin - Historial de Logins' },
-    { value: '/admin/upload-history', label: 'Admin - Historial de Cargas' }
-  ];
+  // Las rutas ahora vienen del archivo de configuración central
+  const availableRoutes = APP_ROUTES;
 
   useEffect(() => {
     fetchData();
@@ -88,7 +39,12 @@ const ViewsPage = () => {
         .select('*')
         .order('nombre');
 
-      setModulesConfig(modulesData || []);
+      // 💡 FILTRADO DINÁMICO: Solo mostrar módulos que existen en APP_MODULES
+      // Esto elimina automáticamente los módulos borrados del proyecto
+      const validModuleIds = APP_MODULES.map(m => m.id);
+      const filteredModules = (modulesData || []).filter(m => validModuleIds.includes(m.id));
+
+      setModulesConfig(filteredModules);
       setRoles(rolesData || []);
 
     } catch (error) {

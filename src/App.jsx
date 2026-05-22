@@ -4,15 +4,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
 import Placeholder from './components/Placeholder';
-import { Lock } from 'lucide-react';
+import { Lock, Bell, Database } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates } from './services/mobileService';
+import { supabase } from './supabase';
+import { toast, Toaster } from 'sonner';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Analytics = React.lazy(() => import('./pages/Analytics/Analytics'));
-const WarehouseTV = React.lazy(() => import('./pages/Analytics/WarehouseTV')); // NUEVO
 
 // TMS Modules
 const RoutePlanning = React.lazy(() => import('./pages/TMS/RoutePlanning'));
@@ -24,9 +24,7 @@ const YardManagement = React.lazy(() => import('./pages/TMS/YardManagement')); /
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA')); // NUEVO
 
 // Inbound Modules
-const Reception = React.lazy(() => import('./pages/Inbound/Reception'));
 const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
-const Returns = React.lazy(() => import('./pages/Inbound/Returns')); // NUEVO
 const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry')); // NUEVO - Registro Cubicaje
 
 // Outbound Modules
@@ -35,28 +33,15 @@ const Picking = React.lazy(() => import('./pages/Outbound/Picking'));
 const Packing = React.lazy(() => import('./pages/Outbound/Packing'));
 const PackingTV = React.lazy(() => import('./pages/Outbound/PackingTV')); // NUEVO
 const Shipping = React.lazy(() => import('./pages/Outbound/Shipping'));
-const Deliveries = React.lazy(() => import('./pages/Outbound/Deliveries'));
 
-// Inventory Modules
-const Stock = React.lazy(() => import('./pages/Inventory/Stock'));
-const InventoryLayout = React.lazy(() => import('./pages/Inventory/Layout'));
-const DashboardWMS = React.lazy(() => import('./pages/Inventory/DashboardWMS'));
-const Transfers = React.lazy(() => import('./pages/Inventory/Transfers'));
-const CycleCount = React.lazy(() => import('./pages/Inventory/CycleCount'));
-const Replenishment = React.lazy(() => import('./pages/Inventory/Replenishment')); // NUEVO
-
-// Quality Control Modules
-const Inspection = React.lazy(() => import('./pages/QualityControl/Inspection'));
-
-// Queries Modules
+// Intelligence Modules
 const Batches = React.lazy(() => import('./pages/Queries/Batches'));
 const SalesStatus = React.lazy(() => import('./pages/Queries/SalesStatus'));
 const Addresses = React.lazy(() => import('./pages/Queries/Addresses'));
 const Locations = React.lazy(() => import('./pages/Queries/Locations'));
 const HistorialNV = React.lazy(() => import('./pages/Queries/HistorialNV'));
+const Heatmap = React.lazy(() => import('./pages/Queries/Heatmap'));
 const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl'));
-const Kardex = React.lazy(() => import('./pages/Queries/Kardex')); // NUEVO
-const Productivity = React.lazy(() => import('./pages/Queries/Productivity')); // NUEVO
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
@@ -70,10 +55,6 @@ const TimeReports = React.lazy(() => import('./pages/Admin/TimeReports'));
 const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UsuariosActivos = React.lazy(() => import('./pages/Admin/UsuariosActivos')); // NUEVO
 const LoginHistory = React.lazy(() => import('./pages/Admin/LoginHistory')); // NUEVO
-const WmsSettings = React.lazy(() => import('./pages/Admin/WmsSettings')); // NUEVO
-const SystemHealth = React.lazy(() => import('./pages/Admin/SystemHealth')); // NUEVO
-const OpsControl = React.lazy(() => import('./pages/Admin/OpsControl')); // NUEVO
-const AuditLogs = React.lazy(() => import('./pages/Admin/AuditLogs')); // NUEVO
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 
 // Fallback 404
@@ -82,10 +63,6 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 // Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
 const ROUTE_PERMISSIONS = {
   '/dashboard': ['view_dashboard'],
-
-  // Analytics
-  '/analytics': ['view_reports'],
-  '/analytics/tv': ['view_reports'], // NUEVO (Pantalla TV)
 
   // TMS
   '/tms/dashboard': ['view_tms_dashboard'],
@@ -97,9 +74,7 @@ const ROUTE_PERMISSIONS = {
   '/mobile/pda': ['view_stock', 'manage_inventory'], // NUEVO (Permisos de stock)
 
   // Inbound
-  '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
-  '/inbound/returns': ['view_reception', 'process_reception'],
   '/inbound/cubing': ['view_reception', 'process_reception'], // Nuevo módulo usa mismos permisos de recepción
   '/inbound/data-import': ['manage_data_import'],
 
@@ -109,29 +84,16 @@ const ROUTE_PERMISSIONS = {
   '/outbound/packing': ['view_packing', 'process_packing'],
   '/outbound/packing-tv': ['view_packing_tv'], // NUEVO (Monitor Packing)
   '/outbound/shipping': ['view_shipping', 'process_shipping'],
-  '/outbound/deliveries': ['view_deliveries', 'process_deliveries'],
-
-  // Inventory
-  '/inventory/dashboard': ['view_stock', 'view_layout'], // Permitir si puede ver stock o layout
-  '/inventory/stock': ['view_stock', 'manage_stock'],
-  '/inventory/layout': ['view_layout', 'manage_layout'],
-  '/inventory/transfers': ['view_transfers', 'manage_transfers'],
-  '/inventory/cycle-count': ['view_stock', 'manage_inventory'],
-  '/inventory/replenishment': ['view_stock', 'manage_inventory'], // NUEVO (Usa mismos permisos que stock)
-
-  // Quality Control
-  '/quality/inspection': ['view_quality', 'process_quality'],
 
   // Queries
   '/queries/batches': ['view_batches'],
   '/queries/sales-status': ['view_sales_status'],
   '/queries/addresses': ['view_addresses'],
   '/queries/locations': ['view_locations'],
+  '/queries/heatmap': ['view_locations'],
   '/queries/historial-nv': ['view_historial_nv'],
   '/queries/dispatch-control': ['view_dispatch_control'],
-  '/queries/kardex': ['view_stock'], // NUEVO (Usa permiso de stock)
-  '/queries/productivity': ['view_reports'], // NUEVO
-
+  
   // Admin (solo ADMIN)
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],
@@ -142,10 +104,6 @@ const ROUTE_PERMISSIONS = {
   '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
   '/admin/active-users': ['manage_users', 'view_users'], // NUEVO (usa permiso de usuarios)
   '/admin/login-history': ['manage_users', 'view_users'], // NUEVO
-  '/admin/wms-settings': ['manage_views', 'view_views'], // NUEVO (Configuración General)
-  '/admin/system-health': ['manage_mediciones', 'view_mediciones'], // NUEVO (Monitoreo)
-  '/admin/ops-control': ['manage_users', 'view_users'], // NUEVO (Control de Procesos)
-  '/admin/audit-logs': ['view_reports'], // NUEVO (Auditoría)
   '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
   '/admin/upload-history': ['admin_upload_history'], // NEW: Historial de Cargas
 };
@@ -157,10 +115,7 @@ const ROUTE_PRIORITY = [
   '/outbound/picking',
   '/outbound/packing',
   '/outbound/shipping',
-  '/inbound/reception',
   '/inbound/entry',
-  '/inventory/stock',
-  '/inventory/layout',
   '/queries/batches',
   '/queries/sales-status',
   '/queries/historial-nv',
@@ -231,7 +186,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
 
 // Componente que determina la primera ruta disponible para el usuario
 const SmartRedirect = () => {
-  const { user, hasPermission, loading, permissions } = useAuth();
+  const { user, hasPermission, loading, landingPage } = useAuth();
 
   if (loading) {
     return (
@@ -241,12 +196,23 @@ const SmartRedirect = () => {
     );
   }
 
-  // ADMIN tiene acceso a todo → ir al dashboard
+  // 1. PRIORIDAD: Si el rol tiene una landing_page configurada y tiene acceso, ir allí
+  if (landingPage && landingPage !== '/') {
+    const requiredPerms = ROUTE_PERMISSIONS[landingPage] || [];
+    const hasAccess = user?.rol === 'ADMIN' || requiredPerms.length === 0 || requiredPerms.some(perm => hasPermission(perm));
+    
+    if (hasAccess) {
+      console.log('🎯 Redirigiendo a Landing Page de Rol:', landingPage);
+      return <Navigate to={landingPage} replace />;
+    }
+  }
+
+  // 2. ADMIN tiene acceso a todo → ir al dashboard si no tiene landing_page específica
   if (user?.rol === 'ADMIN' || user?.es_admin_delegado) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Para otros roles, buscar la primera ruta a la que tienen acceso
+  // 3. FALLBACK: buscar la primera ruta a la que tienen acceso según ROUTE_PRIORITY
   for (const route of ROUTE_PRIORITY) {
     const requiredPerms = ROUTE_PERMISSIONS[route] || [];
     if (requiredPerms.length === 0) {
@@ -300,12 +266,44 @@ const ProtectedRoute = () => {
 };
 
 function AppContent() {
-  // Inicializar OTA Updates al arrancar la app en dispositivos móviles
+  const { user } = useAuth();
+
+  // Inicializar OTA Updates y Notificaciones Globales
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       initOTAUpdates();
     }
-  }, []);
+
+    // --- SISTEMA DE DETECCIÓN GLOBAL DE SUBIDA DE DATOS ---
+    // Escuchar inserciones en tms_historial_cargas para notificar a los interesados
+    const channel = supabase
+      .channel('global-upload-detector')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tms_historial_cargas' },
+        (payload) => {
+          const { modulo, usuario_nombre, registros_totales, registros_error } = payload.new;
+          
+          // No notificar al mismo usuario que subió los datos (evitar spam)
+          if (user && usuario_nombre.includes(user.nombre?.split(' ')[0])) return;
+
+          toast.info(`Nueva subida: ${modulo}`, {
+            description: `${usuario_nombre} cargó ${registros_totales} registros.${registros_error > 0 ? ` (${registros_error} errores)` : ''}`,
+            icon: <Database className="text-orange-500" size={18} />,
+            duration: 6000,
+            action: {
+              label: 'Ver Historial',
+              onClick: () => window.location.href = '/admin/upload-history'
+            }
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <Router>
@@ -319,8 +317,6 @@ function AppContent() {
           {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
           <Route index element={<SmartRedirect />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="analytics/tv" element={<WarehouseTV />} />
 
           {/* TMS Modules */}
           <Route path="tms/dashboard" element={<DashboardTMS />} />
@@ -332,9 +328,7 @@ function AppContent() {
           <Route path="mobile/pda" element={<WarehousePDA />} />
 
           {/* Inbound Modules */}
-          <Route path="inbound/reception" element={<Reception />} />
           <Route path="inbound/entry" element={<Entry />} />
-          <Route path="inbound/returns" element={<Returns />} />
           <Route path="inbound/cubing" element={<CubingRegistry />} />
           <Route path="inbound/data-import" element={<DataImport />} />
 
@@ -344,28 +338,15 @@ function AppContent() {
           <Route path="outbound/packing" element={<Packing />} />
           <Route path="outbound/packing-tv" element={<PackingTV />} />
           <Route path="outbound/shipping" element={<Shipping />} />
-          <Route path="outbound/deliveries" element={<Deliveries />} />
-
-          {/* Inventory Modules */}
-          <Route path="inventory/dashboard" element={<DashboardWMS />} />
-          <Route path="inventory/stock" element={<Stock />} />
-          <Route path="inventory/layout" element={<InventoryLayout />} />
-          <Route path="inventory/transfers" element={<Transfers />} />
-          <Route path="inventory/cycle-count" element={<CycleCount />} />
-          <Route path="inventory/replenishment" element={<Replenishment />} />
-
-          {/* Quality Control Modules */}
-          <Route path="quality/inspection" element={<Inspection />} />
 
           {/* Queries Modules */}
           <Route path="queries/batches" element={<Batches />} />
           <Route path="queries/sales-status" element={<SalesStatus />} />
           <Route path="queries/addresses" element={<Addresses />} />
           <Route path="queries/locations" element={<Locations />} />
+          <Route path="queries/heatmap" element={<Heatmap />} />
           <Route path="queries/historial-nv" element={<HistorialNV />} />
           <Route path="queries/dispatch-control" element={<DispatchControl />} />
-          <Route path="queries/kardex" element={<Kardex />} />
-          <Route path="queries/productivity" element={<Productivity />} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<Users />} />
@@ -375,14 +356,10 @@ function AppContent() {
           <Route path="admin/cleanup" element={<Cleanup />} />
           <Route path="admin/reports" element={<Reports />} />
           <Route path="admin/time-reports" element={<TimeReports />} />
-          <Route path="admin/upload-history" element={<UploadHistory />} />
           <Route path="admin/tickets" element={<Tickets />} />
           <Route path="admin/active-users" element={<UsuariosActivos />} />
           <Route path="admin/login-history" element={<LoginHistory />} />
-          <Route path="admin/wms-settings" element={<WmsSettings />} />
-          <Route path="admin/system-health" element={<SystemHealth />} />
-          <Route path="admin/ops-control" element={<OpsControl />} />
-          <Route path="admin/audit-logs" element={<AuditLogs />} />
+          <Route path="admin/upload-history" element={<UploadHistory />} />
         </Route>
 
         {/* Fallback 404 en lugar de Navigate al login */}
@@ -392,7 +369,6 @@ function AppContent() {
   );
 }
 
-import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {

@@ -167,7 +167,7 @@ const Tickets = () => {
         
         <button 
           onClick={() => setIsCreating(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2"
         >
           <AlertCircle size={20} /> NUEVO TICKET
         </button>
@@ -176,19 +176,19 @@ const Tickets = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">Pendientes</p>
+          <p className="text-xs font-bold text-slate-500 uppercase">Pendientes</p>
           <p className="text-2xl font-black text-amber-500">{tickets.filter(t => t.estado === 'PENDIENTE').length}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">En Proceso</p>
+          <p className="text-xs font-bold text-slate-500 uppercase">En Proceso</p>
           <p className="text-2xl font-black text-blue-500">{tickets.filter(t => t.estado === 'EN_PROCESO').length}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">Resueltos</p>
+          <p className="text-xs font-bold text-slate-500 uppercase">Resueltos</p>
           <p className="text-2xl font-black text-emerald-500">{tickets.filter(t => t.estado === 'RESUELTO').length}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">Total</p>
+          <p className="text-xs font-bold text-slate-500 uppercase">Total</p>
           <p className="text-2xl font-black text-slate-700">{tickets.length}</p>
         </div>
       </div>
@@ -196,7 +196,7 @@ const Tickets = () => {
       {/* Filtros y Buscador */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input 
             type="text" 
             placeholder="Buscar ticket por ID, asunto o descripción..." 
@@ -213,7 +213,7 @@ const Tickets = () => {
               onClick={() => setFilter(status)}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                 filter === status 
-                  ? 'bg-slate-800 text-white shadow-md' 
+                  ? 'bg-white text-slate-900 shadow-md' 
                   : 'text-slate-500 hover:bg-slate-50'
               }`}
             >
@@ -236,7 +236,7 @@ const Tickets = () => {
           >
             <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
               <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 font-bold text-white shadow-md ${
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 font-bold text-slate-900 shadow-md ${
                   ticket.prioridad === 'ALTA' ? 'bg-red-500' : 
                   ticket.prioridad === 'MEDIA' ? 'bg-amber-500' : 
                   'bg-blue-500'
@@ -245,16 +245,16 @@ const Tickets = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                       {ticket.ticket_id}
                     </span>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
                       <Clock size={12} /> {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es })}
                     </span>
                   </div>
                   <h3 className="font-bold text-lg text-slate-800">{ticket.asunto || 'Sin Asunto'}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <User size={12} className="text-slate-400" />
+                    <User size={12} className="text-slate-500" />
                     <span className="text-xs font-medium text-slate-600">{ticket.usuario_nombre}</span>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ const Tickets = () => {
 
         {filteredTickets.length === 0 && (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-            <MessageSquare className="mx-auto text-slate-300 mb-4" size={48} />
+            <MessageSquare className="mx-auto text-slate-700 mb-4" size={48} />
             <h3 className="text-lg font-bold text-slate-700">No hay tickets encontrados</h3>
             <p className="text-slate-500 text-sm">Intenta cambiar los filtros de búsqueda.</p>
           </div>
@@ -328,7 +328,7 @@ const Tickets = () => {
                       onClick={() => setNewTicket({...newTicket, prioridad: p})}
                       className={`py-2 text-xs font-bold rounded-lg border transition-all ${
                         newTicket.prioridad === p 
-                          ? 'bg-slate-800 text-white border-slate-800' 
+                          ? 'bg-white text-slate-900 border-slate-200' 
                           : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
                       }`}
                     >
@@ -360,7 +360,7 @@ const Tickets = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
                 >
                   <Send size={18} /> Enviar Reporte
                 </button>

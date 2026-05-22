@@ -101,12 +101,12 @@ const DashboardTMS = () => {
   }
 
   return (
-    <div ref={container} className="p-6 bg-slate-950 min-h-screen text-slate-300">
+    <div ref={container} className="p-6 bg-slate-950 min-h-screen text-slate-700">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-3 bg-blue-500/20 rounded-xl">
           <Activity className="w-6 h-6 text-blue-400" />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-wide">TMS Control Center</h1>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-wide">TMS Control Center</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -119,10 +119,10 @@ const DashboardTMS = () => {
           <div key={i} className={`tms-card ${stat.bg} ${stat.border} border rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden group`}>
             <div className="flex justify-between items-start relative z-10">
               <div>
-                <p className="text-slate-400 text-sm font-medium mb-1">{stat.title}</p>
-                <h3 className="text-3xl font-black text-white">{stat.value}</h3>
+                <p className="text-slate-500 text-sm font-medium mb-1">{stat.title}</p>
+                <h3 className="text-3xl font-black text-slate-900">{stat.value}</h3>
               </div>
-              <div className="p-3 bg-slate-900/50 rounded-xl">
+              <div className="p-3 bg-slate-50/50 rounded-xl">
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
             </div>
@@ -132,9 +132,9 @@ const DashboardTMS = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl flex flex-col">
-          <h2 className="text-lg font-bold text-white mb-4">Mapa de Operaciones en Vivo</h2>
-          <div className="flex-1 min-h-[400px] bg-slate-800/50 rounded-xl border border-slate-700/50 relative overflow-hidden z-0">
+        <div className="lg:col-span-2 tms-card bg-slate-50/50 border border-slate-200 rounded-2xl p-6 backdrop-blur-xl flex flex-col">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Mapa de Operaciones en Vivo</h2>
+          <div className="flex-1 min-h-[400px] bg-white/50 rounded-xl border border-slate-300/50 relative overflow-hidden z-0">
              <MapContainer 
                center={[-33.4489, -70.6693]} 
                zoom={11} 
@@ -147,17 +147,17 @@ const DashboardTMS = () => {
                />
                {tmsData?.conductoresActivos?.map((driver) => (
                  <Marker key={driver.usuario_id} position={[driver.lat, driver.lng]}>
-                   <Popup className="bg-slate-900 text-slate-300 border-slate-800">
+                   <Popup className="bg-slate-50 text-slate-700 border-slate-200">
                      <div className="p-1">
-                       <strong className="text-white block mb-1">{driver.nombre}</strong>
+                       <strong className="text-slate-900 block mb-1">{driver.nombre}</strong>
                        <span className="text-emerald-400 block text-xs">ONLINE</span>
-                       <span className="text-slate-400 block text-xs mt-1">ETA: {driver.eta}</span>
+                       <span className="text-slate-500 block text-xs mt-1">ETA: {driver.eta}</span>
                      </div>
                    </Popup>
                  </Marker>
                ))}
              </MapContainer>
-             <div className="absolute bottom-4 left-4 z-[400] bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-lg border border-slate-700 text-xs text-slate-400 flex items-center gap-2">
+             <div className="absolute bottom-4 left-4 z-[400] bg-slate-50/80 backdrop-blur-md px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-500 flex items-center gap-2">
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                GPS Activo
              </div>
@@ -165,18 +165,18 @@ const DashboardTMS = () => {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl flex-1">
-            <h2 className="text-lg font-bold text-white mb-4">Conductores Activos ({tmsData?.conductoresActivos?.length || 0})</h2>
+          <div className="tms-card bg-slate-50/50 border border-slate-200 rounded-2xl p-6 backdrop-blur-xl flex-1">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">Conductores Activos ({tmsData?.conductoresActivos?.length || 0})</h2>
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
               {tmsData?.conductoresActivos?.length > 0 ? (
                 tmsData.conductoresActivos.map((driver, index) => (
-                  <div key={driver.usuario_id || index} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-blue-500/30 transition-colors cursor-pointer">
+                  <div key={driver.usuario_id || index} className="flex items-center justify-between p-4 bg-white/30 rounded-xl border border-slate-300/50 hover:border-blue-500/30 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold uppercase">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold uppercase">
                         {driver.nombre ? driver.nombre.substring(0, 2) : 'C'}
                       </div>
                       <div>
-                        <p className="text-white font-medium text-sm capitalize">{driver.nombre || 'Desconocido'}</p>
+                        <p className="text-slate-900 font-medium text-sm capitalize">{driver.nombre || 'Desconocido'}</p>
                         <p className="text-emerald-400 text-xs flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> En Ruta
                         </p>
@@ -185,7 +185,7 @@ const DashboardTMS = () => {
                   </div>
                 ))
               ) : (
-                <div className="text-center p-8 border border-dashed border-slate-700 rounded-xl text-slate-500">
+                <div className="text-center p-8 border border-dashed border-slate-300 rounded-xl text-slate-500">
                   No hay conductores activos (ONLINE) en este momento.
                 </div>
               )}
@@ -195,9 +195,9 @@ const DashboardTMS = () => {
       </div>
 
       {/* Timeline Gráfica */}
-      <div className="tms-card bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl">
+      <div className="tms-card bg-slate-50/50 border border-slate-200 rounded-2xl p-6 backdrop-blur-xl">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <TrendingUp size={20} className="text-emerald-400" />
             Timeline de Entregas
           </h2>

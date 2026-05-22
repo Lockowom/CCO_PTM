@@ -43,7 +43,7 @@ const ExportButton = ({ data, filename = 'export', className = '' }) => {
   return (
     <button
       onClick={handleExport}
-      className={`flex items-center gap-2 px-3 py-2 bg-slate-800 text-white hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm ${className}`}
+      className={`flex items-center gap-2 px-3 py-2 bg-white text-slate-900 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors shadow-sm ${className}`}
       title="Exportar a CSV"
     >
       <Download size={16} />

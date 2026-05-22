@@ -20,53 +20,55 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState([]);
+  const [landingPage, setLandingPage] = useState('/dashboard');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Cargar permisos desde BD
-  const loadPermissions = useCallback(async (rolId) => {
+  // Cargar permisos y configuración del rol desde BD
+  const loadRoleConfig = useCallback(async (rolId) => {
     if (!rolId) {
       setPermissions([]);
-      return [];
+      setLandingPage('/dashboard');
+      return { permissions: [], landingPage: '/dashboard' };
     }
 
     try {
-      console.log('📥 Cargando permisos para rol:', rolId);
+      console.log('📥 Cargando configuración para rol:', rolId);
 
       const { data, error } = await supabase
         .from('tms_roles')
-        .select('permisos_json')
+        .select('permisos_json, landing_page')
         .eq('id', rolId)
         .single();
 
       if (error) throw error;
 
       const perms = data?.permisos_json || [];
-      console.log('✅ Permisos cargados:', perms.length, perms);
+      const landing = data?.landing_page || '/dashboard';
+
+      console.log('✅ Configuración de rol cargada:', { perms: perms.length, landing });
+      
       setPermissions(perms);
-      return perms;
+      setLandingPage(landing);
+      
+      return { permissions: perms, landingPage: landing };
 
     } catch (err) {
-      console.error('❌ Error cargando permisos:', err);
+      console.error('❌ Error cargando config de rol:', err);
       setPermissions([]);
-      return [];
+      setLandingPage('/dashboard');
+      return { permissions: [], landingPage: '/dashboard' };
     }
   }, []);
 
   // FUNCIÓN PÚBLICA: Refrescar permisos (llamar desde Roles.jsx)
   const refreshPermissions = useCallback(async () => {
-    // Si hay usuario logueado, recargar sus permisos
     if (user?.rol) {
-      console.log('🔄 Refrescando permisos...');
-      const perms = await loadPermissions(user.rol);
-
-      // Notificar a otras pestañas/componentes (opcional)
-      // window.dispatchEvent(new Event('permissions_updated'));
-
-      return perms;
+      console.log('🔄 Refrescando configuración de rol...');
+      return await loadRoleConfig(user.rol);
     }
-    return [];
-  }, [user?.rol, loadPermissions]);
+    return null;
+  }, [user?.rol, loadRoleConfig]);
 
   // SUSCRIPCIÓN GLOBAL A CAMBIOS DE ROLES
   useEffect(() => {
@@ -78,15 +80,11 @@ export const AuthProvider = ({ children }) => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tms_roles' },
         async (payload) => {
-          console.log('🎭 Cambio detectado en Roles (DB):', payload);
-
-          // Si el rol modificado es el mío, recargar permisos
-          // Nota: Usamos payload.old.id o payload.new.id para soportar casos donde REPLICA IDENTITY no sea FULL
           const changedRoleId = payload.new?.id || payload.old?.id;
           
           if (changedRoleId === user.rol || !changedRoleId) {
-            console.log('🔄 Rol actualizado (posiblemente el mío), recargando permisos...');
-            await loadPermissions(user.rol);
+            console.log('🔄 Mi rol ha cambiado en la BD, recargando...');
+            await loadRoleConfig(user.rol);
           }
         }
       )
@@ -95,7 +93,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.rol, loadPermissions]);
+  }, [user?.rol, loadRoleConfig]);
 
   // Restaurar sesión al iniciar
   useEffect(() => {
@@ -104,19 +102,17 @@ export const AuthProvider = ({ children }) => {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          console.log('🔄 Restaurando sesión:', parsed.nombre);
           setUser(parsed);
-          setUserForTracking(parsed); // Restaurar también en Sentry
-          await loadPermissions(parsed.rol);
+          setUserForTracking(parsed);
+          await loadRoleConfig(parsed.rol);
         } catch (err) {
-          console.error('Error restaurando sesión:', err);
           localStorage.removeItem('currentUser');
         }
       }
       setLoading(false);
     };
     initSession();
-  }, [loadPermissions]);
+  }, [loadRoleConfig]);
 
   // Heartbeat: Actualizar estado 'ONLINE' en BD y Manejo de Conexión Offline
   useEffect(() => {
@@ -212,7 +208,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
-      await loadPermissions(data.rol);
+      await loadRoleConfig(data.rol);
       
       // Enviar identidad del usuario a Sentry
       setUserForTracking(userData);
@@ -320,7 +316,7 @@ export const AuthProvider = ({ children }) => {
               };
               setUser(updatedUser);
               localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-              loadPermissions(newUser.rol);
+              loadRoleConfig(newUser.rol);
             }
           }
         }
@@ -331,7 +327,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🛑 Deteniendo vigilancia de sesión');
       supabase.removeChannel(channel);
     };
-  }, [user?.id, user?.rol, logout, loadPermissions]);
+  }, [user?.id, user?.rol, logout, loadRoleConfig]);
 
   // Verificar permiso
   const hasPermission = useCallback((permissionId) => {
@@ -346,6 +342,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       permissions,
+      landingPage,
       loading,
       error,
       login,

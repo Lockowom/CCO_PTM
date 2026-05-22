@@ -59,12 +59,12 @@ const Addresses = () => {
         {/* Buscador Flotante Centrado */}
         <div className="max-w-3xl mx-auto mb-8">
           <div className="bg-white rounded-xl shadow-lg shadow-slate-200/50 flex items-center p-2 border border-slate-100 transition-all focus-within:ring-4 focus-within:ring-indigo-100 focus-within:border-indigo-300">
-            <div className="pl-4 pr-3 text-slate-400">
+            <div className="pl-4 pr-3 text-slate-500">
               <Search size={24} />
             </div>
             <input 
               type="text" 
-              className="flex-1 h-12 outline-none text-lg text-slate-700 placeholder:text-slate-400"
+              className="flex-1 h-12 outline-none text-lg text-slate-700 placeholder:text-slate-500"
               placeholder="Buscar por RUT, Razón Social o Dirección..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -74,7 +74,7 @@ const Addresses = () => {
             <button 
               onClick={handleSearch}
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70"
+              className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : 'BUSCAR'}
             </button>
@@ -84,14 +84,14 @@ const Addresses = () => {
         {/* Resultados */}
         <div className="max-w-5xl mx-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 animate-pulse">
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 animate-pulse">
               <Loader2 size={48} className="animate-spin mb-4 text-indigo-400" />
               <p>Buscando en servidor...</p>
             </div>
           ) : searched ? (
             results.length > 0 ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="text-xs font-bold text-slate-400 uppercase px-2">
+                <div className="text-xs font-bold text-slate-500 uppercase px-2">
                   Encontrados {results.length} resultados en {searchTime.toFixed(2)}s
                 </div>
                 
@@ -126,7 +126,7 @@ const Addresses = () => {
                           </td>
                           <td className="p-4 align-top">
                             <div className="flex items-start gap-2 text-sm text-slate-600">
-                              <MapPin size={16} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                              <MapPin size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
                               <span>{item.direccion}</span>
                             </div>
                           </td>
@@ -144,14 +144,14 @@ const Addresses = () => {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-16 text-slate-400">
+              <div className="text-center py-16 text-slate-500">
                 <Search size={48} className="mx-auto mb-4 opacity-20" />
                 <h3 className="text-lg font-bold text-slate-600 mb-1">Sin coincidencias</h3>
                 <p>No se encontraron registros en la base de datos.</p>
               </div>
             )
           ) : (
-            <div className="text-center py-20 text-slate-400">
+            <div className="text-center py-20 text-slate-500">
               <Building size={48} className="mx-auto mb-4 opacity-10" />
               <h3 className="text-lg font-bold text-slate-500 mb-1">Búsqueda Corporativa</h3>
               <p>Ingresa RUT, Nombre o Dirección y presiona Enter.</p>

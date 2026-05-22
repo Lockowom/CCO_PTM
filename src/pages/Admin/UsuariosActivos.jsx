@@ -107,7 +107,7 @@ const UsuariosActivos = () => {
         
         <div className="flex gap-2">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" />
             <input 
               type="text" 
               placeholder="Buscar usuario..." 
@@ -127,7 +127,7 @@ const UsuariosActivos = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Tarjeta de Resumen */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white shadow-lg col-span-1 md:col-span-2 lg:col-span-3 flex justify-between items-center">
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-slate-900 shadow-lg col-span-1 md:col-span-2 lg:col-span-3 flex justify-between items-center">
           <div>
             <h3 className="text-3xl font-bold">{usuarios.length}</h3>
             <p className="text-indigo-100 font-medium">Usuarios Conectados Ahora</p>
@@ -155,7 +155,7 @@ const UsuariosActivos = () => {
                   <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium border border-slate-200">
                     {user.rol}
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
                     <Monitor size={10} /> {user.modulo_actual || 'Navegando'}
                   </span>
                 </div>
@@ -167,7 +167,7 @@ const UsuariosActivos = () => {
 
             <button 
               onClick={() => desconectarUsuario(user.usuario_id)}
-              className="text-slate-300 hover:text-red-500 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+              className="text-slate-700 hover:text-red-500 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
               title="Forzar desconexión"
             >
               <LogOut size={18} />
@@ -176,7 +176,7 @@ const UsuariosActivos = () => {
         ))}
 
         {filteredUsers.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
+          <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">
             <Users size={48} className="mx-auto mb-2 opacity-20" />
             <p>No se encontraron usuarios activos</p>
           </div>

@@ -164,7 +164,7 @@ const ControlTower = () => {
   const entregasPorRuta = (rutaId) => entregas.filter(e => e.ruta_id === rutaId);
 
   const EstadoBadge = ({ estado, size = 'sm' }) => {
-    const config = ESTADOS_CONFIG[estado] || { label: estado, bgColor: 'bg-slate-800', textColor: 'text-slate-400', borderColor: 'border-slate-700', icon: Package };
+    const config = ESTADOS_CONFIG[estado] || { label: estado, bgColor: 'bg-white', textColor: 'text-slate-500', borderColor: 'border-slate-300', icon: Package };
     const Icon = config.icon;
     const sizeClasses = size === 'lg' ? 'px-3 py-1.5 text-sm gap-2' : 'px-2 py-0.5 text-[10px] gap-1';
     
@@ -177,21 +177,21 @@ const ControlTower = () => {
   };
 
   const KPICard = ({ title, value, subtitle, icon: Icon, glowColor }) => (
-    <div className={`bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-4 border border-wms-border relative overflow-hidden group`}>
+    <div className={`bg-white backdrop-blur-xl rounded-2xl p-4 border border-slate-200 relative overflow-hidden group`}>
       <div className={`absolute top-0 right-0 w-24 h-24 bg-${glowColor}-500/10 rounded-full blur-2xl group-hover:bg-${glowColor}-500/20 transition-all`}></div>
       <div className="flex items-center justify-between mb-2 relative z-10">
-        <span className={`text-slate-400 text-xs font-bold uppercase tracking-wider`}>{title}</span>
-        <div className={`w-8 h-8 rounded-lg bg-slate-900 border border-wms-border flex items-center justify-center`}>
+        <span className={`text-slate-500 text-xs font-bold uppercase tracking-wider`}>{title}</span>
+        <div className={`w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center`}>
           <Icon size={16} className={`text-${glowColor}-400`} />
         </div>
       </div>
-      <p className={`text-3xl font-black text-white relative z-10`}>{value}</p>
+      <p className={`text-3xl font-black text-slate-900 relative z-10`}>{value}</p>
       {subtitle && <p className={`text-xs text-slate-500 mt-1 font-medium relative z-10`}>{subtitle}</p>}
     </div>
   );
 
   return (
-    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-wms-dark text-slate-300">
+    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 text-slate-700">
       {/* Background Decorativo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/5 blur-[100px] rounded-full"></div>
@@ -204,8 +204,8 @@ const ControlTower = () => {
             <Radio className="text-indigo-400" size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-white tracking-tight">Torre de Control <span className="text-indigo-400">TMS</span></h2>
-            <p className="text-slate-400 text-sm font-medium flex items-center gap-2 mt-1">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Torre de Control <span className="text-indigo-400">TMS</span></h2>
+            <p className="text-slate-500 text-sm font-medium flex items-center gap-2 mt-1">
               <span className="w-2 h-2 bg-wms-neon rounded-full animate-pulse shadow-neon-green"></span>
               Sincronizado: {lastUpdate.toLocaleTimeString()}
             </p>
@@ -218,9 +218,9 @@ const ControlTower = () => {
             queryClient.invalidateQueries(['tower_entregas']);
           }}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-wms-panel hover:bg-slate-800 border border-wms-border text-white rounded-xl transition-colors font-bold shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-white border border-slate-200 text-slate-900 rounded-xl transition-colors font-bold shadow-sm"
         >
-          <RefreshCw size={18} className={`${loading ? 'animate-spin text-wms-neon' : 'text-slate-400'}`} />
+          <RefreshCw size={18} className={`${loading ? 'animate-spin text-wms-neon' : 'text-slate-500'}`} />
           {loading ? 'Sincronizando...' : 'Refrescar'}
         </button>
       </div>
@@ -240,10 +240,10 @@ const ControlTower = () => {
       <div className="flex gap-6 flex-1 overflow-hidden relative z-10">
         
         {/* Panel Izquierdo: Rutas Activas */}
-        <div className="w-80 bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="w-80 bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
           <div className="h-1 w-full bg-gradient-to-r from-indigo-500/50 to-indigo-500"></div>
-          <div className="p-4 border-b border-wms-border bg-slate-900/50">
-            <h3 className="font-bold text-white flex items-center gap-2">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
               <MapPin size={18} className="text-indigo-400" />
               Rutas Activas
             </h3>
@@ -255,15 +255,15 @@ const ControlTower = () => {
               className={`w-full p-3 rounded-xl border transition-all text-left ${
                 !selectedRoute
                   ? 'bg-indigo-500/10 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
-                  : 'bg-slate-900/50 border-wms-border hover:border-slate-600'
+                  : 'bg-slate-50/50 border-slate-200 hover:border-slate-600'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-                  <Radio size={18} className={!selectedRoute ? 'text-indigo-400' : 'text-slate-400'} />
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-300 flex items-center justify-center">
+                  <Radio size={18} className={!selectedRoute ? 'text-indigo-400' : 'text-slate-500'} />
                 </div>
                 <div>
-                  <p className="font-bold text-white">Todas las Rutas</p>
+                  <p className="font-bold text-slate-900">Todas las Rutas</p>
                   <p className="text-xs font-medium text-slate-500">{entregas.length} entregas totales</p>
                 </div>
               </div>
@@ -282,12 +282,12 @@ const ControlTower = () => {
                   className={`w-full p-3 rounded-xl border transition-all text-left group ${
                     selectedRoute === ruta.id
                       ? 'bg-indigo-500/10 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
-                      : 'bg-slate-900/50 border-wms-border hover:border-slate-600'
+                      : 'bg-slate-50/50 border-slate-200 hover:border-slate-600'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 group-hover:text-indigo-400 transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-slate-300 flex items-center justify-center font-bold text-slate-500 group-hover:text-indigo-400 transition-colors">
                         <Truck size={18} />
                       </div>
                       <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-wms-panel ${
@@ -313,7 +313,7 @@ const ControlTower = () => {
                     </div>
                     {entregasR.length > 0 && (
                       <div className="text-right">
-                        <p className="text-sm font-black text-white">{completadas}/{entregasR.length}</p>
+                        <p className="text-sm font-black text-slate-900">{completadas}/{entregasR.length}</p>
                         {pendientes > 0 && (
                           <p className="text-[10px] text-blue-400 font-bold">{pendientes} pend.</p>
                         )}
@@ -325,7 +325,7 @@ const ControlTower = () => {
             })}
 
             {rutas.length === 0 && (
-                <div className="text-center py-8 text-slate-500 font-medium text-sm border-2 border-dashed border-wms-border rounded-xl">
+                <div className="text-center py-8 text-slate-500 font-medium text-sm border-2 border-dashed border-slate-200 rounded-xl">
                     No hay rutas recientes
                 </div>
             )}
@@ -333,24 +333,24 @@ const ControlTower = () => {
         </div>
 
         {/* Panel Central: Feed de Entregas */}
-        <div className="flex-1 bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="flex-1 bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
           <div className="h-1 w-full bg-gradient-to-r from-emerald-500/50 to-wms-neon"></div>
-          <div className="p-4 border-b border-wms-border bg-slate-900/50">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Package size={18} className="text-wms-neon" />
                 Feed de Entregas
               </h3>
-              <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded-md border border-wms-border">{entregasFiltradas.length} resultados</span>
+              <span className="text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200">{entregasFiltradas.length} resultados</span>
             </div>
             
             <div className="flex gap-3">
-              <div className="flex-1 bg-slate-900 border border-wms-border rounded-xl flex items-center px-3 py-2 focus-within:border-wms-neon focus-within:ring-1 focus-within:ring-wms-neon/30 transition-all">
+              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl flex items-center px-3 py-2 focus-within:border-wms-neon focus-within:ring-1 focus-within:ring-wms-neon/30 transition-all">
                 <Search size={16} className="text-slate-500 mr-2" />
                 <input
                   type="text"
                   placeholder="Buscar por cliente, NV, dirección..."
-                  className="flex-1 outline-none text-sm bg-transparent font-medium text-white placeholder-slate-600"
+                  className="flex-1 outline-none text-sm bg-transparent font-medium text-slate-900 placeholder-slate-600"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
@@ -359,7 +359,7 @@ const ControlTower = () => {
               <select
                 value={filterEstado}
                 onChange={(e) => setFilterEstado(e.target.value)}
-                className="bg-slate-900 border border-wms-border rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-300 focus:border-wms-neon focus:ring-1 focus:ring-wms-neon/30 transition-all"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700 focus:border-wms-neon focus:ring-1 focus:ring-wms-neon/30 transition-all"
               >
                 <option value="TODOS">Todos los estados</option>
                 <option value="PENDIENTE">🕐 Pendientes</option>
@@ -374,13 +374,13 @@ const ControlTower = () => {
           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="w-10 h-10 border-4 border-wms-border border-t-wms-neon rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-wms-neon rounded-full animate-spin"></div>
                 <p className="text-slate-500 font-medium">Sincronizando feed...</p>
               </div>
             ) : entregasFiltradas.length === 0 ? (
-              <div className="text-center py-20 bg-slate-900/30 rounded-2xl border-2 border-dashed border-wms-border">
+              <div className="text-center py-20 bg-slate-50/30 rounded-2xl border-2 border-dashed border-slate-200">
                 <Package size={48} className="mx-auto mb-3 text-slate-600 opacity-50" />
-                <p className="font-bold text-slate-400">No hay entregas en esta vista</p>
+                <p className="font-bold text-slate-500">No hay entregas en esta vista</p>
                 <p className="text-sm text-slate-500 mt-1">Intenta ajustando los filtros</p>
               </div>
             ) : (
@@ -394,8 +394,8 @@ const ControlTower = () => {
                 return (
                   <div
                     key={entrega.id}
-                    className={`rounded-xl border transition-all duration-300 bg-slate-900/50 ${
-                      isExpanded ? 'border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.05)]' : 'border-wms-border hover:border-slate-600'
+                    className={`rounded-xl border transition-all duration-300 bg-slate-50/50 ${
+                      isExpanded ? 'border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.05)]' : 'border-slate-200 hover:border-slate-600'
                     }`}
                   >
                     <div 
@@ -404,18 +404,18 @@ const ControlTower = () => {
                     >
                       <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border ${
-                          ESTADOS_CONFIG[entrega.estado]?.bgColor || 'bg-slate-800'
-                        } ${ESTADOS_CONFIG[entrega.estado]?.borderColor || 'border-slate-700'}`}>
+                          ESTADOS_CONFIG[entrega.estado]?.bgColor || 'bg-white'
+                        } ${ESTADOS_CONFIG[entrega.estado]?.borderColor || 'border-slate-300'}`}>
                           {React.createElement(ESTADOS_CONFIG[entrega.estado]?.icon || Package, {
                             size: 20,
-                            className: ESTADOS_CONFIG[entrega.estado]?.textColor || 'text-slate-400'
+                            className: ESTADOS_CONFIG[entrega.estado]?.textColor || 'text-slate-500'
                           })}
                         </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold border border-slate-700 shadow-inner">
+                              <span className="font-mono text-xs bg-white text-slate-700 px-2 py-0.5 rounded font-bold border border-slate-300 shadow-inner">
                                 NV: {entrega.nv}
                               </span>
                               {ruta && (
@@ -428,14 +428,14 @@ const ControlTower = () => {
                             {isExpanded ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
                           </div>
                           
-                          <p className="font-black text-white truncate text-lg mt-1">{entrega.cliente}</p>
-                          <p className="text-xs text-slate-400 font-medium truncate mt-1">
+                          <p className="font-black text-slate-900 truncate text-lg mt-1">{entrega.cliente}</p>
+                          <p className="text-xs text-slate-500 font-medium truncate mt-1">
                             <MapPin size={12} className="inline mr-1 text-slate-500" />
                             {entrega.direccion}, {entrega.comuna}
                           </p>
                           
                           <div className="flex items-center gap-4 mt-3 text-[11px] font-bold">
-                            <span className="bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">{entrega.bultos || 0} bultos</span>
+                            <span className="bg-white text-slate-700 px-2 py-1 rounded border border-slate-300">{entrega.bultos || 0} bultos</span>
                             <span className="text-slate-500">{entrega.peso_kg || 0} kg</span>
                             {conductor && (
                               <span className="flex items-center gap-1.5 text-indigo-400 bg-indigo-500/5 px-2 py-1 rounded border border-indigo-500/10">
@@ -448,17 +448,17 @@ const ControlTower = () => {
                     </div>
                     
                     {isExpanded && (
-                      <div className="px-4 pb-4 border-t border-slate-800 mt-2 pt-4 bg-slate-900/30 rounded-b-xl">
+                      <div className="px-4 pb-4 border-t border-slate-200 mt-2 pt-4 bg-slate-50/30 rounded-b-xl">
                         <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700">
+                          <div className="bg-white/50 p-2.5 rounded-lg border border-slate-300">
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Factura</p>
                             <p className="font-bold text-slate-200">{entrega.facturas || '-'}</p>
                           </div>
-                          <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700">
+                          <div className="bg-white/50 p-2.5 rounded-lg border border-slate-300">
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Guía</p>
                             <p className="font-bold text-slate-200">{entrega.guia || '-'}</p>
                           </div>
-                          <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700">
+                          <div className="bg-white/50 p-2.5 rounded-lg border border-slate-300">
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Teléfono</p>
                             <p className="font-bold text-slate-200">{entrega.telefono || '-'}</p>
                           </div>
@@ -501,10 +501,10 @@ const ControlTower = () => {
         {/* Panel Derecho: Alertas y Actividad */}
         <div className="w-80 flex flex-col gap-6 relative z-10">
           
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex-1 flex flex-col overflow-hidden relative">
+          <div className="bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex-1 flex flex-col overflow-hidden relative">
             <div className="h-1 w-full bg-gradient-to-r from-wms-alert/50 to-wms-alert"></div>
-            <div className="p-4 border-b border-wms-border bg-slate-900/50">
-              <h3 className="font-bold text-white flex items-center gap-2">
+            <div className="p-4 border-b border-slate-200 bg-slate-50/50">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <AlertTriangle size={18} className="text-wms-alert" />
                 Panel de Alertas
               </h3>
@@ -517,7 +517,7 @@ const ControlTower = () => {
                       <Ban size={16} className="text-wms-danger" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">Entregas Rechazadas</p>
+                      <p className="text-sm font-bold text-slate-900">Entregas Rechazadas</p>
                       <p className="text-xs font-medium text-wms-danger/80 mt-0.5">{stats.rechazadas} requieren revisión</p>
                     </div>
                   </div>
@@ -531,7 +531,7 @@ const ControlTower = () => {
                       <Calendar size={16} className="text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">Reprogramadas</p>
+                      <p className="text-sm font-bold text-slate-900">Reprogramadas</p>
                       <p className="text-xs font-medium text-purple-400/80 mt-0.5">{stats.reprogramadas} para reagendar</p>
                     </div>
                   </div>
@@ -545,7 +545,7 @@ const ControlTower = () => {
                       <Clock size={16} className="text-wms-alert" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">Alto Volumen</p>
+                      <p className="text-sm font-bold text-slate-900">Alto Volumen</p>
                       <p className="text-xs font-medium text-wms-alert/80 mt-0.5">{stats.pendientes} entregas pendientes</p>
                     </div>
                   </div>
@@ -564,10 +564,10 @@ const ControlTower = () => {
             </div>
           </div>
 
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex-1 flex flex-col overflow-hidden relative">
+          <div className="bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex-1 flex flex-col overflow-hidden relative">
             <div className="h-1 w-full bg-gradient-to-r from-blue-500/50 to-blue-500"></div>
-            <div className="p-4 border-b border-wms-border bg-slate-900/50">
-              <h3 className="font-bold text-white flex items-center gap-2">
+            <div className="p-4 border-b border-slate-200 bg-slate-50/50">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Activity size={18} className="text-blue-400" />
                 Log de Actividad
               </h3>
@@ -581,9 +581,9 @@ const ControlTower = () => {
                   const config = ESTADOS_CONFIG[entrega.estado];
                   
                   return (
-                    <div key={entrega.id} className={`p-3 border-l-4 ${config?.borderColor || 'border-slate-700'} bg-slate-900/50 rounded-r-xl border-y border-r border-wms-border hover:bg-slate-800 transition-colors`}>
+                    <div key={entrega.id} className={`p-3 border-l-4 ${config?.borderColor || 'border-slate-300'} bg-slate-50/50 rounded-r-xl border-y border-r border-slate-200 hover:bg-white transition-colors`}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">{entrega.nv}</span>
+                        <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-300">{entrega.nv}</span>
                         <EstadoBadge estado={entrega.estado} />
                       </div>
                       <p className="text-xs font-bold text-slate-200 truncate">{entrega.cliente}</p>

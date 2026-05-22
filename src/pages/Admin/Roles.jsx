@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { APP_PERMISSIONS } from '../../config/modules';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
@@ -15,137 +16,23 @@ import {
   Clock, Upload, Trash, MessageSquare, ArrowLeft
 } from 'lucide-react';
 
-const modules = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: <LayoutDashboard size={16} />,
-    permissions: [
-      { id: 'view_dashboard', label: 'Ver Dashboard Principal' },
-      { id: 'view_kpis', label: 'Ver KPIs y Estadísticas' }
-    ]
-  },
-  {
-    id: 'tms',
-    label: 'TMS (Transporte)',
-    icon: <Truck size={16} />,
-    permissions: [
-      { id: 'view_tms_dashboard', label: 'Ver Dashboard TMS' },
-      { id: 'view_routes', label: 'Ver Rutas' },
-      { id: 'create_routes', label: 'Planificar Rutas' },
-      { id: 'view_control_tower', label: 'Ver Torre de Control' },
-      { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
-      { id: 'view_drivers', label: 'Ver Conductores' },
-      { id: 'manage_drivers', label: 'Gestionar Conductores' },
-      { id: 'view_mobile_app', label: 'Acceder App Móvil' },
-      { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' }
-    ]
-  },
-  {
-    id: 'inbound',
-    label: 'Inbound (Entrada)',
-    icon: <ArrowDownToLine size={16} />,
-    permissions: [
-      { id: 'view_reception', label: 'Ver Recepciones' },
-      { id: 'process_reception', label: 'Procesar Recepciones' },
-      { id: 'view_cubicaje', label: 'Ver Cubicaje (Pesos)' },
-      { id: 'process_cubicaje', label: 'Gestionar Cubicaje' },
-      { id: 'view_returns', label: 'Ver Devoluciones' },
-      { id: 'process_returns', label: 'Procesar Devoluciones' },
-      { id: 'view_entry', label: 'Ver Ingresos (Putaway)' },
-      { id: 'process_entry', label: 'Procesar Ingresos' },
-      { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
-    ]
-  },
-  {
-    id: 'outbound',
-    label: 'Outbound (Salida)',
-    icon: <ArrowUpFromLine size={16} />,
-    permissions: [
-      { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
-      { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
-      { id: 'delete_sales_orders', label: 'Eliminar N.V.' },
-      { id: 'view_picking', label: 'Ver Picking' },
-      { id: 'process_picking', label: 'Procesar Picking' },
-      { id: 'view_packing', label: 'Ver Packing' },
-      { id: 'process_packing', label: 'Procesar Packing' },
-      { id: 'view_packing_tv', label: 'Ver Monitor Packing TV' },
-      { id: 'view_shipping', label: 'Ver Despachos' },
-      { id: 'process_shipping', label: 'Gestionar Despachos' },
-      { id: 'view_deliveries', label: 'Ver Entregas' },
-      { id: 'manage_deliveries', label: 'Gestionar Entregas' }
-    ]
-  },
-  {
-    id: 'inventory',
-    label: 'Inventario',
-    icon: <Warehouse size={16} />,
-    permissions: [
-      { id: 'view_stock', label: 'Ver Stock' },
-      { id: 'manage_stock', label: 'Gestionar Inventario' },
-      { id: 'view_layout', label: 'Ver Layout Bodega' },
-      { id: 'manage_layout', label: 'Editar Layout' },
-      { id: 'view_transfers', label: 'Ver Transferencias' },
-      { id: 'manage_transfers', label: 'Gestionar Transferencias' },
-      { id: 'view_cycle_count', label: 'Conteos Cíclicos' }
-    ]
-  },
-  {
-    id: 'queries',
-    label: 'Consultas',
-    icon: <Search size={16} />,
-    permissions: [
-      { id: 'view_kardex', label: 'Ver Kardex (Trazabilidad)' },
-      { id: 'view_productivity', label: 'Ver Rendimiento' },
-      { id: 'view_historial_nv', label: 'Ver Historial N.V.' },
-      { id: 'view_dispatch_control', label: 'Control Despacho' },
-      { id: 'view_batches', label: 'Ver Lotes/Series' },
-      { id: 'view_sales_status', label: 'Ver Estado N.V.' },
-      { id: 'view_addresses', label: 'Ver Direcciones' },
-      { id: 'view_locations', label: 'Ver Ubicaciones' },
-      { id: 'export_data', label: 'Exportar Datos (CSV)' }
-    ]
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    icon: <FileBarChart size={16} />,
-    permissions: [
-      { id: 'view_reports', label: 'Ver Reportes y KPIs' },
-      { id: 'view_tv_mode', label: 'Ver Modo TV (Live)' }
-    ]
-  },
-  {
-    id: 'quality',
-    label: 'Calidad',
-    icon: <Check size={16} />,
-    permissions: [
-      { id: 'view_quality', label: 'Ver Inspecciones' },
-      { id: 'manage_quality', label: 'Gestionar Calidad' }
-    ]
-  },
-  {
-    id: 'admin',
-    label: 'Administración',
-    icon: <Settings size={16} />,
-    permissions: [
-      { id: 'view_mediciones', label: 'Ver Mediciones de Tiempo' },
-      { id: 'manage_mediciones', label: 'Gestionar Mediciones' },
-      { id: 'view_users', label: 'Ver Usuarios' },
-      { id: 'manage_users', label: 'Gestionar Usuarios' },
-      { id: 'view_roles', label: 'Ver Roles' },
-      { id: 'manage_roles', label: 'Gestionar Roles' },
-      { id: 'view_views', label: 'Ver Configuración Vistas' },
-      { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
-      { id: 'view_reports', label: 'Ver Reportes' },
-      { id: 'view_audit', label: 'Ver Auditoría' },
-      { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
-      { id: 'manage_tickets', label: 'Gestionar Tickets' },
-      { id: 'admin_upload_history', label: 'Historial de Cargas' },
-      { id: 'manage_cleanup', label: 'Limpieza de Datos' }
-    ]
-  }
-];
+// Mapeo de iconos para los módulos
+const MODULE_ICONS = {
+  dashboard: <LayoutDashboard size={16} />,
+  tms: <Truck size={16} />,
+  inbound: <ArrowDownToLine size={16} />,
+  outbound: <ArrowUpFromLine size={16} />,
+  queries: <Search size={16} />,
+  analytics: <FileBarChart size={16} />,
+  quality: <Check size={16} />,
+  admin: <Settings size={16} />
+};
+
+// Generar la lista de módulos dinámicamente desde la configuración central
+const modules = APP_PERMISSIONS.map(m => ({
+  ...m,
+  icon: MODULE_ICONS[m.id] || <Shield size={16} />
+}));
 
 const RolesPage = () => {
   const { refreshPermissions } = useAuth();
@@ -206,16 +93,12 @@ const RolesPage = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries(['admin_roles']);
       await refreshPermissions();
-      toast.success('Rol guardado exitosamente', {
-        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
-      });
+      toast.success('Rol guardado exitosamente');
       setIsEditing(false);
       setIsCreating(false);
     },
     onError: (error) => {
-      toast.error(`Error al guardar: ${error.message}`, {
-        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
-      });
+      toast.error(`Error al guardar: ${error.message}`);
     }
   });
 
@@ -227,15 +110,11 @@ const RolesPage = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries(['admin_roles']);
       await refreshPermissions();
-      toast.success('Rol eliminado', {
-        style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
-      });
+      toast.success('Rol eliminado');
       setSelectedRole(null);
     },
     onError: (error) => {
-      toast.error(`Error al eliminar: ${error.message}`, {
-        style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
-      });
+      toast.error(`Error al eliminar: ${error.message}`);
     }
   });
 
@@ -287,76 +166,76 @@ const RolesPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="animate-spin text-wms-neon" size={40} />
+        <Loader2 className="animate-spin text-emerald-500" size={40} />
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col space-y-4 bg-wms-dark text-slate-300 p-6 min-h-screen">
+    <div ref={containerRef} className="h-full flex flex-col space-y-6 bg-slate-50 p-6 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-wms-panel/80 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-wms-border shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-wms-neon via-emerald-500 to-teal-400"></div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60"></div>
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"></div>
         
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-wms-dark border border-wms-neon/30 rounded-2xl flex items-center justify-center text-wms-neon shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-            <Shield size={28} strokeWidth={2.5} />
+        <div className="flex items-center gap-6 relative z-10">
+          <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-lg shadow-emerald-500/10">
+            <Shield size={32} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Roles y <span className="text-wms-neon">Permisos</span></h1>
-            <p className="text-slate-400 font-medium mt-1">Gestión de accesos y perfiles de usuario</p>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Roles y <span className="text-emerald-600">Permisos</span></h1>
+            <p className="text-slate-500 font-bold mt-1 text-lg">Gestión de accesos y perfiles de usuario</p>
           </div>
         </div>
 
         {!selectedRole && !isCreating && (
           <button
             onClick={handleCreateRole}
-            className="bg-wms-neon text-wms-dark px-6 py-3 rounded-2xl font-black flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] transition-all active:scale-95 relative z-10"
+            className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:-translate-y-1 transition-all active:scale-95 relative z-10"
           >
-            <Plus size={20} /> Nuevo Rol
+            <Plus size={24} /> Nuevo Rol
           </button>
         )}
       </div>
 
-      <div className="flex flex-col gap-6 flex-1 overflow-hidden">
+      <div className="flex flex-col gap-8 flex-1">
         {(!selectedRole || isCreating) && !isEditing ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto p-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {roles.map(role => (
               <div
                 key={role.id}
                 onClick={() => setSelectedRole(role)}
-                className="bg-wms-panel/60 backdrop-blur-md rounded-2xl border border-wms-border p-6 cursor-pointer hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:border-wms-neon/50 hover:-translate-y-1 transition-all group relative overflow-hidden"
+                className="bg-white rounded-[2.5rem] border border-slate-100 p-8 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:border-emerald-200 hover:-translate-y-2 transition-all group relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Shield size={64} className="text-wms-neon" />
+                <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                  <Shield size={80} className="text-emerald-600" />
                 </div>
 
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-wms-alert/20 text-wms-alert border border-wms-alert/30' : 'bg-wms-neon/20 text-wms-neon border border-wms-neon/30'}`}>
-                    {role.id === 'ADMIN' ? <Lock size={24} /> : <Users size={24} />}
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                    {role.id === 'ADMIN' ? <Lock size={28} /> : <Users size={28} />}
                   </div>
                   {role.id !== 'ADMIN' && (
-                    <span className="bg-wms-dark text-slate-400 border border-wms-border text-xs font-bold px-2.5 py-1 rounded-full">
+                    <span className="bg-slate-50 text-slate-500 border border-slate-100 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
                       {role.usuarios} usuarios
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-wms-neon transition-colors">
+                <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-emerald-600 transition-colors tracking-tight">
                   {role.nombre}
                 </h3>
-                <p className="text-sm text-slate-400 mb-6 line-clamp-2 h-10">
+                <p className="text-base text-slate-500 font-medium mb-8 line-clamp-2 h-12 leading-relaxed">
                   {role.descripcion || 'Sin descripción'}
                 </p>
 
-                <div className="flex items-center justify-between border-t border-wms-border pt-4 mt-auto">
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                    <Shield size={14} />
+                <div className="flex items-center justify-between border-t border-slate-50 pt-6 mt-auto">
+                  <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                    <Shield size={16} className="text-emerald-500/50" />
                     {role.permisos?.length || 0} permisos
                   </div>
-                  <span className="text-wms-neon text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    Editar <Edit size={14} />
+                  <span className="text-emerald-600 text-sm font-black flex items-center gap-2 group-hover:translate-x-2 transition-transform uppercase tracking-widest">
+                    Editar <Edit size={16} />
                   </span>
                 </div>
               </div>
@@ -364,72 +243,72 @@ const RolesPage = () => {
 
             <button
               onClick={handleCreateRole}
-              className="bg-wms-panel/30 rounded-2xl border-2 border-dashed border-wms-border p-6 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-wms-neon hover:border-wms-neon/50 hover:bg-wms-neon/5 transition-all group min-h-[240px]"
+              className="bg-white rounded-[2.5rem] border-4 border-dashed border-slate-100 p-8 flex flex-col items-center justify-center gap-6 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group min-h-[300px]"
             >
-              <div className="w-16 h-16 rounded-full bg-wms-dark border-2 border-wms-border flex items-center justify-center group-hover:border-wms-neon/50 transition-colors">
-                <Plus size={32} />
+              <div className="w-20 h-20 rounded-full bg-slate-50 border-2 border-slate-100 flex items-center justify-center group-hover:border-emerald-200 group-hover:bg-white transition-all shadow-inner">
+                <Plus size={40} strokeWidth={3} />
               </div>
-              <span className="font-bold text-lg">Crear Nuevo Rol</span>
+              <span className="font-black text-xl uppercase tracking-tighter">Crear Nuevo Rol</span>
             </button>
           </div>
         ) : (
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl flex flex-col overflow-hidden h-full">
-            <div className="p-6 border-b border-wms-border flex justify-between items-start bg-wms-dark/50">
-              <div className="flex items-center gap-4 flex-1">
+          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-[0_30px_100px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden flex-1">
+            <div className="p-10 border-b border-slate-100 flex justify-between items-start bg-slate-50/30">
+              <div className="flex items-center gap-8 flex-1">
                 <button
                   onClick={() => {
                     setSelectedRole(null);
                     setIsEditing(false);
                     setIsCreating(false);
                   }}
-                  className="p-2 hover:bg-wms-dark rounded-lg text-slate-400 hover:text-white transition-all border border-transparent hover:border-wms-border"
+                  className="p-4 bg-white hover:bg-slate-100 rounded-[1.5rem] text-slate-400 hover:text-slate-900 transition-all border border-slate-200 shadow-sm"
                 >
-                  <ArrowLeft size={24} />
+                  <ArrowLeft size={28} />
                 </button>
 
-                <div className="flex-1 mr-8">
+                <div className="flex-1 mr-12">
                   {isEditing ? (
-                    <div className="flex gap-4 items-start">
+                    <div className="flex gap-8 items-start">
                       <div className="flex-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre del Rol</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Nombre del Rol</label>
                         <input
                           type="text"
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
-                          className="w-full text-2xl font-bold text-white bg-transparent border-b-2 border-wms-border focus:border-wms-neon outline-none px-0 py-1 transition-colors disabled:opacity-50"
+                          className="w-full text-3xl font-black text-slate-900 bg-transparent border-b-2 border-slate-200 focus:border-emerald-500 outline-none px-0 py-2 transition-all disabled:opacity-50"
                           placeholder="Nombre del Rol"
                           autoFocus
                         />
                       </div>
                       <div className="flex-[2]">
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Descripción</label>
                         <input
                           type="text"
                           value={selectedRole.descripcion || ''}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
-                          className="w-full text-lg text-slate-300 bg-transparent border-b-2 border-wms-border focus:border-wms-neon outline-none px-0 py-1 transition-colors"
+                          className="w-full text-xl text-slate-600 font-bold bg-transparent border-b-2 border-slate-200 focus:border-emerald-500 outline-none px-0 py-2 transition-all"
                           placeholder="Descripción breve del rol"
                         />
                       </div>
                     </div>
                   ) : (
                     <div>
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-black text-white">{selectedRole.nombre}</h2>
+                      <div className="flex items-center gap-4">
+                        <h2 className="text-4xl font-black text-slate-900 tracking-tight">{selectedRole.nombre}</h2>
                         {selectedRole.id === 'ADMIN' && (
-                          <span className="bg-wms-alert/20 border border-wms-alert/30 text-wms-alert px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                            <Lock size={12} /> Sistema
+                          <span className="bg-orange-50 border border-orange-100 text-orange-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <Lock size={12} strokeWidth={3} /> Sistema
                           </span>
                         )}
                       </div>
-                      <p className="text-slate-400 mt-1 text-lg">{selectedRole.descripcion}</p>
+                      <p className="text-slate-500 mt-2 text-xl font-medium leading-relaxed">{selectedRole.descripcion}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 {isEditing ? (
                   <>
                     <button
@@ -438,14 +317,14 @@ const RolesPage = () => {
                         setIsCreating(false);
                         if (isCreating) setSelectedRole(null);
                       }}
-                      className="px-6 py-2.5 text-slate-400 hover:bg-wms-dark hover:text-white border border-transparent hover:border-wms-border rounded-xl font-bold transition-all"
+                      className="px-8 py-4 text-slate-500 hover:bg-slate-100 rounded-2xl font-black uppercase tracking-widest transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleSaveRole}
                       disabled={saveRoleMutation.isPending}
-                      className="px-6 py-2.5 bg-wms-neon hover:bg-emerald-400 text-wms-dark rounded-xl font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all disabled:opacity-50 disabled:shadow-none"
+                      className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
                     >
                       {saveRoleMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                       {saveRoleMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
@@ -456,29 +335,34 @@ const RolesPage = () => {
                     <button
                       onClick={() => handleDeleteRole(selectedRole.id)}
                       disabled={selectedRole.id === 'ADMIN' || selectedRole.usuarios > 0}
-                      className="p-3 text-slate-500 hover:text-wms-danger hover:bg-wms-danger/10 border border-transparent hover:border-wms-danger/30 rounded-xl transition-all disabled:opacity-20 disabled:hover:border-transparent disabled:hover:bg-transparent"
+                      className="p-4 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 rounded-2xl transition-all disabled:opacity-10 shadow-sm"
                       title="Eliminar Rol"
                     >
-                      <Trash2 size={20} />
+                      <Trash2 size={24} />
                     </button>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-6 py-2.5 bg-wms-neon/10 text-wms-neon hover:bg-wms-neon/20 border border-wms-neon/30 rounded-xl font-bold flex items-center gap-2 transition-colors"
+                      className="px-8 py-4 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 transition-all"
                     >
-                      <Edit size={18} /> Editar Permisos
+                      <Edit size={20} /> Editar Permisos
                     </button>
                   </>
                 )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-wms-dark/30 p-8">
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-12">
               <div className="max-w-7xl mx-auto">
-                <h3 className="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
-                  <Shield size={16} /> Configuración de Accesos por Módulo
-                </h3>
+                <div className="flex items-center justify-between mb-10">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                    <Shield size={20} className="text-emerald-500" /> Configuración de Accesos por Módulo
+                  </h3>
+                  {isEditing && (
+                    <p className="text-xs font-bold text-slate-400 italic">Haz clic en un módulo o permiso para alternar</p>
+                  )}
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {modules.map(module => {
                     const allPerms = module.permissions.map(p => p.id);
                     const enabledCount = allPerms.filter(p => selectedRole.permisos?.includes(p)).length;
@@ -488,19 +372,19 @@ const RolesPage = () => {
                     return (
                       <div
                         key={module.id}
-                        className={`bg-wms-panel/50 backdrop-blur-sm rounded-xl border transition-all ${hasAll ? 'border-wms-neon/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-wms-border'}`}
+                        className={`bg-white rounded-[2.5rem] border transition-all duration-500 ${hasAll ? 'border-emerald-500 shadow-xl shadow-emerald-500/5' : 'border-slate-100 shadow-sm'}`}
                       >
-                        <div className="p-4 border-b border-wms-border flex items-center justify-between bg-wms-panel/80 rounded-t-xl">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${hasAll ? 'bg-wms-neon/20 text-wms-neon border border-wms-neon/30' : isNone ? 'bg-wms-dark text-slate-500 border border-wms-border' : 'bg-wms-alert/20 text-wms-alert border border-wms-alert/30'}`}>
+                        <div className={`p-6 border-b transition-colors rounded-t-[2.5rem] flex items-center justify-between ${hasAll ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-2xl transition-all ${hasAll ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : isNone ? 'bg-white text-slate-300 border border-slate-100' : 'bg-orange-50 text-orange-500 border border-orange-100'}`}>
                               {module.icon}
                             </div>
                             <div>
-                              <h4 className={`font-bold ${hasAll ? 'text-wms-neon' : 'text-slate-200'}`}>
+                              <h4 className={`text-lg font-black tracking-tight ${hasAll ? 'text-emerald-700' : 'text-slate-900'}`}>
                                 {module.label}
                               </h4>
                               {!isEditing && (
-                                <span className="text-xs text-slate-500 font-medium">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${hasAll ? 'text-emerald-500' : 'text-slate-400'}`}>
                                   {enabledCount} de {allPerms.length} activos
                                 </span>
                               )}
@@ -510,36 +394,36 @@ const RolesPage = () => {
                           {isEditing && (
                             <button
                               onClick={() => selectAllModule(module.id)}
-                              className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${hasAll
-                                  ? 'bg-wms-neon/20 text-wms-neon hover:bg-wms-neon/30 border border-wms-neon/30'
-                                  : 'bg-wms-dark text-slate-400 hover:text-white border border-wms-border hover:border-slate-500'
+                              className={`text-[10px] px-4 py-2 rounded-xl font-black uppercase tracking-widest transition-all ${hasAll
+                                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                                  : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
                                 }`}
                             >
-                              {hasAll ? 'Desmarcar Todo' : 'Marcar Todo'}
+                              {hasAll ? 'Ninguno' : 'Todos'}
                             </button>
                           )}
                         </div>
 
-                        <div className="p-4 space-y-3">
+                        <div className="p-6 space-y-3">
                           {module.permissions.map(perm => {
                             const isEnabled = selectedRole.permisos?.includes(perm.id);
                             return (
                               <label
                                 key={perm.id}
-                                className={`flex items-start gap-3 p-2 rounded-lg transition-all ${isEditing
-                                    ? 'cursor-pointer hover:bg-wms-dark/50 active:scale-[0.99]'
+                                className={`flex items-start gap-4 p-3 rounded-2xl transition-all ${isEditing
+                                    ? 'cursor-pointer hover:bg-slate-50 active:scale-[0.98]'
                                     : 'cursor-default opacity-80'
                                   }`}
                                 onClick={() => togglePermission(perm.id)}
                               >
-                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${isEnabled
-                                    ? 'bg-wms-neon border-wms-neon text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.4)]'
-                                    : 'bg-wms-dark border-wms-border'
+                                <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isEnabled
+                                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                    : 'bg-white border-slate-200'
                                   }`}>
-                                  {isEnabled && <Check size={12} strokeWidth={4} />}
+                                  {isEnabled && <Check size={14} strokeWidth={4} />}
                                 </div>
                                 <div>
-                                  <span className={`text-sm block leading-tight ${isEnabled ? 'text-slate-200 font-bold' : 'text-slate-500 font-medium'}`}>
+                                  <span className={`text-sm block leading-tight tracking-tight ${isEnabled ? 'text-slate-900 font-black' : 'text-slate-500 font-bold'}`}>
                                     {perm.label}
                                   </span>
                                 </div>

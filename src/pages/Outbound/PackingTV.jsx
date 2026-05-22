@@ -202,7 +202,7 @@ const PackingTV = () => {
       {/* HEADER: Estilo WMS Clean */}
       <header className="flex justify-between items-center mb-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20">
         <div className="flex items-center gap-6">
-          <div className="bg-indigo-600 p-4 rounded-2xl shadow-lg shadow-indigo-200 text-white transform hover:scale-105 transition-transform">
+          <div className="bg-indigo-600 text-white transform hover:scale-105 transition-transform">
             <Package size={40} strokeWidth={2} />
           </div>
           <div>
@@ -219,7 +219,7 @@ const PackingTV = () => {
         {/* Stats Chips */}
         <div className="flex gap-4">
           <div className="bg-slate-50 px-8 py-3 rounded-2xl border border-slate-200 flex flex-col items-center min-w-[140px]">
-            <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">En Cola</span>
+            <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">En Cola</span>
             <span className="text-4xl font-black text-slate-700">{stats.totalPendiente}</span>
           </div>
           <div className="bg-indigo-50 px-8 py-3 rounded-2xl border border-indigo-100 flex flex-col items-center min-w-[140px]">
@@ -239,7 +239,7 @@ const PackingTV = () => {
             <span className="animate-pulse text-indigo-400">:</span>
             <span>{currentTime.getMinutes().toString().padStart(2, '0')}</span>
           </div>
-          <div className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] text-center mt-1">
+          <div className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] text-center mt-1">
             {currentTime.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
@@ -252,7 +252,7 @@ const PackingTV = () => {
         <div className="col-span-3 flex flex-col bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden anim-column">
           <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
             <h2 className="text-xl font-black text-slate-700 flex items-center gap-3">
-              <Clock className="text-slate-400" size={24} />
+              <Clock className="text-slate-500" size={24} />
               EN COLA
             </h2>
             <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-lg font-bold text-xs">
@@ -262,7 +262,7 @@ const PackingTV = () => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
             {pendientes.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-300">
+              <div className="h-full flex flex-col items-center justify-center text-slate-700">
                 <Package size={64} className="mb-4 opacity-50" />
                 <p className="font-bold opacity-60">Sin pendientes</p>
               </div>

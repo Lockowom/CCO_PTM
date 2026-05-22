@@ -257,18 +257,18 @@ const Entry = () => {
   };
 
   return (
-    <div ref={containerRef} className="space-y-6 min-h-screen bg-wms-dark p-6 text-slate-300 pb-20">
+    <div ref={containerRef} className="space-y-6 min-h-screen bg-slate-50 p-6 text-slate-700 pb-20">
       {/* Header Glassmorphism */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-wms-panel/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-wms-border shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-wms-alert/10 rounded-full blur-3xl"></div>
         
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-wms-dark/80 border border-wms-alert/50 rounded-2xl flex items-center justify-center text-wms-alert shadow-neon-orange">
+          <div className="w-14 h-14 bg-slate-50/80 border border-wms-alert/50 rounded-2xl flex items-center justify-center text-wms-alert shadow-neon-orange">
             <PackagePlus size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-white tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
-            <p className="text-slate-400 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
+            <p className="text-slate-500 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
           </div>
         </div>
         
@@ -281,9 +281,9 @@ const Entry = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Formulario de Ingreso */}
         <div className="xl:col-span-1 space-y-6">
-          <div ref={formRef} className="bg-wms-panel/80 backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-wms-border relative overflow-hidden">
+          <div ref={formRef} className="bg-white backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden">
             
-            <h3 className="font-black text-white text-lg mb-6 flex items-center gap-2">
+            <h3 className="font-black text-slate-900 text-lg mb-6 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-sm font-black shadow-md">1</span>
               DATOS DEL PRODUCTO
             </h3>
@@ -291,14 +291,14 @@ const Entry = () => {
             <form onSubmit={addToQueue} className="space-y-5">
               {/* UBICACION */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Ubicación <span className="text-wms-danger">*</span> (Max 8)
                 </label>
                 <div className="relative group/input">
                   <input 
                     type="text" 
                     name="ubicacion"
-                    className="w-full pl-4 pr-10 py-3.5 bg-wms-dark border border-wms-border rounded-xl text-lg font-mono font-bold text-white focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
+                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
                     placeholder="A-01-01"
                     value={form.ubicacion}
                     onChange={handleInputChange}
@@ -312,7 +312,7 @@ const Entry = () => {
 
               {/* CODIGO */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Código <span className="text-wms-danger">*</span> (Max 12)
                 </label>
                 <div className="relative group/input">
@@ -320,7 +320,7 @@ const Entry = () => {
                     ref={codigoInputRef}
                     type="text" 
                     name="codigo"
-                    className="w-full pl-4 pr-10 py-3.5 bg-wms-dark border border-wms-border rounded-xl text-lg font-mono font-bold text-white focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
+                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
                     placeholder="SKU-123..."
                     value={form.codigo}
                     onChange={handleInputChange}
@@ -337,13 +337,13 @@ const Entry = () => {
 
               {/* DESCRIPCION (AUTO) */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Descripción (Automático)
                 </label>
                 <textarea 
                   name="descripcion"
                   rows="2"
-                  className="desc-field w-full p-3 bg-wms-dark/50 border border-wms-border rounded-xl text-sm font-bold text-slate-300 resize-none focus:outline-none transition-colors"
+                  className="desc-field w-full p-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 resize-none focus:outline-none transition-colors"
                   placeholder="Se llenará automáticamente..."
                   value={form.descripcion}
                   readOnly
@@ -353,14 +353,14 @@ const Entry = () => {
 
               {/* CANTIDAD */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 tracking-wider">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Cantidad Contada <span className="text-wms-danger">*</span>
                 </label>
                 <input 
                   ref={cantidadInputRef}
                   type="number" 
                   name="cantidad"
-                  className="w-full p-3.5 bg-wms-dark border border-wms-border rounded-xl text-xl font-bold text-wms-neon focus:border-wms-neon outline-none transition-all"
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xl font-bold text-wms-neon focus:border-wms-neon outline-none transition-all"
                   placeholder="0"
                   min="0.01"
                   step="0.01"
@@ -371,40 +371,40 @@ const Entry = () => {
               </div>
 
               {/* CAMPOS OPCIONALES */}
-              <div className="pt-4 border-t border-wms-border">
+              <div className="pt-4 border-t border-slate-200">
                 <p className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Detalles Opcionales</p>
                 <div className="grid grid-cols-2 gap-4">
                   {/* SERIE */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
-                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
+                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
                   </div>
                   {/* PARTIDA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Partida</label>
-                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
+                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
                   </div>
                   {/* PIEZA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pieza</label>
-                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Ej: Motor..." />
+                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Ej: Motor..." />
                   </div>
                   {/* VENCIMIENTO */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vencimiento</label>
                     <div className="relative">
-                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none" />
+                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none" />
                     </div>
                   </div>
                   {/* TALLA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Talla</label>
-                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S, M, L..." />
+                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S, M, L..." />
                   </div>
                   {/* COLOR */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color</label>
-                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2.5 bg-wms-dark border border-wms-border rounded-lg text-sm text-white focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Rojo..." />
+                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Rojo..." />
                   </div>
                 </div>
               </div>
@@ -426,10 +426,10 @@ const Entry = () => {
 
         {/* Cola de Registros */}
         <div className="xl:col-span-2 h-full">
-          <div ref={listRef} className="bg-wms-panel/80 backdrop-blur-xl rounded-3xl shadow-xl border border-wms-border flex flex-col h-[800px] relative overflow-hidden">
+          <div ref={listRef} className="bg-white backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
 
-            <div className="p-6 border-b border-wms-border flex justify-between items-center bg-wms-dark/40 sticky top-0 z-20">
-                <h3 className="font-black text-white text-lg flex items-center gap-3">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/40 sticky top-0 z-20">
+                <h3 className="font-black text-slate-900 text-lg flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-sm font-black shadow-md">2</span>
                     COLA DE PROCESAMIENTO
                     <span className="bg-wms-alert/20 text-wms-alert px-3 py-1 rounded-full text-xs font-bold border border-wms-alert/30">{queue.length} ÍTEMS</span>
@@ -443,13 +443,13 @@ const Entry = () => {
                 </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-wms-dark/20">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/20">
                 {queue.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                        <div className="w-24 h-24 rounded-full bg-wms-panel flex items-center justify-center mb-4">
+                        <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mb-4">
                           <Box size={48} className="opacity-20" />
                         </div>
-                        <p className="font-bold text-lg text-white">La cola está vacía</p>
+                        <p className="font-bold text-lg text-slate-900">La cola está vacía</p>
                         <p className="text-sm">Agrega productos usando el formulario</p>
                     </div>
                 ) : (
@@ -457,21 +457,21 @@ const Entry = () => {
                         <div 
                           key={item.id} 
                           ref={el => queueItemsRef.current[index] = el}
-                          className="group bg-wms-dark p-4 rounded-xl border border-wms-border hover:border-wms-alert/50 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden"
+                          className="group bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-wms-alert/50 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden"
                         >
-                            <div className="w-10 h-10 rounded-full bg-wms-panel flex items-center justify-center text-sm font-bold text-slate-400 shrink-0 group-hover:bg-wms-alert/20 group-hover:text-wms-alert transition-colors">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-sm font-bold text-slate-500 shrink-0 group-hover:bg-wms-alert/20 group-hover:text-wms-alert transition-colors">
                                 {queue.length - index}
                             </div>
                             
                             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ubicación</p>
-                                    <p className="font-mono font-bold text-white text-lg group-hover:text-wms-alert transition-colors">{item.ubicacion}</p>
+                                    <p className="font-mono font-bold text-slate-900 text-lg group-hover:text-wms-alert transition-colors">{item.ubicacion}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Código</p>
                                     <p className="font-mono font-bold text-wms-alert text-lg">{item.codigo}</p>
-                                    {item.descripcion && <p className="text-xs text-slate-400 truncate max-w-[150px]">{item.descripcion}</p>}
+                                    {item.descripcion && <p className="text-xs text-slate-500 truncate max-w-[150px]">{item.descripcion}</p>}
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cantidad</p>
@@ -496,7 +496,7 @@ const Entry = () => {
                 )}
             </div>
 
-            <div className="p-6 border-t border-wms-border bg-wms-panel relative z-20">
+            <div className="p-6 border-t border-slate-200 bg-white relative z-20">
                 <button 
                     onClick={handleSync}
                     disabled={queue.length === 0 || syncMutation.isPending}

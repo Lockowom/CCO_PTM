@@ -129,25 +129,25 @@ const Shipping = () => {
   );
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6">
+    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 relative z-10">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Truck className="text-wms-neon" /> Gestión de Despachos
           </h2>
-          <p className="text-slate-400 text-sm">Complete los datos manuales para sincronizar con Excel</p>
+          <p className="text-slate-500 text-sm">Complete los datos manuales para sincronizar con Excel</p>
         </div>
       </div>
 
-      <div className="bg-wms-panel/80 backdrop-blur-xl p-4 rounded-xl shadow-2xl border border-wms-border flex flex-col md:flex-row gap-4 items-center justify-between relative overflow-hidden">
+      <div className="bg-white backdrop-blur-xl p-4 rounded-xl shadow-2xl border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
         <div className="flex gap-3 flex-1 w-full md:w-auto relative z-10">
-            <div className="bg-wms-dark border border-wms-border rounded-lg flex items-center px-3 py-2 flex-1 focus-within:border-wms-neon transition-colors">
-                <Search size={18} className="text-slate-400 mr-2" />
+            <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center px-3 py-2 flex-1 focus-within:border-wms-neon transition-colors">
+                <Search size={18} className="text-slate-500 mr-2" />
                 <input 
                     type="text" 
                     placeholder="Buscar N.V, Cliente..." 
-                    className="bg-transparent outline-none text-sm w-full text-white placeholder:text-slate-500"
+                    className="bg-transparent outline-none text-sm w-full text-slate-900 placeholder:text-slate-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -156,16 +156,16 @@ const Shipping = () => {
         <button 
             onClick={() => refetch()}
             disabled={loading}
-            className="bg-wms-dark border border-wms-border hover:border-wms-neon hover:text-wms-neon text-slate-300 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all relative z-10"
+            className="bg-slate-50 border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all relative z-10"
         >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Actualizar
         </button>
       </div>
 
-      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-xl shadow-2xl border border-wms-border overflow-hidden relative">
+      <div className="bg-white backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200 overflow-hidden relative">
         <div className="overflow-x-auto relative z-10">
             <table className="w-full text-sm text-left">
-                <thead className="bg-wms-dark text-slate-400 uppercase text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                     <tr>
                         <th className="px-4 py-4 font-bold tracking-wider">N.V</th>
                         <th className="px-4 py-4 font-bold tracking-wider">Cliente</th>
@@ -180,9 +180,9 @@ const Shipping = () => {
                 </thead>
                 <tbody className="divide-y divide-wms-border">
                     {filteredDeliveries.map((delivery) => (
-                        <tr key={delivery.id} className="hover:bg-wms-dark/50 transition-colors">
-                            <td className="px-4 py-3 font-black text-white">#{delivery.nv}</td>
-                            <td className="px-4 py-3 font-medium text-slate-300 truncate max-w-[150px]" title={delivery.cliente}>
+                        <tr key={delivery.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-3 font-black text-slate-900">#{delivery.nv}</td>
+                            <td className="px-4 py-3 font-medium text-slate-700 truncate max-w-[150px]" title={delivery.cliente}>
                                 {delivery.cliente}
                             </td>
                             
@@ -190,32 +190,32 @@ const Shipping = () => {
                             {editingId === delivery.id ? (
                                 <>
                                     <td className="px-4 py-3">
-                                        <input type="text" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.facturas} onChange={e => setEditForm({...editForm, facturas: e.target.value})} placeholder="Facturas" />
+                                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.facturas} onChange={e => setEditForm({...editForm, facturas: e.target.value})} placeholder="Facturas" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input type="text" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.guia} onChange={e => setEditForm({...editForm, guia: e.target.value})} placeholder="Guía" />
+                                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.guia} onChange={e => setEditForm({...editForm, guia: e.target.value})} placeholder="Guía" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input type="text" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.empresa_transporte} onChange={e => setEditForm({...editForm, empresa_transporte: e.target.value})} placeholder="Empresa" />
+                                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.empresa_transporte} onChange={e => setEditForm({...editForm, empresa_transporte: e.target.value})} placeholder="Empresa" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input type="text" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.transportista} onChange={e => setEditForm({...editForm, transportista: e.target.value})} placeholder="Chofer" />
+                                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.transportista} onChange={e => setEditForm({...editForm, transportista: e.target.value})} placeholder="Chofer" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input type="number" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.valor_flete} onChange={e => setEditForm({...editForm, valor_flete: e.target.value})} placeholder="$" />
+                                        <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.valor_flete} onChange={e => setEditForm({...editForm, valor_flete: e.target.value})} placeholder="$" />
                                     </td>
                                     <td className="px-4 py-3">
-                                        <input type="text" className="w-full bg-wms-dark border border-wms-border rounded p-1 text-xs text-white focus:border-wms-neon outline-none" value={editForm.num_envio_ot} onChange={e => setEditForm({...editForm, num_envio_ot: e.target.value})} placeholder="OT" />
+                                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.num_envio_ot} onChange={e => setEditForm({...editForm, num_envio_ot: e.target.value})} placeholder="OT" />
                                     </td>
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.facturas || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.guia || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.empresa_transporte || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.transportista || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.valor_flete || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs">{delivery.num_envio_ot || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.facturas || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.guia || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.empresa_transporte || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.transportista || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.valor_flete || '-'}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.num_envio_ot || '-'}</td>
                                 </>
                             )}
 

@@ -154,7 +154,7 @@ const TimeReports = () => {
 
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" />
             <input 
               type="text" 
               placeholder="Buscar por usuario o N.V..." 
@@ -222,7 +222,7 @@ const TimeReports = () => {
                     {new Date(item.created_at).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-800 flex items-center gap-2">
-                    <User size={16} className="text-slate-400" />
+                    <User size={16} className="text-slate-500" />
                     {item.usuario_nombre}
                   </td>
                   <td className="px-6 py-4">

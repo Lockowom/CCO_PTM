@@ -199,50 +199,50 @@ const UsersPage = () => {
   };
 
   const StatCard = ({ icon, label, value, glowColor }) => (
-    <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border relative overflow-hidden group">
+    <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 relative overflow-hidden group">
       <div className={`absolute top-0 right-0 w-24 h-24 bg-${glowColor}-500/10 rounded-full blur-2xl group-hover:bg-${glowColor}-500/20 transition-all`}></div>
       <div className="flex items-center gap-4 relative z-10">
-        <div className={`p-4 rounded-xl bg-slate-900 border border-wms-border text-${glowColor}-400 shadow-sm`}>
+        <div className={`p-4 rounded-xl bg-slate-50 border border-slate-200 text-${glowColor}-400 shadow-sm`}>
           {icon}
         </div>
         <div>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</p>
-          <p className="text-3xl font-black text-white">{value}</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">{label}</p>
+          <p className="text-3xl font-black text-slate-900">{value}</p>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div ref={containerRef} className="space-y-8 bg-wms-dark min-h-[calc(100vh-80px)] p-6 text-slate-300">
+    <div ref={containerRef} className="space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-6 text-slate-700">
       
       {/* Background Decorativo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
-        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/5 blur-[100px] rounded-full"></div>
+        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/10 blur-[100px] rounded-full"></div>
       </div>
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-sm">
               <Users className="text-indigo-400" size={28} />
             </div>
             Control de <span className="text-indigo-400">Accesos</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-2 font-medium">Administración centralizada de usuarios y roles del sistema</p>
+          <p className="text-slate-500 text-sm mt-2 font-medium">Administración centralizada de usuarios y roles del sistema</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => queryClient.invalidateQueries(['admin_users'])}
-            className="p-3 text-slate-400 hover:text-white bg-wms-panel border border-wms-border hover:border-slate-600 rounded-xl transition-all shadow-sm"
+            className="p-3 text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-600 rounded-xl transition-all shadow-sm"
             title="Actualizar lista"
           >
             <RefreshCw size={20} className={loadingUsers ? 'animate-spin text-indigo-400' : ''} />
           </button>
           <button
             onClick={() => handleOpenModal()}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 shadow-md transition-all active:scale-95"
           >
             <UserPlus size={20} />
             Nuevo Usuario
@@ -259,20 +259,20 @@ const UsersPage = () => {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-wms-panel/80 backdrop-blur-xl p-3 rounded-2xl border border-wms-border shadow-2xl flex flex-col md:flex-row gap-3 items-center sticky top-4 z-30">
+      <div className="bg-white backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl flex flex-col md:flex-row gap-3 items-center sticky top-4 z-30">
         <div className="flex-1 relative w-full group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
           <input
             type="text"
             placeholder="Buscar por nombre, email o ID..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all text-white placeholder-slate-500 font-medium"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all text-slate-900 placeholder-slate-500 font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
           <select
-            className="px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-bold text-slate-300 cursor-pointer transition-colors"
+            className="px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-bold text-slate-700 cursor-pointer transition-colors"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
@@ -280,7 +280,7 @@ const UsersPage = () => {
             {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </select>
           <select
-            className="px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-bold text-slate-300 cursor-pointer transition-colors"
+            className="px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-bold text-slate-700 cursor-pointer transition-colors"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -295,38 +295,38 @@ const UsersPage = () => {
       <div className="relative z-10">
         {loadingUsers || loadingRoles ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <div className="w-16 h-16 border-4 border-slate-800 border-t-indigo-500 rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
             <p className="text-slate-500 font-bold animate-pulse">Cargando directorio...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center bg-wms-panel/50 rounded-3xl border-2 border-dashed border-wms-border">
-            <div className="bg-slate-900 p-6 rounded-full mb-4 border border-wms-border">
+          <div className="flex flex-col items-center justify-center py-32 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200">
+            <div className="bg-slate-50 p-6 rounded-full mb-4 border border-slate-200">
               <Search size={48} className="text-slate-500" />
             </div>
-            <h3 className="text-xl font-bold text-white">No se encontraron usuarios</h3>
-            <p className="text-slate-400 mt-1">Intenta ajustar los filtros de búsqueda</p>
+            <h3 className="text-xl font-bold text-slate-900">No se encontraron usuarios</h3>
+            <p className="text-slate-500 mt-1">Intenta ajustar los filtros de búsqueda</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredUsers.map(user => (
-              <div key={user.id} className="group bg-wms-panel/80 backdrop-blur-md rounded-3xl border border-wms-border shadow-sm hover:shadow-2xl hover:border-slate-600 transition-all duration-300 overflow-hidden relative">
+              <div key={user.id} className="group bg-white backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm hover:shadow-2xl hover:border-slate-600 transition-all duration-300 overflow-hidden relative">
                 {/* Background Pattern */}
-                <div className={`h-24 w-full absolute top-0 left-0 transition-colors ${user.activo ? 'bg-gradient-to-b from-indigo-500/10 to-transparent' : 'bg-slate-800'}`}></div>
+                <div className={`h-24 w-full absolute top-0 left-0 transition-colors ${user.activo ? 'bg-gradient-to-b from-indigo-500/10 to-transparent' : 'bg-slate-100'}`}></div>
 
                 <div className="p-6 relative pt-8">
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white border shadow-lg transform group-hover:scale-110 transition-transform duration-300
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-slate-900 border shadow-lg transform group-hover:scale-110 transition-transform duration-300
                       ${user.rol === 'ADMIN' ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]' :
                         user.rol === 'SUPERVISOR' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' :
-                          'bg-indigo-500/20 border-indigo-500/30 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'}`}
+                          'bg-indigo-500/20 border-indigo-500/30 text-indigo-400 shadow-sm'}`}
                     >
                       {user.nombre?.charAt(0).toUpperCase()}
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${user.activo
-                        ? 'bg-wms-neon/10 text-wms-neon border-wms-neon/20 shadow-neon-green'
-                        : 'bg-slate-800 text-slate-500 border-slate-700'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm'
+                        : 'bg-slate-100 text-slate-500 border-slate-200'
                         }`}>
                         {user.activo ? 'Activo' : 'Inactivo'}
                       </span>
@@ -340,10 +340,10 @@ const UsersPage = () => {
                   </div>
 
                   <div className="space-y-1 mb-6">
-                    <h3 className="font-black text-xl text-white leading-tight truncate" title={user.nombre}>
+                    <h3 className="font-black text-xl text-slate-900 leading-tight truncate" title={user.nombre}>
                       {user.nombre}
                     </h3>
-                    <p className="text-sm text-slate-400 truncate font-medium flex items-center gap-1">
+                    <p className="text-sm text-slate-500 truncate font-medium flex items-center gap-1">
                       {user.email}
                     </p>
                   </div>
@@ -355,16 +355,16 @@ const UsersPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-4 border-t border-slate-800">
+                  <div className="flex gap-3 pt-4 border-t border-slate-200">
                     <button
                       onClick={() => handleOpenModal(user)}
-                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                     >
                       <Edit size={16} /> Editar
                     </button>
                     <button
                       onClick={() => handleDelete(user.id)}
-                      className="p-2.5 text-slate-500 bg-slate-900 hover:bg-rose-500/10 border border-slate-700 hover:border-rose-500/30 hover:text-rose-400 rounded-xl transition-colors"
+                      className="p-2.5 text-slate-500 bg-slate-50 hover:bg-rose-500/10 border border-slate-200 hover:border-rose-500/30 hover:text-rose-400 rounded-xl transition-colors"
                       title="Eliminar usuario"
                     >
                       <Trash2 size={18} />
@@ -379,19 +379,19 @@ const UsersPage = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div ref={modalRef} className="bg-wms-panel border border-wms-border rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
+        <div className="fixed inset-0 bg-slate-50/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div ref={modalRef} className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-            <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div className="px-8 py-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <div>
-                <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                   {editingUser ? 'Editar Perfil' : 'Nuevo Usuario'}
                 </h2>
-                <p className="text-slate-400 text-sm font-medium">Configura los datos de acceso</p>
+                <p className="text-slate-500 text-sm font-medium">Configura los datos de acceso</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="bg-slate-800 p-2 rounded-full border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all hover:rotate-90"
+                className="bg-slate-100 p-2 rounded-full border border-slate-200 text-slate-500 hover:text-rose-400 hover:border-rose-400/30 transition-all hover:rotate-90"
               >
                 <X size={20} />
               </button>
@@ -405,7 +405,7 @@ const UsersPage = () => {
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
                     <input
                       type="text" required
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-white placeholder-slate-600"
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="Ej: Juan Pérez"
                       value={formData.nombre}
                       onChange={e => setFormData({ ...formData, nombre: e.target.value })}
@@ -419,7 +419,7 @@ const UsersPage = () => {
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black group-focus-within:text-indigo-400">@</div>
                     <input
                       type="email" required
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-white placeholder-slate-600"
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="usuario@empresa.com"
                       value={formData.email}
                       onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -436,12 +436,12 @@ const UsersPage = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       required={!editingUser} minLength={6}
-                      className="w-full pl-12 pr-12 py-3.5 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-white placeholder-slate-600"
+                      className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       value={formData.password}
                       onChange={e => setFormData({ ...formData, password: e.target.value })}
                       placeholder={editingUser ? "••••••••" : "Mínimo 6 caracteres"}
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 transition-colors">
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
@@ -453,7 +453,7 @@ const UsersPage = () => {
                     <div className="relative">
                       <select
                         required
-                        className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-white appearance-none cursor-pointer"
+                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 appearance-none cursor-pointer"
                         value={formData.rol}
                         onChange={e => setFormData({ ...formData, rol: e.target.value })}
                       >
@@ -471,13 +471,13 @@ const UsersPage = () => {
                     <div
                       onClick={() => setFormData({ ...formData, activo: !formData.activo })}
                       className={`h-[52px] w-full rounded-xl flex items-center px-4 cursor-pointer transition-all border ${formData.activo
-                        ? 'bg-wms-neon/10 border-wms-neon/30' : 'bg-slate-900 border-slate-700'
+                        ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'
                         }`}
                     >
-                      <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.activo ? 'bg-wms-neon' : 'bg-slate-700'}`}>
+                      <div className={`w-12 h-6 rounded-full relative transition-colors ${formData.activo ? 'bg-emerald-500' : 'bg-slate-200'}`}>
                         <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${formData.activo ? 'translate-x-6' : 'translate-x-0'}`}></div>
                       </div>
-                      <span className={`ml-3 font-bold text-sm ${formData.activo ? 'text-wms-neon' : 'text-slate-500'}`}>
+                      <span className={`ml-3 font-bold text-sm ${formData.activo ? 'text-emerald-600' : 'text-slate-500'}`}>
                         {formData.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
@@ -493,7 +493,7 @@ const UsersPage = () => {
                       <label className="text-sm font-bold text-amber-400 block">Delegar Administración</label>
                       <div
                         onClick={() => setFormData(prev => ({ ...prev, es_admin_delegado: !prev.es_admin_delegado }))}
-                        className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.es_admin_delegado ? 'bg-amber-500' : 'bg-slate-700'}`}
+                        className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.es_admin_delegado ? 'bg-amber-500' : 'bg-slate-200'}`}
                       >
                         <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${formData.es_admin_delegado ? 'translate-x-5' : 'translate-x-0'}`}></div>
                       </div>
@@ -503,11 +503,11 @@ const UsersPage = () => {
                 </div>
               </div>
 
-              <div className="pt-6 flex gap-4 border-t border-slate-800">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-bold transition-colors">
+              <div className="pt-6 flex gap-4 border-t border-slate-200">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-bold transition-colors">
                   Cancelar
                 </button>
-                <button type="submit" disabled={saveMutation.isPending} className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all hover:scale-[1.02] disabled:opacity-70 disabled:scale-100">
+                <button type="submit" disabled={saveMutation.isPending} className="flex-[2] py-4 bg-indigo-600 text-white rounded-xl font-black flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] disabled:opacity-70 disabled:scale-100">
                   {saveMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                   {saveMutation.isPending ? 'Guardando...' : 'Confirmar Cambios'}
                 </button>

@@ -77,32 +77,54 @@ const Layout = ({ children }) => {
     };
   }, []);
 
-  // Animate page transitions when route changes
+  // Animaciones Enterprise para transiciones de página
   useGSAP(() => {
-    // Fade out previous content (handled by React rendering), Fade IN new content
+    // Animación de entrada de página
     gsap.fromTo(mainRef.current, 
-      { opacity: 0, y: 15 }, 
-      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", clearProps: 'all' }
+      { opacity: 0, y: 20, filter: "blur(10px)", scale: 0.98 }, 
+      { opacity: 1, y: 0, filter: "blur(0px)", scale: 1, duration: 0.8, ease: "expo.out", clearProps: 'all' }
     );
-  }, [location.pathname]); // Re-run on route change
+
+    // Animación de los orbes del fondo
+    gsap.to(".layout-orb", {
+      x: "random(-100, 100)",
+      y: "random(-50, 50)",
+      duration: "random(15, 25)",
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+      stagger: 2
+    });
+  }, [location.pathname]); 
 
   return (
-    <div className="min-h-screen bg-slate-50 font-poppins flex flex-col overflow-hidden">
-      {/* Top Navbar - El único menú */}
+    <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
+      
+      {/* Background Decorator - Simplificado para Legibilidad */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="layout-orb absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-slate-200/20 blur-[120px] rounded-full"></div>
+        <div className="layout-orb absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-slate-100/30 blur-[120px] rounded-full"></div>
+      </div>
+
+      {/* Top Navigation Bar */}
       <Navbar />
 
-      {/* Main Content */}
-      <main ref={mainRef} className="flex-1 w-full px-4 py-6 lg:px-8 overflow-y-auto relative z-0">
-        <div className="max-w-[1920px] mx-auto w-full h-full pb-20">
-          {children}
-        </div>
-      </main>
+      {/* Main App Shell Container */}
+      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+        
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar relative pt-[100px]">
+          <div ref={mainRef} className="max-w-[1600px] mx-auto w-full min-h-full p-6 lg:p-10 pb-24">
+            {children}
+          </div>
+        </main>
 
-      {/* Widget de Errores */}
-      <ErrorReportWidget />
+        {/* Widget de Errores */}
+        <ErrorReportWidget />
 
-      {/* Toaster de Notificaciones (Sonner) */}
-      <Toaster position="top-right" richColors expand={true} />
+        {/* Toaster de Notificaciones (Sonner) */}
+        <Toaster position="top-right" richColors expand={true} theme="light" />
+      </div>
     </div>
   );
 };

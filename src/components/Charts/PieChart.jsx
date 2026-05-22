@@ -13,7 +13,7 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-800 text-white p-3 rounded-lg shadow-xl border border-slate-700">
+      <div className="bg-white text-slate-900 p-3 rounded-lg shadow-xl border border-slate-300">
         <p className="text-sm font-bold mb-1">{payload[0].name}</p>
         <p className="text-xs font-mono">
           Valor: <span className="font-bold text-indigo-300">{payload[0].value}</span>

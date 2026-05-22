@@ -22,7 +22,7 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-8 max-w-lg w-full shadow-[0_0_30px_rgba(239,68,68,0.1)] relative overflow-hidden">
+          <div className="bg-slate-50 border border-red-500/30 rounded-2xl p-8 max-w-lg w-full shadow-[0_0_30px_rgba(239,68,68,0.1)] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
             
             <div className="flex justify-center mb-6">
@@ -31,12 +31,12 @@ class ErrorBoundary extends Component {
               </div>
             </div>
             
-            <h1 className="text-2xl font-bold text-white text-center mb-2">Error del Sistema</h1>
-            <p className="text-slate-400 text-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">Error del Sistema</h1>
+            <p className="text-slate-500 text-center mb-6">
               Ha ocurrido un fallo crítico en este módulo. El equipo técnico ha sido notificado.
             </p>
             
-            <div className="bg-slate-950 rounded-lg p-4 mb-6 overflow-auto max-h-32 border border-slate-800">
+            <div className="bg-slate-950 rounded-lg p-4 mb-6 overflow-auto max-h-32 border border-slate-200">
               <p className="text-red-400 font-mono text-sm whitespace-pre-wrap">
                 {this.state.error && this.state.error.toString()}
               </p>
@@ -44,7 +44,7 @@ class ErrorBoundary extends Component {
             
             <button
               onClick={() => window.location.href = '/dashboard'}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl font-bold transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-slate-900 py-3 px-4 rounded-xl font-bold transition-colors"
             >
               <RefreshCcw className="w-5 h-5" />
               Reiniciar Módulo

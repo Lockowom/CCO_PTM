@@ -146,7 +146,7 @@ const Cleanup = () => {
         <button
           onClick={handleCleanup}
           disabled={loading || !Object.values(options).some(Boolean)}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-slate-900 font-bold rounded-xl shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2"
         >
           {loading ? <RefreshCw className="animate-spin" /> : <Trash2 />}
           {loading ? 'Eliminando...' : 'Ejecutar Limpieza'}

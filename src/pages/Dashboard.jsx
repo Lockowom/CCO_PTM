@@ -53,42 +53,42 @@ const Sparkline = ({ data, color }) => (
 );
 
 const StatCard = ({ title, value, icon, trend, colorClass, delay, sparklineData, sparklineColor }) => (
-  <div className={`stat-card bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all`}>
+  <div className={`stat-card card p-5 relative overflow-hidden group`}>
     <div className="flex justify-between items-start z-10 relative">
       <div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-slate-800 tracking-tight">{value}</h3>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{title}</p>
+        <h3 className="text-3xl font-black text-slate-900 tracking-tight">{value}</h3>
       </div>
-      <div className={`p-2.5 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
+      <div className={`p-3 rounded-2xl ${colorClass} bg-opacity-10 text-opacity-100 shadow-sm`}>
         {icon}
       </div>
     </div>
-    <div className="mt-3 flex items-center justify-between">
+    <div className="mt-4 flex items-center justify-between">
       {trend && (
         <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${colorClass} bg-opacity-10`}>
+          <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${colorClass} bg-opacity-10`}>
             {trend}
           </span>
-          <span className="text-[10px] text-slate-400 font-medium">vs ayer</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">vs ayer</span>
         </div>
       )}
       {sparklineData && <Sparkline data={sparklineData} color={sparklineColor || "#94a3b8"} />}
     </div>
     {/* Decoración de fondo */}
-    <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500`}>
-      {React.cloneElement(icon, { size: 80 })}
+    <div className={`absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity transform group-hover:scale-110 duration-700`}>
+      {React.cloneElement(icon, { size: 100 })}
     </div>
   </div>
 );
 
 const PipelineStep = ({ label, value, color, icon, isLast }) => (
   <div className="flex-1 flex flex-col items-center relative group">
-    <div className={`w-12 h-12 rounded-2xl ${color} text-white flex items-center justify-center shadow-md mb-3 transform group-hover:scale-110 transition-transform duration-300 z-10`}>
+    <div className={`w-12 h-12 rounded-2xl ${color} text-slate-900 flex items-center justify-center shadow-md mb-3 transform group-hover:scale-110 transition-transform duration-300 z-10`}>
       {icon}
     </div>
     <div className="text-center">
       <span className="block text-xl font-black text-slate-800 leading-none mb-1">{value}</span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{label}</span>
+      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{label}</span>
     </div>
     {!isLast && (
       <div className="hidden md:block absolute top-6 left-1/2 w-full h-[2px] bg-slate-100 -z-0">
@@ -220,14 +220,14 @@ const Dashboard = () => {
     <div ref={dashboardRef} className="flex flex-col gap-4 max-w-[100vw] overflow-x-hidden">
       
       {/* 1. Header Ultra Compacto */}
-      <div className="dash-element flex justify-between items-center bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white">
-            <Activity size={20} />
+      <div className="dash-element flex justify-between items-center card px-6 py-4 mb-2">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-100">
+            <Activity size={22} />
           </div>
           <div>
-            <h1 className="text-lg font-black text-slate-800 leading-tight">Centro de Control</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <h1 className="text-xl font-black text-slate-900 leading-tight tracking-tight">Centro de Control</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
               {lastUpdate.toLocaleDateString()} • {lastUpdate.toLocaleTimeString()}
             </p>
           </div>
@@ -235,20 +235,20 @@ const Dashboard = () => {
         <div className="flex gap-2">
           <button 
             onClick={fetchData} 
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300"
             title="Actualizar datos"
           >
-            <RefreshCw size={18} className="refresh-spin" />
+            <RefreshCw size={20} className="refresh-spin" />
           </button>
         </div>
       </div>
 
       {/* 2. KPIs Críticos (Fila Superior) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <StatCard 
           title="N.V. Totales" 
           value={kpis.total} 
-          icon={<FileText size={20} />} 
+          icon={<FileText size={24} />} 
           colorClass="text-slate-600 bg-slate-500" 
           trend="+5%"
           sparklineData={[{value: 10}, {value: 12}, {value: 8}, {value: 15}, {value: 18}, {value: 14}, {value: kpis.total}]}
@@ -257,7 +257,7 @@ const Dashboard = () => {
         <StatCard 
           title="Pendientes" 
           value={kpis.pendientes} 
-          icon={<Hourglass size={20} />} 
+          icon={<Hourglass size={24} />} 
           colorClass="text-amber-600 bg-amber-500" 
           trend={kpis.pendientes > 10 ? "Atención" : "Normal"}
           sparklineData={[{value: 5}, {value: 8}, {value: 12}, {value: 7}, {value: 10}, {value: 15}, {value: kpis.pendientes}]}
@@ -266,7 +266,7 @@ const Dashboard = () => {
         <StatCard 
           title="En Picking" 
           value={kpis.picking} 
-          icon={<Hand size={20} />} 
+          icon={<Hand size={24} />} 
           colorClass="text-cyan-600 bg-cyan-500" 
           trend="Activo"
           sparklineData={[{value: 2}, {value: 5}, {value: 4}, {value: 8}, {value: 10}, {value: 9}, {value: kpis.picking}]}
@@ -275,7 +275,7 @@ const Dashboard = () => {
         <StatCard 
           title="Quiebres" 
           value={kpis.quiebres} 
-          icon={<AlertTriangle size={20} />} 
+          icon={<AlertTriangle size={24} />} 
           colorClass="text-red-600 bg-red-500" 
           trend={kpis.quiebres > 0 ? "Crítico" : "Ok"}
           sparklineData={[{value: 0}, {value: 1}, {value: 0}, {value: 2}, {value: 1}, {value: 3}, {value: kpis.quiebres}]}
@@ -284,104 +284,104 @@ const Dashboard = () => {
       </div>
 
       {/* 3. Sección Central: Pipeline Visual y Gráfico */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pipeline (2/3 ancho) */}
-        <div className="dash-element lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-700 flex items-center gap-2">
+        <div className="dash-element lg:col-span-2 card p-6 flex flex-col justify-center">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <TrendingUp size={18} className="text-indigo-500" />
               Flujo Operativo
             </h3>
-            <span className="text-xs font-medium text-slate-400">Tiempo Real</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiempo Real</span>
           </div>
           
           {/* GRÁFICO UNIFICADO */}
-          <div className="mb-6">
-             <BarChart data={chartData} dataKey="valor" color="#6366f1" height={200} />
+          <div className="mb-8">
+             <BarChart data={chartData} dataKey="valor" color="#6366f1" height={220} />
           </div>
 
-          <div className="flex flex-wrap md:flex-nowrap justify-between gap-4 px-2">
-            <PipelineStep label="Pendiente" value={kpis.pendientes} color="bg-slate-500" icon={<Hourglass size={20}/>} />
-            <PipelineStep label="Picking" value={kpis.picking} color="bg-cyan-500" icon={<Hand size={20}/>} />
-            <PipelineStep label="Packing" value={kpis.packing} color="bg-indigo-500" icon={<Box size={20}/>} />
-            <PipelineStep label="Despacho" value={kpis.despacho} color="bg-purple-500" icon={<Send size={20}/>} />
-            <PipelineStep label="En Ruta" value={conductores.enRuta} color="bg-emerald-500" icon={<Truck size={20}/>} isLast={true} />
+          <div className="flex flex-wrap md:flex-nowrap justify-between gap-6 px-4">
+            <PipelineStep label="Pendiente" value={kpis.pendientes} color="bg-slate-100 text-slate-600" icon={<Hourglass size={20}/>} />
+            <PipelineStep label="Picking" value={kpis.picking} color="bg-cyan-50 text-cyan-600" icon={<Hand size={20}/>} />
+            <PipelineStep label="Packing" value={kpis.packing} color="bg-indigo-50 text-indigo-600" icon={<Box size={20}/>} />
+            <PipelineStep label="Despacho" value={kpis.despacho} color="bg-purple-50 text-purple-600" icon={<Send size={20}/>} />
+            <PipelineStep label="En Ruta" value={conductores.enRuta} color="bg-emerald-50 text-emerald-600" icon={<Truck size={20}/>} isLast={true} />
           </div>
         </div>
 
         {/* Panel Lateral: Alertas y Resumen (1/3 ancho) */}
-        <div className="dash-element bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-full shadow-sm text-red-500">
-                <RotateCcw size={16} />
+        <div className="dash-element flex flex-col gap-6">
+          <div className="card p-6 flex items-center justify-between group">
+            <div className="flex items-center gap-4">
+              <div className="bg-red-50 p-3 rounded-2xl text-red-500 group-hover:scale-110 transition-transform">
+                <RotateCcw size={20} />
               </div>
               <div>
-                <p className="text-xs font-bold text-red-800 uppercase">Refacturación</p>
-                <p className="text-[10px] text-red-600 font-medium">Requiere acción</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Refacturación</p>
+                <p className="text-sm font-bold text-slate-900">Requiere Acción</p>
               </div>
             </div>
-            <span className="text-2xl font-black text-red-600">{kpis.refacturacion}</span>
+            <span className="text-3xl font-black text-red-500">{kpis.refacturacion}</span>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg flex-1">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-full shadow-sm text-blue-500">
-                <Users size={16} />
+          <div className="card p-6 flex items-center justify-between group flex-1">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50 p-3 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform">
+                <Users size={20} />
               </div>
               <div>
-                <p className="text-xs font-bold text-blue-800 uppercase">Conductores</p>
-                <p className="text-[10px] text-blue-600 font-medium">{conductores.total - conductores.enRuta} disponibles</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Conductores</p>
+                <p className="text-sm font-bold text-slate-900">{conductores.total - conductores.enRuta} Libres</p>
               </div>
             </div>
-            <span className="text-2xl font-black text-blue-600">{conductores.total}</span>
+            <span className="text-3xl font-black text-blue-500">{conductores.total}</span>
           </div>
         </div>
       </div>
 
       {/* 4. Tabla de Actividad Reciente */}
-      <div className="dash-element bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 min-h-[300px]">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <h3 className="font-bold text-slate-700">Últimas Notas de Venta</h3>
-          <div className="flex items-center gap-3">
+      <div className="dash-element card overflow-hidden flex-1 min-h-[400px]">
+        <div className="px-8 py-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Últimas Notas de Venta</h3>
+          <div className="flex items-center gap-4">
             <ExportButton data={recentNV} filename="nv_recientes" />
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+            <button className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-1 transition-colors">
               Ver todas <ChevronRight size={14} />
             </button>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+          <table className="w-full">
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left">N.V.</th>
-                <th className="px-6 py-3 text-left">Cliente</th>
-                <th className="px-6 py-3 text-center">Estado</th>
-                <th className="px-6 py-3 text-right">Cantidad</th>
-                <th className="px-6 py-3 text-center">Acción</th>
+                <th className="px-8 py-4 text-left">N.V.</th>
+                <th className="px-8 py-4 text-left">Cliente</th>
+                <th className="px-8 py-4 text-center">Estado</th>
+                <th className="px-8 py-4 text-right">Cantidad</th>
+                <th className="px-8 py-4 text-center">Acción</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody>
               {recentNV.map((nv, i) => (
-                <tr key={i} className="hover:bg-indigo-50/30 transition-colors">
-                  <td className="px-6 py-3 font-bold text-indigo-600">#{nv.nv}</td>
-                  <td className="px-6 py-3 text-slate-600 font-medium">{nv.cliente}</td>
-                  <td className="px-6 py-3 text-center">
+                <tr key={i} className="hover:bg-orange-50/50 transition-all duration-200 group">
+                  <td className="px-8 py-5 font-black text-indigo-600">#{nv.nv}</td>
+                  <td className="px-8 py-5 text-slate-600 font-bold">{nv.cliente}</td>
+                  <td className="px-8 py-5 text-center">
                     {getEstadoBadge(nv.estado)}
                   </td>
-                  <td className="px-6 py-3 text-right font-mono text-slate-500">
-                    {nv.cantidad} un.
+                  <td className="px-8 py-5 text-right font-mono font-black text-slate-400">
+                    {nv.cantidad} <span className="text-[10px] uppercase">un.</span>
                   </td>
-                  <td className="px-6 py-3 text-center">
-                    <button className="text-slate-400 hover:text-indigo-600 transition-colors">
-                      <ChevronRight size={16} />
+                  <td className="px-8 py-5 text-center">
+                    <button className="p-2 text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all">
+                      <ChevronRight size={18} />
                     </button>
                   </td>
                 </tr>
               ))}
               {recentNV.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">
+                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500 italic">
                     No hay actividad reciente
                   </td>
                 </tr>

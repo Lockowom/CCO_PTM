@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { 
   Search, Barcode, Box, Package, Layers, Scale, MapPin, 
   RefreshCw, Download, ChevronRight, FileSpreadsheet, Activity, X,
-  Command, Filter
+  Command, Filter, Zap, Clock, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery } from '@tanstack/react-query';
-import { useGSAP } from '@gsap/react';
+import { toast } from 'sonner';
 import gsap from 'gsap';
 
 // Componente para resaltar el texto buscado
@@ -17,7 +17,7 @@ const HighlightText = ({ text, highlight }) => {
     <span>
       {parts.map((part, i) => 
         part.toLowerCase() === highlight.toLowerCase() ? (
-          <span key={i} className="bg-orange-500/40 text-orange-200 font-black px-1 rounded-md shadow-[0_0_8px_rgba(249,115,22,0.4)]">{part}</span>
+          <span key={i} className="bg-orange-100 text-orange-600 font-black px-0.5 rounded-sm">{part}</span>
         ) : (
           <span key={i}>{part}</span>
         )
@@ -34,38 +34,98 @@ const Batches = () => {
   const [subFilter, setSubFilter] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  useGSAP(() => {
-    gsap.from(containerRef.current, {
-      y: 30,
-      opacity: 0,
-      duration: 0.6,
-      ease: 'power4.out',
-      clearProps: 'all'
-    });
-  }, { scope: containerRef });
+  // Animación del fondo sutil y elementos decorativos
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Entrada inicial coordinada
+      const tl = gsap.timeline();
+      tl.from(".animate-header", { 
+        y: -50, 
+        opacity: 0, 
+        duration: 1.2, 
+        ease: "expo.out" 
+      })
+      .from(".animate-search", { 
+        scale: 0.9, 
+        opacity: 0, 
+        duration: 1, 
+        ease: "elastic.out(1, 0.75)" 
+      }, "-=0.8")
+      .from(".animate-decor", { 
+        opacity: 0, 
+        duration: 2 
+      }, "-=0.5");
 
-  // Auto-búsqueda con Debounce (600ms)
+      // Orbes flotantes con movimiento orgánico
+      gsap.to(".bg-orb-1", {
+        x: "random(-100, 100)",
+        y: "random(-50, 50)",
+        duration: 20,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+      gsap.to(".bg-orb-2", {
+        x: "random(-100, 100)",
+        y: "random(-50, 50)",
+        duration: 25,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+      gsap.to(".bg-orb-3", {
+        x: "random(-50, 50)",
+        y: "random(-100, 100)",
+        duration: 18,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
+
+  // Animaciones de entrada de resultados
+  useLayoutEffect(() => {
+    if (submittedTerm) {
+      gsap.fromTo(".result-item", 
+        { opacity: 0, y: 20, scale: 0.98 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1, 
+          duration: 0.5, 
+          stagger: 0.04, 
+          ease: "back.out(1.7)",
+          clearProps: "all"
+        }
+      );
+    }
+  }, [submittedTerm, activeTab]);
+
+  // Auto-búsqueda ultra-rápida (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchTerm.trim() && searchTerm.trim().length >= 2) {
         setSubmittedTerm(searchTerm.trim());
+      } else if (!searchTerm.trim()) {
+        setSubmittedTerm('');
       }
-    }, 600);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data, isLoading: loading, isSuccess: searched } = useQuery({
-    queryKey: ['batches_search', submittedTerm],
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['batches_search_v2', submittedTerm],
     queryFn: async () => {
       const term = `%${submittedTerm.trim()}%`;
-      const newData = { partidas: [], series: [], farmapack: [], peso: [] };
+      const newData = { partidas: [], series: [], farmapack: [], pesos: [] };
 
       const searchTable = async (table, cols) => {
         try {
-          let query = supabase.from(table).select('*').limit(3000);
+          let query = supabase.from(table).select('*').limit(1000);
           const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
           query = query.or(orFilter);
-          
           const { data, error } = await query;
           if (error) throw error;
           return data || [];
@@ -76,7 +136,7 @@ const Batches = () => {
       };
 
       const [p, s, f, w] = await Promise.all([
-        searchTable('tms_partidas', ['codigo_producto', 'producto']),
+        searchTable('tms_partidas', ['codigo_producto', 'producto', 'partida']),
         searchTable('tms_series', ['codigo_producto', 'producto', 'serie']),
         searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']),
         searchTable('tms_pesos', ['codigo_producto', 'descripcion'])
@@ -85,26 +145,20 @@ const Batches = () => {
       newData.partidas = p;
       newData.series = s;
       newData.farmapack = f;
-      newData.peso = w;
-
+      newData.pesos = w;
       return newData;
     },
     enabled: !!submittedTerm,
-    onSuccess: (newData) => {
-      if (newData[activeTab]?.length === 0) {
-        const firstWithData = TABS.find(t => newData[t.id]?.length > 0);
-        if (firstWithData) setActiveTab(firstWithData.id);
-      }
-      setSubFilter('');
-    }
   });
 
-  const currentData = data || { partidas: [], series: [], farmapack: [], peso: [] };
+  const currentData = data || { partidas: [], series: [], farmapack: [], pesos: [] };
+  const searched = !!submittedTerm;
 
   const TABS = [
-    { id: 'partidas', label: 'Partidas', icon: Layers, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30', shadow: 'shadow-orange-500/20' },
-    { id: 'series', label: 'Series / SN', icon: Barcode, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', shadow: 'shadow-amber-500/20' },
-    { id: 'farmapack', label: 'Farmapack', icon: Package, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', shadow: 'shadow-emerald-500/20' }
+    { id: 'partidas', label: 'Partidas / Lotes', icon: Layers, color: 'orange' },
+    { id: 'series', label: 'Series / SN', icon: Barcode, color: 'amber' },
+    { id: 'farmapack', label: 'Farmapack', icon: Package, color: 'emerald' },
+    { id: 'pesos', label: 'Pesos / Cubicaje', icon: Scale, color: 'blue' }
   ];
 
   const handleSearch = (e) => {
@@ -124,42 +178,37 @@ const Batches = () => {
     if (!activeData || activeData.length === 0) return;
 
     const columns = TABLE_CONFIG[activeTab];
-    const headers = columns.map(c => c.header).filter(h => h !== 'Acciones');
+    const headers = columns.map(c => c.header);
     
     const csvContent = [
       headers.join(';'),
       ...activeData.map(row => {
-        return columns
-          .filter(c => c.header !== 'Acciones')
-          .map(col => {
-            let val = row[col.accessor] || '';
-            if (col.accessor.includes('codigo') || col.accessor === 'serie' || col.accessor === 'lote' || col.accessor === 'partida') {
-              return `="${val}"`;
-            }
-            return `"${String(val).replace(/"/g, '""')}"`;
-          }).join(';');
+        return columns.map(col => {
+          let val = row[col.accessor] || '';
+          return `="${String(val).replace(/"/g, '""')}"`;
+        }).join(';');
       })
     ].join('\n');
 
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Consulta_${activeTab.toUpperCase()}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `Reporte_${activeTab.toUpperCase()}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
   const StatusBadge = ({ status }) => {
-    if (!status) return <span className="text-slate-400">-</span>;
+    if (!status) return <span className="text-slate-500">-</span>;
     const s = status.toUpperCase();
-    let color = 'bg-slate-800 text-slate-300 border-slate-600';
+    let color = 'bg-slate-100 text-slate-700 border-slate-300';
     
-    if (['DISPONIBLE', 'EN_BODEGA', 'ACTIVO'].includes(s)) color = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
-    else if (['DESPACHADO', 'ENTREGADO'].includes(s)) color = 'bg-blue-500/10 text-blue-400 border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]';
-    else if (['RESERVA', 'TRANSITO', 'PENDIENTE'].includes(s)) color = 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
-    else if (['CUARENTENA', 'BLOQUEADO', 'MERMA'].includes(s)) color = 'bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]';
+    if (['DISPONIBLE', 'EN_BODEGA', 'ACTIVO'].includes(s)) color = 'bg-emerald-100 text-emerald-900 border-emerald-200';
+    else if (['DESPACHADO', 'ENTREGADO'].includes(s)) color = 'bg-blue-100 text-blue-900 border-blue-200';
+    else if (['RESERVA', 'TRANSITO', 'PENDIENTE'].includes(s)) color = 'bg-amber-100 text-amber-900 border-amber-200';
+    else if (['CUARENTENA', 'BLOQUEADO', 'MERMA'].includes(s)) color = 'bg-rose-100 text-rose-900 border-rose-200';
 
     return (
-      <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${color}`}>
+      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border whitespace-nowrap shadow-sm ${color}`}>
         {status}
       </span>
     );
@@ -167,335 +216,247 @@ const Batches = () => {
 
   const TABLE_CONFIG = {
     partidas: [
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-bold text-slate-300"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-white"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
-      { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono text-xs bg-slate-800/80 px-2 py-1 rounded-md text-slate-300 border border-slate-700 shadow-inner">{r.partida}</span> },
-      { header: 'Vencimiento', accessor: 'fecha_vencimiento', render: r => r.fecha_vencimiento ? <span className="text-slate-400">{new Date(r.fecha_vencimiento).toLocaleDateString()}</span> : <span className="text-slate-500">-</span> },
-      { header: 'Stock Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-400 text-base drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]">{r.disponible}</span> },
-      { header: 'Reserva', accessor: 'reserva', render: r => <span className="text-amber-400 font-medium">{r.reserva || 0}</span> },
-      { header: 'Total', accessor: 'stock_total', render: r => <span className="font-bold text-white">{r.stock_total || r.cantidad_inicial}</span> },
+      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
+      { header: 'Partida / Lote', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-200 px-3 py-1.5 rounded-lg text-slate-900 border border-slate-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
+      { header: 'Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
+      { header: 'Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total || r.cantidad_inicial}</span> },
       { header: 'Estado', accessor: 'estado', render: r => <StatusBadge status={r.estado} /> }
     ],
     series: [
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-bold text-slate-300"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-white"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
-      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/30"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
+      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
+      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-amber-100 px-3 py-1.5 rounded-lg text-amber-900 border border-amber-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
       { header: 'Estado', accessor: 'estado', render: r => <StatusBadge status={r.estado} /> }
     ],
     farmapack: [
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-bold text-slate-300"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-white"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
-      { header: 'Lote', accessor: 'lote', render: r => <span className="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/30"><HighlightText text={r.lote} highlight={submittedTerm} /></span> },
-      { header: 'Vencimiento', accessor: 'fecha_vencimiento', render: r => r.fecha_vencimiento ? <span className="text-slate-400 font-medium">{new Date(r.fecha_vencimiento).toLocaleDateString()}</span> : '-' },
-      { header: 'Stock Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-400 text-base drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]">{r.disponible}</span> },
-      { header: 'Total', accessor: 'stock_total', render: r => <span className="font-bold text-white">{r.stock_total}</span> }
+      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
+      { header: 'Lote', accessor: 'lote', render: r => <span className="font-mono text-[11px] font-black bg-emerald-100 px-3 py-1.5 rounded-lg text-emerald-900 border border-emerald-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.lote} highlight={submittedTerm} /></span> },
+      { header: 'Vencimiento', accessor: 'fecha_vencimiento', render: r => <span className="text-xs font-black text-slate-700 whitespace-nowrap">{r.fecha_vencimiento || '-'}</span> },
+      { header: 'Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
+      { header: 'Estado', accessor: 'estado', render: r => <StatusBadge status={r.estado} /> }
+    ],
+    pesos: [
+      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.descripcion} highlight={submittedTerm} /></span> },
+      { header: 'Peso (kg)', accessor: 'peso_unitario', render: r => <div className="flex items-center gap-2 font-black text-blue-900 bg-blue-100/50 px-3 py-1.5 rounded-lg border border-blue-200 text-sm w-fit whitespace-nowrap"><Scale size={14}/>{r.peso_unitario}</div> },
+      { header: 'Dimensiones', render: r => <span className="text-[11px] font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 whitespace-nowrap">{r.largo}x{r.ancho}x{r.alto} cm</span> },
+      { header: 'Actualizado', accessor: 'updated_at', render: r => <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 whitespace-nowrap"><Clock size={12}/>{r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '-'}</div> }
     ]
   };
 
-  const ResultTable = ({ columns, rows }) => {
-    const filteredRows = React.useMemo(() => {
-      if (!subFilter.trim()) return rows;
-      const lowerFilter = subFilter.toLowerCase().trim();
-      return rows.filter(row => {
-        return columns.some(col => {
-          const val = row[col.accessor];
-          return val && String(val).toLowerCase().includes(lowerFilter);
-        });
-      });
-    }, [rows, subFilter, columns]);
-
-    if (rows.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center bg-wms-panel/40 backdrop-blur-md rounded-2xl border border-wms-border border-dashed shadow-inner">
-          <div className="bg-slate-800/80 p-5 rounded-2xl mb-5 shadow-lg border border-slate-700">
-            <Search size={40} className="text-slate-500" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">No se encontraron registros</h3>
-          <p className="text-slate-400 max-w-sm text-sm">El término <span className="text-orange-400 font-mono">"{submittedTerm}"</span> no produjo resultados en esta pestaña. Intenta con otro código o verifica las demás categorías.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl border border-wms-border shadow-2xl overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-900/90 border-b border-wms-border">
-                {columns.map((col, i) => (
-                  <th key={i} className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                    {col.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-wms-border">
-              {filteredRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/60 transition-colors group">
-                  {columns.map((col, cIdx) => (
-                    <td key={cIdx} className="px-6 py-4 whitespace-nowrap">
-                      {col.render ? col.render(row) : <span className="text-slate-300 text-sm">{row[col.accessor] || '-'}</span>}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div ref={containerRef} className="min-h-screen bg-wms-dark flex flex-col font-sans relative overflow-hidden text-slate-300">
+    <div ref={containerRef} className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-900 selection:bg-orange-200 selection:text-orange-900">
       
-      {/* Background Decorativo Inmersivo */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
-        <div className={`absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/10 blur-[120px] rounded-full transition-opacity duration-1000 ${isFocused ? 'opacity-100' : 'opacity-50'}`}></div>
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-500/10 blur-[120px] rounded-full transition-opacity duration-1000 ${isFocused ? 'opacity-100' : 'opacity-50'}`}></div>
+      {/* BACKGROUND ELEMENTS - Simplificados para Legibilidad */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="bg-orb-1 absolute top-[-15%] right-[-5%] w-[45%] h-[45%] bg-slate-200/30 blur-[130px] rounded-full" />
+        <div className="bg-orb-2 absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-slate-100/40 blur-[160px] rounded-full" />
       </div>
 
-      {/* HEADER & OMNI-SEARCH BAR */}
-      <div className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-10 ${searched || loading ? 'py-4 bg-wms-panel/90 backdrop-blur-2xl border-b border-wms-border shadow-2xl sticky top-0' : 'flex-1 flex flex-col items-center justify-center px-4 -mt-20'}`}>
-        <div className={`w-full mx-auto ${searched || loading ? 'max-w-[1600px] px-6 flex flex-col md:flex-row items-center gap-6' : 'max-w-4xl'}`}>
-          
-          {!searched && !loading && (
-            <div className="text-center mb-12 animate-in slide-in-from-bottom-8 fade-in duration-700">
-              <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-gradient-to-br from-wms-panel to-slate-900 border border-wms-border shadow-[0_0_30px_rgba(249,115,22,0.2)] mb-8 transform hover:scale-105 transition-transform">
-                <Command size={48} className="text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]" strokeWidth={1.5} />
-              </div>
-              <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4 leading-tight">
-                Motor de Búsqueda <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">Global</span>
-              </h1>
-              <p className="text-lg text-slate-400 font-medium max-w-2xl mx-auto">
-                Escribe cualquier código, lote, serie o descripción. El sistema filtrará instantáneamente en todas las bases de datos.
-              </p>
-            </div>
-          )}
-
-          {(searched || loading) && (
-            <div className="hidden lg:flex items-center gap-4 min-w-max group cursor-pointer bg-slate-900/50 p-2 pr-6 rounded-2xl border border-wms-border hover:border-orange-500/50 transition-colors" onClick={handleClear}>
-              <div className="p-2.5 bg-wms-dark border border-wms-border rounded-xl text-orange-400 shadow-sm group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all">
-                <Command size={20} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Buscador</p>
-                <h1 className="text-sm font-black text-white leading-none group-hover:text-orange-400 transition-colors">Lotes & Series</h1>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSearch} className={`relative group w-full ${searched || loading ? 'max-w-3xl' : 'animate-in slide-in-from-bottom-10 fade-in duration-700 delay-100'}`}>
-            <div className="relative flex items-center">
-              <Search className={`absolute left-6 transition-all duration-500 z-10 ${isFocused ? 'text-orange-400 scale-110 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]' : (searched || loading ? 'text-slate-400' : 'text-orange-400/70')}`} size={searched || loading ? 20 : 28} />
-              
-              <input
-                type="text"
-                placeholder="Escanea o escribe Código, Lote, Serie..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                className={`w-full bg-slate-900/60 backdrop-blur-md border-2 outline-none transition-all duration-500 font-mono uppercase text-white placeholder:text-slate-500 placeholder:font-sans placeholder:normal-case placeholder:tracking-normal tracking-wider
-                  ${searched || loading 
-                    ? 'pl-14 pr-14 py-3.5 rounded-2xl border-wms-border focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-base shadow-sm' 
-                    : 'pl-16 pr-16 py-7 rounded-[2rem] border-wms-border focus:border-orange-500 focus:ring-[8px] focus:ring-orange-500/15 text-2xl shadow-2xl focus:bg-slate-900/90'
-                  }`}
-                autoFocus
-              />
-
-              {/* Botón de limpiar dentro del input */}
-              {searchTerm && (
-                <button 
-                  type="button"
-                  onClick={handleClear}
-                  className={`absolute transition-all duration-300 hover:scale-110 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full p-1.5
-                    ${searched || loading ? 'right-4' : 'right-6'}
-                  `}
-                >
-                  <X size={searched || loading ? 16 : 20} />
-                </button>
-              )}
-            </div>
+      <div className="relative z-10">
+        {/* HEADER & SEARCH */}
+        <div className={`transition-all duration-700 ease-in-out relative z-20 ${searched || loading ? 'bg-white/80 backdrop-blur-2xl border-b border-slate-200 shadow-sm sticky top-0' : 'flex flex-col items-center justify-center pt-32 pb-16 px-4'}`}>
+          <div className={`w-full mx-auto transition-all duration-700 ${searched || loading ? 'max-w-7xl px-8 py-4' : 'max-w-4xl'}`}>
             
             {!searched && !loading && (
-              <div className="absolute -bottom-8 left-0 right-0 text-center">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-                  Búsqueda automática activada
-                </p>
+              <div className="text-center mb-12 animate-header">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-orange-500/5 mb-8 transform hover:scale-110 hover:rotate-3 transition-all duration-500">
+                  <Barcode size={40} className="text-orange-500" strokeWidth={1.5} />
+                </div>
+                <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 leading-tight">
+                  Partidas & <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 animate-pulse">Series</span>
+                </h1>
+                <p className="text-slate-400 font-bold uppercase tracking-[0.4em] text-xs opacity-60">Inventory Traceability System</p>
               </div>
             )}
-          </form>
-        </div>
-      </div>
 
-      {/* RESULTADOS */}
-      {(searched || loading) && (
-        <div className="flex-1 w-full max-w-[1600px] mx-auto p-6 animate-in fade-in duration-500">
-          
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-6">
-              <div className="relative w-20 h-20">
-                <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Command size={24} className="text-orange-400 animate-pulse" />
-                </div>
-              </div>
-              <p className="text-orange-400 font-bold tracking-widest uppercase text-sm animate-pulse">Escaneando Red...</p>
-            </div>
-          ) : (
-            <>
-              {/* HEADER DE PRODUCTO Y PESOS */}
-              {currentData.peso && currentData.peso.length > 0 && (
-                <div className="bg-gradient-to-br from-wms-panel/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-wms-border shadow-2xl p-6 mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 relative overflow-hidden group">
-                  
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-colors duration-700"></div>
-
-                  <div className="flex items-start gap-5 relative z-10">
-                    <div className="p-4 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-2xl shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                      <Box size={32} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Ficha Técnica Principal</p>
-                      <h3 className="text-2xl font-black text-white leading-tight mb-1">{currentData.peso[0].descripcion}</h3>
-                      <p className="text-sm font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit">
-                        {currentData.peso[0].codigo_producto}
-                      </p>
-                    </div>
+            <div className={`flex flex-col animate-search ${searched || loading ? 'md:flex-row gap-6 items-center' : 'gap-8'}`}>
+              
+              {(searched || loading) && (
+                <div className="hidden md:flex items-center gap-4 cursor-pointer group px-4 py-2 rounded-2xl hover:bg-slate-50 transition-all duration-300" onClick={handleClear}>
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform duration-300">
+                    <Barcode size={22} />
                   </div>
-                  
-                  <div className="flex flex-wrap items-center gap-8 bg-slate-950/50 p-5 rounded-2xl border border-slate-800/50 relative z-10">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Peso Unitario</span>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
-                          <Scale size={18} />
-                        </div>
-                        <span className="text-2xl font-black text-white">{currentData.peso[0].peso_unitario} <span className="text-sm font-medium text-slate-500">Kg</span></span>
-                      </div>
-                    </div>
-                    
-                    <div className="w-px h-12 bg-wms-border hidden md:block"></div>
-                    
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Dimensiones (L x A x A)</span>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                          <Package size={18} />
-                        </div>
-                        <span className="text-xl font-bold text-white">
-                          {currentData.peso[0].largo || 0} <span className="text-slate-500 font-medium text-sm mx-1">x</span> {currentData.peso[0].ancho || 0} <span className="text-slate-500 font-medium text-sm mx-1">x</span> {currentData.peso[0].alto || 0} <span className="text-sm font-medium text-slate-500 ml-1">cm</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <button 
-                      onClick={() => window.location.href = `/inbound/cubing?code=${currentData.peso[0].codigo_producto}`} 
-                      className="ml-auto bg-wms-dark hover:bg-slate-800 border border-wms-border hover:border-orange-500/50 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]"
-                    >
-                      Editar Ficha
-                      <ChevronRight size={16} className="text-orange-400" />
-                    </button>
+                  <div>
+                    <h1 className="text-base font-black text-slate-900 leading-none mb-1">Stock Control</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Partidas / Series</p>
                   </div>
                 </div>
               )}
 
-              {/* KPI Cards / Tabs */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                {TABS.map(tab => {
-                  const count = currentData[tab.id]?.length || 0;
-                  const isActive = activeTab === tab.id;
-                  const Icon = tab.icon;
+              <form onSubmit={handleSearch} className={`relative group w-full ${searched || loading ? 'flex-1' : ''}`}>
+                {/* Search Aura */}
+                <div className={`absolute -inset-2 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-[3rem] blur-2xl transition-all duration-700 opacity-0 ${isFocused ? 'opacity-100 scale-105' : 'group-hover:opacity-40'}`} />
+                
+                <div className="relative flex items-center">
+                  <Search className={`absolute left-6 transition-all duration-500 z-10 ${loading ? 'animate-pulse text-orange-500' : isFocused ? 'text-orange-500 scale-110' : 'text-slate-400'}`} size={searched || loading ? 22 : 28} />
+                  <input
+                    type="text"
+                    placeholder="Escribe Código, Lote, Serie..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    className={`w-full bg-white/90 backdrop-blur-md outline-none transition-all duration-500 font-mono uppercase text-slate-900 placeholder:text-slate-300 placeholder:font-sans placeholder:normal-case
+                      ${searched || loading 
+                        ? 'pl-16 pr-14 py-4 rounded-2xl border border-slate-200 focus:border-orange-500 focus:ring-8 focus:ring-orange-500/5 shadow-sm text-sm' 
+                        : 'pl-20 pr-20 py-7 rounded-[2.5rem] border-2 border-slate-100 focus:border-orange-500 focus:ring-[12px] focus:ring-orange-500/5 text-2xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.1)]'
+                      }`}
+                    autoFocus
+                  />
+                  {searchTerm && (
+                    <button type="button" onClick={handleClear} className="absolute right-6 text-slate-300 hover:text-rose-500 p-2 rounded-xl transition-all hover:scale-110 active:scale-95">
+                      <X size={searched || loading ? 18 : 24} />
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
 
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`relative flex flex-col items-start p-6 rounded-3xl border-2 transition-all duration-500 text-left overflow-hidden group
-                        ${isActive 
-                          ? `${tab.border} ${tab.bg} ${tab.shadow} scale-[1.02] shadow-2xl` 
-                          : 'border-wms-border bg-wms-panel/40 hover:border-slate-600 hover:bg-wms-panel'
-                        }`}
-                    >
-                      <div className="flex items-center justify-between w-full mb-4 relative z-10">
-                        <div className={`p-3 rounded-2xl border transition-colors duration-500 ${isActive ? tab.border : 'border-slate-700'} ${isActive ? tab.bg : 'bg-slate-800/50 group-hover:bg-slate-800'}`}>
-                          <Icon size={24} className={isActive ? tab.color : 'text-slate-400 group-hover:text-slate-300'} />
+        {/* RESULTS SECTION */}
+        {(searched || loading) && (
+          <div className="max-w-7xl mx-auto px-8 py-10">
+            
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <RefreshCw className="animate-spin text-orange-500" size={32} />
+                <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Buscando registros...</p>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                
+                {/* TABS / KPI CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {TABS.map(tab => {
+                    const count = currentData[tab.id]?.length || 0;
+                    const isActive = activeTab === tab.id;
+                    const Icon = tab.icon;
+
+                    const colors = {
+                      orange: 'border-orange-500 shadow-orange-500/10 bg-orange-500 text-orange-500',
+                      amber: 'border-amber-500 shadow-amber-500/10 bg-amber-500 text-amber-500',
+                      emerald: 'border-emerald-500 shadow-emerald-500/10 bg-emerald-500 text-emerald-500',
+                      blue: 'border-blue-500 shadow-blue-500/10 bg-blue-500 text-blue-500'
+                    };
+
+                    const activeColors = colors[tab.color] || colors.orange;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`group relative flex items-center p-8 rounded-[2.5rem] border transition-all duration-700 text-left overflow-hidden hover:-translate-y-1 active:scale-[0.98]
+                          ${isActive 
+                            ? `bg-white ${activeColors.split(' ')[0]} shadow-[0_25px_60px_-15px_rgba(0,0,0,0.1)] ${activeColors.split(' ')[1]}` 
+                            : 'bg-white/60 backdrop-blur-md border-white/40 hover:bg-white hover:border-slate-300 hover:shadow-2xl'
+                          }`}
+                      >
+                        {/* Tab Glow */}
+                        {isActive && (
+                          <div className={`absolute -inset-4 opacity-20 blur-2xl ${activeColors.split(' ')[2]}`} />
+                        )}
+
+                        <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-700 group-hover:rotate-[5deg] ${isActive ? `${activeColors.split(' ')[2]} text-white shadow-xl ${activeColors.split(' ')[1].replace('10', '40')}` : 'bg-slate-100 text-slate-400 group-hover:text-slate-600'}`}>
+                          <Icon size={28} className={isActive ? 'animate-[pulse_2s_infinite]' : ''} />
+                        </div>
+                        <div className="relative ml-6 flex-1">
+                          <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1.5 transition-colors duration-500 ${isActive ? activeColors.split(' ')[3] : 'text-slate-400'}`}>{tab.label}</p>
+                          <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500 origin-left">{count}</p>
                         </div>
                         {isActive && (
-                          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${tab.bg} border ${tab.border}`}>
-                            <div className={`w-2 h-2 rounded-full ${tab.color.replace('text-', 'bg-')} animate-pulse`} />
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${tab.color}`}>Activo</span>
+                          <div className={`relative flex items-center justify-center w-8 h-8`}>
+                            <div className={`absolute w-full h-full rounded-full animate-ping opacity-20 ${activeColors.split(' ')[2]}`} />
+                            <div className={`w-2 h-2 rounded-full ${activeColors.split(' ')[2]}`} />
                           </div>
                         )}
-                      </div>
-                      
-                      <span className="text-sm font-bold text-slate-400 mb-1 relative z-10 group-hover:text-slate-300 transition-colors">{tab.label}</span>
-                      <span className={`text-4xl font-black font-mono tracking-tight relative z-10 transition-colors duration-500 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`}>
-                        {count}
-                      </span>
-                      
-                      {/* Gran icono de fondo */}
-                      <div className={`absolute -right-8 -bottom-8 opacity-5 transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-12 ${isActive ? tab.color : 'text-slate-500'}`}>
-                        <Icon size={140} />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Toolbar de Tabla */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-wms-panel/30 p-4 rounded-2xl border border-wms-border">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${TABS.find(t => t.id === activeTab)?.bg} ${TABS.find(t => t.id === activeTab)?.color}`}>
-                    {React.createElement(TABS.find(t => t.id === activeTab)?.icon || Layers, { size: 20 })}
-                  </div>
-                  <h2 className="text-xl font-black text-white flex items-center gap-3">
-                    Resultados de {TABS.find(t => t.id === activeTab)?.label}
-                    <span className="text-xs font-bold text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700 shadow-inner">
-                      {currentData[activeTab]?.length || 0} registros
-                    </span>
-                  </h2>
+                      </button>
+                    );
+                  })}
                 </div>
-                
-                {currentData[activeTab]?.length > 0 && (
-                  <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-72 group">
-                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={16} />
-                      <input
-                        type="text"
-                        placeholder="Filtrar en esta tabla..."
-                        value={subFilter}
-                        onChange={(e) => setSubFilter(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all placeholder:text-slate-600 text-white shadow-inner"
-                      />
-                      {subFilter && (
-                        <button 
-                          onClick={() => setSubFilter('')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1 rounded-md transition-colors"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
+
+                {/* TABLE TOOLBAR */}
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-white/70 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/40 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
+                      <Zap size={22} className="animate-pulse" />
                     </div>
-                    
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900 leading-none mb-1.5">Resultados Activos</h2>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Quantum Search Engine v2</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-80 group">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                      <div className="relative">
+                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
+                        <input
+                          type="text"
+                          placeholder="Filtrar en esta tabla..."
+                          value={subFilter}
+                          onChange={(e) => setSubFilter(e.target.value)}
+                          className="w-full pl-12 pr-10 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-orange-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
                     <button 
                       onClick={handleExport}
-                      className="flex items-center gap-2 text-sm font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-5 py-2.5 rounded-xl transition-all shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:-translate-y-0.5 whitespace-nowrap"
+                      className="group bg-slate-900 text-white hover:bg-orange-600 px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-all shadow-2xl hover:-translate-y-1 active:scale-95 active:translate-y-0"
                     >
-                      <FileSpreadsheet size={18} />
-                      Exportar CSV
+                      <Download size={20} className="group-hover:bounce" />
+                      <span className="hidden sm:inline">Exportar</span>
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Tabla */}
-              <ResultTable columns={TABLE_CONFIG[activeTab]} rows={currentData[activeTab] || []} />
-            </>
-          )}
-        </div>
-      )}
+                {/* TABLE CONTAINER */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                      <thead>
+                        <tr className="bg-slate-100 border-b-2 border-slate-200">
+                          {TABLE_CONFIG[activeTab].map((col, i) => (
+                            <th key={i} className="px-8 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest">
+                              {col.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {(subFilter ? currentData[activeTab].filter(row => 
+                          TABLE_CONFIG[activeTab].some(col => String(row[col.accessor] || '').toLowerCase().includes(subFilter.toLowerCase()))
+                        ) : currentData[activeTab]).map((row, idx) => (
+                          <tr key={idx} className="result-item hover:bg-slate-50/50 transition-colors group">
+                            {TABLE_CONFIG[activeTab].map((col, cIdx) => (
+                              <td key={cIdx} className="px-8 py-6">
+                                {col.render ? col.render(row) : <span className="text-slate-600 font-bold text-sm">{row[col.accessor] || '-'}</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {(!currentData[activeTab] || currentData[activeTab].length === 0) && (
+                    <div className="py-20 flex flex-col items-center justify-center text-center">
+                      <div className="bg-slate-50 p-6 rounded-full mb-4">
+                        <Search size={40} className="text-slate-200" />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 mb-2">No se encontraron registros</h3>
+                      <p className="text-slate-400 font-bold max-w-sm">Intenta con otro código o verifica la otra pestaña.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

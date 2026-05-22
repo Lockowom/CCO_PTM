@@ -12,11 +12,18 @@ export default {
         sans: ['Inter', 'sans-serif'], // Inter como fuente por defecto para la UI
         mono: ['JetBrains Mono', 'monospace'], // JetBrains para números y SKUs
         poppins: ['Poppins', 'sans-serif'],
+        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
       },
       colors: {
         primary: '#f97316',
         secondary: '#0f172a',
-        wms: tokens.colors.wms
+        wms: {
+          void: 'var(--color-void)',
+          base: 'var(--color-base)',
+          elevated: 'var(--color-elevated)',
+          surface: 'var(--color-surface)',
+          accent: 'var(--color-accent)',
+        }
       },
       spacing: tokens.spacing,
       boxShadow: {

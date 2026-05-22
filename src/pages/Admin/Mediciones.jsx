@@ -231,7 +231,7 @@ const Mediciones = () => {
       <div className="flex justify-between items-end">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">
-            <Timer className="text-white" size={24} />
+            <Timer className="text-slate-900" size={24} />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Mediciones de Tiempo</h2>
@@ -241,14 +241,14 @@ const Mediciones = () => {
         <div className="flex gap-3">
           <button 
             onClick={exportCSV}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
           >
             <Download size={16} /> Exportar
           </button>
           <button 
             onClick={fetchData}
             disabled={loading}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 text-slate-900 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -258,7 +258,7 @@ const Mediciones = () => {
       {/* Stats generales */}
       <div className="grid grid-cols-5 gap-4">
         <div className="bg-white rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase mb-2">
+          <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase mb-2">
             <BarChart3 size={14} /> Total
           </div>
           <p className="text-2xl font-bold text-slate-800">{stats.totalMediciones}</p>
@@ -339,7 +339,7 @@ const Mediciones = () => {
             <tbody className="divide-y divide-slate-100">
               {resumenUsuarios.length === 0 ? (
                 <tr>
-                  <td colSpan="12" className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan="12" className="px-4 py-8 text-center text-slate-500">
                     No hay datos de mediciones
                   </td>
                 </tr>
@@ -370,7 +370,7 @@ const Mediciones = () => {
 
                       {/* Errores */}
                       <td className="px-2 py-3 text-center text-xs text-rose-500 font-bold bg-rose-50">{u.errores || 0}</td>
-                      <td className="px-2 py-3 text-center text-xs text-slate-400">{(u.errores / (u.picking.cantidad || 1) * 100).toFixed(1)}%</td>
+                      <td className="px-2 py-3 text-center text-xs text-slate-500">{(u.errores / (u.picking.cantidad || 1) * 100).toFixed(1)}%</td>
                       
                       {/* Total */}
                       <td className="px-2 py-3 text-center font-bold text-slate-800">{u.total.cantidad}</td>
@@ -415,7 +415,7 @@ const Mediciones = () => {
             <tbody className="divide-y divide-rose-100">
               {erroresPicking.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
                     No hay errores registrados
                   </td>
                 </tr>
@@ -441,9 +441,9 @@ const Mediciones = () => {
 
       {/* Filtros */}
       <div className="bg-white rounded-xl p-4 border border-slate-200 flex items-center gap-4">
-        <Filter size={18} className="text-slate-400" />
+        <Filter size={18} className="text-slate-500" />
         <div className="bg-slate-50 border rounded-lg flex items-center px-3 py-2">
-          <Search size={16} className="text-slate-400 mr-2" />
+          <Search size={16} className="text-slate-500 mr-2" />
           <input 
             type="text" 
             placeholder="Buscar N.V. o usuario..." 
@@ -502,7 +502,7 @@ const Mediciones = () => {
                 </tr>
               ) : medicionesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan="8" className="px-4 py-12 text-center text-slate-500">
                     <Timer size={32} className="mx-auto mb-2 opacity-40" />
                     <p>No hay mediciones registradas</p>
                   </td>

@@ -199,10 +199,10 @@ const MobileApp = () => {
 
   if (view === 'loading' || authLoading || loadingDriver) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center">
           <RefreshCw className="animate-spin text-indigo-500 mx-auto mb-4" size={48} />
-          <p className="text-white font-medium">Cargando aplicación...</p>
+          <p className="text-slate-900 font-medium">Cargando aplicación...</p>
         </div>
       </div>
     );
@@ -215,7 +215,7 @@ const MobileApp = () => {
           <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h2>
           <p className="text-slate-500 mb-6">No tienes permisos para acceder o debes iniciar sesión.</p>
-          <button onClick={handleLogout} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold">
+          <button onClick={handleLogout} className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold">
             Cerrar Sesión
           </button>
         </div>
@@ -274,7 +274,7 @@ const MobileApp = () => {
                 createProfileMutation.mutate();
               }}
               disabled={createProfileMutation.isPending}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl mt-4 transition-colors disabled:opacity-50"
+              className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl mt-4 transition-colors disabled:opacity-50"
             >
               {createProfileMutation.isPending ? 'Activando...' : 'Activar Perfil'}
             </button>
@@ -294,7 +294,7 @@ const MobileApp = () => {
             </div>
             <div>
               <h1 className="font-bold text-sm leading-tight">{driver?.nombre}</h1>
-              <p className="text-[10px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded mt-0.5 w-fit">{driver?.vehiculo_patente}</p>
+              <p className="text-[10px] text-slate-500 font-mono bg-white px-1.5 py-0.5 rounded mt-0.5 w-fit">{driver?.vehiculo_patente}</p>
             </div>
           </div>
           <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -354,7 +354,7 @@ const MobileApp = () => {
                   key={st}
                   onClick={() => setFilterEstado(st)}
                   className={`px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all shadow-sm ${
-                    filterEstado === st ? 'bg-slate-800 text-white scale-105' : 'bg-white text-slate-600 border border-slate-200'
+                    filterEstado === st ? 'bg-white text-slate-900 scale-105' : 'bg-white text-slate-600 border border-slate-200'
                   }`}
                 >
                   {st === 'TODOS' ? 'Todas' : ESTADOS_ENTREGA[st]?.label || st}
@@ -367,7 +367,7 @@ const MobileApp = () => {
                 <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-indigo-500" /></div>
               ) : getFilteredEntregas().length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                  <Package size={48} className="mx-auto mb-3 text-slate-300" />
+                  <Package size={48} className="mx-auto mb-3 text-slate-700" />
                   <p className="font-bold text-slate-500">Sin entregas asignadas</p>
                 </div>
               ) : (
@@ -390,27 +390,27 @@ const MobileApp = () => {
                     <h3 className="text-lg font-black text-slate-800 mb-1 leading-tight">{entrega.cliente}</h3>
                     
                     <div className="flex items-start gap-2 text-slate-500 text-xs mb-4">
-                      <MapPin size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                      <MapPin size={14} className="mt-0.5 shrink-0 text-slate-500" />
                       <p className="line-clamp-2 font-medium">{entrega.direccion}, {entrega.comuna}</p>
                     </div>
 
                     <div className="flex items-center justify-between bg-slate-50 rounded-2xl p-3 border border-slate-100">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-400">
+                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-500">
                            <Box size={16} />
                         </div>
                         <div>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">Bultos</p>
+                           <p className="text-[10px] text-slate-500 font-bold uppercase">Bultos</p>
                            <p className="text-sm font-black text-slate-800">{entrega.bultos || 0}</p>
                         </div>
                       </div>
                       <div className="w-px h-8 bg-slate-200"></div>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-400">
+                        <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-500">
                            <Scale size={16} />
                         </div>
                         <div>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">Peso</p>
+                           <p className="text-[10px] text-slate-500 font-bold uppercase">Peso</p>
                            <p className="text-sm font-black text-slate-800">{entrega.peso_kg || 0} kg</p>
                         </div>
                       </div>
@@ -447,7 +447,7 @@ const MobileApp = () => {
               
               <div className="p-6 space-y-6">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Destino</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Destino</label>
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <p className="text-slate-800 font-bold">{selectedEntrega.direccion}</p>
@@ -466,12 +466,12 @@ const MobileApp = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <a href={`tel:${selectedEntrega.telefono}`} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 active:bg-slate-100 transition-colors block text-center">
-                    <Phone size={20} className="mx-auto mb-2 text-slate-400" />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Llamar</p>
+                    <Phone size={20} className="mx-auto mb-2 text-slate-500" />
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Llamar</p>
                   </a>
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                    <Clock size={20} className="mx-auto mb-2 text-slate-400" />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Horario</p>
+                    <Clock size={20} className="mx-auto mb-2 text-slate-500" />
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Horario</p>
                     <p className="font-bold text-slate-700 text-sm">09:00 - 18:00</p>
                   </div>
                 </div>
@@ -500,7 +500,7 @@ const MobileApp = () => {
                 <>
                   <button 
                     onClick={() => setActionModal('ENTREGADO')}
-                    className="w-full py-5 bg-emerald-500 text-white font-black rounded-3xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-all text-lg mb-4"
+                    className="w-full py-5 bg-emerald-500 text-slate-900 font-black rounded-3xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-all text-lg mb-4"
                   >
                     <CheckCircle size={24} /> ENTREGAR PEDIDO
                   </button>
@@ -527,7 +527,7 @@ const MobileApp = () => {
 
       {actionModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setActionModal(null)} />
+          <div className="absolute inset-0 bg-slate-50/40 backdrop-blur-sm" onClick={() => setActionModal(null)} />
           <div className="relative bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 animate-in slide-in-from-bottom duration-300 shadow-2xl">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
             
@@ -555,7 +555,7 @@ const MobileApp = () => {
             )}
 
             <div className="mb-8">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Observaciones adicionales</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Observaciones adicionales</label>
               <textarea
                 value={obs}
                 onChange={e => setObs(e.target.value)}

@@ -8,22 +8,22 @@ import React from 'react';
  */
 export const SkeletonTable = ({ rows = 5, columns = 4 }) => {
   return (
-    <div className="w-full bg-wms-panel/80 backdrop-blur-xl border border-wms-border rounded-2xl overflow-hidden shadow-2xl">
+    <div className="w-full bg-white backdrop-blur-xl border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
       <div className="animate-pulse">
         {/* Cabecera de la tabla */}
-        <div className="h-14 bg-slate-800/80 border-b border-wms-border flex items-center px-6 gap-4">
+        <div className="h-14 bg-white/80 border-b border-slate-200 flex items-center px-6 gap-4">
           {Array.from({ length: columns }).map((_, j) => (
-            <div key={`head-${j}`} className="h-4 bg-slate-700/50 rounded flex-1"></div>
+            <div key={`head-${j}`} className="h-4 bg-slate-100/50 rounded flex-1"></div>
           ))}
         </div>
         
         {/* Filas de la tabla */}
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={`row-${i}`} className="flex items-center border-b border-slate-800/50 px-6 py-4 gap-4">
+          <div key={`row-${i}`} className="flex items-center border-b border-slate-200/50 px-6 py-4 gap-4">
             {Array.from({ length: columns }).map((_, j) => (
               <div 
                 key={`col-${i}-${j}`} 
-                className={`h-4 bg-slate-700/30 rounded flex-1 ${j === 0 ? 'max-w-[80px]' : ''}`}
+                className={`h-4 bg-slate-100/30 rounded flex-1 ${j === 0 ? 'max-w-[80px]' : ''}`}
               ></div>
             ))}
           </div>

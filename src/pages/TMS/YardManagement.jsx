@@ -94,7 +94,7 @@ const YardManagement = () => {
   };
 
   const getDockColor = (status, type) => {
-    if (status === 'MAINTENANCE') return 'bg-slate-900 border-wms-alert text-wms-alert/50';
+    if (status === 'MAINTENANCE') return 'bg-slate-50 border-wms-alert text-wms-alert/50';
     if (status === 'OCCUPIED') return 'bg-wms-danger/10 border-wms-danger text-wms-danger';
     return type === 'INBOUND' ? 'bg-wms-neon/10 border-wms-neon text-wms-neon' : 'bg-blue-500/10 border-blue-400 text-blue-400';
   };
@@ -102,26 +102,26 @@ const YardManagement = () => {
   if (loadingDocks || loadingQueue) return <div className="p-8 text-center text-wms-neon animate-pulse">Cargando Patio...</div>;
 
   return (
-    <div ref={containerRef} className="space-y-6 pb-20 bg-wms-dark text-slate-300 min-h-[calc(100vh-80px)] p-6">
+    <div ref={containerRef} className="space-y-6 pb-20 bg-slate-50 text-slate-700 min-h-[calc(100vh-80px)] p-6">
       
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-wms-neon/5 blur-[100px] rounded-full"></div>
       </div>
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-end border-b border-wms-border pb-4 gap-4 relative z-10">
+      <div className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-4 gap-4 relative z-10">
         <div>
-          <h2 className="text-3xl font-black text-white flex items-center gap-3 tracking-tight">
+          <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
             <div className="p-2 bg-wms-neon/10 border border-wms-neon/30 text-wms-neon rounded-xl shadow-neon-green">
               <Anchor size={24} />
             </div>
             GESTIÓN DE PATIOS <span className="text-wms-neon">(YMS)</span>
           </h2>
-          <p className="text-slate-400 text-sm mt-1 font-medium ml-1">Control de tráfico, asignación de andenes y tiempos de espera</p>
+          <p className="text-slate-500 text-sm mt-1 font-medium ml-1">Control de tráfico, asignación de andenes y tiempos de espera</p>
         </div>
         
         <div className="flex gap-4">
-          <div className="bg-wms-panel/80 backdrop-blur-xl px-6 py-3 rounded-2xl border border-wms-border shadow-2xl flex items-center gap-4">
+          <div className="bg-white backdrop-blur-xl px-6 py-3 rounded-2xl border border-slate-200 shadow-2xl flex items-center gap-4">
             <div className="text-right">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">En Espera</p>
               <p className="text-2xl font-black text-wms-alert leading-none">{queue.length}</p>
@@ -141,15 +141,15 @@ const YardManagement = () => {
         
         {/* Columna Izquierda: Cola de Espera */}
         <div className="xl:col-span-1 space-y-4">
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-wms-border p-4">
-            <h3 className="font-bold text-white flex items-center gap-2 mb-4">
+          <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 p-4">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
               <Truck size={18} className="text-wms-alert" />
               Cola de Llegada
             </h3>
             
             <div className="space-y-3">
               {queue.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-sm border-2 border-dashed border-wms-border rounded-xl">
+                <div className="text-center py-8 text-slate-500 text-sm border-2 border-dashed border-slate-200 rounded-xl">
                   No hay vehículos en espera
                 </div>
               ) : (
@@ -159,7 +159,7 @@ const YardManagement = () => {
                     draggable
                     onDragStart={() => setDraggedTruck(truck)}
                     onDragEnd={() => setDraggedTruck(null)}
-                    className="bg-slate-900/50 border border-wms-border p-3 rounded-xl shadow-sm hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:border-wms-alert/50 cursor-grab active:cursor-grabbing transition-all group"
+                    className="bg-slate-50/50 border border-slate-200 p-3 rounded-xl shadow-sm hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] hover:border-wms-alert/50 cursor-grab active:cursor-grabbing transition-all group"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${
@@ -167,11 +167,11 @@ const YardManagement = () => {
                       }`}>
                         {truck.tipo}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-400">{truck.patente}</span>
+                      <span className="text-xs font-mono font-bold text-slate-500">{truck.patente}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 font-bold text-xs">
+                      <div className="w-8 h-8 rounded-xl bg-white border border-slate-300 flex items-center justify-center text-slate-500 font-bold text-xs">
                         {truck.chofer.charAt(0)}
                       </div>
                       <div>
@@ -193,9 +193,9 @@ const YardManagement = () => {
 
         {/* Columna Derecha: Visualización de Andenes */}
         <div className="xl:col-span-3">
-          <div className="bg-slate-900/50 rounded-3xl p-8 border border-wms-border relative overflow-hidden min-h-[600px] shadow-inner">
+          <div className="bg-slate-50/50 rounded-3xl p-8 border border-slate-200 relative overflow-hidden min-h-[600px] shadow-inner">
             {/* Warehouse Background Decor */}
-            <div className="absolute top-0 left-0 w-full h-8 bg-wms-panel border-b-4 border-slate-800 flex items-center justify-center">
+            <div className="absolute top-0 left-0 w-full h-8 bg-white border-b-4 border-slate-200 flex items-center justify-center">
               <span className="text-[10px] font-black text-slate-600 tracking-[1em]">WAREHOUSE WALL</span>
             </div>
 
@@ -208,13 +208,13 @@ const YardManagement = () => {
                   onDrop={() => draggedTruck && handleDockAction(dock.id, 'ASSIGN', draggedTruck)}
                   className={`
                     relative h-64 rounded-t-2xl border-x-4 border-t-4 border-b-0 flex flex-col items-center justify-between p-4 transition-all duration-300 group
-                    ${dock.status === 'AVAILABLE' && draggedTruck ? 'ring-4 ring-wms-neon/50 bg-slate-800' : 'bg-wms-panel/50'}
+                    ${dock.status === 'AVAILABLE' && draggedTruck ? 'ring-4 ring-wms-neon/50 bg-white' : 'bg-white'}
                     ${getDockColor(dock.status, dock.type)}
                   `}
                 >
                   {/* Dock Header */}
-                  <div className="w-full flex justify-between items-center border-b border-slate-700/50 pb-2 mb-2">
-                    <span className="font-black text-xl text-white">{dock.label}</span>
+                  <div className="w-full flex justify-between items-center border-b border-slate-300/50 pb-2 mb-2">
+                    <span className="font-black text-xl text-slate-900">{dock.label}</span>
                     <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{dock.type}</span>
                   </div>
 
@@ -223,20 +223,20 @@ const YardManagement = () => {
                     {dock.status === 'OCCUPIED' && dock.truck ? (
                       <div className="w-full h-full flex flex-col items-center justify-center animate-in zoom-in duration-300">
                         <Truck size={64} className="text-current drop-shadow-lg mb-2" />
-                        <span className="font-mono font-black text-lg bg-slate-900 px-3 py-1 rounded-lg border border-current">{dock.truck.patente}</span>
-                        <span className="text-xs font-bold mt-2 text-slate-300">{dock.truck.chofer}</span>
+                        <span className="font-mono font-black text-lg bg-slate-50 px-3 py-1 rounded-lg border border-current">{dock.truck.patente}</span>
+                        <span className="text-xs font-bold mt-2 text-slate-700">{dock.truck.chofer}</span>
                         
                         <div className="mt-4 flex gap-2">
                           <button 
                             onClick={() => handleDockAction(dock.id, 'RELEASE', dock.truck)}
-                            className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 px-4 py-1.5 rounded-lg shadow-sm text-xs font-bold transition-colors"
+                            className="bg-white hover:bg-slate-100 text-slate-900 border border-slate-600 px-4 py-1.5 rounded-lg shadow-sm text-xs font-bold transition-colors"
                           >
                             Liberar
                           </button>
                         </div>
                         
                         {/* Timer simulado */}
-                        <div className="absolute top-0 right-0 bg-slate-900/80 text-current border border-current/20 px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 backdrop-blur-sm">
+                        <div className="absolute top-0 right-0 bg-slate-50/80 text-current border border-current/20 px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 backdrop-blur-sm">
                           <Timer size={10} /> 00:15:00
                         </div>
                       </div>
@@ -258,7 +258,7 @@ const YardManagement = () => {
                         
                         <button 
                           onClick={() => handleDockAction(dock.id, 'MAINTENANCE')}
-                          className="absolute bottom-0 text-[10px] font-bold opacity-0 group-hover:opacity-100 hover:text-white transition-opacity bg-slate-800 px-2 py-1 rounded-md"
+                          className="absolute bottom-0 text-[10px] font-bold opacity-0 group-hover:opacity-100 hover:text-slate-900 transition-opacity bg-white px-2 py-1 rounded-md"
                         >
                           Bloquear
                         </button>

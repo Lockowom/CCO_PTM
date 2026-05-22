@@ -432,24 +432,24 @@ const Picking = () => {
 
   if (vista === 'lista') {
     return (
-      <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6">
+      <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
         <div className="flex justify-between items-end relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-wms-panel border border-wms-border rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
               <Hand className="text-wms-neon" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight">Picking</h2>
-              <p className="text-slate-400 text-sm font-medium">Recolección de productos para empaque</p>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Picking</h2>
+              <p className="text-slate-500 text-sm font-medium">Recolección de productos para empaque</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-wms-panel border border-wms-border rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors">
-              <Search size={18} className="text-slate-400 mr-2" />
+            <div className="bg-white border border-slate-200 rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors">
+              <Search size={18} className="text-slate-500 mr-2" />
               <input
                 type="text"
                 placeholder="Buscar N.V., cliente..."
-                className="outline-none text-sm w-48 font-medium text-white placeholder:text-slate-500 bg-transparent"
+                className="outline-none text-sm w-48 font-medium text-slate-900 placeholder:text-slate-500 bg-transparent"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 autoFocus
@@ -468,7 +468,7 @@ const Picking = () => {
             <button
               onClick={() => refetch()}
               disabled={loading}
-              className="bg-wms-panel border border-wms-border hover:border-wms-neon hover:text-wms-neon text-slate-300 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+              className="bg-white border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
@@ -476,19 +476,19 @@ const Picking = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-2xl flex items-center justify-between group hover:border-indigo-400/50 transition-all">
+          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-indigo-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pendientes</p>
-              <h3 className="text-3xl font-black text-white">{stats.pendientes}</h3>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Pendientes</p>
+              <h3 className="text-3xl font-black text-slate-900">{stats.pendientes}</h3>
             </div>
             <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform border border-indigo-500/30">
               <FileText size={24} />
             </div>
           </div>
 
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-2xl flex items-center justify-between group hover:border-cyan-400/50 transition-all">
+          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-cyan-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">En Proceso</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">En Proceso</p>
               <h3 className="text-3xl font-black text-cyan-400">{stats.enProceso}</h3>
             </div>
             <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform border border-cyan-500/30">
@@ -496,9 +496,9 @@ const Picking = () => {
             </div>
           </div>
 
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border border-wms-border shadow-2xl flex items-center justify-between group hover:border-emerald-400/50 transition-all">
+          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-emerald-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Completados Hoy</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Completados Hoy</p>
               <h3 className="text-3xl font-black text-emerald-400">{stats.completadasHoy}</h3>
             </div>
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform border border-emerald-500/30">
@@ -507,19 +507,19 @@ const Picking = () => {
           </div>
         </div>
 
-        <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-wms-border overflow-hidden relative">
+        <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-wms-neon/5 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="p-4 border-b border-wms-border bg-wms-dark/50 flex justify-between items-center relative z-10">
-            <h3 className="font-bold text-white flex items-center gap-2">
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center relative z-10">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
               <LayoutGrid size={18} className="text-wms-neon" />
               Cola de Trabajo
             </h3>
-            <span className="text-xs font-bold bg-wms-dark text-slate-300 px-2 py-1 rounded-md border border-wms-border">{nvFiltradas.length} órdenes</span>
+            <span className="text-xs font-bold bg-slate-50 text-slate-700 px-2 py-1 rounded-md border border-slate-200">{nvFiltradas.length} órdenes</span>
           </div>
 
           <div className="hidden md:block overflow-x-auto relative z-10">
             <table className="w-full text-sm">
-              <thead className="bg-wms-dark text-slate-400 uppercase text-xs">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                 <tr>
                   <th className="px-6 py-4 text-left font-bold tracking-wider">N.V.</th>
                   <th className="px-6 py-4 text-left font-bold tracking-wider">Cliente</th>
@@ -535,7 +535,7 @@ const Picking = () => {
                     <td colSpan="6" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <RefreshCw className="animate-spin text-wms-neon" size={24} />
-                        <span className="text-xs font-medium text-slate-400">Cargando órdenes...</span>
+                        <span className="text-xs font-medium text-slate-500">Cargando órdenes...</span>
                       </div>
                     </td>
                   </tr>
@@ -548,16 +548,16 @@ const Picking = () => {
                   </tr>
                 ) : (
                   nvFiltradas.map((nv, index) => (
-                    <tr key={index} className="hover:bg-wms-dark/50 transition-colors group">
-                      <td className="px-6 py-4 font-black text-white">
+                    <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4 font-black text-slate-900">
                         <div className="flex items-center gap-2">
                           <FileText size={16} className="text-slate-500" />
                           #{nv.nv}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-bold text-white">{nv.cliente}</p>
-                        <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                        <p className="font-bold text-slate-900">{nv.cliente}</p>
+                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
                           <User size={10} /> {nv.vendedor || 'Vendedor Web'}
                         </p>
                       </td>
@@ -566,7 +566,7 @@ const Picking = () => {
                           <span className="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-md text-xs font-bold border border-indigo-500/30">
                             {nv.total_items} items
                           </span>
-                          <span className="text-xs font-mono text-slate-400 bg-wms-dark px-2 py-1 rounded border border-wms-border">
+                          <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-200">
                             Total: {nv.total_cantidad}
                           </span>
                         </div>
@@ -585,12 +585,12 @@ const Picking = () => {
                             <div className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xs font-bold">
                               {nv.usuario_nombre.charAt(0)}
                             </div>
-                            <span className="text-xs font-medium text-slate-300">
+                            <span className="text-xs font-medium text-slate-700">
                               {nv.usuario_nombre}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-wms-dark border border-wms-border">Sin asignar</span>
+                          <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-slate-50 border border-slate-200">Sin asignar</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -599,7 +599,7 @@ const Picking = () => {
                             onClick={() => iniciarPicking(nv)}
                             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ml-auto shadow-sm transition-all active:scale-95 ${nv.usuario_asignado === user.id
                               ? 'bg-wms-neon hover:bg-emerald-400 text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                              : 'bg-wms-dark border border-wms-border hover:border-wms-neon hover:text-wms-neon text-slate-300'
+                              : 'bg-slate-50 border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700'
                               }`}
                           >
                             <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} />
@@ -624,7 +624,7 @@ const Picking = () => {
               <div className="py-12 text-center">
                 <div className="flex flex-col items-center gap-2">
                   <RefreshCw className="animate-spin text-wms-neon" size={24} />
-                  <span className="text-xs font-medium text-slate-400">Cargando órdenes...</span>
+                  <span className="text-xs font-medium text-slate-500">Cargando órdenes...</span>
                 </div>
               </div>
             ) : nvFiltradas.length === 0 ? (
@@ -634,11 +634,11 @@ const Picking = () => {
               </div>
             ) : (
               nvFiltradas.map((nv, index) => (
-                <div key={index} className="bg-wms-dark border border-wms-border rounded-xl p-4 shadow-md flex flex-col gap-3">
-                  <div className="flex justify-between items-start border-b border-wms-border pb-3">
+                <div key={index} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-md flex flex-col gap-3">
+                  <div className="flex justify-between items-start border-b border-slate-200 pb-3">
                     <div className="flex items-center gap-2">
                       <FileText size={16} className="text-slate-500" />
-                      <span className="font-black text-white text-lg">#{nv.nv}</span>
+                      <span className="font-black text-slate-900 text-lg">#{nv.nv}</span>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border ${nv.estado === 'Aprobada'
                       ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
@@ -649,33 +649,33 @@ const Picking = () => {
                   </div>
                   
                   <div>
-                    <p className="font-bold text-white text-sm mb-1">{nv.cliente}</p>
-                    <p className="text-xs text-slate-400 font-medium flex items-center gap-1 mb-2">
+                    <p className="font-bold text-slate-900 text-sm mb-1">{nv.cliente}</p>
+                    <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mb-2">
                       <User size={10} /> {nv.vendedor || 'Vendedor Web'}
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-md text-xs font-bold border border-indigo-500/30">
                         {nv.total_items} items
                       </span>
-                      <span className="text-xs font-mono text-slate-400 bg-wms-dark px-2 py-0.5 rounded border border-wms-border">
+                      <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                         Total: {nv.total_cantidad}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-2 border-t border-wms-border mt-1">
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200 mt-1">
                     <div className="flex items-center gap-2">
                       {nv.usuario_nombre ? (
                         <>
                           <div className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xs font-bold">
                             {nv.usuario_nombre.charAt(0)}
                           </div>
-                          <span className="text-xs font-medium text-slate-300 line-clamp-1">
+                          <span className="text-xs font-medium text-slate-700 line-clamp-1">
                             {nv.usuario_nombre.split(' ')[0]}
                           </span>
                         </>
                       ) : (
-                        <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-wms-panel border border-wms-border">Sin asignar</span>
+                        <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-white border border-slate-200">Sin asignar</span>
                       )}
                     </div>
                     
@@ -684,7 +684,7 @@ const Picking = () => {
                         onClick={() => iniciarPicking(nv)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 ${nv.usuario_asignado === user.id
                           ? 'bg-wms-neon hover:bg-emerald-400 text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                          : 'bg-wms-dark border border-wms-border hover:border-wms-neon hover:text-wms-neon text-slate-300'
+                          : 'bg-slate-50 border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700'
                           }`}
                       >
                         <Play size={14} fill={nv.usuario_asignado === user.id ? "currentColor" : "none"} />
@@ -706,14 +706,14 @@ const Picking = () => {
   }
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-wms-dark min-h-screen text-slate-300 p-6">
-      <div className="bg-wms-panel/80 backdrop-blur-xl rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden border border-wms-border">
+    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
+      <div className="bg-white backdrop-blur-xl rounded-3xl p-6 text-slate-900 shadow-2xl relative overflow-hidden border border-slate-200">
         <div className="absolute top-0 right-0 w-64 h-64 bg-wms-neon/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
         <div className="flex justify-between items-start mb-8 relative z-10">
           <button
             onClick={cancelarPicking}
-            className="flex items-center gap-2 text-slate-400 hover:text-white bg-wms-dark hover:bg-slate-800 border border-wms-border px-3 py-1.5 rounded-lg transition-colors text-xs font-bold uppercase tracking-wide"
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold uppercase tracking-wide"
           >
             <ArrowLeft size={16} /> Cancelar / Salir
           </button>
@@ -726,8 +726,8 @@ const Picking = () => {
         </div>
 
         <div className="text-center relative z-10">
-          <p className="text-slate-400 text-sm mb-2 font-medium tracking-wide uppercase">Picking Nota de Venta</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter text-white">
+          <p className="text-slate-500 text-sm mb-2 font-medium tracking-wide uppercase">Picking Nota de Venta</p>
+          <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter text-slate-900">
             #{nvActiva?.nv}
           </h1>
         </div>
@@ -736,7 +736,7 @@ const Picking = () => {
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex justify-between items-center px-2">
-            <h3 className="font-bold text-white flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
               <Box size={20} className="text-wms-neon" />
               Productos ({nvActiva?.total_items})
             </h3>
@@ -749,25 +749,25 @@ const Picking = () => {
             const isComplete = status === 'COMPLETO' || status === 'PARCIAL';
 
             return (
-              <div key={item.id} className={`bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-5 border transition-all shadow-xl group ${isComplete
+              <div key={item.id} className={`bg-white backdrop-blur-xl rounded-2xl p-5 border transition-all shadow-xl group ${isComplete
                 ? 'border-wms-neon bg-emerald-900/10'
                 : status === 'ESPERA'
                   ? 'border-amber-500/50 bg-amber-900/10'
                   : status === 'SIN_STOCK'
                     ? 'border-wms-danger/50 bg-rose-900/10'
-                    : 'border-wms-border hover:border-indigo-500/50'
+                    : 'border-slate-200 hover:border-indigo-500/50'
                 }`}>
                 <div className="flex flex-col sm:flex-row gap-4 justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-wms-dark text-wms-neon border border-wms-neon/30 px-2 py-0.5 rounded text-xs font-mono font-bold">
+                      <span className="bg-slate-50 text-wms-neon border border-wms-neon/30 px-2 py-0.5 rounded text-xs font-mono font-bold">
                         {item.codigo_producto}
                       </span>
                       <span className="text-slate-500 text-xs font-medium uppercase">{item.unidad || 'UNI'}</span>
                     </div>
-                    <p className="font-bold text-white text-lg leading-tight mb-2">{item.descripcion_producto}</p>
+                    <p className="font-bold text-slate-900 text-lg leading-tight mb-2">{item.descripcion_producto}</p>
 
-                    <div className="flex items-center gap-4 text-sm text-slate-400 flex-wrap">
+                    <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
                       {productLocations[item.codigo_producto] && productLocations[item.codigo_producto].length > 0 ? (
                         productLocations[item.codigo_producto].map((loc, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30">
@@ -791,15 +791,15 @@ const Picking = () => {
                   <div className="flex flex-col items-end gap-3 min-w-[140px]">
                     <div className="text-right">
                       <span className="text-xs font-bold text-slate-500 uppercase">Solicitado</span>
-                      <p className="text-3xl font-black text-white">{item.cantidad}</p>
+                      <p className="text-3xl font-black text-slate-900">{item.cantidad}</p>
                     </div>
 
-                    <div className="flex gap-1 bg-wms-dark border border-wms-border p-1 rounded-lg">
+                    <div className="flex gap-1 bg-slate-50 border border-slate-200 p-1 rounded-lg">
                       <button
                         onClick={() => !isLocked && handleItemStatusChange(item.id, 'COMPLETO', item.cantidad)}
                         title="Completo"
                         disabled={isLocked}
-                        className={`p-2 rounded-md transition-all ${status === 'COMPLETO' ? 'bg-wms-neon text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'text-slate-500 hover:bg-wms-panel hover:text-wms-neon'
+                        className={`p-2 rounded-md transition-all ${status === 'COMPLETO' ? 'bg-wms-neon text-wms-dark shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'text-slate-500 hover:bg-white hover:text-wms-neon'
                           } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                       >
                         <CheckCircle size={20} />
@@ -809,7 +809,7 @@ const Picking = () => {
                         onClick={() => !isLocked && handleItemStatusChange(item.id, 'PARCIAL')}
                         title="Parcial"
                         disabled={isLocked}
-                        className={`p-2 rounded-md transition-all ${status === 'PARCIAL' ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'text-slate-500 hover:bg-wms-panel hover:text-blue-400'
+                        className={`p-2 rounded-md transition-all ${status === 'PARCIAL' ? 'bg-blue-500 text-slate-900 shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'text-slate-500 hover:bg-white hover:text-blue-400'
                           } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                       >
                         <Box size={20} />
@@ -819,7 +819,7 @@ const Picking = () => {
                         onClick={() => !isLocked && handleItemStatusChange(item.id, 'ESPERA')}
                         title="Dejar en Espera para otro Picker"
                         disabled={isLocked}
-                        className={`p-2 rounded-md transition-all ${status === 'ESPERA' ? 'bg-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'text-slate-500 hover:bg-wms-panel hover:text-amber-400'
+                        className={`p-2 rounded-md transition-all ${status === 'ESPERA' ? 'bg-amber-500 text-slate-900 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'text-slate-500 hover:bg-white hover:text-amber-400'
                           } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                       >
                         <Hourglass size={20} />
@@ -829,7 +829,7 @@ const Picking = () => {
                         onClick={() => !isLocked && handleItemStatusChange(item.id, 'SIN_STOCK')}
                         title="Sin Stock"
                         disabled={isLocked}
-                        className={`p-2 rounded-md transition-all ${status === 'SIN_STOCK' ? 'bg-wms-danger text-white shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-slate-500 hover:bg-wms-panel hover:text-wms-danger'
+                        className={`p-2 rounded-md transition-all ${status === 'SIN_STOCK' ? 'bg-wms-danger text-slate-900 shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-slate-500 hover:bg-white hover:text-wms-danger'
                           } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                       >
                         <AlertCircle size={20} />
@@ -847,7 +847,7 @@ const Picking = () => {
                         <input
                           type="number"
                           placeholder="Cant. Real"
-                          className="w-full bg-wms-dark border-2 border-blue-500/50 rounded-lg px-2 py-1 text-center font-bold text-blue-400 outline-none focus:border-blue-400"
+                          className="w-full bg-slate-50 border-2 border-blue-500/50 rounded-lg px-2 py-1 text-center font-bold text-blue-400 outline-none focus:border-blue-400"
                           value={cantidad}
                           onChange={(e) => handleItemStatusChange(item.id, 'PARCIAL', e.target.value)}
                           autoFocus
@@ -873,8 +873,8 @@ const Picking = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-wms-panel/80 backdrop-blur-xl rounded-2xl p-6 border border-wms-border shadow-2xl sticky top-6">
-            <h3 className="font-bold text-white mb-6 flex items-center gap-2 border-b border-wms-border pb-4">
+          <div className="bg-white backdrop-blur-xl rounded-2xl p-6 border border-slate-200 shadow-2xl sticky top-6">
+            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-200 pb-4">
               <User size={20} className="text-indigo-400" />
               Datos del Cliente
             </h3>
@@ -882,17 +882,17 @@ const Picking = () => {
             <div className="space-y-5">
               <div>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente Final</p>
-                <p className="font-bold text-white text-lg leading-tight">{nvActiva?.cliente}</p>
+                <p className="font-bold text-slate-900 text-lg leading-tight">{nvActiva?.cliente}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Vendedor</p>
-                  <p className="font-medium text-slate-300 text-sm">{nvActiva?.vendedor || '-'}</p>
+                  <p className="font-medium text-slate-700 text-sm">{nvActiva?.vendedor || '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha Emisión</p>
-                  <p className="font-medium text-slate-300 text-sm">{nvActiva?.fecha_emision || '-'}</p>
+                  <p className="font-medium text-slate-700 text-sm">{nvActiva?.fecha_emision || '-'}</p>
                 </div>
               </div>
 
