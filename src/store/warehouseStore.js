@@ -50,21 +50,39 @@ export const useWarehouseStore = create((set, get) => ({
         return cleaned;
       };
 
-      // 1. Get Real Inventory FIRST (This is the source of truth for occupancy)
-      const { data: ubicacionesRows, error: ubErr } = await supabase
-        .from('wms_ubicaciones')
-        .select('*')
-        .limit(10000);
-        
-      if (ubErr) throw ubErr;
+      // Función auxiliar para traer TODOS los registros (Paginación automática)
+      const fetchAll = async (tableName) => {
+        let allData = [];
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
 
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select('*')
+            .range(from, from + step - 1);
+          
+          if (error) throw error;
+          allData = [...allData, ...data];
+          
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        }
+        return allData;
+      };
+
+      // 1. Get Real Inventory FIRST (Source of truth for occupancy)
+      const ubicacionesRows = await fetchAll('wms_ubicaciones');
+        
       // 2. Get Physical Layout (Optional metadata)
-      const { data: layoutRows, error: layoutErr } = await supabase
-        .from('wms_layout')
-        .select('*')
-        .limit(10000);
-      
-      if (layoutErr) console.warn("Aviso: No se pudo cargar wms_layout", layoutErr);
+      const layoutRows = await fetchAll('wms_layout').catch(err => {
+        console.warn("Aviso: No se pudo cargar wms_layout", err);
+        return [];
+      });
 
       const inventoryMap = {};
       const layoutMap = {};
