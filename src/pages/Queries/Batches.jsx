@@ -216,59 +216,106 @@ const Batches = () => {
 
   const TABLE_CONFIG = {
     partidas: [
-      { header: 'Disponibilidad', accessor: 'disponible', render: r => {
+      { header: 'Estado Crítico', accessor: 'disponible', render: r => {
         const isAvailable = (r.disponible || 0) > 0;
+        const hasExpiry = r.fecha_vencimiento;
+        const isExpired = hasExpiry && new Date(r.fecha_vencimiento) < new Date();
+        
         return (
-          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-400 opacity-60'}`}>
-            {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Apto para Venta' : 'Sin Stock Disp.'}</span>
-              <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+          <div className="flex flex-col gap-2 min-w-[160px]">
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-400'}`}>
+              {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'Sin Stock'}</span>
+                <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+              </div>
             </div>
+            {hasExpiry && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${isExpired ? 'bg-red-600 text-white border-red-700 animate-bounce' : 'bg-slate-900 text-white border-slate-800'}`}>
+                <Clock size={12} />
+                Vence: {r.fecha_vencimiento}
+              </div>
+            )}
           </div>
         );
       }},
-      { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
-      { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg border border-slate-700 uppercase tracking-tight whitespace-nowrap shadow-md"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
-      { header: 'Ubicación / Estado', render: r => (
-        <div className="space-y-2">
-          {r.reserva > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg border border-amber-200 text-[10px] font-black uppercase">
-              <Clock size={12} /> Reserva: {r.reserva}
-            </div>
-          )}
-          {r.transitoria > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg border border-blue-200 text-[10px] font-black uppercase">
-              <Activity size={12} /> Tránsito: {r.transitoria}
-            </div>
-          )}
-          {(!r.reserva && !r.transitoria) && <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">Sin Reservas</span>}
+      { header: 'Producto', render: r => (
+        <div className="flex flex-col max-w-[250px]">
+          <span className="font-mono text-[10px] font-black text-orange-500 uppercase mb-1 tracking-widest"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span>
+          <span className="font-bold text-slate-900 text-sm line-clamp-2 leading-tight"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span>
+          <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-tighter">{r.unidad_medida}</span>
         </div>
       )},
-      { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total || r.cantidad_inicial}</span> }
+      { header: 'Identificación', accessor: 'partida', render: r => (
+        <div className="flex flex-col gap-1">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Partida / Lote</span>
+          <span className="font-mono text-xs font-black bg-slate-900 text-white px-3 py-2 rounded-xl border border-slate-700 uppercase tracking-tight shadow-lg inline-block w-fit"><HighlightText text={r.partida} highlight={submittedTerm} /></span>
+        </div>
+      )},
+      { header: 'Distribución de Stock', render: r => (
+        <div className="grid grid-cols-2 gap-2 min-w-[220px]">
+          <div className={`p-2 rounded-xl border ${r.reserva > 0 ? 'bg-amber-50 border-amber-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-amber-700 uppercase mb-0.5">Reserva</p>
+            <p className="text-sm font-black text-slate-900">{r.reserva || 0}</p>
+          </div>
+          <div className={`p-2 rounded-xl border ${r.transitoria > 0 ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-blue-700 uppercase mb-0.5">Tránsito</p>
+            <p className="text-sm font-black text-slate-900">{r.transitoria || 0}</p>
+          </div>
+          <div className={`p-2 rounded-xl border ${r.consignacion > 0 ? 'bg-purple-50 border-purple-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-purple-700 uppercase mb-0.5">Consign.</p>
+            <p className="text-sm font-black text-slate-900">{r.consignacion || 0}</p>
+          </div>
+          <div className="p-2 rounded-xl border bg-slate-900 border-slate-800">
+            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Total</p>
+            <p className="text-sm font-black text-white">{r.stock_total || 0}</p>
+          </div>
+        </div>
+      )}
     ],
     series: [
-      { header: 'Disponibilidad', accessor: 'disponible', render: r => {
+      { header: 'Estado Crítico', accessor: 'disponible', render: r => {
         const isAvailable = (r.disponible || 0) > 0;
         return (
-          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-400 opacity-60'}`}>
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-400'}`}>
             {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
             <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'No Disponible'}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'No Disponible'}</span>
               <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
             </div>
           </div>
         );
       }},
-      { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
-      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg border border-slate-700 uppercase tracking-tight whitespace-nowrap shadow-md"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
-      { header: 'Info Adicional', render: r => (
-        <div className="space-y-1">
-          {r.reserva > 0 && <span className="block text-[10px] font-black text-amber-600 uppercase tracking-widest">⚠️ En Reserva ({r.reserva})</span>}
-          {r.transitoria > 0 && <span className="block text-[10px] font-black text-blue-600 uppercase tracking-widest">🚚 En Tránsito ({r.transitoria})</span>}
-          {!r.reserva && !r.transitoria && <span className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">Sin Observaciones</span>}
+      { header: 'Producto', render: r => (
+        <div className="flex flex-col max-w-[250px]">
+          <span className="font-mono text-[10px] font-black text-orange-500 uppercase mb-1 tracking-widest"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span>
+          <span className="font-bold text-slate-900 text-sm line-clamp-2 leading-tight"><HighlightText text={r.producto} highlight={submittedTerm} /></span>
+        </div>
+      )},
+      { header: 'Identificación', accessor: 'serie', render: r => (
+        <div className="flex flex-col gap-1">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Serie (SN)</span>
+          <span className="font-mono text-xs font-black bg-slate-900 text-white px-3 py-2 rounded-xl border border-slate-700 uppercase tracking-tight shadow-lg inline-block w-fit"><HighlightText text={r.serie} highlight={submittedTerm} /></span>
+        </div>
+      )},
+      { header: 'Distribución de Stock', render: r => (
+        <div className="grid grid-cols-2 gap-2 min-w-[220px]">
+          <div className={`p-2 rounded-xl border ${r.reserva > 0 ? 'bg-amber-50 border-amber-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-amber-700 uppercase mb-0.5">Reserva</p>
+            <p className="text-sm font-black text-slate-900">{r.reserva || 0}</p>
+          </div>
+          <div className={`p-2 rounded-xl border ${r.transitoria > 0 ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-blue-700 uppercase mb-0.5">Tránsito</p>
+            <p className="text-sm font-black text-slate-900">{r.transitoria || 0}</p>
+          </div>
+          <div className={`p-2 rounded-xl border ${r.consignacion > 0 ? 'bg-purple-50 border-purple-500' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+            <p className="text-[8px] font-black text-purple-700 uppercase mb-0.5">Consign.</p>
+            <p className="text-sm font-black text-slate-900">{r.consignacion || 0}</p>
+          </div>
+          <div className="p-2 rounded-xl border bg-slate-900 border-slate-800">
+            <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">Total</p>
+            <p className="text-sm font-black text-white">{r.stock_total || 0}</p>
+          </div>
         </div>
       )}
     ],
