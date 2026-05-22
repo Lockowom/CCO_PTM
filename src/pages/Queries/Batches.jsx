@@ -216,18 +216,27 @@ const Batches = () => {
 
   const TABLE_CONFIG = {
     partidas: [
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
       { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
-      { header: 'Partida / Lote', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-200 px-3 py-1.5 rounded-lg text-slate-900 border border-slate-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
-      { header: 'Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
-      { header: 'Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total || r.cantidad_inicial}</span> },
-      { header: 'Estado', accessor: 'estado', render: r => <StatusBadge status={r.estado} /> }
+      { header: 'Cod. U. Medida', accessor: 'unidad_medida', render: r => <span className="text-xs font-bold text-slate-500">{r.unidad_medida || '-'}</span> },
+      { header: 'Partida / Talla', accessor: 'partida', render: r => <span className="font-mono text-[11px] font-black bg-slate-200 px-3 py-1.5 rounded-lg text-slate-900 border border-slate-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.partida} highlight={submittedTerm} /></span> },
+      { header: 'Fecha Venc', accessor: 'fecha_vencimiento', render: r => <span className="text-xs font-black text-slate-700">{r.fecha_vencimiento || '-'}</span> },
+      { header: 'Disponible', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
+      { header: 'Reserva', accessor: 'reserva', render: r => <span className="text-sm font-bold text-amber-600">{r.reserva || 0}</span> },
+      { header: 'Transitoria', accessor: 'transitoria', render: r => <span className="text-sm font-bold text-blue-600">{r.transitoria || 0}</span> },
+      { header: 'Consignación', accessor: 'consignacion', render: r => <span className="text-sm font-bold text-indigo-600">{r.consignacion || 0}</span> },
+      { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total || r.cantidad_inicial}</span> }
     ],
     series: [
-      { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
+      { header: 'Cod. Producto', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
       { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto} highlight={submittedTerm} /></span> },
-      { header: 'Serie (SN)', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-amber-100 px-3 py-1.5 rounded-lg text-amber-900 border border-amber-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
-      { header: 'Estado', accessor: 'estado', render: r => <StatusBadge status={r.estado} /> }
+      { header: 'Cod. U. Medida', accessor: 'unidad_medida', render: r => <span className="text-xs font-bold text-slate-500">{r.unidad_medida || '-'}</span> },
+      { header: 'Serie', accessor: 'serie', render: r => <span className="font-mono text-[11px] font-black bg-amber-100 px-3 py-1.5 rounded-lg text-amber-900 border border-amber-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.serie} highlight={submittedTerm} /></span> },
+      { header: 'Disponible', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
+      { header: 'Reserva', accessor: 'reserva', render: r => <span className="text-sm font-bold text-amber-600">{r.reserva || 0}</span> },
+      { header: 'Transitoria', accessor: 'transitoria', render: r => <span className="text-sm font-bold text-blue-600">{r.transitoria || 0}</span> },
+      { header: 'Consignación', accessor: 'consignacion', render: r => <span className="text-sm font-bold text-indigo-600">{r.consignacion || 0}</span> },
+      { header: 'Stock Total', accessor: 'stock_total', render: r => <span className="font-black text-slate-900 text-sm">{r.stock_total}</span> }
     ],
     farmapack: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
