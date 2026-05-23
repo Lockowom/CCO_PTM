@@ -155,14 +155,14 @@ const IMPORT_TABS = [
         icon: Database,
         color: 'orange',
         table: 'wms_ubicaciones',
-        uniqueKey: 'ubicacion,codigo',
+        uniqueKey: null,
         defaultValues: { cantidad: 1 },
         columns: [
             { key: 'ubicacion', label: 'UBICACION', required: true, type: 'text' },
             { key: 'codigo', label: 'CODIGO', required: true, type: 'text' },
             { key: 'descripcion', label: 'DESCRIPCION', required: false, type: 'text' },
         ],
-        helpText: '🏭 Ingresa el inventario con el orden: UBICACION | CODIGO | DESCRIPCION. Si un SKU ya existe en la misma ubicación, se actualiza.',
+        helpText: '🏭 Ingresa el inventario con el orden: UBICACION | CODIGO | DESCRIPCION. Un mismo SKU puede tener múltiples registros por ubicación.',
         smartDedup: false,
     },
     {
