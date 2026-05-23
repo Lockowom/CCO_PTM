@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
 import { wmsToast } from '../lib/notifications';
-import { db } from '../lib/db';
 import { syncOfflineData } from '../lib/syncManager';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '../services/mobileService';
@@ -24,7 +23,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Cargar permisos y configuración del rol desde BD
+  const pathnameRef = useRef(window.location.pathname);
+
+  useEffect(() => {
+    const onPopState = () => { pathnameRef.current = window.location.pathname; };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   const loadRoleConfig = useCallback(async (rolId) => {
     if (!rolId) {
       setPermissions([]);
@@ -33,8 +39,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      console.log('📥 Cargando configuración para rol:', rolId);
-
       const { data, error } = await supabase
         .from('tms_roles')
         .select('permisos_json, landing_page')
@@ -46,25 +50,20 @@ export const AuthProvider = ({ children }) => {
       const perms = data?.permisos_json || [];
       const landing = data?.landing_page || '/dashboard';
 
-      console.log('✅ Configuración de rol cargada:', { perms: perms.length, landing });
-      
       setPermissions(perms);
       setLandingPage(landing);
-      
+
       return { permissions: perms, landingPage: landing };
 
     } catch (err) {
-      console.error('❌ Error cargando config de rol:', err);
       setPermissions([]);
       setLandingPage('/dashboard');
       return { permissions: [], landingPage: '/dashboard' };
     }
   }, []);
 
-  // FUNCIÓN PÚBLICA: Refrescar permisos (llamar desde Roles.jsx)
   const refreshPermissions = useCallback(async () => {
     if (user?.rol) {
-      console.log('🔄 Refrescando configuración de rol...');
       return await loadRoleConfig(user.rol);
     }
     return null;
@@ -81,9 +80,8 @@ export const AuthProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'tms_roles' },
         async (payload) => {
           const changedRoleId = payload.new?.id || payload.old?.id;
-          
+
           if (changedRoleId === user.rol || !changedRoleId) {
-            console.log('🔄 Mi rol ha cambiado en la BD, recargando...');
             await loadRoleConfig(user.rol);
           }
         }
@@ -114,31 +112,23 @@ export const AuthProvider = ({ children }) => {
     initSession();
   }, [loadRoleConfig]);
 
-  // Heartbeat: Actualizar estado 'ONLINE' en BD y Manejo de Conexión Offline
   useEffect(() => {
     if (!user?.id) return;
 
-    // --- MANEJO DE CONEXIÓN (OFFLINE/ONLINE) ---
     const handleOffline = () => {
-      console.warn('📡 Sistema OFFLINE');
       wmsToast.systemOffline();
-      // Actualizar localmente si se desea
     };
 
     const handleOnline = async () => {
-      console.log('⚡ Sistema ONLINE');
       wmsToast.systemOnline();
-      
-      // Intentar sincronizar operaciones guardadas en Dexie usando syncManager
       await syncOfflineData();
     };
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
 
-    // --- HEARTBEAT REGULAR ---
     const updateHeartbeat = async () => {
-      if (!navigator.onLine) return; // No intentar si estamos offline
+      if (!navigator.onLine) return;
 
       try {
         await supabase
@@ -148,15 +138,12 @@ export const AuthProvider = ({ children }) => {
             nombre: user.nombre,
             rol: user.rol,
             ultima_actividad: new Date().toISOString(),
-            modulo_actual: window.location.pathname,
+            modulo_actual: pathnameRef.current,
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-      } catch (err) {
-        console.error('Error updating heartbeat:', err);
-      }
+      } catch (_) {}
     };
 
-    // Actualizar inmediatamente y luego cada 30s
     updateHeartbeat();
     const interval = setInterval(updateHeartbeat, 30000);
 
@@ -165,34 +152,27 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
-  }, [user?.id, window.location.pathname]); // Se actualiza al cambiar de ruta también
+  }, [user?.id]);
 
-  // Login
   const login = async (email, password) => {
     setLoading(true);
     setError('');
 
     try {
-      const { data, error: queryError } = await supabase
-        .from('tms_usuarios')
-        .select('*')
-        .eq('email', email)
-        .single();
+      // Verificar credenciales via RPC (bcrypt en servidor)
+      const { data: authResult, error: authError } = await supabase
+        .rpc('verify_user_password', { p_email: email, p_password: password });
 
-      if (queryError || !data) {
-        setError('❌ Usuario o contraseña inválidos');
+      if (authError || !authResult || authResult.length === 0) {
+        setError('Usuario o contraseña inválidos');
         setLoading(false);
         return false;
       }
 
-      if (data.password_hash !== password) {
-        setError('❌ Usuario o contraseña inválidos');
-        setLoading(false);
-        return false;
-      }
+      const data = authResult[0];
 
       if (!data.activo) {
-        setError('❌ Usuario desactivado');
+        setError('Usuario desactivado');
         setLoading(false);
         return false;
       }
@@ -209,16 +189,12 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('currentUser', JSON.stringify(userData));
       await loadRoleConfig(data.rol);
-      
-      // Enviar identidad del usuario a Sentry
       setUserForTracking(userData);
 
-      // Inicializar notificaciones push si estamos en móvil
       if (Capacitor.isNativePlatform()) {
         initPushNotifications(userData.id);
       }
 
-      // Registrar acceso
       try {
         await supabase.from('tms_accesos').insert({
           usuario_id: userData.id,
@@ -227,8 +203,6 @@ export const AuthProvider = ({ children }) => {
           rol: userData.rol
         });
 
-        // ACTUALIZAR INMEDIATAMENTE el estado activo (Heartbeat inicial)
-        // Esto asegura que el usuario aparezca en "Usuarios Activos" al instante
         await supabase
           .from('tms_usuarios_activos')
           .upsert({
@@ -239,73 +213,56 @@ export const AuthProvider = ({ children }) => {
             modulo_actual: 'Inicio de Sesión',
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-
-      } catch (logErr) {
-        console.error('Error logging access/active status:', logErr);
-      }
+      } catch (_) {}
 
       setLoading(false);
       return true;
 
     } catch (err) {
-      console.error('Error login:', err);
-      setError('❌ Error en el sistema');
+      setError('Error en el sistema');
       setLoading(false);
       return false;
     }
   };
 
-  // Logout
   const logout = useCallback(() => {
+    const userId = user?.id;
     setUser(null);
     setPermissions([]);
     localStorage.removeItem('currentUser');
-    // Limpiar estado activo al salir
-    if (user?.id) {
+    if (userId) {
       supabase
         .from('tms_usuarios_activos')
         .delete()
-        .eq('usuario_id', user.id)
-        .then(() => console.log('👋 Usuario desconectado'))
-        .catch(err => console.error('Error limpiando usuario activo:', err));
+        .eq('usuario_id', userId)
+        .catch(() => {});
     }
   }, [user?.id]);
 
-  // VIGILANTE DE SESIÓN: Escuchar cambios en mi propio usuario
   useEffect(() => {
     if (!user?.id) return;
-
-    console.log('👁️ Iniciando vigilancia de sesión para:', user.email);
 
     const channel = supabase
       .channel(`session_guard_${user.id}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Escuchar UPDATE y DELETE
+          event: '*',
           schema: 'public',
           table: 'tms_usuarios',
           filter: `id=eq.${user.id}`
         },
         (payload) => {
-          console.log('🚨 Cambio crítico en usuario detectado:', payload);
-
           if (payload.eventType === 'DELETE') {
-            console.warn('❌ USUARIO ELIMINADO - CERRANDO SESIÓN');
             alert('Tu cuenta ha sido eliminada por un administrador.');
             logout();
-          }
-          else if (payload.eventType === 'UPDATE') {
+          } else if (payload.eventType === 'UPDATE') {
             const newUser = payload.new;
 
-            // FIX: Be defensive against partial payloads (REPLICA IDENTITY DEFAULT)
             if (newUser.activo === false) {
-              console.warn('⛔ USUARIO DESACTIVADO - CERRANDO SESIÓN');
               alert('Tu sesión ha sido cerrada por un administrador.');
               logout();
             } else if (newUser.rol && newUser.rol !== user.rol) {
-              console.log('🔄 Rol actualizado, refrescando permisos...');
-              // Si cambia el rol, actualizar el estado local preservando variables anteriores si el payload es parcial
               const updatedUser = {
                 ...user,
                 rol: newUser.rol,
@@ -324,19 +281,14 @@ export const AuthProvider = ({ children }) => {
       .subscribe();
 
     return () => {
-      console.log('🛑 Deteniendo vigilancia de sesión');
       supabase.removeChannel(channel);
     };
   }, [user?.id, user?.rol, logout, loadRoleConfig]);
 
-  // Verificar permiso
   const hasPermission = useCallback((permissionId) => {
-    // ADMIN BYPASS: Acceso global a todas las vistas y acciones
-    if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
-
-    const has = permissions.includes(permissionId);
-    return has;
-  }, [permissions, user?.rol, user?.es_admin_delegado]);
+    if (user?.rol === 'ADMIN') return true;
+    return permissions.includes(permissionId);
+  }, [permissions, user?.rol]);
 
   return (
     <AuthContext.Provider value={{

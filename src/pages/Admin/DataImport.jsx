@@ -412,7 +412,6 @@ const DataImport = () => {
 
                 setRowStatuses(statuses);
             } catch (err) {
-                console.error('Error en deduplicación:', err);
                 setRowStatuses(rows.map(() => 'new'));
             }
         } else {
@@ -495,7 +494,6 @@ const DataImport = () => {
                     });
 
                     if (prepError) {
-                        console.error('Error en prepare_nv_import:', prepError);
                         errorDetails.push(`Advertencia: No se pudo verificar NVs en proceso. ${prepError.message}`);
                     } else if (prepData) {
                         if (prepData.reseteadas > 0) {
@@ -505,9 +503,7 @@ const DataImport = () => {
                             errorDetails.push(`🗑️ Se cancelaron ${prepData.items_cancelados} ítems que ya no venían en la carga.`);
                         }
                     }
-                } catch (prepErr) {
-                    console.error('Error invocando lógica avanzada NV:', prepErr);
-                }
+                } catch (_) {}
             }
 
             // Insertar en lotes optimizados para grandes volúmenes
@@ -545,7 +541,6 @@ const DataImport = () => {
 
                 // Si la tabla no tiene uniqueKey o es Control Despacho, usamos INSERT directo (permite duplicados)
                 if (!currentTab.uniqueKey || currentTab.id === 'control_despacho') {
-                    console.log('Insertando datos sin UPSERT (Modo Insert Directo)...');
                     result = await supabase
                         .from(currentTab.table)
                         .insert(batch);
@@ -575,7 +570,6 @@ const DataImport = () => {
                             errorDetails.push(`Registros duplicados detectados. Verifica que la columna clave '${currentTab.uniqueKey || 'id'}' sea única.`);
                         }
                     } else {
-                        console.error('Error en batch:', error);
                         errors += batch.length;
                         errorDetails.push(error.message);
                     }
@@ -650,9 +644,7 @@ const DataImport = () => {
                         registros_error: errors
                     }]);
                 }
-            } catch (logError) {
-                console.error('No se pudo registrar en el historial de cargas:', logError);
-            }
+            } catch (_) {}
 
             setLoadResult({
                 success: errors === 0,
@@ -669,7 +661,6 @@ const DataImport = () => {
             setStep('done');
 
         } catch (err) {
-            console.error('Error cargando datos:', err);
             setLoadResult({
                 success: false,
                 total: parsedRows.length,

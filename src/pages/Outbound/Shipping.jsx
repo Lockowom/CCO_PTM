@@ -82,7 +82,6 @@ const Shipping = () => {
             .insert(controlPayload);
 
         if (controlError) {
-            console.error("Error sincronizando con Control Despacho:", controlError);
         }
       }
     },

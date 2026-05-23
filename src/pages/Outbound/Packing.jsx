@@ -226,9 +226,7 @@ const Packing = () => {
           direccion = addressData.direccion;
           comuna = addressData.comuna;
         }
-      } catch (err) {
-        console.error('Error buscando dirección:', err);
-      }
+      } catch (_) {}
     }
 
     setFormData({
@@ -305,7 +303,6 @@ const Packing = () => {
       toast.success(`Packing finalizado. N.V. #${nvActiva.nv} lista para despacho.`);
     },
     onError: (error) => {
-      console.error('Error:', error);
       toast.error('Error al finalizar: ' + error.message);
     }
   });
@@ -396,7 +393,6 @@ const Packing = () => {
       toast.success(`N.V. #${nvActiva.nv} devuelta a Picking correctamente.`);
     },
     onError: (error) => {
-      console.error('Error al devolver:', error);
       toast.error('Error al devolver a Picking: ' + error.message);
     }
   });

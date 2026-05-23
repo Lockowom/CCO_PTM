@@ -32,7 +32,6 @@ export const InventoryService = {
       if (error) throw error;
       return data; // { success: true/false, message: ... }
     } catch (err) {
-      console.error('Error moviendo stock:', err);
       return { success: false, message: err.message };
     }
   },
@@ -52,7 +51,6 @@ export const InventoryService = {
       if (error) throw error;
       return data; // true/false
     } catch (err) {
-      console.error('Error reservando stock:', err);
       return false;
     }
   }

@@ -21,9 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import gsap from 'gsap';
-import BarChart from '../components/Charts/BarChart';
-import PieChart from '../components/Charts/PieChart';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import ExportButton from '../components/ui/ExportButton';
 
 // --- CONFIGURACIÓN DE ESTADOS ---
@@ -185,8 +183,7 @@ const Dashboard = () => {
       });
 
       setLastUpdate(new Date());
-    } catch (err) {
-      console.error("Error fetching dashboard:", err);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
@@ -297,7 +294,18 @@ const Dashboard = () => {
           
           {/* GRÁFICO UNIFICADO */}
           <div className="mb-8">
-             <BarChart data={chartData} dataKey="valor" color="#6366f1" height={220} />
+             <ResponsiveContainer width="100%" height={220}>
+               <ReBarChart data={chartData} barSize={36} radius={[8, 8, 0, 0]}>
+                 <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                 <YAxis hide />
+                 <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
+                 <Bar dataKey="valor" radius={[8, 8, 0, 0]}>
+                   {chartData.map((entry, index) => (
+                     <Cell key={index} fill={entry.fill} />
+                   ))}
+                 </Bar>
+               </ReBarChart>
+             </ResponsiveContainer>
           </div>
 
           <div className="flex flex-wrap md:flex-nowrap justify-between gap-6 px-4">

@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
 import Placeholder from './components/Placeholder';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Lock, Bell, Database } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates } from './services/mobileService';
@@ -38,7 +39,7 @@ const Shipping = React.lazy(() => import('./pages/Outbound/Shipping'));
 const Batches = React.lazy(() => import('./pages/Queries/Batches'));
 const SalesStatus = React.lazy(() => import('./pages/Queries/SalesStatus'));
 const Addresses = React.lazy(() => import('./pages/Queries/Addresses'));
-const Locations = React.lazy(() => import('./pages/Queries/Locations'));
+const WmsLocations = React.lazy(() => import('./pages/Queries/WmsLocations'));
 const HistorialNV = React.lazy(() => import('./pages/Queries/HistorialNV'));
 const Heatmap = React.lazy(() => import('./pages/Queries/Heatmap'));
 const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl'));
@@ -47,14 +48,9 @@ const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl
 const Users = React.lazy(() => import('./pages/Admin/Users'));
 const Roles = React.lazy(() => import('./pages/Admin/Roles'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
-const Mediciones = React.lazy(() => import('./pages/Admin/Mediciones'));
 const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
 const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
-const Reports = React.lazy(() => import('./pages/Admin/Reports'));
-const TimeReports = React.lazy(() => import('./pages/Admin/TimeReports'));
 const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
-const UsuariosActivos = React.lazy(() => import('./pages/Admin/UsuariosActivos')); // NUEVO
-const LoginHistory = React.lazy(() => import('./pages/Admin/LoginHistory')); // NUEVO
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 
 // Fallback 404
@@ -98,13 +94,8 @@ const ROUTE_PERMISSIONS = {
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],
   '/admin/views': ['manage_views', 'view_views'],
-  '/admin/mediciones': ['manage_mediciones', 'view_mediciones'],
-  '/admin/reports': ['view_reports'],
-  '/admin/time-reports': ['view_time_reports'],
-  '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
-  '/admin/active-users': ['manage_users', 'view_users'], // NUEVO (usa permiso de usuarios)
-  '/admin/login-history': ['manage_users', 'view_users'], // NUEVO
   '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
+  '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
   '/admin/upload-history': ['admin_upload_history'], // NEW: Historial de Cargas
 };
 
@@ -130,8 +121,6 @@ const ROUTE_PRIORITY = [
   '/admin/users',
   '/admin/roles',
   '/admin/views',
-  '/admin/mediciones',
-  '/admin/reports',
 ];
 
 
@@ -202,7 +191,6 @@ const SmartRedirect = () => {
     const hasAccess = user?.rol === 'ADMIN' || requiredPerms.length === 0 || requiredPerms.some(perm => hasPermission(perm));
     
     if (hasAccess) {
-      console.log('🎯 Redirigiendo a Landing Page de Rol:', landingPage);
       return <Navigate to={landingPage} replace />;
     }
   }
@@ -220,7 +208,6 @@ const SmartRedirect = () => {
     }
     const hasAccess = requiredPerms.some(perm => hasPermission(perm));
     if (hasAccess) {
-      console.log('✓ Redirigiendo a primera ruta disponible:', route);
       return <Navigate to={route} replace />;
     }
   }
@@ -343,7 +330,7 @@ function AppContent() {
           <Route path="queries/batches" element={<Batches />} />
           <Route path="queries/sales-status" element={<SalesStatus />} />
           <Route path="queries/addresses" element={<Addresses />} />
-          <Route path="queries/locations" element={<Locations />} />
+          <Route path="queries/locations" element={<WmsLocations />} />
           <Route path="queries/heatmap" element={<Heatmap />} />
           <Route path="queries/historial-nv" element={<HistorialNV />} />
           <Route path="queries/dispatch-control" element={<DispatchControl />} />
@@ -352,13 +339,8 @@ function AppContent() {
           <Route path="admin/users" element={<Users />} />
           <Route path="admin/roles" element={<Roles />} />
           <Route path="admin/views" element={<Views />} />
-          <Route path="admin/mediciones" element={<Mediciones />} />
           <Route path="admin/cleanup" element={<Cleanup />} />
-          <Route path="admin/reports" element={<Reports />} />
-          <Route path="admin/time-reports" element={<TimeReports />} />
           <Route path="admin/tickets" element={<Tickets />} />
-          <Route path="admin/active-users" element={<UsuariosActivos />} />
-          <Route path="admin/login-history" element={<LoginHistory />} />
           <Route path="admin/upload-history" element={<UploadHistory />} />
         </Route>
 
@@ -368,8 +350,6 @@ function AppContent() {
     </Router>
   );
 }
-
-import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (

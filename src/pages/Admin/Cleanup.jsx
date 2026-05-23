@@ -58,7 +58,6 @@ const Cleanup = () => {
       });
 
     } catch (error) {
-      console.error("Error cleaning data:", error);
       setStatus({ type: 'error', message: "Error al limpiar datos: " + error.message });
     } finally {
       setLoading(false);

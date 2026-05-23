@@ -25,7 +25,6 @@ export const WmsIntelligence = {
       if (error) throw error;
       return data || [];
     } catch (err) {
-      console.error('Error calculando asignación FEFO:', err);
       return []; // Fallback: Retornar vacío para manejo manual
     }
   },
@@ -36,7 +35,6 @@ export const WmsIntelligence = {
    */
   async triggerManualReplenishment(zoneId) {
     // Simulación de llamada a función RPC
-    console.log(`Disparando reabastecimiento manual para zona: ${zoneId}`);
     return { success: true, tasksCreated: 3 };
   },
 

@@ -120,7 +120,6 @@ const PackingTV = () => {
       setData(allData);
 
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast.error('Error cargando datos: ' + error.message);
     } finally {
       setLoading(false);

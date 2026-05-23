@@ -13,9 +13,7 @@ export const validateEnv = () => {
   }
 
   if (missing.length > 0) {
-    console.warn(`⚠️ ADVERTENCIA: Faltan variables de entorno: ${missing.join(', ')}. El sistema usará las credenciales por defecto de supabase.js.`);
-    return; // Ya no lanzamos error ni mostramos pantalla roja para no romper producción
+    throw new Error(`Faltan variables de entorno requeridas: ${missing.join(', ')}. Configura un archivo .env con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.`);
   }
 
-  console.log('✅ Variables de entorno validadas correctamente.');
 };

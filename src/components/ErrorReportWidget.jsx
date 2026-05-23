@@ -52,7 +52,6 @@ const ErrorReportWidget = () => {
       }, 2500);
 
     } catch (err) {
-      console.error('Error enviando reporte:', err);
       setStatus('error');
     } finally {
       setLoading(false);

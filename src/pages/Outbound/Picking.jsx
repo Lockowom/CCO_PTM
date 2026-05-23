@@ -18,7 +18,7 @@ const Picking = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Estado global de Zustand persistente
-  const { activeSession: nvActiva, itemsStatus: itemsPickingStatus, startSession, updateItemStatus, completePicking: clearSession, cancelPicking: clearSessionCancel, updateTime, tiempoTranscurrido: storedTiempo, tiempoOcio: storedOcio } = usePickingStore();
+  const { activeSession: nvActiva, itemsStatus: itemsPickingStatus, startSession, updateItemStatus, endSession: clearSession, updateTime, tiempoTranscurrido: storedTiempo, tiempoOcio: storedOcio } = usePickingStore();
 
   const [tiempoInicio, setTiempoInicio] = useState(null);
   const [tiempoTranscurrido, setTiempoTranscurrido] = useState(storedTiempo || 0);
@@ -206,7 +206,6 @@ const Picking = () => {
           setProductLocations(locMap);
         }
       } catch (err) {
-        console.error("Error cargando ubicaciones:", err);
         setProductLocations({});
       }
     } else {
@@ -358,7 +357,6 @@ const Picking = () => {
       toast.success(`Picking finalizado. N.V. enviada a ${nuevoEstadoGlobal}`);
     },
     onError: (error) => {
-      console.error('Error crítico:', error);
       toast.error('Error al finalizar: ' + error.message);
     }
   });
@@ -410,7 +408,7 @@ const Picking = () => {
         .eq('nv', nvActiva.nv);
     }
 
-    clearSessionCancel();
+    clearSession();
     setVista('lista');
     toast.info('Picking cancelado');
   };

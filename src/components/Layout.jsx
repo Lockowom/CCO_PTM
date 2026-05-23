@@ -4,7 +4,7 @@ import ErrorReportWidget from './ErrorReportWidget';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useLocation } from 'react-router-dom';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { supabase } from '../supabase';
 
 const Layout = ({ children }) => {
@@ -121,9 +121,6 @@ const Layout = ({ children }) => {
 
         {/* Widget de Errores */}
         <ErrorReportWidget />
-
-        {/* Toaster de Notificaciones (Sonner) */}
-        <Toaster position="top-right" richColors expand={true} theme="light" />
       </div>
     </div>
   );
