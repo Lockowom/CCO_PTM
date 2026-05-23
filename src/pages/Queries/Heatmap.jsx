@@ -14,18 +14,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-
-const RACK_MATRICES = {
-  'A': { levels: 3, positions: 28, color: 'indigo' },
-  'B': { levels: 3, positions: 28, color: 'purple' },
-  'C': { levels: 3, positions: 50, color: 'emerald' },
-  'D': { levels: 4, positions: 50, color: 'orange' },
-  'E': { levels: 4, positions: 50, color: 'rose' },
-  'F': { levels: 4, positions: 50, color: 'fuchsia' },
-  'G': { levels: 4, positions: 50, color: 'blue' },
-  'H': { levels: 4, positions: 50, color: 'slate' },
-  'I': { levels: 4, positions: 36, color: 'zinc' }
-};
+import { RACK_CONFIG, TOTAL_POSITIONS, MAX_LEVELS } from '../../constants/warehouse';
 
 const Heatmap = () => {
   const containerRef = useRef();
@@ -71,7 +60,7 @@ const Heatmap = () => {
     let levelTotalPositions = 0;
     let levelOccupiedPositions = 0;
 
-    Object.entries(RACK_MATRICES).forEach(([rackId, config]) => {
+    Object.entries(RACK_CONFIG).forEach(([rackId, config]) => {
       // Solo procesar racks que existen físicamente en el nivel seleccionado
       if (selectedLevel > config.levels) return;
 
@@ -139,15 +128,10 @@ const Heatmap = () => {
   }, [layout, selectedLevel]);
 
   const { racks, unmapped, levelStats } = heatmapData;
-    const maxLevels = 4; // Nivel máximo físico real de la bodega
+  const totalOccupiedCount = stats.ocupadas || 0;
+  const globalOccupancyPercent = stats.ocupacion || 0;
 
-    // Usar las estadísticas globales calculadas en el Store para mayor precisión
-    const totalSystemPositions = 1031;
-    const totalOccupiedCount = stats.ocupadas || 0;
-    const globalOccupancyPercent = stats.ocupacion || 0;
-    const totalLoadedLocations = Object.keys(layout).length;
-
-    return (
+  return (
     <div ref={containerRef} className="bg-slate-50 min-h-screen p-8 space-y-8 font-sans">
       
       {/* Header & Global Stats */}
@@ -171,7 +155,7 @@ const Heatmap = () => {
           <div className="mt-8 flex items-center gap-4">
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Nivel de Rack:</span>
             <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner">
-              {Array.from({ length: maxLevels }, (_, i) => i + 1).map(lvl => (
+              {Array.from({ length: MAX_LEVELS }, (_, i) => i + 1).map(lvl => (
                 <button
                   key={lvl}
                   onClick={() => setSelectedLevel(lvl)}
@@ -230,7 +214,7 @@ const Heatmap = () => {
               </div>
               <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <span>{totalOccupiedCount} Ubic. Usadas</span>
-                <span>{totalSystemPositions} Total</span>
+                <span>{TOTAL_POSITIONS} Total</span>
               </div>
             </div>
           </div>
@@ -350,22 +334,6 @@ const Heatmap = () => {
         </div>
       </div>
 
-      <style jsx>{`
-        .custom-scrollbar-flat::-webkit-scrollbar {
-          height: 4px;
-        }
-        .custom-scrollbar-flat::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 10px;
-        }
-        .custom-scrollbar-flat::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar-flat::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
 
     </div>
   );

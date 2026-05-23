@@ -4,8 +4,6 @@ import { supabase } from '../supabase';
 
 export const StressTest = {
   async runPickingSimulation(users = 50, durationSeconds = 30) {
-    console.log(`🚀 Iniciando simulación de carga: ${users} usuarios durante ${durationSeconds}s`);
-    
     let successes = 0;
     let failures = 0;
     const startTime = Date.now();
@@ -40,9 +38,6 @@ export const StressTest = {
 
     await Promise.all(userAgents);
 
-    console.log('🏁 Simulación finalizada');
-    console.log(`✅ Éxitos: ${successes}`);
-    console.log(`🛑 Bloqueos/Fallos (Esperado en alta concurrencia): ${failures}`);
     return { successes, failures };
   }
 };

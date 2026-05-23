@@ -104,8 +104,7 @@ const CommandPalette = () => {
 
         setResults(newResults);
         setSelectedIndex(0);
-      } catch (err) {
-        console.error(err);
+      } catch (_) {
       } finally {
         setIsLoading(false);
       }

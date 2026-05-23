@@ -68,9 +68,7 @@ const Entry = () => {
     if (saved) {
       try {
         setQueue(JSON.parse(saved));
-      } catch (e) {
-        console.error("Error parsing queue", e);
-      }
+      } catch (_) {}
     }
   }, []);
 
@@ -116,8 +114,7 @@ const Entry = () => {
              gsap.to(codigoInputRef.current, { x: [-5, 5, -5, 5, 0], duration: 0.4 });
           }
         }
-      } catch (err) {
-        console.error("Error buscando descripción:", err);
+      } catch (_) {
       } finally {
         setLoadingDesc(false);
         gsap.killTweensOf(".loading-spinner");
@@ -234,9 +231,7 @@ const Entry = () => {
             registros_actualizados: 0,
             registros_error: 0
           }]);
-        } catch (logErr) {
-          console.error('Error guardando en historial:', logErr);
-        }
+        } catch (_) {}
       }
     },
     onSuccess: () => {
@@ -246,7 +241,6 @@ const Entry = () => {
       queryClient.invalidateQueries(['inventory']);
     },
     onError: (err) => {
-      console.error("Error guardando:", err);
       toast.error("❌ Error al guardar: " + err.message);
     }
   });

@@ -34,7 +34,6 @@ const Addresses = () => {
       setSearched(true);
       
     } catch (err) {
-      console.error("Error buscando direcciones:", err);
       alert("Error en la búsqueda: " + err.message);
     } finally {
       const endTime = performance.now();

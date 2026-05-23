@@ -47,8 +47,7 @@ const Tickets = () => {
 
       if (error) throw error;
       setTickets(data || []);
-    } catch (err) {
-      console.error('Error loading tickets:', err);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
@@ -65,7 +64,6 @@ const Tickets = () => {
         .eq('id', id);
 
     } catch (err) {
-      console.error('Error updating status:', err);
       fetchTickets(); // Revert
     }
   };

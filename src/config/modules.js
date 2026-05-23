@@ -123,15 +123,12 @@ export const APP_PERMISSIONS = [
     id: 'admin',
     label: 'Administración',
     permissions: [
-      { id: 'view_mediciones', label: 'Ver Mediciones de Tiempo' },
-      { id: 'manage_mediciones', label: 'Gestionar Mediciones' },
       { id: 'view_users', label: 'Ver Usuarios' },
       { id: 'manage_users', label: 'Gestionar Usuarios' },
       { id: 'view_roles', label: 'Ver Roles' },
       { id: 'manage_roles', label: 'Gestionar Roles' },
       { id: 'view_views', label: 'Ver Configuración Vistas' },
       { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
-      { id: 'view_time_reports', label: 'Ver Reportes de Tiempo' },
       { id: 'manage_tickets', label: 'Gestionar Tickets' },
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' }

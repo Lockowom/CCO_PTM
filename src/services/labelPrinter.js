@@ -37,7 +37,6 @@ export const LabelPrinter = {
       return { success: true, message: 'Enviado a cola de impresión' };
 
     } catch (err) {
-      console.error('Error imprimiendo:', err);
       return { success: false, message: err.message };
     }
   }

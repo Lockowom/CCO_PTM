@@ -47,8 +47,7 @@ const ViewsPage = () => {
       setModulesConfig(filteredModules);
       setRoles(rolesData || []);
 
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
@@ -58,7 +57,6 @@ const ViewsPage = () => {
   const handleToggleModule = async (id, currentStatus) => {
     try {
       setSaving(true);
-      console.log('💾 Cambiando módulo:', id, '→', !currentStatus);
 
       const newStatus = !currentStatus;
 
@@ -78,13 +76,11 @@ const ViewsPage = () => {
 
       if (error) throw error;
 
-      console.log('✅ Módulo actualizado en BD');
       // La actualización en Navbar ocurre vía Realtime (ConfigContext)
       // Pero forzamos un refresh local por si acaso
       await refreshConfig();
 
     } catch (error) {
-      console.error('❌ Error:', error);
       alert('Error: ' + error.message);
       await fetchData(); // Revertir en caso de error
     } finally {
@@ -108,7 +104,6 @@ const ViewsPage = () => {
       if (error) throw error;
 
     } catch (error) {
-      console.error('Error:', error);
       alert('Error: ' + error.message);
       await fetchData();
     } finally {

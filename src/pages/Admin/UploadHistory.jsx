@@ -38,7 +38,6 @@ const UploadHistory = () => {
             .on('postgres_changes', 
                 { event: 'INSERT', schema: 'public', table: 'tms_historial_cargas' }, 
                 (payload) => {
-                    console.log('Nueva subida detectada:', payload.new);
                     // Añadir el nuevo registro al inicio del estado local
                     setHistory(prev => [payload.new, ...prev].slice(0, 100));
                     
@@ -75,8 +74,7 @@ const UploadHistory = () => {
 
             if (error) throw error;
             setHistory(data || []);
-        } catch (err) {
-            console.error("Error al obtener historial:", err);
+        } catch (_) {
         } finally {
             setLoading(false);
             setRefreshing(false);

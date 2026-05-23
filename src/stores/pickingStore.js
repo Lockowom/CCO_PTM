@@ -1,14 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const resetState = { activeSession: null, itemsStatus: {}, tiempoTranscurrido: 0, tiempoOcio: 0 };
+
 export const usePickingStore = create(
   persist(
-    (set, get) => ({
-      activeSession: null, // Guardará la NV completa
-      itemsStatus: {}, // { [itemId]: { status, cantidad } }
-      tiempoTranscurrido: 0,
-      tiempoOcio: 0,
-      
+    (set) => ({
+      ...resetState,
+
       startSession: (nv, initialStatus) => set({
         activeSession: nv,
         itemsStatus: initialStatus,
@@ -28,12 +27,11 @@ export const usePickingStore = create(
         tiempoOcio: ocio
       }),
 
-      completePicking: () => set({ activeSession: null, itemsStatus: {}, tiempoTranscurrido: 0, tiempoOcio: 0 }),
-      cancelPicking: () => set({ activeSession: null, itemsStatus: {}, tiempoTranscurrido: 0, tiempoOcio: 0 })
+      endSession: () => set(resetState),
     }),
     {
-      name: 'picking-session', // Persiste en localStorage
-      partialize: (state) => ({ 
+      name: 'picking-session',
+      partialize: (state) => ({
         activeSession: state.activeSession,
         itemsStatus: state.itemsStatus,
         tiempoTranscurrido: state.tiempoTranscurrido,
@@ -42,3 +40,14 @@ export const usePickingStore = create(
     }
   )
 );
+
+// Selectores granulares para evitar re-renders innecesarios
+export const useActiveSession = () => usePickingStore(s => s.activeSession);
+export const useItemsStatus = () => usePickingStore(s => s.itemsStatus);
+export const usePickingTime = () => usePickingStore(s => ({ tiempo: s.tiempoTranscurrido, ocio: s.tiempoOcio }));
+export const usePickingActions = () => usePickingStore(s => ({
+  startSession: s.startSession,
+  updateItemStatus: s.updateItemStatus,
+  updateTime: s.updateTime,
+  endSession: s.endSession,
+}));

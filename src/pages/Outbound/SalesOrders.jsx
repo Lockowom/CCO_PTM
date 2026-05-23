@@ -137,7 +137,6 @@ const SalesOrders = () => {
       toast.success('N.V. eliminada correctamente y registrada.');
     },
     onError: (e) => {
-      console.error('Error al eliminar:', e);
       if (e.message?.includes('violates row-level security policy')) {
         setRlsErrorModal(true);
       } else {

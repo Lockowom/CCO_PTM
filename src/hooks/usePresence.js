@@ -32,12 +32,8 @@ export const usePresence = (roomName) => {
         const users = Object.values(state).map((userPresenceArray) => userPresenceArray[0]);
         setActiveUsers(users);
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log(`[Presence] ${newPresences[0]?.name || key} entró a ${roomName}`);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log(`[Presence] ${leftPresences[0]?.name || key} salió de ${roomName}`);
-      })
+      .on('presence', { event: 'join' }, () => {})
+      .on('presence', { event: 'leave' }, () => {})
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           // Anunciar mi presencia al canal

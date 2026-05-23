@@ -130,7 +130,6 @@ const Batches = () => {
           if (error) throw error;
           return data || [];
         } catch (err) {
-          console.warn(`Error buscando en ${table}:`, err);
           return [];
         }
       };

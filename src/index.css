@@ -96,3 +96,8 @@ select:focus {
 ::-webkit-scrollbar-thumb {
   @apply bg-orange-400 rounded-full hover:bg-orange-500;
 }
+
+.custom-scrollbar-flat::-webkit-scrollbar { height: 4px; }
+.custom-scrollbar-flat::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.custom-scrollbar-flat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.custom-scrollbar-flat::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

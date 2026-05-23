@@ -84,7 +84,6 @@ const RoutePlanning = () => {
       setRutaNombre(`Ruta-${new Date().toLocaleDateString().replace(/\//g, '-')}`);
     },
     onError: (e) => {
-      console.error(e);
       toast.error("Error al crear la ruta", {
         style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
       });

@@ -83,7 +83,6 @@ const SalesStatus = () => {
                 .maybeSingle();
 
             if (error && error.code !== 'PGRST116') {
-                console.error(error);
             }
 
             return {

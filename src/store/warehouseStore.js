@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../supabase';
+import { RACK_CONFIG, TOTAL_POSITIONS } from '../constants/warehouse';
 
 export const useWarehouseStore = create((set, get) => ({
   layout: {},
@@ -79,23 +80,7 @@ export const useWarehouseStore = create((set, get) => ({
       const ubicacionesRows = await fetchAll('wms_ubicaciones');
         
       // 2. Get Physical Layout (Optional metadata)
-      const layoutRows = await fetchAll('wms_layout').catch(err => {
-        console.warn("Aviso: No se pudo cargar wms_layout", err);
-        return [];
-      });
-
-      // Definición física de la bodega para validación
-      const PHYSICAL_LIMITS = {
-        'A': { levels: 3, positions: 28 },
-        'B': { levels: 3, positions: 28 },
-        'C': { levels: 3, positions: 50 },
-        'D': { levels: 4, positions: 50 },
-        'E': { levels: 4, positions: 50 },
-        'F': { levels: 4, positions: 50 },
-        'G': { levels: 4, positions: 50 },
-        'H': { levels: 4, positions: 50 },
-        'I': { levels: 4, positions: 36 }
-      };
+      const layoutRows = await fetchAll('wms_layout').catch(() => []);
 
       const inventoryMap = {};
       const layoutMap = {};
@@ -118,7 +103,7 @@ export const useWarehouseStore = create((set, get) => ({
         const rackId = parts[0];
         const level = parseInt(parts[1]);
         const pos = parseInt(parts[2]);
-        const config = PHYSICAL_LIMITS[rackId];
+        const config = RACK_CONFIG[rackId];
 
         const isValid = config && level <= config.levels && pos <= config.positions;
 
@@ -140,7 +125,7 @@ export const useWarehouseStore = create((set, get) => ({
         const rackId = parts[0];
         const level = parseInt(parts[1]);
         const pos = parseInt(parts[2]);
-        const config = PHYSICAL_LIMITS[rackId];
+        const config = RACK_CONFIG[rackId];
         const isValid = config && level <= config.levels && pos <= config.positions;
 
         if (row.estado === 'OCUPADA' && isValid) {
@@ -163,29 +148,27 @@ export const useWarehouseStore = create((set, get) => ({
         }
       });
 
-      // Stats Globales: El usuario especificó 1031 posiciones totales
-      const totalSystemPositions = 1031; 
       const occupiedCount = validOccupiedLocations.size;
 
       set({
         layout: layoutMap,
         inventory: inventoryMap,
         stats: {
-          total: totalSystemPositions,
+          total: TOTAL_POSITIONS,
           ocupadas: occupiedCount,
-          vacias: Math.max(0, totalSystemPositions - occupiedCount),
-          ocupacion: totalSystemPositions > 0 ? Math.round((occupiedCount / totalSystemPositions) * 100) : 0
+          vacias: Math.max(0, TOTAL_POSITIONS - occupiedCount),
+          ocupacion: TOTAL_POSITIONS > 0 ? Math.round((occupiedCount / TOTAL_POSITIONS) * 100) : 0
         },
         loading: false
       });
 
-    } catch (error) {
-      console.error('Error fetching warehouse data:', error);
+    } catch (_) {
       set({ loading: false });
     }
   },
 
   updateLocationState: async (ubicacion, nuevoEstado) => {
+    if (!ubicacion || typeof ubicacion !== 'string') return;
     try {
       const parsed = ubicacion.split('-');
       const payload = {
@@ -222,7 +205,6 @@ export const useWarehouseStore = create((set, get) => ({
       });
 
     } catch (error) {
-      console.error("Error al cambiar estado:", error);
       throw error;
     }
   },
@@ -243,23 +225,25 @@ export const useWarehouseStore = create((set, get) => ({
         // Refresh full state to ensure consistency
         get().fetchWarehouseData();
      } catch (error) {
-       console.error("Error moviendo item:", error);
        throw error;
      }
   },
 
   subscribeToRealtime: () => {
+    let debounceTimer = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => get().fetchWarehouseData(), 2000);
+    };
+
     const channel = supabase
       .channel('warehouse-dna-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_ubicaciones' }, payload => {
-         get().fetchWarehouseData(); // Full refresh on change for safety
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_layout' }, payload => {
-         get().fetchWarehouseData();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_ubicaciones' }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_layout' }, debouncedFetch)
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }

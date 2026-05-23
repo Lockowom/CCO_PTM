@@ -117,8 +117,7 @@ const CubingRegistry = () => {
             });
           }
         }
-      } catch (error) {
-        console.error('Error buscando producto:', error);
+      } catch (_) {
       } finally {
         setLoading(false);
       }
@@ -164,9 +163,7 @@ const CubingRegistry = () => {
             tipo_empaque: formData.tipo_empaque,
             observaciones: formData.observaciones
           });
-      } catch (histErr) {
-         console.warn('Error silencioso al guardar historial:', histErr);
-      }
+      } catch (_) {}
     },
     onSuccess: () => {
       toast.success(`Cubicaje guardado para ${formData.codigo_producto}`);
@@ -188,7 +185,6 @@ const CubingRegistry = () => {
       codigoInputRef.current?.focus();
     },
     onError: (error) => {
-      console.error('Error:', error);
       toast.error('Error al guardar: ' + error.message);
     }
   });
