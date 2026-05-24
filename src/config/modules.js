@@ -25,6 +25,7 @@ export const APP_ROUTES = [
   { value: '/tms/mobile', label: 'TMS - App Móvil', module: 'tms' },
   
   // Inbound
+  { value: '/inbound/reception', label: 'Inbound - Recepción', module: 'inbound' },
   { value: '/inbound/entry', label: 'Inbound - Putaway', module: 'inbound' },
   { value: '/inbound/cubing', label: 'Inbound - Cubicaje', module: 'inbound' },
   { value: '/inbound/data-import', label: 'Inbound - Carga Masiva', module: 'inbound' },

@@ -95,6 +95,7 @@ const Navbar = () => {
       title: "Operaciones WMS",
       items: [
         { id: 'inbound', label: 'Inbound', icon: <ArrowDownToLine size={18} />, modules: [
+            { label: 'Recepción', path: '/inbound/reception', icon: <ClipboardCheck size={16} /> },
             { label: 'Cubicaje', path: '/inbound/cubing', icon: <Scale size={16} /> },
             { label: 'Putaway', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> },
             { label: 'Carga Masiva', path: '/inbound/data-import', icon: <Upload size={16} /> }

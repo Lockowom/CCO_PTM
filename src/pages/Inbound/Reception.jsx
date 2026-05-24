@@ -1,0 +1,839 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  ClipboardCheck, Plus, Trash2, Save, Download, Search, Eye, X,
+  Package, Truck, Calendar, Hash, Box, Layers, Camera, Loader2,
+  ChevronDown, ChevronUp, Filter, FileSpreadsheet, CheckCircle, Clock,
+  AlertCircle, ArrowLeft
+} from 'lucide-react';
+import { supabase } from '../../supabase';
+import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+
+// ============================================================================
+// MÓDULO DE RECEPCIÓN DE MERCADERÍA (INBOUND REVIEW)
+// ============================================================================
+
+const TIPO_CONTENEDOR_OPTIONS = ['3-4', '1HCX20', '1HCX40', '2HCX40', 'LCL', 'AEREO'];
+const ESTADOS = {
+  EN_REVISION: { label: 'En Revisión', color: 'bg-amber-500', textColor: 'text-amber-600', bgLight: 'bg-amber-50' },
+  COMPLETADO: { label: 'Completado', color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50' },
+  PENDIENTE: { label: 'Pendiente', color: 'bg-slate-400', textColor: 'text-slate-600', bgLight: 'bg-slate-50' },
+};
+
+const Reception = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
+  const containerRef = useRef(null);
+
+  // Vista: 'dashboard' | 'form'
+  const [view, setView] = useState('dashboard');
+  const [editingId, setEditingId] = useState(null);
+
+  // Filtros del dashboard
+  const [filters, setFilters] = useState({ search: '', estado: '', desde: '', hasta: '' });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Modal de detalle
+  const [detailModal, setDetailModal] = useState(null);
+
+  // Form state - Header
+  const [header, setHeader] = useState({
+    fecha_recepcion: new Date().toISOString().split('T')[0],
+    proveedor: '',
+    oc: '',
+    cant_bultos: '',
+    pallets_usados: '',
+    tipo_contenedor: '3-4',
+    notas: ''
+  });
+
+  // Form state - Items
+  const [items, setItems] = useState([]);
+  const [currentItem, setCurrentItem] = useState({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+
+  // Animación inicial
+  useGSAP(() => {
+    gsap.from(containerRef.current, { y: 20, opacity: 0, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
+  }, { scope: containerRef });
+
+  // ==================== QUERIES ====================
+
+  // Realtime
+  useRealtimeTable('tms_recepciones', [['recepciones']]);
+
+  // Fetch recepciones con items count
+  const { data: recepciones = [], isLoading } = useQuery({
+    queryKey: ['recepciones'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tms_recepciones')
+        .select('id, fecha_recepcion, proveedor, oc, cant_bultos, pallets_usados, tipo_contenedor, estado, notas, items_count, usuario_nombre, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Filtered recepciones
+  const filteredRecepciones = useMemo(() => {
+    return recepciones.filter(r => {
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        const matchesSearch = (r.proveedor || '').toLowerCase().includes(s)
+          || (r.oc || '').toLowerCase().includes(s);
+        if (!matchesSearch) return false;
+      }
+      if (filters.estado && r.estado !== filters.estado) return false;
+      if (filters.desde && r.fecha_recepcion < filters.desde) return false;
+      if (filters.hasta && r.fecha_recepcion > filters.hasta) return false;
+      return true;
+    });
+  }, [recepciones, filters]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = recepciones.length;
+    const enRevision = recepciones.filter(r => r.estado === 'EN_REVISION').length;
+    const completados = recepciones.filter(r => r.estado === 'COMPLETADO').length;
+    const totalBultos = recepciones.reduce((sum, r) => sum + (r.cant_bultos || 0), 0);
+    return { total, enRevision, completados, totalBultos };
+  }, [recepciones]);
+
+  // ==================== MUTATIONS ====================
+
+  // Guardar recepción (crear o actualizar)
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!header.proveedor) throw new Error('Proveedor es obligatorio');
+      if (items.length === 0) throw new Error('Agrega al menos un ítem');
+
+      let recepcionId = editingId;
+
+      if (editingId) {
+        // Actualizar header
+        const { error } = await supabase
+          .from('tms_recepciones')
+          .update({
+            fecha_recepcion: header.fecha_recepcion,
+            proveedor: header.proveedor.toUpperCase(),
+            oc: header.oc || null,
+            cant_bultos: parseInt(header.cant_bultos) || 0,
+            pallets_usados: parseInt(header.pallets_usados) || 0,
+            tipo_contenedor: header.tipo_contenedor,
+            notas: header.notas || null,
+            items_count: items.length,
+            estado: header.oc ? 'COMPLETADO' : 'EN_REVISION',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingId);
+        if (error) throw error;
+
+        // Borrar items anteriores y re-insertar
+        await supabase.from('tms_recepcion_items').delete().eq('recepcion_id', editingId);
+      } else {
+        // Crear header
+        const { data, error } = await supabase
+          .from('tms_recepciones')
+          .insert({
+            fecha_recepcion: header.fecha_recepcion,
+            proveedor: header.proveedor.toUpperCase(),
+            oc: header.oc || null,
+            cant_bultos: parseInt(header.cant_bultos) || 0,
+            pallets_usados: parseInt(header.pallets_usados) || 0,
+            tipo_contenedor: header.tipo_contenedor,
+            notas: header.notas || null,
+            productos: items.map(i => i.reff).join(', '),
+            cantidades: items.map(i => i.cantidad).join(', '),
+            items_count: items.length,
+            estado: header.oc ? 'COMPLETADO' : 'EN_REVISION',
+            usuario_nombre: user?.nombre || user?.email || 'Usuario'
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        recepcionId = data.id;
+      }
+
+      // Insertar items
+      const itemsToInsert = items.map(item => ({
+        recepcion_id: recepcionId,
+        reff: item.reff.toUpperCase(),
+        descripcion: item.descripcion || null,
+        um: item.um || 'UNI',
+        cantidad: parseInt(item.cantidad) || 1,
+        serie: item.serie || null,
+        lote: item.lote || null,
+        box: item.box || null,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('tms_recepcion_items')
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+    },
+    onSuccess: () => {
+      toast.success(editingId ? 'Recepción actualizada' : 'Recepción guardada correctamente');
+      queryClient.invalidateQueries({ queryKey: ['recepciones'] });
+      resetForm();
+      setView('dashboard');
+    },
+    onError: (err) => {
+      toast.error('Error: ' + err.message);
+    }
+  });
+
+  // ==================== ITEM MANAGEMENT ====================
+
+  const addItem = () => {
+    if (!currentItem.reff) {
+      toast.error('El código REFF es obligatorio');
+      return;
+    }
+    if (parseInt(currentItem.cantidad) <= 0) {
+      toast.error('La cantidad debe ser mayor a 0');
+      return;
+    }
+
+    // Buscar descripción en matriz de códigos
+    lookupDescription(currentItem.reff).then(desc => {
+      setItems(prev => [...prev, {
+        ...currentItem,
+        reff: currentItem.reff.toUpperCase(),
+        cantidad: parseInt(currentItem.cantidad) || 1,
+        descripcion: desc || '',
+        um: 'UNI',
+        _id: Date.now()
+      }]);
+      setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+    });
+  };
+
+  const removeItem = (index) => {
+    setItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const lookupDescription = async (codigo) => {
+    try {
+      const { data } = await supabase
+        .from('tms_matriz_codigos')
+        .select('producto')
+        .eq('codigo_producto', codigo.toUpperCase())
+        .maybeSingle();
+      return data?.producto || '';
+    } catch { return ''; }
+  };
+
+  // ==================== CAMERA SCAN ====================
+
+  const scanField = (field) => {
+    startScan({
+      onScan: (value) => {
+        const val = value.trim();
+        setCurrentItem(prev => ({ ...prev, [field]: val }));
+        toast.success(`${field.toUpperCase()} escaneado: ${val}`);
+      },
+      onError: (msg) => toast.error(msg)
+    });
+  };
+
+  // ==================== DETAIL VIEW ====================
+
+  const loadDetail = async (recepcion) => {
+    try {
+      const { data, error } = await supabase
+        .from('tms_recepcion_items')
+        .select('id, reff, descripcion, um, cantidad, serie, lote, box')
+        .eq('recepcion_id', recepcion.id)
+        .order('id', { ascending: true });
+      if (error) throw error;
+      setDetailModal({ ...recepcion, items: data || [] });
+    } catch (err) {
+      toast.error('Error cargando detalle');
+    }
+  };
+
+  const editRecepcion = async (recepcion) => {
+    try {
+      const { data, error } = await supabase
+        .from('tms_recepcion_items')
+        .select('id, reff, descripcion, um, cantidad, serie, lote, box')
+        .eq('recepcion_id', recepcion.id)
+        .order('id', { ascending: true });
+      if (error) throw error;
+
+      setHeader({
+        fecha_recepcion: recepcion.fecha_recepcion || new Date().toISOString().split('T')[0],
+        proveedor: recepcion.proveedor || '',
+        oc: recepcion.oc || '',
+        cant_bultos: recepcion.cant_bultos || '',
+        pallets_usados: recepcion.pallets_usados || '',
+        tipo_contenedor: recepcion.tipo_contenedor || '3-4',
+        notas: recepcion.notas || ''
+      });
+      setItems((data || []).map(i => ({ ...i, _id: i.id })));
+      setEditingId(recepcion.id);
+      setDetailModal(null);
+      setView('form');
+    } catch (err) {
+      toast.error('Error cargando datos');
+    }
+  };
+
+  // ==================== EXCEL EXPORT ====================
+
+  const exportToExcel = (recepcion, exportItems) => {
+    // Hoja 1: Items detallados (formato morado de la imagen)
+    const wsData = exportItems.map(item => ({
+      'CODIGO': item.reff,
+      'DESCRIPCION': item.descripcion || '',
+      'U.M': item.um || 'UNI',
+      'CANTIDAD': item.cantidad,
+      'SERIE': item.serie || '',
+      'PARTIDA': item.lote || ''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(wsData);
+
+    // Ajustar ancho de columnas
+    ws['!cols'] = [
+      { wch: 16 }, // CODIGO
+      { wch: 50 }, // DESCRIPCION
+      { wch: 6 },  // U.M
+      { wch: 10 }, // CANTIDAD
+      { wch: 16 }, // SERIE
+      { wch: 16 }, // PARTIDA
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Detalle Items');
+
+    // Hoja 2: Resumen header
+    const headerData = [{
+      'FECHA RECEPCION': recepcion.fecha_recepcion,
+      'PROVEEDOR': recepcion.proveedor,
+      'OC': recepcion.oc || '',
+      'CANT BULTOS': recepcion.cant_bultos,
+      'PALLETS USADOS': recepcion.pallets_usados,
+      'TIPO CONTENEDOR': recepcion.tipo_contenedor,
+      'ESTADO': recepcion.estado,
+      'TOTAL ITEMS': exportItems.length,
+      'TOTAL CANTIDAD': exportItems.reduce((sum, i) => sum + (i.cantidad || 0), 0)
+    }];
+    const ws2 = XLSX.utils.json_to_sheet(headerData);
+    ws2['!cols'] = [
+      { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 14 },
+      { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
+
+    const fileName = `Recepcion_${recepcion.proveedor}_${recepcion.fecha_recepcion || 'sin-fecha'}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast.success(`Archivo descargado: ${fileName}`);
+  };
+
+  const exportAllToExcel = () => {
+    if (filteredRecepciones.length === 0) {
+      toast.error('No hay recepciones para exportar');
+      return;
+    }
+
+    const wsData = filteredRecepciones.map(r => ({
+      'FECHA RECEPCION': r.fecha_recepcion,
+      'PROVEEDOR': r.proveedor,
+      'OC': r.oc || '',
+      'CANT BULTOS': r.cant_bultos || 0,
+      'PALLETS USADOS': r.pallets_usados || 0,
+      'TIPO CONT': r.tipo_contenedor || '',
+      'ESTADO': r.estado,
+      'ITEMS': r.items_count || 0,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 18 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+      { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 8 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Recepciones');
+    XLSX.writeFile(wb, `Recepciones_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Reporte exportado');
+  };
+
+  // ==================== HELPERS ====================
+
+  const resetForm = () => {
+    setHeader({
+      fecha_recepcion: new Date().toISOString().split('T')[0],
+      proveedor: '', oc: '', cant_bultos: '', pallets_usados: '',
+      tipo_contenedor: '3-4', notas: ''
+    });
+    setItems([]);
+    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+    setEditingId(null);
+  };
+
+  const formatDate = (d) => {
+    if (!d) return '-';
+    const parts = d.split('-');
+    return `${parts[2]}-${parts[1]}-${parts[0].slice(2)}`;
+  };
+
+  // ==================== RENDER ====================
+
+  return (
+    <div ref={containerRef} className="space-y-6 min-h-screen bg-slate-50 p-6 text-slate-700 pb-20">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-14 h-14 bg-slate-50/80 border border-emerald-500/50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-lg">
+            <ClipboardCheck size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              Recepción de <span className="text-emerald-600">Mercadería</span>
+            </h2>
+            <p className="text-slate-500 font-medium mt-1">Revisión y registro de ingresos</p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 relative z-10">
+          {view === 'dashboard' && (
+            <>
+              <button onClick={exportAllToExcel} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
+                <FileSpreadsheet size={16} /> EXPORTAR
+              </button>
+              <button
+                onClick={() => { resetForm(); setView('form'); }}
+                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 transition-colors shadow-lg"
+              >
+                <Plus size={18} /> NUEVA RECEPCIÓN
+              </button>
+            </>
+          )}
+          {view === 'form' && (
+            <button onClick={() => { resetForm(); setView('dashboard'); }} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
+              <ArrowLeft size={16} /> VOLVER
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ==================== DASHBOARD VIEW ==================== */}
+      {view === 'dashboard' && (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard icon={<Package size={20} />} label="Total Recepciones" value={stats.total} color="text-slate-700" bg="bg-white" />
+            <StatCard icon={<Clock size={20} />} label="En Revisión" value={stats.enRevision} color="text-amber-600" bg="bg-amber-50" />
+            <StatCard icon={<CheckCircle size={20} />} label="Completados" value={stats.completados} color="text-emerald-600" bg="bg-emerald-50" />
+            <StatCard icon={<Layers size={20} />} label="Total Bultos" value={stats.totalBultos} color="text-blue-600" bg="bg-blue-50" />
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg">
+            <div className="p-4 flex items-center justify-between border-b border-slate-100">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar proveedor u OC..."
+                  value={filters.search}
+                  onChange={e => setFilters(p => ({ ...p, search: e.target.value }))}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-emerald-400 transition-colors"
+                />
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="ml-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-sm font-bold text-slate-600 flex items-center gap-2 transition-colors"
+              >
+                <Filter size={16} /> Filtros {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
+
+            {showFilters && (
+              <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Estado</label>
+                  <select
+                    value={filters.estado}
+                    onChange={e => setFilters(p => ({ ...p, estado: e.target.value }))}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400"
+                  >
+                    <option value="">Todos</option>
+                    <option value="EN_REVISION">En Revisión</option>
+                    <option value="COMPLETADO">Completado</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Desde</label>
+                  <input type="date" value={filters.desde} onChange={e => setFilters(p => ({ ...p, desde: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hasta</label>
+                  <input type="date" value={filters.hasta} onChange={e => setFilters(p => ({ ...p, hasta: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400" />
+                </div>
+                <button onClick={() => setFilters({ search: '', estado: '', desde: '', hasta: '' })} className="self-end px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 transition-colors">
+                  Limpiar
+                </button>
+              </div>
+            )}
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-800 text-white text-xs uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left font-bold">Fecha Recepción</th>
+                    <th className="px-4 py-3 text-left font-bold">Proveedor</th>
+                    <th className="px-4 py-3 text-left font-bold">OC</th>
+                    <th className="px-4 py-3 text-center font-bold">Cant Bultos</th>
+                    <th className="px-4 py-3 text-center font-bold">Pallets</th>
+                    <th className="px-4 py-3 text-center font-bold">Tipo Cont</th>
+                    <th className="px-4 py-3 text-center font-bold">Estado</th>
+                    <th className="px-4 py-3 text-center font-bold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400"><Loader2 size={24} className="animate-spin mx-auto mb-2" />Cargando...</td></tr>
+                  ) : filteredRecepciones.length === 0 ? (
+                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No hay recepciones registradas</td></tr>
+                  ) : (
+                    filteredRecepciones.map((r, idx) => {
+                      const estado = ESTADOS[r.estado] || ESTADOS.PENDIENTE;
+                      return (
+                        <tr key={r.id} className={`border-b border-slate-100 hover:bg-emerald-50/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                          <td className="px-4 py-3 font-bold text-slate-700">{formatDate(r.fecha_recepcion)}</td>
+                          <td className="px-4 py-3 font-bold text-slate-900">{r.proveedor}</td>
+                          <td className="px-4 py-3 font-mono text-slate-600">{r.oc || <span className="text-slate-300 italic">Sin OC</span>}</td>
+                          <td className="px-4 py-3 text-center font-bold">{r.cant_bultos || 0}</td>
+                          <td className="px-4 py-3 text-center font-bold">{r.pallets_usados || 0}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="px-2 py-1 bg-slate-100 rounded-md text-xs font-bold text-slate-600">{r.tipo_contenedor}</span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white ${estado.color}`}>
+                              {estado.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => loadDetail(r)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Ver detalle">
+                                <Eye size={16} className="text-slate-500" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ==================== FORM VIEW ==================== */}
+      {view === 'form' && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* HEADER FORM */}
+          <div className="xl:col-span-1 space-y-6">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+              <h3 className="font-black text-slate-900 text-lg mb-5 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 text-sm font-black">1</span>
+                DATOS DE RECEPCIÓN
+              </h3>
+
+              <div className="space-y-4">
+                {/* Fecha */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fecha Recepción <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input type="date" value={header.fecha_recepcion} onChange={e => setHeader(p => ({ ...p, fecha_recepcion: e.target.value }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" required />
+                  </div>
+                </div>
+
+                {/* Proveedor */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Proveedor <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input type="text" value={header.proveedor} onChange={e => setHeader(p => ({ ...p, proveedor: e.target.value.toUpperCase() }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold uppercase outline-none focus:border-emerald-400" placeholder="SAIKANG, BCF..." required />
+                  </div>
+                </div>
+
+                {/* OC */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">OC <span className="text-amber-500 text-[9px]">(después de revisión)</span></label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input type="text" value={header.oc} onChange={e => setHeader(p => ({ ...p, oc: e.target.value }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="21073..." />
+                  </div>
+                </div>
+
+                {/* Bultos + Pallets */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cant Bultos <span className="text-red-500">*</span></label>
+                    <input type="number" value={header.cant_bultos} onChange={e => setHeader(p => ({ ...p, cant_bultos: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pallets Usados</label>
+                    <input type="number" value={header.pallets_usados} onChange={e => setHeader(p => ({ ...p, pallets_usados: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" />
+                  </div>
+                </div>
+
+                {/* Tipo Contenedor */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo Contenedor</label>
+                  <select value={header.tipo_contenedor} onChange={e => setHeader(p => ({ ...p, tipo_contenedor: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400">
+                    {TIPO_CONTENEDOR_OPTIONS.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Notas */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notas</label>
+                  <textarea rows={2} value={header.notas} onChange={e => setHeader(p => ({ ...p, notas: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-400 resize-none" placeholder="Observaciones..." />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ITEMS FORM + LIST */}
+          <div className="xl:col-span-2 space-y-6">
+            {/* Add Item Form */}
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+              <h3 className="font-black text-slate-900 text-lg mb-5 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 text-sm font-black">2</span>
+                AGREGAR ÍTEMS
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                {/* REFF */}
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">REFF <span className="text-red-500">*</span></label>
+                  <input type="text" value={currentItem.reff} onChange={e => setCurrentItem(p => ({ ...p, reff: e.target.value.toUpperCase() }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold uppercase outline-none focus:border-emerald-400" placeholder="CMS60D1" />
+                </div>
+
+                {/* CANTIDAD */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cantidad</label>
+                  <input type="number" value={currentItem.cantidad} onChange={e => setCurrentItem(p => ({ ...p, cantidad: e.target.value }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-emerald-400" min="1" />
+                </div>
+
+                {/* SERIE */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
+                  <div className="flex gap-1">
+                    <input type="text" value={currentItem.serie} onChange={e => setCurrentItem(p => ({ ...p, serie: e.target.value }))} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono outline-none focus:border-emerald-400" placeholder="S/N..." />
+                    {isSupportedDevice && (
+                      <button type="button" onClick={() => scanField('serie')} disabled={isScanning} className="px-2 bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 rounded-lg transition-colors disabled:opacity-50">
+                        <Camera size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* LOTE */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lote</label>
+                  <div className="flex gap-1">
+                    <input type="text" value={currentItem.lote} onChange={e => setCurrentItem(p => ({ ...p, lote: e.target.value }))} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono outline-none focus:border-emerald-400" placeholder="Lote..." />
+                    {isSupportedDevice && (
+                      <button type="button" onClick={() => scanField('lote')} disabled={isScanning} className="px-2 bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 rounded-lg transition-colors disabled:opacity-50">
+                        <Camera size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* BOX */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Box</label>
+                  <input type="text" value={currentItem.box} onChange={e => setCurrentItem(p => ({ ...p, box: e.target.value }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-emerald-400" placeholder="B1..." />
+                </div>
+              </div>
+
+              <button onClick={addItem} className="mt-4 w-full bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
+                <Plus size={18} /> AGREGAR ÍTEM
+              </button>
+            </div>
+
+            {/* Items List */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 className="font-black text-slate-900 text-sm flex items-center gap-2">
+                  ÍTEMS REGISTRADOS
+                  <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold">{items.length}</span>
+                </h3>
+                {items.length > 0 && (
+                  <span className="text-xs font-bold text-slate-500">
+                    Total: {items.reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0)} unidades
+                  </span>
+                )}
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto">
+                {items.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <Box size={40} className="mx-auto mb-2 opacity-30" />
+                    <p className="font-bold">Sin ítems</p>
+                    <p className="text-xs">Usa el formulario de arriba para agregar productos</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-emerald-700 text-white text-xs uppercase">
+                        <th className="px-3 py-2 text-left">#</th>
+                        <th className="px-3 py-2 text-left">REFF</th>
+                        <th className="px-3 py-2 text-center">Cant</th>
+                        <th className="px-3 py-2 text-left">Serie</th>
+                        <th className="px-3 py-2 text-left">Lote</th>
+                        <th className="px-3 py-2 text-left">Box</th>
+                        <th className="px-3 py-2 text-center">-</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, idx) => (
+                        <tr key={item._id || idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'}`}>
+                          <td className="px-3 py-2 text-slate-400 text-xs">{idx + 1}</td>
+                          <td className="px-3 py-2 font-mono font-bold text-slate-900">{item.reff}</td>
+                          <td className="px-3 py-2 text-center font-bold text-emerald-700">{item.cantidad}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.serie || '-'}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.lote || '-'}</td>
+                          <td className="px-3 py-2 text-xs text-slate-600">{item.box || '-'}</td>
+                          <td className="px-3 py-2 text-center">
+                            <button onClick={() => removeItem(idx)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Save Button */}
+              {items.length > 0 && (
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                  <button
+                    onClick={() => saveMutation.mutate()}
+                    disabled={saveMutation.isPending}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-black text-lg flex items-center justify-center gap-3 transition-colors disabled:opacity-50 shadow-lg active:scale-[0.98]"
+                  >
+                    {saveMutation.isPending ? (
+                      <><Loader2 size={22} className="animate-spin" /> GUARDANDO...</>
+                    ) : (
+                      <><Save size={22} /> {editingId ? 'ACTUALIZAR' : 'GUARDAR'} RECEPCIÓN ({items.length} ítems)</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== DETAIL MODAL ==================== */}
+      {detailModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDetailModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="p-6 bg-slate-800 text-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-black">Recepción — {detailModal.proveedor}</h3>
+                <div className="flex gap-4 mt-2 text-sm text-slate-300">
+                  <span>📅 {formatDate(detailModal.fecha_recepcion)}</span>
+                  {detailModal.oc && <span>📋 OC: {detailModal.oc}</span>}
+                  <span>📦 {detailModal.cant_bultos || 0} bultos</span>
+                  <span>🏗️ {detailModal.pallets_usados || 0} pallets</span>
+                  <span>🚛 {detailModal.tipo_contenedor}</span>
+                </div>
+              </div>
+              <button onClick={() => setDetailModal(null)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex gap-3">
+              <button onClick={() => editRecepcion(detailModal)} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors">
+                <ClipboardCheck size={16} /> EDITAR
+              </button>
+              <button
+                onClick={() => exportToExcel(detailModal, detailModal.items)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
+              >
+                <Download size={16} /> DESCARGAR EXCEL
+              </button>
+            </div>
+
+            {/* Modal Table */}
+            <div className="overflow-auto max-h-[50vh]">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0">
+                  <tr className="bg-purple-800 text-white text-xs uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left font-bold">CÓDIGO</th>
+                    <th className="px-4 py-3 text-left font-bold">DESCRIPCIÓN</th>
+                    <th className="px-4 py-3 text-center font-bold">U.M</th>
+                    <th className="px-4 py-3 text-center font-bold">CANTIDAD</th>
+                    <th className="px-4 py-3 text-left font-bold">SERIE</th>
+                    <th className="px-4 py-3 text-left font-bold">PARTIDA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(detailModal.items || []).map((item, idx) => (
+                    <tr key={item.id || idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-purple-50/30'}`}>
+                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{item.reff}</td>
+                      <td className="px-4 py-2.5 text-slate-600 truncate max-w-[300px]">{item.descripcion || '-'}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-500">{item.um || 'UNI'}</td>
+                      <td className="px-4 py-2.5 text-center font-bold text-slate-900">{item.cantidad}</td>
+                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.serie || ''}</td>
+                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.lote || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-sm">
+              <span className="font-bold text-slate-500">Total ítems: {detailModal.items?.length || 0}</span>
+              <span className="font-bold text-slate-700">Total cantidad: {(detailModal.items || []).reduce((s, i) => s + (i.cantidad || 0), 0)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== STAT CARD COMPONENT ====================
+
+const StatCard = ({ icon, label, value, color, bg }) => (
+  <div className={`${bg} p-4 rounded-2xl border border-slate-200 shadow-sm`}>
+    <div className={`flex items-center gap-2 ${color} mb-2`}>
+      {icon}
+      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+    </div>
+    <p className={`text-3xl font-black ${color}`}>{value}</p>
+  </div>
+);
+
+export default Reception;

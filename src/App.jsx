@@ -26,7 +26,8 @@ const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA')); //
 
 // Inbound Modules
 const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
-const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry')); // NUEVO - Registro Cubicaje
+const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry'));
+const Reception = React.lazy(() => import('./pages/Inbound/Reception'));
 
 // Outbound Modules
 const SalesOrders = React.lazy(() => import('./pages/Outbound/SalesOrders'));
@@ -282,6 +283,7 @@ function AppContent() {
           <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
 
           {/* Inbound Modules */}
+          <Route path="inbound/reception" element={<ErrorBoundary><Reception /></ErrorBoundary>} />
           <Route path="inbound/entry" element={<ErrorBoundary><Entry /></ErrorBoundary>} />
           <Route path="inbound/cubing" element={<ErrorBoundary><CubingRegistry /></ErrorBoundary>} />
           <Route path="inbound/data-import" element={<ErrorBoundary><DataImport /></ErrorBoundary>} />
