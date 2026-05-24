@@ -1,401 +1,362 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import {
-  Search, X, Download, RefreshCw, Package,
-  ChevronDown, Layers, Box, ArrowUpDown
+  Search, X, Download, RefreshCw,
+  ChevronDown, ChevronUp, Package, MapPin,
+  Filter, ArrowUpDown, Layers
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../store/warehouseStore';
-import { RACK_CONFIG } from '../../constants/warehouse';
 
-const ROW_HEIGHT = 64;
-const VALID_RACKS = Object.keys(RACK_CONFIG);
+const COLLAPSED_HEIGHT = 72;
+const ITEM_HEIGHT = 52;
 
-/* ── SKU row inside expanded location ── */
-const SkuRow = React.memo(({ item }) => (
-  <div className="flex items-center justify-between py-2.5 px-4 rounded-lg hover:bg-orange-50/50 transition-colors">
-    <div className="flex items-center gap-3 flex-1 min-w-0">
-      <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-        <Box size={13} className="text-orange-600" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold text-slate-800 truncate">{item.descripcion || '—'}</p>
-        <p className="text-[11px] text-slate-400 font-medium">{item.codigo}</p>
-      </div>
-    </div>
-    <div className="flex items-center gap-5 shrink-0 text-[11px] text-slate-500 font-medium">
-      {item.talla && <span className="hidden md:block bg-slate-100 px-2 py-0.5 rounded text-[10px] font-semibold">{item.talla}</span>}
-      {item.color && <span className="hidden md:block bg-slate-100 px-2 py-0.5 rounded text-[10px] font-semibold">{item.color}</span>}
-      {item.partida && <span className="hidden lg:block text-slate-400 truncate max-w-[90px]">{item.partida}</span>}
-      <span className={`text-base font-bold tabular-nums min-w-[40px] text-right ${item.cantidad > 0 ? 'text-slate-900' : 'text-slate-300'}`}>
-        {item.cantidad || 0}
-      </span>
-    </div>
-  </div>
-));
-
-/* ── Location Row ── */
-const LocationRow = React.memo(({ location, isExpanded, onToggle }) => {
-  const parts = location.ubicacion?.split('-') || [];
-  const skuCount = location.items?.length || 0;
-  const totalQty = location.totalStock || 0;
-  const hasStock = totalQty > 0;
+const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) => {
+  const matchingItems = group.matchingItems;
+  const totalItems = group.allItems.length;
+  const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+  const matchStock = matchingItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+  const parts = group.ubicacion.split('-');
+  const hasSearch = searchQuery.length > 0;
+  const displayItems = hasSearch ? matchingItems : group.allItems;
+  const showItems = isExpanded ? displayItems : displayItems.slice(0, 1);
 
   return (
-    <div className={`rounded-xl border transition-all duration-200 overflow-hidden ${
-      isExpanded
-        ? 'bg-white border-orange-200 shadow-md'
-        : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
-    }`}>
-      <button onClick={onToggle} className="w-full px-4 py-3 flex items-center gap-4 text-left">
-        <div className="flex items-center gap-3 min-w-[180px]">
-          <div className={`w-2 h-2 rounded-full shrink-0 ${hasStock ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-          <span className="text-[15px] font-bold text-slate-900 tracking-tight font-mono">{location.ubicacion}</span>
-        </div>
-
-        <div className="hidden md:flex items-center gap-4 text-[11px] text-slate-400 font-medium min-w-[180px]">
-          <span>Rack <strong className="text-slate-600">{parts[0]}</strong></span>
-          <span>Niv <strong className="text-slate-600">{parts[1]}</strong></span>
-          <span>Pos <strong className="text-slate-600">{parts[2]}</strong></span>
-        </div>
-
-        <div className="flex-1 min-w-0 hidden lg:block">
-          <p className="text-[12px] text-slate-400 truncate">
-            {location.items?.[0]?.descripcion || '—'}
-            {skuCount > 1 && <span className="text-slate-300 ml-1">+{skuCount - 1} más</span>}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 min-w-[60px] justify-end">
-          <Layers size={13} className="text-slate-300" />
-          <span className="text-[12px] font-semibold text-slate-500 tabular-nums">{skuCount}</span>
-        </div>
-
-        <div className="min-w-[70px] text-right">
-          <span className={`text-lg font-bold tabular-nums ${hasStock ? 'text-slate-900' : 'text-slate-200'}`}>
-            {totalQty.toLocaleString()}
-          </span>
-        </div>
-
-        <ChevronDown size={16} className={`text-slate-300 transition-transform shrink-0 ${isExpanded ? 'rotate-180 text-orange-500' : ''}`} />
-      </button>
-
-      {isExpanded && location.items && (
-        <div className="border-t border-slate-100 px-3 py-2 bg-slate-50/60">
-          <div className="flex items-center justify-between px-4 py-1.5 mb-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos en {location.ubicacion}</span>
-            <span className="text-[10px] font-bold text-slate-400">{skuCount} item{skuCount !== 1 ? 's' : ''}</span>
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all">
+      <div
+        className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none hover:bg-slate-50/50 transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${totalStock > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            <span className="text-sm font-bold text-slate-900 tracking-tight">{group.ubicacion}</span>
           </div>
-          <div className="space-y-0.5 max-h-[280px] overflow-y-auto custom-scrollbar-flat">
-            {location.items.map((item, idx) => (
-              <SkuRow key={item.id || idx} item={item} />
-            ))}
+          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 font-medium">
+            <span>Rack <strong className="text-slate-600">{parts[0]}</strong></span>
+            <span>Pos <strong className="text-slate-600">{parts[1]}</strong></span>
+            <span>Niv <strong className="text-slate-600">{parts[2]}</strong></span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-5">
+          {hasSearch && matchingItems.length < totalItems && (
+            <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">
+              {matchingItems.length}/{totalItems} coinciden
+            </span>
+          )}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Package size={13} />
+            <span className="font-bold text-slate-600">{hasSearch ? matchingItems.length : totalItems}</span>
+            <span>SKUs</span>
+          </div>
+          <div className="text-right min-w-[60px]">
+            <span className="text-lg font-extrabold text-slate-900 tracking-tight">{hasSearch ? matchStock : totalStock}</span>
+            <span className="text-[10px] text-slate-400 font-medium ml-1">uds</span>
+          </div>
+          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </div>
+        </div>
+      </div>
+
+      {showItems.length > 0 && (
+        <div className="border-t border-slate-100">
+          {showItems.map((item, idx) => (
+            <div
+              key={item.id || idx}
+              className={`flex items-center justify-between px-5 py-2.5 text-sm ${idx > 0 ? 'border-t border-slate-50' : ''} hover:bg-blue-50/30 transition-colors`}
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 shrink-0">{item.codigo}</span>
+                <span className="text-slate-600 truncate">{item.descripcion}</span>
+              </div>
+              <span className="text-sm font-bold text-slate-800 tabular-nums shrink-0 ml-4">{Number(item.cantidad) || 0}</span>
+            </div>
+          ))}
+          {!isExpanded && displayItems.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggle(); }}
+              className="w-full py-2 text-xs font-bold text-slate-400 hover:text-blue-600 hover:bg-blue-50/30 transition-colors border-t border-slate-50"
+            >
+              +{displayItems.length - 1} más
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 });
 
-/* ══════════════════════════════════════════════ */
-/*  Main Component                               */
-/* ══════════════════════════════════════════════ */
 const WmsLocations = () => {
   const { inventory, stats, loading, fetchWarehouseData } = useWarehouseStore();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
-  const [activeAisle, setActiveAisle] = useState('Todos');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
-  const [expandedId, setExpandedId] = useState(null);
-  const [sortBy, setSortBy] = useState('ubicacion');
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortAsc, setSortAsc] = useState(true);
+  const [expandedKeys, setExpandedKeys] = useState(new Set());
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
   useEffect(() => { fetchWarehouseData(); }, [fetchWarehouseData]);
 
   useEffect(() => {
-    const s = searchParams.get('search');
-    if (s && s !== search) { setSearch(s); setDebouncedSearch(s); }
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setDebouncedSearch(search);
-      setSearchParams(search ? { search } : {}, { replace: true });
-    }, 150);
-    return () => clearTimeout(t);
+    const handler = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(handler);
   }, [search]);
 
   useEffect(() => {
     const handler = (e) => {
-      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && e.target.tagName !== 'INPUT')) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         searchRef.current?.focus();
       }
-      if (e.key === 'Escape') { searchRef.current?.blur(); setSearch(''); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  /*
-   * Pre-compute: group by location + build a search index string per location.
-   * The search index is built ONCE when inventory changes, not on every keystroke.
-   */
-  const groupedLocations = useMemo(() => {
-    const all = Object.values(inventory).flat();
-    const map = {};
-
-    all.forEach(item => {
-      const loc = item.ubicacion || 'SIN-UBI';
-      if (!map[loc]) {
-        map[loc] = { ubicacion: loc, items: [], totalStock: 0, _searchIndex: '' };
+  const locationGroups = useMemo(() => {
+    const groups = {};
+    Object.entries(inventory).forEach(([ubicacion, items]) => {
+      if (!groups[ubicacion]) {
+        groups[ubicacion] = { ubicacion, allItems: [], matchingItems: [] };
       }
-      map[loc].items.push(item);
-      map[loc].totalStock += (Number(item.cantidad) || 0);
+      groups[ubicacion].allItems = items;
     });
-
-    // Build search index once per location
-    const result = Object.values(map);
-    result.forEach(loc => {
-      loc._searchIndex = [
-        loc.ubicacion,
-        ...loc.items.map(i =>
-          `${i.codigo || ''} ${i.descripcion || ''} ${i.talla || ''} ${i.color || ''} ${i.partida || ''}`
-        )
-      ].join(' ').toLowerCase();
-    });
-
-    return result;
+    return groups;
   }, [inventory]);
 
-  /* Sidebar: only show valid racks from RACK_CONFIG (A-I), not dirty data */
-  const aisles = useMemo(() => {
-    const inData = new Set(groupedLocations.map(l => l.ubicacion.split('-')[0]).filter(Boolean));
-    const validInData = VALID_RACKS.filter(r => inData.has(r));
-    return ['Todos', ...validInData];
-  }, [groupedLocations]);
-
-  /* Filter + search + sort — uses pre-built _searchIndex for speed */
-  const filteredData = useMemo(() => {
-    let r = groupedLocations;
-
-    // Only show locations in valid racks
-    if (activeAisle !== 'Todos') {
-      r = r.filter(l => l.ubicacion.startsWith(activeAisle + '-'));
-    } else {
-      r = r.filter(l => VALID_RACKS.includes(l.ubicacion.split('-')[0]));
-    }
-
-    if (stockFilter === 'stock') r = r.filter(l => l.totalStock > 0);
-    else if (stockFilter === 'empty') r = r.filter(l => l.totalStock === 0);
-
+  const filteredGroups = useMemo(() => {
     const q = debouncedSearch.toLowerCase().trim();
+    let results = Object.values(locationGroups);
+
+    results = results.map(group => {
+      let matching;
+      if (q) {
+        matching = group.allItems.filter(item =>
+          (item.ubicacion || '').toLowerCase().includes(q) ||
+          (item.codigo || '').toLowerCase().includes(q) ||
+          (item.descripcion || '').toLowerCase().includes(q)
+        );
+      } else {
+        matching = group.allItems;
+      }
+      return { ...group, matchingItems: matching };
+    });
+
     if (q) {
-      const terms = q.split(/\s+/);
-      r = r.filter(loc => terms.every(t => loc._searchIndex.includes(t)));
+      results = results.filter(g => g.matchingItems.length > 0);
     }
 
-    r.sort((a, b) => {
-      let c = 0;
-      if (sortBy === 'stock') c = a.totalStock - b.totalStock;
-      else if (sortBy === 'skus') c = a.items.length - b.items.length;
-      else c = a.ubicacion.localeCompare(b.ubicacion);
-      return sortDir === 'desc' ? -c : c;
-    });
-    return r;
-  }, [groupedLocations, debouncedSearch, activeAisle, stockFilter, sortBy, sortDir]);
+    if (stockFilter === 'stock') {
+      results = results.filter(g => {
+        const items = q ? g.matchingItems : g.allItems;
+        return items.some(i => Number(i.cantidad) > 0);
+      });
+    } else if (stockFilter === 'empty') {
+      results = results.filter(g => {
+        const total = g.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+        return total === 0;
+      });
+    }
 
-  const filteredStats = useMemo(() => ({
-    locations: filteredData.length,
-    totalStock: filteredData.reduce((a, l) => a + l.totalStock, 0),
-    skus: filteredData.reduce((a, l) => a + l.items.length, 0),
-  }), [filteredData]);
+    results.sort((a, b) => {
+      const cmp = a.ubicacion.localeCompare(b.ubicacion);
+      return sortAsc ? cmp : -cmp;
+    });
+
+    return results;
+  }, [locationGroups, debouncedSearch, stockFilter, sortAsc]);
+
+  const summaryStats = useMemo(() => {
+    const totalLocations = filteredGroups.length;
+    const totalItems = filteredGroups.reduce((acc, g) => {
+      const items = debouncedSearch ? g.matchingItems : g.allItems;
+      return acc + items.length;
+    }, 0);
+    const totalStock = filteredGroups.reduce((acc, g) => {
+      const items = debouncedSearch ? g.matchingItems : g.allItems;
+      return acc + items.reduce((a, i) => a + (Number(i.cantidad) || 0), 0);
+    }, 0);
+    return { totalLocations, totalItems, totalStock };
+  }, [filteredGroups, debouncedSearch]);
+
+  const toggleExpand = useCallback((key) => {
+    setExpandedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
 
   const virtualizer = useVirtualizer({
-    count: filteredData.length,
+    count: filteredGroups.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (i) => {
-      if (filteredData[i]?.ubicacion === expandedId) {
-        const n = filteredData[i].items?.length || 0;
-        return ROW_HEIGHT + Math.min(n * 42 + 56, 340) + 8;
+    estimateSize: (index) => {
+      const group = filteredGroups[index];
+      if (!group) return COLLAPSED_HEIGHT;
+      const isExpanded = expandedKeys.has(group.ubicacion);
+      const q = debouncedSearch.toLowerCase().trim();
+      const displayItems = q ? group.matchingItems : group.allItems;
+      if (isExpanded) {
+        return COLLAPSED_HEIGHT + displayItems.length * ITEM_HEIGHT + 8;
       }
-      return ROW_HEIGHT + 6;
+      return COLLAPSED_HEIGHT + (displayItems.length > 0 ? ITEM_HEIGHT : 0) + (displayItems.length > 1 ? 32 : 0) + 8;
     },
-    overscan: 10,
+    overscan: 8,
   });
 
-  useEffect(() => { virtualizer.measure(); }, [expandedId]);
-
-  const cycleSort = useCallback(() => {
-    const order = ['ubicacion', 'stock', 'skus'];
-    const idx = order.indexOf(sortBy);
-    if (sortDir === 'asc') setSortDir('desc');
-    else { setSortDir('asc'); setSortBy(order[(idx + 1) % order.length]); }
-  }, [sortBy, sortDir]);
+  useEffect(() => {
+    virtualizer.measure();
+  }, [expandedKeys, debouncedSearch, stockFilter]);
 
   const exportCSV = useCallback(() => {
-    const headers = ['Ubicacion', 'Codigo', 'Descripcion', 'Cantidad', 'Talla', 'Color', 'Partida'];
+    const headers = ['Ubicacion', 'Codigo', 'Descripcion', 'Cantidad'];
     const rows = [];
-    filteredData.forEach(loc => loc.items.forEach(item => {
-      rows.push([
-        `"${loc.ubicacion}"`, `"${item.codigo || ''}"`,
-        `"${(item.descripcion || '').replace(/"/g, '""')}"`,
-        item.cantidad || 0, `"${item.talla || ''}"`,
-        `"${item.color || ''}"`, `"${item.partida || ''}"`,
-      ]);
-    }));
-    const csv = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    filteredGroups.forEach(group => {
+      const items = debouncedSearch ? group.matchingItems : group.allItems;
+      items.forEach(item => {
+        rows.push([
+          `"${(item.ubicacion || '').replace(/"/g, '""')}"`,
+          `"${(item.codigo || '').replace(/"/g, '""')}"`,
+          `"${(item.descripcion || '').replace(/"/g, '""')}"`,
+          item.cantidad || 0
+        ]);
+      });
+    });
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob(["﻿" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `WMS_INVENTARIO_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `WMS_UBICACIONES_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [filteredData]);
+  }, [filteredGroups, debouncedSearch]);
 
-  const sortLabel = sortBy === 'stock' ? 'Stock' : sortBy === 'skus' ? 'SKUs' : 'Ubicación';
+  const filterTabs = [
+    { key: 'all', label: 'Todos' },
+    { key: 'stock', label: 'Con stock' },
+    { key: 'empty', label: 'Vacías' },
+  ];
 
   return (
-    <div className="h-screen bg-[#F4F5F7] flex overflow-hidden">
+    <div className="h-full flex flex-col bg-[#F8F9FB] overflow-hidden">
 
-      {/* ── Sidebar: only valid racks A–I ── */}
-      <aside className="w-14 bg-slate-900 flex flex-col items-center py-4 shrink-0 z-50">
-        <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center mb-4">
-          <Package size={16} className="text-white" />
-        </div>
-
-        <div className="flex-1 flex flex-col gap-1 w-full px-1 overflow-y-auto no-scrollbar">
-          {aisles.map(aisle => (
+      <header className="shrink-0 bg-white border-b border-slate-200 px-6 pt-5 pb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Explorador de Ubicaciones</h1>
+            <p className="text-xs text-slate-400 mt-0.5 font-medium">
+              {stats.ocupacion}% ocupación · {summaryStats.totalLocations} ubicaciones · {summaryStats.totalItems} registros · {summaryStats.totalStock.toLocaleString()} uds
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              key={aisle}
-              onClick={() => { setActiveAisle(aisle); setExpandedId(null); }}
-              title={aisle === 'Todos' ? 'Todos los racks' : `Rack ${aisle}`}
-              className={`w-full py-2 rounded-lg text-center transition-all ${
-                activeAisle === aisle
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                  : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
-              }`}
+              onClick={exportCSV}
+              className="flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors active:scale-[0.97]"
             >
-              <span className="text-[13px] font-bold leading-none">{aisle === 'Todos' ? '✦' : aisle}</span>
+              <Download size={16} />
+              Exportar
             </button>
-          ))}
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-
-        <header className="bg-white border-b border-slate-200 px-6 py-4 shrink-0 z-40">
-          <div className="max-w-[1400px] mx-auto space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">Explorador de Ubicaciones</h1>
-                <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                  {stats.ocupacion}% ocupación • {filteredStats.locations} ubicaciones • {filteredStats.skus.toLocaleString()} registros • {filteredStats.totalStock.toLocaleString()} uds
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={exportCSV} className="flex items-center gap-2 bg-slate-900 text-white pl-4 pr-5 py-2.5 rounded-xl text-[12px] font-bold hover:bg-orange-600 transition-colors active:scale-95">
-                  <Download size={15} /> Exportar
-                </button>
-                <button onClick={() => fetchWarehouseData()} className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-orange-500 hover:border-orange-300 transition-all active:rotate-180 duration-500">
-                  <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
-                </button>
-              </div>
-            </div>
-
-            <div className="relative">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder="Buscar por ubicación, SKU, descripción, talla, color, partida..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-24 py-3 text-sm font-medium text-slate-900 placeholder-slate-300 focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                {search && (
-                  <button onClick={() => { setSearch(''); searchRef.current?.focus(); }} className="w-7 h-7 rounded-md bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors">
-                    <X size={13} />
-                  </button>
-                )}
-                <kbd className="hidden sm:block text-[10px] font-semibold text-slate-300 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Ctrl K</kbd>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex bg-slate-100 p-0.5 rounded-lg">
-                {[
-                  { key: 'all', label: 'Todos' },
-                  { key: 'stock', label: 'Con stock' },
-                  { key: 'empty', label: 'Vacías' },
-                ].map(f => (
-                  <button
-                    key={f.key}
-                    onClick={() => setStockFilter(f.key)}
-                    className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${
-                      stockFilter === f.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-              <button onClick={cycleSort} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500 hover:border-orange-300 hover:text-orange-600 transition-colors">
-                <ArrowUpDown size={13} />
-                {sortLabel} {sortDir === 'asc' ? '↑' : '↓'}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="bg-slate-50 border-b border-slate-200 px-6 shrink-0">
-          <div className="max-w-[1400px] mx-auto flex items-center py-2 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            <span className="min-w-[180px]">Ubicación</span>
-            <span className="hidden md:block min-w-[180px]">Desglose</span>
-            <span className="flex-1 hidden lg:block">Producto</span>
-            <span className="min-w-[60px] text-right">SKUs</span>
-            <span className="min-w-[70px] text-right">Stock</span>
-            <span className="w-5" />
+            <button
+              onClick={() => fetchWarehouseData()}
+              className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all active:scale-95"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
           </div>
         </div>
 
-        <main ref={parentRef} className="flex-1 overflow-y-auto px-6 py-4 bg-[#F4F5F7]">
-          {loading && filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-28">
-              <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4" />
-              <p className="text-sm font-semibold text-slate-400">Cargando inventario...</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-slate-200 mx-auto max-w-lg">
-              <Search size={40} className="text-slate-200 mb-4" />
-              <h3 className="text-base font-bold text-slate-900 mb-1">Sin resultados</h3>
-              <p className="text-sm text-slate-400 mb-3">No hay coincidencias para tu búsqueda</p>
-              <button onClick={() => { setSearch(''); setActiveAisle('Todos'); setStockFilter('all'); }} className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-colors">
-                Limpiar filtros
+        <div className="relative flex items-center">
+          <Search size={18} className="absolute left-4 text-slate-300 pointer-events-none" />
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder="Buscar ubicación, SKU o descripción..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-20 py-3 text-sm font-medium text-slate-900 placeholder-slate-300 focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all outline-none"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-12 w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+            >
+              <X size={13} />
+            </button>
+          )}
+          <span className="absolute right-4 text-[10px] text-slate-300 font-mono">Ctrl K</span>
+        </div>
+
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+            {filterTabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setStockFilter(tab.key)}
+                className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${stockFilter === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                {tab.label}
               </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setSortAsc(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+          >
+            <ArrowUpDown size={13} />
+            Ubicación {sortAsc ? '↑' : '↓'}
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-6 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-white/50 shrink-0">
+          <span className="flex items-center gap-1"><MapPin size={11} /> Ubicación</span>
+          <span className="w-[100px]">Desglose</span>
+          <span className="w-[200px]">Producto</span>
+          <span className="w-[120px] text-right">Stock</span>
+        </div>
+
+        <main ref={parentRef} className="flex-1 overflow-y-auto px-4 py-3">
+          {loading && filteredGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32">
+              <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-6" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando datos...</p>
+            </div>
+          ) : filteredGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32">
+              <Layers size={40} className="text-slate-200 mb-4" />
+              <h3 className="text-base font-bold text-slate-400 mb-1">Sin resultados</h3>
+              <p className="text-xs text-slate-300">
+                {search ? `No se encontró "${search}"` : 'No hay ubicaciones que mostrar'}
+              </p>
             </div>
           ) : (
-            <div className="max-w-[1400px] mx-auto relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
-              {virtualizer.getVirtualItems().map(vr => {
-                const loc = filteredData[vr.index];
+            <div
+              className="relative"
+              style={{ height: `${virtualizer.getTotalSize()}px` }}
+            >
+              {virtualizer.getVirtualItems().map(virtualRow => {
+                const group = filteredGroups[virtualRow.index];
                 return (
                   <div
-                    key={vr.key}
+                    key={group.ubicacion}
                     className="absolute top-0 left-0 w-full"
-                    style={{ height: `${vr.size}px`, transform: `translateY(${vr.start}px)`, paddingBottom: '6px' }}
+                    style={{
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                      paddingBottom: '8px',
+                    }}
                   >
-                    <LocationRow
-                      location={loc}
-                      isExpanded={expandedId === loc.ubicacion}
-                      onToggle={() => setExpandedId(p => p === loc.ubicacion ? null : loc.ubicacion)}
+                    <LocationGroup
+                      group={group}
+                      searchQuery={debouncedSearch}
+                      isExpanded={expandedKeys.has(group.ubicacion)}
+                      onToggle={() => toggleExpand(group.ubicacion)}
                     />
                   </div>
                 );

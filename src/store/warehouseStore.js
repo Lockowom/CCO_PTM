@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../supabase';
-import { RACK_CONFIG, TOTAL_POSITIONS } from '../constants/warehouse';
+import { RACK_CONFIG, TOTAL_POSITIONS, getPositionsForLevel } from '../constants/warehouse';
 
 export const useWarehouseStore = create((set, get) => ({
   layout: {},
@@ -27,7 +27,7 @@ export const useWarehouseStore = create((set, get) => ({
         // 1. Limpieza agresiva: eliminar todo lo que no sea letras, números o guiones/espacios
         let cleaned = loc.trim().toUpperCase().replace(/[\s\.]+/g, '-');
         
-        // 2. Normalización de partes (RACK-NIVEL-POSICION)
+        // 2. Normalización de partes: RACK-POSICION-NIVEL
         const parts = cleaned.split('-').filter(p => p !== '');
         if (parts.length >= 2) {
           const rack = parts[0];
@@ -37,16 +37,15 @@ export const useWarehouseStore = create((set, get) => ({
           const val1 = parseInt(p1);
           const val2 = parseInt(p2);
 
-          // Lógica de Detección de Intercambio (Heurística)
-          // Si el primer número es > 4 y el segundo es <= 4, asumimos que es POS-LEVEL y lo invertimos a LEVEL-POS
-          if (!isNaN(val1) && !isNaN(val2) && val1 > 4 && val2 <= 4) {
+          // Heurística: si p1 parece nivel (<=4) y p2 parece posición (>4), invertir a POSICION-NIVEL
+          if (!isNaN(val1) && !isNaN(val2) && val1 <= 4 && val2 > 4) {
             [p1, p2] = [p2, p1];
           }
 
-          const normLevel = isNaN(parseInt(p1)) ? p1 : parseInt(p1).toString().padStart(2, '0');
-          const normPos = isNaN(parseInt(p2)) ? p2 : parseInt(p2).toString().padStart(2, '0');
+          const normPos = isNaN(parseInt(p1)) ? p1 : parseInt(p1).toString().padStart(2, '0');
+          const normLevel = isNaN(parseInt(p2)) ? p2 : parseInt(p2).toString().padStart(2, '0');
 
-          return `${rack}-${normLevel}-${normPos}`;
+          return `${rack}-${normPos}-${normLevel}`;
         }
         return cleaned;
       };
@@ -98,14 +97,15 @@ export const useWarehouseStore = create((set, get) => ({
           ubicacion: normUbic
         });
 
-        // Validar si la ubicación es físicamente posible antes de contarla en estadísticas
+        // Validar si la ubicación es físicamente posible (formato: RACK-POS-NIVEL)
         const parts = normUbic.split('-');
         const rackId = parts[0];
-        const level = parseInt(parts[1]);
-        const pos = parseInt(parts[2]);
+        const pos = parseInt(parts[1]);
+        const level = parseInt(parts[2]);
         const config = RACK_CONFIG[rackId];
 
-        const isValid = config && level <= config.levels && pos <= config.positions;
+        const maxPos = config ? getPositionsForLevel(rackId, level) : 0;
+        const isValid = config && level <= config.levels && pos <= maxPos;
 
         if (Number(row.cantidad) > 0 && isValid) {
           validOccupiedLocations.add(normUbic);
@@ -120,13 +120,14 @@ export const useWarehouseStore = create((set, get) => ({
           ubicacion: normUbic,
           cantidad: (inventoryMap[normUbic] || []).reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0)
         };
-        
+
         const parts = normUbic.split('-');
         const rackId = parts[0];
-        const level = parseInt(parts[1]);
-        const pos = parseInt(parts[2]);
+        const pos = parseInt(parts[1]);
+        const level = parseInt(parts[2]);
         const config = RACK_CONFIG[rackId];
-        const isValid = config && level <= config.levels && pos <= config.positions;
+        const maxPos = config ? getPositionsForLevel(rackId, level) : 0;
+        const isValid = config && level <= config.levels && pos <= maxPos;
 
         if (row.estado === 'OCUPADA' && isValid) {
           validOccupiedLocations.add(normUbic);
@@ -140,8 +141,8 @@ export const useWarehouseStore = create((set, get) => ({
           layoutMap[normUbic] = {
             ubicacion: normUbic,
             pasillo: parts[0],
-            nivel: parseInt(parts[1]) || 0,
-            columna: parseInt(parts[2]) || 0,
+            columna: parseInt(parts[1]) || 0,
+            nivel: parseInt(parts[2]) || 0,
             estado: 'OCUPADA', // Si está en inventario con stock, está ocupada
             cantidad: inventoryMap[normUbic].reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0)
           };
