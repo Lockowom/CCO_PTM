@@ -3,11 +3,12 @@ import {
   ClipboardCheck, Plus, Trash2, Save, Download, Search, Eye, X,
   Package, Truck, Calendar, Hash, Box, Layers, Camera, Loader2,
   ChevronDown, ChevronUp, Filter, FileSpreadsheet, CheckCircle, Clock,
-  AlertCircle, ArrowLeft
+  AlertCircle, ArrowLeft, TrendingUp, BarChart3
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import gsap from 'gsap';
@@ -103,7 +104,52 @@ const Reception = () => {
     const enRevision = recepciones.filter(r => r.estado === 'EN_REVISION').length;
     const completados = recepciones.filter(r => r.estado === 'COMPLETADO').length;
     const totalBultos = recepciones.reduce((sum, r) => sum + (r.cant_bultos || 0), 0);
-    return { total, enRevision, completados, totalBultos };
+    const totalPallets = recepciones.reduce((sum, r) => sum + (r.pallets_usados || 0), 0);
+    const promPallets = total > 0 ? (totalPallets / total).toFixed(1) : 0;
+    const promBultos = total > 0 ? Math.round(totalBultos / total) : 0;
+    return { total, enRevision, completados, totalBultos, totalPallets, promPallets, promBultos };
+  }, [recepciones]);
+
+  // Analytics Charts Data
+  const chartData = useMemo(() => {
+    // Bultos por proveedor (top 10)
+    const proveedorMap = {};
+    recepciones.forEach(r => {
+      const p = r.proveedor || 'N/A';
+      if (!proveedorMap[p]) proveedorMap[p] = { proveedor: p, bultos: 0, pallets: 0, recepciones: 0 };
+      proveedorMap[p].bultos += r.cant_bultos || 0;
+      proveedorMap[p].pallets += r.pallets_usados || 0;
+      proveedorMap[p].recepciones += 1;
+    });
+    const porProveedor = Object.values(proveedorMap).sort((a, b) => b.bultos - a.bultos).slice(0, 10);
+
+    // Recepciones por mes (timeline)
+    const mesMap = {};
+    recepciones.forEach(r => {
+      if (!r.fecha_recepcion) return;
+      const mes = r.fecha_recepcion.slice(0, 7); // YYYY-MM
+      if (!mesMap[mes]) mesMap[mes] = { mes, bultos: 0, pallets: 0, recepciones: 0 };
+      mesMap[mes].bultos += r.cant_bultos || 0;
+      mesMap[mes].pallets += r.pallets_usados || 0;
+      mesMap[mes].recepciones += 1;
+    });
+    const porMes = Object.values(mesMap).sort((a, b) => a.mes.localeCompare(b.mes));
+    // Format month labels
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    porMes.forEach(m => {
+      const [y, mo] = m.mes.split('-');
+      m.label = `${meses[parseInt(mo) - 1]} ${y.slice(2)}`;
+    });
+
+    // Por tipo contenedor (pie)
+    const tipoMap = {};
+    recepciones.forEach(r => {
+      const t = r.tipo_contenedor || 'N/A';
+      tipoMap[t] = (tipoMap[t] || 0) + 1;
+    });
+    const porTipo = Object.entries(tipoMap).map(([name, value]) => ({ name, value }));
+
+    return { porProveedor, porMes, porTipo };
   }, [recepciones]);
 
   // ==================== MUTATIONS ====================
@@ -431,11 +477,83 @@ const Reception = () => {
       {view === 'dashboard' && (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard icon={<Package size={20} />} label="Total Recepciones" value={stats.total} color="text-slate-700" bg="bg-white" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <StatCard icon={<Package size={20} />} label="Recepciones" value={stats.total} color="text-slate-700" bg="bg-white" />
             <StatCard icon={<Clock size={20} />} label="En Revisión" value={stats.enRevision} color="text-amber-600" bg="bg-amber-50" />
             <StatCard icon={<CheckCircle size={20} />} label="Completados" value={stats.completados} color="text-emerald-600" bg="bg-emerald-50" />
             <StatCard icon={<Layers size={20} />} label="Total Bultos" value={stats.totalBultos} color="text-blue-600" bg="bg-blue-50" />
+            <StatCard icon={<TrendingUp size={20} />} label="Prom. Pallets" value={stats.promPallets} color="text-purple-600" bg="bg-purple-50" />
+            <StatCard icon={<BarChart3 size={20} />} label="Prom. Bultos" value={stats.promBultos} color="text-indigo-600" bg="bg-indigo-50" />
+          </div>
+
+          {/* Analytics Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Bultos & Pallets por Mes (Timeline) */}
+            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+              <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
+                <TrendingUp size={16} className="text-emerald-600" /> BULTOS Y PALLETS POR MES
+              </h3>
+              {chartData.porMes.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={chartData.porMes} barGap={2}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
+                      formatter={(value, name) => [value, name === 'bultos' ? 'Bultos' : name === 'pallets' ? 'Pallets' : 'Recepciones']}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+                    <Bar dataKey="bultos" fill="#10b981" name="Bultos" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="pallets" fill="#8b5cf6" name="Pallets" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[260px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+              )}
+            </div>
+
+            {/* Por Tipo Contenedor (Pie) */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+              <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
+                <Truck size={16} className="text-blue-600" /> TIPO CONTENEDOR
+              </h3>
+              {chartData.porTipo.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={chartData.porTipo} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} style={{ fontSize: 10, fontWeight: 700 }}>
+                      {chartData.porTipo.map((_, idx) => (
+                        <Cell key={idx} fill={['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#6366f1'][idx % 6]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[260px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+              )}
+            </div>
+          </div>
+
+          {/* Top Proveedores */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+            <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
+              <BarChart3 size={16} className="text-indigo-600" /> TOP PROVEEDORES (Bultos recibidos)
+            </h3>
+            {chartData.porProveedor.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData.porProveedor} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <YAxis type="category" dataKey="proveedor" tick={{ fontSize: 11, fontWeight: 700, fill: '#334155' }} width={80} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }} />
+                  <Bar dataKey="bultos" fill="#6366f1" name="Bultos" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="pallets" fill="#a78bfa" name="Pallets" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[220px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+            )}
           </div>
 
           {/* Filters */}
