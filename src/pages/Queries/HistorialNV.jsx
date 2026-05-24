@@ -68,8 +68,7 @@ const HistorialNV = () => {
         query = query.lte('fecha_emision', filterFechaHasta + 'T23:59:59');
       }
 
-      // AUMENTADO DE 1000 a 5000 para evitar que desaparezcan registros en el histórico
-      const { data, error } = await query.limit(5000);
+      const { data, error } = await query.limit(2000);
 
       if (error) throw error;
       return data || [];
@@ -319,10 +318,10 @@ const HistorialNV = () => {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order, index) => {
+                filteredOrders.map((order) => {
                   const config = getEstadoConfig(order.estado);
                   return (
-                    <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={order.id || order.nv} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <span className="font-black text-indigo-400 text-lg">#{order.nv}</span>
                       </td>

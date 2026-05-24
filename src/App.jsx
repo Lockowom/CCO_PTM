@@ -1,11 +1,11 @@
 import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
-import Placeholder from './components/Placeholder';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Lock, Bell, Database } from 'lucide-react';
+import { Lock, Database } from 'lucide-react';
+import { ROUTE_PERMISSIONS } from './constants/permissions';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates } from './services/mobileService';
 import { supabase } from './supabase';
@@ -56,48 +56,6 @@ const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); /
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
-// Mapeo de rutas a permisos requeridos (solo necesita UNO de los listados)
-const ROUTE_PERMISSIONS = {
-  '/dashboard': ['view_dashboard'],
-
-  // TMS
-  '/tms/dashboard': ['view_tms_dashboard'],
-  '/tms/planning': ['view_routes', 'create_routes'],
-  '/tms/control-tower': ['view_control_tower', 'manage_control_tower'],
-  '/tms/drivers': ['view_drivers', 'manage_drivers'],
-  '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
-  '/tms/yard': ['view_control_tower'], // NUEVO (Usa permiso de torre de control)
-  '/mobile/pda': ['view_stock', 'manage_inventory'], // NUEVO (Permisos de stock)
-
-  // Inbound
-  '/inbound/entry': ['view_entry', 'process_entry'],
-  '/inbound/cubing': ['view_reception', 'process_reception'], // Nuevo módulo usa mismos permisos de recepción
-  '/inbound/data-import': ['manage_data_import'],
-
-  // Outbound
-  '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
-  '/outbound/picking': ['view_picking', 'process_picking'],
-  '/outbound/packing': ['view_packing', 'process_packing'],
-  '/outbound/packing-tv': ['view_packing_tv'], // NUEVO (Monitor Packing)
-  '/outbound/shipping': ['view_shipping', 'process_shipping'],
-
-  // Queries
-  '/queries/batches': ['view_batches'],
-  '/queries/sales-status': ['view_sales_status'],
-  '/queries/addresses': ['view_addresses'],
-  '/queries/locations': ['view_locations'],
-  '/queries/heatmap': ['view_locations'],
-  '/queries/historial-nv': ['view_historial_nv'],
-  '/queries/dispatch-control': ['view_dispatch_control'],
-  
-  // Admin (solo ADMIN)
-  '/admin/users': ['manage_users', 'view_users'],
-  '/admin/roles': ['manage_roles', 'view_roles'],
-  '/admin/views': ['manage_views', 'view_views'],
-  '/admin/cleanup': ['manage_cleanup'], // NUEVO (Limpieza)
-  '/admin/tickets': ['manage_tickets'], // NUEVO (Soporte TI)
-  '/admin/upload-history': ['admin_upload_history'], // NEW: Historial de Cargas
-};
 
 // Orden de prioridad para la primera ruta disponible
 const ROUTE_PRIORITY = [
@@ -272,7 +230,7 @@ function AppContent() {
           const { modulo, usuario_nombre, registros_totales, registros_error } = payload.new;
           
           // No notificar al mismo usuario que subió los datos (evitar spam)
-          if (user && usuario_nombre.includes(user.nombre?.split(' ')[0])) return;
+          if (user && usuario_nombre === user.nombre) return;
 
           toast.info(`Nueva subida: ${modulo}`, {
             description: `${usuario_nombre} cargó ${registros_totales} registros.${registros_error > 0 ? ` (${registros_error} errores)` : ''}`,

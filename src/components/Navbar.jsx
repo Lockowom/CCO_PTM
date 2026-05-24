@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { ROUTE_PERMISSIONS, SECTION_PERMISSIONS } from '../constants/permissions';
 
 const Navbar = () => {
   const location = useLocation();
@@ -56,16 +57,7 @@ const Navbar = () => {
     if (!isModuleEnabled(sectionId)) return false;
     if (user?.rol === 'ADMIN') return true;
     if (sectionId === 'admin') return false;
-    
-    const SECTION_PERMISSIONS = {
-      'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
-      'dashboard': ['view_dashboard', 'view_kpis'],
-      'inbound': ['view_entry', 'manage_data_import'],
-      'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_packing_tv', 'view_shipping'],
-      'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_dispatch_control'],
-      'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_tickets', 'admin_upload_history']
-    };
-    
+
     const sectionPerms = SECTION_PERMISSIONS[sectionId] || [];
     return sectionPerms.some(perm => hasPermission(perm));
   };
@@ -73,46 +65,11 @@ const Navbar = () => {
   const canAccessRoute = (path, sectionId) => {
     if (user?.rol === 'ADMIN') return true;
     if (sectionId === 'admin') return user?.rol === 'ADMIN';
-    
-    const ROUTE_PERMISSIONS = {
-      '/dashboard': 'view_dashboard',
-      '/tms/dashboard': 'view_tms_dashboard',
-      '/tms/planning': 'view_routes',
-      '/tms/control-tower': 'view_control_tower',
-      '/tms/yard': 'view_control_tower',
-      '/tms/drivers': 'view_drivers',
-      '/tms/mobile': 'view_mobile_app',
-      '/inbound/entry': 'view_entry',
-      '/inbound/cubing': 'process_reception',
-      '/inbound/data-import': 'manage_data_import',
-      '/outbound/sales-orders': 'view_sales_orders',
-      '/outbound/picking': 'view_picking',
-      '/outbound/packing': 'view_packing',
-      '/outbound/packing-tv': 'view_packing_tv',
-      '/outbound/shipping': 'view_shipping',
-      '/mobile/pda': 'view_stock',
-      '/queries/batches': 'view_batches',
-      '/queries/heatmap': 'view_locations',
-      '/queries/sales-status': 'view_sales_status',
-      '/queries/addresses': 'view_addresses',
-      '/queries/locations': 'view_locations',
-      '/queries/historial-nv': 'view_historial_nv',
-      '/queries/dispatch-control': 'view_dispatch_control',
-      '/admin/users': 'manage_users',
-      '/admin/roles': 'manage_roles',
-      '/admin/views': 'manage_views',
-      '/admin/reports': 'manage_reports',
-      '/admin/mediciones': 'manage_mediciones',
-      '/admin/cleanup': 'manage_cleanup',
-      '/admin/time-reports': 'view_time_reports',
-      '/admin/tickets': 'manage_tickets',
-      '/admin/login-history': 'manage_users',
-      '/admin/upload-history': 'admin_upload_history'
-    };
-    
-    const requiredPerm = ROUTE_PERMISSIONS[path];
-    if (!requiredPerm) return true;
-    return hasPermission(requiredPerm);
+
+    const perms = ROUTE_PERMISSIONS[path];
+    if (!perms) return true;
+    const permList = Array.isArray(perms) ? perms : [perms];
+    return permList.some(perm => hasPermission(perm));
   };
 
   const menuCategories = [
@@ -244,7 +201,7 @@ const Navbar = () => {
             if (visibleItems.length === 0) return null;
 
             return visibleItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path) || (item.modules && item.modules.some(m => location.pathname === m.path));
+              const isActive = (item.path && location.pathname.startsWith(item.path)) || (item.modules && item.modules.some(m => location.pathname === m.path));
               const isOpen = activeDropdown === item.id;
 
               return (
@@ -410,7 +367,7 @@ const Navbar = () => {
                   <div className="space-y-1">
                     {visibleItems.map((item) => {
                       const isExpanded = activeDropdown === item.id;
-                      const isActive = location.pathname.startsWith(item.path);
+                      const isActive = item.path ? location.pathname.startsWith(item.path) : (item.modules && item.modules.some(m => location.pathname === m.path));
 
                       return item.isLink ? (
                         <Link

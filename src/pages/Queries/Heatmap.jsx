@@ -1,12 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWarehouseStore } from '../../store/warehouseStore';
-import { 
-  Activity, 
-  Map as MapIcon, 
+import {
   Warehouse,
   Info,
-  ChevronRight,
   Layout,
   PieChart,
   Grid,
@@ -148,7 +145,7 @@ const Heatmap = () => {
               </div>
             </div>
             <p className="text-slate-600 text-sm font-medium leading-relaxed max-w-xl">
-              Monitoreo en tiempo real de la capacidad instalada. La visualización actual muestra la disponibilidad en el **Nivel {selectedLevel}**.
+              Monitoreo en tiempo real de la capacidad instalada. La visualización actual muestra la disponibilidad en el <strong>Nivel {selectedLevel}</strong>.
             </p>
           </div>
           

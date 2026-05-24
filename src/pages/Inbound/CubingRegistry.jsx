@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Box, Search, Scale, Save, Trash2, CheckCircle, 
-  AlertCircle, Package, QrCode, Ruler, Info, Loader2, RefreshCw, Zap
+import {
+  Box, Search, Scale, Save, CheckCircle,
+  AlertCircle, Package, QrCode, Ruler, Info, Loader2, Zap
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
@@ -106,7 +106,7 @@ const CubingRegistry = () => {
               largo: pesoData?.largo || '',
               ancho: pesoData?.ancho || '',
               alto: pesoData?.alto || '',
-              tipo_empaque: 'UNIDAD'
+              tipo_empaque: pesoData?.tipo_empaque || 'UNIDAD'
             }));
             
             gsap.to(formRef.current, { 

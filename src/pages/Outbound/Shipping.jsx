@@ -86,7 +86,7 @@ const Shipping = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['shipping_deliveries']);
+      queryClient.invalidateQueries({ queryKey: ['shipping_deliveries'] });
       setEditingId(null);
       toast.success("Despacho guardado y sincronizado con Control Despacho.", {
         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }

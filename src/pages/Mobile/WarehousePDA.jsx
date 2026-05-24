@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 // ============================================================================
 
 const WarehousePDA = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const [mode, setMode] = useState('HOME'); // HOME, PICKING, PUTAWAY, INVENTORY
   const [scannedValue, setScannedValue] = useState('');
   
@@ -129,7 +129,7 @@ const WarehousePDA = () => {
               </div>
             </div>
           </div>
-          <button onClick={signOut} className="p-2 bg-slate-100 rounded-lg">
+          <button onClick={logout} className="p-2 bg-slate-100 rounded-lg">
             <LogOut size={18} />
           </button>
         </div>
@@ -173,7 +173,7 @@ const WarehousePDA = () => {
 
   if (mode === 'PICKING' && activeTask) {
     return (
-      <div className="min-h-screen bg-black text-slate-900 flex flex-col font-mono">
+      <div className="min-h-screen bg-black text-white flex flex-col font-mono">
         {/* Task Header */}
         <div className="bg-slate-50 p-2 border-b border-slate-300 flex justify-between items-center">
           <span className="text-xs font-bold text-slate-500">TASK: {activeTask.id}</span>
@@ -239,7 +239,7 @@ const WarehousePDA = () => {
               type="text" 
               value={scannedValue}
               onChange={e => setScannedValue(e.target.value)}
-              className="w-full bg-black border border-slate-300 rounded-lg py-3 pl-10 text-slate-900 font-bold outline-none focus:border-indigo-500"
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500"
               placeholder="Escanear aquí..."
               autoComplete="off"
             />

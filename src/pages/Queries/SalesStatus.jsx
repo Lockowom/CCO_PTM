@@ -54,14 +54,15 @@ const SalesStatus = () => {
                 .limit(20);
 
             if (error) throw error;
-            
-            // Auto-seleccionar si es coincidencia exacta
-            if (data && data.length === 1 && data[0].nv.toLowerCase() === debouncedTerm.toLowerCase()) {
-                setSelectedNVId(data[0].nv);
-            }
             return data || [];
         },
         enabled: !!debouncedTerm,
+        select: (data) => {
+            if (data.length === 1 && data[0].nv.toLowerCase() === debouncedTerm.toLowerCase()) {
+                setTimeout(() => setSelectedNVId(data[0].nv), 0);
+            }
+            return data;
+        },
     });
 
     // TanStack Query para Detalles (incluyendo entrega)
@@ -103,9 +104,9 @@ const SalesStatus = () => {
         const channel = supabase
             .channel('sales_status_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, (payload) => {
-                queryClient.invalidateQueries(['sales_search']);
+                queryClient.invalidateQueries({ queryKey: ['sales_search'] });
                 if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
-                    queryClient.invalidateQueries(['sales_details', payload.new.nv]);
+                    queryClient.invalidateQueries({ queryKey: ['sales_details', payload.new.nv] });
                     toast('Actualización WMS', {
                         description: `El estado cambió a ${payload.new.estado}`,
                         icon: <Activity className="text-wms-neon" />,
@@ -115,7 +116,7 @@ const SalesStatus = () => {
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, (payload) => {
                 if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
-                    queryClient.invalidateQueries(['sales_details', selectedNVRef.current.nv]);
+                    queryClient.invalidateQueries({ queryKey: ['sales_details', selectedNVRef.current.nv] });
                     toast('Actualización Logística', {
                         description: `Datos de ruta/despacho modificados para la NV`,
                         icon: <Truck className="text-wms-neon animate-bounce" />,
@@ -253,7 +254,7 @@ const SalesStatus = () => {
                     <input
                         type="text"
                         placeholder="Buscar por N.V, Cliente o SKU..."
-                        className="w-full pl-12 pr-12 py-3.5 bg-slate-900 text-white font-bold tracking-wide transition-all shadow-inner focus:shadow-neon-green"
+                        className="w-full pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold tracking-wide transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />

@@ -211,7 +211,7 @@ const DispatchControl = () => {
               type="date"
               value={filterFechaDesde}
               onChange={e => setFilterFechaDesde(e.target.value)}
-              className="w-full bg-slate-900 text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
             />
           </div>
           <div>
@@ -220,7 +220,7 @@ const DispatchControl = () => {
               type="date"
               value={filterFechaHasta}
               onChange={e => setFilterFechaHasta(e.target.value)}
-              className="w-full bg-slate-900 text-white outline-none focus:border-wms-neon focus:ring-2 focus:ring-wms-neon/20 transition-all [color-scheme:dark]"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
             />
           </div>
         </div>

@@ -29,7 +29,7 @@ export function useConductores() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries(['conductores']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conductores'] }),
   });
 
   const actualizarMutation = useMutation({
@@ -55,7 +55,7 @@ export function useConductores() {
       queryClient.setQueryData(['conductores'], context.previousConductores);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['conductores']);
+      queryClient.invalidateQueries({ queryKey: ['conductores'] });
     }
   });
 
@@ -68,7 +68,7 @@ export function useConductores() {
       if (error) throw error;
       return true;
     },
-    onSuccess: () => queryClient.invalidateQueries(['conductores']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conductores'] }),
   });
 
   // Suscripción Realtime
@@ -79,7 +79,7 @@ export function useConductores() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tms_conductores' },
         (payload) => {
-          queryClient.invalidateQueries(['conductores']);
+          queryClient.invalidateQueries({ queryKey: ['conductores'] });
         }
       )
       .subscribe();
@@ -96,6 +96,6 @@ export function useConductores() {
     crearConductor: (conductor) => crearMutation.mutateAsync(conductor),
     actualizarConductor: (id, updates) => actualizarMutation.mutateAsync({ id, updates }),
     eliminarConductor: (id) => eliminarMutation.mutateAsync(id),
-    refetch: () => queryClient.invalidateQueries(['conductores']),
+    refetch: () => queryClient.invalidateQueries({ queryKey: ['conductores'] }),
   };
 }

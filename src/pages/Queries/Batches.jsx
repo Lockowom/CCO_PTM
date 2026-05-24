@@ -12,10 +12,11 @@ import gsap from 'gsap';
 // Componente para resaltar el texto buscado
 const HighlightText = ({ text, highlight }) => {
   if (!highlight || !text) return <span>{text}</span>;
-  const parts = String(text).split(new RegExp(`(${highlight})`, 'gi'));
+  const escaped = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = String(text).split(new RegExp(`(${escaped})`, 'gi'));
   return (
     <span>
-      {parts.map((part, i) => 
+      {parts.map((part, i) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
           <span key={i} className="bg-orange-100 text-orange-600 font-black px-0.5 rounded-sm">{part}</span>
         ) : (

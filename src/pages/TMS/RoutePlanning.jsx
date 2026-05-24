@@ -46,7 +46,7 @@ const RoutePlanning = () => {
     const channel = supabase
       .channel('planning_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
-        queryClient.invalidateQueries(['entregas_pendientes']);
+        queryClient.invalidateQueries({ queryKey: ['entregas_pendientes'] });
       })
       .subscribe();
 
@@ -79,7 +79,7 @@ const RoutePlanning = () => {
       toast.success("¡Ruta creada con éxito!", {
         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
       });
-      queryClient.invalidateQueries(['entregas_pendientes']);
+      queryClient.invalidateQueries({ queryKey: ['entregas_pendientes'] });
       setSelectedEntregas([]);
       setRutaNombre(`Ruta-${new Date().toLocaleDateString().replace(/\//g, '-')}`);
     },

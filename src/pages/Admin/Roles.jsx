@@ -91,7 +91,7 @@ const RolesPage = () => {
       return roleData;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries(['admin_roles']);
+      await queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
       await refreshPermissions();
       toast.success('Rol guardado exitosamente');
       setIsEditing(false);
@@ -108,7 +108,7 @@ const RolesPage = () => {
       if (error) throw error;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries(['admin_roles']);
+      await queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
       await refreshPermissions();
       toast.success('Rol eliminado');
       setSelectedRole(null);
@@ -408,13 +408,15 @@ const RolesPage = () => {
                           {module.permissions.map(perm => {
                             const isEnabled = selectedRole.permisos?.includes(perm.id);
                             return (
-                              <label
+                              <div
                                 key={perm.id}
+                                role="checkbox"
+                                aria-checked={isEnabled}
                                 className={`flex items-start gap-4 p-3 rounded-2xl transition-all ${isEditing
                                     ? 'cursor-pointer hover:bg-slate-50 active:scale-[0.98]'
                                     : 'cursor-default opacity-80'
                                   }`}
-                                onClick={() => togglePermission(perm.id)}
+                                onClick={() => isEditing && togglePermission(perm.id)}
                               >
                                 <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isEnabled
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
@@ -427,7 +429,7 @@ const RolesPage = () => {
                                     {perm.label}
                                   </span>
                                 </div>
-                              </label>
+                              </div>
                             );
                           })}
                         </div>

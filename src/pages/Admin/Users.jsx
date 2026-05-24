@@ -74,10 +74,10 @@ const UsersPage = () => {
   React.useEffect(() => {
     const channel = supabase.channel('admin_users_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_usuarios' }, () => {
-        queryClient.invalidateQueries(['admin_users']);
+        queryClient.invalidateQueries({ queryKey: ['admin_users'] });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_roles' }, () => {
-        queryClient.invalidateQueries(['admin_roles']);
+        queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -95,12 +95,15 @@ const UsersPage = () => {
         const { error } = await supabase.from('tms_usuarios').update(updates).eq('id', editingUser.id);
         if (error) throw error;
       } else {
+        if (!user.password || user.password.trim().length < 6) {
+          throw new Error('La contraseña es obligatoria y debe tener al menos 6 caracteres');
+        }
         const legacyId = `USR-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
         const { error } = await supabase.from('tms_usuarios').insert([{
           id_usuario: legacyId,
           nombre: user.nombre,
           email: user.email,
-          password_hash: user.password || '123456',
+          password_hash: user.password,
           rol: user.rol,
           activo: user.activo,
           es_admin_delegado: user.es_admin_delegado
@@ -109,7 +112,7 @@ const UsersPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin_users']);
+      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
       toast.success(`Usuario ${editingUser ? 'actualizado' : 'creado'} exitosamente`, {
         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
       });
@@ -129,7 +132,7 @@ const UsersPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin_users']);
+      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
       toast.success('Usuario eliminado exitosamente');
     },
     onError: (err) => toast.error('Error al eliminar: ' + err.message)
@@ -234,7 +237,7 @@ const UsersPage = () => {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => queryClient.invalidateQueries(['admin_users'])}
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_users'] })}
             className="p-3 text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-600 rounded-xl transition-all shadow-sm"
             title="Actualizar lista"
           >

@@ -134,12 +134,12 @@ const Packing = () => {
   useEffect(() => {
     const channelNV = supabase
       .channel('packing_realtime_nv')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries(['packing_data']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
       .subscribe();
 
     const channelMetrics = supabase
       .channel('packing_realtime_metrics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => queryClient.invalidateQueries(['packing_data']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
       .subscribe();
 
     return () => {
@@ -291,7 +291,8 @@ const Packing = () => {
         .eq('estado', 'EN_PROCESO');
       if (medicionError) throw new Error("Error actualizando medición: " + medicionError.message);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables, context) => {
+      const nvNumero = nvActiva?.nv;
       setNvActiva(null);
       setTiempoInicio(null);
       setTiempoTranscurrido(0);
@@ -299,8 +300,8 @@ const Packing = () => {
       setEnPausa(false);
       setVista('clientes');
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
-      queryClient.invalidateQueries(['packing_data']);
-      toast.success(`Packing finalizado. N.V. #${nvActiva.nv} lista para despacho.`);
+      queryClient.invalidateQueries({ queryKey: ['packing_data'] });
+      toast.success(`Packing finalizado. N.V. #${nvNumero} lista para despacho.`);
     },
     onError: (error) => {
       toast.error('Error al finalizar: ' + error.message);
@@ -313,7 +314,6 @@ const Packing = () => {
       toast.error("Debes completar Bultos, Pallets y Peso antes de finalizar.");
       return;
     }
-    toast.loading('Finalizando packing...');
     finalizarMutation.mutate();
   };
 
@@ -389,7 +389,7 @@ const Packing = () => {
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       setShowDevolverModal(false);
       setMotivoDevolucion('');
-      queryClient.invalidateQueries(['packing_data']);
+      queryClient.invalidateQueries({ queryKey: ['packing_data'] });
       toast.success(`N.V. #${nvActiva.nv} devuelta a Picking correctamente.`);
     },
     onError: (error) => {
@@ -402,7 +402,6 @@ const Packing = () => {
       toast.warning("Debes indicar el motivo de la devolución.");
       return;
     }
-    toast.loading('Devolviendo a picking...');
     devolverMutation.mutate();
   };
 

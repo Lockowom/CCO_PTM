@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Phone, Mail, Truck, Building, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Phone, Building, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { toast } from 'sonner';
 
 const Addresses = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,7 +12,7 @@ const Addresses = () => {
 
   const handleSearch = async () => {
     if (!searchTerm || searchTerm.length < 2) {
-      alert("Ingrese al menos 2 caracteres");
+      toast.warning("Ingrese al menos 2 caracteres");
       return;
     }
 
@@ -34,7 +35,7 @@ const Addresses = () => {
       setSearched(true);
       
     } catch (err) {
-      alert("Error en la búsqueda: " + err.message);
+      toast.error("Error en la búsqueda: " + err.message);
     } finally {
       const endTime = performance.now();
       setSearchTime((endTime - startTime) / 1000);

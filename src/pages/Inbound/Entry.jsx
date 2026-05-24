@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2, Calendar, CheckCircle2 } from 'lucide-react';
+import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -61,6 +61,18 @@ const Entry = () => {
       }
     }
   }, [queue.length]);
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    setIsOnline(navigator.onLine);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
   // Cargar cola local al inicio
   useEffect(() => {
@@ -238,7 +250,7 @@ const Entry = () => {
       toast.success(`✅ ${queue.length} registros guardados correctamente.`);
       gsap.to(listRef.current, { y: 10, duration: 0.1, yoyo: true, repeat: 1 });
       setQueue([]);
-      queryClient.invalidateQueries(['inventory']);
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
     onError: (err) => {
       toast.error("❌ Error al guardar: " + err.message);

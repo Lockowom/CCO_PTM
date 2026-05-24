@@ -108,7 +108,7 @@ const Picking = () => {
   useEffect(() => {
     const channelNV = supabase
       .channel('picking_realtime_nv')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries(['picking_data']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['picking_data'] }))
       .subscribe();
 
     return () => {
@@ -353,7 +353,7 @@ const Picking = () => {
     onSuccess: (nuevoEstadoGlobal) => {
       clearSession();
       setVista('lista');
-      queryClient.invalidateQueries(['picking_data']);
+      queryClient.invalidateQueries({ queryKey: ['picking_data'] });
       toast.success(`Picking finalizado. N.V. enviada a ${nuevoEstadoGlobal}`);
     },
     onError: (error) => {
@@ -383,7 +383,6 @@ const Picking = () => {
     }
 
     if (!confirm('¿Confirmar finalización de picking y movimientos de stock?')) return;
-    toast.loading('Procesando movimientos de stock...');
     finalizarMutation.mutate();
   };
 

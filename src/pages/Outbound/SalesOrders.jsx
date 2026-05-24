@@ -90,7 +90,7 @@ const SalesOrders = () => {
     const channel = supabase
       .channel('nv_realtime_sales')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
-        queryClient.invalidateQueries(['sales_orders']);
+        queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
       })
       .subscribe();
     return () => supabase.removeChannel(channel);
@@ -103,7 +103,7 @@ const SalesOrders = () => {
       return { nv, newStatus };
     },
     onSuccess: ({ newStatus }) => {
-      queryClient.invalidateQueries(['sales_orders']);
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
       if (newStatus === 'Despachado') {
         setSelectedOrder(null);
       } else if (selectedOrder) {
@@ -132,7 +132,7 @@ const SalesOrders = () => {
       await supabase.from('tms_entregas').delete().eq('nv', nv);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sales_orders']);
+      queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
       setSelectedOrder(null);
       toast.success('N.V. eliminada correctamente y registrada.');
     },

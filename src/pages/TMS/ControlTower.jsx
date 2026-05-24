@@ -99,15 +99,15 @@ const ControlTower = () => {
   useEffect(() => {
     const channel = supabase.channel('tower_realtime_v3')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, () => {
-        queryClient.invalidateQueries(['tower_conductores']);
+        queryClient.invalidateQueries({ queryKey: ['tower_conductores'] });
         setLastUpdate(new Date());
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_rutas' }, () => {
-        queryClient.invalidateQueries(['tower_rutas']);
+        queryClient.invalidateQueries({ queryKey: ['tower_rutas'] });
         setLastUpdate(new Date());
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, (payload) => {
-        queryClient.invalidateQueries(['tower_entregas']);
+        queryClient.invalidateQueries({ queryKey: ['tower_entregas'] });
         setLastUpdate(new Date());
         
         // Notificación opcional (Gamificación)
@@ -213,9 +213,9 @@ const ControlTower = () => {
         </div>
         <button
           onClick={() => {
-            queryClient.invalidateQueries(['tower_conductores']);
-            queryClient.invalidateQueries(['tower_rutas']);
-            queryClient.invalidateQueries(['tower_entregas']);
+            queryClient.invalidateQueries({ queryKey: ['tower_conductores'] });
+            queryClient.invalidateQueries({ queryKey: ['tower_rutas'] });
+            queryClient.invalidateQueries({ queryKey: ['tower_entregas'] });
           }}
           disabled={loading}
           className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-white border border-slate-200 text-slate-900 rounded-xl transition-colors font-bold shadow-sm"
