@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2 } from 'lucide-react';
+import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 
 const Entry = () => {
   const { user } = useAuth();
@@ -14,12 +15,16 @@ const Entry = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [error, setError] = useState(null);
-  
+  const [ubicacionWarning, setUbicacionWarning] = useState(null);
+
   // Refs for animations
   const containerRef = useRef(null);
   const formRef = useRef(null);
   const listRef = useRef(null);
   const queueItemsRef = useRef([]);
+
+  // Subscribe to realtime changes on wms_ubicaciones
+  useRealtimeTable('wms_ubicaciones', [['inventory']]);
 
   // Form State
   const [form, setForm] = useState({
@@ -93,10 +98,10 @@ const Entry = () => {
   useEffect(() => {
     const fetchDescription = async () => {
       if (!form.codigo || form.codigo.length < 3) return;
-      
+
       setLoadingDesc(true);
       setError(null);
-      
+
       gsap.to(".loading-spinner", { rotation: 360, repeat: -1, duration: 1, ease: "linear" });
 
       try {
@@ -116,7 +121,7 @@ const Entry = () => {
             .eq('codigo', form.codigo)
             .limit(1)
             .maybeSingle();
-            
+
           if (dataWms && dataWms.descripcion) {
              setForm(prev => ({ ...prev, descripcion: dataWms.descripcion }));
              gsap.fromTo(".desc-field", { backgroundColor: "#10b98120" }, { backgroundColor: "transparent", duration: 1 });
@@ -138,14 +143,44 @@ const Entry = () => {
     return () => clearTimeout(timer);
   }, [form.codigo]);
 
+  // Validate ubicacion exists on blur
+  const handleUbicacionBlur = async () => {
+    if (!form.ubicacion || form.ubicacion.length < 3) {
+      setUbicacionWarning(null);
+      return;
+    }
+
+    try {
+      const { data, error: queryError } = await supabase
+        .from('wms_ubicaciones')
+        .select('ubicacion')
+        .eq('ubicacion', form.ubicacion)
+        .limit(1)
+        .maybeSingle();
+
+      if (queryError) {
+        console.error('Ubicacion validation error:', queryError);
+        return;
+      }
+
+      if (!data) {
+        setUbicacionWarning('⚠ Ubicación no registrada en el sistema');
+      } else {
+        setUbicacionWarning(null);
+      }
+    } catch (_) {
+      console.error('Ubicacion validation error:', _);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let finalValue = value;
 
     if (name === 'ubicacion') {
-      finalValue = value.toUpperCase().slice(0, 8);
-    } else if (name === 'codigo') {
       finalValue = value.toUpperCase().slice(0, 12);
+    } else if (name === 'codigo') {
+      finalValue = value.toUpperCase().slice(0, 20);
     }
 
     setForm(prev => ({ ...prev, [name]: finalValue }));
@@ -159,6 +194,12 @@ const Entry = () => {
       return;
     }
 
+    if (parseFloat(form.cantidad) <= 0) {
+      setError("La cantidad debe ser mayor a 0");
+      gsap.to(formRef.current, { x: [-10, 10, -10, 10, 0], duration: 0.4 });
+      return;
+    }
+
     const newItem = {
       id: Date.now(),
       ...form,
@@ -166,7 +207,7 @@ const Entry = () => {
     };
 
     setQueue([newItem, ...queue]);
-    
+
     gsap.fromTo(".add-btn", { scale: 0.95 }, { scale: 1, duration: 0.2, ease: "power2.out" });
 
     setForm(prev => ({
@@ -182,7 +223,8 @@ const Entry = () => {
       descripcion: ''
     }));
     setError(null);
-    
+    setUbicacionWarning(null);
+
     if (codigoInputRef.current) codigoInputRef.current.focus();
   };
 
@@ -226,11 +268,16 @@ const Entry = () => {
         color: item.color || null,
       }));
 
-      const { error } = await supabase
+      const { data: upsertedData, error } = await supabase
         .from('wms_ubicaciones')
-        .insert(rowsToInsert);
+        .upsert(rowsToInsert, { onConflict: 'ubicacion,codigo' })
+        .select('id');
 
       if (error) throw error;
+
+      // Count new vs updated based on response
+      const registrosNuevos = upsertedData ? upsertedData.length : 0;
+      const registrosActualizados = queue.length - registrosNuevos;
 
       if (user) {
         try {
@@ -240,8 +287,8 @@ const Entry = () => {
             modulo: 'Ingreso Manual WMS',
             tabla_destino: 'wms_ubicaciones',
             registros_totales: queue.length,
-            registros_nuevos: queue.length,
-            registros_actualizados: 0,
+            registros_nuevos: registrosNuevos,
+            registros_actualizados: registrosActualizados >= 0 ? registrosActualizados : 0,
             registros_error: 0
           }]);
         } catch (_) { console.error('Entry operation error:', _); }
@@ -260,6 +307,7 @@ const Entry = () => {
 
   const handleSync = () => {
     if (queue.length === 0) return;
+    if (!window.confirm(`¿Guardar ${queue.length} registros en ubicaciones?`)) return;
     syncMutation.mutate();
   };
 
@@ -268,7 +316,7 @@ const Entry = () => {
       {/* Header Glassmorphism */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-wms-alert/10 rounded-full blur-3xl"></div>
-        
+
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-14 h-14 bg-slate-50/80 border border-wms-alert/50 rounded-2xl flex items-center justify-center text-wms-alert shadow-neon-orange">
             <PackagePlus size={28} strokeWidth={2.5} />
@@ -278,7 +326,7 @@ const Entry = () => {
             <p className="text-slate-500 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
           </div>
         </div>
-        
+
         <div className={`flex items-center gap-2 text-sm px-5 py-2.5 rounded-2xl border font-bold shadow-sm transition-all relative z-10 ${isOnline ? 'bg-wms-neon/10 text-wms-neon border-wms-neon/30' : 'bg-wms-danger/10 text-wms-danger border-wms-danger/30'}`}>
            {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
            {isOnline ? 'SISTEMA EN LÍNEA' : 'SIN CONEXIÓN'}
@@ -289,7 +337,7 @@ const Entry = () => {
         {/* Formulario de Ingreso */}
         <div className="xl:col-span-1 space-y-6">
           <div ref={formRef} className="bg-white backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden">
-            
+
             <h3 className="font-black text-slate-900 text-lg mb-6 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-sm font-black shadow-md">1</span>
               DATOS DEL PRODUCTO
@@ -299,40 +347,47 @@ const Entry = () => {
               {/* UBICACION */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
-                  Ubicación <span className="text-wms-danger">*</span> (Max 8)
+                  Ubicación <span className="text-wms-danger">*</span> (RACK-POS-NIVEL)
                 </label>
                 <div className="relative group/input">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="ubicacion"
                     className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
-                    placeholder="A-01-01"
+                    placeholder="AA-01-01A"
                     value={form.ubicacion}
                     onChange={handleInputChange}
-                    maxLength={8}
-                    required 
+                    onBlur={handleUbicacionBlur}
+                    maxLength={12}
+                    required
                     autoFocus
                   />
                   <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
                 </div>
+                {ubicacionWarning && (
+                  <div className="mt-1.5 p-2 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2 text-xs text-amber-700 font-medium">
+                    <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+                    {ubicacionWarning}
+                  </div>
+                )}
               </div>
 
               {/* CODIGO */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
-                  Código <span className="text-wms-danger">*</span> (Max 12)
+                  Código <span className="text-wms-danger">*</span> (Max 20)
                 </label>
                 <div className="relative group/input">
-                  <input 
+                  <input
                     ref={codigoInputRef}
-                    type="text" 
+                    type="text"
                     name="codigo"
                     className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
                     placeholder="SKU-123..."
                     value={form.codigo}
                     onChange={handleInputChange}
-                    maxLength={12}
-                    required 
+                    maxLength={20}
+                    required
                   />
                   {loadingDesc ? (
                     <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-wms-alert" size={20} />
@@ -347,7 +402,7 @@ const Entry = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Descripción (Automático)
                 </label>
-                <textarea 
+                <textarea
                   name="descripcion"
                   rows="2"
                   className="desc-field w-full p-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 resize-none focus:outline-none transition-colors"
@@ -363,9 +418,9 @@ const Entry = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Cantidad Contada <span className="text-wms-danger">*</span>
                 </label>
-                <input 
+                <input
                   ref={cantidadInputRef}
-                  type="number" 
+                  type="number"
                   name="cantidad"
                   className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xl font-bold text-wms-neon focus:border-wms-neon outline-none transition-all"
                   placeholder="0"
@@ -373,7 +428,7 @@ const Entry = () => {
                   step="0.01"
                   value={form.cantidad}
                   onChange={handleInputChange}
-                  required 
+                  required
                 />
               </div>
 
@@ -441,15 +496,15 @@ const Entry = () => {
                     COLA DE PROCESAMIENTO
                     <span className="bg-wms-alert/20 text-wms-alert px-3 py-1 rounded-full text-xs font-bold border border-wms-alert/30">{queue.length} ÍTEMS</span>
                 </h3>
-                <button 
-                  onClick={clearQueue} 
-                  disabled={queue.length===0} 
+                <button
+                  onClick={clearQueue}
+                  disabled={queue.length===0}
                   className="px-4 py-2 rounded-lg text-xs font-bold text-wms-danger hover:bg-wms-danger/20 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                     <Trash2 size={16} /> VACIAR TODO
                 </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/20">
                 {queue.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500">
@@ -460,16 +515,17 @@ const Entry = () => {
                         <p className="text-sm">Agrega productos usando el formulario</p>
                     </div>
                 ) : (
+                    (() => { queueItemsRef.current = []; return null; })() ||
                     queue.map((item, index) => (
-                        <div 
-                          key={item.id} 
-                          ref={el => queueItemsRef.current[index] = el}
+                        <div
+                          key={item.id}
+                          ref={el => { if (el) queueItemsRef.current[index] = el; }}
                           className="group bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-wms-alert/50 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden"
                         >
                             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-sm font-bold text-slate-500 shrink-0 group-hover:bg-wms-alert/20 group-hover:text-wms-alert transition-colors">
                                 {queue.length - index}
                             </div>
-                            
+
                             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ubicación</p>
@@ -504,7 +560,7 @@ const Entry = () => {
             </div>
 
             <div className="p-6 border-t border-slate-200 bg-white relative z-20">
-                <button 
+                <button
                     onClick={handleSync}
                     disabled={queue.length === 0 || syncMutation.isPending}
                     className="w-full bg-wms-alert/20 border border-wms-alert hover:bg-wms-alert text-wms-alert hover:text-wms-dark py-4 rounded-2xl font-black text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-neon-orange flex items-center justify-center gap-3"
