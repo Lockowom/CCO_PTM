@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCircle, Loader2, AlertTriangle, Camera } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,10 +7,12 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 const Entry = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
   const [queue, setQueue] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [loadingDesc, setLoadingDesc] = useState(false);
@@ -171,6 +173,32 @@ const Entry = () => {
     } catch (_) {
       console.error('Ubicacion validation error:', _);
     }
+  };
+
+  // Escaneo por cámara - Ubicación
+  const scanUbicacion = () => {
+    startScan({
+      onScan: (value) => {
+        const val = value.toUpperCase().slice(0, 12);
+        setForm(prev => ({ ...prev, ubicacion: val }));
+        toast.success(`Ubicación escaneada: ${val}`);
+        // Trigger blur validation
+        setTimeout(handleUbicacionBlur, 200);
+      },
+      onError: (msg) => toast.error(msg)
+    });
+  };
+
+  // Escaneo por cámara - Código
+  const scanCodigo = () => {
+    startScan({
+      onScan: (value) => {
+        const val = value.toUpperCase().slice(0, 20);
+        setForm(prev => ({ ...prev, codigo: val }));
+        toast.success(`Código escaneado: ${val}`);
+      },
+      onError: (msg) => toast.error(msg)
+    });
   };
 
   const handleInputChange = (e) => {
@@ -349,20 +377,33 @@ const Entry = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Ubicación <span className="text-wms-danger">*</span> (RACK-POS-NIVEL)
                 </label>
-                <div className="relative group/input">
-                  <input
-                    type="text"
-                    name="ubicacion"
-                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
-                    placeholder="AA-01-01A"
-                    value={form.ubicacion}
-                    onChange={handleInputChange}
-                    onBlur={handleUbicacionBlur}
-                    maxLength={12}
-                    required
-                    autoFocus
-                  />
-                  <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                <div className="flex gap-2">
+                  <div className="relative group/input flex-1">
+                    <input
+                      type="text"
+                      name="ubicacion"
+                      className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
+                      placeholder="AA-01-01A"
+                      value={form.ubicacion}
+                      onChange={handleInputChange}
+                      onBlur={handleUbicacionBlur}
+                      maxLength={12}
+                      required
+                      autoFocus
+                    />
+                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                  </div>
+                  {isSupportedDevice && (
+                    <button
+                      type="button"
+                      onClick={scanUbicacion}
+                      disabled={isScanning}
+                      className="px-3.5 bg-wms-alert/20 border border-wms-alert text-wms-alert hover:bg-wms-alert hover:text-white rounded-xl flex items-center justify-center transition-colors disabled:opacity-50"
+                      title="Escanear con cámara"
+                    >
+                      <Camera size={20} />
+                    </button>
+                  )}
                 </div>
                 {ubicacionWarning && (
                   <div className="mt-1.5 p-2 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2 text-xs text-amber-700 font-medium">
@@ -377,22 +418,35 @@ const Entry = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
                   Código <span className="text-wms-danger">*</span> (Max 20)
                 </label>
-                <div className="relative group/input">
-                  <input
-                    ref={codigoInputRef}
-                    type="text"
-                    name="codigo"
-                    className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
-                    placeholder="SKU-123..."
-                    value={form.codigo}
-                    onChange={handleInputChange}
-                    maxLength={20}
-                    required
-                  />
-                  {loadingDesc ? (
-                    <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-wms-alert" size={20} />
-                  ) : (
-                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                <div className="flex gap-2">
+                  <div className="relative group/input flex-1">
+                    <input
+                      ref={codigoInputRef}
+                      type="text"
+                      name="codigo"
+                      className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-mono font-bold text-slate-900 focus:border-wms-alert outline-none transition-all placeholder:text-slate-600 uppercase"
+                      placeholder="SKU-123..."
+                      value={form.codigo}
+                      onChange={handleInputChange}
+                      maxLength={20}
+                      required
+                    />
+                    {loadingDesc ? (
+                      <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-wms-alert" size={20} />
+                    ) : (
+                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                    )}
+                  </div>
+                  {isSupportedDevice && (
+                    <button
+                      type="button"
+                      onClick={scanCodigo}
+                      disabled={isScanning}
+                      className="px-3.5 bg-wms-alert/20 border border-wms-alert text-wms-alert hover:bg-wms-alert hover:text-white rounded-xl flex items-center justify-center transition-colors disabled:opacity-50"
+                      title="Escanear con cámara"
+                    >
+                      <Camera size={20} />
+                    </button>
                   )}
                 </div>
               </div>

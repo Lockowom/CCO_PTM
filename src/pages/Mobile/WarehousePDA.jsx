@@ -3,13 +3,14 @@ import {
   Scan, Package, ArrowRight, CheckCircle,
   AlertTriangle, RotateCcw, Search, LogOut,
   Box, MapPin, ClipboardList, ArrowLeft, Wifi,
-  Plus, Minus, ChevronRight, Archive
+  Plus, Minus, ChevronRight, Archive, Camera
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import gsap from 'gsap';
 import { toast } from 'sonner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 // ============================================================================
 // WMS PDA / HANDHELD MODE
@@ -26,6 +27,7 @@ const hapticError = async () => {
 
 const WarehousePDA = () => {
   const { user, logout } = useAuth();
+  const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
   const [mode, setMode] = useState('HOME'); // HOME, PICKING, PUTAWAY, INVENTORY, QUERY
   const [scannedValue, setScannedValue] = useState('');
 
@@ -103,6 +105,20 @@ const WarehousePDA = () => {
       hapticError();
       toast.error('Error al buscar tarea: ' + (err.message || 'Error desconocido'));
     }
+  };
+
+  // Abre la cámara nativa para escanear código de barras / QR
+  const openCameraScanner = async () => {
+    const result = await startScan({
+      onScan: (value) => {
+        hapticSuccess();
+        processInput(value.trim().toUpperCase());
+      },
+      onError: (msg) => {
+        hapticError();
+        toast.error(msg);
+      }
+    });
   };
 
   const handleScan = (e) => {
@@ -377,19 +393,31 @@ const WarehousePDA = () => {
           </div>
         </div>
 
-        {/* Hidden Input for Scanner */}
+        {/* Scanner Input + Camera Button */}
         <form onSubmit={handleScan} className="p-2 bg-slate-50">
-          <div className="relative">
-            <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-            <input
-              ref={inputRef}
-              type="text"
-              value={scannedValue}
-              onChange={e => setScannedValue(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500"
-              placeholder="Escanear aquí..."
-              autoComplete="off"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+              <input
+                ref={inputRef}
+                type="text"
+                value={scannedValue}
+                onChange={e => setScannedValue(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500"
+                placeholder="Escanear aquí..."
+                autoComplete="off"
+              />
+            </div>
+            {isSupportedDevice && (
+              <button
+                type="button"
+                onClick={openCameraScanner}
+                disabled={isScanning}
+                className="px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
+              >
+                <Camera size={20} />
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -544,20 +572,32 @@ const WarehousePDA = () => {
           )}
         </div>
 
-        {/* Scanner Input (steps 1 & 2 only) */}
+        {/* Scanner Input + Camera Button (steps 1 & 2 only) */}
         {(putawayStep === 'SCAN_LOC' || putawayStep === 'SCAN_SKU') && (
           <form onSubmit={handleScan} className="p-2 bg-slate-900 border-t border-slate-700">
-            <div className="relative">
-              <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
-              <input
-                ref={inputRef}
-                type="text"
-                value={scannedValue}
-                onChange={e => setScannedValue(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-emerald-400"
-                placeholder={putawayStep === 'SCAN_LOC' ? 'Escanear ubicación...' : 'Escanear producto...'}
-                autoComplete="off"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={scannedValue}
+                  onChange={e => setScannedValue(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-emerald-400"
+                  placeholder={putawayStep === 'SCAN_LOC' ? 'Escanear ubicación...' : 'Escanear producto...'}
+                  autoComplete="off"
+                />
+              </div>
+              {isSupportedDevice && (
+                <button
+                  type="button"
+                  onClick={openCameraScanner}
+                  disabled={isScanning}
+                  className="px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
+                >
+                  <Camera size={20} />
+                </button>
+              )}
             </div>
           </form>
         )}
