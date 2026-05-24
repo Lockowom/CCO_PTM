@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { 
-  Activity, 
-  Clock, 
+import React, { useRef, useLayoutEffect } from 'react';
+import {
+  Activity,
+  Clock,
   RefreshCw,
-  FileText, 
-  Hourglass, 
-  Hand, 
-  AlertCircle, 
-  Box, 
-  Send, 
-  Truck, 
+  FileText,
+  Hourglass,
+  Hand,
+  AlertCircle,
+  Box,
+  Send,
+  Truck,
   CheckCircle,
   Users,
   RotateCcw,
@@ -21,22 +21,11 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import gsap from 'gsap';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LineChart, Line, BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import ExportButton from '../components/ui/ExportButton';
-
-// --- CONFIGURACIÓN DE ESTADOS ---
-const ESTADOS_NV = [
-  { key: 'Pendiente', label: 'Pendiente', color: '#64748b', bg: 'bg-slate-100', text: 'text-slate-700' },
-  { key: 'Aprobada', label: 'Aprobada', color: '#f59e0b', bg: 'bg-amber-100', text: 'text-amber-700' },
-  { key: 'Pendiente Picking', label: 'Picking', color: '#06b6d4', bg: 'bg-cyan-100', text: 'text-cyan-700' },
-  { key: 'QUIEBRE_STOCK', label: 'Quiebre', color: '#ef4444', bg: 'bg-red-100', text: 'text-red-700' },
-  { key: 'PACKING', label: 'Packing', color: '#6366f1', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-  { key: 'LISTO_DESPACHO', label: 'Despacho', color: '#a855f7', bg: 'bg-purple-100', text: 'text-purple-700' },
-  { key: 'Pendiente Shipping', label: 'Shipping', color: '#3b82f6', bg: 'bg-blue-100', text: 'text-blue-700' },
-  { key: 'Despachado', label: 'En Ruta', color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  { key: 'ENTREGADO', label: 'Entregado', color: '#059669', bg: 'bg-green-100', text: 'text-green-700' },
-  { key: 'Refacturacion', label: 'Refact.', color: '#f97316', bg: 'bg-orange-100', text: 'text-orange-700' },
-];
+import useRealtimeTable from '../hooks/useRealtimeTable';
+import { ESTADOS_CONFIG, getEstadoConfig } from '../constants/estados';
 
 // --- COMPONENTES AUXILIARES (DEFINIDOS PRIMERO) ---
 
@@ -98,24 +87,8 @@ const PipelineStep = ({ label, value, color, icon, isLast }) => (
 
 // --- COMPONENTE PRINCIPAL DASHBOARD ---
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const queryClient = useQueryClient();
   const dashboardRef = useRef(null);
-
-  // Estados de datos
-  const [kpis, setKpis] = useState({
-    total: 0,
-    pendientes: 0,
-    picking: 0,
-    packing: 0,
-    despacho: 0,
-    quiebres: 0,
-    refacturacion: 0
-  });
-  
-  const [chartData, setChartData] = useState([]);
-  const [recentNV, setRecentNV] = useState([]);
-  const [conductores, setConductores] = useState({ total: 0, enRuta: 0 });
 
   // Animación de entrada
   useLayoutEffect(() => {
@@ -131,86 +104,70 @@ const Dashboard = () => {
     return () => ctx.revert();
   }, []);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Animación del icono de refresco
-      gsap.to(".refresh-spin", { rotation: "+=360", duration: 1 });
-
-      // 1. Obtener N.V. Diarias
+  const { data: dashData, isLoading: loading, refetch: fetchData } = useQuery({
+    queryKey: ['dashboard_kpis'],
+    queryFn: async () => {
       const { data: nvData } = await supabase
         .from('tms_nv_diarias')
-        .select('*')
+        .select('nv, estado, fecha_emision, cliente, cantidad')
         .order('fecha_emision', { ascending: false });
-        
+
       const nv = nvData || [];
-      
-      // Cálculos
+
       const counts = nv.reduce((acc, curr) => {
         const estado = curr.estado === 'PENDIENTE' ? 'Pendiente' : curr.estado;
         acc[estado] = (acc[estado] || 0) + 1;
         return acc;
       }, {});
 
-      setKpis({
+      const kpis = {
         total: nv.length,
-        pendientes: (counts['Pendiente'] || 0),
-        picking: (counts['Pendiente Picking'] || 0),
-        packing: (counts['PACKING'] || 0),
-        despacho: (counts['LISTO_DESPACHO'] || 0),
-        quiebres: (counts['QUIEBRE_STOCK'] || 0),
-        refacturacion: (counts['Refacturacion'] || 0)
-      });
+        pendientes: counts['Pendiente'] || 0,
+        picking: counts['Pendiente Picking'] || 0,
+        packing: counts['PACKING'] || 0,
+        despacho: counts['LISTO_DESPACHO'] || 0,
+        quiebres: counts['QUIEBRE_STOCK'] || 0,
+        refacturacion: counts['Refacturacion'] || 0
+      };
 
-      // Datos para gráfico (Actividad por hora simulada o por estado)
-      const graphData = [
+      const chartData = [
         { name: 'Pendiente', valor: counts['Pendiente'] || 0, fill: '#64748b' },
         { name: 'Picking', valor: counts['Pendiente Picking'] || 0, fill: '#06b6d4' },
         { name: 'Packing', valor: counts['PACKING'] || 0, fill: '#6366f1' },
         { name: 'Despacho', valor: counts['LISTO_DESPACHO'] || 0, fill: '#a855f7' },
         { name: 'En Ruta', valor: counts['Despachado'] || 0, fill: '#10b981' },
       ];
-      setChartData(graphData);
 
-      setRecentNV(nv.slice(0, 7));
+      const recentNV = nv.slice(0, 7);
 
-      // 2. Conductores
       const { data: drivers } = await supabase.from('tms_conductores').select('estado');
       const driversArr = drivers || [];
-      setConductores({
-        total: driversArr.length,
-        enRuta: driversArr.filter(d => d.estado === 'EN_RUTA').length
-      });
 
-      setLastUpdate(new Date());
-    } catch (_) {
-      console.error('Dashboard data load error:', _);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return {
+        kpis,
+        chartData,
+        recentNV,
+        conductores: {
+          total: driversArr.length,
+          enRuta: driversArr.filter(d => d.estado === 'EN_RUTA').length
+        }
+      };
+    },
+    refetchInterval: 30000,
+  });
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    
-    // Suscripción simple para actualizar
-    const channel = supabase.channel('dashboard_updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, fetchData)
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
+  const kpis = dashData?.kpis || { total: 0, pendientes: 0, picking: 0, packing: 0, despacho: 0, quiebres: 0, refacturacion: 0 };
+  const chartData = dashData?.chartData || [];
+  const recentNV = dashData?.recentNV || [];
+  const conductores = dashData?.conductores || { total: 0, enRuta: 0 };
+  const lastUpdate = new Date();
 
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, [fetchData]);
+  useRealtimeTable('tms_nv_diarias', ['dashboard_kpis']);
 
   const getEstadoBadge = (estado) => {
-    const config = ESTADOS_NV.find(e => e.key === (estado === 'PENDIENTE' ? 'Pendiente' : estado)) || ESTADOS_NV[0];
+    const config = getEstadoConfig(estado);
     return (
-      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${config.bg} ${config.text} border border-transparent`}>
+      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${config.lightBg} ${config.textColor} border border-transparent`}>
         {config.label}
       </span>
     );

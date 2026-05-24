@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search, Eye, AlertCircle, X, Package, Truck, Calendar, User, FileText, Hand, CheckCircle, Clock, Box, Send, RefreshCw, ChevronRight, ArrowRight, ThumbsUp, Hourglass, RotateCcw, Ship, Trash2
@@ -8,29 +8,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-
-const PIPELINE_ESTADOS = [
-  { key: 'Pendiente', label: 'Pendiente', icon: Hourglass, bgColor: 'bg-slate-500', lightBg: 'bg-slate-100', textColor: 'text-slate-700', borderColor: 'border-slate-300', description: 'Esperando aprobación' },
-  { key: 'Aprobada', label: 'Aprobada', icon: ThumbsUp, bgColor: 'bg-amber-500', lightBg: 'bg-amber-50', textColor: 'text-amber-700', borderColor: 'border-amber-200', description: 'Lista para Picking' },
-  { key: 'Pendiente Picking', label: 'En Picking', icon: Hand, bgColor: 'bg-cyan-500', lightBg: 'bg-cyan-50', textColor: 'text-cyan-700', borderColor: 'border-cyan-200', description: 'Recolectando productos' },
-  { key: 'PACKING', label: 'Packing', icon: Box, bgColor: 'bg-indigo-500', lightBg: 'bg-indigo-50', textColor: 'text-indigo-700', borderColor: 'border-indigo-200', description: 'Empacando pedido' },
-  { key: 'LISTO_DESPACHO', label: 'Listo Despacho', icon: Send, bgColor: 'bg-purple-500', lightBg: 'bg-purple-50', textColor: 'text-purple-700', borderColor: 'border-purple-200', description: 'Listo para enviar' },
-  { key: 'Pendiente Shipping', label: 'Pend. Shipping', icon: Ship, bgColor: 'bg-blue-500', lightBg: 'bg-blue-50', textColor: 'text-blue-700', borderColor: 'border-blue-200', description: 'Pendiente de envío' },
-  { key: 'Despachado', label: 'Despachado', icon: Truck, bgColor: 'bg-emerald-500', lightBg: 'bg-emerald-50', textColor: 'text-emerald-700', borderColor: 'border-emerald-200', description: 'En camino' },
-  { key: 'NULA', label: 'Nula', icon: X, bgColor: 'bg-rose-500', lightBg: 'bg-rose-50', textColor: 'text-rose-700', borderColor: 'border-rose-200', description: 'Venta anulada' },
-  { key: 'Refacturacion', label: 'Refacturación', icon: RotateCcw, bgColor: 'bg-orange-500', lightBg: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200', description: 'Requiere refacturación' },
-];
-
-const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping', 'NULA', 'Refacturacion'];
-
-const ACCIONES_ESTADO = {
-  'Pendiente': { next: 'Aprobada', label: 'Aprobar', icon: ThumbsUp },
-  'Aprobada': { next: 'Pendiente Picking', label: 'Enviar a Picking', icon: Hand },
-  'Pendiente Picking': { next: 'PACKING', label: 'Enviar a Packing', icon: Box },
-  'PACKING': { next: 'LISTO_DESPACHO', label: 'Listo Despacho', icon: Send },
-  'LISTO_DESPACHO': { next: 'Pendiente Shipping', label: 'A Shipping', icon: Ship },
-  'Pendiente Shipping': { next: 'Despachado', label: 'Despachar', icon: Truck },
-};
+import { groupByNV } from '../../utils/groupOrders';
+import useRealtimeTable from '../../hooks/useRealtimeTable';
+import { ESTADOS_CONFIG, getEstadoConfig, ACCIONES_ESTADO, ESTADOS_PIPELINE } from '../../constants/estados';
 
 const SalesOrders = () => {
   const { hasPermission } = useAuth();
@@ -56,28 +36,17 @@ const SalesOrders = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_nv_diarias')
-        .select('*')
+        .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
         .not('estado', 'eq', 'Despachado')
         .order('fecha_emision', { ascending: false })
         .limit(5000);
 
       if (error) throw error;
 
-      const grouped = {};
-      (data || []).forEach(item => {
-        const nvId = item.nv;
-        if (!grouped[nvId]) {
-          grouped[nvId] = { ...item, items: [], total_items: 0, total_cantidad: 0 };
-        }
-        grouped[nvId].items.push(item);
-        grouped[nvId].total_items++;
-        grouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
-      });
-
-      const ordersArray = Object.values(grouped).sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
+      const ordersArray = groupByNV(data).sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
 
       const counts = {};
-      PIPELINE_ESTADOS.forEach(e => {
+      ESTADOS_CONFIG.forEach(e => {
         counts[e.key] = ordersArray.filter(o => o.estado === e.key).length;
       });
       counts['Pendiente'] = (counts['Pendiente'] || 0) + ordersArray.filter(o => o.estado === 'PENDIENTE').length;
@@ -86,17 +55,7 @@ const SalesOrders = () => {
     }
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('nv_realtime_sales')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
-      })
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
-    return () => supabase.removeChannel(channel);
-  }, [queryClient]);
+  useRealtimeTable('tms_nv_diarias', ['sales_orders']);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ nv, newStatus }) => {
@@ -169,10 +128,6 @@ const SalesOrders = () => {
     });
   }, [orders, selectedEstado, searchTerm]);
 
-  const getEstadoConfig = (estado) => {
-    const normalized = estado === 'PENDIENTE' ? 'Pendiente' : estado;
-    return PIPELINE_ESTADOS.find(e => e.key === normalized) || PIPELINE_ESTADOS[0];
-  };
 
   return (
     <div ref={containerRef} className="space-y-6 min-h-screen text-slate-800">
@@ -496,7 +451,7 @@ const SalesOrders = () => {
               <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Cambiar Estado Manualmente</h3>
                 <div className="flex flex-wrap gap-2">
-                  {PIPELINE_ESTADOS.map((estado) => {
+                  {ESTADOS_CONFIG.map((estado) => {
                     const isCurrent = selectedOrder.estado === estado.key ||
                       (selectedOrder.estado === 'PENDIENTE' && estado.key === 'Pendiente');
                     const accion = ACCIONES_ESTADO[selectedOrder.estado] ||

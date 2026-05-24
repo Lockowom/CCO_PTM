@@ -9,7 +9,10 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { usePickingStore } from '../../stores/pickingStore';
+import { useActiveSession, useItemsStatus, usePickingTime, usePickingActions } from '../../stores/pickingStore';
+import { useProcessTimer } from '../../hooks/useProcessTimer';
+import { groupByNV } from '../../utils/groupOrders';
+import useRealtimeTable from '../../hooks/useRealtimeTable';
 
 const Picking = () => {
   const { user } = useAuth();
@@ -17,32 +20,28 @@ const Picking = () => {
   const [vista, setVista] = useState('lista'); 
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Estado global de Zustand persistente
-  const { activeSession: nvActiva, itemsStatus: itemsPickingStatus, startSession, updateItemStatus, endSession: clearSession, updateTime, tiempoTranscurrido: storedTiempo, tiempoOcio: storedOcio } = usePickingStore();
+  // Estado global de Zustand persistente (granular selectors)
+  const nvActiva = useActiveSession();
+  const itemsPickingStatus = useItemsStatus();
+  const { tiempo: storedTiempo, ocio: storedOcio } = usePickingTime();
+  const { startSession, updateItemStatus, endSession: clearSession, updateTime } = usePickingActions();
 
-  const [tiempoInicio, setTiempoInicio] = useState(null);
-  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(storedTiempo || 0);
-  const [enPausa, setEnPausa] = useState(false);
-  const [tiempoOcio, setTiempoOcio] = useState(storedOcio || 0);
-  const [pausaInicio, setPausaInicio] = useState(null);
-  const [productLocations, setProductLocations] = useState({}); 
+  const timer = useProcessTimer({
+    initialTiempo: storedTiempo || 0,
+    initialOcio: storedOcio || 0,
+    onTimeUpdate: updateTime,
+  });
+
+  const [productLocations, setProductLocations] = useState({});
 
   // Efecto para restaurar vista si hay sesión activa
   useEffect(() => {
     if (nvActiva && vista === 'lista') {
       setVista('picking');
-      setTiempoInicio(Date.now() - (storedTiempo * 1000));
+      timer.start(storedTiempo);
     }
   }, [nvActiva, vista, storedTiempo]);
 
-  // Sincronizar tiempos con Zustand
-  useEffect(() => {
-    updateTime(tiempoTranscurrido, tiempoOcio);
-  }, [tiempoTranscurrido, tiempoOcio, updateTime]);
-
-  const timerRef = useRef(null);
-  const ocioRef = useRef(null);
-  const lastHiddenTime = useRef(null);
   const containerRef = useRef(null);
 
   useGSAP(() => {
@@ -60,31 +59,19 @@ const Picking = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_nv_diarias')
-        .select('*')
+        .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
         .in('estado', ['Pendiente Picking', 'Aprobada'])
         .order('fecha_emision', { ascending: true });
 
       if (error) throw error;
 
-      const grouped = {};
-      (data || []).forEach(item => {
-        const nvId = item.nv;
-        if (!grouped[nvId]) {
-          grouped[nvId] = {
-            ...item,
-            items: [],
-            total_items: 0,
-            total_cantidad: 0,
-            usuario_asignado: item.usuario_asignado,
-            usuario_nombre: item.usuario_nombre
-          };
-        }
-        grouped[nvId].items.push(item);
-        grouped[nvId].total_items++;
-        grouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
+      const grouped = groupByNV(data);
+      // Preserve usuario fields
+      grouped.forEach(nv => {
+        nv.usuario_asignado = nv.usuario_asignado;
+        nv.usuario_nombre = nv.usuario_nombre;
       });
-
-      const uniqueNVs = Object.values(grouped);
+      const uniqueNVs = grouped;
 
       const today = new Date().toISOString().split('T')[0];
       const { count: completados } = await supabase
@@ -105,68 +92,7 @@ const Picking = () => {
     }
   });
 
-  useEffect(() => {
-    const channelNV = supabase
-      .channel('picking_realtime_nv')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['picking_data'] }))
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
-
-    return () => {
-      supabase.removeChannel(channelNV);
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (ocioRef.current) clearInterval(ocioRef.current);
-    };
-  }, [queryClient]);
-
-  useEffect(() => {
-    let intervalId = null;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden && !enPausa && tiempoInicio) {
-        lastHiddenTime.current = Date.now();
-      } else if (!document.hidden && lastHiddenTime.current && !enPausa) {
-        const now = Date.now();
-        const diffSeconds = Math.floor((now - lastHiddenTime.current) / 1000);
-        if (diffSeconds > 0) {
-          setTiempoOcio(prev => prev + diffSeconds);
-          toast.info(`Regresaste: ${diffSeconds}s agregados a tiempo inactivo`);
-        }
-        lastHiddenTime.current = null;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    if (tiempoInicio && !enPausa) {
-      intervalId = setInterval(() => {
-        const now = Date.now();
-        let currentHidden = 0;
-        if (document.hidden && lastHiddenTime.current) {
-          currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
-        }
-        const diffSeconds = Math.floor((now - tiempoInicio) / 1000) - (tiempoOcio + currentHidden);
-        setTiempoTranscurrido(diffSeconds > 0 ? diffSeconds : 0);
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [tiempoInicio, enPausa, tiempoOcio]);
-
-  useEffect(() => {
-    if (enPausa && pausaInicio) {
-      ocioRef.current = setInterval(() => {
-        setTiempoOcio(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (ocioRef.current) clearInterval(ocioRef.current);
-    }
-    return () => { if (ocioRef.current) clearInterval(ocioRef.current); };
-  }, [enPausa, pausaInicio]);
+  useRealtimeTable('tms_nv_diarias', ['picking_data']);
 
   const iniciarPicking = async (nv) => {
     if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
@@ -214,10 +140,7 @@ const Picking = () => {
       setProductLocations({});
     }
 
-    setTiempoInicio(Date.now());
-    setTiempoTranscurrido(0);
-    setTiempoOcio(0);
-    setEnPausa(false);
+    timer.start(0);
     setVista('picking');
 
     await supabase
@@ -241,16 +164,6 @@ const Picking = () => {
     toast.success(`Picking iniciado: NV #${nv.nv}`);
   };
 
-  const togglePausa = () => {
-    if (!enPausa) {
-      setPausaInicio(Date.now());
-      toast.warning('Proceso Pausado');
-    } else {
-      setPausaInicio(null);
-      toast.success('Proceso Reanudado');
-    }
-    setEnPausa(!enPausa);
-  };
 
   const handleItemStatusChange = (itemId, status, cantidad = '') => {
     updateItemStatus(itemId, status, cantidad);
@@ -341,8 +254,8 @@ const Picking = () => {
         .from('tms_mediciones_tiempos')
         .update({
           fin_at: new Date().toISOString(),
-          tiempo_activo: tiempoTranscurrido,
-          tiempo_ocio: tiempoOcio,
+          tiempo_activo: timer.tiempoTranscurrido,
+          tiempo_ocio: timer.tiempoOcio,
           estado: 'COMPLETADO',
           updated_at: new Date().toISOString()
         })
@@ -353,6 +266,7 @@ const Picking = () => {
       return nuevoEstadoGlobal;
     },
     onSuccess: (nuevoEstadoGlobal) => {
+      timer.reset();
       clearSession();
       setVista('lista');
       queryClient.invalidateQueries({ queryKey: ['picking_data'] });
@@ -409,18 +323,12 @@ const Picking = () => {
         .eq('nv', nvActiva.nv);
     }
 
+    timer.reset();
     clearSession();
     setVista('lista');
     toast.info('Picking cancelado');
   };
 
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const nvFiltradas = React.useMemo(() => {
     return nvData.filter(nv =>

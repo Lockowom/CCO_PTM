@@ -17,12 +17,25 @@ export default {
       colors: {
         primary: '#f97316',
         secondary: '#0f172a',
+        brand: {
+          DEFAULT: '#f97316',
+          light: '#fff7ed',
+          dark: '#c2410c',
+        },
         wms: {
           void: 'var(--color-void)',
           base: 'var(--color-base)',
           elevated: 'var(--color-elevated)',
           surface: 'var(--color-surface)',
           accent: 'var(--color-accent)',
+          dark: '#0f172a',
+          panel: '#1e293b',
+          border: '#334155',
+          neon: '#10b981',
+          alert: '#f97316',
+          danger: '#ef4444',
+          warning: '#f59e0b',
+          info: '#3b82f6',
         }
       },
       spacing: tokens.spacing,

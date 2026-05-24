@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { groupByNV } from '../../utils/groupOrders';
+import { useProcessTimer } from '../../hooks/useProcessTimer';
+import useRealtimeTable from '../../hooks/useRealtimeTable';
 
 const Packing = () => {
   const { user } = useAuth();
@@ -16,11 +19,7 @@ const Packing = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [nvActiva, setNvActiva] = useState(null);
-  const [tiempoInicio, setTiempoInicio] = useState(null);
-  const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
-  const [enPausa, setEnPausa] = useState(false);
-  const [tiempoOcio, setTiempoOcio] = useState(0);
-  const [pausaInicio, setPausaInicio] = useState(null);
+  const timer = useProcessTimer();
 
   const [showDevolverModal, setShowDevolverModal] = useState(false);
   const [motivoDevolucion, setMotivoDevolucion] = useState('');
@@ -41,9 +40,6 @@ const Packing = () => {
     });
   };
 
-  const timerRef = useRef(null);
-  const ocioRef = useRef(null);
-  const lastHiddenTime = useRef(null);
   const containerRef = useRef(null);
 
   useGSAP(() => {
@@ -61,34 +57,20 @@ const Packing = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_nv_diarias')
-        .select('*')
+        .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
         .in('estado', ['PACKING', 'QUIEBRE_STOCK'])
         .order('cliente', { ascending: true });
 
       if (error) throw error;
 
-      const nvGrouped = {};
-      (data || []).forEach(item => {
-        const nvId = item.nv;
-        if (!nvGrouped[nvId]) {
-          nvGrouped[nvId] = {
-            ...item,
-            items: [],
-            total_items: 0,
-            total_cantidad: 0,
-            has_partial: false,
-            has_stock_break: false
-          };
-        }
-        nvGrouped[nvId].items.push(item);
-        nvGrouped[nvId].total_items++;
-        nvGrouped[nvId].total_cantidad += parseInt(item.cantidad) || 0;
-
-        if (item.picking_status === 'PARCIAL') nvGrouped[nvId].has_partial = true;
-        if (item.picking_status === 'SIN_STOCK' || item.estado === 'QUIEBRE_STOCK') nvGrouped[nvId].has_stock_break = true;
+      const uniqueNVsRaw = groupByNV(data);
+      // Add packing-specific flags
+      uniqueNVsRaw.forEach(nv => {
+        nv.has_partial = nv.items.some(i => i.picking_status === 'PARCIAL');
+        nv.has_stock_break = nv.items.some(i => i.picking_status === 'SIN_STOCK' || i.estado === 'QUIEBRE_STOCK');
       });
 
-      const uniqueNVs = Object.values(nvGrouped).filter(nv =>
+      const uniqueNVs = uniqueNVsRaw.filter(nv =>
         nv.items.some(i => i.estado === 'PACKING')
       );
 
@@ -131,75 +113,8 @@ const Packing = () => {
     }
   });
 
-  useEffect(() => {
-    const channelNV = supabase
-      .channel('packing_realtime_nv')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
-
-    const channelMetrics = supabase
-      .channel('packing_realtime_metrics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
-
-    return () => {
-      supabase.removeChannel(channelNV);
-      supabase.removeChannel(channelMetrics);
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (ocioRef.current) clearInterval(ocioRef.current);
-    };
-  }, [queryClient]);
-
-  useEffect(() => {
-    let intervalId = null;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden && !enPausa && tiempoInicio) {
-        lastHiddenTime.current = Date.now();
-      } else if (!document.hidden && lastHiddenTime.current && !enPausa) {
-        const now = Date.now();
-        const diffSeconds = Math.floor((now - lastHiddenTime.current) / 1000);
-        if (diffSeconds > 0) {
-          setTiempoOcio(prev => prev + diffSeconds);
-        }
-        lastHiddenTime.current = null;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    if (tiempoInicio && !enPausa) {
-      intervalId = setInterval(() => {
-        const now = Date.now();
-        let currentHidden = 0;
-        if (document.hidden && lastHiddenTime.current) {
-          currentHidden = Math.floor((now - lastHiddenTime.current) / 1000);
-        }
-        const diffSeconds = Math.floor((now - tiempoInicio) / 1000) - (tiempoOcio + currentHidden);
-        setTiempoTranscurrido(diffSeconds > 0 ? diffSeconds : 0);
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [tiempoInicio, enPausa, tiempoOcio]);
-
-  useEffect(() => {
-    if (enPausa && pausaInicio) {
-      ocioRef.current = setInterval(() => {
-        setTiempoOcio(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (ocioRef.current) clearInterval(ocioRef.current);
-    }
-    return () => { if (ocioRef.current) clearInterval(ocioRef.current); };
-  }, [enPausa, pausaInicio]);
+  useRealtimeTable('tms_nv_diarias', ['packing_data']);
+  useRealtimeTable('tms_mediciones_tiempos', ['packing_data']);
 
   const iniciarPacking = async (nv) => {
     if (nv.usuario_asignado && nv.usuario_asignado !== user.id) {
@@ -208,10 +123,7 @@ const Packing = () => {
     }
 
     setNvActiva(nv);
-    setTiempoInicio(Date.now());
-    setTiempoTranscurrido(0);
-    setTiempoOcio(0);
-    setEnPausa(false);
+    timer.start(0);
     setVista('packing');
 
     let direccion = nv.direccion_despacho || '';
@@ -249,16 +161,11 @@ const Packing = () => {
     });
   };
 
-  const togglePausa = () => {
-    if (!enPausa) setPausaInicio(Date.now());
-    else setPausaInicio(null);
-    setEnPausa(!enPausa);
-  };
 
   const finalizarMutation = useMutation({
     mutationFn: async () => {
-      const tiempoFinal = tiempoTranscurrido;
-      const ocioFinal = tiempoOcio;
+      const tiempoFinal = timer.tiempoTranscurrido;
+      const ocioFinal = timer.tiempoOcio;
 
       const { error: updateError } = await supabase
         .from('tms_nv_diarias')
@@ -297,11 +204,8 @@ const Packing = () => {
     },
     onSuccess: (_, variables, context) => {
       const nvNumero = nvActiva?.nv;
+      timer.reset();
       setNvActiva(null);
-      setTiempoInicio(null);
-      setTiempoTranscurrido(0);
-      setTiempoOcio(0);
-      setEnPausa(false);
       setVista('clientes');
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       queryClient.invalidateQueries({ queryKey: ['packing_data'] });
@@ -332,11 +236,8 @@ const Packing = () => {
 
       await supabase.from('tms_nv_diarias').update({ usuario_asignado: null, usuario_nombre: null }).eq('nv', nvActiva.nv);
     }
+    timer.reset();
     setNvActiva(null);
-    setTiempoInicio(null);
-    setTiempoTranscurrido(0);
-    setTiempoOcio(0);
-    setEnPausa(false);
     setVista('clientes');
     setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
   };
@@ -384,11 +285,8 @@ const Packing = () => {
         .eq('estado', 'EN_PROCESO');
     },
     onSuccess: () => {
+      timer.reset();
       setNvActiva(null);
-      setTiempoInicio(null);
-      setTiempoTranscurrido(0);
-      setTiempoOcio(0);
-      setEnPausa(false);
       setVista('clientes');
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       setShowDevolverModal(false);
@@ -409,13 +307,6 @@ const Packing = () => {
     devolverMutation.mutate();
   };
 
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const clientesFiltrados = React.useMemo(() => {
     return clientesAgrupados.filter(c =>
