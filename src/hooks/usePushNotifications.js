@@ -29,7 +29,7 @@ export const usePushNotifications = (userId) => {
             .from('tms_usuarios')
             .update({ push_token: token.value })
             .eq('id', userId);
-        } catch (_) {}
+        } catch (_) { console.error('Push token update error:', _); }
       });
 
       PushNotifications.addListener('registrationError', () => {});
@@ -42,6 +42,6 @@ export const usePushNotifications = (userId) => {
       });
 
       PushNotifications.addListener('pushNotificationActionPerformed', () => {});
-    } catch (_) {}
+    } catch (_) { console.error('Push notifications setup error:', _); }
   };
 };

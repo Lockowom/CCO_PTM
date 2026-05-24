@@ -92,7 +92,9 @@ const SalesOrders = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
         queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
     return () => supabase.removeChannel(channel);
   }, [queryClient]);
 

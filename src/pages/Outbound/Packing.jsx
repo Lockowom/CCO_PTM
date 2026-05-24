@@ -135,12 +135,16 @@ const Packing = () => {
     const channelNV = supabase
       .channel('packing_realtime_nv')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     const channelMetrics = supabase
       .channel('packing_realtime_metrics')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_mediciones_tiempos' }, () => queryClient.invalidateQueries({ queryKey: ['packing_data'] }))
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channelNV);
@@ -226,7 +230,7 @@ const Packing = () => {
           direccion = addressData.direccion;
           comuna = addressData.comuna;
         }
-      } catch (_) {}
+      } catch (_) { console.error('Packing operation error:', _); }
     }
 
     setFormData({

@@ -48,6 +48,7 @@ const ViewsPage = () => {
       setRoles(rolesData || []);
 
     } catch (_) {
+      console.error('Views fetch error:', _);
     } finally {
       setLoading(false);
     }

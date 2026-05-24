@@ -25,6 +25,7 @@ export const ConfigProvider = ({ children }) => {
       setModulesConfig(configMap);
       return configMap;
     } catch (_) {
+      console.error('ConfigContext load error:', _);
       return {};
     } finally {
       setLoading(false);
@@ -45,7 +46,9 @@ export const ConfigProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'tms_modules_config' },
         () => { loadConfig(); }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);

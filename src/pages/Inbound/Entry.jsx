@@ -80,7 +80,7 @@ const Entry = () => {
     if (saved) {
       try {
         setQueue(JSON.parse(saved));
-      } catch (_) {}
+      } catch (_) { console.error('Entry data load error:', _); }
     }
   }, []);
 
@@ -127,6 +127,7 @@ const Entry = () => {
           }
         }
       } catch (_) {
+        console.error('Entry save error:', _);
       } finally {
         setLoadingDesc(false);
         gsap.killTweensOf(".loading-spinner");
@@ -243,7 +244,7 @@ const Entry = () => {
             registros_actualizados: 0,
             registros_error: 0
           }]);
-        } catch (_) {}
+        } catch (_) { console.error('Entry operation error:', _); }
       }
     },
     onSuccess: () => {

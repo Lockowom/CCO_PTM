@@ -40,25 +40,51 @@ const WarehousePDA = () => {
     return () => clearInterval(interval);
   }, [mode, pickStep]);
 
-  // Simular carga de tarea
   const loadPickingTask = async () => {
-    // En producción: WmsIntelligence.getNextTask(user.id)
-    toast.loading('Buscando tarea...');
-    setTimeout(() => {
+    try {
+      toast.loading('Buscando tarea...', { id: 'loading-task' });
+
+      const { data, error } = await supabase
+        .from('tms_picking_tasks')
+        .select('*')
+        .eq('estado', 'PENDIENTE')
+        .order('prioridad', { ascending: false })
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      toast.dismiss('loading-task');
+
+      if (error) throw error;
+
+      if (!data) {
+        toast.info('No hay tareas de picking pendientes');
+        return;
+      }
+
+      // Mark task as in progress
+      await supabase
+        .from('tms_picking_tasks')
+        .update({ estado: 'EN_PROCESO', operario_id: user?.id })
+        .eq('id', data.id);
+
       setActiveTask({
-        id: 'TASK-9901',
-        location: 'A-01-04-B',
-        sku: 'PARACETAMOL-500',
-        desc: 'Paracetamol 500mg Caja 20',
-        qty_needed: 50,
+        id: data.id,
+        location: data.ubicacion,
+        sku: data.sku,
+        desc: data.descripcion,
+        qty_needed: data.cantidad_requerida,
         qty_picked: 0,
-        batch: 'LOTE-2024'
+        batch: data.lote
       });
       setMode('PICKING');
       setPickStep('SCAN_LOC');
-      toast.dismiss();
       toast.success('Nueva tarea asignada');
-    }, 800);
+    } catch (err) {
+      console.error('Error loading picking task:', err);
+      toast.dismiss('loading-task');
+      toast.error('Error al buscar tarea: ' + (err.message || 'Error desconocido'));
+    }
   };
 
   const handleScan = (e) => {

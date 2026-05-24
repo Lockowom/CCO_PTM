@@ -105,6 +105,7 @@ const CommandPalette = () => {
         setResults(newResults);
         setSelectedIndex(0);
       } catch (_) {
+        console.error('Command execution error:', _);
       } finally {
         setIsLoading(false);
       }

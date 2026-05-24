@@ -30,7 +30,9 @@ const Tickets = () => {
           audio.play().catch(e => {});
         }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(subscription);
@@ -48,6 +50,7 @@ const Tickets = () => {
       if (error) throw error;
       setTickets(data || []);
     } catch (_) {
+      console.error('Tickets fetch error:', _);
     } finally {
       setLoading(false);
     }

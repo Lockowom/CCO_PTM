@@ -3,8 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
 import { APP_PERMISSIONS } from '../../config/modules';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
@@ -43,15 +41,6 @@ const RolesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  useGSAP(() => {
-    gsap.from(containerRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.4,
-      ease: 'power3.out',
-      clearProps: 'all'
-    });
-  }, { scope: containerRef });
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['admin_roles'],

@@ -109,7 +109,9 @@ const Picking = () => {
     const channelNV = supabase
       .channel('picking_realtime_nv')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => queryClient.invalidateQueries({ queryKey: ['picking_data'] }))
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channelNV);

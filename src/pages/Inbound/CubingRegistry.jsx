@@ -118,6 +118,7 @@ const CubingRegistry = () => {
           }
         }
       } catch (_) {
+        console.error('Cubing data load error:', _);
       } finally {
         setLoading(false);
       }
@@ -163,7 +164,7 @@ const CubingRegistry = () => {
             tipo_empaque: formData.tipo_empaque,
             observaciones: formData.observaciones
           });
-      } catch (_) {}
+      } catch (_) { console.error('Cubing save error:', _); }
     },
     onSuccess: () => {
       toast.success(`Cubicaje guardado para ${formData.codigo_producto}`);

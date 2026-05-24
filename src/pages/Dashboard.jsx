@@ -184,6 +184,7 @@ const Dashboard = () => {
 
       setLastUpdate(new Date());
     } catch (_) {
+      console.error('Dashboard data load error:', _);
     } finally {
       setLoading(false);
     }
@@ -196,7 +197,9 @@ const Dashboard = () => {
     // Suscripción simple para actualizar
     const channel = supabase.channel('dashboard_updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, fetchData)
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       clearInterval(interval);

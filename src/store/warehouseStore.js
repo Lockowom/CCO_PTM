@@ -164,6 +164,7 @@ export const useWarehouseStore = create((set, get) => ({
       });
 
     } catch (_) {
+      console.error('Warehouse data fetch error:', _);
       set({ loading: false });
     }
   },
@@ -241,7 +242,9 @@ export const useWarehouseStore = create((set, get) => ({
       .channel('warehouse-dna-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_ubicaciones' }, debouncedFetch)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'wms_layout' }, debouncedFetch)
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);

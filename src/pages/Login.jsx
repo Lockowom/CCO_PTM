@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import gsap from 'gsap';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,8 +14,6 @@ const Login = () => {
   
   const navigate = useNavigate();
   const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const particleSystem = useRef({ particles: [], speedMult: 1 });
 
   const { login, isAuthenticated } = useAuth();
 
@@ -26,105 +23,6 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // --- Kinetic Cinematic Background Engine ---
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.baseSpeedX = (Math.random() - 0.5) * 1.2;
-        this.baseSpeedY = (Math.random() - 0.5) * 1.2;
-        this.opacity = Math.random() * 0.6 + 0.1;
-        this.hue = Math.random() > 0.8 ? 30 : 20;
-      }
-      update(speedMult) {
-        this.x += this.baseSpeedX * speedMult;
-        this.y += this.baseSpeedY * speedMult;
-        
-        if (this.x < 0) this.x = canvas.width;
-        if (this.x > canvas.width) this.x = 0;
-        if (this.y < 0) this.y = canvas.height;
-        if (this.y > canvas.height) this.y = 0;
-      }
-      draw() {
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, ${this.opacity})`;
-        ctx.shadowBlur = 10 * (particleSystem.current.speedMult / 2);
-        ctx.shadowColor = `hsla(${this.hue}, 100%, 50%, 0.5)`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-    }
-
-    const init = () => {
-      resize();
-      particleSystem.current.particles = Array.from({ length: 180 }, () => new Particle());
-    };
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particleSystem.current.particles.forEach(p => {
-        p.update(particleSystem.current.speedMult);
-        p.draw();
-      });
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    init();
-    animate();
-    window.addEventListener('resize', resize);
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline();
-      
-      tl.from(".login-container", { 
-        scale: 0.8, 
-        opacity: 0, 
-        duration: 1.2, 
-        ease: "expo.out" 
-      })
-      .from(".animate-form-item", { 
-        y: 20, 
-        opacity: 0, 
-        duration: 0.6, 
-        stagger: 0.1, 
-        ease: "power3.out" 
-      }, "-=0.8");
-
-      gsap.to(".orb-glow", {
-        x: "random(-100, 100)",
-        y: "random(-100, 100)",
-        scale: "random(0.8, 1.3)",
-        duration: "random(8, 15)",
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        stagger: 1
-      });
-    }, containerRef);
-    return () => ctx.revert();
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -134,38 +32,22 @@ const Login = () => {
     setError(null);
     setLoadingPhase(1); // Fase: Autenticación
 
-    // Acelerar partículas gradualmente
-    gsap.to(particleSystem.current, { speedMult: 8, duration: 2, ease: "power2.in" });
-
     try {
       const success = await login(email, password);
-      
+
       if (success) {
         setLoadingPhase(2); // Fase: Sincronización de Núcleo
-        
-        // Simular carga dinámica de módulos
+
         await new Promise(r => setTimeout(r, 1200));
         setLoadingPhase(3); // Fase: Estableciendo Conexión
-        
-        // Animación final de salida "Warp"
-        gsap.to(particleSystem.current, { speedMult: 40, duration: 0.8, ease: "expo.in" });
-        gsap.to(".login-container", { 
-          scale: 1.2, 
-          opacity: 0, 
-          filter: "blur(10px)",
-          duration: 0.6, 
-          ease: "power4.in",
-          onComplete: () => navigate('/', { replace: true }) 
-        });
+
+        await new Promise(r => setTimeout(r, 600));
+        navigate('/', { replace: true });
       } else {
-        // Revertir velocidad si falla
-        gsap.to(particleSystem.current, { speedMult: 1, duration: 0.5 });
         setLoadingPhase(0);
         setError("Acceso denegado. Verifica tus credenciales.");
-        gsap.to(".login-container", { x: [-10, 10, -10, 10, 0], duration: 0.4 });
       }
     } catch (err) {
-      gsap.to(particleSystem.current, { speedMult: 1, duration: 0.5 });
       setLoadingPhase(0);
       setError("Error de conexión con el núcleo.");
     } finally {
@@ -185,14 +67,10 @@ const Login = () => {
   return (
     <div ref={containerRef} className="min-h-screen w-full flex items-center justify-center bg-[#020617] font-sans selection:bg-orange-500 selection:text-white relative overflow-hidden">
       
-      {/* --- KINETIC CINEMATIC BACKGROUND --- */}
-      <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none opacity-80" />
-      
-      {/* Intense Decorators */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="orb-glow absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-orange-600/10 blur-[180px] rounded-full" />
-        <div className="orb-glow absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-amber-600/10 blur-[160px] rounded-full" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#020617_95%)]" />
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-orange-500/5 to-transparent rounded-full animate-pulse" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-indigo-500/5 to-transparent rounded-full animate-pulse" style={{ animationDuration: '6s' }}></div>
       </div>
 
       {/* --- CENTERED LOGIN BOX --- */}

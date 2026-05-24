@@ -86,7 +86,9 @@ export const AuthProvider = ({ children }) => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -100,9 +102,35 @@ export const AuthProvider = ({ children }) => {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          setUser(parsed);
-          setUserForTracking(parsed);
-          await loadRoleConfig(parsed.rol);
+          // Validate session against server
+          const { data, error } = await supabase
+            .from('tms_usuarios')
+            .select('id, nombre, email, rol, activo, es_admin_delegado')
+            .eq('id', parsed.id)
+            .eq('activo', true)
+            .single();
+
+          if (error || !data) {
+            // User no longer exists or is deactivated
+            localStorage.removeItem('currentUser');
+            setLoading(false);
+            return;
+          }
+
+          // Update with fresh server data
+          const freshUser = {
+            id: data.id,
+            nombre: data.nombre,
+            email: data.email,
+            rol: data.rol,
+            activo: data.activo,
+            es_admin_delegado: data.es_admin_delegado || false
+          };
+
+          setUser(freshUser);
+          localStorage.setItem('currentUser', JSON.stringify(freshUser));
+          setUserForTracking(freshUser);
+          await loadRoleConfig(freshUser.rol);
         } catch (err) {
           localStorage.removeItem('currentUser');
         }
@@ -141,7 +169,7 @@ export const AuthProvider = ({ children }) => {
             modulo_actual: pathnameRef.current,
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-      } catch (_) {}
+      } catch (_) { console.error('Heartbeat update failed:', _); }
     };
 
     updateHeartbeat();
@@ -213,7 +241,7 @@ export const AuthProvider = ({ children }) => {
             modulo_actual: 'Inicio de Sesión',
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-      } catch (_) {}
+      } catch (_) { console.error('Login tracking failed:', _); }
 
       setLoading(false);
       return true;
@@ -278,7 +306,9 @@ export const AuthProvider = ({ children }) => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);

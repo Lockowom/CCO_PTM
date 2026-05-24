@@ -7,16 +7,25 @@ export const initOTAUpdates = async () => {
   try {
     await CapacitorUpdater.notifyAppReady();
 
-    CapacitorUpdater.addListener('updateAvailable', async (info) => {
-      toast.info('Nueva actualización disponible', {
-        description: 'La aplicación se reiniciará para aplicar los cambios.',
-        duration: 5000,
+    CapacitorUpdater.addListener('downloadComplete', async (bundle) => {
+      toast.info('Actualización descargada', {
+        description: 'La aplicación se reiniciará en 3 segundos...',
+        duration: 3000,
       });
       setTimeout(async () => {
-        await CapacitorUpdater.set(info.version);
+        try {
+          await CapacitorUpdater.set(bundle);
+        } catch (_) { console.error('OTA set bundle error:', _); }
       }, 3000);
     });
-  } catch (_) {}
+
+    CapacitorUpdater.addListener('downloadFailed', () => {
+      toast.error('Error al descargar actualización', {
+        description: 'Se reintentará automáticamente.',
+        duration: 4000,
+      });
+    });
+  } catch (_) { console.error('OTA init error:', _); }
 };
 
 export const initPushNotifications = async (userId) => {
@@ -39,7 +48,7 @@ export const initPushNotifications = async (userId) => {
           .from('tms_usuarios')
           .update({ push_token: token.value })
           .eq('id', userId);
-      } catch (_) {}
+      } catch (_) { console.error('Push registration error:', _); }
     });
 
     PushNotifications.addListener('registrationError', () => {});
@@ -52,5 +61,5 @@ export const initPushNotifications = async (userId) => {
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', () => {});
-  } catch (_) {}
+  } catch (_) { console.error('Push notifications init error:', _); }
 };

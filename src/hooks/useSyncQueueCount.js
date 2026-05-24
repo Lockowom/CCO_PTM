@@ -10,7 +10,7 @@ export const useSyncQueueCount = () => {
       try {
         const c = await db.syncQueue.count();
         setCount(c);
-      } catch (_) {}
+      } catch (_) { console.error('Sync queue count error:', _); }
     };
 
     // Initial count

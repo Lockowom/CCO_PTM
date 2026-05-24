@@ -135,6 +135,30 @@ const debouncedSync = () => {
 
 window.addEventListener('online', debouncedSync);
 
+// Cleanup: remove stale items (older than 24h or maxed retries)
+const cleanupStaleItems = async () => {
+  try {
+    const allItems = await db.syncQueue.toArray();
+    const now = Date.now();
+    const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+    for (const item of allItems) {
+      const age = now - (item.timestamp || item.createdAt || 0);
+      if (age > MAX_AGE || item.retryCount >= MAX_RETRIES) {
+        await db.syncQueue.delete(item.id);
+      }
+    }
+    emitQueueUpdate();
+  } catch (err) {
+    console.error('Sync queue cleanup error:', err);
+  }
+};
+
+// Run cleanup every 5 minutes
+setInterval(cleanupStaleItems, 5 * 60 * 1000);
+// Run once on startup
+cleanupStaleItems();
+
 setInterval(() => {
   if (navigator.onLine) {
     syncOfflineData();

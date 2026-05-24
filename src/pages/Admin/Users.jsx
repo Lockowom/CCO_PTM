@@ -10,6 +10,14 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
 
+const hashPassword = async (password) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 const UsersPage = () => {
   const queryClient = useQueryClient();
   const containerRef = useRef(null);
@@ -26,16 +34,6 @@ const UsersPage = () => {
     nombre: '', email: '', password: '', rol: '', activo: true, es_admin_delegado: false
   });
   const [showPassword, setShowPassword] = useState(false);
-
-  useGSAP(() => {
-    gsap.from(containerRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.5,
-      ease: 'power3.out',
-      clearProps: 'all'
-    });
-  }, { scope: containerRef });
 
   useGSAP(() => {
     if (isModalOpen && modalRef.current) {
@@ -64,7 +62,7 @@ const UsersPage = () => {
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['admin_users'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tms_usuarios').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('tms_usuarios').select('id, id_usuario, nombre, email, rol, activo, es_admin_delegado, created_at').order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
@@ -79,7 +77,9 @@ const UsersPage = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_roles' }, () => {
         queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
@@ -89,7 +89,7 @@ const UsersPage = () => {
       if (editingUser) {
         const updates = { ...user };
         if (user.password && user.password.trim() !== '') {
-          updates.password_hash = user.password;
+          updates.password_hash = await hashPassword(user.password);
         }
         delete updates.password;
         const { error } = await supabase.from('tms_usuarios').update(updates).eq('id', editingUser.id);
@@ -103,7 +103,7 @@ const UsersPage = () => {
           id_usuario: legacyId,
           nombre: user.nombre,
           email: user.email,
-          password_hash: user.password,
+          password_hash: await hashPassword(user.password),
           rol: user.rol,
           activo: user.activo,
           es_admin_delegado: user.es_admin_delegado

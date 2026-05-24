@@ -494,7 +494,7 @@ const DataImport = () => {
                     return 'new';
                 });
                 setRowStatuses(statuses);
-            } catch (_) { setRowStatuses(rows.map(() => 'new')); }
+            } catch (_) { console.error('Row status check error:', _); setRowStatuses(rows.map(() => 'new')); }
         } else {
             setRowStatuses(rows.map(() => 'new'));
         }
@@ -541,7 +541,7 @@ const DataImport = () => {
                         if (prepData.reseteadas > 0) errorDetails.push(`Se reiniciaron ${prepData.reseteadas} N.V. en proceso.`);
                         if (prepData.items_cancelados > 0) errorDetails.push(`Se cancelaron ${prepData.items_cancelados} ítems faltantes.`);
                     }
-                } catch (_) {}
+                } catch (_) { console.error('Record upsert error:', _); }
             }
 
             const BATCH_SIZE = 1000;
@@ -598,7 +598,7 @@ const DataImport = () => {
                         registros_error: errors
                     }]);
                 }
-            } catch (_) {}
+            } catch (_) { console.error('Upload history save error:', _); }
 
             setLoadResult({
                 success: errors === 0, total: parsedRows.length, inserted, skipped, errors, errorDetails,

@@ -48,7 +48,9 @@ const RoutePlanning = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, () => {
         queryClient.invalidateQueries({ queryKey: ['entregas_pendientes'] });
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);

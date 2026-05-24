@@ -170,7 +170,9 @@ const MobileApp = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas', filter: `conductor_id=eq.${driver.id}` }, () => {
         queryClient.invalidateQueries(['mobile_entregas', driver.id]);
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, [driver?.id, queryClient]);

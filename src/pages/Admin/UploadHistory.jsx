@@ -44,7 +44,9 @@ const UploadHistory = () => {
                     // Opcional: Podríamos mostrar un toast o notificación aquí
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+              if (err) console.error('Realtime subscription error:', err);
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -75,6 +77,7 @@ const UploadHistory = () => {
             if (error) throw error;
             setHistory(data || []);
         } catch (_) {
+            console.error('Upload history fetch error:', _);
         } finally {
             setLoading(false);
             setRefreshing(false);

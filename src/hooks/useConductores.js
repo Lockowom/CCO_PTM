@@ -1,6 +1,6 @@
 // useConductores.js - Hook con Realtime para actualizaciones instantáneas
 import { useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useConductores() {
@@ -82,7 +82,9 @@ export function useConductores() {
           queryClient.invalidateQueries({ queryKey: ['conductores'] });
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);

@@ -210,6 +210,13 @@ const ProtectedRoute = () => {
   );
 };
 
+// Error Boundary por módulo para evitar crashes globales
+const ModuleBoundary = ({ children }) => (
+  <ErrorBoundary>
+    {children}
+  </ErrorBoundary>
+);
+
 function AppContent() {
   const { user } = useAuth();
 
@@ -243,7 +250,9 @@ function AppContent() {
           });
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -261,45 +270,45 @@ function AppContent() {
         <Route path="/" element={<ProtectedRoute />}>
           {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
           <Route index element={<SmartRedirect />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
 
           {/* TMS Modules */}
-          <Route path="tms/dashboard" element={<DashboardTMS />} />
-          <Route path="tms/planning" element={<RoutePlanning />} />
-          <Route path="tms/control-tower" element={<ControlTower />} />
-          <Route path="tms/drivers" element={<Drivers />} />
-          <Route path="tms/mobile" element={<MobileApp />} />
-          <Route path="tms/yard" element={<YardManagement />} />
-          <Route path="mobile/pda" element={<WarehousePDA />} />
+          <Route path="tms/dashboard" element={<ErrorBoundary><DashboardTMS /></ErrorBoundary>} />
+          <Route path="tms/planning" element={<ErrorBoundary><RoutePlanning /></ErrorBoundary>} />
+          <Route path="tms/control-tower" element={<ErrorBoundary><ControlTower /></ErrorBoundary>} />
+          <Route path="tms/drivers" element={<ErrorBoundary><Drivers /></ErrorBoundary>} />
+          <Route path="tms/mobile" element={<ErrorBoundary><MobileApp /></ErrorBoundary>} />
+          <Route path="tms/yard" element={<ErrorBoundary><YardManagement /></ErrorBoundary>} />
+          <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
 
           {/* Inbound Modules */}
-          <Route path="inbound/entry" element={<Entry />} />
-          <Route path="inbound/cubing" element={<CubingRegistry />} />
-          <Route path="inbound/data-import" element={<DataImport />} />
+          <Route path="inbound/entry" element={<ErrorBoundary><Entry /></ErrorBoundary>} />
+          <Route path="inbound/cubing" element={<ErrorBoundary><CubingRegistry /></ErrorBoundary>} />
+          <Route path="inbound/data-import" element={<ErrorBoundary><DataImport /></ErrorBoundary>} />
 
           {/* Outbound Modules */}
-          <Route path="outbound/sales-orders" element={<SalesOrders />} />
-          <Route path="outbound/picking" element={<Picking />} />
-          <Route path="outbound/packing" element={<Packing />} />
-          <Route path="outbound/packing-tv" element={<PackingTV />} />
-          <Route path="outbound/shipping" element={<Shipping />} />
+          <Route path="outbound/sales-orders" element={<ErrorBoundary><SalesOrders /></ErrorBoundary>} />
+          <Route path="outbound/picking" element={<ErrorBoundary><Picking /></ErrorBoundary>} />
+          <Route path="outbound/packing" element={<ErrorBoundary><Packing /></ErrorBoundary>} />
+          <Route path="outbound/packing-tv" element={<ErrorBoundary><PackingTV /></ErrorBoundary>} />
+          <Route path="outbound/shipping" element={<ErrorBoundary><Shipping /></ErrorBoundary>} />
 
           {/* Queries Modules */}
-          <Route path="queries/batches" element={<Batches />} />
-          <Route path="queries/sales-status" element={<SalesStatus />} />
-          <Route path="queries/addresses" element={<Addresses />} />
-          <Route path="queries/locations" element={<WmsLocations />} />
-          <Route path="queries/heatmap" element={<Heatmap />} />
-          <Route path="queries/historial-nv" element={<HistorialNV />} />
-          <Route path="queries/dispatch-control" element={<DispatchControl />} />
+          <Route path="queries/batches" element={<ErrorBoundary><Batches /></ErrorBoundary>} />
+          <Route path="queries/sales-status" element={<ErrorBoundary><SalesStatus /></ErrorBoundary>} />
+          <Route path="queries/addresses" element={<ErrorBoundary><Addresses /></ErrorBoundary>} />
+          <Route path="queries/locations" element={<ErrorBoundary><WmsLocations /></ErrorBoundary>} />
+          <Route path="queries/heatmap" element={<ErrorBoundary><Heatmap /></ErrorBoundary>} />
+          <Route path="queries/historial-nv" element={<ErrorBoundary><HistorialNV /></ErrorBoundary>} />
+          <Route path="queries/dispatch-control" element={<ErrorBoundary><DispatchControl /></ErrorBoundary>} />
 
           {/* Admin Modules */}
-          <Route path="admin/users" element={<Users />} />
-          <Route path="admin/roles" element={<Roles />} />
-          <Route path="admin/views" element={<Views />} />
-          <Route path="admin/cleanup" element={<Cleanup />} />
-          <Route path="admin/tickets" element={<Tickets />} />
-          <Route path="admin/upload-history" element={<UploadHistory />} />
+          <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
+          <Route path="admin/roles" element={<ErrorBoundary><Roles /></ErrorBoundary>} />
+          <Route path="admin/views" element={<ErrorBoundary><Views /></ErrorBoundary>} />
+          <Route path="admin/cleanup" element={<ErrorBoundary><Cleanup /></ErrorBoundary>} />
+          <Route path="admin/tickets" element={<ErrorBoundary><Tickets /></ErrorBoundary>} />
+          <Route path="admin/upload-history" element={<ErrorBoundary><UploadHistory /></ErrorBoundary>} />
         </Route>
 
         {/* Fallback 404 en lugar de Navigate al login */}

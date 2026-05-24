@@ -34,7 +34,9 @@ export const useRealtimeTable = (tableName, queryKeysToInvalidate = [tableName],
           }
         }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('Realtime subscription error:', err);
+      });
 
     return () => {
       supabase.removeChannel(channel);
