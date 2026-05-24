@@ -201,6 +201,28 @@ const Entry = () => {
     });
   };
 
+  // Escaneo por cámara - Serie
+  const scanSerie = () => {
+    startScan({
+      onScan: (value) => {
+        setForm(prev => ({ ...prev, serie: value.trim() }));
+        toast.success(`Serie escaneada: ${value.trim()}`);
+      },
+      onError: (msg) => toast.error(msg)
+    });
+  };
+
+  // Escaneo por cámara - Partida/Lote
+  const scanPartida = () => {
+    startScan({
+      onScan: (value) => {
+        setForm(prev => ({ ...prev, partida: value.trim() }));
+        toast.success(`Partida escaneada: ${value.trim()}`);
+      },
+      onError: (msg) => toast.error(msg)
+    });
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let finalValue = value;
@@ -493,12 +515,26 @@ const Entry = () => {
                   {/* SERIE */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
-                    <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
+                    <div className="flex gap-1.5">
+                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
+                      {isSupportedDevice && (
+                        <button type="button" onClick={scanSerie} disabled={isScanning} className="px-2.5 bg-slate-100 border border-slate-200 text-slate-500 hover:text-wms-alert hover:border-wms-alert rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" title="Escanear Serie">
+                          <Camera size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {/* PARTIDA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Partida</label>
-                    <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
+                    <div className="flex gap-1.5">
+                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
+                      {isSupportedDevice && (
+                        <button type="button" onClick={scanPartida} disabled={isScanning} className="px-2.5 bg-slate-100 border border-slate-200 text-slate-500 hover:text-wms-alert hover:border-wms-alert rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" title="Escanear Partida">
+                          <Camera size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {/* PIEZA */}
                   <div>
