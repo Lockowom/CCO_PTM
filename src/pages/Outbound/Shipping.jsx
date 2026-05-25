@@ -130,7 +130,7 @@ const Shipping = () => {
   );
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 relative z-10">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">

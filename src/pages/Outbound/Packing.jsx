@@ -319,7 +319,7 @@ const Packing = () => {
 
   if (vista === 'clientes' || vista === 'lista') {
     return (
-      <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
+      <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
         <div className="flex justify-between items-end relative z-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
@@ -542,7 +542,7 @@ const Packing = () => {
   }
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
       <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-2xl p-6 text-slate-900 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 

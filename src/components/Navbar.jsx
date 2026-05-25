@@ -162,36 +162,36 @@ const Navbar = () => {
   return (
     <header 
       ref={navRef}
-      className={`fixed top-4 left-4 right-4 z-[100] transition-all duration-700 ease-in-out
-        ${scrolled ? 'py-1' : 'py-3'}`}
+      className={`fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-[100] transition-all duration-700 ease-in-out
+        ${scrolled ? 'py-0.5 sm:py-1' : 'py-1.5 sm:py-3'}`}
     >
-      <div className={`max-w-[1600px] mx-auto px-6 flex items-center justify-between rounded-[2rem] border transition-all duration-700 ease-in-out
+      <div className={`max-w-[1600px] mx-auto px-3 sm:px-6 flex items-center justify-between rounded-2xl sm:rounded-[2rem] border transition-all duration-700 ease-in-out
         ${scrolled 
           ? 'bg-white border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.1)]' 
           : 'bg-white/80 backdrop-blur-md border-white/20 shadow-sm'}`}>
         
         {/* Left: Logo & Brand */}
-        <Link to={landingPage || "/dashboard"} className="flex items-center gap-4 group py-2">
+        <Link to={landingPage || "/dashboard"} className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-300" />
-            <div className="relative w-11 h-11 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl flex items-center justify-center shadow-2xl border border-white/10 group-hover:scale-105 transition-all duration-500 overflow-hidden">
+            <div className="relative w-8 h-8 sm:w-11 sm:h-11 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center shadow-2xl border border-white/10 group-hover:scale-105 transition-all duration-500 overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.15)_0%,transparent_70%)]" />
-              <img 
-                src="https://i.imgur.com/YJh67CY.png" 
-                alt="CCO" 
-                className="w-7 h-7 object-contain relative z-10 transition-all duration-500 group-hover:rotate-[10deg] group-hover:scale-110" 
+              <img
+                src="https://i.imgur.com/YJh67CY.png"
+                alt="CCO"
+                className="w-5 h-5 sm:w-7 sm:h-7 object-contain relative z-10 transition-all duration-500 group-hover:rotate-[10deg] group-hover:scale-110"
                 style={{ filter: 'brightness(0) invert(1) drop-shadow(0 0 8px rgba(249,115,22,0.5))' }}
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = "https://cdn-icons-png.flaticon.com/512/2271/2271062.png"; // Fallback icon
+                  e.target.src = "https://cdn-icons-png.flaticon.com/512/2271/2271062.png";
                 }}
               />
             </div>
           </div>
           <div className="flex flex-col leading-none">
-            <div className="flex items-center gap-1.5">
-              <span className="text-2xl font-black text-slate-900 tracking-tighter">CCO</span>
-              <span className="px-1.5 py-0.5 bg-orange-500 text-white text-[10px] font-black rounded-md tracking-widest uppercase">System</span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-lg sm:text-2xl font-black text-slate-900 tracking-tighter">CCO</span>
+              <span className="px-1 sm:px-1.5 py-0.5 bg-orange-500 text-white text-[8px] sm:text-[10px] font-black rounded-md tracking-widest uppercase">System</span>
             </div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 hidden sm:block">Centro Control Operacional</span>
           </div>
@@ -353,11 +353,11 @@ const Navbar = () => {
         />
         
         {/* Contenido del Menú (Drawer) */}
-        <div 
-          className={`absolute right-4 top-[85px] bottom-4 w-[calc(100%-32px)] max-w-[320px] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-500 ease-out
+        <div
+          className={`absolute right-2 sm:right-4 top-[60px] sm:top-[85px] bottom-2 sm:bottom-4 w-[calc(100%-16px)] sm:w-[calc(100%-32px)] max-w-[320px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-500 ease-out
             ${mobileMenuOpen ? 'translate-x-0 scale-100' : 'translate-x-8 scale-95'}`}
         >
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pb-20 space-y-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 space-y-4 sm:space-y-6">
             {menuCategories.map((category) => {
               const visibleItems = category.items.filter(item => item.id ? isSectionVisible(item.id) : true);
               if (visibleItems.length === 0) return null;
