@@ -212,7 +212,7 @@ const MobileApp = () => {
 
   if (view === 'unauthorized') {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 sm:p-6">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
           <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h2>
@@ -227,7 +227,7 @@ const MobileApp = () => {
 
   if (view === 'onboard') {
     return (
-      <div className="min-h-screen bg-slate-50 p-6 flex flex-col justify-center">
+      <div className="min-h-screen bg-slate-50 p-3 sm:p-6 flex flex-col justify-center">
         <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md mx-auto">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -102,7 +102,7 @@ const YardManagement = () => {
   if (loadingDocks || loadingQueue) return <div className="p-8 text-center text-wms-neon animate-pulse">Cargando Patio...</div>;
 
   return (
-    <div ref={containerRef} className="space-y-6 pb-20 bg-slate-50 text-slate-700 min-h-[calc(100vh-80px)] p-6">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 pb-20 bg-slate-50 text-slate-700 min-h-[calc(100vh-80px)] p-3 sm:p-6">
       
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-wms-neon/5 blur-[100px] rounded-full"></div>
@@ -111,7 +111,7 @@ const YardManagement = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-4 gap-4 relative z-10">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+          <h2 className="text-xl sm:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
             <div className="p-2 bg-wms-neon/10 border border-wms-neon/30 text-wms-neon rounded-xl shadow-neon-green">
               <Anchor size={24} />
             </div>

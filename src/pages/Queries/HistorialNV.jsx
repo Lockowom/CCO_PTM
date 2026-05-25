@@ -123,7 +123,7 @@ const HistorialNV = () => {
   };
 
   return (
-    <div ref={container} className="bg-slate-50 min-h-screen text-slate-700 p-6 space-y-8">
+    <div ref={container} className="bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6 space-y-4 sm:space-y-8">
       {/* Header Moderno */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header">
         <div>

@@ -94,19 +94,19 @@ const DashboardTMS = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 bg-slate-950 min-h-screen flex items-center justify-center">
+      <div className="p-3 sm:p-6 bg-slate-950 min-h-screen flex items-center justify-center">
         <div className="text-orange-500 animate-pulse font-bold tracking-widest">CARGANDO TELEMETRÍA TMS...</div>
       </div>
     );
   }
 
   return (
-    <div ref={container} className="p-6 bg-slate-950 min-h-screen text-slate-700">
+    <div ref={container} className="p-3 sm:p-6 bg-slate-950 min-h-screen text-slate-700">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-3 bg-blue-500/20 rounded-xl">
           <Activity className="w-6 h-6 text-blue-400" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-wide">TMS Control Center</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-wide">TMS Control Center</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

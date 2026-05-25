@@ -161,7 +161,7 @@ const RolesPage = () => {
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col space-y-6 bg-slate-50 p-6 min-h-screen">
+    <div ref={containerRef} className="h-full flex flex-col space-y-4 sm:space-y-6 bg-slate-50 p-3 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60"></div>

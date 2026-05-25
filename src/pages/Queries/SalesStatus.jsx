@@ -234,7 +234,7 @@ const SalesStatus = () => {
                         <Search size={28} strokeWidth={3} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black tracking-tighter text-slate-900 leading-none mb-1">
+                        <h1 className="text-xl sm:text-3xl font-black tracking-tighter text-slate-900 leading-none mb-1">
                             CONSULTAS <span className="text-wms-neon">WMS</span>
                         </h1>
                         <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] md:text-xs tracking-wider uppercase">

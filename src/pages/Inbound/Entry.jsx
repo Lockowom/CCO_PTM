@@ -362,7 +362,7 @@ const Entry = () => {
   };
 
   return (
-    <div ref={containerRef} className="space-y-6 min-h-screen bg-slate-50 p-6 text-slate-700 pb-20">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 min-h-screen bg-slate-50 p-3 sm:p-6 text-slate-700 pb-20">
       {/* Header Glassmorphism */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-wms-alert/10 rounded-full blur-3xl"></div>
@@ -372,7 +372,7 @@ const Entry = () => {
             <PackagePlus size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
             <p className="text-slate-500 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
           </div>
         </div>

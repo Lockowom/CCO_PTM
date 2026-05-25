@@ -217,7 +217,7 @@ const UsersPage = () => {
   );
 
   return (
-    <div ref={containerRef} className="space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-6 text-slate-700">
+    <div ref={containerRef} className="space-y-4 sm:space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-3 sm:p-6 text-slate-700">
       
       {/* Background Decorativo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
@@ -227,7 +227,7 @@ const UsersPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+          <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-sm">
               <Users className="text-indigo-400" size={28} />
             </div>

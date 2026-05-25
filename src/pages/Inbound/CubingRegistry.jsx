@@ -203,7 +203,7 @@ const CubingRegistry = () => {
   };
 
   return (
-    <div ref={containerRef} className="max-w-[1600px] mx-auto pb-20 space-y-8 min-h-screen bg-slate-50 p-6 text-slate-700">
+    <div ref={containerRef} className="max-w-[1600px] mx-auto pb-20 space-y-4 sm:space-y-8 min-h-screen bg-slate-50 p-3 sm:p-6 text-slate-700">
       {/* Header Moderno Glassmorphism */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 pb-6 anim-stagger bg-white backdrop-blur-xl p-6 rounded-3xl shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -212,7 +212,7 @@ const CubingRegistry = () => {
             <Scale size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Registro de Cubicaje</h1>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Registro de Cubicaje</h1>
             <p className="text-slate-500 font-medium mt-1 flex items-center gap-2">
               <Ruler size={16} /> Maestro de Pesos y Dimensiones
             </p>

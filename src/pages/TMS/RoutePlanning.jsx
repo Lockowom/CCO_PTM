@@ -113,7 +113,7 @@ const RoutePlanning = () => {
   );
 
   return (
-    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 text-slate-700 p-6 min-h-screen">
+    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 text-slate-700 p-3 sm:p-6 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
         <div className="relative z-10 flex items-center gap-4 mb-4 md:mb-0">

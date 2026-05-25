@@ -118,7 +118,7 @@ const DispatchControl = () => {
   };
 
   return (
-    <div ref={containerRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-700 p-6 relative">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6 relative">
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-rose-500/10 blur-[120px] rounded-full"></div>
       </div>
@@ -130,7 +130,7 @@ const DispatchControl = () => {
             <Truck className="text-rose-400" size={28} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Control Despacho</h2>
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Control Despacho</h2>
             <p className="text-slate-500 font-medium">Registro y seguimiento de guías y envíos</p>
           </div>
         </div>

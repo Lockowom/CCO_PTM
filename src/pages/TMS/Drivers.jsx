@@ -144,7 +144,7 @@ const Drivers = () => {
 
   if (error) {
     return (
-      <div className="p-6 bg-slate-50 min-h-screen text-slate-700">
+      <div className="p-3 sm:p-6 bg-slate-50 min-h-screen text-slate-700">
         <div className="bg-wms-danger/20 border border-wms-danger/50 text-wms-danger px-4 py-3 rounded-lg shadow-sm">
           Error: {error}
         </div>
@@ -153,7 +153,7 @@ const Drivers = () => {
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 text-slate-700 p-6 min-h-screen">
+    <div ref={containerRef} className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 text-slate-700 p-3 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
@@ -162,7 +162,7 @@ const Drivers = () => {
             <User size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Gestión de Conductores</h2>
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Gestión de Conductores</h2>
             <p className="text-slate-500 text-sm font-medium mt-1 flex items-center gap-2">
               <Activity size={14} className="text-wms-neon" />
               {conductores.length} conductores registrados • 

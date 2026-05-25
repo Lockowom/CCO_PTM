@@ -130,10 +130,10 @@ const SalesOrders = () => {
 
 
   return (
-    <div ref={containerRef} className="space-y-6 min-h-screen text-slate-800">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6 min-h-screen text-slate-800">
       <div className="flex justify-between items-end relative z-10">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
              Notas de Venta
           </h2>
           <p className="text-slate-500 text-sm font-medium">Gestión de pedidos en proceso</p>
