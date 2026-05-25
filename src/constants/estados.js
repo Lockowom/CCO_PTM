@@ -1,4 +1,4 @@
-import { Hourglass, ThumbsUp, Hand, Box, Send, Ship, Truck, X, RotateCcw, CheckCircle } from 'lucide-react';
+import { Hourglass, ThumbsUp, Hand, Box, Send, Ship, Truck, X, RotateCcw, CheckCircle, FileText } from 'lucide-react';
 
 export const ESTADOS_CONFIG = [
   { key: 'Pendiente', label: 'Pendiente', icon: Hourglass, color: '#64748b', bgColor: 'bg-slate-500', lightBg: 'bg-slate-100', textColor: 'text-slate-700', borderColor: 'border-slate-300', description: 'Esperando aprobación' },
@@ -12,6 +12,7 @@ export const ESTADOS_CONFIG = [
   { key: 'ENTREGADO', label: 'Entregado', icon: CheckCircle, color: '#059669', bgColor: 'bg-green-500', lightBg: 'bg-green-100', textColor: 'text-green-700', borderColor: 'border-green-200', description: 'Pedido entregado' },
   { key: 'NULA', label: 'Nula', icon: X, color: '#f43f5e', bgColor: 'bg-rose-500', lightBg: 'bg-rose-50', textColor: 'text-rose-700', borderColor: 'border-rose-200', description: 'Venta anulada' },
   { key: 'Refacturacion', label: 'Refacturación', icon: RotateCcw, color: '#f97316', bgColor: 'bg-orange-500', lightBg: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-200', description: 'Requiere refacturación' },
+  { key: 'SOLO_FACTURAR', label: 'Solo Facturar', icon: FileText, color: '#0891b2', bgColor: 'bg-teal-500', lightBg: 'bg-teal-50', textColor: 'text-teal-700', borderColor: 'border-teal-200', description: 'Solo requiere facturación' },
 ];
 
 export const getEstadoConfig = (estado) => {
@@ -28,4 +29,4 @@ export const ACCIONES_ESTADO = {
   'Pendiente Shipping': { next: 'Despachado', label: 'Despachar', icon: Truck },
 };
 
-export const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping', 'NULA', 'Refacturacion'];
+export const ESTADOS_PIPELINE = ['Pendiente', 'Aprobada', 'Pendiente Picking', 'PACKING', 'LISTO_DESPACHO', 'Pendiente Shipping', 'NULA', 'Refacturacion', 'SOLO_FACTURAR'];
