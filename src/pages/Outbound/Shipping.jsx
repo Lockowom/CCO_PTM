@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { logUpload } from '../../utils/logUpload';
 
 const Shipping = () => {
   const queryClient = useQueryClient();
@@ -91,6 +92,7 @@ const Shipping = () => {
       toast.success("Despacho guardado y sincronizado con Control Despacho.", {
         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
       });
+      logUpload({ modulo: 'Despachos', tablaDestino: 'tms_entregas + tms_control_despacho', totalRegistros: 1, actualizados: 1 });
     },
     onError: (err) => {
       toast.error("Error: " + err.message, {

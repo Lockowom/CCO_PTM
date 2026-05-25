@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { logUpload } from '../../utils/logUpload';
 
 const CubingRegistry = () => {
   const queryClient = useQueryClient();
@@ -168,6 +169,7 @@ const CubingRegistry = () => {
     },
     onSuccess: () => {
       toast.success(`Cubicaje guardado para ${formData.codigo_producto}`);
+      logUpload({ modulo: 'Cubicaje', tablaDestino: 'tms_pesos', totalRegistros: 1, actualizados: 1 });
       
       setSearchTerm('');
       setProductData(null);

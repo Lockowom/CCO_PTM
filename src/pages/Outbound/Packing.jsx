@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { logUpload } from '../../utils/logUpload';
 import { groupByNV } from '../../utils/groupOrders';
 import { useProcessTimer } from '../../hooks/useProcessTimer';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
@@ -210,6 +211,7 @@ const Packing = () => {
       setFormData({ bultos: '', pallets: '', peso: '', peso_sobredimensionado: '', direccion: '', comuna: '' });
       queryClient.invalidateQueries({ queryKey: ['packing_data'] });
       toast.success(`Packing finalizado. N.V. #${nvNumero} lista para despacho.`);
+      logUpload({ modulo: 'Packing', tablaDestino: 'tms_entregas', totalRegistros: 1, actualizados: 1 });
     },
     onError: (error) => {
       toast.error('Error al finalizar: ' + error.message);

@@ -52,7 +52,9 @@ export const APP_ROUTES = [
   { value: '/admin/views', label: 'Admin - Vistas', module: 'admin' },
   { value: '/admin/cleanup', label: 'Admin - Limpieza', module: 'admin' },
   { value: '/admin/tickets', label: 'Admin - Tickets TI', module: 'admin' },
-  { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' }
+  { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' },
+  { value: '/admin/locations', label: 'Admin - Gestión Ubicaciones', module: 'admin' },
+  { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' }
 ];
 
 export const APP_PERMISSIONS = [
@@ -132,7 +134,8 @@ export const APP_PERMISSIONS = [
       { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
       { id: 'manage_tickets', label: 'Gestionar Tickets' },
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
-      { id: 'manage_cleanup', label: 'Limpieza de Datos' }
+      { id: 'manage_cleanup', label: 'Limpieza de Datos' },
+      { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS' }
     ]
   }
 ];

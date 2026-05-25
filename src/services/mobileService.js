@@ -40,9 +40,36 @@ export const initPushNotifications = async (userId) => {
 
     if (permStatus.receive !== 'granted') return;
 
+    // Crear canal de notificaciones para Android (requerido Android 8+)
+    try {
+      await PushNotifications.createChannel({
+        id: 'cco_tickets',
+        name: 'Tickets Soporte TI',
+        description: 'Notificaciones de tickets y soporte técnico',
+        importance: 5, // MAX — muestra en pantalla y suena
+        visibility: 1, // PUBLIC
+        sound: 'default',
+        vibration: true,
+        lights: true,
+      });
+
+      await PushNotifications.createChannel({
+        id: 'cco_general',
+        name: 'CCO General',
+        description: 'Notificaciones generales del sistema',
+        importance: 4, // HIGH
+        visibility: 1,
+        sound: 'default',
+        vibration: true,
+      });
+    } catch (channelErr) {
+      console.warn('Channel creation skipped:', channelErr);
+    }
+
     await PushNotifications.register();
 
     PushNotifications.addListener('registration', async (token) => {
+      console.log('FCM Token registered:', token.value?.slice(0, 20) + '...');
       try {
         await supabase
           .from('tms_usuarios')
@@ -51,15 +78,27 @@ export const initPushNotifications = async (userId) => {
       } catch (_) { console.error('Push registration error:', _); }
     });
 
-    PushNotifications.addListener('registrationError', () => {});
+    PushNotifications.addListener('registrationError', (err) => {
+      console.error('Push registration error:', err);
+    });
 
+    // Notificación recibida mientras app está EN PRIMER PLANO
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      toast.info(notification.title, {
+      console.log('Push received (foreground):', notification);
+      toast.info(notification.title || 'Notificación', {
         description: notification.body,
-        duration: 5000,
+        duration: 8000,
       });
     });
 
-    PushNotifications.addListener('pushNotificationActionPerformed', () => {});
+    // Usuario tocó la notificación (app estaba en BACKGROUND)
+    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      console.log('Push action performed:', action);
+      const data = action.notification?.data;
+      if (data?.type === 'NEW_TICKET' || data?.type === 'TICKET_UPDATE') {
+        window.location.href = '/admin/tickets';
+      }
+    });
+
   } catch (_) { console.error('Push notifications init error:', _); }
 };

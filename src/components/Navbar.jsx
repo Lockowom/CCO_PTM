@@ -95,7 +95,7 @@ const Navbar = () => {
       title: "Operaciones WMS",
       items: [
         { id: 'inbound', label: 'Inbound', icon: <ArrowDownToLine size={18} />, modules: [
-            { label: 'Recepción', path: '/inbound/reception', icon: <ClipboardCheck size={16} /> },
+            { label: 'Recepción Importaciones', path: '/inbound/reception', icon: <ClipboardCheck size={16} /> },
             { label: 'Cubicaje', path: '/inbound/cubing', icon: <Scale size={16} /> },
             { label: 'Putaway', path: '/inbound/entry', icon: <ArrowDownToLine size={16} /> },
             { label: 'Carga Masiva', path: '/inbound/data-import', icon: <Upload size={16} /> }
@@ -137,6 +137,8 @@ const Navbar = () => {
             { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
+            { label: 'Gestión Ubicaciones', path: '/admin/locations', icon: <MapPin size={16} /> },
+            { label: 'Monitor', path: '/admin/monitor', icon: <Activity size={16} /> },
             { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
           ]
         }

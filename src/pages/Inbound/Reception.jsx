@@ -13,6 +13,7 @@ import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { logUpload } from '../../utils/logUpload';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
@@ -98,59 +99,72 @@ const Reception = () => {
     });
   }, [recepciones, filters]);
 
-  // Stats
+  // ==================== STATS & CHARTS — TODO REACTIVO A FILTROS ====================
+  const hasActiveFilters = !!(filters.search || filters.estado || filters.desde || filters.hasta);
+
+  // Stats reactivos: usan filteredRecepciones para que cambien con cada filtro
   const stats = useMemo(() => {
-    const total = recepciones.length;
-    const enRevision = recepciones.filter(r => r.estado === 'EN_REVISION').length;
-    const completados = recepciones.filter(r => r.estado === 'COMPLETADO').length;
-    const totalBultos = recepciones.reduce((sum, r) => sum + (r.cant_bultos || 0), 0);
-    const totalPallets = recepciones.reduce((sum, r) => sum + (r.pallets_usados || 0), 0);
+    const src = filteredRecepciones;
+    const total = src.length;
+    const enRevision = src.filter(r => r.estado === 'EN_REVISION').length;
+    const completados = src.filter(r => r.estado === 'COMPLETADO').length;
+    const totalBultos = src.reduce((sum, r) => sum + (r.cant_bultos || 0), 0);
+    const totalPallets = src.reduce((sum, r) => sum + (r.pallets_usados || 0), 0);
     const promPallets = total > 0 ? (totalPallets / total).toFixed(1) : 0;
     const promBultos = total > 0 ? Math.round(totalBultos / total) : 0;
-    return { total, enRevision, completados, totalBultos, totalPallets, promPallets, promBultos };
-  }, [recepciones]);
+    // Totales globales (para comparar)
+    const globalTotal = recepciones.length;
+    const globalPallets = recepciones.reduce((s, r) => s + (r.pallets_usados || 0), 0);
+    const globalPromPallets = globalTotal > 0 ? (globalPallets / globalTotal).toFixed(1) : 0;
+    return { total, enRevision, completados, totalBultos, totalPallets, promPallets, promBultos, globalTotal, globalPromPallets };
+  }, [filteredRecepciones, recepciones]);
 
-  // Analytics Charts Data
+  // Charts reactivos: usan filteredRecepciones
   const chartData = useMemo(() => {
+    const src = filteredRecepciones;
+    const mesesLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
     // Bultos por proveedor (top 10)
     const proveedorMap = {};
-    recepciones.forEach(r => {
+    src.forEach(r => {
       const p = r.proveedor || 'N/A';
-      if (!proveedorMap[p]) proveedorMap[p] = { proveedor: p, bultos: 0, pallets: 0, recepciones: 0 };
+      if (!proveedorMap[p]) proveedorMap[p] = { proveedor: p, bultos: 0, pallets: 0, recepciones: 0, promPallets: 0 };
       proveedorMap[p].bultos += r.cant_bultos || 0;
       proveedorMap[p].pallets += r.pallets_usados || 0;
       proveedorMap[p].recepciones += 1;
+    });
+    // Calcular promedio de pallets por proveedor
+    Object.values(proveedorMap).forEach(p => {
+      p.promPallets = p.recepciones > 0 ? parseFloat((p.pallets / p.recepciones).toFixed(1)) : 0;
     });
     const porProveedor = Object.values(proveedorMap).sort((a, b) => b.bultos - a.bultos).slice(0, 10);
 
     // Recepciones por mes (timeline)
     const mesMap = {};
-    recepciones.forEach(r => {
+    src.forEach(r => {
       if (!r.fecha_recepcion) return;
-      const mes = r.fecha_recepcion.slice(0, 7); // YYYY-MM
+      const mes = r.fecha_recepcion.slice(0, 7);
       if (!mesMap[mes]) mesMap[mes] = { mes, bultos: 0, pallets: 0, recepciones: 0 };
       mesMap[mes].bultos += r.cant_bultos || 0;
       mesMap[mes].pallets += r.pallets_usados || 0;
       mesMap[mes].recepciones += 1;
     });
     const porMes = Object.values(mesMap).sort((a, b) => a.mes.localeCompare(b.mes));
-    // Format month labels
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     porMes.forEach(m => {
       const [y, mo] = m.mes.split('-');
-      m.label = `${meses[parseInt(mo) - 1]} ${y.slice(2)}`;
+      m.label = `${mesesLabels[parseInt(mo) - 1]} ${y.slice(2)}`;
     });
 
     // Por tipo contenedor (pie)
     const tipoMap = {};
-    recepciones.forEach(r => {
+    src.forEach(r => {
       const t = r.tipo_contenedor || 'N/A';
       tipoMap[t] = (tipoMap[t] || 0) + 1;
     });
     const porTipo = Object.entries(tipoMap).map(([name, value]) => ({ name, value }));
 
     return { porProveedor, porMes, porTipo };
-  }, [recepciones]);
+  }, [filteredRecepciones]);
 
   // ==================== MUTATIONS ====================
 
@@ -225,9 +239,17 @@ const Reception = () => {
 
       if (itemsError) throw itemsError;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success(editingId ? 'Recepción actualizada' : 'Recepción guardada correctamente');
       queryClient.invalidateQueries({ queryKey: ['recepciones'] });
+      logUpload({
+        modulo: 'Recepción Importaciones',
+        tablaDestino: 'tms_recepciones + tms_recepcion_items',
+        totalRegistros: items.length + 1,
+        nuevos: editingId ? 0 : items.length + 1,
+        actualizados: editingId ? items.length + 1 : 0,
+        usuarioNombre: user?.nombre || user?.email,
+      });
       resetForm();
       setView('dashboard');
     },
@@ -235,6 +257,21 @@ const Reception = () => {
       toast.error('Error: ' + err.message);
     }
   });
+
+  // Eliminar recepción completa
+  const deleteRecepcion = async (id, proveedor) => {
+    if (!window.confirm(`¿Eliminar la recepción de ${proveedor}? Se borrarán también todos sus ítems.`)) return;
+    try {
+      await supabase.from('tms_recepcion_items').delete().eq('recepcion_id', id);
+      const { error } = await supabase.from('tms_recepciones').delete().eq('id', id);
+      if (error) throw error;
+      toast.success(`Recepción de ${proveedor} eliminada`);
+      queryClient.invalidateQueries({ queryKey: ['recepciones'] });
+      if (detailModal?.id === id) setDetailModal(null);
+    } catch (err) {
+      toast.error('Error al eliminar: ' + err.message);
+    }
+  };
 
   // ==================== ITEM MANAGEMENT ====================
 
@@ -435,219 +472,243 @@ const Reception = () => {
   // ==================== RENDER ====================
 
   return (
-    <div ref={containerRef} className="space-y-6 min-h-screen bg-slate-50 p-6 text-slate-700 pb-20">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-slate-50/80 border border-emerald-500/50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-lg">
-            <ClipboardCheck size={28} strokeWidth={2.5} />
+    <div ref={containerRef} className="space-y-4 min-h-screen bg-gray-50 p-5 text-slate-700 pb-20">
+      {/* HEADER — Corporate Clean */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white px-6 py-5 rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-white">
+            <ClipboardCheck size={20} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-              Recepción de <span className="text-emerald-600">Mercadería</span>
-            </h2>
-            <p className="text-slate-500 font-medium mt-1">Revisión y registro de ingresos</p>
+            <h2 className="text-xl font-bold text-slate-800">Recepción Importaciones</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Módulo Inbound — Revisión y registro</p>
           </div>
         </div>
-
-        <div className="flex gap-3 relative z-10">
+        <div className="flex gap-2">
           {view === 'dashboard' && (
             <>
-              <button onClick={exportAllToExcel} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
-                <FileSpreadsheet size={16} /> EXPORTAR
+              <button onClick={exportAllToExcel} className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                <FileSpreadsheet size={14} /> Exportar
               </button>
-              <button
-                onClick={() => { resetForm(); setView('form'); }}
-                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 transition-colors shadow-lg"
-              >
-                <Plus size={18} /> NUEVA RECEPCIÓN
+              <button onClick={() => { resetForm(); setView('form'); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                <Plus size={14} /> Nueva Recepción
               </button>
             </>
           )}
           {view === 'form' && (
-            <button onClick={() => { resetForm(); setView('dashboard'); }} className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
-              <ArrowLeft size={16} /> VOLVER
+            <button onClick={() => { resetForm(); setView('dashboard'); }} className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+              <ArrowLeft size={14} /> Volver
             </button>
           )}
         </div>
       </div>
 
-      {/* ==================== DASHBOARD VIEW ==================== */}
+      {/* ==================== DASHBOARD VIEW — CORPORATE CLEAN ==================== */}
       {view === 'dashboard' && (
         <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <StatCard icon={<Package size={20} />} label="Recepciones" value={stats.total} color="text-slate-700" bg="bg-white" />
-            <StatCard icon={<Clock size={20} />} label="En Revisión" value={stats.enRevision} color="text-amber-600" bg="bg-amber-50" />
-            <StatCard icon={<CheckCircle size={20} />} label="Completados" value={stats.completados} color="text-emerald-600" bg="bg-emerald-50" />
-            <StatCard icon={<Layers size={20} />} label="Total Bultos" value={stats.totalBultos} color="text-blue-600" bg="bg-blue-50" />
-            <StatCard icon={<TrendingUp size={20} />} label="Prom. Pallets" value={stats.promPallets} color="text-purple-600" bg="bg-purple-50" />
-            <StatCard icon={<BarChart3 size={20} />} label="Prom. Bultos" value={stats.promBultos} color="text-indigo-600" bg="bg-indigo-50" />
+          {/* KPI Strip */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-px bg-slate-200 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+            <KpiCell label="Recepciones" value={stats.total} sub={hasActiveFilters ? `de ${stats.globalTotal}` : null} />
+            <KpiCell label="En Revisión" value={stats.enRevision} accent="text-amber-600" />
+            <KpiCell label="Completados" value={stats.completados} accent="text-teal-600" />
+            <KpiCell label="Total Bultos" value={stats.totalBultos.toLocaleString()} />
+            <KpiCell label="Prom. Pallets" value={stats.promPallets} accent="text-slate-800" sub={hasActiveFilters ? `global: ${stats.globalPromPallets}` : null} />
+            <KpiCell label="Prom. Bultos" value={stats.promBultos} />
           </div>
 
-          {/* Analytics Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Bultos & Pallets por Mes (Timeline) */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
-              <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
-                <TrendingUp size={16} className="text-emerald-600" /> BULTOS Y PALLETS POR MES
-              </h3>
+          {/* Filtros inline */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <input
+                type="text"
+                placeholder="Buscar proveedor u OC..."
+                value={filters.search}
+                onChange={e => setFilters(p => ({ ...p, search: e.target.value }))}
+                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors"
+              />
+            </div>
+            <select value={filters.estado} onChange={e => setFilters(p => ({ ...p, estado: e.target.value }))} className="px-2 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400">
+              <option value="">Todos los estados</option>
+              <option value="EN_REVISION">En Revisión</option>
+              <option value="COMPLETADO">Completado</option>
+              <option value="PENDIENTE">Pendiente</option>
+            </select>
+            <input type="date" value={filters.desde} onChange={e => setFilters(p => ({ ...p, desde: e.target.value }))} className="px-2 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400" />
+            <span className="text-slate-300 text-xs self-center hidden md:block">—</span>
+            <input type="date" value={filters.hasta} onChange={e => setFilters(p => ({ ...p, hasta: e.target.value }))} className="px-2 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400" />
+            {hasActiveFilters && (
+              <button onClick={() => setFilters({ search: '', estado: '', desde: '', hasta: '' })} className="px-2 py-2 text-xs font-medium text-slate-400 hover:text-red-500 transition-colors whitespace-nowrap">
+                Limpiar
+              </button>
+            )}
+          </div>
+
+          {/* Indicador filtro activo */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 text-xs text-slate-500 px-1">
+              <Filter size={12} />
+              <span>
+                Mostrando <b className="text-slate-700">{filteredRecepciones.length}</b> de {recepciones.length}
+                {filters.search && <span> · Proveedor: <b className="text-slate-700">{filters.search}</b></span>}
+              </span>
+            </div>
+          )}
+
+          {/* Charts Grid — 2 columnas principales */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Timeline Chart */}
+            <div className="lg:col-span-8 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-slate-700">Volumen mensual</h3>
+                {hasActiveFilters && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Filtrado</span>}
+              </div>
               {chartData.porMes.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={chartData.porMes} barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} />
-                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                      formatter={(value, name) => [value, name === 'bultos' ? 'Bultos' : name === 'pallets' ? 'Pallets' : 'Recepciones']}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
-                    <Bar dataKey="bultos" fill="#10b981" name="Bultos" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="pallets" fill="#8b5cf6" name="Pallets" radius={[4, 4, 0, 0]} />
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={chartData.porMes} barGap={4} barSize={18}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#cbd5e1' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 12, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} cursor={{ fill: '#f8fafc' }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} />
+                    <Bar dataKey="bultos" fill="#0f766e" name="Bultos" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="pallets" fill="#94a3b8" name="Pallets" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[260px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+                <div className="h-[240px] flex items-center justify-center text-slate-300 text-sm">Sin datos</div>
               )}
             </div>
 
-            {/* Por Tipo Contenedor (Pie) */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
-              <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
-                <Truck size={16} className="text-blue-600" /> TIPO CONTENEDOR
-              </h3>
+            {/* Pie Chart + KPIs laterales */}
+            <div className="lg:col-span-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-700 mb-4">Tipo contenedor</h3>
               {chartData.porTipo.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
-                    <Pie data={chartData.porTipo} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} style={{ fontSize: 10, fontWeight: 700 }}>
+                    <Pie data={chartData.porTipo} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2} dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}
+                      style={{ fontSize: 10, fontWeight: 600 }}>
                       {chartData.porTipo.map((_, idx) => (
-                        <Cell key={idx} fill={['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#6366f1'][idx % 6]} />
+                        <Cell key={idx} fill={['#0f766e', '#475569', '#0284c7', '#d97706', '#dc2626', '#7c3aed'][idx % 6]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }} />
+                    <Tooltip contentStyle={{ borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[260px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+                <div className="h-[240px] flex items-center justify-center text-slate-300 text-sm">Sin datos</div>
               )}
             </div>
           </div>
 
-          {/* Top Proveedores */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
-            <h3 className="font-black text-slate-900 text-sm mb-4 flex items-center gap-2">
-              <BarChart3 size={16} className="text-indigo-600" /> TOP PROVEEDORES (Bultos recibidos)
-            </h3>
+          {/* Proveedores — Tabla analítica (estilo Tableau) */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700">Análisis por proveedor</h3>
+              {hasActiveFilters && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Filtrado</span>}
+            </div>
             {chartData.porProveedor.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData.porProveedor} layout="vertical" margin={{ left: 80 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis type="category" dataKey="proveedor" tick={{ fontSize: 11, fontWeight: 700, fill: '#334155' }} width={80} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }} />
-                  <Bar dataKey="bultos" fill="#6366f1" name="Bultos" radius={[0, 6, 6, 0]} />
-                  <Bar dataKey="pallets" fill="#a78bfa" name="Pallets" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">Proveedor</th>
+                      <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Recepciones</th>
+                      <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Bultos</th>
+                      <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Pallets</th>
+                      <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Prom. Pallets</th>
+                      <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider w-[200px]">Distribución</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chartData.porProveedor.map((p, idx) => {
+                      const maxBultos = Math.max(...chartData.porProveedor.map(x => x.bultos));
+                      const barWidth = maxBultos > 0 ? (p.bultos / maxBultos) * 100 : 0;
+                      return (
+                        <tr key={p.proveedor}
+                          className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                          onClick={() => setFilters(f => ({ ...f, search: p.proveedor }))}>
+                          <td className="px-4 py-2.5 font-semibold text-slate-800">{p.proveedor}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">{p.recepciones}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-800 tabular-nums">{p.bultos.toLocaleString()}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">{p.pallets}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <span className="inline-block bg-slate-800 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{p.promPallets}</span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-teal-600 rounded-full transition-all duration-500" style={{ width: `${barWidth}%` }} />
+                              </div>
+                              <span className="text-[10px] text-slate-400 w-8 text-right tabular-nums">{Math.round(barWidth)}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-slate-400 text-sm">Sin datos</div>
+              <div className="p-8 text-center text-slate-300 text-sm">Sin datos</div>
             )}
           </div>
 
-          {/* Filters */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg">
-            <div className="p-4 flex items-center justify-between border-b border-slate-100">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  type="text"
-                  placeholder="Buscar proveedor u OC..."
-                  value={filters.search}
-                  onChange={e => setFilters(p => ({ ...p, search: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-emerald-400 transition-colors"
-                />
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="ml-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-sm font-bold text-slate-600 flex items-center gap-2 transition-colors"
-              >
-                <Filter size={16} /> Filtros {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
+          {/* Tabla de Recepciones */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-700">Registro de recepciones</h3>
             </div>
-
-            {showFilters && (
-              <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Estado</label>
-                  <select
-                    value={filters.estado}
-                    onChange={e => setFilters(p => ({ ...p, estado: e.target.value }))}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400"
-                  >
-                    <option value="">Todos</option>
-                    <option value="EN_REVISION">En Revisión</option>
-                    <option value="COMPLETADO">Completado</option>
-                    <option value="PENDIENTE">Pendiente</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Desde</label>
-                  <input type="date" value={filters.desde} onChange={e => setFilters(p => ({ ...p, desde: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hasta</label>
-                  <input type="date" value={filters.hasta} onChange={e => setFilters(p => ({ ...p, hasta: e.target.value }))} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-400" />
-                </div>
-                <button onClick={() => setFilters({ search: '', estado: '', desde: '', hasta: '' })} className="self-end px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 transition-colors">
-                  Limpiar
-                </button>
-              </div>
-            )}
-
-            {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-800 text-white text-xs uppercase tracking-wider">
-                    <th className="px-4 py-3 text-left font-bold">Fecha Recepción</th>
-                    <th className="px-4 py-3 text-left font-bold">Proveedor</th>
-                    <th className="px-4 py-3 text-left font-bold">OC</th>
-                    <th className="px-4 py-3 text-center font-bold">Cant Bultos</th>
-                    <th className="px-4 py-3 text-center font-bold">Pallets</th>
-                    <th className="px-4 py-3 text-center font-bold">Tipo Cont</th>
-                    <th className="px-4 py-3 text-center font-bold">Estado</th>
-                    <th className="px-4 py-3 text-center font-bold">Acciones</th>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">Proveedor</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">OC</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Bultos</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Pallets</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider w-16"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400"><Loader2 size={24} className="animate-spin mx-auto mb-2" />Cargando...</td></tr>
+                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-300"><Loader2 size={20} className="animate-spin mx-auto mb-2" />Cargando...</td></tr>
                   ) : filteredRecepciones.length === 0 ? (
-                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No hay recepciones registradas</td></tr>
+                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-300">Sin resultados</td></tr>
                   ) : (
                     filteredRecepciones.map((r, idx) => {
                       const estado = ESTADOS[r.estado] || ESTADOS.PENDIENTE;
                       return (
-                        <tr key={r.id} className={`border-b border-slate-100 hover:bg-emerald-50/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                          <td className="px-4 py-3 font-bold text-slate-700">{formatDate(r.fecha_recepcion)}</td>
-                          <td className="px-4 py-3 font-bold text-slate-900">{r.proveedor}</td>
-                          <td className="px-4 py-3 font-mono text-slate-600">{r.oc || <span className="text-slate-300 italic">Sin OC</span>}</td>
-                          <td className="px-4 py-3 text-center font-bold">{r.cant_bultos || 0}</td>
-                          <td className="px-4 py-3 text-center font-bold">{r.pallets_usados || 0}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="px-2 py-1 bg-slate-100 rounded-md text-xs font-bold text-slate-600">{r.tipo_contenedor}</span>
+                        <tr key={r.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                          <td className="px-4 py-2.5 text-slate-600 tabular-nums">{formatDate(r.fecha_recepcion)}</td>
+                          <td className="px-4 py-2.5 font-semibold text-slate-800">{r.proveedor}</td>
+                          <td className="px-4 py-2.5 font-mono text-slate-500">{r.oc || <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{r.cant_bultos || 0}</td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{r.pallets_usados || 0}</td>
+                          <td className="px-4 py-2.5 text-center">
+                            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{r.tipo_contenedor}</span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white ${estado.color}`}>
-                              {estado.label}
-                            </span>
+                          <td className="px-4 py-2.5 text-center">
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                              r.estado === 'COMPLETADO' ? 'bg-teal-50 text-teal-700 border border-teal-200' :
+                              r.estado === 'EN_REVISION' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              'bg-slate-100 text-slate-500 border border-slate-200'
+                            }`}>{estado.label}</span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => loadDetail(r)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Ver detalle">
-                                <Eye size={16} className="text-slate-500" />
+                          <td className="px-4 py-2.5 text-center">
+                            <div className="flex items-center justify-center gap-0.5">
+                              <button onClick={() => loadDetail(r)} className="p-1 hover:bg-slate-100 rounded transition-colors" title="Ver detalle">
+                                <Eye size={14} className="text-slate-400 hover:text-slate-600" />
+                              </button>
+                              <button onClick={() => editRecepcion(r)} className="p-1 hover:bg-slate-100 rounded transition-colors" title="Editar">
+                                <ClipboardCheck size={14} className="text-slate-400 hover:text-amber-600" />
+                              </button>
+                              <button onClick={() => deleteRecepcion(r.id, r.proveedor)} className="p-1 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
                               </button>
                             </div>
                           </td>
@@ -734,61 +795,111 @@ const Reception = () => {
 
           {/* ITEMS FORM + LIST */}
           <div className="xl:col-span-2 space-y-6">
-            {/* Add Item Form */}
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-              <h3 className="font-black text-slate-900 text-lg mb-5 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 text-sm font-black">2</span>
+            {/* Add Item Form — ESPACIOSO */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-emerald-200">
+              <h3 className="font-black text-slate-900 text-xl mb-6 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-emerald-600 text-base font-black">2</span>
                 AGREGAR ÍTEMS
               </h3>
 
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                {/* REFF */}
-                <div className="col-span-2 md:col-span-1">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">REFF <span className="text-red-500">*</span></label>
-                  <input type="text" value={currentItem.reff} onChange={e => setCurrentItem(p => ({ ...p, reff: e.target.value.toUpperCase() }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold uppercase outline-none focus:border-emerald-400" placeholder="CMS60D1" />
-                </div>
+              {/* ===== FILA 1: REFF (código de producto) ===== */}
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Código REFF <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={currentItem.reff}
+                  onChange={e => setCurrentItem(p => ({ ...p, reff: e.target.value.toUpperCase() }))}
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-mono font-black uppercase outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                  placeholder="CMS60D1"
+                />
+              </div>
 
-                {/* CANTIDAD */}
+              {/* ===== FILA 2: CANTIDAD + BOX ===== */}
+              <div className="grid grid-cols-2 gap-5 mb-5">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cantidad</label>
-                  <input type="number" value={currentItem.cantidad} onChange={e => setCurrentItem(p => ({ ...p, cantidad: e.target.value }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-emerald-400" min="1" />
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Cantidad</label>
+                  <input
+                    type="number"
+                    value={currentItem.cantidad}
+                    onChange={e => setCurrentItem(p => ({ ...p, cantidad: e.target.value }))}
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-black outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                    min="1"
+                  />
                 </div>
-
-                {/* SERIE */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
-                  <div className="flex gap-1">
-                    <input type="text" value={currentItem.serie} onChange={e => setCurrentItem(p => ({ ...p, serie: e.target.value }))} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono outline-none focus:border-emerald-400" placeholder="S/N..." />
-                    {isSupportedDevice && (
-                      <button type="button" onClick={() => scanField('serie')} disabled={isScanning} className="px-2 bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 rounded-lg transition-colors disabled:opacity-50">
-                        <Camera size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* LOTE */}
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lote</label>
-                  <div className="flex gap-1">
-                    <input type="text" value={currentItem.lote} onChange={e => setCurrentItem(p => ({ ...p, lote: e.target.value }))} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono outline-none focus:border-emerald-400" placeholder="Lote..." />
-                    {isSupportedDevice && (
-                      <button type="button" onClick={() => scanField('lote')} disabled={isScanning} className="px-2 bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 rounded-lg transition-colors disabled:opacity-50">
-                        <Camera size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* BOX */}
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Box</label>
-                  <input type="text" value={currentItem.box} onChange={e => setCurrentItem(p => ({ ...p, box: e.target.value }))} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-emerald-400" placeholder="B1..." />
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Box / Caja</label>
+                  <input
+                    type="text"
+                    value={currentItem.box}
+                    onChange={e => setCurrentItem(p => ({ ...p, box: e.target.value }))}
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-bold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                    placeholder="B1..."
+                  />
                 </div>
               </div>
 
-              <button onClick={addItem} className="mt-4 w-full bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
-                <Plus size={18} /> AGREGAR ÍTEM
+              {/* ===== SEPARADOR VISUAL ===== */}
+              <div className="border-t-2 border-dashed border-emerald-200 my-6"></div>
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Camera size={14} /> CAMPOS CON ESCÁNER DE CÁMARA
+              </p>
+
+              {/* ===== FILA 3: SERIE con botón GRANDE de cámara ===== */}
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">
+                  N° Serie
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={currentItem.serie}
+                    onChange={e => setCurrentItem(p => ({ ...p, serie: e.target.value }))}
+                    className="flex-1 p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-mono outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                    placeholder="26010500018..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => scanField('serie')}
+                    disabled={isScanning}
+                    className="px-5 py-4 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 min-w-[120px]"
+                  >
+                    <Camera size={20} />
+                    <span className="hidden sm:inline">ESCANEAR</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ===== FILA 4: LOTE con botón GRANDE de cámara ===== */}
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">
+                  Lote / Partida
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={currentItem.lote}
+                    onChange={e => setCurrentItem(p => ({ ...p, lote: e.target.value }))}
+                    className="flex-1 p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-mono outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                    placeholder="LOTE-2026..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => scanField('lote')}
+                    disabled={isScanning}
+                    className="px-5 py-4 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 min-w-[120px]"
+                  >
+                    <Camera size={20} />
+                    <span className="hidden sm:inline">ESCANEAR</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ===== BOTÓN AGREGAR ===== */}
+              <button
+                onClick={addItem}
+                className="w-full bg-emerald-50 border-2 border-emerald-400 hover:bg-emerald-100 text-emerald-700 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 transition-all active:scale-[0.97] hover:shadow-md"
+              >
+                <Plus size={22} /> AGREGAR ÍTEM
               </button>
             </div>
 
@@ -900,6 +1011,12 @@ const Reception = () => {
               >
                 <Download size={16} /> DESCARGAR EXCEL
               </button>
+              <button
+                onClick={() => deleteRecepcion(detailModal.id, detailModal.proveedor)}
+                className="px-4 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors ml-auto"
+              >
+                <Trash2 size={16} /> ELIMINAR
+              </button>
             </div>
 
             {/* Modal Table */}
@@ -944,13 +1061,12 @@ const Reception = () => {
 
 // ==================== STAT CARD COMPONENT ====================
 
-const StatCard = ({ icon, label, value, color, bg }) => (
-  <div className={`${bg} p-4 rounded-2xl border border-slate-200 shadow-sm`}>
-    <div className={`flex items-center gap-2 ${color} mb-2`}>
-      {icon}
-      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
-    </div>
-    <p className={`text-3xl font-black ${color}`}>{value}</p>
+// Corporate Clean KPI Cell
+const KpiCell = ({ label, value, accent, sub }) => (
+  <div className="bg-white px-4 py-3 text-center">
+    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+    <p className={`text-2xl font-bold tabular-nums ${accent || 'text-slate-800'}`}>{value}</p>
+    {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
   </div>
 );
 

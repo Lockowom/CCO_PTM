@@ -4,8 +4,9 @@ import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Lock, Database } from 'lucide-react';
+import { Lock, Database, MessageSquare } from 'lucide-react';
 import { ROUTE_PERMISSIONS } from './constants/permissions';
+import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates } from './services/mobileService';
 import { supabase } from './supabase';
@@ -53,6 +54,8 @@ const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
 const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
 const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
+const LocationManager = React.lazy(() => import('./pages/Admin/LocationManager')); // Gestión Ubicaciones
+const AdminMonitor = React.lazy(() => import('./pages/Admin/AdminMonitor')); // Monitor Tiempo Real
 
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -175,10 +178,24 @@ const SmartRedirect = () => {
   return <Navigate to="/dashboard" replace />;
 };
 
-// Ruta Protegida con validación de permisos
+// Ruta Protegida con validación de permisos + tracking de presencia
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, user, hasPermission } = useAuth();
   const location = useLocation();
+  const { startTracking, updatePath } = usePresenceTracker();
+
+  // Tracking de presencia: reportar módulo actual cada 30s
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      startTracking(location.pathname);
+    }
+  }, [isAuthenticated, user?.id]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      updatePath(location.pathname);
+    }
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -192,11 +209,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Obtener los permisos requeridos para esta ruta
   const requiredPermissions = ROUTE_PERMISSIONS[location.pathname] || [];
-
-  // Validar permisos
-  // Si es ADMIN, o tiene poder de delegado, o la ruta no exige nada, o califica a la ruta exigida
   const hasAccess = user?.rol === 'ADMIN' || user?.es_admin_delegado || requiredPermissions.length === 0 ||
     requiredPermissions.some(perm => hasPermission(perm));
 
@@ -228,7 +241,6 @@ function AppContent() {
     }
 
     // --- SISTEMA DE DETECCIÓN GLOBAL DE SUBIDA DE DATOS ---
-    // Escuchar inserciones en tms_historial_cargas para notificar a los interesados
     const channel = supabase
       .channel('global-upload-detector')
       .on(
@@ -236,27 +248,60 @@ function AppContent() {
         { event: 'INSERT', schema: 'public', table: 'tms_historial_cargas' },
         (payload) => {
           const { modulo, usuario_nombre, registros_totales, registros_error } = payload.new;
-          
-          // No notificar al mismo usuario que subió los datos (evitar spam)
           if (user && usuario_nombre === user.nombre) return;
-
           toast.info(`Nueva subida: ${modulo}`, {
             description: `${usuario_nombre} cargó ${registros_totales} registros.${registros_error > 0 ? ` (${registros_error} errores)` : ''}`,
             icon: <Database className="text-orange-500" size={18} />,
             duration: 6000,
-            action: {
-              label: 'Ver Historial',
-              onClick: () => window.location.href = '/admin/upload-history'
-            }
+            action: { label: 'Ver Historial', onClick: () => window.location.href = '/admin/upload-history' }
           });
         }
       )
-      .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
-      });
+      .subscribe();
+
+    // --- SISTEMA DE NOTIFICACIÓN GLOBAL DE TICKETS TI ---
+    const ticketChannel = supabase
+      .channel('global-ticket-detector')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tms_tickets' },
+        (payload) => {
+          const { usuario_nombre, asunto, descripcion, prioridad, ticket_id } = payload.new;
+          // No notificar al creador
+          if (user && usuario_nombre === user.nombre) return;
+
+          const prioLabel = prioridad === 'ALTA' ? '🔴 ALTA' : prioridad === 'MEDIA' ? '🟡 MEDIA' : '🔵 BAJA';
+
+          toast.warning(`🎟️ Nuevo Ticket: ${ticket_id}`, {
+            description: `${usuario_nombre}: ${asunto || descripcion?.slice(0, 60) || 'Sin detalle'} — Prioridad ${prioLabel}`,
+            icon: <MessageSquare className="text-indigo-500" size={18} />,
+            duration: 10000,
+            action: { label: 'Ver Tickets', onClick: () => window.location.href = '/admin/tickets' }
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tms_tickets' },
+        (payload) => {
+          const { estado, ticket_id, respuesta_admin } = payload.new;
+          const oldEstado = payload.old?.estado;
+          // Solo notificar cambios de estado o respuesta nueva
+          if (estado !== oldEstado) {
+            const statusEmoji = estado === 'RESUELTO' ? '✅' : estado === 'EN_PROCESO' ? '⚡' : '⏳';
+            toast.info(`${statusEmoji} Ticket ${ticket_id} → ${estado.replace('_', ' ')}`, {
+              icon: <MessageSquare className="text-indigo-500" size={18} />,
+              duration: 6000,
+              action: { label: 'Ver', onClick: () => window.location.href = '/admin/tickets' }
+            });
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(ticketChannel);
     };
   }, [user]);
 
@@ -311,6 +356,8 @@ function AppContent() {
           <Route path="admin/cleanup" element={<ErrorBoundary><Cleanup /></ErrorBoundary>} />
           <Route path="admin/tickets" element={<ErrorBoundary><Tickets /></ErrorBoundary>} />
           <Route path="admin/upload-history" element={<ErrorBoundary><UploadHistory /></ErrorBoundary>} />
+          <Route path="admin/locations" element={<ErrorBoundary><LocationManager /></ErrorBoundary>} />
+          <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
         </Route>
 
         {/* Fallback 404 en lugar de Navigate al login */}
