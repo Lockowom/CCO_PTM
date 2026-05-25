@@ -240,9 +240,9 @@ const Batches = () => {
         );
       }},
       { header: 'Producto', render: r => (
-        <div className="flex flex-col max-w-[250px]">
+        <div className="flex flex-col min-w-[200px]">
           <span className="font-mono text-[10px] font-black text-orange-500 uppercase mb-1 tracking-widest"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span>
-          <span className="font-bold text-slate-900 text-sm line-clamp-2 leading-tight"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span>
+          <span className="font-bold text-slate-900 text-sm leading-tight whitespace-normal break-words"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span>
           <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-tighter">{r.unidad_medida}</span>
         </div>
       )},
@@ -287,9 +287,9 @@ const Batches = () => {
         );
       }},
       { header: 'Producto', render: r => (
-        <div className="flex flex-col max-w-[250px]">
+        <div className="flex flex-col min-w-[200px]">
           <span className="font-mono text-[10px] font-black text-orange-500 uppercase mb-1 tracking-widest"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span>
-          <span className="font-bold text-slate-900 text-sm line-clamp-2 leading-tight"><HighlightText text={r.producto} highlight={submittedTerm} /></span>
+          <span className="font-bold text-slate-900 text-sm leading-tight whitespace-normal break-words"><HighlightText text={r.producto} highlight={submittedTerm} /></span>
         </div>
       )},
       { header: 'Identificación', accessor: 'serie', render: r => (
@@ -321,7 +321,7 @@ const Batches = () => {
     ],
     farmapack: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
+      { header: 'Producto', accessor: 'producto', render: r => <span className="font-bold text-slate-900 text-sm whitespace-normal break-words min-w-[200px]"><HighlightText text={r.producto || r.descripcion} highlight={submittedTerm} /></span> },
       { header: 'Lote', accessor: 'lote', render: r => <span className="font-mono text-[11px] font-black bg-emerald-100 px-3 py-1.5 rounded-lg text-emerald-900 border border-emerald-300 uppercase tracking-tight whitespace-nowrap shadow-sm"><HighlightText text={r.lote} highlight={submittedTerm} /></span> },
       { header: 'Vencimiento', accessor: 'fecha_vencimiento', render: r => <span className="text-xs font-black text-slate-700 whitespace-nowrap">{r.fecha_vencimiento || '-'}</span> },
       { header: 'Disp.', accessor: 'disponible', render: r => <span className="font-black text-emerald-700 text-lg tracking-tighter">{r.disponible}</span> },
@@ -329,7 +329,7 @@ const Batches = () => {
     ],
     pesos: [
       { header: 'Código', accessor: 'codigo_producto', render: r => <span className="font-mono text-xs font-black text-slate-900 whitespace-nowrap"><HighlightText text={r.codigo_producto} highlight={submittedTerm} /></span> },
-      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-900 text-sm line-clamp-2 min-w-[200px]"><HighlightText text={r.descripcion} highlight={submittedTerm} /></span> },
+      { header: 'Descripción', accessor: 'descripcion', render: r => <span className="font-bold text-slate-900 text-sm whitespace-normal break-words min-w-[200px]"><HighlightText text={r.descripcion} highlight={submittedTerm} /></span> },
       { header: 'Peso (kg)', accessor: 'peso_unitario', render: r => <div className="flex items-center gap-2 font-black text-blue-900 bg-blue-100/50 px-3 py-1.5 rounded-lg border border-blue-200 text-sm w-fit whitespace-nowrap"><Scale size={14}/>{r.peso_unitario}</div> },
       { header: 'Dimensiones', render: r => <span className="text-[11px] font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 whitespace-nowrap">{r.largo}x{r.ancho}x{r.alto} cm</span> },
       { header: 'Actualizado', accessor: 'updated_at', render: r => <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 whitespace-nowrap"><Clock size={12}/>{r.updated_at ? new Date(r.updated_at).toLocaleDateString() : '-'}</div> }
