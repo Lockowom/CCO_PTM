@@ -203,24 +203,40 @@ const Entry = () => {
 
   // Escaneo por cámara - Serie
   const scanSerie = () => {
-    startScan({
-      onScan: (value) => {
-        setForm(prev => ({ ...prev, serie: value.trim() }));
-        toast.success(`Serie escaneada: ${value.trim()}`);
-      },
-      onError: (msg) => toast.error(msg)
-    });
+    if (isSupportedDevice) {
+      startScan({
+        onScan: (value) => {
+          setForm(prev => ({ ...prev, serie: value.trim() }));
+          toast.success(`Serie escaneada: ${value.trim()}`);
+        },
+        onError: (msg) => toast.error(msg)
+      });
+    } else {
+      const val = window.prompt('Ingrese o pegue la Serie / S.N.:');
+      if (val) {
+        setForm(prev => ({ ...prev, serie: val.trim() }));
+        toast.success(`Serie ingresada: ${val.trim()}`);
+      }
+    }
   };
 
   // Escaneo por cámara - Partida/Lote
   const scanPartida = () => {
-    startScan({
-      onScan: (value) => {
-        setForm(prev => ({ ...prev, partida: value.trim() }));
-        toast.success(`Partida escaneada: ${value.trim()}`);
-      },
-      onError: (msg) => toast.error(msg)
-    });
+    if (isSupportedDevice) {
+      startScan({
+        onScan: (value) => {
+          setForm(prev => ({ ...prev, partida: value.trim() }));
+          toast.success(`Partida escaneada: ${value.trim()}`);
+        },
+        onError: (msg) => toast.error(msg)
+      });
+    } else {
+      const val = window.prompt('Ingrese o pegue la Partida / Lote:');
+      if (val) {
+        setForm(prev => ({ ...prev, partida: val.trim() }));
+        toast.success(`Partida ingresada: ${val.trim()}`);
+      }
+    }
   };
 
   const handleInputChange = (e) => {
@@ -367,33 +383,35 @@ const Entry = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-wms-alert/10 rounded-full blur-3xl"></div>
 
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-slate-50/80 border border-wms-alert/50 rounded-2xl flex items-center justify-center text-wms-alert shadow-neon-orange">
-            <PackagePlus size={28} strokeWidth={2.5} />
+        <div className="flex items-center gap-3 sm:gap-4 relative z-10">
+          <div className="w-10 h-10 sm:w-14 sm:h-14 bg-slate-50/80 border border-wms-alert/50 rounded-xl sm:rounded-2xl flex items-center justify-center text-wms-alert shadow-neon-orange flex-shrink-0">
+            <PackagePlus size={22} className="sm:hidden" strokeWidth={2.5} />
+            <PackagePlus size={28} className="hidden sm:block" strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
-            <p className="text-slate-500 font-medium mt-1">Registro manual de entradas a ubicaciones</p>
+            <h2 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight">Ingreso de <span className="text-wms-alert">Mercancía</span></h2>
+            <p className="text-slate-500 font-medium mt-0.5 sm:mt-1 text-xs sm:text-base">Registro de entradas a ubicaciones</p>
           </div>
         </div>
 
-        <div className={`flex items-center gap-2 text-sm px-5 py-2.5 rounded-2xl border font-bold shadow-sm transition-all relative z-10 ${isOnline ? 'bg-wms-neon/10 text-wms-neon border-wms-neon/30' : 'bg-wms-danger/10 text-wms-danger border-wms-danger/30'}`}>
-           {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
-           {isOnline ? 'SISTEMA EN LÍNEA' : 'SIN CONEXIÓN'}
+        <div className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border font-bold shadow-sm transition-all relative z-10 ${isOnline ? 'bg-wms-neon/10 text-wms-neon border-wms-neon/30' : 'bg-wms-danger/10 text-wms-danger border-wms-danger/30'}`}>
+           {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
+           <span className="hidden sm:inline">{isOnline ? 'SISTEMA EN LÍNEA' : 'SIN CONEXIÓN'}</span>
+           <span className="sm:hidden">{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-8">
         {/* Formulario de Ingreso */}
-        <div className="xl:col-span-1 space-y-6">
-          <div ref={formRef} className="bg-white backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden">
+        <div className="xl:col-span-1 space-y-4 sm:space-y-6">
+          <div ref={formRef} className="bg-white backdrop-blur-xl p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden">
 
-            <h3 className="font-black text-slate-900 text-lg mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-sm font-black shadow-md">1</span>
+            <h3 className="font-black text-slate-900 text-base sm:text-lg mb-4 sm:mb-6 flex items-center gap-2">
+              <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-xs sm:text-sm font-black shadow-md flex-shrink-0">1</span>
               DATOS DEL PRODUCTO
             </h3>
 
-            <form onSubmit={addToQueue} className="space-y-5">
+            <form onSubmit={addToQueue} className="space-y-4 sm:space-y-5">
               {/* UBICACION */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
@@ -509,31 +527,27 @@ const Entry = () => {
               </div>
 
               {/* CAMPOS OPCIONALES */}
-              <div className="pt-4 border-t border-slate-200">
-                <p className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Detalles Opcionales</p>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="pt-3 sm:pt-4 border-t border-slate-200">
+                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-3 sm:mb-4 tracking-wider">Detalles Opcionales</p>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {/* SERIE */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
-                      {isSupportedDevice && (
-                        <button type="button" onClick={scanSerie} disabled={isScanning} className="px-2.5 bg-slate-100 border border-slate-200 text-slate-500 hover:text-wms-alert hover:border-wms-alert rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" title="Escanear Serie">
-                          <Camera size={16} />
-                        </button>
-                      )}
+                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
+                      <button type="button" onClick={scanSerie} disabled={isScanning} className="px-2.5 bg-wms-alert/10 border border-wms-alert/40 text-wms-alert hover:bg-wms-alert hover:text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0" title="Escanear Serie">
+                        <Camera size={16} />
+                      </button>
                     </div>
                   </div>
                   {/* PARTIDA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Partida</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
-                      {isSupportedDevice && (
-                        <button type="button" onClick={scanPartida} disabled={isScanning} className="px-2.5 bg-slate-100 border border-slate-200 text-slate-500 hover:text-wms-alert hover:border-wms-alert rounded-lg flex items-center justify-center transition-colors disabled:opacity-50" title="Escanear Partida">
-                          <Camera size={16} />
-                        </button>
-                      )}
+                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
+                      <button type="button" onClick={scanPartida} disabled={isScanning} className="px-2.5 bg-wms-alert/10 border border-wms-alert/40 text-wms-alert hover:bg-wms-alert hover:text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0" title="Escanear Partida">
+                        <Camera size={16} />
+                      </button>
                     </div>
                   </div>
                   {/* PIEZA */}
@@ -568,7 +582,7 @@ const Entry = () => {
                 </div>
               )}
 
-              <button className="add-btn w-full bg-wms-alert/20 border border-wms-alert hover:bg-wms-alert text-wms-alert hover:text-wms-dark py-4 rounded-2xl font-black text-lg shadow-neon-orange transition-all active:scale-95 flex items-center justify-center gap-2 mt-6">
+              <button className="add-btn w-full bg-wms-alert/20 border border-wms-alert hover:bg-wms-alert text-wms-alert hover:text-wms-dark py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-base sm:text-lg shadow-neon-orange transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 sm:mt-6">
                 <PackagePlus size={24} />
                 <span>AGREGAR A COLA</span>
               </button>
@@ -578,20 +592,21 @@ const Entry = () => {
 
         {/* Cola de Registros */}
         <div className="xl:col-span-2 h-full">
-          <div ref={listRef} className="bg-white backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 flex flex-col h-[800px] relative overflow-hidden">
+          <div ref={listRef} className="bg-white backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 flex flex-col h-[500px] sm:h-[800px] relative overflow-hidden">
 
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/40 sticky top-0 z-20">
-                <h3 className="font-black text-slate-900 text-lg flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-sm font-black shadow-md">2</span>
-                    COLA DE PROCESAMIENTO
-                    <span className="bg-wms-alert/20 text-wms-alert px-3 py-1 rounded-full text-xs font-bold border border-wms-alert/30">{queue.length} ÍTEMS</span>
+            <div className="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/40 sticky top-0 z-20">
+                <h3 className="font-black text-slate-900 text-sm sm:text-lg flex items-center gap-2 sm:gap-3">
+                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-wms-alert/20 border border-wms-alert/50 flex items-center justify-center text-wms-alert text-xs sm:text-sm font-black shadow-md flex-shrink-0">2</span>
+                    <span className="hidden sm:inline">COLA DE PROCESAMIENTO</span>
+                    <span className="sm:hidden">COLA</span>
+                    <span className="bg-wms-alert/20 text-wms-alert px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold border border-wms-alert/30">{queue.length}</span>
                 </h3>
                 <button
                   onClick={clearQueue}
                   disabled={queue.length===0}
-                  className="px-4 py-2 rounded-lg text-xs font-bold text-wms-danger hover:bg-wms-danger/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold text-wms-danger hover:bg-wms-danger/20 transition-colors flex items-center gap-1.5 sm:gap-2 disabled:opacity-50"
                 >
-                    <Trash2 size={16} /> VACIAR TODO
+                    <Trash2 size={14} /> <span className="hidden sm:inline">VACIAR TODO</span><span className="sm:hidden">VACIAR</span>
                 </button>
             </div>
 
