@@ -131,20 +131,20 @@ const SalesOrders = () => {
 
   return (
     <div ref={containerRef} className="space-y-4 sm:space-y-6 min-h-screen text-slate-800">
-      <div className="flex justify-between items-end relative z-10">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 relative z-10">
         <div>
           <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
              Notas de Venta
           </h2>
-          <p className="text-slate-500 text-sm font-medium">Gestión de pedidos en proceso</p>
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">Gestión de pedidos en proceso</p>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-white border border-slate-200 rounded-xl flex items-center px-4 py-2 shadow-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10 transition-all">
-            <Search size={18} className="text-slate-500 mr-2" />
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="bg-white border border-slate-200 rounded-xl flex items-center px-3 sm:px-4 py-2 shadow-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10 transition-all flex-1 sm:flex-none">
+            <Search size={16} className="text-slate-500 mr-2 flex-shrink-0" />
             <input
               type="text"
-              placeholder="Buscar NV, cliente, producto..."
-              className="outline-none text-sm w-64 bg-transparent text-slate-900 placeholder:text-slate-500"
+              placeholder="Buscar NV, cliente..."
+              className="outline-none text-xs sm:text-sm w-full sm:w-64 bg-transparent text-slate-900 placeholder:text-slate-500"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -152,17 +152,17 @@ const SalesOrders = () => {
           <button
             onClick={() => refetch()}
             disabled={loading}
-            className="bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+            className="bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm transition-all flex-shrink-0"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin text-orange-500' : 'text-slate-500'} />
-            Actualizar
+            <RefreshCw size={14} className={loading ? 'animate-spin text-orange-500' : 'text-slate-500'} />
+            <span className="hidden sm:inline">Actualizar</span>
           </button>
         </div>
       </div>
 
       {/* PIPELINE VISUAL */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden">
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 relative z-10 custom-scrollbar">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-5 relative overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 relative z-10 custom-scrollbar">
           {ESTADOS_PIPELINE.map((estadoKey, index) => {
             const config = getEstadoConfig(estadoKey);
             const Icon = config.icon;
@@ -176,19 +176,19 @@ const SalesOrders = () => {
                   className={`flex-shrink-0 relative group transition-all duration-200 ${isSelected ? 'scale-105' : 'hover:-translate-y-1'}`}
                 >
                   <div className={`
-                    px-4 py-3 rounded-xl border transition-all text-center min-w-[120px]
+                    px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl border transition-all text-center min-w-[90px] sm:min-w-[120px]
                     ${isSelected
                       ? `bg-white ${config.borderColor} shadow-md ring-1 ring-${config.borderColor.split('-')[1]}-500/20`
                       : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }
                   `}>
                     <div className={`
-                      w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center transition-all
+                      w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl mx-auto mb-1.5 sm:mb-2 flex items-center justify-center transition-all
                       ${isSelected ? `${config.bgColor} text-slate-900 shadow-sm` : 'bg-white text-slate-500 border border-slate-200 shadow-sm'}
                     `}>
                       <Icon size={20} />
                     </div>
-                    <p className={`font-bold text-xs mb-1 ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
+                    <p className={`font-bold text-[10px] sm:text-xs mb-1 ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
                       {config.label}
                     </p>
                     <div className={`
@@ -214,21 +214,22 @@ const SalesOrders = () => {
         const config = getEstadoConfig(selectedEstado);
         const accion = ACCIONES_ESTADO[selectedEstado];
         return (
-          <div className={`bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${config.lightBg} ${config.textColor}`}>
-                <config.icon size={24} />
+          <div className={`bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className={`p-2.5 sm:p-3 rounded-xl ${config.lightBg} ${config.textColor} flex-shrink-0`}>
+                <config.icon size={20} className="sm:hidden" />
+                <config.icon size={24} className="hidden sm:block" />
               </div>
               <div>
-                <p className={`font-black text-lg text-slate-800`}>
-                  {config.label}: {filteredOrders.length} <span className="font-medium text-slate-500 text-sm">notas de venta</span>
+                <p className={`font-black text-sm sm:text-lg text-slate-800`}>
+                  {config.label}: {filteredOrders.length} <span className="font-medium text-slate-500 text-xs sm:text-sm">notas de venta</span>
                 </p>
-                <p className={`text-sm text-slate-500 font-medium`}>{config.description}</p>
+                <p className={`text-xs sm:text-sm text-slate-500 font-medium`}>{config.description}</p>
               </div>
             </div>
             {accion && (
-              <div className={`text-sm text-slate-600 font-medium flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200`}>
-                <ArrowRight size={16} className="text-slate-500" /> Siguiente: <strong className="text-slate-800">{accion.label}</strong>
+              <div className={`text-xs sm:text-sm text-slate-600 font-medium flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 w-fit`}>
+                <ArrowRight size={14} className="text-slate-500" /> Siguiente: <strong className="text-slate-800">{accion.label}</strong>
               </div>
             )}
           </div>
@@ -398,7 +399,7 @@ const SalesOrders = () => {
 
             <div className="p-6 max-h-[65vh] overflow-y-auto space-y-6">
               {/* Info Cards */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                   <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Fecha</p>
                   <p className="font-bold text-slate-800 text-sm">

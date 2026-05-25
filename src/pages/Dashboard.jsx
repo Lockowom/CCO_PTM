@@ -40,26 +40,27 @@ const Sparkline = ({ data, color }) => (
 );
 
 const StatCard = ({ title, value, icon, trend, colorClass, delay, sparklineData, sparklineColor }) => (
-  <div className={`stat-card card p-5 relative overflow-hidden group`}>
+  <div className={`stat-card card p-3.5 sm:p-5 relative overflow-hidden group`}>
     <div className="flex justify-between items-start z-10 relative">
       <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{title}</p>
-        <h3 className="text-3xl font-black text-slate-900 tracking-tight">{value}</h3>
+        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider sm:tracking-widest mb-1.5 sm:mb-2">{title}</p>
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{value}</h3>
       </div>
-      <div className={`p-3 rounded-2xl ${colorClass} bg-opacity-10 text-opacity-100 shadow-sm`}>
-        {icon}
+      <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl ${colorClass} bg-opacity-10 text-opacity-100 shadow-sm flex-shrink-0`}>
+        {React.cloneElement(icon, { size: 18, className: 'sm:hidden' })}
+        {React.cloneElement(icon, { size: 24, className: 'hidden sm:block' })}
       </div>
     </div>
-    <div className="mt-4 flex items-center justify-between">
+    <div className="mt-3 sm:mt-4 flex items-center justify-between">
       {trend && (
-        <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${colorClass} bg-opacity-10`}>
+        <div className="flex items-center gap-1">
+          <span className={`text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-lg ${colorClass} bg-opacity-10`}>
             {trend}
           </span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase">vs ayer</span>
+          <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase hidden sm:inline">vs ayer</span>
         </div>
       )}
-      {sparklineData && <Sparkline data={sparklineData} color={sparklineColor || "#94a3b8"} />}
+      {sparklineData && <div className="hidden sm:block"><Sparkline data={sparklineData} color={sparklineColor || "#94a3b8"} /></div>}
     </div>
     {/* Decoración de fondo */}
     <div className={`absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity transform group-hover:scale-110 duration-700`}>
@@ -69,13 +70,14 @@ const StatCard = ({ title, value, icon, trend, colorClass, delay, sparklineData,
 );
 
 const PipelineStep = ({ label, value, color, icon, isLast }) => (
-  <div className="flex-1 flex flex-col items-center relative group">
-    <div className={`w-12 h-12 rounded-2xl ${color} text-slate-900 flex items-center justify-center shadow-md mb-3 transform group-hover:scale-110 transition-transform duration-300 z-10`}>
-      {icon}
+  <div className="flex-1 flex flex-col items-center relative group min-w-[55px]">
+    <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${color} text-slate-900 flex items-center justify-center shadow-md mb-2 sm:mb-3 transform group-hover:scale-110 transition-transform duration-300 z-10`}>
+      {React.cloneElement(icon, { size: 16, className: 'sm:hidden' })}
+      {React.cloneElement(icon, { size: 20, className: 'hidden sm:block' })}
     </div>
     <div className="text-center">
-      <span className="block text-xl font-black text-slate-800 leading-none mb-1">{value}</span>
-      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{label}</span>
+      <span className="block text-base sm:text-xl font-black text-slate-800 leading-none mb-0.5 sm:mb-1">{value}</span>
+      <span className="text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-tight">{label}</span>
     </div>
     {!isLast && (
       <div className="hidden md:block absolute top-6 left-1/2 w-full h-[2px] bg-slate-100 -z-0">
@@ -177,14 +179,15 @@ const Dashboard = () => {
     <div ref={dashboardRef} className="flex flex-col gap-4 max-w-[100vw] overflow-x-hidden">
       
       {/* 1. Header Ultra Compacto */}
-      <div className="dash-element flex justify-between items-center card px-6 py-4 mb-2">
-        <div className="flex items-center gap-4">
-          <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-100">
-            <Activity size={22} />
+      <div className="dash-element flex justify-between items-center card px-4 sm:px-6 py-3 sm:py-4 mb-2">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white shadow-lg shadow-indigo-100 flex-shrink-0">
+            <Activity size={18} className="sm:hidden" />
+            <Activity size={22} className="hidden sm:block" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 leading-tight tracking-tight">Centro de Control</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+            <h1 className="text-base sm:text-xl font-black text-slate-900 leading-tight tracking-tight">Centro de Control</h1>
+            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
               {lastUpdate.toLocaleDateString()} • {lastUpdate.toLocaleTimeString()}
             </p>
           </div>
@@ -201,7 +204,7 @@ const Dashboard = () => {
       </div>
 
       {/* 2. KPIs Críticos (Fila Superior) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
         <StatCard 
           title="N.V. Totales" 
           value={kpis.total} 
@@ -241,11 +244,11 @@ const Dashboard = () => {
       </div>
 
       {/* 3. Sección Central: Pipeline Visual y Gráfico */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Pipeline (2/3 ancho) */}
-        <div className="dash-element lg:col-span-2 card p-6 flex flex-col justify-center">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+        <div className="dash-element lg:col-span-2 card p-4 sm:p-6 flex flex-col justify-center">
+          <div className="flex justify-between items-center mb-4 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <TrendingUp size={18} className="text-indigo-500" />
               Flujo Operativo
             </h3>
@@ -268,7 +271,7 @@ const Dashboard = () => {
              </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-wrap md:flex-nowrap justify-between gap-6 px-4">
+          <div className="flex flex-wrap md:flex-nowrap justify-between gap-3 sm:gap-6 px-0 sm:px-4">
             <PipelineStep label="Pendiente" value={kpis.pendientes} color="bg-slate-100 text-slate-600" icon={<Hourglass size={20}/>} />
             <PipelineStep label="Picking" value={kpis.picking} color="bg-cyan-50 text-cyan-600" icon={<Hand size={20}/>} />
             <PipelineStep label="Packing" value={kpis.packing} color="bg-indigo-50 text-indigo-600" icon={<Box size={20}/>} />
@@ -278,42 +281,42 @@ const Dashboard = () => {
         </div>
 
         {/* Panel Lateral: Alertas y Resumen (1/3 ancho) */}
-        <div className="dash-element flex flex-col gap-6">
-          <div className="card p-6 flex items-center justify-between group">
-            <div className="flex items-center gap-4">
-              <div className="bg-red-50 p-3 rounded-2xl text-red-500 group-hover:scale-110 transition-transform">
-                <RotateCcw size={20} />
+        <div className="dash-element grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-6">
+          <div className="card p-4 sm:p-6 flex items-center justify-between group">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="bg-red-50 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                <RotateCcw size={18} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Refacturación</p>
-                <p className="text-sm font-bold text-slate-900">Requiere Acción</p>
+                <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider sm:tracking-widest mb-0.5 sm:mb-1">Refacturación</p>
+                <p className="text-xs sm:text-sm font-bold text-slate-900">Requiere Acción</p>
               </div>
             </div>
-            <span className="text-3xl font-black text-red-500">{kpis.refacturacion}</span>
+            <span className="text-2xl sm:text-3xl font-black text-red-500">{kpis.refacturacion}</span>
           </div>
 
-          <div className="card p-6 flex items-center justify-between group flex-1">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-50 p-3 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform">
-                <Users size={20} />
+          <div className="card p-4 sm:p-6 flex items-center justify-between group flex-1">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="bg-blue-50 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl text-blue-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                <Users size={18} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Conductores</p>
-                <p className="text-sm font-bold text-slate-900">{conductores.total - conductores.enRuta} Libres</p>
+                <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider sm:tracking-widest mb-0.5 sm:mb-1">Conductores</p>
+                <p className="text-xs sm:text-sm font-bold text-slate-900">{conductores.total - conductores.enRuta} Libres</p>
               </div>
             </div>
-            <span className="text-3xl font-black text-blue-500">{conductores.total}</span>
+            <span className="text-2xl sm:text-3xl font-black text-blue-500">{conductores.total}</span>
           </div>
         </div>
       </div>
 
       {/* 4. Tabla de Actividad Reciente */}
-      <div className="dash-element card overflow-hidden flex-1 min-h-[400px]">
-        <div className="px-8 py-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Últimas Notas de Venta</h3>
-          <div className="flex items-center gap-4">
+      <div className="dash-element card overflow-hidden flex-1 min-h-[300px] sm:min-h-[400px]">
+        <div className="px-4 sm:px-8 py-3 sm:py-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+          <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider sm:tracking-widest">Últimas N.V.</h3>
+          <div className="flex items-center gap-2 sm:gap-4">
             <ExportButton data={recentNV} filename="nv_recientes" />
-            <button className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-1 transition-colors">
+            <button className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-1 transition-colors hidden sm:flex">
               Ver todas <ChevronRight size={14} />
             </button>
           </div>

@@ -347,18 +347,19 @@ const Batches = () => {
 
       <div className="relative z-10">
         {/* HEADER & SEARCH */}
-        <div className={`transition-all duration-700 ease-in-out relative z-20 ${searched || loading ? 'bg-white/80 backdrop-blur-2xl border-b border-slate-200 shadow-sm sticky top-0' : 'flex flex-col items-center justify-center pt-32 pb-16 px-4'}`}>
-          <div className={`w-full mx-auto transition-all duration-700 ${searched || loading ? 'max-w-7xl px-8 py-4' : 'max-w-4xl'}`}>
+        <div className={`transition-all duration-700 ease-in-out relative z-20 ${searched || loading ? 'bg-white/80 backdrop-blur-2xl border-b border-slate-200 shadow-sm sticky top-0' : 'flex flex-col items-center justify-center pt-20 sm:pt-32 pb-10 sm:pb-16 px-3 sm:px-4'}`}>
+          <div className={`w-full mx-auto transition-all duration-700 ${searched || loading ? 'max-w-7xl px-3 sm:px-8 py-3 sm:py-4' : 'max-w-4xl'}`}>
             
             {!searched && !loading && (
-              <div className="text-center mb-12 animate-header">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-orange-500/5 mb-8 transform hover:scale-110 hover:rotate-3 transition-all duration-500">
-                  <Barcode size={40} className="text-orange-500" strokeWidth={1.5} />
+              <div className="text-center mb-8 sm:mb-12 animate-header">
+                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-xl shadow-orange-500/5 mb-5 sm:mb-8 transform hover:scale-110 hover:rotate-3 transition-all duration-500">
+                  <Barcode size={28} className="text-orange-500 sm:hidden" strokeWidth={1.5} />
+                  <Barcode size={40} className="text-orange-500 hidden sm:block" strokeWidth={1.5} />
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 leading-tight">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-4 sm:mb-6 leading-tight">
                   Partidas & <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 animate-pulse">Series</span>
                 </h1>
-                <p className="text-slate-400 font-bold uppercase tracking-[0.4em] text-xs opacity-60">Inventory Traceability System</p>
+                <p className="text-slate-400 font-bold uppercase tracking-[0.2em] sm:tracking-[0.4em] text-[10px] sm:text-xs opacity-60">Inventory Traceability System</p>
               </div>
             )}
 
@@ -381,7 +382,7 @@ const Batches = () => {
                 <div className={`absolute -inset-2 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-[3rem] blur-2xl transition-all duration-700 opacity-0 ${isFocused ? 'opacity-100 scale-105' : 'group-hover:opacity-40'}`} />
                 
                 <div className="relative flex items-center">
-                  <Search className={`absolute left-6 transition-all duration-500 z-10 ${loading ? 'animate-pulse text-orange-500' : isFocused ? 'text-orange-500 scale-110' : 'text-slate-400'}`} size={searched || loading ? 22 : 28} />
+                  <Search className={`absolute left-4 sm:left-6 transition-all duration-500 z-10 ${loading ? 'animate-pulse text-orange-500' : isFocused ? 'text-orange-500 scale-110' : 'text-slate-400'}`} size={searched || loading ? 18 : 22} />
                   <input
                     type="text"
                     placeholder="Escribe Código, Lote, Serie..."
@@ -390,9 +391,9 @@ const Batches = () => {
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className={`w-full bg-white/90 backdrop-blur-md outline-none transition-all duration-500 font-mono uppercase text-slate-900 placeholder:text-slate-300 placeholder:font-sans placeholder:normal-case
-                      ${searched || loading 
-                        ? 'pl-16 pr-14 py-4 rounded-2xl border border-slate-200 focus:border-orange-500 focus:ring-8 focus:ring-orange-500/5 shadow-sm text-sm' 
-                        : 'pl-20 pr-20 py-7 rounded-[2.5rem] border-2 border-slate-100 focus:border-orange-500 focus:ring-[12px] focus:ring-orange-500/5 text-2xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.1)]'
+                      ${searched || loading
+                        ? 'pl-12 sm:pl-16 pr-12 sm:pr-14 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-200 focus:border-orange-500 focus:ring-4 sm:focus:ring-8 focus:ring-orange-500/5 shadow-sm text-xs sm:text-sm'
+                        : 'pl-14 sm:pl-20 pr-14 sm:pr-20 py-5 sm:py-7 rounded-2xl sm:rounded-[2.5rem] border-2 border-slate-100 focus:border-orange-500 focus:ring-8 sm:focus:ring-[12px] focus:ring-orange-500/5 text-base sm:text-2xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.1)]'
                       }`}
                     autoFocus
                   />
@@ -409,7 +410,7 @@ const Batches = () => {
 
         {/* RESULTS SECTION */}
         {(searched || loading) && (
-          <div className="max-w-7xl mx-auto px-8 py-10">
+          <div className="max-w-7xl mx-auto px-3 sm:px-8 py-6 sm:py-10">
             
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -420,7 +421,7 @@ const Batches = () => {
               <div className="space-y-8">
                 
                 {/* TABS / KPI CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6">
                   {TABS.map(tab => {
                     const count = currentData[tab.id]?.length || 0;
                     const isActive = activeTab === tab.id;
@@ -439,7 +440,7 @@ const Batches = () => {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`group relative flex items-center p-8 rounded-[2.5rem] border transition-all duration-700 text-left overflow-hidden hover:-translate-y-1 active:scale-[0.98]
+                        className={`group relative flex items-center p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border transition-all duration-700 text-left overflow-hidden hover:-translate-y-1 active:scale-[0.98]
                           ${isActive 
                             ? `bg-white ${activeColors.split(' ')[0]} shadow-[0_25px_60px_-15px_rgba(0,0,0,0.1)] ${activeColors.split(' ')[1]}` 
                             : 'bg-white/60 backdrop-blur-md border-white/40 hover:bg-white hover:border-slate-300 hover:shadow-2xl'
@@ -450,12 +451,13 @@ const Batches = () => {
                           <div className={`absolute -inset-4 opacity-20 blur-2xl ${activeColors.split(' ')[2]}`} />
                         )}
 
-                        <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-700 group-hover:rotate-[5deg] ${isActive ? `${activeColors.split(' ')[2]} text-white shadow-xl ${activeColors.split(' ')[1].replace('10', '40')}` : 'bg-slate-100 text-slate-400 group-hover:text-slate-600'}`}>
-                          <Icon size={28} className={isActive ? 'animate-[pulse_2s_infinite]' : ''} />
+                        <div className={`relative w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-700 group-hover:rotate-[5deg] flex-shrink-0 ${isActive ? `${activeColors.split(' ')[2]} text-white shadow-xl ${activeColors.split(' ')[1].replace('10', '40')}` : 'bg-slate-100 text-slate-400 group-hover:text-slate-600'}`}>
+                          <Icon size={20} className={`sm:hidden ${isActive ? 'animate-[pulse_2s_infinite]' : ''}`} />
+                          <Icon size={28} className={`hidden sm:block ${isActive ? 'animate-[pulse_2s_infinite]' : ''}`} />
                         </div>
-                        <div className="relative ml-6 flex-1">
-                          <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1.5 transition-colors duration-500 ${isActive ? activeColors.split(' ')[3] : 'text-slate-400'}`}>{tab.label}</p>
-                          <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500 origin-left">{count}</p>
+                        <div className="relative ml-3 sm:ml-6 flex-1 min-w-0">
+                          <p className={`text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.3em] mb-1 sm:mb-1.5 transition-colors duration-500 truncate ${isActive ? activeColors.split(' ')[3] : 'text-slate-400'}`}>{tab.label}</p>
+                          <p className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500 origin-left">{count}</p>
                         </div>
                         {isActive && (
                           <div className={`relative flex items-center justify-center w-8 h-8`}>
@@ -469,49 +471,49 @@ const Batches = () => {
                 </div>
 
                 {/* TABLE TOOLBAR */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-white/70 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/40 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
-                      <Zap size={22} className="animate-pulse" />
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-6 bg-white/70 backdrop-blur-2xl p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] border border-white/40 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
+                  <div className="flex items-center gap-3 sm:gap-5">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 flex-shrink-0">
+                      <Zap size={18} className="animate-pulse" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-slate-900 leading-none mb-1.5">Resultados Activos</h2>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Quantum Search Engine v2</p>
+                      <h2 className="text-base sm:text-xl font-black text-slate-900 leading-none mb-1">Resultados Activos</h2>
+                      <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] sm:tracking-[0.3em]">Search Engine v2</p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80 group">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity" />
+
+                  <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-80 group">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl sm:rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity" />
                       <div className="relative">
-                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={16} />
+                        <Filter className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={14} />
                         <input
                           type="text"
-                          placeholder="Filtrar en esta tabla..."
+                          placeholder="Filtrar..."
                           value={subFilter}
                           onChange={(e) => setSubFilter(e.target.value)}
-                          className="w-full pl-12 pr-10 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-orange-500 outline-none transition-all"
+                          className="w-full pl-9 sm:pl-12 pr-4 sm:pr-10 py-3 sm:py-4 bg-slate-50/50 border border-slate-100 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold focus:bg-white focus:border-orange-500 outline-none transition-all"
                         />
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={handleExport}
-                      className="group bg-slate-900 text-white hover:bg-orange-600 px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-all shadow-2xl hover:-translate-y-1 active:scale-95 active:translate-y-0"
+                      className="group bg-slate-900 text-white hover:bg-orange-600 px-4 sm:px-10 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] flex items-center gap-2 sm:gap-4 transition-all shadow-2xl hover:-translate-y-1 active:scale-95 active:translate-y-0 flex-shrink-0"
                     >
-                      <Download size={20} className="group-hover:bounce" />
+                      <Download size={16} className="group-hover:bounce" />
                       <span className="hidden sm:inline">Exportar</span>
                     </button>
                   </div>
                 </div>
 
                 {/* TABLE CONTAINER */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
+                <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[1000px]">
                       <thead>
                         <tr className="bg-slate-100 border-b-2 border-slate-200">
                           {TABLE_CONFIG[activeTab].map((col, i) => (
-                            <th key={i} className="px-8 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest">
+                            <th key={i} className="px-4 py-3 sm:px-8 sm:py-5 text-[10px] sm:text-[11px] font-black text-slate-700 uppercase tracking-widest">
                               {col.header}
                             </th>
                           ))}
@@ -523,7 +525,7 @@ const Batches = () => {
                         ) : currentData[activeTab]).map((row, idx) => (
                           <tr key={idx} className="result-item hover:bg-slate-50/50 transition-colors group">
                             {TABLE_CONFIG[activeTab].map((col, cIdx) => (
-                              <td key={cIdx} className="px-8 py-6">
+                              <td key={cIdx} className="px-4 py-4 sm:px-8 sm:py-6">
                                 {col.render ? col.render(row) : <span className="text-slate-600 font-bold text-sm">{row[col.accessor] || '-'}</span>}
                               </td>
                             ))}
