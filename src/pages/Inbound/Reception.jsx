@@ -466,7 +466,7 @@ const Reception = () => {
   const formatDate = (d) => {
     if (!d) return '-';
     const parts = d.split('-');
-    return `${parts[2]}-${parts[1]}-${parts[0].slice(2)}`;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
   // ==================== RENDER ====================
@@ -664,13 +664,13 @@ const Reception = () => {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap min-w-[90px]">Fecha</th>
                     <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">Proveedor</th>
-                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider">OC</th>
-                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Bultos</th>
-                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider">Pallets</th>
-                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-4 py-2.5 text-left font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">OC</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Bultos</th>
+                    <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Pallets</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tipo</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
                     <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider w-16"></th>
                   </tr>
                 </thead>
@@ -684,11 +684,11 @@ const Reception = () => {
                       const estado = ESTADOS[r.estado] || ESTADOS.PENDIENTE;
                       return (
                         <tr key={r.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                          <td className="px-4 py-2.5 text-slate-600 tabular-nums">{formatDate(r.fecha_recepcion)}</td>
-                          <td className="px-4 py-2.5 font-semibold text-slate-800">{r.proveedor}</td>
-                          <td className="px-4 py-2.5 font-mono text-slate-500">{r.oc || <span className="text-slate-300">—</span>}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{r.cant_bultos || 0}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{r.pallets_usados || 0}</td>
+                          <td className="px-4 py-2.5 text-slate-600 tabular-nums whitespace-nowrap">{formatDate(r.fecha_recepcion)}</td>
+                          <td className="px-4 py-2.5 font-semibold text-slate-800 max-w-[160px] truncate">{r.proveedor}</td>
+                          <td className="px-4 py-2.5 font-mono text-slate-500 whitespace-nowrap">{r.oc || <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 whitespace-nowrap">{r.cant_bultos || 0}</td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 whitespace-nowrap">{r.pallets_usados || 0}</td>
                           <td className="px-4 py-2.5 text-center">
                             <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{r.tipo_contenedor}</span>
                           </td>
