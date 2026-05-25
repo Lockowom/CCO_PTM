@@ -517,16 +517,19 @@ const DataImport = () => {
     };
 
     // ── CARGAR A SUPABASE ──
+    const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+
     const handleUpload = async () => {
         if (parsedRows.length === 0) return;
         setIsLoading(true);
         setLoadResult(null);
+        setUploadProgress({ current: 0, total: 0 });
 
         try {
-            const newRows = parsedRows.filter((_, idx) => rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update');
+            let newRows = parsedRows.filter((_, idx) => rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update');
 
             if (newRows.length === 0) {
-                setLoadResult({ success: true, total: parsedRows.length, inserted: 0, skipped: parsedRows.length, errors: 0, message: 'No hay registros nuevos. Todos ya existen.' });
+                setLoadResult({ success: true, total: parsedRows.length, inserted: 0, skipped: parsedRows.length, errors: 0, deduplicated: 0, message: 'No hay registros nuevos. Todos ya existen.' });
                 setStep('done'); setIsLoading(false); return;
             }
 
@@ -544,19 +547,36 @@ const DataImport = () => {
                 } catch (_) { console.error('Record upsert error:', _); }
             }
 
-            const BATCH_SIZE = 1000;
+            // ── DEDUP GLOBAL (antes de batching) ──
+            let deduplicated = 0;
+            if (currentTab.uniqueKey) {
+                const keys = currentTab.uniqueKey.split(',').map(k => k.trim());
+                const uniqueMap = new Map();
+                newRows.forEach(row => {
+                    const key = keys.map(k => (row[k] || '').toString().trim()).join('|');
+                    if (key && key !== '|' && key !== '') {
+                        uniqueMap.set(key, row); // last wins
+                    }
+                });
+                const beforeCount = newRows.length;
+                newRows = Array.from(uniqueMap.values());
+                deduplicated = beforeCount - newRows.length;
+                if (deduplicated > 0) {
+                    errorDetails.push(`${deduplicated} filas duplicadas consolidadas (misma clave: ${currentTab.uniqueKey})`);
+                }
+            }
+
+            const BATCH_SIZE = 500;
             let inserted = 0, errors = 0;
+            const totalBatches = Math.ceil(newRows.length / BATCH_SIZE);
+            setUploadProgress({ current: 0, total: totalBatches });
             if (parsedRows.length > 10000) setRawText('');
 
             for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
-                let batch = newRows.slice(i, i + BATCH_SIZE);
+                const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                setUploadProgress({ current: batchNum, total: totalBatches });
 
-                if (currentTab.uniqueKey) {
-                    const uniqueMap = new Map();
-                    const keys = currentTab.uniqueKey.split(',').map(k => k.trim());
-                    batch.forEach(row => { uniqueMap.set(keys.map(k => row[k]).join('|'), row); });
-                    batch = Array.from(uniqueMap.values());
-                }
+                const batch = newRows.slice(i, i + BATCH_SIZE);
 
                 let result;
                 if (!currentTab.uniqueKey || currentTab.id === 'control_despacho') {
@@ -567,7 +587,8 @@ const DataImport = () => {
 
                 if (result.error) {
                     errors += batch.length;
-                    errorDetails.push(result.error.message);
+                    errorDetails.push(`Lote ${batchNum}: ${result.error.message}`);
+                    console.error(`Batch ${batchNum} error:`, result.error);
                 } else {
                     inserted += batch.length;
                 }
@@ -583,7 +604,7 @@ const DataImport = () => {
             });
             setRowStatuses(updatedStatuses);
 
-            const skipped = parsedRows.length - newRows.length;
+            const skipped = parsedRows.length - newRows.length - deduplicated;
 
             try {
                 if (user && (inserted > 0 || errors > 0)) {
@@ -593,7 +614,7 @@ const DataImport = () => {
                         modulo: currentTab.label,
                         tabla_destino: currentTab.table,
                         registros_totales: parsedRows.length,
-                        registros_nuevos: rowStatuses.filter(s => s === 'new').length,
+                        registros_nuevos: inserted,
                         registros_actualizados: rowStatuses.filter(s => s === 'update').length,
                         registros_error: errors
                     }]);
@@ -601,15 +622,15 @@ const DataImport = () => {
             } catch (_) { console.error('Upload history save error:', _); }
 
             setLoadResult({
-                success: errors === 0, total: parsedRows.length, inserted, skipped, errors, errorDetails,
+                success: errors === 0, total: parsedRows.length, inserted, skipped, errors, deduplicated, errorDetails,
                 message: errors === 0
-                    ? `${inserted} registros cargados${skipped > 0 ? ` · ${skipped} ignorados` : ''}`
-                    : `${inserted} cargados · ${errors} con error${skipped > 0 ? ` · ${skipped} ignorados` : ''}`
+                    ? `${inserted} registros cargados${deduplicated > 0 ? ` · ${deduplicated} duplicados consolidados` : ''}${skipped > 0 ? ` · ${skipped} ignorados` : ''}`
+                    : `${inserted} cargados · ${errors} con error${deduplicated > 0 ? ` · ${deduplicated} duplicados` : ''}${skipped > 0 ? ` · ${skipped} ignorados` : ''}`
             });
             setStep('done');
         } catch (err) {
-            setLoadResult({ success: false, total: parsedRows.length, inserted: 0, skipped: 0, errors: parsedRows.length, message: `Error: ${err.message}` });
-        } finally { setIsLoading(false); }
+            setLoadResult({ success: false, total: parsedRows.length, inserted: 0, skipped: 0, errors: parsedRows.length, deduplicated: 0, message: `Error: ${err.message}` });
+        } finally { setIsLoading(false); setUploadProgress({ current: 0, total: 0 }); }
     };
 
     const handleReset = () => {
@@ -831,7 +852,9 @@ const DataImport = () => {
                                 className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors disabled:cursor-not-allowed"
                             >
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                                {isLoading ? 'Sincronizando...' : `Confirmar (${stats.new + stats.update})`}
+                                {isLoading
+                                    ? (uploadProgress.total > 0 ? `Lote ${uploadProgress.current}/${uploadProgress.total}...` : 'Preparando...')
+                                    : `Confirmar (${stats.new + stats.update})`}
                             </button>
                         </div>
 
@@ -909,11 +932,17 @@ const DataImport = () => {
                             </h2>
                             <p className="text-sm text-slate-500 mb-6">{loadResult.message}</p>
 
-                            <div className="grid grid-cols-3 gap-3 mb-6">
+                            <div className={`grid ${loadResult.deduplicated > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-3 mb-6`}>
                                 <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
                                     <p className="text-2xl font-extrabold text-emerald-600">{loadResult.inserted}</p>
                                     <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Cargados</p>
                                 </div>
+                                {loadResult.deduplicated > 0 && (
+                                    <div className="bg-violet-50 border border-violet-100 rounded-xl p-4">
+                                        <p className="text-2xl font-extrabold text-violet-600">{loadResult.deduplicated}</p>
+                                        <p className="text-[10px] font-bold text-violet-700 uppercase tracking-wider">Duplicados</p>
+                                    </div>
+                                )}
                                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
                                     <p className="text-2xl font-extrabold text-amber-600">{loadResult.skipped}</p>
                                     <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Ignorados</p>
