@@ -224,60 +224,60 @@ const SalesStatus = () => {
     };
 
     return (
-        <div ref={containerRef} className="h-full flex flex-col font-sans p-2 md:p-6 bg-slate-50 min-h-screen text-slate-700">
+        <div ref={containerRef} className="h-full flex flex-col font-sans p-2 sm:p-4 md:p-6 bg-slate-50 min-h-screen text-slate-700">
 
             {/* HEADER WMS AESTHETIC INTEGRADO CON BÚSQUEDA */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-2xl relative z-20 overflow-hidden">
+            <header className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 bg-white backdrop-blur-xl p-3 sm:p-5 rounded-xl sm:rounded-3xl border border-slate-200 shadow-2xl relative z-20 overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-wms-neon/10 rounded-full blur-3xl"></div>
-                <div className="flex items-center gap-5 relative z-10">
-                    <div className="bg-wms-neon/10 p-4 rounded-2xl border border-wms-neon/20 shadow-neon-green text-wms-neon transform hover:scale-105 transition-transform">
-                        <Search size={28} strokeWidth={3} />
+                <div className="flex items-center gap-3 sm:gap-5 relative z-10">
+                    <div className="bg-wms-neon/10 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-wms-neon/20 shadow-neon-green text-wms-neon flex-shrink-0">
+                        <Search size={20} strokeWidth={3} />
                     </div>
                     <div>
-                        <h1 className="text-xl sm:text-3xl font-black tracking-tighter text-slate-900 leading-none mb-1">
+                        <h1 className="text-base sm:text-3xl font-black tracking-tighter text-slate-900 leading-none mb-0.5 sm:mb-1">
                             CONSULTAS <span className="text-wms-neon">WMS</span>
                         </h1>
-                        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[10px] md:text-xs tracking-wider uppercase">
-                            <Activity size={14} className="text-wms-neon" />
-                            <span>Trazabilidad de Venta • En Vivo</span>
+                        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[9px] sm:text-xs tracking-wider uppercase">
+                            <Activity size={12} className="text-wms-neon" />
+                            <span>Trazabilidad • En Vivo</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Barra de Búsqueda Flotante */}
-                <div className="mt-5 md:mt-0 w-full md:w-[450px] relative group z-10">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <div className="w-full sm:max-w-[450px] relative group z-10">
+                    <div className="absolute inset-y-0 left-3 sm:left-4 flex items-center pointer-events-none">
                         {loading ? (
-                            <div className="w-5 h-5 border-2 border-wms-neon border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-wms-neon border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                            <Search className="text-slate-500 group-focus-within:text-wms-neon transition-colors" size={20} strokeWidth={2.5} />
+                            <Search className="text-slate-500 group-focus-within:text-wms-neon transition-colors" size={18} strokeWidth={2.5} />
                         )}
                     </div>
                     <input
                         type="text"
                         placeholder="Buscar por N.V, Cliente o SKU..."
-                        className="w-full pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold tracking-wide transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 bg-white border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 font-bold tracking-wide transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     {searchTerm && (
                         <button
                             onClick={handleClear}
-                            className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-wms-alert bg-white shadow-sm my-2 px-1.5 rounded-lg border border-slate-200"
+                            className="absolute inset-y-0 right-3 sm:right-4 flex items-center text-slate-500 hover:text-wms-alert bg-white shadow-sm my-2 px-1.5 rounded-lg border border-slate-200"
                             title="Limpiar Búsqueda"
                         >
-                            <AlertCircle size={16} className="transform rotate-45" />
+                            <AlertCircle size={14} className="transform rotate-45" />
                         </button>
                     )}
                 </div>
             </header>
 
             {/* DISEÑO PRINCIPAL (Split View) */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-4">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 pb-4">
 
                 {/* ====== LISTA LATERAL RESULTADOS (4 Cols) ====== */}
-                <div className="lg:col-span-4 flex flex-col bg-white backdrop-blur-xl rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden relative">
-                    <div className="p-5 border-b border-slate-200 bg-slate-50/50 z-10 flex justify-between items-center sticky top-0">
+                <div className="lg:col-span-4 flex flex-col bg-white backdrop-blur-xl rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden relative">
+                    <div className="p-3 sm:p-5 border-b border-slate-200 bg-slate-50/50 z-10 flex justify-between items-center sticky top-0">
                         <h3 className="font-black text-slate-900 tracking-tight flex items-center gap-2">
                             <Clock size={18} className="text-wms-neon" />
                             COINCIDENCIAS

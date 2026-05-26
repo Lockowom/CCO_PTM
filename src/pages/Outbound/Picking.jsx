@@ -340,23 +340,23 @@ const Picking = () => {
   if (vista === 'lista') {
     return (
       <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
-        <div className="flex justify-between items-end relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-              <Hand className="text-wms-neon" size={24} />
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 relative z-10">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-shrink-0">
+              <Hand className="text-wms-neon" size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Picking</h2>
-              <p className="text-slate-500 text-sm font-medium">Recolección de productos para empaque</p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Picking</h2>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium">Recolección de productos</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <div className="bg-white border border-slate-200 rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors">
-              <Search size={18} className="text-slate-500 mr-2" />
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="bg-white border border-slate-200 rounded-xl flex items-center px-3 py-2 shadow-sm focus-within:border-wms-neon transition-colors flex-1 sm:flex-none">
+              <Search size={16} className="text-slate-500 mr-2 flex-shrink-0" />
               <input
                 type="text"
                 placeholder="Buscar N.V., cliente..."
-                className="outline-none text-sm w-48 font-medium text-slate-900 placeholder:text-slate-500 bg-transparent"
+                className="outline-none text-xs sm:text-sm w-full sm:w-48 font-medium text-slate-900 placeholder:text-slate-500 bg-transparent"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 autoFocus
@@ -375,41 +375,44 @@ const Picking = () => {
             <button
               onClick={() => refetch()}
               disabled={loading}
-              className="bg-white border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+              className="bg-white border border-slate-200 hover:border-wms-neon hover:text-wms-neon text-slate-700 px-3 sm:px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all flex-shrink-0"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-indigo-400/50 transition-all">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 relative z-10">
+          <div className="bg-white backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-indigo-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Pendientes</p>
-              <h3 className="text-3xl font-black text-slate-900">{stats.pendientes}</h3>
+              <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 sm:mb-1">Pendientes</p>
+              <h3 className="text-xl sm:text-3xl font-black text-slate-900">{stats.pendientes}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform border border-indigo-500/30">
-              <FileText size={24} />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform border border-indigo-500/30 flex-shrink-0">
+              <FileText size={16} className="sm:hidden" />
+              <FileText size={24} className="hidden sm:block" />
             </div>
           </div>
 
-          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-cyan-400/50 transition-all">
+          <div className="bg-white backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-cyan-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">En Proceso</p>
-              <h3 className="text-3xl font-black text-cyan-400">{stats.enProceso}</h3>
+              <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 sm:mb-1">En Proceso</p>
+              <h3 className="text-xl sm:text-3xl font-black text-cyan-400">{stats.enProceso}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform border border-cyan-500/30">
-              <Hand size={24} />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform border border-cyan-500/30 flex-shrink-0">
+              <Hand size={16} className="sm:hidden" />
+              <Hand size={24} className="hidden sm:block" />
             </div>
           </div>
 
-          <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-emerald-400/50 transition-all">
+          <div className="bg-white backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-2xl flex items-center justify-between group hover:border-emerald-400/50 transition-all">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Completados Hoy</p>
-              <h3 className="text-3xl font-black text-emerald-400">{stats.completadasHoy}</h3>
+              <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 sm:mb-1">Completados</p>
+              <h3 className="text-xl sm:text-3xl font-black text-emerald-400">{stats.completadasHoy}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform border border-emerald-500/30">
-              <CheckCircle size={24} />
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform border border-emerald-500/30 flex-shrink-0">
+              <CheckCircle size={16} className="sm:hidden" />
+              <CheckCircle size={24} className="hidden sm:block" />
             </div>
           </div>
         </div>

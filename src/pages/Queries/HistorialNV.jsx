@@ -125,136 +125,136 @@ const HistorialNV = () => {
   return (
     <div ref={container} className="bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6 space-y-4 sm:space-y-8">
       {/* Header Moderno */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 page-header">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <div className="bg-indigo-600/20 p-2 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-              <History className="text-indigo-400" size={24} />
-            </div>
-            Consulta Maestra
-          </h1>
-          <p className="text-slate-500 text-lg mt-2 ml-1">Visión global y trazabilidad de todas las Notas de Venta</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 page-header">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-600/20 p-2 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)] flex-shrink-0">
+            <History className="text-indigo-400" size={20} />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight">Consulta Maestra</h1>
+            <p className="text-slate-500 text-xs sm:text-lg">Trazabilidad de Notas de Venta</p>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button 
+        <div className="flex gap-2 sm:gap-3">
+          <button
             onClick={exportToCSV}
-            className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all hover:scale-105 active:scale-95"
+            className="bg-emerald-600 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-sm sm:text-base font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all hover:scale-105 active:scale-95"
           >
-            <Download size={20} />
-            Exportar CSV
+            <Download size={16} />
+            <span className="hidden sm:inline">Exportar</span> CSV
           </button>
-          <button 
+          <button
             onClick={() => refetch()}
             disabled={loading}
-            className="p-3 text-slate-500 bg-white border border-slate-200 hover:bg-indigo-600/20 hover:text-indigo-400 hover:border-indigo-500/50 rounded-xl transition-all shadow-lg"
+            className="p-2.5 sm:p-3 text-slate-500 bg-white border border-slate-200 hover:bg-indigo-600/20 hover:text-indigo-400 hover:border-indigo-500/50 rounded-xl transition-all shadow-lg"
             title="Actualizar datos"
           >
-            <RefreshCw size={24} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
       {/* Stats Cards Modernos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-xl hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:border-indigo-500/30 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="bg-white backdrop-blur-xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all"></div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-4 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-              <BarChart3 size={28} />
+          <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+            <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+              <BarChart3 size={20} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Total Registros</p>
-              <p className="text-3xl font-black text-slate-900">{stats.total}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Total</p>
+              <p className="text-xl sm:text-3xl font-black text-slate-900">{stats.total}</p>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-xl hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:border-emerald-500/30 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+
+        <div className="bg-white backdrop-blur-xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-4 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              <Truck size={28} />
+          <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+            <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <Truck size={20} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Despachados</p>
-              <p className="text-3xl font-black text-emerald-400">{stats.despachados}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Despachados</p>
+              <p className="text-xl sm:text-3xl font-black text-emerald-400">{stats.despachados}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-xl hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] hover:border-blue-500/30 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+        <div className="bg-white backdrop-blur-xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-4 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
-              <Clock size={28} />
+          <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+            <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              <Clock size={20} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">En Proceso</p>
-              <p className="text-3xl font-black text-blue-400">{stats.enProceso}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">En Proceso</p>
+              <p className="text-xl sm:text-3xl font-black text-blue-400">{stats.enProceso}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white backdrop-blur-xl p-5 rounded-3xl border border-slate-200 shadow-xl hover:shadow-[0_0_20px_rgba(249,115,22,0.15)] hover:border-orange-500/30 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+        <div className="bg-white backdrop-blur-xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all"></div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-4 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30">
-              <RotateCcw size={28} />
+          <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+            <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              <RotateCcw size={20} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Refacturación</p>
-              <p className="text-3xl font-black text-orange-400">{stats.refacturacion}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Refacturación</p>
+              <p className="text-xl sm:text-3xl font-black text-orange-400">{stats.refacturacion}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filtros Flotantes Modernos */}
-      <div className="bg-white/90 backdrop-blur-xl p-2 rounded-2xl border border-slate-200 shadow-xl flex flex-col lg:flex-row gap-2 items-center filters-bar sticky top-4 z-30">
+      <div className="bg-white/90 backdrop-blur-xl p-2 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xl flex flex-col gap-2 items-stretch filters-bar sticky top-2 sm:top-4 z-30">
         <div className="flex-1 relative w-full group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-wms-neon transition-colors" size={20} />
-          <input 
-            type="text" 
-            placeholder="Buscar por NV, cliente, producto, vendedor..." 
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon transition-all text-slate-900 placeholder-slate-600 font-medium"
+          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-wms-neon transition-colors" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar NV, cliente, producto..."
+            className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon transition-all text-sm sm:text-base text-slate-900 placeholder-slate-600 font-medium"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
-        
-        <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+
+        <div className="flex gap-2 w-full overflow-x-auto pb-1 sm:pb-0">
           <select
             value={filterEstado}
             onChange={e => setFilterEstado(e.target.value)}
-            className="px-4 py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-slate-700 cursor-pointer transition-colors min-w-[140px]"
+            className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-[120px] sm:min-w-[140px]"
           >
-            <option value="TODOS">Todos los estados</option>
+            <option value="TODOS">Todos</option>
             {ESTADOS_FILTRO.map(e => (
               <option key={e.key} value={e.key}>{e.label}</option>
             ))}
           </select>
-          
+
           <input
             type="date"
             value={filterFechaDesde}
             onChange={e => setFilterFechaDesde(e.target.value)}
-            className="px-4 py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-slate-700 cursor-pointer transition-colors [color-scheme:dark]"
+            className="px-2 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-0"
           />
-          <span className="self-center text-slate-500 font-bold">-</span>
+          <span className="self-center text-slate-500 font-bold hidden sm:inline">-</span>
           <input
             type="date"
             value={filterFechaHasta}
             onChange={e => setFilterFechaHasta(e.target.value)}
-            className="px-4 py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-slate-700 cursor-pointer transition-colors [color-scheme:dark]"
+            className="px-2 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-0"
           />
-          
+
           {(filterEstado !== 'TODOS' || filterFechaDesde || filterFechaHasta || searchTerm) && (
             <button
               onClick={() => { setFilterEstado('TODOS'); setFilterFechaDesde(''); setFilterFechaHasta(''); setSearchTerm(''); }}
-              className="px-4 py-3 bg-wms-danger/20 border border-wms-danger/50 text-wms-danger hover:bg-wms-danger/40 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+              className="px-3 sm:px-4 py-2.5 sm:py-3 bg-wms-danger/20 border border-wms-danger/50 text-wms-danger hover:bg-wms-danger/40 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-[0_0_10px_rgba(239,68,68,0.2)] flex-shrink-0"
               title="Limpiar filtros"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           )}
         </div>
@@ -273,19 +273,19 @@ const HistorialNV = () => {
       )}
 
       {/* Tabla Moderna */}
-      <div className="bg-white backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white backdrop-blur-xl rounded-xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wider font-bold border-b border-slate-200">
+          <table className="w-full text-sm text-left min-w-[700px]">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] sm:text-xs tracking-wider font-bold border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4">N.V</th>
-                <th className="px-6 py-4">Fecha</th>
-                <th className="px-6 py-4">Cliente</th>
-                <th className="px-6 py-4">Vendedor</th>
-                <th className="px-6 py-4">Producto</th>
-                <th className="px-6 py-4 text-right">Cant.</th>
-                <th className="px-6 py-4 text-center">Estado</th>
-                <th className="px-6 py-4 text-right">Acciones</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">N.V</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Fecha</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Cliente</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Vendedor</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Producto</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Cant.</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center">Estado</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-wms-border">

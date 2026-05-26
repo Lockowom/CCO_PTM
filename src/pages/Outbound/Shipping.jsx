@@ -131,12 +131,13 @@ const Shipping = () => {
 
   return (
     <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4 relative z-10">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Truck className="text-wms-neon" /> Gestión de Despachos
-          </h2>
-          <p className="text-slate-500 text-sm">Complete los datos manuales para sincronizar con Excel</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4 relative z-10">
+        <div className="flex items-center gap-2">
+          <Truck className="text-wms-neon flex-shrink-0" size={20} />
+          <div>
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900">Gestión de Despachos</h2>
+            <p className="text-slate-500 text-xs sm:text-sm">Datos para sincronizar con Excel</p>
+          </div>
         </div>
       </div>
 
