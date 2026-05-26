@@ -3,10 +3,12 @@ import {
     Upload, FileText, Layers, Barcode, Package, ClipboardPaste,
     CheckCircle, XCircle, AlertCircle, Loader2, Trash2,
     ArrowRight, SkipForward, RefreshCw, Database, Check, X, Info, Truck,
-    ChevronDown, Box, FileSpreadsheet, Tag, Settings, Shield, Save
+    ChevronDown, Box, FileSpreadsheet, Tag, Settings, Shield, Save,
+    Camera, QrCode, ScanLine, Plus, Minus
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 // ── CONFIGURACIÓN DE TABS ──
 const IMPORT_TABS = [
@@ -191,6 +193,17 @@ const CATEGORY_COLORS = {
     slate: { active: 'bg-slate-100 border-slate-300 text-slate-700', dot: 'bg-slate-500' },
 };
 
+const SCAN_FIELD_MAP = {
+    inventario_general: 'codigo_producto',
+    nv: 'codigo_producto',
+    control_despacho: 'guia',
+    partidas: 'codigo_producto',
+    series: 'serie',
+    farmapack: 'codigo_producto',
+    inventario: 'codigo',
+    matriz_codigos: 'codigo_producto',
+};
+
 const FULL_ACCESS_ROLES = ['ADMIN', 'ADMIN_DEV'];
 
 const ALL_TAB_IDS = IMPORT_TABS.map(t => t.id);
@@ -362,6 +375,11 @@ const DataImport = () => {
     const [syncDeleted, setSyncDeleted] = useState(false);
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [inputMode, setInputMode] = useState('paste'); // 'paste' | 'scan'
+    const [scannedItems, setScannedItems] = useState([]);
+    const [scanError, setScanError] = useState('');
+    const [manualScanValue, setManualScanValue] = useState('');
+    const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
 
     // Sync defaults when config loads
     useEffect(() => {
@@ -516,6 +534,90 @@ const DataImport = () => {
         reader.readAsText(file);
     };
 
+    // ── ESCANEO QR / CÓDIGO DE BARRAS ──
+    const getScanField = () => {
+        if (!currentTab) return 'codigo_producto';
+        const tabId = currentTab.id.startsWith('inv_') ? 'inventario_general' : currentTab.id;
+        return SCAN_FIELD_MAP[tabId] || currentTab.columns.find(c => c.required)?.key || currentTab.columns[0]?.key;
+    };
+
+    const enrichWithProductInfo = async (code) => {
+        try {
+            const { data } = await supabase
+                .from('tms_matriz_codigos')
+                .select('codigo_producto, producto, unidad_medida')
+                .eq('codigo_producto', code)
+                .maybeSingle();
+            return data || null;
+        } catch { return null; }
+    };
+
+    const addScannedItem = useCallback(async (rawValue) => {
+        if (!rawValue || !currentTab) return;
+        setScanError('');
+
+        const scanField = getScanField();
+        const row = {};
+
+        if (currentTab.defaultValues) {
+            Object.entries(currentTab.defaultValues).forEach(([k, v]) => { row[k] = v; });
+        }
+
+        const hasSeparator = rawValue.includes('\t') || rawValue.includes('|') || rawValue.includes(';');
+        if (hasSeparator) {
+            const sep = rawValue.includes('\t') ? '\t' : rawValue.includes('|') ? '|' : ';';
+            const parts = rawValue.split(sep).map(s => s.trim());
+            currentTab.columns.forEach((col, idx) => {
+                if (parts[idx]) row[col.key] = parts[idx];
+            });
+        } else {
+            row[scanField] = rawValue.trim();
+        }
+
+        const codeField = row.codigo_producto || row.codigo;
+        if (codeField && !row.producto) {
+            const productInfo = await enrichWithProductInfo(codeField);
+            if (productInfo) {
+                if (!row.producto) row.producto = productInfo.producto;
+                if (!row.unidad_medida) row.unidad_medida = productInfo.unidad_medida;
+            }
+        }
+
+        setScannedItems(prev => [...prev, { ...row, _scannedAt: Date.now(), _rawValue: rawValue }]);
+    }, [currentTab]);
+
+    const handleCameraScan = useCallback(async () => {
+        setScanError('');
+        const value = await startScan({
+            onError: (msg) => setScanError(msg),
+        });
+        if (value) await addScannedItem(value);
+    }, [startScan, addScannedItem]);
+
+    const handleManualScan = useCallback(async () => {
+        if (!manualScanValue.trim()) return;
+        await addScannedItem(manualScanValue.trim());
+        setManualScanValue('');
+    }, [manualScanValue, addScannedItem]);
+
+    const removeScannedItem = (index) => {
+        setScannedItems(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const processScannedItems = useCallback(() => {
+        if (scannedItems.length === 0) return;
+        const rows = scannedItems.map(item => {
+            const row = { ...item };
+            delete row._scannedAt;
+            delete row._rawValue;
+            return row;
+        });
+
+        setParsedRows(rows);
+        setRowStatuses(rows.map(() => 'new'));
+        setStep('preview');
+    }, [scannedItems]);
+
     // ── CARGAR A SUPABASE ──
     const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
@@ -636,6 +738,7 @@ const DataImport = () => {
     const handleReset = () => {
         setRawText(''); setParsedRows([]); setRowStatuses([]); setLoadResult(null);
         setStep('paste'); setSkipFirstColumn(false); setSyncDeleted(false);
+        setScannedItems([]); setScanError(''); setManualScanValue(''); setInputMode('paste');
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -751,7 +854,7 @@ const DataImport = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4">
 
-                {/* STEP 1: PASTE */}
+                {/* STEP 1: PASTE / SCAN */}
                 {step === 'paste' && (
                     <div className="max-w-5xl mx-auto">
                         {/* Instructions card */}
@@ -774,8 +877,26 @@ const DataImport = () => {
                             </div>
                         </div>
 
+                        {/* Mode toggle: Paste vs Scan */}
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+                                <button
+                                    onClick={() => setInputMode('paste')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${inputMode === 'paste' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <ClipboardPaste size={14} /> Pegar datos
+                                </button>
+                                <button
+                                    onClick={() => setInputMode('scan')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${inputMode === 'scan' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <QrCode size={14} /> Escanear QR / Código
+                                </button>
+                            </div>
+                        </div>
+
                         {/* NV options */}
-                        {activeTab === 'nv' && (
+                        {activeTab === 'nv' && inputMode === 'paste' && (
                             <div className="flex items-center gap-3 mb-4">
                                 <label className="flex items-center gap-2 text-xs text-slate-600 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 cursor-pointer select-none font-bold hover:border-slate-300 transition-colors">
                                     <input type="checkbox" checked={skipFirstColumn} onChange={(e) => { setSkipFirstColumn(e.target.checked); if (rawText) setTimeout(() => parseData(rawText), 50); }}
@@ -790,44 +911,157 @@ const DataImport = () => {
                             </div>
                         )}
 
-                        {/* Paste area */}
-                        <div
-                            className="relative bg-white border-2 border-dashed border-slate-200 hover:border-blue-300 rounded-2xl min-h-[360px] transition-all cursor-text group flex flex-col overflow-hidden"
-                            onClick={() => textareaRef.current?.focus()}
-                        >
-                            {!rawText && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-                                    <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-50 group-hover:border-blue-200 group-hover:text-blue-500 transition-all text-slate-400">
-                                        <ClipboardPaste size={26} />
-                                    </div>
-                                    <h3 className="text-sm font-bold text-slate-700 mb-1">Pega tus datos aquí</h3>
-                                    <p className="text-xs text-slate-400 mb-5">
-                                        <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 mx-0.5">Ctrl+V</kbd> desde Excel o Google Sheets
-                                    </p>
-                                    <label className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-xl text-slate-500 font-bold text-xs cursor-pointer transition-all pointer-events-auto">
-                                        <Upload size={14} /> Subir CSV
-                                        <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
-                                    </label>
-                                </div>
-                            )}
-                            <textarea
-                                ref={textareaRef} value={rawText}
-                                onChange={(e) => setRawText(e.target.value)}
-                                onPaste={handlePaste}
-                                className="w-full flex-1 bg-transparent p-5 resize-none outline-none font-mono text-xs text-slate-700 placeholder:text-transparent min-h-[360px] z-10"
-                                placeholder="Pega datos aquí..."
-                            />
-                        </div>
-
-                        {rawText && (
-                            <div className="flex items-center justify-end mt-3">
-                                <button
-                                    onClick={() => parseData(rawText)} disabled={isParsing}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                        {/* ── PASTE MODE ── */}
+                        {inputMode === 'paste' && (
+                            <>
+                                <div
+                                    className="relative bg-white border-2 border-dashed border-slate-200 hover:border-blue-300 rounded-2xl min-h-[360px] transition-all cursor-text group flex flex-col overflow-hidden"
+                                    onClick={() => textareaRef.current?.focus()}
                                 >
-                                    {isParsing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                                    Analizar datos
-                                </button>
+                                    {!rawText && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
+                                            <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-50 group-hover:border-blue-200 group-hover:text-blue-500 transition-all text-slate-400">
+                                                <ClipboardPaste size={26} />
+                                            </div>
+                                            <h3 className="text-sm font-bold text-slate-700 mb-1">Pega tus datos aquí</h3>
+                                            <p className="text-xs text-slate-400 mb-5">
+                                                <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 mx-0.5">Ctrl+V</kbd> desde Excel o Google Sheets
+                                            </p>
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-xl text-slate-500 font-bold text-xs cursor-pointer transition-all pointer-events-auto">
+                                                <Upload size={14} /> Subir CSV
+                                                <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
+                                            </label>
+                                        </div>
+                                    )}
+                                    <textarea
+                                        ref={textareaRef} value={rawText}
+                                        onChange={(e) => setRawText(e.target.value)}
+                                        onPaste={handlePaste}
+                                        className="w-full flex-1 bg-transparent p-5 resize-none outline-none font-mono text-xs text-slate-700 placeholder:text-transparent min-h-[360px] z-10"
+                                        placeholder="Pega datos aquí..."
+                                    />
+                                </div>
+
+                                {rawText && (
+                                    <div className="flex items-center justify-end mt-3">
+                                        <button
+                                            onClick={() => parseData(rawText)} disabled={isParsing}
+                                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+                                        >
+                                            {isParsing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                                            Analizar datos
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* ── SCAN MODE ── */}
+                        {inputMode === 'scan' && (
+                            <div className="space-y-4">
+                                {/* Scan actions */}
+                                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                                    <div className="flex flex-col items-center text-center mb-5">
+                                        <div className="w-16 h-16 bg-violet-50 border border-violet-200 rounded-2xl flex items-center justify-center mb-3 text-violet-500">
+                                            <ScanLine size={30} />
+                                        </div>
+                                        <h3 className="text-sm font-bold text-slate-800 mb-1">Escanear QR o Código de Barras</h3>
+                                        <p className="text-xs text-slate-400">
+                                            Escanea con la cámara o ingresa el código manualmente.
+                                            Campo destino: <span className="font-bold text-violet-600">{currentTab.columns.find(c => c.key === getScanField())?.label || getScanField()}</span>
+                                        </p>
+                                    </div>
+
+                                    {/* Camera scan button */}
+                                    {isSupportedDevice && (
+                                        <button
+                                            onClick={handleCameraScan}
+                                            disabled={isScanning}
+                                            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-300 text-white rounded-xl font-bold text-sm transition-colors mb-4"
+                                        >
+                                            {isScanning ? (
+                                                <><Loader2 size={20} className="animate-spin" /> Escaneando...</>
+                                            ) : (
+                                                <><Camera size={20} /> Abrir Cámara</>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Manual input */}
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={manualScanValue}
+                                            onChange={(e) => setManualScanValue(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') handleManualScan(); }}
+                                            placeholder="Ingresa código manualmente..."
+                                            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                                        />
+                                        <button
+                                            onClick={handleManualScan}
+                                            disabled={!manualScanValue.trim()}
+                                            className="px-5 py-3 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+
+                                    {scanError && (
+                                        <div className="mt-3 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                            <AlertCircle size={14} />
+                                            {scanError}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Scanned items list */}
+                                {scannedItems.length > 0 && (
+                                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
+                                            <div className="flex items-center gap-2">
+                                                <QrCode size={14} className="text-violet-500" />
+                                                <span className="text-xs font-bold text-slate-700">Escaneados</span>
+                                                <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">{scannedItems.length}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setScannedItems([])}
+                                                className="text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors"
+                                            >
+                                                Limpiar todo
+                                            </button>
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100">
+                                            {scannedItems.map((item, idx) => (
+                                                <div key={item._scannedAt + idx} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
+                                                    <span className="text-[10px] font-mono text-slate-400 w-6 text-right shrink-0">{idx + 1}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <span className="text-xs font-bold font-mono text-slate-800 truncate">{item._rawValue}</span>
+                                                        </div>
+                                                        {item.producto && (
+                                                            <p className="text-[10px] text-slate-400 truncate">{item.producto}</p>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeScannedItem(idx)}
+                                                        className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all shrink-0"
+                                                    >
+                                                        <Minus size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50">
+                                            <button
+                                                onClick={processScannedItems}
+                                                className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm transition-colors"
+                                            >
+                                                <ArrowRight size={16} />
+                                                Procesar {scannedItems.length} escaneado{scannedItems.length !== 1 ? 's' : ''}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
