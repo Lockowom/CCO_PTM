@@ -7,24 +7,59 @@ export const initOTAUpdates = async () => {
   try {
     await CapacitorUpdater.notifyAppReady();
 
-    CapacitorUpdater.addListener('downloadComplete', async (bundle) => {
+    CapacitorUpdater.addListener('downloadComplete', async (event) => {
+      const bundleInfo = event?.bundle;
+      const bundleId = bundleInfo?.id;
+
+      if (!bundleId) {
+        console.error('OTA: No bundle ID received in downloadComplete event', event);
+        return;
+      }
+
+      console.log('OTA: Bundle downloaded:', bundleId, 'version:', bundleInfo?.version);
+
       toast.info('Actualización descargada', {
-        description: 'La aplicación se reiniciará en 3 segundos...',
+        description: `v${bundleInfo?.version || '?'} — Reiniciando en 3s...`,
         duration: 3000,
       });
+
       setTimeout(async () => {
         try {
-          await CapacitorUpdater.set(bundle);
-        } catch (_) { console.error('OTA set bundle error:', _); }
+          // set() espera { id: string } y recarga la app inmediatamente
+          await CapacitorUpdater.set({ id: bundleId });
+          // set() destruye el contexto JS, este código no debería ejecutarse
+        } catch (err) {
+          console.error('OTA set bundle error:', err);
+          // Fallback: intentar reload manual
+          try {
+            await CapacitorUpdater.reload();
+          } catch (reloadErr) {
+            console.error('OTA reload fallback error:', reloadErr);
+            toast.error('No se pudo aplicar la actualización', {
+              description: 'Cierra y abre la app manualmente.',
+              duration: 8000,
+            });
+          }
+        }
       }, 3000);
     });
 
-    CapacitorUpdater.addListener('downloadFailed', () => {
+    CapacitorUpdater.addListener('downloadFailed', (event) => {
+      console.error('OTA download failed:', event?.version);
       toast.error('Error al descargar actualización', {
         description: 'Se reintentará automáticamente.',
         duration: 4000,
       });
     });
+
+    CapacitorUpdater.addListener('updateFailed', (event) => {
+      console.error('OTA update failed:', event);
+      toast.error('Error al aplicar actualización', {
+        description: 'Se restauró la versión anterior.',
+        duration: 5000,
+      });
+    });
+
   } catch (_) { console.error('OTA init error:', _); }
 };
 
