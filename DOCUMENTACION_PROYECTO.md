@@ -1,0 +1,731 @@
+# CCO PTM — Documentación Técnica Completa
+
+> **Versión:** 1.3.6 | **Última actualización:** 2026-05-26
+> **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
+> **Plataformas:** Web (Render) + Android (Capgo OTA)
+
+---
+
+## 1. Arquitectura General
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    FRONTEND (React 18)                   │
+│  Vite 5 · TailwindCSS · GSAP · React Query · Zustand   │
+├──────────┬──────────┬───────────┬──────────┬────────────┤
+│ Dashboard│ Inbound  │ Outbound  │ Queries  │   Admin    │
+│          │ WMS      │ Picking   │ Lotes    │   Roles    │
+│          │ Entry    │ Packing   │ NV Hist  │   Users    │
+│          │ Recepción│ Shipping  │ Heatmap  │   Import   │
+├──────────┴──────────┴───────────┴──────────┴────────────┤
+│                      TMS (Transporte)                    │
+│  Control Tower · Rutas · Conductores · App Móvil · Patio│
+├─────────────────────────────────────────────────────────┤
+│                   SERVICIOS & HOOKS                      │
+│  AuthContext · Realtime · SyncManager · BarcodeScanner  │
+├─────────────────────────────────────────────────────────┤
+│                    BACKEND (Supabase)                     │
+│  PostgreSQL · RLS · RPC Functions · Realtime · Storage  │
+├─────────────────────────────────────────────────────────┤
+│                   MOBILE (Capacitor 8)                   │
+│  ML Kit Barcode · Haptics · Push (FCM) · OTA (Capgo)    │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Estructura de Carpetas
+
+```
+src/
+├── components/          # Componentes compartidos
+│   ├── Layout.jsx       # Layout principal con realtime global
+│   ├── Navbar.jsx       # Navegación con permisos dinámicos
+│   ├── ErrorBoundary.jsx# Captura errores React → Sentry
+│   └── ui/              # CommandPalette, ErrorReportWidget
+├── constants/
+│   ├── estados.js       # Máquina de estados N.V. (12 estados)
+│   ├── permissions.js   # Mapa ruta → permiso (30+ rutas)
+│   └── warehouse.js     # Config racks A-I, niveles, posiciones
+├── context/
+│   ├── AuthContext.jsx   # Auth + permisos + presencia
+│   └── ConfigContext.jsx # Feature flags por módulo
+├── hooks/
+│   ├── useBarcodeScanner.js  # Escaneo QR/barcode nativo
+│   ├── useConductores.js     # CRUD conductores + realtime
+│   ├── usePresence.js        # Presencia usuarios (heartbeat 30s)
+│   ├── useProcessTimer.js    # Timer picking/packing con ocio
+│   ├── useRealtimeTable.js   # Suscripción genérica realtime
+│   ├── useScanner.js         # Scanner hardware PDA/Zebra
+│   ├── useSupabaseMutation.js# Mutación genérica con optimistic
+│   ├── useSupabaseTable.js   # Query genérica con filtros
+│   └── useSyncQueueCount.js  # Contador cola offline
+├── lib/
+│   ├── db.js            # Dexie (IndexedDB) para offline
+│   ├── syncManager.js   # Cola sync offline con retry
+│   ├── notifications.js # Toast WMS personalizados
+│   ├── sentry.js        # Tracking errores
+│   └── env.js           # Validación env vars
+├── services/
+│   ├── mobileService.js    # OTA updates + Push notifications
+│   ├── inventoryService.js # Movimientos stock ACID (RPC)
+│   ├── labelPrinter.js     # Generación ZPL etiquetas
+│   └── wmsLogic.js         # FEFO allocation + validaciones
+└── pages/               # Ver sección 4
+```
+
+---
+
+## 3. Tablas Supabase
+
+| Tabla | Propósito | Módulos que la usan |
+|---|---|---|
+| `tms_usuarios` | Cuentas de usuario, presencia, push_token | Auth, Admin, Monitor |
+| `tms_roles` | Roles con permisos JSON, landing page, import_tabs | Auth, Roles, Views |
+| `tms_accesos` | Auditoría de logins | Auth |
+| `tms_modules_config` | Feature flags por módulo | ConfigContext, Views |
+| `tms_nv_diarias` | Notas de venta diarias (pedidos) | Dashboard, SalesOrders, Picking, Packing, PackingTV, Historial |
+| `tms_nv_eliminadas` | Auditoría NV eliminadas | SalesOrders, DataImport |
+| `tms_inventario_general` | Stock consolidado por bodega | DataImport |
+| `tms_partidas` | Lotes/partidas con vencimiento | Batches, DataImport, Layout |
+| `tms_series` | Números de serie | Batches, DataImport, Layout |
+| `tms_farmapack` | Lotes farmacéuticos | Batches, DataImport, Layout |
+| `tms_pesos` | Pesos y dimensiones productos | Batches, CubingRegistry |
+| `tms_matriz_codigos` | Maestro productos (código→descripción) | Entry, DataImport, PDA |
+| `tms_control_despacho` | Control de despacho/guías | DispatchControl, Shipping, DataImport |
+| `tms_direcciones` | Directorio de direcciones clientes | Addresses, Packing |
+| `tms_conductores` | Conductores/choferes | Drivers, ControlTower, Rutas |
+| `tms_rutas` | Rutas de despacho | RoutePlanning, ControlTower |
+| `tms_entregas` | Entregas individuales | ControlTower, MobileApp, Shipping, SalesStatus |
+| `tms_mediciones_tiempos` | Tiempos picking/packing | Picking, Packing, PDA |
+| `tms_recepciones` | Recepciones de mercadería | Reception |
+| `tms_recepcion_items` | Items por recepción | Reception |
+| `tms_tickets` | Tickets soporte TI | Tickets |
+| `tms_historial_cargas` | Historial importaciones datos | UploadHistory, DataImport |
+| `tms_errores_picking` | Errores detectados en picking | Packing |
+| `tms_print_queue` | Cola impresión etiquetas ZPL | LabelPrinter |
+| `tms_picking_tasks` | Tareas picking asignadas | PDA |
+| `wms_ubicaciones` | Ubicaciones bodega (RACK-POS-NIVEL) | Entry, Heatmap, WmsLocations, LocationManager, Picking, PDA |
+| `tms_cubicaje_historial` | Historial cubicaje productos | CubingRegistry |
+
+---
+
+## 4. Módulos y Flujos
+
+### 4.1 Dashboard (`/dashboard`)
+**Archivo:** `src/pages/Dashboard.jsx`
+
+Panel operacional con KPIs en tiempo real.
+
+```
+┌──────────────────────────────────────┐
+│  KPIs: Pendientes · En Picking ·     │
+│         En Packing · Despachados     │
+├──────────────────────────────────────┤
+│  Pipeline visual estados N.V.        │
+│  Gráfico barras por estado           │
+└──────────────────────────────────────┘
+```
+
+- **Datos:** `tms_nv_diarias`, `tms_conductores`
+- **Realtime:** Suscripción a cambios en N.V.
+- **Hooks:** useRealtimeTable, useProcessTimer, useAuth
+
+---
+
+### 4.2 Inbound (Recepción y Entrada)
+
+#### 4.2.1 Recepción (`/inbound/reception`)
+**Archivo:** `src/pages/Inbound/Reception.jsx`
+
+Dashboard de operaciones de recepción con KPIs, gráficos de tendencia y export Excel.
+
+**Flujo:**
+```
+Proveedor llega → Registrar recepción → Contar bultos/pallets
+→ Escanear items → Confirmar cantidades → Cerrar recepción
+```
+
+- **Tablas:** `tms_recepciones`, `tms_recepcion_items`
+- **Realtime:** Sí
+
+#### 4.2.2 Entrada WMS (`/inbound/entry`)
+**Archivo:** `src/pages/Inbound/Entry.jsx`
+
+Registro de productos en ubicaciones con escaneo de código de barras y soporte offline.
+
+**Flujo:**
+```
+Seleccionar ubicación → Escanear código producto (cámara/manual)
+→ Auto-buscar descripción en tms_matriz_codigos
+→ Agregar a cola local → Sync a wms_ubicaciones (upsert)
+```
+
+- **Tablas:** `wms_ubicaciones`, `tms_matriz_codigos`
+- **Offline:** Cola localStorage, sync automático al reconectar
+- **Scanner:** Cámara nativa (ML Kit) + input manual
+- **Realtime:** Sí
+
+#### 4.2.3 Cubicaje (`/inbound/cubing`)
+**Archivo:** `src/pages/Inbound/CubingRegistry.jsx`
+
+Registro de dimensiones y peso de productos para optimización de packing.
+
+**Flujo:**
+```
+Escanear producto → Ingresar largo/ancho/alto/peso
+→ Seleccionar tipo empaque → Calcular cubicaje → Guardar
+```
+
+- **Tablas:** `tms_matriz_codigos`, `tms_pesos`, `tms_cubicaje_historial`
+
+#### 4.2.4 Carga Masiva (`/inbound/data-import`)
+**Archivo:** `src/pages/Admin/DataImport.jsx`
+
+Sistema de importación masiva con 13 módulos, deduplicación inteligente y escaneo QR/barcode.
+
+**Módulos de importación:**
+| Módulo | Tabla destino | Clave única |
+|---|---|---|
+| Consolidado | `tms_inventario_general` | bodega + codigo_producto |
+| BD 21/5/24/3/7/99/22 | `tms_inventario_general` | bodega + codigo_producto |
+| N.V Diarias | `tms_nv_diarias` | nv + codigo_producto |
+| Control Despacho | `tms_control_despacho` | Sin dedup |
+| Partidas | `tms_partidas` | codigo_producto + partida |
+| Series | `tms_series` | serie |
+| Farmapack | `tms_farmapack` | codigo_producto + lote |
+| Inventario WMS | `wms_ubicaciones` | Sin dedup |
+| Matriz Códigos | `tms_matriz_codigos` | codigo_producto |
+
+**Flujo Pegado:**
+```
+Seleccionar módulo → Pegar datos (Ctrl+V desde Excel)
+→ Detectar encabezados → Parsear columnas → Dedup inteligente
+→ Preview con estado (Nueva/Existe/Eliminada/Actualiza)
+→ Confirmar → Batch upsert (500 rows) → Resultado
+```
+
+**Flujo Escaneo QR/Barcode (NUEVO v1.3.5):**
+```
+Seleccionar módulo → Cambiar a modo "Escanear QR / Código"
+→ Abrir cámara (nativo) o input manual (web)
+→ Escanear código → Auto-buscar producto en tms_matriz_codigos
+→ Acumular items escaneados → Procesar → Preview → Confirmar
+```
+
+- **Formatos QR soportados:** QR, Code128, Code39, EAN13/8, UPC-A/E, ITF, Codabar, DataMatrix, PDF417
+- **Dedup inteligente:** Para N.V., detecta NVs eliminadas y no las recarga
+- **Smart dedup N.V.:** RPC `prepare_nv_import` que resetea NVs en proceso y cancela items faltantes
+- **Acceso por rol:** Configurable vía `tms_roles.import_tabs`
+- **Historial:** Cada carga se registra en `tms_historial_cargas`
+
+---
+
+### 4.3 Outbound (Salida)
+
+#### 4.3.1 Notas de Venta (`/outbound/sales-orders`)
+**Archivo:** `src/pages/Outbound/SalesOrders.jsx`
+
+Gestión de pedidos con transiciones de estado y auditoría.
+
+**Máquina de estados N.V.:**
+```
+Pendiente → Aprobada → Pendiente Picking → PICKING → PACKING
+→ LISTO_DESPACHO → Pendiente Shipping → EN_RUTA → ENTREGADO
+                                                  → NULA
+                                                  → Refacturacion
+                                                  → SOLO_FACTURAR
+```
+
+- **Tablas:** `tms_nv_diarias`, `tms_nv_eliminadas`
+- **Realtime:** Sí
+- **Acciones:** Cambiar estado, eliminar con auditoría, ver detalle productos
+
+#### 4.3.2 Picking (`/outbound/picking`)
+**Archivo:** `src/pages/Outbound/Picking.jsx`
+
+Operación de picking con timer, tracking de ubicaciones y estados por item.
+
+**Flujo:**
+```
+Buscar N.V. → Iniciar picking (play) → Timer activo
+→ Por cada item: marcar COMPLETO/PARCIAL/ESPERA/SIN_STOCK
+→ Si PARCIAL: ingresar cantidad pickeada
+→ Mostrar ubicación WMS del producto
+→ Finalizar → Registrar tiempo → Cambiar estado N.V.
+```
+
+- **Tablas:** `tms_nv_diarias`, `tms_mediciones_tiempos`, `wms_ubicaciones`
+- **Timer:** Tiempo activo + tiempo ocio separados
+- **Realtime:** Sí
+- **Stores:** Zustand (usePickingActions, useItemsStatus, useActiveSession)
+
+#### 4.3.3 Packing (`/outbound/packing`)
+**Archivo:** `src/pages/Outbound/Packing.jsx`
+
+Empaque con registro de bultos, búsqueda de dirección y devolución a picking.
+
+**Flujo:**
+```
+Seleccionar N.V. → Iniciar timer → Registrar bulto (dimensiones/peso)
+→ Buscar dirección en tms_direcciones → Escanear productos para confirmar
+→ Detectar errores de picking → Completar o devolver a picking
+→ Registrar tiempo packing
+```
+
+- **Tablas:** `tms_nv_diarias`, `tms_mediciones_tiempos`, `tms_direcciones`, `tms_entregas`, `tms_errores_picking`
+- **Realtime:** Sí (N.V. + tiempos)
+
+#### 4.3.4 Packing TV (`/outbound/packing-tv`)
+**Archivo:** `src/pages/Outbound/PackingTV.jsx`
+
+Pantalla para TV/monitor grande con cola de packing en 3 columnas.
+
+```
+┌─────────────┬─────────────┬─────────────┐
+│  EN COLA    │ PREPARANDO  │   LISTOS    │
+│  (Pendiente)│ (En proceso)│ (Completo)  │
+│  Card 1     │  Card 4     │  Card 7     │
+│  Card 2     │  Card 5     │  Card 8     │
+│  Card 3     │  Card 6     │             │
+└─────────────┴─────────────┴─────────────┘
+        Reloj grande · Auto-refresh
+```
+
+- **Tabla:** `tms_nv_diarias`
+- **Realtime:** Sí
+- **Layout:** Landscape optimizado
+
+#### 4.3.5 Shipping (`/outbound/shipping`)
+**Archivo:** `src/pages/Outbound/Shipping.jsx`
+
+Documentación de despacho con edición inline.
+
+**Flujo:**
+```
+Buscar por N.V./Cliente → Editar inline (facturas, guía, transporte, flete)
+→ Guardar → Actualizar tms_entregas + tms_control_despacho
+```
+
+- **Tablas:** `tms_entregas`, `tms_control_despacho`
+- **Edición:** Inline por celda con Enter para guardar
+
+---
+
+### 4.4 TMS (Transporte)
+
+#### 4.4.1 Dashboard TMS (`/tms/dashboard`)
+**Archivo:** `src/pages/TMS/Dashboard.jsx`
+
+Dashboard específico de transporte con métricas de entregas y rutas.
+
+#### 4.4.2 Planificación Rutas (`/tms/planning`)
+**Archivo:** `src/pages/TMS/RoutePlanning.jsx`
+
+Creación de rutas y asignación de entregas a conductores.
+
+**Flujo:**
+```
+Panel izquierdo: entregas pendientes con checkboxes
+→ Seleccionar entregas → Panel derecho: seleccionar conductor (DISPONIBLE)
+→ Nombrar ruta (auto-genera con fecha) → Crear ruta
+→ API POST /api/rutas → Actualizar estados
+```
+
+- **Tablas:** `tms_entregas`, `tms_conductores`, `tms_rutas`
+- **Realtime:** Sí
+
+#### 4.4.3 Torre de Control (`/tms/control-tower`)
+**Archivo:** `src/pages/TMS/ControlTower.jsx`
+
+Centro de monitoreo de flota con alertas en tiempo real.
+
+```
+┌──────────┬──────────────────┬──────────┐
+│  Rutas   │  Feed Entregas   │ Alertas  │
+│ Activas  │  (buscable)      │ Rechazo  │
+│ [Ruta 1] │  Card expandible │ Reprog.  │
+│ [Ruta 2] │  + Maps/Llamada  │ Vol.Alto │
+└──────────┴──────────────────┴──────────┘
+```
+
+- **Tablas:** `tms_conductores`, `tms_rutas`, `tms_entregas`
+- **Realtime:** Toasts en ENTREGADO/RECHAZADO
+
+#### 4.4.4 Conductores (`/tms/drivers`)
+**Archivo:** `src/pages/TMS/Drivers.jsx`
+
+CRUD de conductores con estados (DISPONIBLE/OCUPADO/EN_RUTA/INACTIVO).
+
+- **Tabla:** `tms_conductores`
+- **Realtime:** Vía useConductores
+
+#### 4.4.5 App Móvil Conductor (`/tms/mobile`)
+**Archivo:** `src/pages/TMS/MobileApp.jsx`
+
+Interfaz móvil para conductores con gestión de entregas.
+
+**Flujo:**
+```
+Login → Detectar perfil conductor → Ver entregas asignadas
+→ Filtrar por estado → Seleccionar entrega → Ver detalle
+→ Acciones: Entregar / Rechazar / Reprogramar
+→ Seleccionar motivo → Observaciones → Confirmar
+→ Sync automático
+```
+
+- **Tablas:** `tms_conductores`, `tms_entregas`
+- **Realtime:** Canal filtrado por conductor_id
+- **Features:** Llamada telefónica, navegación Google Maps
+
+#### 4.4.6 Gestión Patio (`/tms/yard`)
+**Archivo:** `src/pages/TMS/YardManagement.jsx`
+
+Gestión de docks con cola de camiones y drag-and-drop.
+
+- **Docks:** 4 INBOUND + 4 OUTBOUND
+- **Persistencia:** localStorage (sin Supabase)
+
+---
+
+### 4.5 Consultas (Queries)
+
+#### 4.5.1 Lotes y Series (`/queries/batches`)
+**Archivo:** `src/pages/Queries/Batches.jsx`
+
+Búsqueda multi-tab de inventario por lote/serie/farmapack/pesos.
+
+- **4 tabs:** Partidas · Series · Farmapack · Pesos
+- **Tablas:** `tms_partidas`, `tms_series`, `tms_farmapack`, `tms_pesos`
+- **Features:** Highlight búsqueda, badges disponibilidad, export CSV
+
+#### 4.5.2 Estado Pedido (`/queries/sales-status`)
+**Archivo:** `src/pages/Queries/SalesStatus.jsx`
+
+Timeline visual de progresión de un pedido con info logística.
+
+```
+[Pendiente] → [Picking] → [Packing] → [Despacho] → [En Ruta] → [Entregado]
+     ●            ●           ●            ○            ○            ○
+```
+
+- **Tablas:** `tms_nv_diarias`, `tms_entregas`, `tms_rutas`, `tms_conductores`
+- **Realtime:** Sí
+
+#### 4.5.3 Directorio Direcciones (`/queries/addresses`)
+Búsqueda ilike en `tms_direcciones` (razón social, nombre, RUT).
+
+#### 4.5.4 Ubicaciones WMS (`/queries/locations`)
+**Archivo:** `src/pages/Queries/WmsLocations.jsx`
+
+Explorador de ubicaciones con virtual scrolling (react-virtual).
+
+- **Filtros:** Todos / Con stock / Vacías
+- **Atajos:** Ctrl+K para focus búsqueda
+- **Store:** warehouseStore (Zustand)
+
+#### 4.5.5 Mapa Calor Bodega (`/queries/heatmap`)
+**Archivo:** `src/pages/Queries/Heatmap.jsx`
+
+Visualización de ocupación por rack/nivel con celdas coloreadas.
+
+```
+Ocupación: 0% (gris) · <25% (verde) · <50% (amarillo) · <75% (naranja) · >75% (rojo)
+```
+
+- **Selector:** Niveles 1-4, Racks A-I
+- **Admin:** Cambiar estado ubicación (LIBRE/OCUPADA/NO_DISPONIBLE)
+
+#### 4.5.6 Historial N.V. (`/queries/historial-nv`)
+Historial completo de notas de venta con filtros de fecha y estado.
+
+#### 4.5.7 Control Despacho (`/queries/dispatch-control`)
+Seguimiento de guías con KPIs (guías, bultos, flete) y filtros de fecha.
+
+---
+
+### 4.6 Admin (Administración)
+
+#### 4.6.1 Usuarios (`/admin/users`)
+CRUD de usuarios con asignación de roles y tracking de actividad.
+
+#### 4.6.2 Roles (`/admin/roles`)
+Gestión de permisos granular por módulo con matriz visual.
+
+#### 4.6.3 Vistas (`/admin/views`)
+Enable/disable módulos y asignación de landing page por rol.
+
+#### 4.6.4 Tickets (`/admin/tickets`)
+Sistema de tickets soporte TI con estados y prioridades.
+
+- **Estados:** ABIERTO → EN_PROCESO → CERRADO / RECHAZADO
+- **Realtime:** Sí
+- **Push:** Notificaciones FCM al canal `cco_tickets`
+
+#### 4.6.5 Monitor (`/admin/monitor`)
+Monitoreo en tiempo real de usuarios activos, sesiones y módulos.
+
+#### 4.6.6 Historial Cargas (`/admin/upload-history`)
+Analytics de importaciones con gráficos de tendencia y breakdown por proveedor.
+
+#### 4.6.7 Gestor Ubicaciones (`/admin/locations`)
+Edición inline de ubicaciones WMS con normalización.
+
+#### 4.6.8 Limpieza (`/admin/cleanup`)
+Utilidad peligrosa para limpiar datos operacionales (RPC `clean_operational_data`).
+
+---
+
+### 4.7 Mobile PDA (`/mobile/pda`)
+**Archivo:** `src/pages/Mobile/WarehousePDA.jsx`
+
+Interfaz optimizada para dispositivos PDA (Zebra TC21, Honeywell).
+
+**Modos de operación:**
+```
+HOME → [PICKING] → Escanear ubicación → Escanear SKU → Confirmar cantidad
+     → [PUTAWAY] → Escanear producto → Escanear ubicación destino → Confirmar
+     → [INVENTORY] → Escanear ubicación → Ver/contar productos
+     → [QUERY] → Escanear código → Ver información producto
+```
+
+- **Diseño:** 320px-480px, botones grandes (40-60px), modo oscuro
+- **Scanner:** Cámara ML Kit + scanner hardware PDA
+- **Haptics:** Vibración éxito/error
+- **Offline:** Cola de operaciones
+
+---
+
+## 5. Sistema de Autenticación y Permisos
+
+### Flujo de Login
+```
+Usuario ingresa email/contraseña → RPC verify_user_password (bcrypt)
+→ Verificar usuario activo → Cargar rol + permisos de tms_roles
+→ Registrar acceso en tms_accesos → Redirigir a landing_page del rol
+→ Iniciar heartbeat presencia (30s) → Init OTA + Push (si nativo)
+```
+
+### Permisos
+- **30+ rutas** mapeadas a permisos en `ROUTE_PERMISSIONS`
+- **6 secciones** (tms, dashboard, inbound, outbound, queries, admin)
+- **Navbar dinámico:** Solo muestra módulos con permiso
+- **Guard en cada ruta:** `ProtectedRoute` verifica auth + permiso
+- **Roles especiales:** ADMIN, ADMIN_DEV tienen acceso total
+
+---
+
+## 6. Sistema Offline y Sincronización
+
+```
+┌─────────────────────────────────────────┐
+│              ONLINE                      │
+│  Supabase ←→ React Query (cache 5min)   │
+│          ←→ Realtime channels           │
+├─────────────────────────────────────────┤
+│              OFFLINE                     │
+│  Operación → Dexie syncQueue            │
+│  (IndexedDB)                            │
+│                                          │
+│  Reconexión detectada (navigator.onLine) │
+│  → syncManager procesa cola             │
+│  → Retry exponencial (max 5 intentos)   │
+│  → TTL 24 horas → auto-limpieza 5min   │
+│  → Sync interval: cada 15s online       │
+└─────────────────────────────────────────┘
+```
+
+**Dexie Schema (v3):**
+- `syncQueue`: type, tableName, recordId, status, timestamp, retryCount
+- `cachedLocations`: ubicaciones cacheadas
+- `cachedProducts`: productos cacheados (SKU, barcode, nombre)
+
+---
+
+## 7. Sistema Realtime
+
+### Canales globales (Layout.jsx)
+- `tms_nv_diarias` → Toast en nueva NV o cambio de estado
+- `tms_partidas` → Toast en nueva partida
+- `tms_series` → Toast en nueva serie
+- `tms_farmapack` → Toast en nuevo lote
+
+### Canales por módulo
+| Módulo | Canal | Eventos |
+|---|---|---|
+| Picking | `picking_data` | Cambios en N.V. |
+| Packing | `packing_data` + `packing` | N.V. + tiempos |
+| PackingTV | `packing_tv_realtime` | Cambios N.V. |
+| SalesOrders | `sales_orders` | Cambios N.V. |
+| ControlTower | `tower_realtime_v3` | Conductores + rutas + entregas |
+| MobileApp | `mobile_updates` | Entregas (filtro conductor_id) |
+| SalesStatus | `sales_status_realtime` | N.V. + entregas |
+| AdminMonitor | `admin_monitor` | Usuarios |
+| Tickets | `public:tms_tickets` | Tickets |
+| UploadHistory | `realtime-uploads` | Cargas INSERT |
+
+---
+
+## 8. Plataforma Móvil (Capacitor)
+
+### Plugins instalados
+| Plugin | Versión | Uso |
+|---|---|---|
+| `@capacitor-mlkit/barcode-scanning` | 8.1.0 | Escaneo QR/barcode con cámara |
+| `@capacitor/haptics` | 7.0.5 | Vibración feedback |
+| `@capacitor/push-notifications` | 7.0.6 | Notificaciones push FCM |
+| `@capgo/capacitor-updater` | 7.45.10 | OTA updates |
+
+### OTA Updates (Capgo)
+**Config:** `autoUpdate: true` en capacitor.config.json
+
+**Flujo actualización:**
+```
+App inicia → notifyAppReady() → Capgo verifica versión en background
+→ Si hay update: descarga automática → Evento downloadComplete
+→ Toast "Actualización descargada v{X}" → 3 segundos
+→ CapacitorUpdater.set({ id: bundleId }) → App se recarga
+→ Si set() falla: fallback CapacitorUpdater.reload()
+→ Si todo falla: toast "Cierra y abre la app manualmente"
+```
+
+**Listeners registrados:**
+- `downloadComplete` → Aplica bundle y recarga
+- `downloadFailed` → Toast error, retry automático
+- `updateFailed` → Toast "versión anterior restaurada"
+
+### Push Notifications (FCM)
+**Canales Android:**
+- `cco_tickets` (prioridad MAX) — Tickets soporte
+- `cco_general` (prioridad HIGH) — General
+
+**Flujo:**
+```
+App inicia → Verificar permisos → Crear canales → Registrar FCM
+→ Token guardado en tms_usuarios.push_token
+→ Foreground: toast con título/body
+→ Background: al tocar → navegar a /admin/tickets (si ticket)
+```
+
+### Config Android
+- **App ID:** `com.cco.wms`
+- **Min SDK:** 24 (Android 7.0)
+- **Target SDK:** 36 (Android 15)
+- **Java:** 21
+
+---
+
+## 9. Deploy y CI/CD
+
+### Web (Render)
+```bash
+git push origin main    # Render auto-detect y rebuild
+```
+- **Server:** Express.js (server.js) en puerto 3000
+- **Static:** Sirve `dist/` con cache 1 día
+- **Security:** CSP, HSTS, X-Frame-Options, X-XSS-Protection
+- **SPA:** Todas las rutas → index.html
+
+### Mobile OTA (Capgo)
+```bash
+npm run deploy:mobile   # scripts/deploy_mobile.js
+```
+1. Auto-increment versión patch en package.json
+2. `npm run build` (Vite production)
+3. `npx cap sync android` (copiar assets)
+4. `npx @capgo/cli bundle upload` (subir a Capgo Cloud)
+
+### APK Nativo
+```bash
+cd android && ./gradlew assembleRelease
+```
+- Output: `android/app/build/outputs/apk/release/`
+
+---
+
+## 10. Dependencias Principales
+
+| Librería | Versión | Uso |
+|---|---|---|
+| React | 18.2.0 | UI Framework |
+| React Router | 6.20.0 | Routing SPA |
+| Vite | 5.4.21 | Build tool |
+| Supabase JS | 2.98.0 | Backend client |
+| TanStack React Query | 5.50.0 | Server state cache |
+| TanStack Virtual | 3.8.3 | Virtual scrolling |
+| TailwindCSS | 3.4.17 | CSS utility |
+| GSAP | 3.14.2 | Animaciones |
+| Recharts | 3.7.0 | Gráficos |
+| Leaflet | 1.9.4 | Mapas |
+| Dexie | 4.0.8 | IndexedDB offline |
+| Sonner | 1.7.4 | Toast notifications |
+| Zustand | 5.0.5 | State management |
+| date-fns | 4.1.0 | Fechas |
+| Sentry | 7.114.0 | Error tracking |
+| Capacitor | 8.2.0 | Native bridge |
+
+---
+
+## 11. Formato Ubicaciones WMS
+
+Las ubicaciones siguen el formato **RACK-POSICIÓN-NIVEL** (NO rack-nivel-posición).
+
+Ejemplo: `A-05-3` = Rack A, Posición 05, Nivel 3
+
+**Racks configurados:** A-I
+- Niveles: 1-4 (varía por rack)
+- Posiciones: 12-50 por nivel (varía por rack)
+
+---
+
+## 12. Mapa de Rutas
+
+| Ruta | Componente | Categoría |
+|---|---|---|
+| `/login` | Login | Auth |
+| `/dashboard` | Dashboard | Core |
+| `/tms/dashboard` | DashboardTMS | TMS |
+| `/tms/planning` | RoutePlanning | TMS |
+| `/tms/control-tower` | ControlTower | TMS |
+| `/tms/drivers` | Drivers | TMS |
+| `/tms/mobile` | MobileApp | TMS |
+| `/tms/yard` | YardManagement | TMS |
+| `/mobile/pda` | WarehousePDA | Mobile |
+| `/inbound/reception` | Reception | Inbound |
+| `/inbound/entry` | Entry | Inbound |
+| `/inbound/cubing` | CubingRegistry | Inbound |
+| `/inbound/data-import` | DataImport | Inbound |
+| `/outbound/sales-orders` | SalesOrders | Outbound |
+| `/outbound/picking` | Picking | Outbound |
+| `/outbound/packing` | Packing | Outbound |
+| `/outbound/packing-tv` | PackingTV | Outbound |
+| `/outbound/shipping` | Shipping | Outbound |
+| `/queries/batches` | Batches | Queries |
+| `/queries/sales-status` | SalesStatus | Queries |
+| `/queries/addresses` | Addresses | Queries |
+| `/queries/locations` | WmsLocations | Queries |
+| `/queries/heatmap` | Heatmap | Queries |
+| `/queries/historial-nv` | HistorialNV | Queries |
+| `/queries/dispatch-control` | DispatchControl | Queries |
+| `/admin/users` | Users | Admin |
+| `/admin/roles` | Roles | Admin |
+| `/admin/views` | Views | Admin |
+| `/admin/cleanup` | Cleanup | Admin |
+| `/admin/tickets` | Tickets | Admin |
+| `/admin/upload-history` | UploadHistory | Admin |
+| `/admin/locations` | LocationManager | Admin |
+| `/admin/monitor` | AdminMonitor | Admin |
+
+---
+
+## 13. Changelog Reciente
+
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.3.6 | 2026-05-26 | Fix OTA update: app no se reiniciaba tras descargar actualización. Se corrigió extracción de bundle ID del evento downloadComplete + fallback reload() |
+| 1.3.5 | 2026-05-26 | Escaneo QR/barcode agregado al módulo DataImport. Toggle paste/scan, acumulador de items escaneados, auto-lookup producto en tms_matriz_codigos |
+| 1.3.4 | — | Fix responsive para dispositivos Redmi (360px-412px) |
+| 1.3.3 | — | Botones cámara siempre visibles para Serie/Partida + fix responsive |
+| 1.3.2 | — | Overhaul responsive completo para 360px+ |
+| 1.3.1 | — | Estado "Solo Facturar" en pipeline de ventas |
+| 1.3.0 | — | Descripción completa de producto en módulo Lotes y Series |
