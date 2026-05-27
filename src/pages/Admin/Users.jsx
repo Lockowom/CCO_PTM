@@ -10,13 +10,8 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
 
-const hashPassword = async (password) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
+// Las contraseñas ahora se gestionan via Supabase Auth + RPCs server-side
+// create_auth_user() y update_auth_password() en la BD
 
 const UsersPage = () => {
   const queryClient = useQueryClient();
@@ -87,23 +82,64 @@ const UsersPage = () => {
   const saveMutation = useMutation({
     mutationFn: async (user) => {
       if (editingUser) {
-        const updates = { ...user };
-        if (user.password && user.password.trim() !== '') {
-          updates.password_hash = await hashPassword(user.password);
-        }
-        delete updates.password;
+        // Actualizar datos en tms_usuarios
+        const updates = {
+          nombre: user.nombre,
+          email: user.email,
+          rol: user.rol,
+          activo: user.activo,
+          es_admin_delegado: user.es_admin_delegado,
+        };
+
         const { error } = await supabase.from('tms_usuarios').update(updates).eq('id', editingUser.id);
         if (error) throw error;
+
+        // Si se cambió la contraseña, actualizar en Supabase Auth
+        if (user.password && user.password.trim() !== '') {
+          if (user.password.trim().length < 6) {
+            throw new Error('La contraseña debe tener al menos 6 caracteres');
+          }
+
+          // Obtener auth_uid del usuario
+          const { data: userData } = await supabase
+            .from('tms_usuarios')
+            .select('auth_uid')
+            .eq('id', editingUser.id)
+            .single();
+
+          if (userData?.auth_uid) {
+            // Actualizar contraseña en auth.users via RPC
+            const { error: pwdError } = await supabase
+              .rpc('update_auth_password', {
+                p_auth_uid: userData.auth_uid,
+                p_new_password: user.password.trim()
+              });
+            if (pwdError) throw new Error('Error al actualizar contraseña: ' + pwdError.message);
+          }
+        }
       } else {
+        // Crear nuevo usuario
         if (!user.password || user.password.trim().length < 6) {
           throw new Error('La contraseña es obligatoria y debe tener al menos 6 caracteres');
         }
+
+        // 1. Crear en Supabase Auth via RPC
+        const { data: authUid, error: authError } = await supabase
+          .rpc('create_auth_user', {
+            p_email: user.email.toLowerCase(),
+            p_password: user.password.trim()
+          });
+
+        if (authError) throw new Error('Error al crear usuario auth: ' + authError.message);
+
+        // 2. Crear en tms_usuarios con auth_uid vinculado
         const legacyId = `USR-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
         const { error } = await supabase.from('tms_usuarios').insert([{
           id_usuario: legacyId,
           nombre: user.nombre,
-          email: user.email,
-          password_hash: await hashPassword(user.password),
+          email: user.email.toLowerCase(),
+          password_hash: 'managed_by_supabase_auth',
+          auth_uid: authUid,
           rol: user.rol,
           activo: user.activo,
           es_admin_delegado: user.es_admin_delegado

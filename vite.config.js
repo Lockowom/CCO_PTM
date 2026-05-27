@@ -98,6 +98,17 @@ export default defineConfig({
       }
     }
   },
+  // Vitest configuration
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setup.js'],
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    coverage: {
+      reporter: ['text', 'lcov'],
+      include: ['src/lib/**', 'src/context/**'],
+    },
+  },
   // Importante para SPA routing
   preview: {
     port: 4173,

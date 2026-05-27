@@ -31,7 +31,7 @@ const MOTIVOS_REPROGRAMACION = [
 ];
 
 const MobileApp = () => {
-  const { user, signOut, hasPermission, loading: authLoading } = useAuth();
+  const { user, logout, hasPermission, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const containerRef = useRef(null);
 
@@ -191,7 +191,7 @@ const MobileApp = () => {
     if (driver?.id) {
       await supabase.from('tms_conductores').update({ estado: 'DISPONIBLE' }).eq('id', driver.id);
     }
-    signOut();
+    logout();
   };
 
   const getFilteredEntregas = () => {

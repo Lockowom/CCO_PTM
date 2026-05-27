@@ -3,6 +3,7 @@ import { PackagePlus, Search, QrCode, Trash2, Save, Wifi, WifiOff, Box, AlertCir
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { enqueueUpsert } from '../../lib/syncManager';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
@@ -366,14 +367,96 @@ const Entry = () => {
       setQueue([]);
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
-    onError: (err) => {
-      toast.error("❌ Error al guardar: " + err.message);
+    onError: async (err) => {
+      // Si estamos offline o es error de red, encolar en Dexie para sync automático
+      const isOfflineError = !navigator.onLine
+        || err.message?.includes('Failed to fetch')
+        || err.message?.includes('NetworkError')
+        || err.message?.includes('ERR_INTERNET_DISCONNECTED')
+        || err.code === 'PGRST301';
+
+      if (isOfflineError) {
+        try {
+          const rowsToInsert = queue.map(item => ({
+            ubicacion: item.ubicacion,
+            codigo: item.codigo,
+            descripcion: item.descripcion,
+            cantidad: parseFloat(item.cantidad),
+            serie: item.serie || null,
+            partida: item.partida || null,
+            pieza: item.pieza || null,
+            fecha_vencimiento: item.fecha_vencimiento || null,
+            talla: item.talla || null,
+            color: item.color || null,
+          }));
+
+          const enqueued = await enqueueUpsert({
+            tableName: 'wms_ubicaciones',
+            data: rowsToInsert,
+            onConflict: 'ubicacion,codigo',
+            userId: user?.id || null,
+          });
+
+          if (enqueued) {
+            toast.info(`📦 ${queue.length} registros guardados offline. Se sincronizarán al recuperar conexión.`, {
+              duration: 6000,
+            });
+            setQueue([]);
+          } else {
+            toast.error('Cola offline llena. No se pudieron guardar los datos.');
+          }
+        } catch (offlineErr) {
+          console.error('[Entry] Error al encolar offline:', offlineErr);
+          toast.error('Error al guardar offline: ' + offlineErr.message);
+        }
+      } else {
+        toast.error("Error al guardar: " + err.message);
+      }
     }
   });
 
-  const handleSync = () => {
+  const handleSync = async () => {
     if (queue.length === 0) return;
     if (!window.confirm(`¿Guardar ${queue.length} registros en ubicaciones?`)) return;
+
+    // Si estamos offline, encolar directamente sin intentar Supabase
+    if (!navigator.onLine) {
+      try {
+        const rowsToInsert = queue.map(item => ({
+          ubicacion: item.ubicacion,
+          codigo: item.codigo,
+          descripcion: item.descripcion,
+          cantidad: parseFloat(item.cantidad),
+          serie: item.serie || null,
+          partida: item.partida || null,
+          pieza: item.pieza || null,
+          fecha_vencimiento: item.fecha_vencimiento || null,
+          talla: item.talla || null,
+          color: item.color || null,
+        }));
+
+        const enqueued = await enqueueUpsert({
+          tableName: 'wms_ubicaciones',
+          data: rowsToInsert,
+          onConflict: 'ubicacion,codigo',
+          userId: user?.id || null,
+        });
+
+        if (enqueued) {
+          toast.info(`📦 ${queue.length} registros guardados offline. Se sincronizarán automáticamente.`, {
+            duration: 6000,
+          });
+          setQueue([]);
+        } else {
+          toast.error('Cola offline llena. Conecta a internet para sincronizar.');
+        }
+      } catch (err) {
+        console.error('[Entry] Error al encolar offline:', err);
+        toast.error('Error al guardar offline: ' + err.message);
+      }
+      return;
+    }
+
     syncMutation.mutate();
   };
 

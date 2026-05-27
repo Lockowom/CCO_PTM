@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.3.6 | **Última actualización:** 2026-05-26
+> **Versión:** 1.4.0 | **Última actualización:** 2026-05-26
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -162,7 +162,7 @@ Seleccionar ubicación → Escanear código producto (cámara/manual)
 ```
 
 - **Tablas:** `wms_ubicaciones`, `tms_matriz_codigos`
-- **Offline:** Cola localStorage, sync automático al reconectar
+- **Offline:** Integrado con syncManager (Dexie). Si offline al guardar → `enqueueUpsert()` directo. Si falla la mutación por error de red → fallback automático a Dexie. Se sincroniza automáticamente al recuperar conexión.
 - **Scanner:** Cámara nativa (ML Kit) + input manual
 - **Realtime:** Sí
 
@@ -498,20 +498,67 @@ HOME → [PICKING] → Escanear ubicación → Escanear SKU → Confirmar cantid
 
 ## 5. Sistema de Autenticación y Permisos
 
+### Arquitectura Auth (Supabase Auth nativo — v1.3.7+)
+
+**Migración completada 2026-05-26**: El sistema fue migrado de auth custom (RPC `verify_user_password` + localStorage) a **Supabase Auth nativo** con JWT tokens.
+
+**Componentes:**
+- `auth.users` — Tabla nativa de Supabase Auth (passwords bcrypt)
+- `tms_usuarios.auth_uid` — FK que vincula `tms_usuarios.id` con `auth.users.id`
+- `supabase.auth.signInWithPassword()` — Login principal
+- `supabase.auth.getSession()` — Restauración de sesión (JWT auto-refresh)
+- `supabase.auth.onAuthStateChange()` — Listener de eventos auth
+- `supabase.auth.signOut()` — Logout
+
+**RPCs auxiliares (SECURITY DEFINER):**
+- `create_auth_user(p_email, p_password)` → UUID — Crea usuario en auth.users (admin)
+- `update_auth_password(p_auth_uid, p_new_password)` → void — Actualiza contraseña (admin)
+- `get_user_role()` → TEXT — Helper RLS: obtiene rol del usuario autenticado
+- `is_admin()` → BOOLEAN — Helper RLS: verifica si es admin o admin delegado
+- `verify_user_password()` — **LEGACY**, se mantiene como fallback para migración lazy
+
 ### Flujo de Login
 ```
-Usuario ingresa email/contraseña → RPC verify_user_password (bcrypt)
+Usuario ingresa email/contraseña
+→ supabase.auth.signInWithPassword({ email, password })
+→ Si OK: sesión JWT automática + cargar perfil de tms_usuarios (por email)
+→ Si FALLA: fallback legacy RPC verify_user_password (migración lazy)
+  → Si legacy OK: crear auth user via RPC create_auth_user + vincular auth_uid
+  → Re-login con Supabase Auth
 → Verificar usuario activo → Cargar rol + permisos de tms_roles
 → Registrar acceso en tms_accesos → Redirigir a landing_page del rol
 → Iniciar heartbeat presencia (30s) → Init OTA + Push (si nativo)
 ```
 
-### Permisos
+### Permisos (client-side)
 - **30+ rutas** mapeadas a permisos en `ROUTE_PERMISSIONS`
 - **6 secciones** (tms, dashboard, inbound, outbound, queries, admin)
 - **Navbar dinámico:** Solo muestra módulos con permiso
 - **Guard en cada ruta:** `ProtectedRoute` verifica auth + permiso
 - **Roles especiales:** ADMIN, ADMIN_DEV tienen acceso total
+
+### Row Level Security (RLS) — Supabase (server-side)
+
+**Estado:** ✅ Habilitado en 30/30 tablas (desde v1.4.0)
+
+**Tier 1 — Tablas operacionales** (26 tablas):
+Política: `auth.role() = 'authenticated'` para ALL operations.
+Bloquea acceso anónimo, permite operación normal para todos los empleados autenticados.
+
+Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas`, `tms_series`, `tms_farmapack`, `tms_pesos`, `tms_control_despacho`, `tms_direcciones`, `tms_mediciones_tiempos`, `tms_conductores`, `tms_entregas`, `tms_rutas`, `tms_recepciones`, `tms_recepcion_items`, `tms_nv_eliminadas`, `tms_errores_picking`, `tms_cubicaje_historial`, `tms_inventario_general`, `tms_inventario_resumen`, `wms_layout`, `tms_historial_cargas`, `tms_accesos`, `tms_usuarios_activos`, `tms_permisos`, `tms_roles_permisos`
+
+**Tier 2 — Tablas con restricciones por rol** (4 tablas):
+
+| Tabla | SELECT | INSERT | UPDATE | DELETE |
+|---|---|---|---|---|
+| `tms_usuarios` | All auth | Admin only | Self o Admin | Admin only |
+| `tms_roles` | All auth | Admin only | Admin only | Admin only |
+| `tms_modules_config` | All auth | Admin only | Admin only | — |
+| `tms_tickets` | Own o Admin | All auth | Admin only | Admin only |
+
+**Helpers RLS (SECURITY DEFINER):**
+- `get_user_role()` → TEXT — Obtiene rol del usuario desde `tms_usuarios.auth_uid`
+- `is_admin()` → BOOLEAN — Verifica `rol = 'ADMIN'` o `es_admin_delegado = true`
 
 ---
 
@@ -529,14 +576,35 @@ Usuario ingresa email/contraseña → RPC verify_user_password (bcrypt)
 │                                          │
 │  Reconexión detectada (navigator.onLine) │
 │  → syncManager procesa cola             │
-│  → Retry exponencial (max 5 intentos)   │
-│  → TTL 24 horas → auto-limpieza 5min   │
+│  → Retry exponencial con jitter         │
+│    (max 8 intentos, backoff 2^n + rand) │
+│  → TTL 72 horas → cleanup cada 10min   │
+│  → Items muertos → status 'dead'        │
+│    (no borrado silencioso, toast+log)   │
+│  → Cola max: 500 items (protección)     │
 │  → Sync interval: cada 15s online       │
+│  → Tipos: rpc, upsert, update,         │
+│    insert, delete                        │
 └─────────────────────────────────────────┘
 ```
 
+**Funciones del syncManager:**
+- `enqueueSyncItem()` — Encola operación genérica (rpc/update/create/delete)
+- `enqueueUpsert()` — Encola upsert batch (Entry.jsx, DataImport)
+- `enqueueOfflineAction()` — Wrapper para acciones específicas (picking)
+- `syncOfflineData()` — Procesa cola pendiente, retry con backoff exponencial + jitter
+- `getFailedItems()` — Obtiene items fallidos/muertos para UI de auditoría
+- `retryItem(id)` — Reintenta un item manualmente
+- `removeItem(id)` — Elimina un item manualmente
+- `cleanupStaleItems()` — Limpieza de items expirados (>72h)
+
+**Entry.jsx — Integración offline:**
+- Si `navigator.onLine === false` al guardar → encola directo a Dexie vía `enqueueUpsert()`
+- Si falla la mutación por error de red → fallback automático a Dexie
+- Se sincroniza automáticamente al recuperar conexión (listener `online`)
+
 **Dexie Schema (v3):**
-- `syncQueue`: type, tableName, recordId, status, timestamp, retryCount
+- `syncQueue`: type, tableName, recordId, data, onConflict, status, timestamp, retryCount, conflictResolution, lastAttempt, lastError, userId
 - `cachedLocations`: ubicaciones cacheadas
 - `cachedProducts`: productos cacheados (SKU, barcode, nombre)
 
@@ -718,10 +786,62 @@ Ejemplo: `A-05-3` = Rack A, Posición 05, Nivel 3
 
 ---
 
-## 13. Changelog Reciente
+## 13. Tests Unitarios
+
+Framework: **Vitest 4.x** + jsdom + @testing-library/react
+
+```bash
+npm test           # Ejecutar tests una vez
+npm run test:watch # Modo watch
+npm run test:coverage # Con cobertura
+```
+
+### Archivos de test
+
+| Archivo | Módulo | Tests | Cobertura |
+|---|---|---|---|
+| `src/tests/syncManager.test.js` | SyncManager (offline queue) | 21 | enqueueSyncItem, enqueueUpsert, enqueueOfflineAction, syncOfflineData (upsert/rpc/update/delete), backoff exponencial, dead status, getFailedItems, retryItem, removeItem |
+| `src/tests/pickingStore.test.js` | Picking Store (Zustand) | 10 | startSession, updateItemStatus (COMPLETO/PARCIAL/SIN_STOCK), updateTime, endSession, flujo completo, persistencia |
+| `src/tests/groupOrders.test.js` | groupByNV (utility) | 8 | Agrupación por NV, null/undefined, cantidades inválidas, flags picking, ordenamiento |
+
+### Setup de tests
+- `src/tests/setup.js` — Mocks globales: sonner toast, navigator.onLine, window events
+
+---
+
+## 14. Escalabilidad — Índices y Plan
+
+### Índices de Base de Datos
+
+**Índices agregados (v1.4.0):**
+
+| Tabla | Índice | Columnas | Justificación |
+|---|---|---|---|
+| tms_nv_diarias | idx_nv_diarias_estado_cliente | (estado, cliente) | Packing filtra por estado IN ('PACKING','QUIEBRE_STOCK') y agrupa por cliente |
+| tms_nv_diarias | idx_nv_diarias_estado_fecha | (estado, fecha_emision) | SalesOrders filtra por estado + rango de fechas |
+| tms_recepcion_items | idx_recepcion_items_recepcion | (recepcion_id) | FK lookup en detalle de recepciones |
+| wms_ubicaciones | idx_wms_ubicaciones_ubic_codigo | (ubicacion, codigo) | ON CONFLICT en upserts de Entry/DataImport |
+| tms_usuarios | idx_usuarios_auth_uid | (auth_uid) | RLS helpers is_admin()/get_user_role() hacen lookup por auth_uid en cada query |
+| tms_usuarios | idx_usuarios_email | (email) | Login lookup por email en AuthContext |
+
+### Recomendaciones de paginación
+- **SalesOrders**: Implementar paginación cursor-based cuando NVs > 500/día
+- **Queries/HistorialNV**: Ya usa .range() — correcto
+- **WmsLocations**: Considerar virtualización (react-virtual ya instalado) para > 10k ubicaciones
+
+### Realtime selectivo
+- Activo solo en: PackingTV (monitor), SalesOrders (pipeline), ControlTower
+- Las tablas de referencia (conductores, skus, ubicaciones) NO usan realtime — correcto
+- Recomendación: configurar filtros de canal (`filter: 'estado=eq.PACKING'`) para reducir eventos broadcast
+
+---
+
+## 15. Changelog Reciente
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.0 | 2026-05-26 | **MIGRACIÓN AUTH + RLS**: Custom auth → Supabase Auth nativo. 21 usuarios migrados. AuthContext reescrito. Users.jsx via RPC. RLS 30/30 tablas. **TESTS**: Vitest configurado, 39 tests (syncManager 21, pickingStore 10, groupOrders 8). **ÍNDICES**: 6 índices compuestos agregados para queries críticas. **ESCALABILIDAD**: Plan documentado (paginación, realtime selectivo) |
+| 1.3.7 | 2026-05-26 | Rewrite completo syncManager: backoff exponencial con jitter, TTL 72h, status 'dead' en vez de borrado silencioso, soporte upsert batch, cola max 500 items, utilidades getFailedItems/retryItem/removeItem. Entry.jsx integrado con syncManager — offline enqueue automático vía enqueueUpsert + fallback en onError |
 | 1.3.6 | 2026-05-26 | Fix OTA update: app no se reiniciaba tras descargar actualización. Se corrigió extracción de bundle ID del evento downloadComplete + fallback reload() |
 | 1.3.5 | 2026-05-26 | Escaneo QR/barcode agregado al módulo DataImport. Toggle paste/scan, acumulador de items escaneados, auto-lookup producto en tms_matriz_codigos |
 | 1.3.4 | — | Fix responsive para dispositivos Redmi (360px-412px) |

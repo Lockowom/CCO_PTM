@@ -10,7 +10,7 @@ import { supabase } from '../supabase';
  * @param {number} [params.nuevos=0] - Registros nuevos insertados
  * @param {number} [params.actualizados=0] - Registros actualizados
  * @param {number} [params.errores=0] - Registros con error
- * @param {string} [params.usuarioId] - ID del usuario (se obtiene automáticamente si no se pasa)
+ * @param {string} [params.usuarioId] - ID del usuario (se obtiene de la sesión auth si no se pasa)
  * @param {string} [params.usuarioNombre] - Nombre del usuario
  */
 export async function logUpload({
@@ -24,12 +24,23 @@ export async function logUpload({
   usuarioNombre,
 }) {
   try {
-    // Si no se pasan datos de usuario, obtenerlos de la sesión
+    // Si no se pasan datos de usuario, obtenerlos de la sesión Supabase Auth
     if (!usuarioId || !usuarioNombre) {
-      const { data: userData } = await supabase.auth.getUser();
-      const u = userData?.user;
-      usuarioId = usuarioId || u?.id || 'system';
-      usuarioNombre = usuarioNombre || u?.user_metadata?.nombre || 'Sistema';
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Buscar datos del perfil en tms_usuarios
+        const { data: profile } = await supabase
+          .from('tms_usuarios')
+          .select('id, nombre')
+          .ilike('email', session.user.email)
+          .single();
+
+        usuarioId = usuarioId || profile?.id || 'system';
+        usuarioNombre = usuarioNombre || profile?.nombre || 'Sistema';
+      } else {
+        usuarioId = usuarioId || 'system';
+        usuarioNombre = usuarioNombre || 'Sistema';
+      }
     }
 
     await supabase.from('tms_historial_cargas').insert([{

@@ -79,10 +79,12 @@ const SalesOrders = () => {
 
   const deleteOrderMutation = useMutation({
     mutationFn: async (nv) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Obtener usuario de la sesión auth (ya no usar getUser legacy)
+      const { data: { session } } = await supabase.auth.getSession();
+      const authUserId = session?.user?.id || null;
       const { error: insertError } = await supabase.from('tms_nv_eliminadas').insert({
         nv: nv.toString(),
-        usuario_elimino: user?.id,
+        usuario_elimino: authUserId,
         motivo: 'Eliminación manual desde SalesOrders'
       });
       if (insertError) throw insertError;

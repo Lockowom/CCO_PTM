@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState('');
 
   const pathnameRef = useRef(window.location.pathname);
+  const initDoneRef = useRef(false);
 
   useEffect(() => {
     const onPopState = () => { pathnameRef.current = window.location.pathname; };
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  // ── Cargar configuración de rol ──
   const loadRoleConfig = useCallback(async (rolId) => {
     if (!rolId) {
       setPermissions([]);
@@ -69,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, [user?.rol, loadRoleConfig]);
 
-  // SUSCRIPCIÓN GLOBAL A CAMBIOS DE ROLES
+  // ── Suscripción global a cambios de roles ──
   useEffect(() => {
     if (!user?.rol) return;
 
@@ -95,51 +97,126 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.rol, loadRoleConfig]);
 
-  // Restaurar sesión al iniciar
-  useEffect(() => {
-    const initSession = async () => {
-      const stored = localStorage.getItem('currentUser');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Validate session against server
-          const { data, error } = await supabase
-            .from('tms_usuarios')
-            .select('id, nombre, email, rol, activo, es_admin_delegado')
-            .eq('id', parsed.id)
-            .eq('activo', true)
-            .single();
+  // ── Cargar perfil desde tms_usuarios usando email de sesión auth ──
+  const loadUserProfile = useCallback(async (authEmail) => {
+    try {
+      const { data, error } = await supabase
+        .from('tms_usuarios')
+        .select('id, nombre, email, rol, activo, es_admin_delegado, auth_uid')
+        .eq('email', authEmail)
+        .eq('activo', true)
+        .single();
 
-          if (error || !data) {
-            // User no longer exists or is deactivated
-            localStorage.removeItem('currentUser');
-            setLoading(false);
-            return;
-          }
+      if (error || !data) {
+        // Intentar con email en minúsculas (por si hay case mismatch)
+        const { data: dataLower, error: errLower } = await supabase
+          .from('tms_usuarios')
+          .select('id, nombre, email, rol, activo, es_admin_delegado, auth_uid')
+          .ilike('email', authEmail)
+          .eq('activo', true)
+          .single();
 
-          // Update with fresh server data
-          const freshUser = {
-            id: data.id,
-            nombre: data.nombre,
-            email: data.email,
-            rol: data.rol,
-            activo: data.activo,
-            es_admin_delegado: data.es_admin_delegado || false
-          };
-
-          setUser(freshUser);
-          localStorage.setItem('currentUser', JSON.stringify(freshUser));
-          setUserForTracking(freshUser);
-          await loadRoleConfig(freshUser.rol);
-        } catch (err) {
-          localStorage.removeItem('currentUser');
-        }
+        if (errLower || !dataLower) return null;
+        return dataLower;
       }
-      setLoading(false);
+
+      return data;
+    } catch (err) {
+      console.error('[Auth] Error loading user profile:', err);
+      return null;
+    }
+  }, []);
+
+  // ── Establecer usuario en el estado ──
+  const setUserState = useCallback(async (profile) => {
+    if (!profile) return;
+
+    const userData = {
+      id: profile.id,
+      nombre: profile.nombre,
+      email: profile.email,
+      rol: profile.rol,
+      activo: profile.activo,
+      es_admin_delegado: profile.es_admin_delegado || false,
     };
-    initSession();
+
+    setUser(userData);
+    setUserForTracking(userData);
+    await loadRoleConfig(userData.rol);
+
+    if (Capacitor.isNativePlatform()) {
+      initPushNotifications(userData.id);
+    }
   }, [loadRoleConfig]);
 
+  // ── Restaurar sesión al iniciar (Supabase Auth) ──
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user?.email) {
+          const profile = await loadUserProfile(session.user.email);
+          if (profile) {
+            await setUserState(profile);
+          } else {
+            // Usuario existe en auth pero no en tms_usuarios (o desactivado)
+            await supabase.auth.signOut();
+          }
+        } else {
+          // Sin sesión auth — verificar si hay sesión legacy en localStorage
+          const stored = localStorage.getItem('currentUser');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              // Intentar login automático con Supabase Auth no es posible sin contraseña
+              // Forzar re-login
+              console.warn('[Auth] Sesión legacy encontrada, requiere re-login con Supabase Auth');
+              localStorage.removeItem('currentUser');
+            } catch (_) {
+              localStorage.removeItem('currentUser');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Auth] Init session error:', err);
+      } finally {
+        initDoneRef.current = true;
+        setLoading(false);
+      }
+    };
+
+    initSession();
+  }, [loadUserProfile, setUserState]);
+
+  // ── Listener de cambios de sesión auth ──
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // Solo procesar después de la inicialización
+        if (!initDoneRef.current) return;
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setPermissions([]);
+          setLandingPage('/dashboard');
+        } else if (event === 'SIGNED_IN' && session?.user?.email) {
+          const profile = await loadUserProfile(session.user.email);
+          if (profile) {
+            await setUserState(profile);
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token renovado automáticamente — no hacer nada
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadUserProfile, setUserState]);
+
+  // ── Online/Offline + Heartbeat ──
   useEffect(() => {
     if (!user?.id) return;
 
@@ -182,47 +259,126 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.id]);
 
+  // ── LOGIN (Supabase Auth con fallback legacy) ──
   const login = async (email, password) => {
     setLoading(true);
     setError('');
 
     try {
-      // Verificar credenciales via RPC (bcrypt en servidor)
-      const { data: authResult, error: authError } = await supabase
+      // 1. Intentar login con Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password,
+      });
+
+      if (!authError && authData?.session) {
+        // Login exitoso con Supabase Auth
+        const profile = await loadUserProfile(email);
+
+        if (!profile) {
+          setError('Usuario no encontrado o desactivado');
+          await supabase.auth.signOut();
+          setLoading(false);
+          return false;
+        }
+
+        if (!profile.activo) {
+          setError('Usuario desactivado');
+          await supabase.auth.signOut();
+          setLoading(false);
+          return false;
+        }
+
+        // Asegurar que auth_uid está vinculado
+        if (!profile.auth_uid) {
+          await supabase.from('tms_usuarios')
+            .update({ auth_uid: authData.session.user.id })
+            .eq('id', profile.id);
+        }
+
+        await setUserState(profile);
+
+        // Registrar acceso
+        try {
+          await supabase.from('tms_accesos').insert({
+            usuario_id: profile.id,
+            nombre: profile.nombre,
+            email: profile.email,
+            rol: profile.rol
+          });
+
+          await supabase
+            .from('tms_usuarios_activos')
+            .upsert({
+              usuario_id: profile.id,
+              nombre: profile.nombre,
+              rol: profile.rol,
+              ultima_actividad: new Date().toISOString(),
+              modulo_actual: 'Inicio de Sesión',
+              estado: 'ONLINE'
+            }, { onConflict: 'usuario_id' });
+        } catch (_) { console.error('Login tracking failed:', _); }
+
+        setLoading(false);
+        return true;
+      }
+
+      // 2. Fallback: Intentar login legacy (para usuarios con hash no migrado)
+      console.warn('[Auth] Supabase Auth failed, trying legacy RPC...');
+      const { data: legacyResult, error: legacyError } = await supabase
         .rpc('verify_user_password', { p_email: email, p_password: password });
 
-      if (authError || !authResult || authResult.length === 0) {
+      if (legacyError || !legacyResult || legacyResult.length === 0) {
         setError('Usuario o contraseña inválidos');
         setLoading(false);
         return false;
       }
 
-      const data = authResult[0];
+      const legacyUser = legacyResult[0];
 
-      if (!data.activo) {
+      if (!legacyUser.activo) {
         setError('Usuario desactivado');
         setLoading(false);
         return false;
       }
 
+      // 3. Migración lazy: crear usuario en auth.users y vincular
+      try {
+        const { data: authUid, error: createErr } = await supabase
+          .rpc('create_auth_user', { p_email: email.toLowerCase(), p_password: password });
+
+        if (!createErr && authUid) {
+          await supabase.from('tms_usuarios')
+            .update({ auth_uid: authUid })
+            .eq('id', legacyUser.id);
+
+          // Re-intentar login con Supabase Auth
+          await supabase.auth.signInWithPassword({ email: email.toLowerCase(), password });
+        }
+      } catch (migErr) {
+        console.error('[Auth] Lazy migration failed:', migErr);
+        // Continuar sin sesión auth (modo degradado temporal)
+      }
+
+      // Establecer usuario independientemente de si la migración auth funcionó
       const userData = {
-        id: data.id,
-        nombre: data.nombre,
-        email: data.email,
-        rol: data.rol,
-        activo: data.activo,
-        es_admin_delegado: data.es_admin_delegado || false
+        id: legacyUser.id,
+        nombre: legacyUser.nombre,
+        email: legacyUser.email,
+        rol: legacyUser.rol,
+        activo: legacyUser.activo,
+        es_admin_delegado: legacyUser.es_admin_delegado || false
       };
 
       setUser(userData);
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      await loadRoleConfig(data.rol);
       setUserForTracking(userData);
+      await loadRoleConfig(legacyUser.rol);
 
       if (Capacitor.isNativePlatform()) {
         initPushNotifications(userData.id);
       }
 
+      // Registrar acceso
       try {
         await supabase.from('tms_accesos').insert({
           usuario_id: userData.id,
@@ -247,17 +403,26 @@ export const AuthProvider = ({ children }) => {
       return true;
 
     } catch (err) {
+      console.error('[Auth] Login error:', err);
       setError('Error en el sistema');
       setLoading(false);
       return false;
     }
   };
 
-  const logout = useCallback(() => {
+  // ── LOGOUT ──
+  const logout = useCallback(async () => {
     const userId = user?.id;
+
     setUser(null);
     setPermissions([]);
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser'); // Limpiar legacy
+
+    // Cerrar sesión Supabase Auth
+    try {
+      await supabase.auth.signOut();
+    } catch (_) { console.error('Auth signOut error:', _); }
+
     if (userId) {
       supabase
         .from('tms_usuarios_activos')
@@ -267,6 +432,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user?.id]);
 
+  // ── Session Guard (realtime) ──
   useEffect(() => {
     if (!user?.id) return;
 
@@ -300,7 +466,6 @@ export const AuthProvider = ({ children }) => {
                 es_admin_delegado: newUser.es_admin_delegado !== undefined ? newUser.es_admin_delegado : user.es_admin_delegado
               };
               setUser(updatedUser);
-              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
               loadRoleConfig(newUser.rol);
             }
           }
@@ -315,6 +480,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.id, user?.rol, logout, loadRoleConfig]);
 
+  // ── Permisos ──
   const hasPermission = useCallback((permissionId) => {
     if (user?.rol === 'ADMIN') return true;
     return permissions.includes(permissionId);

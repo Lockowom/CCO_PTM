@@ -574,13 +574,10 @@ const Tickets = () => {
 
   const handleCreate = async (form) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const u = userData.user;
-
       const ticketData = {
         ticket_id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-        usuario_id: u?.id || 'anon',
-        usuario_nombre: u?.user_metadata?.nombre || user?.nombre || 'Usuario',
+        usuario_id: user?.id || 'anon',
+        usuario_nombre: user?.nombre || 'Usuario',
         asunto: form.asunto,
         descripcion: form.descripcion,
         prioridad: form.prioridad,
