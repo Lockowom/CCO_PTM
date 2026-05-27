@@ -63,19 +63,28 @@ const UsersPage = () => {
     }
   });
 
-  // Suscripciones Realtime
+  // Suscripciones Realtime (con debounce)
   React.useEffect(() => {
+    let timers = {};
+    const debounced = (key) => {
+      if (timers[key]) clearTimeout(timers[key]);
+      timers[key] = setTimeout(() => queryClient.invalidateQueries({ queryKey: [key] }), 800);
+    };
+
     const channel = supabase.channel('admin_users_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_usuarios' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+        debounced('admin_users');
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_roles' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
+        debounced('admin_roles');
       })
       .subscribe((status, err) => {
         if (err) console.error('Realtime subscription error:', err);
       });
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      Object.values(timers).forEach(t => clearTimeout(t));
+      supabase.removeChannel(channel);
+    };
   }, [queryClient]);
 
   // Mutation: Guardar Usuario

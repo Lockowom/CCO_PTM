@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.0 | **Última actualización:** 2026-05-26
+> **Versión:** 1.4.1 | **Última actualización:** 2026-05-27
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -832,7 +832,14 @@ npm run test:coverage # Con cobertura
 ### Realtime selectivo
 - Activo solo en: PackingTV (monitor), SalesOrders (pipeline), ControlTower
 - Las tablas de referencia (conductores, skus, ubicaciones) NO usan realtime — correcto
-- Recomendación: configurar filtros de canal (`filter: 'estado=eq.PACKING'`) para reducir eventos broadcast
+- **Debounce aplicado** (v1.4.1): Todas las suscripciones realtime tienen debounce 800-1500ms para evitar cascadas de invalidación durante uploads masivos
+- Layout global: notificaciones de INSERT agrupadas en ventanas de 2s (batch toasts)
+
+### React Query — Configuración global (v1.4.1)
+- `staleTime: 2 min` — datos se consideran frescos 2 min (antes 0ms = siempre stale)
+- `gcTime: 10 min` — caché permanece 10 min antes de GC
+- `refetchOnWindowFocus: false` — no refetch al cambiar de pestaña
+- `retry: 1` — 1 reintento (antes 3)
 
 ---
 
@@ -840,6 +847,7 @@ npm run test:coverage # Con cobertura
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.1 | 2026-05-27 | **FIX PERFORMANCE CRÍTICO**: QueryClient configurado con staleTime 2min + gcTime 10min + refetchOnWindowFocus:false. Debounce 800-1500ms en TODAS las suscripciones realtime (useRealtimeTable, PackingTV, ControlTower, SalesStatus, Users). Layout: toasts batch agrupados en ventana 2s — fix directo del freeze en uploads masivos de Farmapack/NV |
 | 1.4.0 | 2026-05-26 | **MIGRACIÓN AUTH + RLS**: Custom auth → Supabase Auth nativo. 21 usuarios migrados. AuthContext reescrito. Users.jsx via RPC. RLS 30/30 tablas. **TESTS**: Vitest configurado, 39 tests (syncManager 21, pickingStore 10, groupOrders 8). **ÍNDICES**: 6 índices compuestos agregados para queries críticas. **ESCALABILIDAD**: Plan documentado (paginación, realtime selectivo) |
 | 1.3.7 | 2026-05-26 | Rewrite completo syncManager: backoff exponencial con jitter, TTL 72h, status 'dead' en vez de borrado silencioso, soporte upsert batch, cola max 500 items, utilidades getFailedItems/retryItem/removeItem. Entry.jsx integrado con syncManager — offline enqueue automático vía enqueueUpsert + fallback en onError |
 | 1.3.6 | 2026-05-26 | Fix OTA update: app no se reiniciaba tras descargar actualización. Se corrigió extracción de bundle ID del evento downloadComplete + fallback reload() |

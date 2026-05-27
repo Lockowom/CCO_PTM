@@ -11,60 +11,76 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const mainRef = useRef(null);
 
-  // Sistema de Notificaciones en Tiempo Real
+  // Sistema de Notificaciones en Tiempo Real (con throttle para uploads masivos)
   useEffect(() => {
-    // 1. Configurar canal de escucha global
+    // Acumuladores para batch — en vez de 1 toast por fila, agrupa en 1 toast
+    const insertCounters = { tms_nv_diarias: 0, tms_partidas: 0, tms_series: 0, tms_farmapack: 0 };
+    let flushTimer = null;
+
+    const flushNotifications = () => {
+      if (insertCounters.tms_nv_diarias > 0) {
+        const n = insertCounters.tms_nv_diarias;
+        toast.info(n === 1 ? 'Nueva N.V. Cargada' : `${n} N.V. Cargadas`, {
+          id: 'batch-nv', duration: 5000,
+        });
+      }
+      if (insertCounters.tms_partidas > 0) {
+        const n = insertCounters.tms_partidas;
+        toast.success(n === 1 ? 'Nueva Partida' : `${n} Partidas cargadas`, {
+          id: 'batch-partidas', duration: 4000,
+        });
+      }
+      if (insertCounters.tms_series > 0) {
+        const n = insertCounters.tms_series;
+        toast.success(n === 1 ? 'Nueva Serie' : `${n} Series cargadas`, {
+          id: 'batch-series', duration: 4000,
+        });
+      }
+      if (insertCounters.tms_farmapack > 0) {
+        const n = insertCounters.tms_farmapack;
+        toast.success(n === 1 ? 'Farmapack Actualizado' : `${n} lotes Farmapack cargados`, {
+          id: 'batch-farmapack', duration: 4000,
+        });
+      }
+      // Reset
+      Object.keys(insertCounters).forEach(k => insertCounters[k] = 0);
+    };
+
+    const scheduleFlush = () => {
+      if (flushTimer) clearTimeout(flushTimer);
+      flushTimer = setTimeout(flushNotifications, 2000); // Agrupar en ventana de 2s
+    };
+
     const channel = supabase
       .channel('global-notifications')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_nv_diarias' },
-        (payload) => {
-          toast.info('Nueva N.V. Cargada', {
-            description: `Se ha cargado la N.V. #${payload.new.nv} de ${payload.new.cliente}`,
-            duration: 5000,
-          });
-        }
+        () => { insertCounters.tms_nv_diarias++; scheduleFlush(); }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_partidas' },
-        (payload) => {
-          toast.success('Nuevas Partidas', {
-            description: `Se ha registrado una nueva partida: ${payload.new.partida}`,
-            duration: 4000,
-          });
-        }
+        () => { insertCounters.tms_partidas++; scheduleFlush(); }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_series' },
-        (payload) => {
-          toast.success('Nuevas Series', {
-            description: `Serie cargada: ${payload.new.serie}`,
-            duration: 4000,
-          });
-        }
+        () => { insertCounters.tms_series++; scheduleFlush(); }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_farmapack' },
-        (payload) => {
-          toast.success('Farmapack Actualizado', {
-            description: `Nuevo lote registrado: ${payload.new.lote}`,
-            duration: 4000,
-          });
-        }
+        () => { insertCounters.tms_farmapack++; scheduleFlush(); }
       )
-      // 2. Escuchar cambios de estado automáticos
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'tms_nv_diarias' },
         (payload) => {
-          // Solo notificar si cambió el estado
           if (payload.new.estado !== payload.old.estado) {
             toast.info('Cambio de Estado', {
-              description: `La N.V. #${payload.new.nv} cambió a ${payload.new.estado}`,
+              description: `N.V. #${payload.new.nv} → ${payload.new.estado}`,
+              id: `estado-${payload.new.nv}`,
               duration: 4000,
             });
           }
@@ -75,6 +91,7 @@ const Layout = ({ children }) => {
       });
 
     return () => {
+      if (flushTimer) clearTimeout(flushTimer);
       supabase.removeChannel(channel);
     };
   }, []);

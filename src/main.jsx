@@ -14,7 +14,17 @@ validateEnv();
 // Inicializar Sentry (Monitoreo de Errores)
 initSentry();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,       // 2 min — los datos se consideran frescos
+      gcTime: 1000 * 60 * 10,          // 10 min en caché antes de GC
+      refetchOnWindowFocus: false,      // No refetch al volver a la pestaña
+      refetchOnReconnect: 'always',     // Sí refetch al recuperar conexión
+      retry: 1,                         // 1 reintento (no 3 por defecto)
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

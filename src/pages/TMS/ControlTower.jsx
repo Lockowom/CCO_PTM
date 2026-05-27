@@ -95,30 +95,37 @@ const ControlTower = () => {
 
   const loading = loadingConductores || loadingRutas || loadingEntregas;
 
-  // Supabase Realtime para Invalidation Optimista
+  // Supabase Realtime para Invalidation Optimista (con debounce)
   useEffect(() => {
+    let debounceTimers = {};
+    const debouncedInvalidate = (key) => {
+      if (debounceTimers[key]) clearTimeout(debounceTimers[key]);
+      debounceTimers[key] = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+        setLastUpdate(new Date());
+      }, 1000);
+    };
+
     const channel = supabase.channel('tower_realtime_v3')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_conductores' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['tower_conductores'] });
-        setLastUpdate(new Date());
+        debouncedInvalidate('tower_conductores');
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_rutas' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['tower_rutas'] });
-        setLastUpdate(new Date());
+        debouncedInvalidate('tower_rutas');
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['tower_entregas'] });
-        setLastUpdate(new Date());
-        
-        // Notificación opcional (Gamificación)
+        debouncedInvalidate('tower_entregas');
+
         if (payload.eventType === 'UPDATE' && payload.new?.estado === 'ENTREGADO') {
-          toast.success(`📦 ¡Entrega completada!`, {
+          toast.success(`Entrega completada`, {
             description: `NV: ${payload.new.nv} entregada a ${payload.new.cliente}`,
+            id: `entrega-${payload.new.nv}`,
             style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
           });
         } else if (payload.eventType === 'UPDATE' && payload.new?.estado === 'RECHAZADO') {
-          toast.error(`❌ Alerta de Rechazo`, {
+          toast.error(`Alerta de Rechazo`, {
             description: `NV: ${payload.new.nv} fue rechazada.`,
+            id: `rechazo-${payload.new.nv}`,
             style: { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' }
           });
         }
@@ -126,8 +133,9 @@ const ControlTower = () => {
       .subscribe((status, err) => {
         if (err) console.error('Realtime subscription error:', err);
       });
-      
+
     return () => {
+      Object.values(debounceTimers).forEach(t => clearTimeout(t));
       supabase.removeChannel(channel);
     }
   }, [queryClient]);

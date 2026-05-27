@@ -129,16 +129,23 @@ const PackingTV = () => {
   useEffect(() => {
     fetchData();
 
+    let debounceTimer = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fetchData, 1500);
+    };
+
     const channel = supabase
       .channel('packing_tv_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, () => {
-        fetchData();
+        debouncedFetch();
       })
       .subscribe((status, err) => {
         if (err) console.error('Realtime subscription error:', err);
       });
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, []);

@@ -99,27 +99,37 @@ const SalesStatus = () => {
         selectedNVRef.current = selectedNV;
     }, [selectedNV]);
 
-    // Sincronización en Tiempo Real
+    // Sincronización en Tiempo Real (con debounce)
     useEffect(() => {
+        let debounceTimer = null;
+        const debouncedInvalidateSearch = () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['sales_search'] });
+            }, 1000);
+        };
+
         const channel = supabase
             .channel('sales_status_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_nv_diarias' }, (payload) => {
-                queryClient.invalidateQueries({ queryKey: ['sales_search'] });
-                if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
+                debouncedInvalidateSearch();
+                if (selectedNVRef.current && selectedNVRef.current.nv === payload.new?.nv) {
                     queryClient.invalidateQueries({ queryKey: ['sales_details', payload.new.nv] });
                     toast('Actualización WMS', {
                         description: `El estado cambió a ${payload.new.estado}`,
+                        id: `wms-update-${payload.new.nv}`,
                         icon: <Activity className="text-wms-neon" />,
                         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
                     });
                 }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_entregas' }, (payload) => {
-                if (selectedNVRef.current && selectedNVRef.current.nv === payload.new.nv) {
+                if (selectedNVRef.current && selectedNVRef.current.nv === payload.new?.nv) {
                     queryClient.invalidateQueries({ queryKey: ['sales_details', selectedNVRef.current.nv] });
                     toast('Actualización Logística', {
                         description: `Datos de ruta/despacho modificados para la NV`,
-                        icon: <Truck className="text-wms-neon animate-bounce" />,
+                        id: `logistics-update-${payload.new?.nv}`,
+                        icon: <Truck className="text-wms-neon" />,
                         style: { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' }
                     });
                 }
@@ -129,6 +139,7 @@ const SalesStatus = () => {
             });
 
         return () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
             supabase.removeChannel(channel);
         };
     }, [queryClient]);
