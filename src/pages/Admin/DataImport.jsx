@@ -693,98 +693,51 @@ const DataImport = () => {
             let inserted = 0, errors = 0;
             const conflictKeys = (!currentTab.uniqueKey || currentTab.id === 'control_despacho') ? null : currentTab.uniqueKey;
 
-            // ── ESTRATEGIA: RPC bulk_upsert para datasets grandes, paralelo para medianos ──
-            const USE_RPC_THRESHOLD = 2000;
+            // ── SIEMPRE usar RPC bulk_upsert (SECURITY DEFINER = bypasea RLS) ──
+            // Chunks de 3000 filas para evitar timeout de 60s en Supabase free
+            const RPC_CHUNK = 3000;
+            const CONCURRENCY = 3;
+            const rpcChunks = [];
+            for (let i = 0; i < newRows.length; i += RPC_CHUNK) {
+                rpcChunks.push(newRows.slice(i, i + RPC_CHUNK));
+            }
 
-            if (newRows.length >= USE_RPC_THRESHOLD) {
-                // ── RPC SERVER-SIDE: una sola transacción en PostgreSQL ──
-                setUploadProgress({ current: 0, total: 1 });
+            const totalChunks = rpcChunks.length;
+            let completedChunks = 0;
+            setUploadProgress({ current: 0, total: totalChunks });
 
-                // Dividir en chunks de 5000 para el RPC (evitar timeout de 60s)
-                const RPC_CHUNK = 5000;
-                const rpcChunks = [];
-                for (let i = 0; i < newRows.length; i += RPC_CHUNK) {
-                    rpcChunks.push(newRows.slice(i, i + RPC_CHUNK));
-                }
-
-                const totalChunks = rpcChunks.length;
-                let completedChunks = 0;
-
-                // Ejecutar chunks en paralelo (max 3 concurrentes)
-                const CONCURRENCY = 3;
-                for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
-                    const batch = rpcChunks.slice(i, i + CONCURRENCY);
-                    const results = await Promise.allSettled(
-                        batch.map(chunk =>
-                            supabase.rpc('bulk_upsert', {
-                                p_table: currentTab.table,
-                                p_data: chunk,
-                                p_conflict_keys: conflictKeys
-                            })
-                        )
-                    );
-
-                    results.forEach((res, idx) => {
-                        completedChunks++;
-                        setUploadProgress({ current: completedChunks, total: totalChunks });
-
-                        if (res.status === 'fulfilled' && !res.value.error) {
-                            const d = res.value.data;
-                            inserted += d.inserted || 0;
-                            errors += d.errors || 0;
-                            if (d.errors > 0) {
-                                errorDetails.push(`Chunk ${i + idx + 1}: ${d.errors} errores`);
-                            }
-                        } else {
-                            const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
-                            const chunkSize = batch[idx]?.length || 0;
-                            errors += chunkSize;
-                            errorDetails.push(`Chunk ${i + idx + 1}: ${errMsg}`);
-                        }
-                    });
-                }
-            } else {
-                // ── PARALELO CLIENT-SIDE: batches concurrentes via PostgREST ──
-                const BATCH_SIZE = 1000;
-                const CONCURRENCY = 5;
-                const batches = [];
-                for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
-                    batches.push(newRows.slice(i, i + BATCH_SIZE));
-                }
-
-                const totalBatches = batches.length;
-                let completedBatches = 0;
-                setUploadProgress({ current: 0, total: totalBatches });
-
-                // Procesar en oleadas de CONCURRENCY batches en paralelo
-                for (let i = 0; i < batches.length; i += CONCURRENCY) {
-                    const wave = batches.slice(i, i + CONCURRENCY);
-                    const results = await Promise.allSettled(
-                        wave.map(batch => {
-                            if (!conflictKeys) {
-                                return supabase.from(currentTab.table).insert(batch);
-                            } else {
-                                return supabase.from(currentTab.table).upsert(batch, { onConflict: conflictKeys, ignoreDuplicates: false });
-                            }
+            for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
+                const wave = rpcChunks.slice(i, i + CONCURRENCY);
+                const results = await Promise.allSettled(
+                    wave.map(chunk =>
+                        supabase.rpc('bulk_upsert', {
+                            p_table: currentTab.table,
+                            p_data: chunk,
+                            p_conflict_keys: conflictKeys
                         })
-                    );
+                    )
+                );
 
-                    results.forEach((res, idx) => {
-                        completedBatches++;
-                        setUploadProgress({ current: completedBatches, total: totalBatches });
-                        const batchNum = i + idx + 1;
-                        const batchLen = wave[idx]?.length || 0;
+                results.forEach((res, idx) => {
+                    completedChunks++;
+                    setUploadProgress({ current: completedChunks, total: totalChunks });
+                    const chunkNum = i + idx + 1;
 
-                        if (res.status === 'fulfilled' && !res.value.error) {
-                            inserted += batchLen;
-                        } else {
-                            errors += batchLen;
-                            const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
-                            errorDetails.push(`Lote ${batchNum}: ${errMsg}`);
-                            console.error(`Batch ${batchNum} error:`, errMsg);
+                    if (res.status === 'fulfilled' && !res.value.error) {
+                        const d = res.value.data;
+                        inserted += d.inserted || 0;
+                        errors += d.errors || 0;
+                        if (d.errors > 0) {
+                            errorDetails.push(`Lote ${chunkNum}: ${d.errors} errores server-side`);
                         }
-                    });
-                }
+                    } else {
+                        const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
+                        const chunkSize = wave[idx]?.length || 0;
+                        errors += chunkSize;
+                        errorDetails.push(`Lote ${chunkNum}: ${errMsg}`);
+                        console.error(`Chunk ${chunkNum} error:`, errMsg);
+                    }
+                });
             }
 
             const updatedStatuses = [...rowStatuses];
