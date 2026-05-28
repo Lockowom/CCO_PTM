@@ -7,7 +7,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../store/warehouseStore';
 
-const COLLAPSED_HEIGHT = 72;
+const COLLAPSED_HEIGHT = 82;
 const ITEM_HEIGHT = 52;
 
 const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) => {
@@ -23,38 +23,47 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all">
       <div
-        className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none hover:bg-slate-50/50 transition-colors"
+        className="px-4 sm:px-5 py-3 cursor-pointer select-none hover:bg-slate-50/50 transition-colors"
         onClick={onToggle}
       >
-        <div className="flex items-center gap-4 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full shrink-0 ${totalStock > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-            <span className="text-sm font-bold text-slate-900 tracking-tight">{group.ubicacion}</span>
+        {/* Row 1: Location name + chevron */}
+        <div className="flex items-center justify-between mb-1.5 sm:mb-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${totalStock > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            <span className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight whitespace-nowrap">{group.ubicacion}</span>
+            <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 font-medium ml-2">
+              <span>Rack <strong className="text-slate-600">{parts[0]}</strong></span>
+              <span>Pos <strong className="text-slate-600">{parts[1]}</strong></span>
+              <span>Niv <strong className="text-slate-600">{parts[2]}</strong></span>
+            </div>
           </div>
-          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 font-medium">
-            <span>Rack <strong className="text-slate-600">{parts[0]}</strong></span>
-            <span>Pos <strong className="text-slate-600">{parts[1]}</strong></span>
-            <span>Niv <strong className="text-slate-600">{parts[2]}</strong></span>
+          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 sm:hidden">
+            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
-          {hasSearch && matchingItems.length < totalItems && (
-            <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">
-              {matchingItems.length}/{totalItems} coinciden
-            </span>
-          )}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Package size={13} />
-            <span className="font-bold text-slate-600">{hasSearch ? matchingItems.length : totalItems}</span>
-            <span>SKUs</span>
+        {/* Row 2: Stats (match badge + SKUs + stock) */}
+        <div className="flex items-center justify-between sm:justify-end sm:gap-5 ml-5 sm:ml-0">
+          <div className="flex items-center gap-3">
+            {hasSearch && matchingItems.length < totalItems && (
+              <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">
+                {matchingItems.length}/{totalItems} coinciden
+              </span>
+            )}
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Package size={13} />
+              <span className="font-bold text-slate-600">{hasSearch ? matchingItems.length : totalItems}</span>
+              <span>SKUs</span>
+            </div>
           </div>
-          <div className="text-right min-w-[60px]">
-            <span className="text-lg font-extrabold text-slate-900 tracking-tight">{hasSearch ? matchStock : totalStock}</span>
-            <span className="text-[10px] text-slate-400 font-medium ml-1">uds</span>
-          </div>
-          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-            {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <span className="text-lg font-extrabold text-slate-900 tracking-tight">{hasSearch ? matchStock : totalStock}</span>
+              <span className="text-[10px] text-slate-400 font-medium ml-1">uds</span>
+            </div>
+            <div className="w-7 h-7 rounded-lg bg-slate-100 hidden sm:flex items-center justify-center text-slate-400">
+              {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </div>
           </div>
         </div>
       </div>
