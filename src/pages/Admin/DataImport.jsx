@@ -478,7 +478,7 @@ const DataImport = () => {
 
         setParsedRows(rows);
 
-        // Deduplicación inteligente
+        // Deduplicación inteligente (optimizada con paginación paralela)
         if (currentTab.smartDedup && currentTab.uniqueKey && rows.length > 0) {
             try {
                 const keysDef = currentTab.uniqueKey.split(',').map(k => k.trim());
@@ -486,22 +486,41 @@ const DataImport = () => {
                 const firstKeyValues = [...new Set(rows.map(r => r[firstKey]).filter(Boolean))];
                 const selectFields = keysDef.join(',');
 
-                const { data: existing, error: errorExisting } = await supabase
-                    .from(currentTab.table).select(selectFields).in(firstKey, firstKeyValues).limit(2000);
-                if (errorExisting) throw errorExisting;
-
-                let deletedKeys = new Set();
-                if (currentTab.id === 'nv') {
-                    const { data: deleted, error: errorDeleted } = await supabase
-                        .from('tms_nv_eliminadas').select(firstKey).in(firstKey, firstKeyValues);
-                    if (!errorDeleted && deleted) {
-                        deletedKeys = new Set(deleted.map(d => d[firstKey]?.toString().trim().toUpperCase()));
-                    }
+                // Paginar en chunks de 500 keys para evitar URLs gigantes y timeouts
+                const KEY_CHUNK = 500;
+                const keyChunks = [];
+                for (let i = 0; i < firstKeyValues.length; i += KEY_CHUNK) {
+                    keyChunks.push(firstKeyValues.slice(i, i + KEY_CHUNK));
                 }
 
-                const existingKeys = new Set((existing || []).map(r =>
-                    keysDef.map(k => r[k]?.toString().trim().toUpperCase()).join('|')
-                ));
+                // Queries en paralelo: existing + deleted (si aplica)
+                const existingPromises = keyChunks.map(chunk =>
+                    supabase.from(currentTab.table).select(selectFields).in(firstKey, chunk).limit(chunk.length)
+                );
+
+                const deletedPromises = currentTab.id === 'nv'
+                    ? keyChunks.map(chunk => supabase.from('tms_nv_eliminadas').select(firstKey).in(firstKey, chunk))
+                    : [];
+
+                const [existingResults, deletedResults] = await Promise.all([
+                    Promise.all(existingPromises),
+                    deletedPromises.length > 0 ? Promise.all(deletedPromises) : Promise.resolve([])
+                ]);
+
+                const existingKeys = new Set();
+                existingResults.forEach(res => {
+                    (res.data || []).forEach(r => {
+                        existingKeys.add(keysDef.map(k => r[k]?.toString().trim().toUpperCase()).join('|'));
+                    });
+                });
+
+                const deletedKeys = new Set();
+                deletedResults.forEach(res => {
+                    (res.data || []).forEach(d => {
+                        const val = d[firstKey]?.toString().trim().toUpperCase();
+                        if (val) deletedKeys.add(val);
+                    });
+                });
 
                 const statuses = rows.map(row => {
                     const fkVal = row[firstKey]?.toString().trim().toUpperCase();
@@ -618,7 +637,7 @@ const DataImport = () => {
         setStep('preview');
     }, [scannedItems]);
 
-    // ── CARGAR A SUPABASE ──
+    // ── CARGAR A SUPABASE (OPTIMIZADO: RPC bulk + paralelo) ──
     const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
     const handleUpload = async () => {
@@ -668,31 +687,103 @@ const DataImport = () => {
                 }
             }
 
-            const BATCH_SIZE = 500;
+            // Liberar memoria del textarea si el dataset es grande
+            if (parsedRows.length > 5000) setRawText('');
+
             let inserted = 0, errors = 0;
-            const totalBatches = Math.ceil(newRows.length / BATCH_SIZE);
-            setUploadProgress({ current: 0, total: totalBatches });
-            if (parsedRows.length > 10000) setRawText('');
+            const conflictKeys = (!currentTab.uniqueKey || currentTab.id === 'control_despacho') ? null : currentTab.uniqueKey;
 
-            for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
-                const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-                setUploadProgress({ current: batchNum, total: totalBatches });
+            // ── ESTRATEGIA: RPC bulk_upsert para datasets grandes, paralelo para medianos ──
+            const USE_RPC_THRESHOLD = 2000;
 
-                const batch = newRows.slice(i, i + BATCH_SIZE);
+            if (newRows.length >= USE_RPC_THRESHOLD) {
+                // ── RPC SERVER-SIDE: una sola transacción en PostgreSQL ──
+                setUploadProgress({ current: 0, total: 1 });
 
-                let result;
-                if (!currentTab.uniqueKey || currentTab.id === 'control_despacho') {
-                    result = await supabase.from(currentTab.table).insert(batch);
-                } else {
-                    result = await supabase.from(currentTab.table).upsert(batch, { onConflict: currentTab.uniqueKey, ignoreDuplicates: false });
+                // Dividir en chunks de 5000 para el RPC (evitar timeout de 60s)
+                const RPC_CHUNK = 5000;
+                const rpcChunks = [];
+                for (let i = 0; i < newRows.length; i += RPC_CHUNK) {
+                    rpcChunks.push(newRows.slice(i, i + RPC_CHUNK));
                 }
 
-                if (result.error) {
-                    errors += batch.length;
-                    errorDetails.push(`Lote ${batchNum}: ${result.error.message}`);
-                    console.error(`Batch ${batchNum} error:`, result.error);
-                } else {
-                    inserted += batch.length;
+                const totalChunks = rpcChunks.length;
+                let completedChunks = 0;
+
+                // Ejecutar chunks en paralelo (max 3 concurrentes)
+                const CONCURRENCY = 3;
+                for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
+                    const batch = rpcChunks.slice(i, i + CONCURRENCY);
+                    const results = await Promise.allSettled(
+                        batch.map(chunk =>
+                            supabase.rpc('bulk_upsert', {
+                                p_table: currentTab.table,
+                                p_data: chunk,
+                                p_conflict_keys: conflictKeys
+                            })
+                        )
+                    );
+
+                    results.forEach((res, idx) => {
+                        completedChunks++;
+                        setUploadProgress({ current: completedChunks, total: totalChunks });
+
+                        if (res.status === 'fulfilled' && !res.value.error) {
+                            const d = res.value.data;
+                            inserted += d.inserted || 0;
+                            errors += d.errors || 0;
+                            if (d.errors > 0) {
+                                errorDetails.push(`Chunk ${i + idx + 1}: ${d.errors} errores`);
+                            }
+                        } else {
+                            const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
+                            const chunkSize = batch[idx]?.length || 0;
+                            errors += chunkSize;
+                            errorDetails.push(`Chunk ${i + idx + 1}: ${errMsg}`);
+                        }
+                    });
+                }
+            } else {
+                // ── PARALELO CLIENT-SIDE: batches concurrentes via PostgREST ──
+                const BATCH_SIZE = 1000;
+                const CONCURRENCY = 5;
+                const batches = [];
+                for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
+                    batches.push(newRows.slice(i, i + BATCH_SIZE));
+                }
+
+                const totalBatches = batches.length;
+                let completedBatches = 0;
+                setUploadProgress({ current: 0, total: totalBatches });
+
+                // Procesar en oleadas de CONCURRENCY batches en paralelo
+                for (let i = 0; i < batches.length; i += CONCURRENCY) {
+                    const wave = batches.slice(i, i + CONCURRENCY);
+                    const results = await Promise.allSettled(
+                        wave.map(batch => {
+                            if (!conflictKeys) {
+                                return supabase.from(currentTab.table).insert(batch);
+                            } else {
+                                return supabase.from(currentTab.table).upsert(batch, { onConflict: conflictKeys, ignoreDuplicates: false });
+                            }
+                        })
+                    );
+
+                    results.forEach((res, idx) => {
+                        completedBatches++;
+                        setUploadProgress({ current: completedBatches, total: totalBatches });
+                        const batchNum = i + idx + 1;
+                        const batchLen = wave[idx]?.length || 0;
+
+                        if (res.status === 'fulfilled' && !res.value.error) {
+                            inserted += batchLen;
+                        } else {
+                            errors += batchLen;
+                            const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
+                            errorDetails.push(`Lote ${batchNum}: ${errMsg}`);
+                            console.error(`Batch ${batchNum} error:`, errMsg);
+                        }
+                    });
                 }
             }
 
@@ -708,20 +799,17 @@ const DataImport = () => {
 
             const skipped = parsedRows.length - newRows.length - deduplicated;
 
-            try {
-                if (user && (inserted > 0 || errors > 0)) {
-                    await supabase.from('tms_historial_cargas').insert([{
-                        usuario_id: user.id,
-                        usuario_nombre: user.nombre || user.email || 'Desconocido',
-                        modulo: currentTab.label,
-                        tabla_destino: currentTab.table,
-                        registros_totales: parsedRows.length,
-                        registros_nuevos: inserted,
-                        registros_actualizados: rowStatuses.filter(s => s === 'update').length,
-                        registros_error: errors
-                    }]);
-                }
-            } catch (_) { console.error('Upload history save error:', _); }
+            // Log al historial (no bloquea)
+            supabase.from('tms_historial_cargas').insert([{
+                usuario_id: user?.id,
+                usuario_nombre: user?.nombre || user?.email || 'Desconocido',
+                modulo: currentTab.label,
+                tabla_destino: currentTab.table,
+                registros_totales: parsedRows.length,
+                registros_nuevos: inserted,
+                registros_actualizados: rowStatuses.filter(s => s === 'update').length,
+                registros_error: errors
+            }]).then(() => {}).catch(() => {});
 
             setLoadResult({
                 success: errors === 0, total: parsedRows.length, inserted, skipped, errors, deduplicated, errorDetails,

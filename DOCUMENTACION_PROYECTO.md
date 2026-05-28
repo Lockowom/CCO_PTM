@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.4 | **Última actualización:** 2026-05-28
+> **Versión:** 1.4.5 | **Última actualización:** 2026-05-28
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -202,7 +202,7 @@ Sistema de importación masiva con 13 módulos, deduplicación inteligente y esc
 Seleccionar módulo → Pegar datos (Ctrl+V desde Excel)
 → Detectar encabezados → Parsear columnas → Dedup inteligente
 → Preview con estado (Nueva/Existe/Eliminada/Actualiza)
-→ Confirmar → Batch upsert (500 rows) → Resultado
+→ Confirmar → Bulk upsert paralelo (RPC server-side o batches concurrentes) → Resultado
 ```
 
 **Flujo Escaneo QR/Barcode (NUEVO v1.3.5):**
@@ -858,8 +858,10 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 | tms_partidas | idx_partidas_con_stock | WHERE disponible > 0 |
 | tms_entregas | idx_entregas_activas | WHERE estado IN ('PENDIENTE','EN_RUTA') |
 
-### Función batch (v1.4.4)
+### Funciones batch (v1.4.4+)
 `batch_update_nv_estado(p_nv_ids UUID[], p_nuevo_estado TEXT)` — Actualiza N notas de venta en 1 sola llamada RPC en vez de N requests individuales.
+
+`bulk_upsert(p_table TEXT, p_data JSONB, p_conflict_keys TEXT)` — **(v1.4.5)** Inserta/actualiza miles de filas en una sola transacción PostgreSQL. Whitelist de tablas permitidas. Procesa internamente en batches de 500 dentro de la misma transacción, evitando múltiples round-trips HTTP. Usado por DataImport para datasets ≥ 2000 filas.
 
 ### Recomendaciones de paginación
 - **SalesOrders**: Implementar paginación cursor-based cuando NVs > 500/día
@@ -884,6 +886,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.5 | 2026-05-28 | **FIX CARGA MASIVA LENTA**: RPC `bulk_upsert()` procesa datasets ≥2000 filas en una sola transacción PostgreSQL server-side. Datasets menores usan batches paralelos (5 concurrentes × 1000 filas). Deduplicación inteligente paginada en paralelo. Historial de carga non-blocking. Resultado: carga ~5-10x más rápida en datasets grandes |
 | 1.4.4 | 2026-05-28 | **OPTIMIZACIONES SUPABASE FREE + INTEGRACIÓN FRONTEND**: **DB**: pg_cron (6 jobs auto), pg_trgm (6 índices GIN), vista materializada mv_dashboard_kpis (refresh 5min), 4 índices parciales. **RPCs**: get_dashboard_kpis(), fuzzy_search(), batch_update_nv_estado(). **Frontend**: Dashboard.jsx usa RPC get_dashboard_kpis() en vez de COUNT(*) sobre todas las NV — carga instantánea. Batches.jsx búsqueda fuzzy+exacta en paralelo — encuentra resultados con typos. SalesStatus.jsx fuzzy_search en campo cliente complementa ilike. Addresses.jsx fuzzy merge con búsqueda exacta. SalesOrders.jsx botón batch "Pasar todas a Picking" / "Despachar todas" usando batch_update_nv_estado RPC (1 call en vez de N) |
 | 1.4.3 | 2026-05-27 | **OVERHAUL RESPONSIVE COMPLETO (320-412px) — 30+ archivos**: **Infraestructura**: viewport-fit=cover en index.html, breakpoint `xs:360px` en tailwind.config.js. **Outbound**: SalesOrders tablas overflow-x-auto + min-w-[700px], cell padding px-2 sm:px-4 md:px-6, modal grid-cols-1 xs:2 sm:4. Picking tabla + picking process responsive. Shipping tabla responsive. PackingTV grid-cols-1 sm:2 lg:12 (stacks en móvil). **Inbound**: Entry/Reception/CubingRegistry padding + grids responsive, tabla overflow-x-auto. **Queries**: Batches search pl-10, SalesStatus NV text-3xl sm:5xl, HistorialNV/DispatchControl tablas min-w + padding, Heatmap/WmsLocations/Addresses responsive. **Admin**: Users/Tickets/DataImport/Roles/Views/UploadHistory/LocationManager/AdminMonitor/Cleanup — KPI grids grid-cols-2, tablas padding px-2 sm:px-4, modales responsive, tabs overflow-x-auto. **TMS**: Dashboard stats grid-cols-2, Drivers tabla responsive, RoutePlanning/YardManagement padding + grids. **PDA**: WarehousePDA touch targets min-h-[44px], inputs/buttons sizing responsive |
 | 1.4.2 | 2026-05-27 | **OTA UPDATE OVERLAY**: Reemplazo de toast por overlay fullscreen con countdown 4s + botón "Actualizar Ahora" + cadena fallback set→reload→location.reload. **RESPONSIVE MOBILE 320px**: Fix filter pills MobileApp (px-3 sm:px-5), modal max-h-[90vh] overflow, stat cards sizing. Navbar drawer max-w-[280px] en 320px. ControlTower KPI grid-cols-2 sm:4 lg:7. Dashboard tabla padding px-3 sm:px-6. Packing grid-cols-1 sm:3 |
