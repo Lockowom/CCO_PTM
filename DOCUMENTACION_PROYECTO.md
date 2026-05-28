@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.12 | **Última actualización:** 2026-05-28
+> **Versión:** 1.4.13 | **Última actualización:** 2026-05-28
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -886,6 +886,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.13 | 2026-05-28 | **REDISEÑO UBICACIONES MOBILE v2**: Ubicación ahora como badge oscuro prominente (`bg-slate-800 text-white font-extrabold`) con `shrink-0` para nunca cortarse. Layout simplificado a 1 fila flex: badge ubicación + match badge + SKUs + stock + chevron. Eliminado `overflow-hidden` del contenedor que recortaba contenido. Altura virtualizer 82→64px |
 | 1.4.12 | 2026-05-28 | **FIX DISEÑO UBICACIONES MOBILE**: Header de LocationGroup rediseñado a 2 filas en mobile — ubicación (R-01, D-02, etc.) ahora en línea propia con font `text-base font-extrabold`, stats (SKUs/uds/coinciden) en segunda fila. Chevron en la misma línea de la ubicación. En desktop mantiene layout horizontal. Altura virtualizer ajustada 72→82px |
 | 1.4.11 | 2026-05-28 | **COMPACTACIÓN DB + FIX SEARCH_BATCHES**: Tabla `wms_ubicaciones` recreada para eliminar bloat (3,328kB→448kB, -87%). Query de 114ms→4ms (-96%). Buffers 416→56 (-87%). Fix RPC `search_batches()`: columna `id` no existía en `tms_pesos` (causaba error). Index trigram `idx_trgm_series_producto` agregado en `tms_series` para fuzzy search. Resultado: búsqueda Lotes y Series ~80ms (antes 500ms+). pg_stat_statements reseteado para baseline limpio |
 | 1.4.10 | 2026-05-28 | **FIX PUT AWAY DESCRIPCIÓN NO APARECE**: Bug: useRealtimeTable causaba re-renders que reseteaban el timer de debounce infinitamente → el fetch de descripción nunca se ejecutaba. Fix: timer/abort en useRef (inmune a re-renders), AbortController para cancelar requests en vuelo, caché Map local de SKU→descripción, debounce 800→400ms, guard `prev.codigo === codigo` para evitar actualizar form con data obsoleta |
