@@ -463,7 +463,7 @@ const Entry = () => {
   return (
     <div ref={containerRef} className="space-y-4 sm:space-y-6 min-h-screen bg-slate-50 p-3 sm:p-6 text-slate-700 pb-20">
       {/* Header Glassmorphism */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white backdrop-blur-xl p-4 sm:p-6 md:p-8 rounded-3xl border border-slate-200 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-wms-alert/10 rounded-full blur-3xl"></div>
 
         <div className="flex items-center gap-3 sm:gap-4 relative z-10">

@@ -22,15 +22,15 @@ const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
     violet: 'from-violet-500 to-purple-500 shadow-violet-200',
   };
   return (
-    <div className="bg-white border border-slate-200/80 rounded-xl p-4 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
-          <Icon size={15} className="text-white" />
+    <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all">
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+          <Icon size={14} className="text-white" />
         </div>
       </div>
-      <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
-      {sub && <p className="text-[11px] text-slate-400 font-medium mt-1.5">{sub}</p>}
+      <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
+      {sub && <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">{sub}</p>}
     </div>
   );
 };
@@ -275,7 +275,7 @@ const UploadHistory = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+      <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-5">
         <KpiCell label="Cargas" value={stats.total} icon={TrendingUp} color="orange" sub="Total registradas" />
         <KpiCell label="Registros" value={stats.totalRegistros.toLocaleString()} icon={Database} color="blue" sub="Procesados" />
         <KpiCell label="Nuevos" value={stats.totalNuevos.toLocaleString()} icon={CheckCircle2} color="emerald" sub="Insertados" />
@@ -345,7 +345,7 @@ const UploadHistory = () => {
           </div>
 
           {/* Date Range */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
             <Calendar size={14} className="text-slate-400" />
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-400" />
@@ -372,11 +372,11 @@ const UploadHistory = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-8"></th>
-                <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Fecha</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Operador</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Módulo</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase text-center">Total</th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-8"></th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Fecha</th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Operador</th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Módulo</th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase text-center">Total</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-emerald-600 uppercase text-center">Nuevos</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-blue-600 uppercase text-center">Modif.</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-red-600 uppercase text-center">Errores</th>
@@ -403,12 +403,12 @@ const UploadHistory = () => {
                   <React.Fragment key={row.id}>
                     <tr className="border-b border-slate-100 hover:bg-orange-50/30 transition-colors group cursor-pointer"
                         onClick={() => setExpandedRow(expandedRow === row.id ? null : row.id)}>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-3">
                         <button className="p-1 rounded-md hover:bg-slate-100 text-slate-400 transition-colors">
                           {expandedRow === row.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-3">
                         <div>
                           <p className="text-sm font-bold text-slate-800">
                             {row.fecha_carga ? new Date(row.fecha_carga).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
@@ -419,7 +419,7 @@ const UploadHistory = () => {
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
                             {(row.usuario_nombre || 'U').charAt(0)}
@@ -427,30 +427,30 @@ const UploadHistory = () => {
                           <span className="text-sm font-semibold text-slate-700">{row.usuario_nombre}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-3">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[11px] font-bold border border-slate-200">
                           <FileText size={11} />
                           {row.modulo}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 sm:px-4 py-3 text-center">
                         <span className="text-sm font-black text-slate-900">{row.registros_totales}</span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 sm:px-4 py-3 text-center">
                         <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
                           (row.registros_nuevos || 0) > 0 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'text-slate-300'
                         }`}>
                           {(row.registros_nuevos || 0) > 0 ? `+${row.registros_nuevos}` : '0'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 sm:px-4 py-3 text-center">
                         <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
                           (row.registros_actualizados || 0) > 0 ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'text-slate-300'
                         }`}>
                           {row.registros_actualizados || '0'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 sm:px-4 py-3 text-center">
                         <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
                           (row.registros_error || 0) > 0 ? 'bg-red-100 text-red-700 border border-red-200' : 'text-slate-300'
                         }`}>

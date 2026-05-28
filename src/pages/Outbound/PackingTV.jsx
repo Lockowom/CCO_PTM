@@ -205,62 +205,64 @@ const PackingTV = () => {
   );
 
   return (
-    <div ref={containerRef} className="h-screen bg-slate-100 text-slate-800 font-sans overflow-hidden flex flex-col p-6">
+    <div ref={containerRef} className="min-h-screen lg:h-screen bg-slate-100 text-slate-800 font-sans overflow-y-auto lg:overflow-hidden flex flex-col p-2 sm:p-4 lg:p-6">
 
       {/* HEADER: Estilo WMS Clean */}
-      <header className="flex justify-between items-center mb-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20">
-        <div className="flex items-center gap-6">
-          <div className="bg-indigo-600 text-white transform hover:scale-105 transition-transform">
+      <header className="flex flex-wrap lg:flex-nowrap justify-between items-center mb-3 sm:mb-6 bg-white p-3 sm:p-5 rounded-xl sm:rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 relative z-20 gap-3">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <div className="bg-indigo-600 text-white transform hover:scale-105 transition-transform hidden sm:block">
             <Package size={40} strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tighter text-slate-800 leading-none mb-1">
+            <h1 className="text-lg sm:text-2xl lg:text-4xl font-black tracking-tighter text-slate-800 leading-none mb-1">
               PACKING <span className="text-indigo-600">MONITOR</span>
             </h1>
-            <div className="flex items-center gap-2 text-slate-500 font-bold text-sm tracking-wider uppercase">
-              <Activity size={16} className="text-emerald-500" />
-              <span>Tiempo Real • Centro de Distribución</span>
+            <div className="flex items-center gap-2 text-slate-500 font-bold text-[10px] sm:text-sm tracking-wider uppercase">
+              <Activity size={14} className="text-emerald-500 sm:hidden" />
+              <Activity size={16} className="text-emerald-500 hidden sm:block" />
+              <span className="hidden xs:inline">Tiempo Real • Centro de Distribución</span>
+              <span className="xs:hidden">En Vivo</span>
             </div>
           </div>
         </div>
 
         {/* Stats Chips */}
-        <div className="flex gap-4">
-          <div className="bg-slate-50 px-8 py-3 rounded-2xl border border-slate-200 flex flex-col items-center min-w-[140px]">
-            <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">En Cola</span>
-            <span className="text-4xl font-black text-slate-700">{stats.totalPendiente}</span>
+        <div className="flex gap-2 sm:gap-4 order-3 lg:order-none w-full lg:w-auto justify-center">
+          <div className="bg-slate-50 px-3 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 flex flex-col items-center min-w-[70px] sm:min-w-[140px]">
+            <span className="text-slate-500 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">En Cola</span>
+            <span className="text-xl sm:text-4xl font-black text-slate-700">{stats.totalPendiente}</span>
           </div>
-          <div className="bg-indigo-50 px-8 py-3 rounded-2xl border border-indigo-100 flex flex-col items-center min-w-[140px]">
-            <span className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">Procesando</span>
-            <span className="text-4xl font-black text-indigo-600">{stats.totalEnProceso}</span>
+          <div className="bg-indigo-50 px-3 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-indigo-100 flex flex-col items-center min-w-[70px] sm:min-w-[140px]">
+            <span className="text-indigo-400 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Procesando</span>
+            <span className="text-xl sm:text-4xl font-black text-indigo-600">{stats.totalEnProceso}</span>
           </div>
-          <div className="bg-emerald-50 px-8 py-3 rounded-2xl border border-emerald-100 flex flex-col items-center min-w-[140px]">
-            <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Finalizados</span>
-            <span className="text-4xl font-black text-emerald-600">{stats.totalListo}</span>
+          <div className="bg-emerald-50 px-3 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col items-center min-w-[70px] sm:min-w-[140px]">
+            <span className="text-emerald-500 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Finalizados</span>
+            <span className="text-xl sm:text-4xl font-black text-emerald-600">{stats.totalListo}</span>
           </div>
         </div>
 
         {/* Clock */}
-        <div className="text-right bg-slate-900 text-white px-8 py-3 rounded-2xl shadow-xl">
-          <div className="text-5xl font-black font-mono tracking-wider flex items-center justify-end gap-1">
+        <div className="text-right bg-slate-900 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl shadow-xl">
+          <div className="text-2xl sm:text-5xl font-black font-mono tracking-wider flex items-center justify-end gap-1">
             <span>{currentTime.getHours().toString().padStart(2, '0')}</span>
             <span className="animate-pulse text-indigo-400">:</span>
             <span>{currentTime.getMinutes().toString().padStart(2, '0')}</span>
           </div>
-          <div className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] text-center mt-1">
+          <div className="text-slate-500 font-bold uppercase text-[8px] sm:text-[10px] tracking-[0.2em] text-center mt-1">
             {currentTime.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
       </header>
 
       {/* MAIN LAYOUT */}
-      <div className="flex-1 grid grid-cols-12 gap-6 h-full overflow-hidden pb-2">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-6 h-full overflow-hidden pb-2">
 
         {/* COLUMNA 1: EN COLA (3 cols) */}
-        <div className="col-span-3 flex flex-col bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden anim-column">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-            <h2 className="text-xl font-black text-slate-700 flex items-center gap-3">
-              <Clock className="text-slate-500" size={24} />
+        <div className="sm:col-span-1 lg:col-span-3 flex flex-col bg-white rounded-2xl lg:rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden anim-column">
+          <div className="p-3 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h2 className="text-base sm:text-xl font-black text-slate-700 flex items-center gap-2 sm:gap-3">
+              <Clock className="text-slate-500" size={20} />
               EN COLA
             </h2>
             <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-lg font-bold text-xs">
@@ -304,11 +306,11 @@ const PackingTV = () => {
         </div>
 
         {/* COLUMNA 2: PREPARANDO (5 cols) - MAIN FOCUS */}
-        <div className="col-span-5 flex flex-col bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100 shadow-2xl shadow-indigo-100/50 overflow-hidden relative anim-column">
+        <div className="sm:col-span-1 lg:col-span-5 flex flex-col bg-indigo-50/50 rounded-2xl lg:rounded-[2.5rem] border border-indigo-100 shadow-2xl shadow-indigo-100/50 overflow-hidden relative anim-column">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-violet-500"></div>
 
-          <div className="p-6 border-b border-indigo-100 bg-white/60 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
-            <h2 className="text-2xl font-black text-indigo-900 flex items-center gap-3">
+          <div className="p-3 sm:p-6 border-b border-indigo-100 bg-white/60 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
+            <h2 className="text-base sm:text-2xl font-black text-indigo-900 flex items-center gap-2 sm:gap-3">
               <Box size={28} className="text-indigo-600" />
               PREPARANDO
               <span className="flex h-3 w-3 relative ml-2">
@@ -329,11 +331,11 @@ const PackingTV = () => {
               </div>
             ) : (
               enProceso.map((nv, idx) => (
-                <div key={idx} className="anim-card bg-white border border-indigo-100 rounded-3xl p-6 shadow-xl shadow-indigo-100/50 relative overflow-hidden group">
+                <div key={idx} className="anim-card bg-white border border-indigo-100 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-xl shadow-indigo-100/50 relative overflow-hidden group">
                   <div className="flex justify-between items-start relative z-10">
                     <div className="flex-1 min-w-0 pr-4">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-4xl font-black text-slate-800 tracking-tight">#{nv.nv}</span>
+                        <span className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight">#{nv.nv}</span>
                         {(nv.has_stock_break || nv.has_partial) && (
                           <div className="animate-bounce text-amber-500 bg-amber-50 p-1.5 rounded-full border border-amber-100">
                             <AlertCircle size={20} />
@@ -365,9 +367,9 @@ const PackingTV = () => {
         </div>
 
         {/* COLUMNA 3: LISTO (4 cols) */}
-        <div className="col-span-4 flex flex-col bg-emerald-50/50 rounded-[2.5rem] border border-emerald-100 shadow-xl shadow-emerald-50/50 overflow-hidden anim-column">
-          <div className="p-6 border-b border-emerald-100 bg-emerald-50/30 flex justify-between items-center">
-            <h2 className="text-xl font-black text-emerald-800 flex items-center gap-3">
+        <div className="sm:col-span-2 lg:col-span-4 flex flex-col bg-emerald-50/50 rounded-2xl lg:rounded-[2.5rem] border border-emerald-100 shadow-xl shadow-emerald-50/50 overflow-hidden anim-column">
+          <div className="p-3 sm:p-6 border-b border-emerald-100 bg-emerald-50/30 flex justify-between items-center">
+            <h2 className="text-base sm:text-xl font-black text-emerald-800 flex items-center gap-2 sm:gap-3">
               <CheckCircle size={24} className="text-emerald-600" />
               LISTOS
             </h2>

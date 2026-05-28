@@ -247,15 +247,15 @@ const UsersPage = () => {
   };
 
   const StatCard = ({ icon, label, value, glowColor }) => (
-    <div className="bg-white backdrop-blur-xl rounded-2xl p-5 border border-slate-200 relative overflow-hidden group">
+    <div className="bg-white backdrop-blur-xl rounded-2xl p-3 sm:p-5 border border-slate-200 relative overflow-hidden group">
       <div className={`absolute top-0 right-0 w-24 h-24 bg-${glowColor}-500/10 rounded-full blur-2xl group-hover:bg-${glowColor}-500/20 transition-all`}></div>
-      <div className="flex items-center gap-4 relative z-10">
-        <div className={`p-4 rounded-xl bg-slate-50 border border-slate-200 text-${glowColor}-400 shadow-sm`}>
+      <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+        <div className={`p-2 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 text-${glowColor}-400 shadow-sm`}>
           {icon}
         </div>
-        <div>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">{label}</p>
-          <p className="text-3xl font-black text-slate-900">{value}</p>
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 truncate">{label}</p>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">{value}</p>
         </div>
       </div>
     </div>
@@ -299,7 +299,7 @@ const UsersPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 relative z-10">
         <StatCard icon={<Users size={24} />} label="Total Usuarios" value={stats.total} glowColor="indigo" />
         <StatCard icon={<UserCheck size={24} />} label="Activos" value={stats.active} glowColor="emerald" />
         <StatCard icon={<Crown size={24} />} label="Admins" value={stats.admins} glowColor="rose" />
@@ -355,13 +355,13 @@ const UsersPage = () => {
             <p className="text-slate-500 mt-1">Intenta ajustar los filtros de búsqueda</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {filteredUsers.map(user => (
               <div key={user.id} className="group bg-white backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm hover:shadow-2xl hover:border-slate-600 transition-all duration-300 overflow-hidden relative">
                 {/* Background Pattern */}
                 <div className={`h-24 w-full absolute top-0 left-0 transition-colors ${user.activo ? 'bg-gradient-to-b from-indigo-500/10 to-transparent' : 'bg-slate-100'}`}></div>
 
-                <div className="p-6 relative pt-8">
+                <div className="p-4 sm:p-6 relative pt-6 sm:pt-8">
                   <div className="flex justify-between items-start mb-4">
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-slate-900 border shadow-lg transform group-hover:scale-110 transition-transform duration-300
                       ${user.rol === 'ADMIN' ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]' :
@@ -430,7 +430,7 @@ const UsersPage = () => {
         <div className="fixed inset-0 bg-slate-50/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div ref={modalRef} className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-            <div className="px-8 py-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <div>
                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                   {editingUser ? 'Editar Perfil' : 'Nuevo Usuario'}
@@ -445,7 +445,7 @@ const UsersPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-8 space-y-6">
+            <form onSubmit={handleSave} className="p-4 sm:p-8 space-y-4 sm:space-y-6">
               <div className="space-y-5">
                 <div className="group">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 group-focus-within:text-indigo-400 transition-colors">Nombre Completo</label>
@@ -495,7 +495,7 @@ const UsersPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 sm:gap-6">
                   <div className="group">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 group-focus-within:text-indigo-400 transition-colors">Rol de Acceso</label>
                     <div className="relative">

@@ -384,7 +384,7 @@ const Packing = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 relative z-10">
           <div className="bg-white backdrop-blur-xl rounded-xl p-3 sm:p-4 border border-slate-200 shadow-2xl flex items-center justify-between">
             <div>
               <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Pendientes</p>

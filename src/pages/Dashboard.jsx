@@ -109,50 +109,48 @@ const Dashboard = () => {
   const { data: dashData, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ['dashboard_kpis'],
     queryFn: async () => {
-      const { data: nvData } = await supabase
+      // 1. KPIs desde vista materializada (instantáneo, se refresca cada 5 min via pg_cron)
+      const { data: rpcKpis } = await supabase.rpc('get_dashboard_kpis');
+      const mk = rpcKpis || {};
+
+      // 2. Últimas NV para la tabla (solo 7, liviano)
+      const { data: nvRecent } = await supabase
         .from('tms_nv_diarias')
         .select('nv, estado, fecha_emision, cliente, cantidad')
-        .order('fecha_emision', { ascending: false });
+        .order('fecha_emision', { ascending: false })
+        .limit(7);
 
-      const nv = nvData || [];
-
-      const counts = nv.reduce((acc, curr) => {
-        const estado = curr.estado === 'PENDIENTE' ? 'Pendiente' : curr.estado;
-        acc[estado] = (acc[estado] || 0) + 1;
-        return acc;
-      }, {});
+      // 3. Conductores (tabla pequeña)
+      const { data: drivers } = await supabase.from('tms_conductores').select('estado');
+      const driversArr = drivers || [];
 
       const kpis = {
-        total: nv.length,
-        pendientes: counts['Pendiente'] || 0,
-        picking: counts['Pendiente Picking'] || 0,
-        packing: counts['PACKING'] || 0,
-        despacho: counts['LISTO_DESPACHO'] || 0,
-        quiebres: counts['QUIEBRE_STOCK'] || 0,
-        refacturacion: counts['Refacturacion'] || 0
+        total: mk.total || 0,
+        pendientes: mk.pendientes || 0,
+        picking: mk.en_picking || 0,
+        packing: mk.en_packing || 0,
+        despacho: mk.despachados || 0,
+        quiebres: 0,
+        refacturacion: 0
       };
 
       const chartData = [
-        { name: 'Pendiente', valor: counts['Pendiente'] || 0, fill: '#64748b' },
-        { name: 'Picking', valor: counts['Pendiente Picking'] || 0, fill: '#06b6d4' },
-        { name: 'Packing', valor: counts['PACKING'] || 0, fill: '#6366f1' },
-        { name: 'Despacho', valor: counts['LISTO_DESPACHO'] || 0, fill: '#a855f7' },
-        { name: 'En Ruta', valor: counts['Despachado'] || 0, fill: '#10b981' },
+        { name: 'Pendiente', valor: mk.pendientes || 0, fill: '#64748b' },
+        { name: 'Picking', valor: mk.en_picking || 0, fill: '#06b6d4' },
+        { name: 'Packing', valor: mk.en_packing || 0, fill: '#6366f1' },
+        { name: 'Despacho', valor: mk.despachados || 0, fill: '#a855f7' },
+        { name: 'Entregados', valor: mk.entregados || 0, fill: '#10b981' },
       ];
-
-      const recentNV = nv.slice(0, 7);
-
-      const { data: drivers } = await supabase.from('tms_conductores').select('estado');
-      const driversArr = drivers || [];
 
       return {
         kpis,
         chartData,
-        recentNV,
+        recentNV: nvRecent || [],
         conductores: {
           total: driversArr.length,
           enRuta: driversArr.filter(d => d.estado === 'EN_RUTA').length
-        }
+        },
+        lastRefresh: mk.last_refresh
       };
     },
     refetchInterval: 30000,
@@ -325,25 +323,25 @@ const Dashboard = () => {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="px-8 py-4 text-left">N.V.</th>
-                <th className="px-8 py-4 text-left">Cliente</th>
-                <th className="px-8 py-4 text-center">Estado</th>
-                <th className="px-8 py-4 text-right">Cantidad</th>
-                <th className="px-8 py-4 text-center">Acción</th>
+                <th className="px-3 sm:px-6 py-4 text-left">N.V.</th>
+                <th className="px-3 sm:px-6 py-4 text-left">Cliente</th>
+                <th className="px-3 sm:px-6 py-4 text-center">Estado</th>
+                <th className="px-3 sm:px-6 py-4 text-right">Cantidad</th>
+                <th className="px-3 sm:px-6 py-4 text-center">Acción</th>
               </tr>
             </thead>
             <tbody>
               {recentNV.map((nv, i) => (
                 <tr key={i} className="hover:bg-orange-50/50 transition-all duration-200 group">
-                  <td className="px-8 py-5 font-black text-indigo-600">#{nv.nv}</td>
-                  <td className="px-8 py-5 text-slate-600 font-bold">{nv.cliente}</td>
-                  <td className="px-8 py-5 text-center">
+                  <td className="px-3 sm:px-6 py-5 font-black text-indigo-600">#{nv.nv}</td>
+                  <td className="px-3 sm:px-6 py-5 text-slate-600 font-bold">{nv.cliente}</td>
+                  <td className="px-3 sm:px-6 py-5 text-center">
                     {getEstadoBadge(nv.estado)}
                   </td>
-                  <td className="px-8 py-5 text-right font-mono font-black text-slate-400">
+                  <td className="px-3 sm:px-6 py-5 text-right font-mono font-black text-slate-400">
                     {nv.cantidad} <span className="text-[10px] uppercase">un.</span>
                   </td>
-                  <td className="px-8 py-5 text-center">
+                  <td className="px-3 sm:px-6 py-5 text-center">
                     <button className="p-2 text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all">
                       <ChevronRight size={18} />
                     </button>

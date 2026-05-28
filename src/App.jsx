@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -8,7 +8,8 @@ import { Lock, Database, MessageSquare } from 'lucide-react';
 import { ROUTE_PERMISSIONS } from './constants/permissions';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
-import { initOTAUpdates } from './services/mobileService';
+import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
+import UpdateOverlay from './components/ui/UpdateOverlay';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
 
@@ -233,11 +234,13 @@ const ModuleBoundary = ({ children }) => (
 
 function AppContent() {
   const { user } = useAuth();
+  const [pendingUpdate, setPendingUpdate] = useState(null);
 
   // Inicializar OTA Updates y Notificaciones Globales
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       initOTAUpdates();
+      onUpdateAvailable((info) => setPendingUpdate(info));
     }
 
     // --- SISTEMA DE DETECCIÓN GLOBAL DE SUBIDA DE DATOS ---
@@ -307,6 +310,11 @@ function AppContent() {
 
   return (
     <Router>
+      {/* OTA Update Overlay — fullscreen blocker while applying */}
+      <UpdateOverlay
+        updateInfo={pendingUpdate}
+        onApplyNow={(bundleId) => applyPendingUpdate(bundleId)}
+      />
       <CommandPalette />
       <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}

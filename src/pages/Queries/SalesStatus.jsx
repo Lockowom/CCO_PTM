@@ -46,15 +46,41 @@ const SalesStatus = () => {
         queryKey: ['sales_search', debouncedTerm],
         queryFn: async () => {
             if (!debouncedTerm) return [];
-            const { data, error } = await supabase
-                .from('tms_nv_diarias')
-                .select('*')
-                .or(`nv.ilike.%${debouncedTerm}%,cliente.ilike.%${debouncedTerm}%,codigo_producto.ilike.%${debouncedTerm}%`)
-                .order('fecha_emision', { ascending: false })
-                .limit(20);
 
-            if (error) throw error;
-            return data || [];
+            // Búsqueda exacta + fuzzy en paralelo
+            const [exactRes, fuzzyRes] = await Promise.all([
+                supabase
+                    .from('tms_nv_diarias')
+                    .select('*')
+                    .or(`nv.ilike.%${debouncedTerm}%,cliente.ilike.%${debouncedTerm}%,codigo_producto.ilike.%${debouncedTerm}%`)
+                    .order('fecha_emision', { ascending: false })
+                    .limit(20),
+                supabase.rpc('fuzzy_search', {
+                    p_table: 'tms_nv_diarias',
+                    p_column: 'cliente',
+                    p_query: debouncedTerm,
+                    p_limit: 15,
+                    p_threshold: 0.15
+                }).catch(() => ({ data: [] }))
+            ]);
+
+            if (exactRes.error) throw exactRes.error;
+            const exactData = exactRes.data || [];
+
+            // Merge fuzzy results que no vinieron en exact
+            const exactIds = new Set(exactData.map(r => r.id));
+            const fuzzyIds = (fuzzyRes.data || []).map(r => r.id).filter(id => !exactIds.has(id));
+
+            if (fuzzyIds.length > 0) {
+                const { data: extra } = await supabase
+                    .from('tms_nv_diarias')
+                    .select('*')
+                    .in('id', fuzzyIds.slice(0, 10))
+                    .order('fecha_emision', { ascending: false });
+                if (extra) exactData.push(...extra);
+            }
+
+            return exactData;
         },
         enabled: !!debouncedTerm,
         select: (data) => {
@@ -192,7 +218,7 @@ const SalesStatus = () => {
         const currentIdx = statusMap[data.estado] !== undefined ? statusMap[data.estado] : 0;
 
         return (
-            <div className="relative flex justify-between items-start w-full mt-4 mb-2">
+            <div className="relative flex justify-between items-start w-full mt-4 mb-2 overflow-x-auto">
                 {/* Linea base gris (Fondo de Progreso) */}
                 <div className="absolute top-6 left-6 right-6 h-1.5 bg-slate-200/60 rounded-full -z-10"></div>
                 {/* Linea Activa (Verde) que se "llena" según el índice actual */}
@@ -354,7 +380,7 @@ const SalesStatus = () => {
                         <div className="flex-1 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-right-4 duration-300">
 
                             {/* Dark Header de Pedido */}
-                            <div className="bg-slate-50 p-8 shadow-inner relative overflow-hidden">
+                            <div className="bg-slate-50 p-4 sm:p-6 md:p-8 shadow-inner relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-96 h-96 bg-wms-neon/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
 
                                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -365,7 +391,7 @@ const SalesStatus = () => {
                                             </div>
                                             <span className="text-wms-neon font-black tracking-widest uppercase text-xs">Información de N.V.</span>
                                         </div>
-                                        <h2 className="text-6xl font-black tracking-tighter text-slate-900 mb-2 ml-[-3px]">#{selectedNV.nv}</h2>
+                                        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 mb-2 ml-[-3px]">#{selectedNV.nv}</h2>
                                         <p className="text-slate-700 font-bold text-lg flex items-center gap-2">
                                             <User size={18} className="text-wms-neon" />
                                             {selectedNV.cliente}
@@ -390,7 +416,7 @@ const SalesStatus = () => {
                             </div>
 
                             {/* Timeline Logístico */}
-                            <div className="p-8 border-b border-slate-200 bg-slate-50/30">
+                            <div className="p-4 sm:p-6 md:p-8 border-b border-slate-200 bg-slate-50/30">
                                 <h4 className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-8">
                                     <Activity size={14} className="text-wms-neon" /> Trazabilidad Operativa
                                 </h4>
@@ -398,7 +424,7 @@ const SalesStatus = () => {
                             </div>
 
                             {/* Cards de Detalle Expandido */}
-                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-white">
+                            <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 bg-white">
 
                                 {/* 1. PRODUCTO */}
                                 <div className="bg-slate-50/50 rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-neon-green transition-shadow">

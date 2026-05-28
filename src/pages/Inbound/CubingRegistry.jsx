@@ -225,7 +225,7 @@ const CubingRegistry = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
         
         <div className="lg:col-span-4 space-y-6 anim-stagger">
           <div className="bg-white backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden group">
@@ -326,7 +326,7 @@ const CubingRegistry = () => {
             onSubmit={handleSave} 
             className="bg-white backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full"
           >
-            <div className="p-8 border-b border-slate-200 bg-slate-50/40 flex justify-between items-center">
+            <div className="p-4 sm:p-6 md:p-8 border-b border-slate-200 bg-slate-50/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <h3 className="font-black text-slate-900 text-xl flex items-center gap-2">
                 <Ruler className="text-blue-400" />
                 DETALLES DE DIMENSIONES
@@ -338,7 +338,7 @@ const CubingRegistry = () => {
               )}
             </div>
             
-            <div className="p-8 space-y-8 flex-1">
+            <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
               
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-3">
@@ -449,7 +449,7 @@ const CubingRegistry = () => {
 
             </div>
 
-            <div className="p-6 bg-slate-50/40 border-t border-slate-200 flex justify-end gap-4">
+            <div className="p-4 sm:p-6 bg-slate-50/40 border-t border-slate-200 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
               <button 
                 type="button"
                 onClick={() => {

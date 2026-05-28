@@ -255,7 +255,7 @@ const AccessConfigPanel = ({ onClose }) => {
     return (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center"><Shield size={18} /></div>
                         <div>
@@ -266,7 +266,7 @@ const AccessConfigPanel = ({ onClose }) => {
                     <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 transition-colors"><X size={16} /></button>
                 </div>
 
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-3 sm:p-6">
                     {loading ? (
                         <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-slate-400" /></div>
                     ) : (
@@ -791,7 +791,7 @@ const DataImport = () => {
             {showAccessConfig && <AccessConfigPanel onClose={() => setShowAccessConfig(false)} />}
 
             {/* Header */}
-            <header className="shrink-0 bg-white border-b border-slate-200 px-6 pt-5 pb-4">
+            <header className="shrink-0 bg-white border-b border-slate-200 px-3 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Carga Masiva</h1>
@@ -814,7 +814,7 @@ const DataImport = () => {
                 </div>
 
                 {/* Category selector */}
-                <div className="flex items-center gap-1.5 mb-3">
+                <div className="flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar pb-1">
                     {visibleCategories.map(cat => {
                         const Icon = cat.icon;
                         const isActive = activeCategory === cat.id;
@@ -824,7 +824,7 @@ const DataImport = () => {
                                 key={cat.id}
                                 onClick={() => handleCategoryChange(cat.id)}
                                 disabled={isLoading}
-                                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${isActive ? colors.active : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'} disabled:opacity-50`}
+                                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex-shrink-0 ${isActive ? colors.active : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'} disabled:opacity-50`}
                             >
                                 <Icon size={14} />
                                 {cat.label}
@@ -852,7 +852,7 @@ const DataImport = () => {
             </header>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4">
 
                 {/* STEP 1: PASTE / SCAN */}
                 {step === 'paste' && (
@@ -1071,7 +1071,7 @@ const DataImport = () => {
                 {step === 'preview' && parsedRows.length > 0 && (
                     <div className="flex flex-col gap-4">
                         {/* Stats + action bar */}
-                        <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-xl border border-slate-200">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white p-2 sm:p-3 rounded-xl border border-slate-200">
                             <StatPill icon={Database} label="Total" value={stats.total} color="slate" />
                             <StatPill icon={CheckCircle} label="Nuevas" value={stats.new} color="emerald" />
                             {stats.update > 0 && <StatPill icon={RefreshCw} label="Actualizar" value={stats.update} color="blue" />}

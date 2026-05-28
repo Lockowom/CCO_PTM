@@ -121,7 +121,7 @@ const RoutePlanning = () => {
             <Truck size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Planificador de Rutas</h2>
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Planificador de Rutas</h2>
             <p className="text-slate-500 text-sm font-medium mt-1 flex items-center gap-2">
               <Activity size={14} className="text-wms-neon" />
               Asigna entregas pendientes a tus conductores
@@ -142,7 +142,7 @@ const RoutePlanning = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 h-full overflow-hidden">
         
         {/* Panel Izquierdo: Lista de Entregas */}
         <div className="flex-1 bg-white backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 flex flex-col overflow-hidden relative">

@@ -331,19 +331,19 @@ const MobileApp = () => {
       <main className="p-4">
         {view === 'home' && (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-indigo-500">
-                <p className="text-slate-500 text-[10px] uppercase font-black tracking-wider">Pendientes</p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-indigo-500">
+                <p className="text-slate-500 text-[9px] sm:text-[10px] uppercase font-black tracking-wider">Pendientes</p>
                 <div className="flex items-end gap-2 mt-1">
-                  <p className="text-3xl font-black text-slate-800">
+                  <p className="text-2xl sm:text-3xl font-black text-slate-800">
                     {entregas.filter(e => ['PENDIENTE', 'EN_RUTA'].includes(e.estado)).length}
                   </p>
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-emerald-500">
-                <p className="text-slate-500 text-[10px] uppercase font-black tracking-wider">Completadas</p>
+              <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-emerald-500">
+                <p className="text-slate-500 text-[9px] sm:text-[10px] uppercase font-black tracking-wider">Completadas</p>
                 <div className="flex items-end gap-2 mt-1">
-                  <p className="text-3xl font-black text-slate-800">
+                  <p className="text-2xl sm:text-3xl font-black text-slate-800">
                     {entregas.filter(e => e.estado === 'ENTREGADO').length}
                   </p>
                 </div>
@@ -355,7 +355,7 @@ const MobileApp = () => {
                 <button
                   key={st}
                   onClick={() => setFilterEstado(st)}
-                  className={`px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all shadow-sm ${
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-black whitespace-nowrap transition-all shadow-sm ${
                     filterEstado === st ? 'bg-white text-slate-900 scale-105' : 'bg-white text-slate-600 border border-slate-200'
                   }`}
                 >
@@ -389,7 +389,7 @@ const MobileApp = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-black text-slate-800 mb-1 leading-tight">{entrega.cliente}</h3>
+                    <h3 className="text-base sm:text-lg font-black text-slate-800 mb-1 leading-tight break-words">{entrega.cliente}</h3>
                     
                     <div className="flex items-start gap-2 text-slate-500 text-xs mb-4">
                       <MapPin size={14} className="mt-0.5 shrink-0 text-slate-500" />
@@ -437,7 +437,7 @@ const MobileApp = () => {
               <div className={`h-2 w-full bg-${ESTADOS_ENTREGA[selectedEntrega.estado]?.color}-500`}></div>
               <div className="p-6 border-b border-slate-100">
                 <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedEntrega.cliente}</h2>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight break-words">{selectedEntrega.cliente}</h2>
                 </div>
                 <div className="flex gap-2 items-center">
                   <p className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">NV: {selectedEntrega.nv}</p>
@@ -530,7 +530,7 @@ const MobileApp = () => {
       {actionModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-slate-50/40 backdrop-blur-sm" onClick={() => setActionModal(null)} />
-          <div className="relative bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 animate-in slide-in-from-bottom duration-300 shadow-2xl">
+          <div className="relative bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-5 sm:p-8 animate-in slide-in-from-bottom duration-300 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
             
             <h3 className="text-2xl font-black text-slate-800 mb-6 text-center">

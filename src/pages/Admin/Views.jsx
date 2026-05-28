@@ -181,7 +181,7 @@ const ViewsPage = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-4 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {activeTab === 'modules' && (
           <div className="space-y-8">
@@ -198,11 +198,11 @@ const ViewsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {modulesConfig.map(module => (
                 <div
                   key={module.id}
-                  className={`relative overflow-hidden flex flex-col justify-between p-6 rounded-3xl border-2 transition-all group ${module.enabled
+                  className={`relative overflow-hidden flex flex-col justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all group ${module.enabled
                       ? 'bg-white border-orange-100 shadow-md hover:border-orange-300 hover:shadow-xl hover:-translate-y-1'
                       : 'bg-slate-50 border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100'
                     }`}
@@ -257,9 +257,9 @@ const ViewsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
               {roles.map(role => (
-                <div key={role.id} className="p-6 border border-slate-200 rounded-3xl bg-white hover:shadow-xl hover:-translate-y-1 hover:border-orange-300 transition-all duration-300 group">
+                <div key={role.id} className="p-4 sm:p-6 border border-slate-200 rounded-2xl sm:rounded-3xl bg-white hover:shadow-xl hover:-translate-y-1 hover:border-orange-300 transition-all duration-300 group">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 font-black text-2xl group-hover:bg-gradient-to-br group-hover:from-orange-500 group-hover:to-amber-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all duration-300">
                       {role.nombre?.charAt(0)}

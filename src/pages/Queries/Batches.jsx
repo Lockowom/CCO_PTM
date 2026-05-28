@@ -119,9 +119,11 @@ const Batches = () => {
   const { data, isLoading: loading } = useQuery({
     queryKey: ['batches_search_v2', submittedTerm],
     queryFn: async () => {
-      const term = `%${submittedTerm.trim()}%`;
+      const trimmed = submittedTerm.trim();
+      const term = `%${trimmed}%`;
       const newData = { partidas: [], series: [], farmapack: [], pesos: [] };
 
+      // Búsqueda exacta (ilike) para cada tabla
       const searchTable = async (table, cols) => {
         try {
           let query = supabase.from(table).select('*').limit(1000);
@@ -135,12 +137,50 @@ const Batches = () => {
         }
       };
 
-      const [p, s, f, w] = await Promise.all([
+      // Búsqueda fuzzy (tolerante a typos) — complementa la búsqueda exacta
+      const fuzzySearch = async (table, column) => {
+        try {
+          const { data, error } = await supabase.rpc('fuzzy_search', {
+            p_table: table,
+            p_column: column,
+            p_query: trimmed,
+            p_limit: 50,
+            p_threshold: 0.15
+          });
+          if (error) throw error;
+          return (data || []).map(r => r.id);
+        } catch {
+          return [];
+        }
+      };
+
+      // Ejecutar búsqueda exacta + fuzzy en paralelo
+      const [p, s, f, w, fuzzyPartIds, fuzzySerieIds] = await Promise.all([
         searchTable('tms_partidas', ['codigo_producto', 'producto', 'partida']),
         searchTable('tms_series', ['codigo_producto', 'producto', 'serie']),
         searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']),
-        searchTable('tms_pesos', ['codigo_producto', 'descripcion'])
+        searchTable('tms_pesos', ['codigo_producto', 'descripcion']),
+        fuzzySearch('tms_partidas', 'producto'),
+        fuzzySearch('tms_series', 'producto')
       ]);
+
+      // Merge fuzzy results que no vinieron en la búsqueda exacta
+      const pIds = new Set(p.map(r => r.id));
+      if (fuzzyPartIds.length > 0) {
+        const missingIds = fuzzyPartIds.filter(id => !pIds.has(id));
+        if (missingIds.length > 0) {
+          const { data: extra } = await supabase.from('tms_partidas').select('*').in('id', missingIds.slice(0, 100));
+          if (extra) p.push(...extra);
+        }
+      }
+      const sIds = new Set(s.map(r => r.id));
+      if (fuzzySerieIds.length > 0) {
+        const missingIds = fuzzySerieIds.filter(id => !sIds.has(id));
+        if (missingIds.length > 0) {
+          const { data: extra } = await supabase.from('tms_series').select('*').in('id', missingIds.slice(0, 100));
+          if (extra) s.push(...extra);
+        }
+      }
 
       newData.partidas = p;
       newData.series = s;
@@ -392,8 +432,8 @@ const Batches = () => {
                     onBlur={() => setIsFocused(false)}
                     className={`w-full bg-white/90 backdrop-blur-md outline-none transition-all duration-500 font-mono uppercase text-slate-900 placeholder:text-slate-300 placeholder:font-sans placeholder:normal-case
                       ${searched || loading
-                        ? 'pl-12 sm:pl-16 pr-12 sm:pr-14 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-200 focus:border-orange-500 focus:ring-4 sm:focus:ring-8 focus:ring-orange-500/5 shadow-sm text-xs sm:text-sm'
-                        : 'pl-14 sm:pl-20 pr-14 sm:pr-20 py-5 sm:py-7 rounded-2xl sm:rounded-[2.5rem] border-2 border-slate-100 focus:border-orange-500 focus:ring-8 sm:focus:ring-[12px] focus:ring-orange-500/5 text-base sm:text-2xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.1)]'
+                        ? 'pl-10 sm:pl-16 pr-10 sm:pr-14 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-200 focus:border-orange-500 focus:ring-4 sm:focus:ring-8 focus:ring-orange-500/5 shadow-sm text-xs sm:text-sm'
+                        : 'pl-10 sm:pl-20 pr-10 sm:pr-20 py-5 sm:py-7 rounded-2xl sm:rounded-[2.5rem] border-2 border-slate-100 focus:border-orange-500 focus:ring-8 sm:focus:ring-[12px] focus:ring-orange-500/5 text-base sm:text-2xl shadow-[0_30px_70px_-15px_rgba(0,0,0,0.1)]'
                       }`}
                     autoFocus
                   />

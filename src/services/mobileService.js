@@ -1,7 +1,12 @@
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { App as CapApp } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
+
+// ── Estado global del update para que el componente UI pueda reaccionar ──
+let updateCallback = null;
+export const onUpdateAvailable = (cb) => { updateCallback = cb; };
 
 export const initOTAUpdates = async () => {
   try {
@@ -12,36 +17,25 @@ export const initOTAUpdates = async () => {
       const bundleId = bundleInfo?.id;
 
       if (!bundleId) {
-        console.error('OTA: No bundle ID received in downloadComplete event', event);
+        console.error('OTA: No bundle ID in downloadComplete', event);
         return;
       }
 
-      console.log('OTA: Bundle downloaded:', bundleId, 'version:', bundleInfo?.version);
+      console.log('OTA: Bundle ready:', bundleId, 'v' + bundleInfo?.version);
 
-      toast.info('Actualización descargada', {
-        description: `v${bundleInfo?.version || '?'} — Reiniciando en 3s...`,
-        duration: 3000,
-      });
+      // Notificar al componente UI para mostrar overlay de actualización
+      if (updateCallback) {
+        updateCallback({
+          version: bundleInfo?.version || 'nueva',
+          bundleId,
+        });
+      }
 
+      // Aplicar automáticamente después de 4 segundos
+      // El overlay ya está visible, el usuario sabe qué pasa
       setTimeout(async () => {
-        try {
-          // set() espera { id: string } y recarga la app inmediatamente
-          await CapacitorUpdater.set({ id: bundleId });
-          // set() destruye el contexto JS, este código no debería ejecutarse
-        } catch (err) {
-          console.error('OTA set bundle error:', err);
-          // Fallback: intentar reload manual
-          try {
-            await CapacitorUpdater.reload();
-          } catch (reloadErr) {
-            console.error('OTA reload fallback error:', reloadErr);
-            toast.error('No se pudo aplicar la actualización', {
-              description: 'Cierra y abre la app manualmente.',
-              duration: 8000,
-            });
-          }
-        }
-      }, 3000);
+        await applyUpdate(bundleId);
+      }, 4000);
     });
 
     CapacitorUpdater.addListener('downloadFailed', (event) => {
@@ -53,16 +47,42 @@ export const initOTAUpdates = async () => {
     });
 
     CapacitorUpdater.addListener('updateFailed', (event) => {
-      console.error('OTA update failed:', event);
+      console.error('OTA update failed, rolling back:', event);
       toast.error('Error al aplicar actualización', {
         description: 'Se restauró la versión anterior.',
         duration: 5000,
       });
     });
 
-  } catch (_) { console.error('OTA init error:', _); }
+  } catch (err) {
+    console.error('OTA init error:', err);
+  }
 };
 
+// ── Aplicar update con múltiples fallbacks ──
+const applyUpdate = async (bundleId) => {
+  try {
+    // Intento 1: set() — debería recargar la app inmediatamente
+    await CapacitorUpdater.set({ id: bundleId });
+  } catch (err) {
+    console.error('OTA set() failed:', err);
+    try {
+      // Intento 2: reload() de Capacitor
+      await CapacitorUpdater.reload();
+    } catch (err2) {
+      console.error('OTA reload() failed:', err2);
+      // Intento 3: forzar reload del webview
+      window.location.reload();
+    }
+  }
+};
+
+// ── Aplicar update manualmente (desde botón UI) ──
+export const applyPendingUpdate = async (bundleId) => {
+  await applyUpdate(bundleId);
+};
+
+// ── Push Notifications ──
 export const initPushNotifications = async (userId) => {
   if (!userId) return;
 
@@ -75,14 +95,14 @@ export const initPushNotifications = async (userId) => {
 
     if (permStatus.receive !== 'granted') return;
 
-    // Crear canal de notificaciones para Android (requerido Android 8+)
+    // Canales Android (requerido Android 8+)
     try {
       await PushNotifications.createChannel({
         id: 'cco_tickets',
         name: 'Tickets Soporte TI',
         description: 'Notificaciones de tickets y soporte técnico',
-        importance: 5, // MAX — muestra en pantalla y suena
-        visibility: 1, // PUBLIC
+        importance: 5,
+        visibility: 1,
         sound: 'default',
         vibration: true,
         lights: true,
@@ -92,7 +112,7 @@ export const initPushNotifications = async (userId) => {
         id: 'cco_general',
         name: 'CCO General',
         description: 'Notificaciones generales del sistema',
-        importance: 4, // HIGH
+        importance: 4,
         visibility: 1,
         sound: 'default',
         vibration: true,
@@ -104,31 +124,27 @@ export const initPushNotifications = async (userId) => {
     await PushNotifications.register();
 
     PushNotifications.addListener('registration', async (token) => {
-      console.log('FCM Token registered:', token.value?.slice(0, 20) + '...');
+      console.log('FCM Token:', token.value?.slice(0, 20) + '...');
       try {
         await supabase
           .from('tms_usuarios')
           .update({ push_token: token.value })
           .eq('id', userId);
-      } catch (_) { console.error('Push registration error:', _); }
+      } catch (_) { console.error('Push token save error:', _); }
     });
 
     PushNotifications.addListener('registrationError', (err) => {
       console.error('Push registration error:', err);
     });
 
-    // Notificación recibida mientras app está EN PRIMER PLANO
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Push received (foreground):', notification);
       toast.info(notification.title || 'Notificación', {
         description: notification.body,
         duration: 8000,
       });
     });
 
-    // Usuario tocó la notificación (app estaba en BACKGROUND)
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      console.log('Push action performed:', action);
       const data = action.notification?.data;
       if (data?.type === 'NEW_TICKET' || data?.type === 'TICKET_UPDATE') {
         window.location.href = '/admin/tickets';

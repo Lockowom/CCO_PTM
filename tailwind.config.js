@@ -8,6 +8,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '360px',
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'], // Inter como fuente por defecto para la UI
         mono: ['JetBrains Mono', 'monospace'], // JetBrains para números y SKUs

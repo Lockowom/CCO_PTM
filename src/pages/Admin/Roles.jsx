@@ -163,17 +163,18 @@ const RolesPage = () => {
   return (
     <div ref={containerRef} className="h-full flex flex-col space-y-4 sm:space-y-6 bg-slate-50 p-3 sm:p-6 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 bg-white p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60"></div>
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"></div>
         
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-lg shadow-emerald-500/10">
-            <Shield size={32} strokeWidth={2.5} />
+        <div className="flex items-center gap-3 sm:gap-6 relative z-10">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-50 border border-emerald-100 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-lg shadow-emerald-500/10 flex-shrink-0">
+            <Shield size={24} className="sm:hidden" strokeWidth={2.5} />
+            <Shield size={32} className="hidden sm:block" strokeWidth={2.5} />
           </div>
-          <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Roles y <span className="text-emerald-600">Permisos</span></h1>
-            <p className="text-slate-500 font-bold mt-1 text-lg">Gestión de accesos y perfiles de usuario</p>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-4xl font-black text-slate-900 tracking-tight">Roles y <span className="text-emerald-600">Permisos</span></h1>
+            <p className="text-slate-500 font-bold mt-1 text-sm sm:text-lg">Gestión de accesos y perfiles</p>
           </div>
         </div>
 
@@ -189,12 +190,12 @@ const RolesPage = () => {
 
       <div className="flex flex-col gap-8 flex-1">
         {(!selectedRole || isCreating) && !isEditing ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
             {roles.map(role => (
               <div
                 key={role.id}
                 onClick={() => setSelectedRole(role)}
-                className="bg-white rounded-[2.5rem] border border-slate-100 p-8 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:border-emerald-200 hover:-translate-y-2 transition-all group relative overflow-hidden"
+                className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 p-4 sm:p-8 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:border-emerald-200 hover:-translate-y-2 transition-all group relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
                   <Shield size={80} className="text-emerald-600" />
@@ -241,8 +242,8 @@ const RolesPage = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-[0_30px_100px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden flex-1">
-            <div className="p-10 border-b border-slate-100 flex justify-between items-start bg-slate-50/30">
+          <div className="bg-white rounded-2xl sm:rounded-[3rem] border border-slate-200 shadow-[0_30px_100px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden flex-1">
+            <div className="p-4 sm:p-10 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start bg-slate-50/30 gap-4">
               <div className="flex items-center gap-8 flex-1">
                 <button
                   onClick={() => {
@@ -257,8 +258,8 @@ const RolesPage = () => {
 
                 <div className="flex-1 mr-12">
                   {isEditing ? (
-                    <div className="flex gap-8 items-start">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start">
+                      <div className="flex-1 w-full">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Nombre del Rol</label>
                         <input
                           type="text"
@@ -340,7 +341,7 @@ const RolesPage = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-12">
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-3 sm:p-12">
               <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-10">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
@@ -351,7 +352,7 @@ const RolesPage = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-8">
                   {modules.map(module => {
                     const allPerms = module.permissions.map(p => p.id);
                     const enabledCount = allPerms.filter(p => selectedRole.permisos?.includes(p)).length;

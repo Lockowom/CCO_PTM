@@ -165,63 +165,63 @@ const Shipping = () => {
       </div>
 
       <div className="bg-white backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200 overflow-hidden relative">
-        <div className="overflow-x-auto relative z-10">
-            <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto -mx-2 px-2 relative z-10">
+            <table className="w-full text-sm text-left min-w-[800px]">
                 <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                     <tr>
-                        <th className="px-4 py-4 font-bold tracking-wider">N.V</th>
-                        <th className="px-4 py-4 font-bold tracking-wider">Cliente</th>
-                        <th className="px-4 py-4 w-24 font-bold tracking-wider">Facturas</th>
-                        <th className="px-4 py-4 w-24 font-bold tracking-wider">Guía</th>
-                        <th className="px-4 py-4 w-32 font-bold tracking-wider">Empresa</th>
-                        <th className="px-4 py-4 w-32 font-bold tracking-wider">Transportista</th>
-                        <th className="px-4 py-4 w-24 font-bold tracking-wider">Flete ($)</th>
-                        <th className="px-4 py-4 w-24 font-bold tracking-wider">N° Envío</th>
-                        <th className="px-4 py-4 text-center font-bold tracking-wider">Acciones</th>
+                        <th className="px-2 sm:px-4 py-4 font-bold tracking-wider">N.V</th>
+                        <th className="px-2 sm:px-4 py-4 font-bold tracking-wider">Cliente</th>
+                        <th className="px-2 sm:px-4 py-4 w-24 font-bold tracking-wider">Facturas</th>
+                        <th className="px-2 sm:px-4 py-4 w-24 font-bold tracking-wider">Guía</th>
+                        <th className="px-2 sm:px-4 py-4 w-32 font-bold tracking-wider">Empresa</th>
+                        <th className="px-2 sm:px-4 py-4 w-32 font-bold tracking-wider">Transportista</th>
+                        <th className="px-2 sm:px-4 py-4 w-24 font-bold tracking-wider">Flete ($)</th>
+                        <th className="px-2 sm:px-4 py-4 w-24 font-bold tracking-wider">N° Envío</th>
+                        <th className="px-2 sm:px-4 py-4 text-center font-bold tracking-wider">Acciones</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-wms-border">
                     {filteredDeliveries.map((delivery) => (
                         <tr key={delivery.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-3 font-black text-slate-900">#{delivery.nv}</td>
-                            <td className="px-4 py-3 font-medium text-slate-700 truncate max-w-[150px]" title={delivery.cliente}>
+                            <td className="px-2 sm:px-4 py-3 font-black text-slate-900">#{delivery.nv}</td>
+                            <td className="px-2 sm:px-4 py-3 font-medium text-slate-700 truncate max-w-[150px]" title={delivery.cliente}>
                                 {delivery.cliente}
                             </td>
                             
                             {/* Campos Editables */}
                             {editingId === delivery.id ? (
                                 <>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.facturas} onChange={e => setEditForm({...editForm, facturas: e.target.value})} placeholder="Facturas" />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.guia} onChange={e => setEditForm({...editForm, guia: e.target.value})} placeholder="Guía" />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.empresa_transporte} onChange={e => setEditForm({...editForm, empresa_transporte: e.target.value})} placeholder="Empresa" />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.transportista} onChange={e => setEditForm({...editForm, transportista: e.target.value})} placeholder="Chofer" />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.valor_flete} onChange={e => setEditForm({...editForm, valor_flete: e.target.value})} placeholder="$" />
                                     </td>
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 sm:px-4 py-3">
                                         <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs text-slate-900 focus:border-wms-neon outline-none" value={editForm.num_envio_ot} onChange={e => setEditForm({...editForm, num_envio_ot: e.target.value})} placeholder="OT" />
                                     </td>
                                 </>
                             ) : (
                                 <>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.facturas || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.guia || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.empresa_transporte || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.transportista || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.valor_flete || '-'}</td>
-                                    <td className="px-4 py-3 text-slate-500 text-xs">{delivery.num_envio_ot || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.facturas || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.guia || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.empresa_transporte || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.transportista || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.valor_flete || '-'}</td>
+                                    <td className="px-2 sm:px-4 py-3 text-slate-500 text-xs">{delivery.num_envio_ot || '-'}</td>
                                 </>
                             )}
 
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-2 sm:px-4 py-3 text-center">
                                 {editingId === delivery.id ? (
                                     <div className="flex justify-center gap-2">
                                         <button onClick={() => handleSave(delivery.id)} disabled={saveMutation.isPending} className="text-wms-neon hover:bg-wms-neon/20 p-1 rounded transition-colors"><Check size={18}/></button>
@@ -237,7 +237,7 @@ const Shipping = () => {
                     ))}
                     {filteredDeliveries.length === 0 && !loading && (
                         <tr>
-                            <td colSpan="9" className="px-4 py-8 text-center text-slate-500">
+                            <td colSpan="9" className="px-2 sm:px-4 py-8 text-center text-slate-500">
                                 No se encontraron despachos
                             </td>
                         </tr>

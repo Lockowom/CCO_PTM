@@ -236,7 +236,7 @@ const ControlTower = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-7 gap-4 mb-6 relative z-10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 mb-6 relative z-10">
         <KPICard title="Total" value={stats.total} icon={Package} glowColor="slate" />
         <KPICard title="Pendientes" value={stats.pendientes} icon={Clock} glowColor="amber" />
         <KPICard title="En Ruta" value={stats.enRuta} icon={Truck} glowColor="blue" />
@@ -250,7 +250,7 @@ const ControlTower = () => {
       <div className="flex gap-6 flex-1 overflow-hidden relative z-10">
         
         {/* Panel Izquierdo: Rutas Activas */}
-        <div className="w-80 bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="w-80 max-w-[90vw] bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden relative">
           <div className="h-1 w-full bg-gradient-to-r from-indigo-500/50 to-indigo-500"></div>
           <div className="p-4 border-b border-slate-200 bg-slate-50/50">
             <h3 className="font-bold text-slate-900 flex items-center gap-2">
@@ -509,7 +509,7 @@ const ControlTower = () => {
         </div>
 
         {/* Panel Derecho: Alertas y Actividad */}
-        <div className="w-80 flex flex-col gap-6 relative z-10">
+        <div className="w-80 max-w-[90vw] flex flex-col gap-6 relative z-10">
           
           <div className="bg-white backdrop-blur-xl rounded-2xl border border-slate-200 shadow-2xl flex-1 flex flex-col overflow-hidden relative">
             <div className="h-1 w-full bg-gradient-to-r from-wms-alert/50 to-wms-alert"></div>

@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.1 | **Última actualización:** 2026-05-27
+> **Versión:** 1.4.4 | **Última actualización:** 2026-05-28
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -42,7 +42,7 @@ src/
 │   ├── Layout.jsx       # Layout principal con realtime global
 │   ├── Navbar.jsx       # Navegación con permisos dinámicos
 │   ├── ErrorBoundary.jsx# Captura errores React → Sentry
-│   └── ui/              # CommandPalette, ErrorReportWidget
+│   └── ui/              # CommandPalette, ErrorReportWidget, UpdateOverlay
 ├── constants/
 │   ├── estados.js       # Máquina de estados N.V. (12 estados)
 │   ├── permissions.js   # Mapa ruta → permiso (30+ rutas)
@@ -647,18 +647,25 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 ### OTA Updates (Capgo)
 **Config:** `autoUpdate: true` en capacitor.config.json
 
-**Flujo actualización:**
+**Flujo actualización (v1.4.2):**
 ```
 App inicia → notifyAppReady() → Capgo verifica versión en background
 → Si hay update: descarga automática → Evento downloadComplete
-→ Toast "Actualización descargada v{X}" → 3 segundos
+→ Callback onUpdateAvailable() notifica a App.jsx
+→ UpdateOverlay fullscreen se muestra (version + countdown 4s)
+→ Usuario puede pulsar "Actualizar Ahora" o esperar auto-apply
 → CapacitorUpdater.set({ id: bundleId }) → App se recarga
 → Si set() falla: fallback CapacitorUpdater.reload()
-→ Si todo falla: toast "Cierra y abre la app manualmente"
+→ Si reload() falla: window.location.reload()
 ```
 
+**Componentes:**
+- `src/services/mobileService.js` — Core OTA + Push init, exports `onUpdateAvailable(cb)` y `applyPendingUpdate(bundleId)`
+- `src/components/ui/UpdateOverlay.jsx` — Overlay fullscreen con countdown, progress bar, botón manual
+- Integrado en `App.jsx` → `AppContent()` con state `pendingUpdate`
+
 **Listeners registrados:**
-- `downloadComplete` → Aplica bundle y recarga
+- `downloadComplete` → Notifica UI overlay + auto-apply 4s
 - `downloadFailed` → Toast error, retry automático
 - `updateFailed` → Toast "versión anterior restaurada"
 
@@ -824,6 +831,36 @@ npm run test:coverage # Con cobertura
 | tms_usuarios | idx_usuarios_auth_uid | (auth_uid) | RLS helpers is_admin()/get_user_role() hacen lookup por auth_uid en cada query |
 | tms_usuarios | idx_usuarios_email | (email) | Login lookup por email en AuthContext |
 
+### pg_cron — Jobs automáticos (v1.4.4)
+| Job | Frecuencia | Acción |
+|-----|-----------|--------|
+| `refresh-dashboard-kpis` | Cada 5 min | REFRESH MATERIALIZED VIEW mv_dashboard_kpis |
+| `cleanup-accesos-90d` | Domingo 3am | DELETE tms_accesos > 90 días |
+| `cleanup-nv-eliminadas-60d` | Domingo 3am | DELETE tms_nv_eliminadas > 60 días |
+| `cleanup-presencia-stale` | Cada 6h | DELETE tms_usuarios_activos > 24h |
+| `vacuum-analyze-weekly` | Domingo 4am | VACUUM ANALYZE tablas grandes |
+| `reset-pg-stats-monthly` | Día 1, 5am | Reset pg_stat_statements |
+
+### pg_trgm — Búsqueda fuzzy (v1.4.4)
+Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GIN en: `tms_nv_diarias.cliente`, `tms_nv_diarias.descripcion_producto`, `tms_matriz_codigos.producto`, `tms_direcciones.razon_social`, `wms_ubicaciones.descripcion`, `tms_partidas.producto`.
+
+**RPC:** `fuzzy_search(p_table, p_column, p_query, p_limit, p_threshold)` — búsqueda universal con whitelist de tablas/columnas permitidas.
+
+### Vista Materializada — Dashboard KPIs (v1.4.4)
+`mv_dashboard_kpis`: Precalcula conteos por estado de NV. Se refresca cada 5 min via pg_cron.
+**RPC:** `get_dashboard_kpis()` → JSON con todos los KPIs instantáneamente.
+
+### Índices parciales (v1.4.4)
+| Tabla | Índice | Filtro |
+|-------|--------|--------|
+| tms_nv_diarias | idx_nv_activas | WHERE estado NOT IN ('DESPACHADO','ENTREGADO','FACTURADO') |
+| wms_ubicaciones | idx_ubicaciones_con_stock | WHERE cantidad > 0 |
+| tms_partidas | idx_partidas_con_stock | WHERE disponible > 0 |
+| tms_entregas | idx_entregas_activas | WHERE estado IN ('PENDIENTE','EN_RUTA') |
+
+### Función batch (v1.4.4)
+`batch_update_nv_estado(p_nv_ids UUID[], p_nuevo_estado TEXT)` — Actualiza N notas de venta en 1 sola llamada RPC en vez de N requests individuales.
+
 ### Recomendaciones de paginación
 - **SalesOrders**: Implementar paginación cursor-based cuando NVs > 500/día
 - **Queries/HistorialNV**: Ya usa .range() — correcto
@@ -847,6 +884,9 @@ npm run test:coverage # Con cobertura
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.4 | 2026-05-28 | **OPTIMIZACIONES SUPABASE FREE + INTEGRACIÓN FRONTEND**: **DB**: pg_cron (6 jobs auto), pg_trgm (6 índices GIN), vista materializada mv_dashboard_kpis (refresh 5min), 4 índices parciales. **RPCs**: get_dashboard_kpis(), fuzzy_search(), batch_update_nv_estado(). **Frontend**: Dashboard.jsx usa RPC get_dashboard_kpis() en vez de COUNT(*) sobre todas las NV — carga instantánea. Batches.jsx búsqueda fuzzy+exacta en paralelo — encuentra resultados con typos. SalesStatus.jsx fuzzy_search en campo cliente complementa ilike. Addresses.jsx fuzzy merge con búsqueda exacta. SalesOrders.jsx botón batch "Pasar todas a Picking" / "Despachar todas" usando batch_update_nv_estado RPC (1 call en vez de N) |
+| 1.4.3 | 2026-05-27 | **OVERHAUL RESPONSIVE COMPLETO (320-412px) — 30+ archivos**: **Infraestructura**: viewport-fit=cover en index.html, breakpoint `xs:360px` en tailwind.config.js. **Outbound**: SalesOrders tablas overflow-x-auto + min-w-[700px], cell padding px-2 sm:px-4 md:px-6, modal grid-cols-1 xs:2 sm:4. Picking tabla + picking process responsive. Shipping tabla responsive. PackingTV grid-cols-1 sm:2 lg:12 (stacks en móvil). **Inbound**: Entry/Reception/CubingRegistry padding + grids responsive, tabla overflow-x-auto. **Queries**: Batches search pl-10, SalesStatus NV text-3xl sm:5xl, HistorialNV/DispatchControl tablas min-w + padding, Heatmap/WmsLocations/Addresses responsive. **Admin**: Users/Tickets/DataImport/Roles/Views/UploadHistory/LocationManager/AdminMonitor/Cleanup — KPI grids grid-cols-2, tablas padding px-2 sm:px-4, modales responsive, tabs overflow-x-auto. **TMS**: Dashboard stats grid-cols-2, Drivers tabla responsive, RoutePlanning/YardManagement padding + grids. **PDA**: WarehousePDA touch targets min-h-[44px], inputs/buttons sizing responsive |
+| 1.4.2 | 2026-05-27 | **OTA UPDATE OVERLAY**: Reemplazo de toast por overlay fullscreen con countdown 4s + botón "Actualizar Ahora" + cadena fallback set→reload→location.reload. **RESPONSIVE MOBILE 320px**: Fix filter pills MobileApp (px-3 sm:px-5), modal max-h-[90vh] overflow, stat cards sizing. Navbar drawer max-w-[280px] en 320px. ControlTower KPI grid-cols-2 sm:4 lg:7. Dashboard tabla padding px-3 sm:px-6. Packing grid-cols-1 sm:3 |
 | 1.4.1 | 2026-05-27 | **FIX PERFORMANCE CRÍTICO**: QueryClient configurado con staleTime 2min + gcTime 10min + refetchOnWindowFocus:false. Debounce 800-1500ms en TODAS las suscripciones realtime (useRealtimeTable, PackingTV, ControlTower, SalesStatus, Users). Layout: toasts batch agrupados en ventana 2s — fix directo del freeze en uploads masivos de Farmapack/NV |
 | 1.4.0 | 2026-05-26 | **MIGRACIÓN AUTH + RLS**: Custom auth → Supabase Auth nativo. 21 usuarios migrados. AuthContext reescrito. Users.jsx via RPC. RLS 30/30 tablas. **TESTS**: Vitest configurado, 39 tests (syncManager 21, pickingStore 10, groupOrders 8). **ÍNDICES**: 6 índices compuestos agregados para queries críticas. **ESCALABILIDAD**: Plan documentado (paginación, realtime selectivo) |
 | 1.3.7 | 2026-05-26 | Rewrite completo syncManager: backoff exponencial con jitter, TTL 72h, status 'dead' en vez de borrado silencioso, soporte upsert batch, cola max 500 items, utilidades getFailedItems/retryItem/removeItem. Entry.jsx integrado con syncManager — offline enqueue automático vía enqueueUpsert + fallback en onError |

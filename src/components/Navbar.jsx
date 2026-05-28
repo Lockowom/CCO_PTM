@@ -354,7 +354,7 @@ const Navbar = () => {
         
         {/* Contenido del Menú (Drawer) */}
         <div
-          className={`absolute right-2 sm:right-4 top-[60px] sm:top-[85px] bottom-2 sm:bottom-4 w-[calc(100%-16px)] sm:w-[calc(100%-32px)] max-w-[320px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-500 ease-out
+          className={`absolute right-2 sm:right-4 top-[60px] sm:top-[85px] bottom-2 sm:bottom-4 w-[calc(100%-16px)] sm:w-[calc(100%-32px)] max-w-[280px] sm:max-w-[320px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-500 ease-out
             ${mobileMenuOpen ? 'translate-x-0 scale-100' : 'translate-x-8 scale-95'}`}
         >
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 space-y-4 sm:space-y-6">

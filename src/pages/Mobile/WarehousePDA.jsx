@@ -278,9 +278,9 @@ const WarehousePDA = () => {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex flex-col">
         {/* Top Bar */}
-        <div className="bg-white p-4 flex justify-between items-center shadow-md">
+        <div className="bg-white p-3 sm:p-4 flex justify-between items-center shadow-md">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold flex-shrink-0">
               {user?.email?.charAt(0).toUpperCase()}
             </div>
             <div className="text-xs">
@@ -296,7 +296,7 @@ const WarehousePDA = () => {
         </div>
 
         {/* Menu Grid */}
-        <div className="flex-1 p-4 grid grid-cols-2 gap-4 content-start mt-4">
+        <div className="flex-1 p-3 sm:p-4 grid grid-cols-2 gap-3 sm:gap-4 content-start mt-3 sm:mt-4">
           <MenuButton
             icon={<ClipboardList size={32} />}
             label="PICKING"
@@ -351,13 +351,13 @@ const WarehousePDA = () => {
         </div>
 
         {/* Main Info */}
-        <div className="flex-1 p-4 flex flex-col gap-4">
+        <div className="flex-1 p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
           {/* STEP 1: LOCATION */}
-          <div className={`p-4 rounded-xl border-2 transition-all ${
+          <div className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
             pickStep === 'SCAN_LOC' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
           }`}>
             <label className="block text-[10px] text-slate-500 uppercase">IR A UBICACIÓN</label>
-            <div className="text-4xl font-black text-yellow-400">{activeTask.location}</div>
+            <div className="text-3xl sm:text-4xl font-black text-yellow-400">{activeTask.location}</div>
           </div>
 
           {/* STEP 2: PRODUCT */}
@@ -384,7 +384,7 @@ const WarehousePDA = () => {
               {pickStep === 'CONFIRM_QTY' && (
                 <button
                   onClick={() => confirmQty(activeTask.qty_needed)}
-                  className="bg-yellow-400 text-black px-6 py-4 rounded-lg font-bold text-xl animate-pulse"
+                  className="bg-yellow-400 text-black px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-bold text-lg sm:text-xl animate-pulse min-h-[44px]"
                 >
                   CONFIRMAR
                 </button>
@@ -403,7 +403,7 @@ const WarehousePDA = () => {
                 type="text"
                 value={scannedValue}
                 onChange={e => setScannedValue(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500"
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500 min-h-[44px]"
                 placeholder="Escanear aquí..."
                 autoComplete="off"
               />
@@ -413,7 +413,7 @@ const WarehousePDA = () => {
                 type="button"
                 onClick={openCameraScanner}
                 disabled={isScanning}
-                className="px-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
+                className="px-4 min-w-[44px] min-h-[44px] bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
               >
                 <Camera size={20} />
               </button>
@@ -502,10 +502,10 @@ const WarehousePDA = () => {
               </div>
 
               <h2 className="text-xl font-black text-emerald-400 mt-2">CANTIDAD</h2>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => setPutawayData(prev => ({ ...prev, cantidad: Math.max(1, prev.cantidad - 1) }))}
-                  className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
+                  className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
                 >
                   <Minus size={24} className="text-white" />
                 </button>
@@ -518,7 +518,7 @@ const WarehousePDA = () => {
                 />
                 <button
                   onClick={() => setPutawayData(prev => ({ ...prev, cantidad: prev.cantidad + 1 }))}
-                  className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
+                  className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
                 >
                   <Plus size={24} className="text-white" />
                 </button>
@@ -557,13 +557,13 @@ const WarehousePDA = () => {
               <div className="flex gap-3 mt-auto">
                 <button
                   onClick={() => setPutawayStep('ENTER_QTY')}
-                  className="flex-1 bg-slate-700 text-white py-4 rounded-xl font-bold text-lg active:bg-slate-600"
+                  className="flex-1 bg-slate-700 text-white py-4 rounded-xl font-bold text-base sm:text-lg active:bg-slate-600 min-h-[44px]"
                 >
                   ATRÁS
                 </button>
                 <button
                   onClick={confirmPutaway}
-                  className="flex-1 bg-emerald-500 text-black py-4 rounded-xl font-bold text-lg active:bg-emerald-400 animate-pulse"
+                  className="flex-1 bg-emerald-500 text-black py-4 rounded-xl font-bold text-base sm:text-lg active:bg-emerald-400 animate-pulse min-h-[44px]"
                 >
                   CONFIRMAR
                 </button>
@@ -583,7 +583,7 @@ const WarehousePDA = () => {
                   type="text"
                   value={scannedValue}
                   onChange={e => setScannedValue(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-emerald-400"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-emerald-400 min-h-[44px]"
                   placeholder={putawayStep === 'SCAN_LOC' ? 'Escanear ubicación...' : 'Escanear producto...'}
                   autoComplete="off"
                 />
@@ -593,7 +593,7 @@ const WarehousePDA = () => {
                   type="button"
                   onClick={openCameraScanner}
                   disabled={isScanning}
-                  className="px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
+                  className="px-4 min-w-[44px] min-h-[44px] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
                 >
                   <Camera size={20} />
                 </button>
@@ -667,10 +667,10 @@ const WarehousePDA = () => {
 const MenuButton = ({ icon, label, color, onClick }) => (
   <button
     onClick={onClick}
-    className={`${color} text-slate-900 p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center gap-3 h-40`}
+    className={`${color} text-slate-900 p-4 sm:p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center gap-2 sm:gap-3 h-32 sm:h-40 min-h-[44px]`}
   >
     {icon}
-    <span className="font-bold text-sm tracking-wide">{label}</span>
+    <span className="font-bold text-xs sm:text-sm tracking-wide text-center leading-tight">{label}</span>
   </button>
 );
 

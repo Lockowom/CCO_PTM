@@ -278,14 +278,14 @@ const HistorialNV = () => {
           <table className="w-full text-sm text-left min-w-[700px]">
             <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] sm:text-xs tracking-wider font-bold border-b border-slate-200">
               <tr>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">N.V</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Fecha</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Cliente</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Vendedor</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Producto</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Cant.</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-center">Estado</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Acciones</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">N.V</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">Fecha</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">Cliente</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">Vendedor</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">Producto</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">Cant.</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-center">Estado</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-wms-border">
@@ -322,30 +322,30 @@ const HistorialNV = () => {
                   const config = getEstadoConfig(order.estado);
                   return (
                     <tr key={order.id || order.nv} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">
                         <span className="font-black text-indigo-400 text-lg">#{order.nv}</span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500 font-medium">
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 font-medium">
                         {order.fecha_emision ? new Date(order.fecha_emision).toLocaleDateString() : '-'}
                       </td>
-                      <td className="px-6 py-4 font-bold text-slate-900 truncate max-w-[200px]" title={order.cliente}>
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-slate-900 truncate max-w-[200px]" title={order.cliente}>
                         {order.cliente}
                       </td>
-                      <td className="px-6 py-4 text-slate-500 text-xs font-medium uppercase">{order.vendedor}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 text-xs font-medium uppercase">{order.vendedor}</td>
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">
                         <div className="font-mono font-bold text-slate-700">{order.codigo_producto}</div>
                         <div className="text-xs text-slate-500 truncate max-w-[250px] font-medium">{order.descripcion_producto}</div>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">
                         <div className="font-black text-slate-900 text-lg">{order.cantidad}</div>
                         <div className="text-[10px] text-slate-500 font-bold uppercase">{order.unidad}</div>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
                           <config.icon size={12} /> {config.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">
                         <button 
                           onClick={() => setSelectedOrder(order)}
                           className="bg-slate-50 hover:bg-indigo-500/20 text-slate-500 hover:text-indigo-400 p-2 rounded-xl border border-slate-200 hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(99,102,241,0.3)]"
@@ -376,7 +376,7 @@ const HistorialNV = () => {
             {(() => {
               const config = getEstadoConfig(selectedOrder.estado);
               return (
-                <div className={`bg-slate-50 p-8 flex justify-between items-start border-b border-slate-200 relative overflow-hidden`}>
+                <div className={`bg-slate-50 p-4 sm:p-6 md:p-8 flex justify-between items-start border-b border-slate-200 relative overflow-hidden`}>
                   <div className={`absolute top-0 right-0 w-48 h-48 ${config.lightBg} rounded-full blur-3xl`}></div>
                   <div className="flex items-center gap-4 relative z-10">
                     <div className={`${config.lightBg} border ${config.borderColor} p-3 rounded-2xl ${config.textColor} shadow-lg`}>
@@ -402,8 +402,8 @@ const HistorialNV = () => {
               );
             })()}
             
-            <div className="p-8 space-y-8 bg-white">
-              <div className="grid grid-cols-3 gap-6">
+            <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-inner">
                   <div className="flex items-center gap-2 mb-2 text-slate-500">
                     <Calendar size={16} />
@@ -425,7 +425,7 @@ const HistorialNV = () => {
                 </div>
               </div>
 
-              <div className="bg-indigo-900/20 p-6 rounded-3xl border border-indigo-500/30 relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.1)]">
+              <div className="bg-indigo-900/20 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-500/30 relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.1)]">
                 <div className="absolute top-0 right-0 p-4 opacity-5 text-indigo-300">
                   <Package size={120} />
                 </div>

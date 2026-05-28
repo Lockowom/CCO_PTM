@@ -178,9 +178,9 @@ const Heatmap = () => {
     <div ref={containerRef} className="h-full flex flex-col bg-[#F8F9FB] overflow-hidden">
 
       {/* Header */}
-      <header className="shrink-0 bg-white border-b border-slate-200 px-6 pt-5 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+      <header className="shrink-0 bg-white border-b border-slate-200 px-3 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-11 h-11 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-900/20">
               <Grid size={20} />
             </div>
@@ -202,9 +202,9 @@ const Heatmap = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Nivel:</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Nivel:</span>
             <div className="flex bg-slate-100 p-0.5 rounded-lg">
               {Array.from({ length: MAX_LEVELS }, (_, i) => i + 1).map(lvl => (
                 <button key={lvl} onClick={() => setSelectedLevel(lvl)}
@@ -216,7 +216,7 @@ const Heatmap = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rack:</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Rack:</span>
             <div className="flex bg-slate-100 p-0.5 rounded-lg flex-wrap">
               <button onClick={() => setSelectedRack(null)}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${!selectedRack ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
@@ -248,7 +248,7 @@ const Heatmap = () => {
       {/* Main */}
       <div className="flex-1 overflow-y-auto">
         {/* KPIs */}
-        <div className="px-6 pt-4 pb-2">
+        <div className="px-3 sm:px-6 pt-4 pb-2">
           <div className="hm-fade grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="bg-white border border-slate-200 rounded-2xl p-5">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ocupación Total</p>
@@ -285,7 +285,7 @@ const Heatmap = () => {
         </div>
 
         {/* Rack Cards */}
-        <div className="px-6 py-2">
+        <div className="px-3 sm:px-6 py-2">
           <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2 hm-fade">
             {rackSummary.map(rack => (
               <button key={rack.id} onClick={() => setSelectedRack(selectedRack === rack.id ? null : rack.id)}
@@ -310,7 +310,7 @@ const Heatmap = () => {
         </div>
 
         {/* Matrix Grid */}
-        <div className="px-6 py-3 space-y-4">
+        <div className="px-3 sm:px-6 py-3 space-y-4">
           {loading && filteredRacks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mb-4" />
@@ -393,7 +393,7 @@ const Heatmap = () => {
         </div>
 
         {/* Legend */}
-        <div className="px-6 pb-8">
+        <div className="px-3 sm:px-6 pb-8">
           <div className="hm-fade bg-white border border-slate-200 rounded-2xl p-5">
             <h4 className="text-xs font-extrabold text-slate-900 mb-3">Escala de Color</h4>
             <div className="flex items-center gap-4 flex-wrap">

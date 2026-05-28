@@ -121,12 +121,12 @@ const AdminMonitor = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Conectados</p>
-              <p className="text-3xl font-black text-emerald-600 mt-1">{onlineCount}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold truncate">Conectados</p>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{onlineCount}</p>
             </div>
             <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
               <Wifi size={24} className="text-emerald-500" />
@@ -134,11 +134,11 @@ const AdminMonitor = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Inactivos</p>
-              <p className="text-3xl font-black text-amber-500 mt-1">{idleCount}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold truncate">Inactivos</p>
+              <p className="text-2xl sm:text-3xl font-black text-amber-500 mt-1">{idleCount}</p>
             </div>
             <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
               <Clock size={24} className="text-amber-400" />
@@ -146,11 +146,11 @@ const AdminMonitor = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Usuarios</p>
-              <p className="text-3xl font-black text-slate-800 mt-1">{totalCount}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold truncate">Total Usuarios</p>
+              <p className="text-2xl sm:text-3xl font-black text-slate-800 mt-1">{totalCount}</p>
             </div>
             <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
               <Users size={24} className="text-slate-500" />
@@ -158,11 +158,11 @@ const AdminMonitor = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Módulos Activos</p>
-              <p className="text-3xl font-black text-indigo-600 mt-1">{Object.keys(moduleGroups).length}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-semibold truncate">Módulos Activos</p>
+              <p className="text-2xl sm:text-3xl font-black text-indigo-600 mt-1">{Object.keys(moduleGroups).length}</p>
             </div>
             <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
               <Monitor size={24} className="text-indigo-500" />
@@ -214,17 +214,17 @@ const AdminMonitor = () => {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
               <tr>
-                <th className="px-5 py-4 font-bold tracking-wider">Usuario</th>
-                <th className="px-5 py-4 font-bold tracking-wider">Estado</th>
-                <th className="px-5 py-4 font-bold tracking-wider">Módulo Actual</th>
-                <th className="px-5 py-4 font-bold tracking-wider">Sesión</th>
-                <th className="px-5 py-4 font-bold tracking-wider">Última Actividad</th>
+                <th className="px-2 sm:px-5 py-3 sm:py-4 font-bold tracking-wider">Usuario</th>
+                <th className="px-2 sm:px-5 py-3 sm:py-4 font-bold tracking-wider">Estado</th>
+                <th className="px-2 sm:px-5 py-3 sm:py-4 font-bold tracking-wider">Módulo Actual</th>
+                <th className="px-2 sm:px-5 py-3 sm:py-4 font-bold tracking-wider">Sesión</th>
+                <th className="px-2 sm:px-5 py-3 sm:py-4 font-bold tracking-wider">Última Actividad</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-5 py-4">
+                  <td className="px-2 sm:px-5 py-3 sm:py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs uppercase">
                         {(u.nombre || u.email || '?').slice(0, 2)}
@@ -235,7 +235,7 @@ const AdminMonitor = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-2 sm:px-5 py-3 sm:py-4">
                     <div className="flex items-center gap-2">
                       <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(u.last_seen)} ${isOnline(u.last_seen) ? 'animate-pulse' : ''}`}></div>
                       <span className={`text-xs font-medium ${
@@ -245,7 +245,7 @@ const AdminMonitor = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-2 sm:px-5 py-3 sm:py-4">
                     {(isOnline(u.last_seen) || isIdle(u.last_seen)) && u.current_module ? (
                       <div className="flex items-center gap-2">
                         <MapPin size={14} className="text-indigo-400" />
@@ -255,7 +255,7 @@ const AdminMonitor = () => {
                       <span className="text-slate-400 text-xs">-</span>
                     )}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-2 sm:px-5 py-3 sm:py-4">
                     {(isOnline(u.last_seen) || isIdle(u.last_seen)) && u.session_start ? (
                       <div className="flex items-center gap-2">
                         <Timer size={14} className="text-slate-400" />
@@ -265,7 +265,7 @@ const AdminMonitor = () => {
                       <span className="text-slate-400 text-xs">-</span>
                     )}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-2 sm:px-5 py-3 sm:py-4">
                     <span className="text-xs text-slate-500">{getLastSeenText(u.last_seen)}</span>
                   </td>
                 </tr>

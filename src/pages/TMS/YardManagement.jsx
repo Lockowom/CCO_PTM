@@ -121,7 +121,7 @@ const YardManagement = () => {
         </div>
         
         <div className="flex gap-4">
-          <div className="bg-white backdrop-blur-xl px-6 py-3 rounded-2xl border border-slate-200 shadow-2xl flex items-center gap-4">
+          <div className="bg-white backdrop-blur-xl px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xl flex items-center gap-3 sm:gap-4">
             <div className="text-right">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">En Espera</p>
               <p className="text-2xl font-black text-wms-alert leading-none">{queue.length}</p>
@@ -137,7 +137,7 @@ const YardManagement = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 relative z-10">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-8 relative z-10">
         
         {/* Columna Izquierda: Cola de Espera */}
         <div className="xl:col-span-1 space-y-4">
@@ -193,13 +193,13 @@ const YardManagement = () => {
 
         {/* Columna Derecha: Visualización de Andenes */}
         <div className="xl:col-span-3">
-          <div className="bg-slate-50/50 rounded-3xl p-8 border border-slate-200 relative overflow-hidden min-h-[600px] shadow-inner">
+          <div className="bg-slate-50/50 rounded-2xl sm:rounded-3xl p-3 sm:p-8 border border-slate-200 relative overflow-hidden min-h-[400px] sm:min-h-[600px] shadow-inner">
             {/* Warehouse Background Decor */}
             <div className="absolute top-0 left-0 w-full h-8 bg-white border-b-4 border-slate-200 flex items-center justify-center">
               <span className="text-[10px] font-black text-slate-600 tracking-[1em]">WAREHOUSE WALL</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mt-8">
               {docks.map(dock => (
                 <div 
                   key={dock.id}

@@ -245,10 +245,10 @@ const WmsLocations = () => {
   return (
     <div className="h-full flex flex-col bg-[#F8F9FB] overflow-hidden">
 
-      <header className="shrink-0 bg-white border-b border-slate-200 px-6 pt-5 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Explorador de Ubicaciones</h1>
+      <header className="shrink-0 bg-white border-b border-slate-200 px-3 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight">Explorador de Ubicaciones</h1>
             <p className="text-xs text-slate-400 mt-0.5 font-medium">
               {stats.ocupacion}% ocupación · {summaryStats.totalLocations} ubicaciones · {summaryStats.totalItems} registros · {summaryStats.totalStock.toLocaleString()} uds
             </p>
@@ -256,10 +256,10 @@ const WmsLocations = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={exportCSV}
-              className="flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors active:scale-[0.97]"
+              className="flex items-center gap-2 bg-slate-800 text-white px-3 sm:px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors active:scale-[0.97]"
             >
               <Download size={16} />
-              Exportar
+              <span className="hidden sm:inline">Exportar</span>
             </button>
             <button
               onClick={() => fetchWarehouseData()}
@@ -314,14 +314,14 @@ const WmsLocations = () => {
       </header>
 
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-6 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-white/50 shrink-0">
+        <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-3 sm:px-6 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-white/50 shrink-0">
           <span className="flex items-center gap-1"><MapPin size={11} /> Ubicación</span>
           <span className="w-[100px]">Desglose</span>
           <span className="w-[200px]">Producto</span>
           <span className="w-[120px] text-right">Stock</span>
         </div>
 
-        <main ref={parentRef} className="flex-1 overflow-y-auto px-4 py-3">
+        <main ref={parentRef} className="flex-1 overflow-y-auto px-2 sm:px-4 py-3">
           {loading && filteredGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32">
               <div className="w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-6" />

@@ -427,22 +427,22 @@ const Picking = () => {
             <span className="text-xs font-bold bg-slate-50 text-slate-700 px-2 py-1 rounded-md border border-slate-200">{nvFiltradas.length} órdenes</span>
           </div>
 
-          <div className="hidden md:block overflow-x-auto relative z-10">
-            <table className="w-full text-sm">
+          <div className="hidden md:block overflow-x-auto -mx-2 px-2 relative z-10">
+            <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-4 text-left font-bold tracking-wider">N.V.</th>
-                  <th className="px-6 py-4 text-left font-bold tracking-wider">Cliente</th>
-                  <th className="px-6 py-4 text-left font-bold tracking-wider">Detalle</th>
-                  <th className="px-6 py-4 text-center font-bold tracking-wider">Estado</th>
-                  <th className="px-6 py-4 text-left font-bold tracking-wider">Operador</th>
-                  <th className="px-6 py-4 text-right font-bold tracking-wider">Acción</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-left font-bold tracking-wider">N.V.</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-left font-bold tracking-wider">Cliente</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-left font-bold tracking-wider">Detalle</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-center font-bold tracking-wider">Estado</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-left font-bold tracking-wider">Operador</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-4 text-right font-bold tracking-wider">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-wms-border">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
+                    <td colSpan="6" className="px-2 sm:px-4 md:px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <RefreshCw className="animate-spin text-wms-neon" size={24} />
                         <span className="text-xs font-medium text-slate-500">Cargando órdenes...</span>
@@ -451,7 +451,7 @@ const Picking = () => {
                   </tr>
                 ) : nvFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                    <td colSpan="6" className="px-2 sm:px-4 md:px-6 py-12 text-center text-slate-500">
                       <Package size={32} className="mx-auto mb-2 opacity-40" />
                       <p>No hay N.V. pendientes de picking</p>
                     </td>
@@ -459,19 +459,19 @@ const Picking = () => {
                 ) : (
                   nvFiltradas.map((nv, index) => (
                     <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4 font-black text-slate-900">
+                      <td className="px-2 sm:px-4 md:px-6 py-4 font-black text-slate-900">
                         <div className="flex items-center gap-2">
                           <FileText size={16} className="text-slate-500" />
                           #{nv.nv}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-2 sm:px-4 md:px-6 py-4">
                         <p className="font-bold text-slate-900">{nv.cliente}</p>
                         <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
                           <User size={10} /> {nv.vendedor || 'Vendedor Web'}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-2 sm:px-4 md:px-6 py-4">
                         <div className="flex items-center gap-2">
                           <span className="bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-md text-xs font-bold border border-indigo-500/30">
                             {nv.total_items} items
@@ -481,7 +481,7 @@ const Picking = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-2 sm:px-4 md:px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${nv.estado === 'Aprobada'
                           ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                           : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
@@ -489,7 +489,7 @@ const Picking = () => {
                           {nv.estado === 'Aprobada' ? 'PENDIENTE' : 'EN PROCESO'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-2 sm:px-4 md:px-6 py-4">
                         {nv.usuario_nombre ? (
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xs font-bold">
@@ -503,7 +503,7 @@ const Picking = () => {
                           <span className="text-xs text-slate-500 italic font-medium px-2 py-1 rounded-md bg-slate-50 border border-slate-200">Sin asignar</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 sm:px-4 md:px-6 py-4 text-right">
                         {(!nv.usuario_asignado || nv.usuario_asignado === user.id) ? (
                           <button
                             onClick={() => iniciarPicking(nv)}
@@ -617,10 +617,10 @@ const Picking = () => {
 
   return (
     <div ref={containerRef} className="space-y-4 sm:space-y-6 bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6">
-      <div className="bg-white backdrop-blur-xl rounded-3xl p-6 text-slate-900 shadow-2xl relative overflow-hidden border border-slate-200">
+      <div className="bg-white backdrop-blur-xl rounded-2xl sm:rounded-3xl p-3 sm:p-6 text-slate-900 shadow-2xl relative overflow-hidden border border-slate-200">
         <div className="absolute top-0 right-0 w-64 h-64 bg-wms-neon/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-        <div className="flex justify-between items-start mb-8 relative z-10">
+        <div className="flex justify-between items-start mb-4 sm:mb-8 relative z-10">
           <button
             onClick={cancelarPicking}
             className="flex items-center gap-2 text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold uppercase tracking-wide"
@@ -637,7 +637,7 @@ const Picking = () => {
 
         <div className="text-center relative z-10">
           <p className="text-slate-500 text-sm mb-2 font-medium tracking-wide uppercase">Picking Nota de Venta</p>
-          <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tighter text-slate-900">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-8 tracking-tighter text-slate-900">
             #{nvActiva?.nv}
           </h1>
         </div>
@@ -659,7 +659,7 @@ const Picking = () => {
             const isComplete = status === 'COMPLETO' || status === 'PARCIAL';
 
             return (
-              <div key={item.id} className={`bg-white backdrop-blur-xl rounded-2xl p-5 border transition-all shadow-xl group ${isComplete
+              <div key={item.id} className={`bg-white backdrop-blur-xl rounded-2xl p-3 sm:p-5 border transition-all shadow-xl group ${isComplete
                 ? 'border-wms-neon bg-emerald-900/10'
                 : status === 'ESPERA'
                   ? 'border-amber-500/50 bg-amber-900/10'
@@ -698,7 +698,7 @@ const Picking = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-3 min-w-[140px]">
+                  <div className="flex flex-col items-end gap-3 min-w-[100px] sm:min-w-[140px]">
                     <div className="text-right">
                       <span className="text-xs font-bold text-slate-500 uppercase">Solicitado</span>
                       <p className="text-3xl font-black text-slate-900">{item.cantidad}</p>
@@ -783,7 +783,7 @@ const Picking = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white backdrop-blur-xl rounded-2xl p-6 border border-slate-200 shadow-2xl sticky top-6">
+          <div className="bg-white backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-2xl sticky top-6">
             <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-200 pb-4">
               <User size={20} className="text-indigo-400" />
               Datos del Cliente

@@ -65,7 +65,7 @@ const Cleanup = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 p-3 sm:p-0">
       <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
         <div className="flex items-start">
           <AlertTriangle className="text-red-500 mr-3 flex-shrink-0" size={24} />
@@ -79,7 +79,7 @@ const Cleanup = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
         <h4 className="text-slate-800 font-bold mb-4 flex items-center gap-2">
           <Trash2 size={20} className="text-slate-500" /> Selecciona qué datos eliminar
         </h4>

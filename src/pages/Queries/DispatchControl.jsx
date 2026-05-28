@@ -255,17 +255,17 @@ const DispatchControl = () => {
       {/* Tabla */}
       <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative z-10">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[700px]">
             <thead className="bg-slate-50/80 text-slate-500 uppercase text-xs tracking-wider border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 font-bold">Fecha Desp.</th>
-                <th className="px-6 py-4 font-bold">Guía</th>
-                <th className="px-6 py-4 font-bold">NV</th>
-                <th className="px-6 py-4 font-bold">Cliente</th>
-                <th className="px-6 py-4 font-bold">Transporte</th>
-                <th className="px-6 py-4 font-bold text-right">Bultos</th>
-                <th className="px-6 py-4 font-bold text-right">Flete</th>
-                <th className="px-6 py-4 font-bold text-center">Detalle</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold">Fecha Desp.</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold">Guía</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold">NV</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold">Cliente</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold">Transporte</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-right">Bultos</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-right">Flete</th>
+                <th className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-center">Detalle</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-wms-border">
@@ -299,24 +299,24 @@ const DispatchControl = () => {
               ) : (
                 filteredRecords.map((record, index) => (
                   <tr key={index} className="hover:bg-white/50 transition-colors group">
-                    <td className="px-6 py-4 text-slate-500 text-xs font-mono font-bold">
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 text-xs font-mono font-bold">
                       {record.fecha_despacho ? new Date(record.fecha_despacho).toLocaleDateString() : '-'}
                     </td>
-                    <td className="px-6 py-4 font-black text-rose-400 text-base">{record.guia}</td>
-                    <td className="px-6 py-4 font-mono text-xs font-bold text-indigo-400">#{record.nv}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900 truncate max-w-[200px]" title={record.cliente}>
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-black text-rose-400 text-base">{record.guia}</td>
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-mono text-xs font-bold text-indigo-400">#{record.nv}</td>
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-slate-900 truncate max-w-[200px]" title={record.cliente}>
                       {record.cliente}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-500 truncate max-w-[150px]">
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-xs font-bold text-slate-500 truncate max-w-[150px]">
                       {record.empresa_transporte || record.transportista}
                     </td>
-                    <td className="px-6 py-4 text-right font-black text-slate-900 text-lg">
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right font-black text-slate-900 text-lg">
                       {record.bultos}
                     </td>
-                    <td className="px-6 py-4 text-right font-mono font-bold text-emerald-400">
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right font-mono font-bold text-emerald-400">
                       {record.valor_flete > 0 ? formatCurrency(record.valor_flete) : '-'}
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-center">
                       <button
                         onClick={() => setSelectedRecord(record)}
                         className="bg-slate-50 hover:bg-rose-500/20 border border-slate-200 hover:border-rose-500/30 text-slate-500 hover:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-all"
@@ -352,9 +352,9 @@ const DispatchControl = () => {
               </button>
             </div>
 
-            <div className="p-8 space-y-8">
+            <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
               {/* Fechas */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-200 shadow-inner">
                   <div className="flex items-center gap-2 mb-2">
                     <Calendar size={16} className="text-slate-500" />
@@ -382,7 +382,7 @@ const DispatchControl = () => {
                   <p className="text-2xl font-black text-slate-900">{selectedRecord.cliente}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">Nota de Venta</label>
                     <div className="flex items-center gap-2">
@@ -398,14 +398,14 @@ const DispatchControl = () => {
               </div>
 
               {/* Logística */}
-              <div className="bg-indigo-500/10 p-6 rounded-2xl border border-indigo-500/20 relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.05)]">
+              <div className="bg-indigo-500/10 p-4 sm:p-6 rounded-2xl border border-indigo-500/20 relative overflow-hidden shadow-[0_0_20px_rgba(79,70,229,0.05)]">
                 <div className="absolute -right-10 -bottom-10 opacity-5 text-indigo-400">
                   <MapPin size={150} />
                 </div>
                 <h4 className="text-xs font-black text-indigo-400 uppercase tracking-wider mb-6 flex items-center gap-2 relative z-10">
                   <MapPin size={16} /> Información Logística
                 </h4>
-                <div className="grid grid-cols-2 gap-y-6 gap-x-8 relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 sm:gap-y-6 gap-x-4 sm:gap-x-8 relative z-10">
                   <div>
                     <p className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-wider mb-1">Empresa Transporte</p>
                     <p className="font-black text-indigo-300 text-lg leading-tight">{selectedRecord.empresa_transporte || '-'}</p>

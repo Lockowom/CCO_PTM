@@ -420,7 +420,7 @@ export default function LocationManager() {
           </div>
 
           {/* Rack Filter */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap overflow-x-auto no-scrollbar">
             <Filter size={14} className="text-slate-400" />
             <button
               onClick={() => setRackFilter('')}

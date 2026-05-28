@@ -39,15 +39,15 @@ const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
     red: 'from-red-500 to-rose-500 shadow-red-200',
   };
   return (
-    <div className="bg-white border border-slate-200/80 rounded-xl p-4 hover:shadow-md transition-all group">
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
-          <Icon size={15} className="text-white" />
+    <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all group">
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+          <Icon size={14} className="text-white" />
         </div>
       </div>
-      <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
-      {sub && <p className="text-[11px] text-slate-400 font-medium mt-1.5">{sub}</p>}
+      <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
+      {sub && <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">{sub}</p>}
     </div>
   );
 };
@@ -176,7 +176,7 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl ${status.bg} flex items-center justify-center`}>
               <MessageSquare size={18} className={status.text} />
@@ -191,9 +191,9 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Meta Info */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
             <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Estado</p>
               {isAdmin ? (
@@ -312,13 +312,13 @@ const CreateModal = ({ onClose, onCreate }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
               <AlertCircle size={18} className="text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-lg">Nuevo Ticket</h3>
+              <h3 className="font-bold text-slate-900 text-base sm:text-lg">Nuevo Ticket</h3>
               <p className="text-xs text-slate-400">Reportar un incidente o solicitud</p>
             </div>
           </div>
@@ -327,7 +327,7 @@ const CreateModal = ({ onClose, onCreate }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Asunto */}
           <div>
             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Asunto</label>
@@ -644,7 +644,7 @@ const Tickets = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+      <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 mb-5">
         <KpiCell label="Pendientes" value={stats.pendientes} icon={Clock} color="amber" sub="Esperando atención" />
         <KpiCell label="En Proceso" value={stats.enProceso} icon={Zap} color="blue" sub="Siendo atendidos" />
         <KpiCell label="Resueltos" value={stats.resueltos} icon={CheckCircle} color="emerald" sub="Completados" />
@@ -673,7 +673,7 @@ const Tickets = () => {
           </div>
 
           {/* Status Tabs */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5">
+          <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5 overflow-x-auto no-scrollbar">
             {[
               { key: 'ALL', label: 'Todos', count: stats.total },
               { key: 'PENDIENTE', label: 'Pendientes', count: stats.pendientes },
@@ -683,7 +683,7 @@ const Tickets = () => {
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`px-3 py-2 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-2 rounded-md text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
                   filter === tab.key
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'

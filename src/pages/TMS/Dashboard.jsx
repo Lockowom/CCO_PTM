@@ -109,18 +109,18 @@ const DashboardTMS = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-wide">TMS Control Center</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {[
           { title: 'Vehículos en Ruta', value: tmsData?.vehiculosEnRuta || '0', icon: Truck, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
           { title: 'Entregas Pendientes', value: tmsData?.entregasPendientes || '0', icon: MapPin, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
           { title: 'Alertas de Retraso', value: tmsData?.alertasRetraso || '0', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
           { title: 'Tiempo Promedio', value: tmsData?.tiempoPromedio || '--', icon: Clock, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
         ].map((stat, i) => (
-          <div key={i} className={`tms-card ${stat.bg} ${stat.border} border rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden group`}>
+          <div key={i} className={`tms-card ${stat.bg} ${stat.border} border rounded-xl sm:rounded-2xl p-3 sm:p-6 backdrop-blur-xl relative overflow-hidden group`}>
             <div className="flex justify-between items-start relative z-10">
-              <div>
-                <p className="text-slate-500 text-sm font-medium mb-1">{stat.title}</p>
-                <h3 className="text-3xl font-black text-slate-900">{stat.value}</h3>
+              <div className="min-w-0">
+                <p className="text-slate-500 text-xs sm:text-sm font-medium mb-1 truncate">{stat.title}</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900">{stat.value}</h3>
               </div>
               <div className="p-3 bg-slate-50/50 rounded-xl">
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -131,10 +131,10 @@ const DashboardTMS = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <div className="lg:col-span-2 tms-card bg-slate-50/50 border border-slate-200 rounded-2xl p-6 backdrop-blur-xl flex flex-col">
           <h2 className="text-lg font-bold text-slate-900 mb-4">Mapa de Operaciones en Vivo</h2>
-          <div className="flex-1 min-h-[400px] bg-white/50 rounded-xl border border-slate-300/50 relative overflow-hidden z-0">
+          <div className="flex-1 min-h-[250px] sm:min-h-[400px] bg-white/50 rounded-xl border border-slate-300/50 relative overflow-hidden z-0">
              <MapContainer 
                center={[-33.4489, -70.6693]} 
                zoom={11} 

@@ -507,7 +507,7 @@ const Reception = () => {
       {view === 'dashboard' && (
         <>
           {/* KPI Strip */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-px bg-slate-200 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+          <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-6 gap-px bg-slate-200 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
             <KpiCell label="Recepciones" value={stats.total} sub={hasActiveFilters ? `de ${stats.globalTotal}` : null} />
             <KpiCell label="En Revisión" value={stats.enRevision} accent="text-amber-600" />
             <KpiCell label="Completados" value={stats.completados} accent="text-teal-600" />
@@ -725,10 +725,10 @@ const Reception = () => {
 
       {/* ==================== FORM VIEW ==================== */}
       {view === 'form' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* HEADER FORM */}
-          <div className="xl:col-span-1 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+          <div className="xl:col-span-1 space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200">
               <h3 className="font-black text-slate-900 text-lg mb-5 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 text-sm font-black">1</span>
                 DATOS DE RECEPCIÓN
@@ -796,9 +796,9 @@ const Reception = () => {
           {/* ITEMS FORM + LIST */}
           <div className="xl:col-span-2 space-y-6">
             {/* Add Item Form — ESPACIOSO */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-emerald-200">
-              <h3 className="font-black text-slate-900 text-xl mb-6 flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-emerald-600 text-base font-black">2</span>
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg border-2 border-emerald-200">
+              <h3 className="font-black text-slate-900 text-lg sm:text-xl mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-emerald-600 text-sm sm:text-base font-black">2</span>
                 AGREGAR ÍTEMS
               </h3>
 
@@ -917,7 +917,7 @@ const Reception = () => {
                 )}
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto">
+              <div className="max-h-[400px] overflow-y-auto overflow-x-auto">
                 {items.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
                     <Box size={40} className="mx-auto mb-2 opacity-30" />
@@ -925,16 +925,16 @@ const Reception = () => {
                     <p className="text-xs">Usa el formulario de arriba para agregar productos</p>
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm min-w-[500px]">
                     <thead>
                       <tr className="bg-emerald-700 text-white text-xs uppercase">
-                        <th className="px-3 py-2 text-left">#</th>
-                        <th className="px-3 py-2 text-left">REFF</th>
-                        <th className="px-3 py-2 text-center">Cant</th>
-                        <th className="px-3 py-2 text-left">Serie</th>
-                        <th className="px-3 py-2 text-left">Lote</th>
-                        <th className="px-3 py-2 text-left">Box</th>
-                        <th className="px-3 py-2 text-center">-</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">#</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">REFF</th>
+                        <th className="px-2 sm:px-3 py-2 text-center">Cant</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">Serie</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">Lote</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">Box</th>
+                        <th className="px-2 sm:px-3 py-2 text-center">-</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -984,10 +984,10 @@ const Reception = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDetailModal(null)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
-            <div className="p-6 bg-slate-800 text-white flex justify-between items-start">
-              <div>
-                <h3 className="text-xl font-black">Recepción — {detailModal.proveedor}</h3>
-                <div className="flex gap-4 mt-2 text-sm text-slate-300">
+            <div className="p-4 sm:p-6 bg-slate-800 text-white flex justify-between items-start">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg sm:text-xl font-black truncate">Recepción — {detailModal.proveedor}</h3>
+                <div className="flex flex-wrap gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-slate-300">
                   <span>📅 {formatDate(detailModal.fecha_recepcion)}</span>
                   {detailModal.oc && <span>📋 OC: {detailModal.oc}</span>}
                   <span>📦 {detailModal.cant_bultos || 0} bultos</span>
@@ -1024,23 +1024,23 @@ const Reception = () => {
               <table className="w-full text-sm">
                 <thead className="sticky top-0">
                   <tr className="bg-purple-800 text-white text-xs uppercase tracking-wider">
-                    <th className="px-4 py-3 text-left font-bold">CÓDIGO</th>
-                    <th className="px-4 py-3 text-left font-bold">DESCRIPCIÓN</th>
-                    <th className="px-4 py-3 text-center font-bold">U.M</th>
-                    <th className="px-4 py-3 text-center font-bold">CANTIDAD</th>
-                    <th className="px-4 py-3 text-left font-bold">SERIE</th>
-                    <th className="px-4 py-3 text-left font-bold">PARTIDA</th>
+                    <th className="px-2 sm:px-4 py-3 text-left font-bold">CÓDIGO</th>
+                    <th className="px-2 sm:px-4 py-3 text-left font-bold">DESCRIPCIÓN</th>
+                    <th className="px-2 sm:px-4 py-3 text-center font-bold">U.M</th>
+                    <th className="px-2 sm:px-4 py-3 text-center font-bold">CANTIDAD</th>
+                    <th className="px-2 sm:px-4 py-3 text-left font-bold">SERIE</th>
+                    <th className="px-2 sm:px-4 py-3 text-left font-bold">PARTIDA</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(detailModal.items || []).map((item, idx) => (
                     <tr key={item.id || idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-purple-50/30'}`}>
-                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{item.reff}</td>
-                      <td className="px-4 py-2.5 text-slate-600 truncate max-w-[300px]">{item.descripcion || '-'}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-500">{item.um || 'UNI'}</td>
-                      <td className="px-4 py-2.5 text-center font-bold text-slate-900">{item.cantidad}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.serie || ''}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.lote || ''}</td>
+                      <td className="px-2 sm:px-4 py-2.5 font-mono font-bold text-slate-800">{item.reff}</td>
+                      <td className="px-2 sm:px-4 py-2.5 text-slate-600 truncate max-w-[300px]">{item.descripcion || '-'}</td>
+                      <td className="px-2 sm:px-4 py-2.5 text-center text-slate-500">{item.um || 'UNI'}</td>
+                      <td className="px-2 sm:px-4 py-2.5 text-center font-bold text-slate-900">{item.cantidad}</td>
+                      <td className="px-2 sm:px-4 py-2.5 font-mono text-xs text-slate-600">{item.serie || ''}</td>
+                      <td className="px-2 sm:px-4 py-2.5 font-mono text-xs text-slate-600">{item.lote || ''}</td>
                     </tr>
                   ))}
                 </tbody>

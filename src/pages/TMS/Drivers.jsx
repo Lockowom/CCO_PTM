@@ -162,7 +162,7 @@ const Drivers = () => {
             <User size={28} strokeWidth={2.5} />
           </div>
           <div>
-            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Gestión de Conductores</h2>
+            <h2 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight">Gestión de Conductores</h2>
             <p className="text-slate-500 text-sm font-medium mt-1 flex items-center gap-2">
               <Activity size={14} className="text-wms-neon" />
               {conductores.length} conductores registrados • 
@@ -199,22 +199,22 @@ const Drivers = () => {
           <table className="min-w-full divide-y divide-wms-border">
             <thead className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
                   Conductor
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
                   RUT
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
                   Teléfono
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
                   Vehículo
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-left text-xs font-black text-slate-500 uppercase tracking-widest">
                   Estado
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-widest">
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-right text-xs font-black text-slate-500 uppercase tracking-widest">
                   Acciones
                 </th>
               </tr>
@@ -240,7 +240,7 @@ const Drivers = () => {
               ) : (
                 filteredConductores.map((conductor) => (
                   <tr key={conductor.id} className="hover:bg-white/50 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center group-hover:border-wms-neon/50 transition-colors shadow-sm">
                           <User size={20} className="text-slate-500 group-hover:text-wms-neon transition-colors" />
@@ -255,16 +255,16 @@ const Drivers = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-mono font-medium">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-700 font-mono font-medium">
                       {conductor.rut || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
                         <Phone size={14} className="text-wms-neon" />
                         {conductor.telefono || '-'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-slate-700 font-mono font-bold">
                         <Car size={16} className="text-wms-neon" />
                         <span className="bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
@@ -272,7 +272,7 @@ const Drivers = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <select
                         value={conductor.estado}
                         onChange={(e) => handleEstadoChange(conductor.id, e.target.value)}
@@ -284,7 +284,7 @@ const Drivers = () => {
                         <option value="INACTIVO" className="bg-white text-slate-900">Inactivo</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleOpenEdit(conductor)}
