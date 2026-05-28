@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.7 | **Última actualización:** 2026-05-28
+> **Versión:** 1.4.8 | **Última actualización:** 2026-05-28
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -886,6 +886,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.7 | 2026-05-28 | **FIX LOTES Y SERIES LENTO**: RPC `search_batches()` reemplaza 8 queries paralelas por 1 sola llamada server-side (ilike + fuzzy en 4 tablas). Debounce 300→500ms. Límite 1000→150 filas/tabla. GSAP animación limitada a 15 filas (antes animaba todas). Resultado: búsqueda ~8x menos carga en Supabase |
 | 1.4.6 | 2026-05-28 | **FIX CRÍTICO RENDIMIENTO POST-RLS**: Políticas RLS cambiadas de `auth.role()` per-row (función evaluada POR CADA FILA) a `TO authenticated` (check a nivel statement). 29 tablas corregidas. Índices duplicados eliminados: tms_nv_diarias 13→11 (3 unique idénticos), wms_ubicaciones 9→7, tms_partidas 7→6. DataImport ahora SIEMPRE usa RPC `bulk_upsert` (SECURITY DEFINER, bypasea RLS). Resultado: rendimiento restaurado a niveles pre-RLS |
 | 1.4.5 | 2026-05-28 | **OPTIMIZACIÓN CARGA MASIVA**: RPC `bulk_upsert()` para transacciones server-side. Deduplicación inteligente paginada en paralelo. Historial de carga non-blocking |
 | 1.4.4 | 2026-05-28 | **OPTIMIZACIONES SUPABASE FREE + INTEGRACIÓN FRONTEND**: **DB**: pg_cron (6 jobs auto), pg_trgm (6 índices GIN), vista materializada mv_dashboard_kpis (refresh 5min), 4 índices parciales. **RPCs**: get_dashboard_kpis(), fuzzy_search(), batch_update_nv_estado(). **Frontend**: Dashboard.jsx usa RPC get_dashboard_kpis() en vez de COUNT(*) sobre todas las NV — carga instantánea. Batches.jsx búsqueda fuzzy+exacta en paralelo — encuentra resultados con typos. SalesStatus.jsx fuzzy_search en campo cliente complementa ilike. Addresses.jsx fuzzy merge con búsqueda exacta. SalesOrders.jsx botón batch "Pasar todas a Picking" / "Despachar todas" usando batch_update_nv_estado RPC (1 call en vez de N) |

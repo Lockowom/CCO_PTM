@@ -86,25 +86,21 @@ const Batches = () => {
     return () => ctx.revert();
   }, []);
 
-  // Animaciones de entrada de resultados
+  // Animación de entrada solo para las primeras 15 filas (evita lag con datasets grandes)
   useLayoutEffect(() => {
     if (submittedTerm) {
-      gsap.fromTo(".result-item", 
-        { opacity: 0, y: 20, scale: 0.98 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          scale: 1, 
-          duration: 0.5, 
-          stagger: 0.04, 
-          ease: "back.out(1.7)",
-          clearProps: "all"
-        }
-      );
+      const items = document.querySelectorAll(".result-item");
+      if (items.length > 0) {
+        const limited = Array.from(items).slice(0, 15);
+        gsap.fromTo(limited,
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.3, stagger: 0.02, ease: "power2.out", clearProps: "all" }
+        );
+      }
     }
   }, [submittedTerm, activeTab]);
 
-  // Auto-búsqueda ultra-rápida (300ms)
+  // Auto-búsqueda (500ms debounce — era 300ms, causaba demasiadas queries)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchTerm.trim() && searchTerm.trim().length >= 2) {
@@ -112,81 +108,20 @@ const Batches = () => {
       } else if (!searchTerm.trim()) {
         setSubmittedTerm('');
       }
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['batches_search_v2', submittedTerm],
+    queryKey: ['batches_search_v3', submittedTerm],
     queryFn: async () => {
-      const trimmed = submittedTerm.trim();
-      const term = `%${trimmed}%`;
-      const newData = { partidas: [], series: [], farmapack: [], pesos: [] };
-
-      // Búsqueda exacta (ilike) para cada tabla
-      const searchTable = async (table, cols) => {
-        try {
-          let query = supabase.from(table).select('*').limit(1000);
-          const orFilter = cols.map(c => `${c}.ilike.${term}`).join(',');
-          query = query.or(orFilter);
-          const { data, error } = await query;
-          if (error) throw error;
-          return data || [];
-        } catch (err) {
-          return [];
-        }
-      };
-
-      // Búsqueda fuzzy (tolerante a typos) — complementa la búsqueda exacta
-      const fuzzySearch = async (table, column) => {
-        try {
-          const { data, error } = await supabase.rpc('fuzzy_search', {
-            p_table: table,
-            p_column: column,
-            p_query: trimmed,
-            p_limit: 50,
-            p_threshold: 0.15
-          });
-          if (error) throw error;
-          return (data || []).map(r => r.id);
-        } catch {
-          return [];
-        }
-      };
-
-      // Ejecutar búsqueda exacta + fuzzy en paralelo
-      const [p, s, f, w, fuzzyPartIds, fuzzySerieIds] = await Promise.all([
-        searchTable('tms_partidas', ['codigo_producto', 'producto', 'partida']),
-        searchTable('tms_series', ['codigo_producto', 'producto', 'serie']),
-        searchTable('tms_farmapack', ['codigo_producto', 'producto', 'lote']),
-        searchTable('tms_pesos', ['codigo_producto', 'descripcion']),
-        fuzzySearch('tms_partidas', 'producto'),
-        fuzzySearch('tms_series', 'producto')
-      ]);
-
-      // Merge fuzzy results que no vinieron en la búsqueda exacta
-      const pIds = new Set(p.map(r => r.id));
-      if (fuzzyPartIds.length > 0) {
-        const missingIds = fuzzyPartIds.filter(id => !pIds.has(id));
-        if (missingIds.length > 0) {
-          const { data: extra } = await supabase.from('tms_partidas').select('*').in('id', missingIds.slice(0, 100));
-          if (extra) p.push(...extra);
-        }
-      }
-      const sIds = new Set(s.map(r => r.id));
-      if (fuzzySerieIds.length > 0) {
-        const missingIds = fuzzySerieIds.filter(id => !sIds.has(id));
-        if (missingIds.length > 0) {
-          const { data: extra } = await supabase.from('tms_series').select('*').in('id', missingIds.slice(0, 100));
-          if (extra) s.push(...extra);
-        }
-      }
-
-      newData.partidas = p;
-      newData.series = s;
-      newData.farmapack = f;
-      newData.pesos = w;
-      return newData;
+      // 1 SOLA llamada RPC que busca en las 4 tablas + fuzzy server-side
+      const { data, error } = await supabase.rpc('search_batches', {
+        p_query: submittedTerm.trim(),
+        p_limit: 150
+      });
+      if (error) throw error;
+      return data || { partidas: [], series: [], farmapack: [], pesos: [] };
     },
     enabled: !!submittedTerm,
   });
