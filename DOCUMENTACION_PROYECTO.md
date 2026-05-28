@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.9 | **Última actualización:** 2026-05-28
+> **Versión:** 1.4.10 | **Última actualización:** 2026-05-28
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -886,6 +886,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.10 | 2026-05-28 | **FIX PUT AWAY DESCRIPCIÓN NO APARECE**: Bug: useRealtimeTable causaba re-renders que reseteaban el timer de debounce infinitamente → el fetch de descripción nunca se ejecutaba. Fix: timer/abort en useRef (inmune a re-renders), AbortController para cancelar requests en vuelo, caché Map local de SKU→descripción, debounce 800→400ms, guard `prev.codigo === codigo` para evitar actualizar form con data obsoleta |
 | 1.4.8 | 2026-05-28 | **FIX PUT AWAY NO GUARDA**: Faltaba UNIQUE constraint en `wms_ubicaciones(ubicacion, codigo)` — el upsert de Entry.jsx fallaba silenciosamente. Limpieza de 22,820 filas duplicadas (26,382→3,562). Tabla 7x más liviana. Constraint `wms_ubicaciones_ubic_codigo_unique` creado |
 | 1.4.7 | 2026-05-28 | **FIX LOTES Y SERIES LENTO**: RPC `search_batches()` reemplaza 8 queries paralelas por 1 sola llamada server-side (ilike + fuzzy en 4 tablas). Debounce 300→500ms. Límite 1000→150 filas/tabla. GSAP animación limitada a 15 filas (antes animaba todas). Resultado: búsqueda ~8x menos carga en Supabase |
 | 1.4.6 | 2026-05-28 | **FIX CRÍTICO RENDIMIENTO POST-RLS**: Políticas RLS cambiadas de `auth.role()` per-row (función evaluada POR CADA FILA) a `TO authenticated` (check a nivel statement). 29 tablas corregidas. Índices duplicados eliminados: tms_nv_diarias 13→11 (3 unique idénticos), wms_ubicaciones 9→7, tms_partidas 7→6. DataImport ahora SIEMPRE usa RPC `bulk_upsert` (SECURITY DEFINER, bypasea RLS). Resultado: rendimiento restaurado a niveles pre-RLS |

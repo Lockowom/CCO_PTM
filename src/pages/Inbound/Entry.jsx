@@ -97,53 +97,103 @@ const Entry = () => {
     localStorage.setItem('wms_entry_queue', JSON.stringify(queue));
   }, [queue]);
 
-  // Buscar descripción al cambiar el código (Debounce o Blur)
+  // ── BÚSQUEDA DE DESCRIPCIÓN (fix: useRef para evitar reset por re-renders) ──
+  const descCacheRef = useRef(new Map()); // Caché local SKU → descripción
+  const descAbortRef = useRef(null);      // AbortController para cancelar fetch anterior
+  const descTimerRef = useRef(null);      // Timer del debounce
+  const lastCodigoRef = useRef('');       // Último código procesado
+
   useEffect(() => {
-    const fetchDescription = async () => {
-      if (!form.codigo || form.codigo.length < 3) return;
+    const codigo = form.codigo;
+
+    // Limpiar timer anterior (debounce manual con ref, inmune a re-renders)
+    if (descTimerRef.current) clearTimeout(descTimerRef.current);
+
+    // Si código vacío o muy corto, limpiar
+    if (!codigo || codigo.length < 3) {
+      setLoadingDesc(false);
+      if (lastCodigoRef.current && !codigo) {
+        setForm(prev => ({ ...prev, descripcion: '' }));
+        setError(null);
+      }
+      lastCodigoRef.current = codigo;
+      return;
+    }
+
+    // Si ya buscamos este código, no repetir
+    if (codigo === lastCodigoRef.current) return;
+
+    // Revisar caché primero (instantáneo)
+    if (descCacheRef.current.has(codigo)) {
+      const cached = descCacheRef.current.get(codigo);
+      setForm(prev => ({ ...prev, descripcion: cached || '' }));
+      setError(cached ? null : 'SKU NO ENCONTRADO');
+      setLoadingDesc(false);
+      lastCodigoRef.current = codigo;
+      return;
+    }
+
+    // Debounce: esperar 400ms después de último cambio
+    descTimerRef.current = setTimeout(async () => {
+      // Cancelar request anterior si existe
+      if (descAbortRef.current) descAbortRef.current.abort();
+      const controller = new AbortController();
+      descAbortRef.current = controller;
 
       setLoadingDesc(true);
       setError(null);
 
-      gsap.to(".loading-spinner", { rotation: 360, repeat: -1, duration: 1, ease: "linear" });
-
       try {
-        let { data } = await supabase
+        // 1. Buscar en matriz de códigos (tiene índice PK, muy rápido)
+        const { data, error: err1 } = await supabase
           .from('tms_matriz_codigos')
           .select('producto')
-          .eq('codigo_producto', form.codigo)
-          .maybeSingle();
+          .eq('codigo_producto', codigo)
+          .maybeSingle()
+          .abortSignal(controller.signal);
 
-        if (data && data.producto) {
-          setForm(prev => ({ ...prev, descripcion: data.producto }));
-          gsap.fromTo(".desc-field", { backgroundColor: "#10b98120" }, { backgroundColor: "transparent", duration: 1 });
-        } else {
-          const { data: dataWms } = await supabase
-            .from('wms_ubicaciones')
-            .select('descripcion')
-            .eq('codigo', form.codigo)
-            .limit(1)
-            .maybeSingle();
+        if (controller.signal.aborted) return;
 
-          if (dataWms && dataWms.descripcion) {
-             setForm(prev => ({ ...prev, descripcion: dataWms.descripcion }));
-             gsap.fromTo(".desc-field", { backgroundColor: "#10b98120" }, { backgroundColor: "transparent", duration: 1 });
-          } else {
-             setForm(prev => ({ ...prev, descripcion: '' }));
-             setError("SKU NO ENCONTRADO");
-             gsap.to(codigoInputRef.current, { x: [-5, 5, -5, 5, 0], duration: 0.4 });
-          }
+        if (data?.producto) {
+          descCacheRef.current.set(codigo, data.producto);
+          setForm(prev => prev.codigo === codigo ? { ...prev, descripcion: data.producto } : prev);
+          lastCodigoRef.current = codigo;
+          setLoadingDesc(false);
+          return;
         }
-      } catch (_) {
-        console.error('Entry save error:', _);
-      } finally {
-        setLoadingDesc(false);
-        gsap.killTweensOf(".loading-spinner");
-      }
-    };
 
-    const timer = setTimeout(fetchDescription, 800);
-    return () => clearTimeout(timer);
+        // 2. Fallback: buscar en wms_ubicaciones
+        const { data: dataWms } = await supabase
+          .from('wms_ubicaciones')
+          .select('descripcion')
+          .eq('codigo', codigo)
+          .limit(1)
+          .maybeSingle()
+          .abortSignal(controller.signal);
+
+        if (controller.signal.aborted) return;
+
+        if (dataWms?.descripcion) {
+          descCacheRef.current.set(codigo, dataWms.descripcion);
+          setForm(prev => prev.codigo === codigo ? { ...prev, descripcion: dataWms.descripcion } : prev);
+        } else {
+          descCacheRef.current.set(codigo, '');
+          setForm(prev => prev.codigo === codigo ? { ...prev, descripcion: '' } : prev);
+          setError('SKU NO ENCONTRADO');
+        }
+
+        lastCodigoRef.current = codigo;
+      } catch (err) {
+        if (err?.name === 'AbortError') return; // Cancelado intencionalmente
+        console.error('Desc lookup error:', err);
+      } finally {
+        if (!controller.signal.aborted) setLoadingDesc(false);
+      }
+    }, 400);
+
+    return () => {
+      if (descTimerRef.current) clearTimeout(descTimerRef.current);
+    };
   }, [form.codigo]);
 
   // Validate ubicacion exists on blur
