@@ -694,62 +694,53 @@ const DataImport = () => {
             const conflictKeys = (!currentTab.uniqueKey || currentTab.id === 'control_despacho') ? null : currentTab.uniqueKey;
 
             // ── SIEMPRE usar RPC bulk_upsert (SECURITY DEFINER = bypasea RLS) ──
-            // Set-based en el server; chunks de 1000 con timeout por lote para que
-            // NUNCA quede "cargando eterno" si una request se cuelga.
+            // Set-based en el server; chunks de 1000 con timeout por lote.
+            // El progreso se actualiza POR LOTE a medida que cada uno termina
+            // (1/5, 2/5, …) para que nunca se perciba "pegado en 0/N".
             const RPC_CHUNK = 1000;
-            const CONCURRENCY = 3;
-            const CHUNK_TIMEOUT_MS = 90000;
+            const CONCURRENCY = 2;
+            const CHUNK_TIMEOUT_MS = 60000;
             const rpcChunks = [];
             for (let i = 0; i < newRows.length; i += RPC_CHUNK) {
                 rpcChunks.push(newRows.slice(i, i + RPC_CHUNK));
             }
 
-            // Llama bulk_upsert con abort/timeout: si un lote se cuelga, se aborta
-            // y se cuenta como error en vez de bloquear toda la carga.
-            const callChunk = (chunk) => {
-                const ctrl = new AbortController();
-                const tid = setTimeout(() => ctrl.abort(), CHUNK_TIMEOUT_MS);
-                return supabase
-                    .rpc('bulk_upsert', {
-                        p_table: currentTab.table,
-                        p_data: chunk,
-                        p_conflict_keys: conflictKeys
-                    })
-                    .abortSignal(ctrl.signal)
-                    .then(
-                        (r) => { clearTimeout(tid); return r; },
-                        (e) => { clearTimeout(tid); throw e; }
-                    );
-            };
-
             const totalChunks = rpcChunks.length;
             let completedChunks = 0;
             setUploadProgress({ current: 0, total: totalChunks });
 
-            for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
-                const wave = rpcChunks.slice(i, i + CONCURRENCY);
-                const results = await Promise.allSettled(wave.map(callChunk));
-
-                results.forEach((res, idx) => {
+            // Procesa un lote con abort/timeout y actualiza progreso al terminar.
+            const runChunk = async (chunk, chunkNum) => {
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), CHUNK_TIMEOUT_MS);
+                try {
+                    const { data, error } = await supabase
+                        .rpc('bulk_upsert', {
+                            p_table: currentTab.table,
+                            p_data: chunk,
+                            p_conflict_keys: conflictKeys
+                        })
+                        .abortSignal(ctrl.signal);
+                    if (error) throw error;
+                    inserted += data?.inserted || 0;
+                    errors += data?.errors || 0;
+                    if (data?.error) errorDetails.push(`Lote ${chunkNum}: ${data.error}`);
+                    else if (data?.errors > 0) errorDetails.push(`Lote ${chunkNum}: ${data.errors} errores server-side`);
+                } catch (e) {
+                    errors += chunk.length;
+                    const msg = e?.name === 'AbortError' ? 'tiempo de espera agotado (60s)' : (e?.message || 'error desconocido');
+                    errorDetails.push(`Lote ${chunkNum}: ${msg}`);
+                    console.error(`Chunk ${chunkNum} error:`, msg);
+                } finally {
+                    clearTimeout(tid);
                     completedChunks++;
                     setUploadProgress({ current: completedChunks, total: totalChunks });
-                    const chunkNum = i + idx + 1;
+                }
+            };
 
-                    if (res.status === 'fulfilled' && !res.value.error) {
-                        const d = res.value.data;
-                        inserted += d.inserted || 0;
-                        errors += d.errors || 0;
-                        if (d.errors > 0) {
-                            errorDetails.push(`Lote ${chunkNum}: ${d.errors} errores server-side`);
-                        }
-                    } else {
-                        const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error?.message;
-                        const chunkSize = wave[idx]?.length || 0;
-                        errors += chunkSize;
-                        errorDetails.push(`Lote ${chunkNum}: ${errMsg}`);
-                        console.error(`Chunk ${chunkNum} error:`, errMsg);
-                    }
-                });
+            for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
+                const wave = rpcChunks.slice(i, i + CONCURRENCY);
+                await Promise.all(wave.map((chunk, idx) => runChunk(chunk, i + idx + 1)));
             }
 
             const updatedStatuses = [...rowStatuses];
