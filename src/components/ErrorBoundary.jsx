@@ -42,13 +42,25 @@ class ErrorBoundary extends Component {
               </p>
             </div>
             
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-slate-900 py-3 px-4 rounded-xl font-bold transition-colors"
-            >
-              <RefreshCcw className="w-5 h-5" />
-              Reiniciar Módulo
-            </button>
+            <div className="flex flex-col gap-2">
+              {/* Reintentar: recarga el MÓDULO actual (no bota a dashboard) y
+                  toma los chunks nuevos tras una actualización de la web. */}
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-slate-900 py-3 px-4 rounded-xl font-bold transition-colors"
+              >
+                <RefreshCcw className="w-5 h-5" />
+                Reiniciar Módulo
+              </button>
+              {/* Ir al inicio: '/' pasa por el SmartRedirect → lleva a cada rol a su
+                  landing correcto (NO hardcodea /dashboard, que algunos roles no ven). */}
+              <button
+                onClick={() => { window.location.href = '/'; }}
+                className="w-full text-center text-slate-500 hover:text-slate-700 py-2 text-sm font-semibold transition-colors"
+              >
+                Ir al inicio
+              </button>
+            </div>
           </div>
         </div>
       );

@@ -27,11 +27,11 @@ const NotFound = () => {
         </p>
 
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/')}
           className="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-slate-900 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] hover:-translate-y-1"
         >
           <Home className="w-5 h-5" />
-          Volver a la Base (Dashboard)
+          Volver al inicio
         </button>
       </div>
     </div>
