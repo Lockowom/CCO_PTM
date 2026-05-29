@@ -428,7 +428,9 @@ export const AuthProvider = ({ children }) => {
         .from('tms_usuarios_activos')
         .delete()
         .eq('usuario_id', userId)
-        .catch(() => {});
+        .then(({ error }) => {
+          if (error) console.warn('[Auth] No se pudo limpiar la presencia al cerrar sesión:', error);
+        });
     }
   }, [user?.id]);
 

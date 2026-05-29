@@ -285,8 +285,9 @@ const Reception = () => {
       return;
     }
 
-    // Buscar descripción en matriz de códigos
-    lookupDescription(currentItem.reff).then(desc => {
+    // Buscar descripción en matriz de códigos. Si la búsqueda falla, igual se agrega
+    // el item (con descripción vacía) para no perder el registro.
+    const addItem = (desc) => {
       setItems(prev => [...prev, {
         ...currentItem,
         reff: currentItem.reff.toUpperCase(),
@@ -296,7 +297,13 @@ const Reception = () => {
         _id: Date.now()
       }]);
       setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
-    });
+    };
+    lookupDescription(currentItem.reff)
+      .then(desc => addItem(desc))
+      .catch(err => {
+        console.error('[Reception] Falló lookup de descripción:', err);
+        addItem('');
+      });
   };
 
   const removeItem = (index) => {

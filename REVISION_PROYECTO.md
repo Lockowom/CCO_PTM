@@ -17,33 +17,51 @@
 | Calidad de código | — | 2 | 4 | 2 |
 | Documentación | — | 1 | 3 | — |
 
-**Lo más urgente:** un usuario autenticado cualquiera puede **borrar toda la data operacional**
-(`clean_operational_data` sin protección server-side) y `tms_inventario_general` quedó **sin RLS
-efectiva**. Ver §2.
-
 **Estado general:** la base arquitectónica es sólida (auth migrada a Supabase Auth, RLS en la
 mayoría de tablas, headers de seguridad, offline-first, tests). Las debilidades son de
 **autorización server-side**, **gestión de SQL no versionada** y **documentación redundante/
 desactualizada**.
 
+> ### ⚠️ Actualización 2026-05-29 — corrección de la auditoría tras inspeccionar la BD live
+> La auditoría inicial se basó en los archivos `SUPABASE_*.sql`/`migrations` del **repo**, que
+> están **obsoletos** respecto a la base de datos en producción. Al inspeccionar la BD live
+> (Supabase MCP) se confirmó que:
+> - **S-1 ya estaba corregido en prod:** `clean_operational_data` vive como
+>   `private.clean_operational_data` (SECURITY DEFINER) con gate `IF NOT private.is_admin() …`.
+>   **No es explotable.** Se sincronizó el archivo stale del repo para que no revierta el fix.
+> - **S-2 ya estaba corregido en prod:** `tms_inventario_general` **tiene RLS habilitada**.
+>   Solo faltaba el `ENABLE` en el archivo de migración del repo (corregido).
+> - **Hueco real encontrado (S-0):** los advisors de Supabase mostraron que `bulk_upsert` y
+>   `search_batches` (SECURITY DEFINER) eran ejecutables por el rol **`anon`** → escritura/
+>   lectura **sin autenticación**. **Corregido y verificado** (migración `004`).
+>
+> Ver "Estado de remediación" en cada hallazgo abajo.
+
 ---
 
 ## 2. Seguridad
 
-### 🔴 S-1 — `clean_operational_data()` sin autorización (CRÍTICO)
-`SUPABASE_TRANSACTIONAL.sql:121-170`. La función **no** tiene `SECURITY DEFINER` ni check
-`is_admin()`. Como las políticas RLS Tier-1 permiten `DELETE` a cualquier usuario autenticado,
-cualquier usuario logueado puede ejecutar el RPC desde la consola del navegador y borrar
-`tms_nv_diarias`, `tms_entregas`, `tms_partidas`, `tms_series`/tracking y Farmapack. La única
-barrera (`Cleanup.jsx`: `window.confirm` + prompt "BORRAR") es **client-side**.
-**Fix sugerido:** añadir al inicio `IF NOT is_admin() THEN RAISE EXCEPTION ...; END IF;`,
-marcar la función `SECURITY DEFINER`, y registrar auditoría antes de borrar.
+### ✅ S-0 — `anon` podía ejecutar `bulk_upsert` / `search_batches` (RESUELTO)
+Hallazgo **real** (advisors Supabase 0028/0029). `public.bulk_upsert` (escribe en tablas
+whitelisted, SECURITY DEFINER → bypassa RLS) y `public.search_batches` eran ejecutables por el
+rol `anon` vía `/rest/v1/rpc/...` → **escritura/lectura sin autenticación**. Además tenían
+`search_path` mutable.
+**Resuelto (migración `004`, aplicada y verificada en prod):** `REVOKE EXECUTE … FROM PUBLIC,
+anon` (se conserva `authenticated`), `SET search_path = public, extensions, pg_temp`, y `REVOKE
+SELECT … FROM anon` en `mv_dashboard_kpis`. Verificado: `anon` ya no puede ejecutar; la app
+(autenticada) sigue operando.
 
-### 🔴 S-2 — RLS no habilitada en `tms_inventario_general` (CRÍTICO)
-`supabase/migrations/003_rls_policies.sql:80`. Se crea la política `auth_all_inventario_general`
-pero falta el `ALTER TABLE tms_inventario_general ENABLE ROW LEVEL SECURITY;` previo, por lo que
-la política **se ignora** y la tabla queda sin protección.
-**Fix sugerido:** añadir el `ENABLE ROW LEVEL SECURITY`.
+### ✅ S-1 — `clean_operational_data()` (RESUELTO en prod; archivo repo sincronizado)
+La versión **del repo** (`SUPABASE_TRANSACTIONAL.sql`) no tenía gate, pero **producción ya está
+endurecida**: `private.clean_operational_data` es `SECURITY DEFINER` con
+`IF NOT private.is_admin() THEN RAISE EXCEPTION 'Acceso denegado: solo administradores'`, más un
+wrapper `public`. **No explotable.** Se actualizó el archivo stale del repo para que coincida y
+no revierta la protección si se re-ejecuta.
+
+### ✅ S-2 — RLS en `tms_inventario_general` (RESUELTO en prod; migración repo corregida)
+En la BD live la tabla **tiene RLS habilitada** (1 política). El archivo
+`supabase/migrations/003_rls_policies.sql:80` solo omitía el `ENABLE ROW LEVEL SECURITY`
+(corregido en el repo).
 
 ### 🟠 S-3 — Permisos solo client-side (ALTO)
 `src/constants/permissions.js`, `src/App.jsx:213-218`, `src/context/AuthContext.jsx:484`.
@@ -180,16 +198,20 @@ histórico/de mejoras a `docs/archivo/`.
 
 ## 6. Roadmap de remediación priorizado
 
-### Inmediato (seguridad)
-1. **S-1** Proteger `clean_operational_data` (`SECURITY DEFINER` + `is_admin()` + auditoría).
-2. **S-2** `ENABLE ROW LEVEL SECURITY` en `tms_inventario_general`.
-3. **S-3** Autorización server-side en RPC sensibles.
+### Inmediato (seguridad) — ✅ HECHO (2026-05-29)
+1. ✅ **S-0** Cerrado acceso `anon` a `bulk_upsert`/`search_batches` + `search_path` fijo
+   (migración `004`, aplicada y verificada en prod).
+2. ✅ **S-1** `clean_operational_data` — ya endurecida en prod; archivo stale del repo sincronizado.
+3. ✅ **S-2** RLS en `tms_inventario_general` — ya activa en prod; migración del repo corregida.
 
 ### Corto plazo
-4. **C-1/C-2/C-3** Fix del `await` y de las promesas sin `.catch`.
-5. **DB-1/DB-2/DB-3** Consolidar `SUPABASE_*.sql` en migraciones ordenadas; unificar `is_admin`;
-   versionar las RPC faltantes (exportar desde Supabase).
-6. **S-4/S-5** Decidir modelo RLS por rol; deprecar `verify_user_password`.
+4. ✅ **C-1/C-2/C-3** Fix del `await` (`warehouseStore.js`) y promesas sin `.catch`
+   (`MobileApp.jsx`, `Reception.jsx`, `DataImport.jsx`, `AuthContext.jsx`). **Hecho.**
+5. **DB-1/DB-2/DB-3** Consolidar `SUPABASE_*.sql` en migraciones ordenadas; unificar `is_admin`
+   (existe canónica `private.is_admin()`; quedan legacy `is_admin_safe`/`is_user_admin` por
+   limpiar); versionar las RPC que solo viven en la BD (exportar desde Supabase). **Pendiente.**
+6. **S-4/S-5** Decidir modelo RLS por rol (advisors confirman 30+ políticas "always true");
+   deprecar `verify_user_password`; activar "leaked password protection" en Auth. **Pendiente.**
 
 ### Backlog
 7. **C-4/C-5/C-6/C-7** Eliminar código muerto, unificar `store/`↔`stores/`, dividir
@@ -197,8 +219,9 @@ histórico/de mejoras a `docs/archivo/`.
 8. **D-4** Consolidar/archivar los 29 documentos.
 9. **S-6** Upgrade Sentry 8.x.
 
-> Tras leer este informe: indícame qué bloques del roadmap ejecutar. Cada cambio de código/BD
-> se reflejará en la documentación (regla en `CLAUDE.md`).
+> Próximo bloque sugerido: **DB-1/DB-2/DB-3** (consolidar SQL y versionar RPCs) o **S-4/S-5**
+> (modelo RLS por rol). Indícame cuál seguir. Cada cambio de código/BD se refleja en la
+> documentación (regla en `CLAUDE.md`).
 
 ---
 

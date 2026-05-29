@@ -570,6 +570,17 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 **Helpers RLS (SECURITY DEFINER):**
 - `get_user_role()` → TEXT — Obtiene rol del usuario desde `tms_usuarios.auth_uid`
 - `is_admin()` → BOOLEAN — Verifica `rol = 'ADMIN'` o `es_admin_delegado = true`
+- Canónicas en esquema `private` (`private.is_admin()`, `private.get_user_role()`) con wrapper
+  `public`. Existen helpers legacy `is_admin_safe()` / `is_user_admin()` (por email) pendientes
+  de limpieza — ver `REVISION_PROYECTO.md` §DB-2.
+
+### Hardening de RPC SECURITY DEFINER (2026-05-29)
+- `bulk_upsert` y `search_batches` (SECURITY DEFINER) ya **no** son ejecutables por el rol
+  `anon` (antes permitían escritura/lectura sin autenticar vía `/rest/v1/rpc`). Se revocó
+  EXECUTE de `PUBLIC`/`anon` (se conserva `authenticated`) y se fijó `search_path = public,
+  extensions, pg_temp`. Migración `004_harden_security_definer_rpcs.sql`.
+- `mv_dashboard_kpis` ya no es seleccionable por `anon` (se lee vía RPC `get_dashboard_kpis`).
+- `clean_operational_data` está protegida por `is_admin()` (esquema `private`, SECURITY DEFINER).
 
 ---
 
@@ -899,6 +910,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| seguridad | 2026-05-29 | **HARDENING + FIXES**: Migración `004` — revocado EXECUTE de `anon`/`PUBLIC` en `bulk_upsert` y `search_batches` (cierra escritura/lectura no autenticada), `search_path` fijado, `mv_dashboard_kpis` fuera del API anónimo. Fixes de código: `await` faltante en `warehouseStore.moveItem`, promesas sin `.catch` en `MobileApp`/`Reception`/`DataImport`/`AuthContext`. Sincronizados archivos SQL stale del repo. Ver `REVISION_PROYECTO.md`. |
 | 1.4.13 | 2026-05-28 | **REDISEÑO UBICACIONES MOBILE v2**: Ubicación ahora como badge oscuro prominente (`bg-slate-800 text-white font-extrabold`) con `shrink-0` para nunca cortarse. Layout simplificado a 1 fila flex: badge ubicación + match badge + SKUs + stock + chevron. Eliminado `overflow-hidden` del contenedor que recortaba contenido. Altura virtualizer 82→64px |
 | 1.4.12 | 2026-05-28 | **FIX DISEÑO UBICACIONES MOBILE**: Header de LocationGroup rediseñado a 2 filas en mobile — ubicación (R-01, D-02, etc.) ahora en línea propia con font `text-base font-extrabold`, stats (SKUs/uds/coinciden) en segunda fila. Chevron en la misma línea de la ubicación. En desktop mantiene layout horizontal. Altura virtualizer ajustada 72→82px |
 | 1.4.11 | 2026-05-28 | **COMPACTACIÓN DB + FIX SEARCH_BATCHES**: Tabla `wms_ubicaciones` recreada para eliminar bloat (3,328kB→448kB, -87%). Query de 114ms→4ms (-96%). Buffers 416→56 (-87%). Fix RPC `search_batches()`: columna `id` no existía en `tms_pesos` (causaba error). Index trigram `idx_trgm_series_producto` agregado en `tms_series` para fuzzy search. Resultado: búsqueda Lotes y Series ~80ms (antes 500ms+). pg_stat_statements reseteado para baseline limpio |

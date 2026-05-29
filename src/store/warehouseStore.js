@@ -225,7 +225,7 @@ export const useWarehouseStore = create((set, get) => ({
         if (error) throw error;
         
         // Refresh full state to ensure consistency
-        get().fetchWarehouseData();
+        await get().fetchWarehouseData();
      } catch (error) {
        throw error;
      }

@@ -74,7 +74,10 @@ const MobileApp = () => {
         setView('home');
         // Actualizar a EN_RUTA si estaba disponible
         if (data.estado === 'DISPONIBLE') {
-          supabase.from('tms_conductores').update({ estado: 'EN_RUTA', updated_at: new Date().toISOString() }).eq('id', data.id).then();
+          supabase.from('tms_conductores').update({ estado: 'EN_RUTA', updated_at: new Date().toISOString() }).eq('id', data.id)
+            .then(({ error }) => {
+              if (error) console.error('[MobileApp] No se pudo marcar conductor EN_RUTA:', error);
+            });
         }
       } else {
         setView('onboard');

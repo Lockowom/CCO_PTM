@@ -77,6 +77,7 @@ CREATE POLICY "auth_all_errores_picking" ON tms_errores_picking FOR ALL USING (a
 ALTER TABLE tms_cubicaje_historial ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_cubicaje" ON tms_cubicaje_historial FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
+ALTER TABLE tms_inventario_general ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_inventario_general" ON tms_inventario_general FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 ALTER TABLE tms_inventario_resumen ENABLE ROW LEVEL SECURITY;

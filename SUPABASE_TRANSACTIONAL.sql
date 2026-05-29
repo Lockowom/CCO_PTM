@@ -116,7 +116,11 @@ $$ LANGUAGE plpgsql;
 -- ------------------------------------------------------------------------------
 -- 3. LIMPIEZA DE DATOS (ADMIN TOOLS)
 -- ------------------------------------------------------------------------------
--- Función peligrosa para limpiar datos operativos en entornos de prueba.
+-- Función PELIGROSA para limpiar datos operativos.
+-- SEGURIDAD: requiere is_admin(). Sin este gate, cualquier usuario autenticado
+-- podría borrar toda la data operacional (las políticas RLS Tier-1 permiten DELETE).
+-- En producción vive como private.clean_operational_data() (SECURITY DEFINER) con un
+-- wrapper public que la invoca. Este script refleja esa versión endurecida.
 
 CREATE OR REPLACE FUNCTION clean_operational_data(
     p_clean_nv BOOLEAN,
@@ -124,47 +128,46 @@ CREATE OR REPLACE FUNCTION clean_operational_data(
     p_clean_series BOOLEAN,
     p_clean_farmapack BOOLEAN
 )
-RETURNS TEXT AS $$
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     v_msg TEXT := '';
 BEGIN
-    -- Limpiar Series (Dependiente de partidas)
-    IF p_clean_series THEN
-        DELETE FROM tms_series_tracking;
-        v_msg := v_msg || 'Series eliminadas. ';
+    -- Gate de autorización: solo administradores
+    IF NOT is_admin() THEN
+        RAISE EXCEPTION 'Acceso denegado: solo administradores';
     END IF;
 
-    -- Limpiar Partidas (Dependiente de NV)
+    IF p_clean_nv THEN
+        DELETE FROM tms_entregas;
+        DELETE FROM tms_nv_diarias;
+        v_msg := v_msg || 'NV y Entregas eliminadas. ';
+    END IF;
+
     IF p_clean_partidas THEN
         DELETE FROM tms_partidas;
         v_msg := v_msg || 'Partidas eliminadas. ';
     END IF;
 
-    -- Limpiar Integración Farmapack
+    IF p_clean_series THEN
+        DELETE FROM tms_series;
+        v_msg := v_msg || 'Series eliminadas. ';
+    END IF;
+
     IF p_clean_farmapack THEN
-        DELETE FROM tms_farmapack_integration;
+        DELETE FROM tms_farmapack;
         v_msg := v_msg || 'Datos Farmapack eliminados. ';
     END IF;
 
-    -- Limpiar Notas de Venta (y Entregas por cascada si está configurado, si no manual)
-    IF p_clean_nv THEN
-        -- Borrar referencias en entregas
-        DELETE FROM tms_entregas;
-        
-        -- Borrar partidas si aún no se han borrado (por integridad referencial)
-        IF NOT p_clean_partidas THEN
-            DELETE FROM tms_partidas;
-        END IF;
-
-        -- Luego borrar las NVs
-        DELETE FROM tms_nv_diarias;
-        v_msg := v_msg || 'Notas de Venta y Entregas eliminadas. ';
-    END IF;
-
     IF v_msg = '' THEN
-        v_msg := 'Ninguna acción seleccionada.';
+        RETURN 'No se seleccionaron datos para eliminar.';
     END IF;
 
     RETURN v_msg;
+EXCEPTION WHEN OTHERS THEN
+    RETURN 'Error: ' || SQLERRM;
 END;
-$$ LANGUAGE plpgsql;
+$$;

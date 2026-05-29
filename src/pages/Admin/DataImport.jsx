@@ -762,7 +762,9 @@ const DataImport = () => {
                 registros_nuevos: inserted,
                 registros_actualizados: rowStatuses.filter(s => s === 'update').length,
                 registros_error: errors
-            }]).then(() => {}).catch(() => {});
+            }]).then(({ error }) => {
+                if (error) console.error('[DataImport] No se pudo registrar el historial de carga:', error);
+            });
 
             setLoadResult({
                 success: errors === 0, total: parsedRows.length, inserted, skipped, errors, deduplicated, errorDetails,
