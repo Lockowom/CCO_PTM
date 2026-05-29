@@ -7,8 +7,11 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../store/warehouseStore';
 
-const COLLAPSED_HEIGHT = 64;
-const ITEM_HEIGHT = 48;
+// Estimaciones iniciales solamente — la altura real la mide el virtualizer
+// dinámicamente (measureElement), por lo que las filas nunca se solapan aunque
+// el header ocupe 1 o 2 líneas en pantallas angostas.
+const COLLAPSED_HEIGHT = 96;
+const ITEM_HEIGHT = 44;
 
 const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) => {
   const matchingItems = group.matchingItems;
@@ -26,39 +29,35 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) 
         className="px-4 sm:px-5 py-3 sm:py-3.5 cursor-pointer select-none hover:bg-slate-50/50 transition-colors"
         onClick={onToggle}
       >
-        {/* Header: Location badge + stats */}
-        <div className="flex items-center gap-3">
-          {/* Location badge - always visible and prominent */}
-          <div className={`shrink-0 px-3 py-1.5 rounded-xl border-2 ${totalStock > 0 ? 'bg-slate-800 border-slate-800 text-white' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>
-            <span className="text-sm sm:text-base font-extrabold tracking-wide whitespace-nowrap">{group.ubicacion}</span>
+        {/* Header robusto: ubicación SIEMPRE en su propia fila (nunca se tapa),
+            estadísticas debajo. A prueba de overflow en cualquier ancho (incl. 320px). */}
+        <div className="flex flex-col gap-2">
+          {/* Fila 1: badge ubicación (izq) + chevron (der) */}
+          <div className="flex items-center justify-between gap-2">
+            <div className={`min-w-0 px-3 py-1.5 rounded-xl border-2 ${totalStock > 0 ? 'bg-slate-800 border-slate-800 text-white' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>
+              <span className="block text-sm sm:text-base font-extrabold tracking-wide truncate">{group.ubicacion}</span>
+            </div>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </div>
           </div>
 
-          {/* Match badge */}
-          {hasSearch && matchingItems.length < totalItems && (
-            <span className="shrink-0 text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full border border-orange-100">
-              {matchingItems.length}/{totalItems}
-            </span>
-          )}
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* SKUs count */}
-          <div className="flex items-center gap-1 text-xs text-slate-400 shrink-0">
-            <Package size={12} />
-            <span className="font-bold text-slate-600">{hasSearch ? matchingItems.length : totalItems}</span>
-            <span className="hidden xs:inline">SKUs</span>
-          </div>
-
-          {/* Stock total */}
-          <div className="shrink-0 text-right">
-            <span className="text-base sm:text-lg font-extrabold text-slate-900 tabular-nums">{hasSearch ? matchStock : totalStock}</span>
-            <span className="text-[10px] text-slate-400 font-medium ml-0.5">uds</span>
-          </div>
-
-          {/* Chevron */}
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {/* Fila 2: match · SKUs · stock — texto pequeño, puede envolver sin tapar nada */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+            {hasSearch && matchingItems.length < totalItems && (
+              <span className="shrink-0 text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">
+                {matchingItems.length}/{totalItems} coinciden
+              </span>
+            )}
+            <div className="flex items-center gap-1 shrink-0">
+              <Package size={12} />
+              <span className="font-bold text-slate-600">{hasSearch ? matchingItems.length : totalItems}</span>
+              <span>SKUs</span>
+            </div>
+            <div className="shrink-0">
+              <span className="text-base sm:text-lg font-extrabold text-slate-900 tabular-nums">{hasSearch ? matchStock : totalStock}</span>
+              <span className="text-[10px] text-slate-400 font-medium ml-0.5">uds</span>
+            </div>
           </div>
         </div>
       </div>
@@ -349,9 +348,10 @@ const WmsLocations = () => {
                 return (
                   <div
                     key={group.ubicacion}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
                     className="absolute top-0 left-0 w-full"
                     style={{
-                      height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
                       paddingBottom: '8px',
                     }}
