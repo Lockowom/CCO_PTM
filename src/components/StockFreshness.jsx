@@ -13,7 +13,7 @@ const fmtTime = (d) =>
 
 // Firma "Tío Inventario" con letras en ola + degradado animado
 const AnimatedSignature = ({ text }) => (
-  <span className="ti-signature font-black tracking-tight">
+  <span className="ti-signature font-black tracking-tight text-2xl sm:text-3xl">
     {text.split('').map((ch, i) =>
       ch === ' '
         ? <span key={i}>&nbsp;</span>

@@ -4,6 +4,16 @@ import path from 'path';
 
 console.log('🚀 Iniciando despliegue OTA para móviles...');
 
+// 0. GUARDA DE SEGURIDAD: no compilar/subir un bundle OTA sin las variables de
+// Supabase. Sin ellas el bundle queda SIN backend y dejaría la app Android rota
+// para TODOS los dispositivos. Abortar antes de construir.
+if (!process.env.VITE_SUPABASE_URL || !(process.env.VITE_SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY)) {
+  console.error('\n❌ ABORTADO: faltan VITE_SUPABASE_URL / VITE_SUPABASE_KEY en el entorno.');
+  console.error('   Compilar sin ellas produce un bundle OTA SIN conexión a Supabase.');
+  console.error('   Corre este deploy en una máquina/CI con el .env correcto.\n');
+  process.exit(1);
+}
+
 // 1. Auto-incrementar la versión (Patch) de manera extremadamente segura
 try {
   console.log('📦 Actualizando versión en package.json...');
