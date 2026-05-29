@@ -323,84 +323,12 @@ export const AuthProvider = ({ children }) => {
         return true;
       }
 
-      // 2. Fallback: Intentar login legacy (para usuarios con hash no migrado)
-      console.warn('[Auth] Supabase Auth failed, trying legacy RPC...');
-      const { data: legacyResult, error: legacyError } = await supabase
-        .rpc('verify_user_password', { p_email: email, p_password: password });
-
-      if (legacyError || !legacyResult || legacyResult.length === 0) {
-        setError('Usuario o contraseña inválidos');
-        setLoading(false);
-        return false;
-      }
-
-      const legacyUser = legacyResult[0];
-
-      if (!legacyUser.activo) {
-        setError('Usuario desactivado');
-        setLoading(false);
-        return false;
-      }
-
-      // 3. Migración lazy: crear usuario en auth.users y vincular
-      try {
-        const { data: authUid, error: createErr } = await supabase
-          .rpc('create_auth_user', { p_email: email.toLowerCase(), p_password: password });
-
-        if (!createErr && authUid) {
-          await supabase.from('tms_usuarios')
-            .update({ auth_uid: authUid })
-            .eq('id', legacyUser.id);
-
-          // Re-intentar login con Supabase Auth
-          await supabase.auth.signInWithPassword({ email: email.toLowerCase(), password });
-        }
-      } catch (migErr) {
-        console.error('[Auth] Lazy migration failed:', migErr);
-        // Continuar sin sesión auth (modo degradado temporal)
-      }
-
-      // Establecer usuario independientemente de si la migración auth funcionó
-      const userData = {
-        id: legacyUser.id,
-        nombre: legacyUser.nombre,
-        email: legacyUser.email,
-        rol: legacyUser.rol,
-        activo: legacyUser.activo,
-        es_admin_delegado: legacyUser.es_admin_delegado || false
-      };
-
-      setUser(userData);
-      setUserForTracking(userData);
-      await loadRoleConfig(legacyUser.rol);
-
-      if (Capacitor.isNativePlatform()) {
-        initPushNotifications(userData.id);
-      }
-
-      // Registrar acceso
-      try {
-        await supabase.from('tms_accesos').insert({
-          usuario_id: userData.id,
-          nombre: userData.nombre,
-          email: userData.email,
-          rol: userData.rol
-        });
-
-        await supabase
-          .from('tms_usuarios_activos')
-          .upsert({
-            usuario_id: userData.id,
-            nombre: userData.nombre,
-            rol: userData.rol,
-            ultima_actividad: new Date().toISOString(),
-            modulo_actual: 'Inicio de Sesión',
-            estado: 'ONLINE'
-          }, { onConflict: 'usuario_id' });
-      } catch (_) { console.error('Login tracking failed:', _); }
-
+      // Sin sesión de Supabase Auth → credenciales inválidas.
+      // (El fallback legacy `verify_user_password` se eliminó: todos los usuarios
+      //  están migrados a Supabase Auth.)
+      setError('Usuario o contraseña inválidos');
       setLoading(false);
-      return true;
+      return false;
 
     } catch (err) {
       console.error('[Auth] Login error:', err);

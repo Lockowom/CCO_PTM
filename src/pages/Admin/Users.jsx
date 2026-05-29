@@ -147,7 +147,6 @@ const UsersPage = () => {
           id_usuario: legacyId,
           nombre: user.nombre,
           email: user.email.toLowerCase(),
-          password_hash: 'managed_by_supabase_auth',
           auth_uid: authUid,
           rol: user.rol,
           activo: user.activo,

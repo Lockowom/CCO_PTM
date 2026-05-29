@@ -527,16 +527,15 @@ HOME → [PICKING] → Escanear ubicación → Escanear SKU → Confirmar cantid
 - `update_auth_password(p_auth_uid, p_new_password)` → void — Actualiza contraseña (admin)
 - `get_user_role()` → TEXT — Helper RLS: obtiene rol del usuario autenticado
 - `is_admin()` → BOOLEAN — Helper RLS: verifica si es admin o admin delegado
-- `verify_user_password()` — **LEGACY**, se mantiene como fallback para migración lazy
+- ~~`verify_user_password()`~~ — **ELIMINADA** (migración 006) junto con la columna
+  `password_hash`. Todos los usuarios usan Supabase Auth; no hay fallback legacy.
 
 ### Flujo de Login
 ```
 Usuario ingresa email/contraseña
 → supabase.auth.signInWithPassword({ email, password })
 → Si OK: sesión JWT automática + cargar perfil de tms_usuarios (por email)
-→ Si FALLA: fallback legacy RPC verify_user_password (migración lazy)
-  → Si legacy OK: crear auth user via RPC create_auth_user + vincular auth_uid
-  → Re-login con Supabase Auth
+→ Si FALLA: credenciales inválidas (sin fallback legacy — retirado en migración 006)
 → Verificar usuario activo → Cargar rol + permisos de tms_roles
 → Registrar acceso en tms_accesos → Redirigir a landing_page del rol
 → Iniciar heartbeat presencia (30s) → Init OTA + Push (si nativo)
@@ -911,6 +910,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| auth | 2026-05-29 | **ELIMINACIÓN LEGACY AUTH**: Migración `006` — eliminada función `verify_user_password()` y columna `tms_usuarios.password_hash` (exposición de hashes). Quitado el fallback legacy de login en `AuthContext.jsx` y la escritura de `password_hash` en `Users.jsx`. 21/21 usuarios en Supabase Auth. ⚠️ Requiere desplegar frontend para crear usuarios nuevos. |
 | limpieza | 2026-05-29 | **CONSOLIDACIÓN BD + LIMPIEZA**: Migración `005` — eliminados helpers admin legacy `is_admin_safe`/`is_user_admin` (canónica única `private.is_admin()`). RPC versionadas en `supabase/functions_snapshot.sql`. ~15 SQL sueltos movidos a `supabase/legacy_sql/`. Eliminados 4 componentes muertos (`Placeholder`, `PageTransition`, `SkeletonCard`, `SkeletonTable`). Auditoría live: 21/21 usuarios migrados a Supabase Auth. Ver `REVISION_PROYECTO.md`. |
 | seguridad | 2026-05-29 | **HARDENING + FIXES**: Migración `004` — revocado EXECUTE de `anon`/`PUBLIC` en `bulk_upsert` y `search_batches` (cierra escritura/lectura no autenticada), `search_path` fijado, `mv_dashboard_kpis` fuera del API anónimo. Fixes de código: `await` faltante en `warehouseStore.moveItem`, promesas sin `.catch` en `MobileApp`/`Reception`/`DataImport`/`AuthContext`. Sincronizados archivos SQL stale del repo. Ver `REVISION_PROYECTO.md`. |
 | 1.4.13 | 2026-05-28 | **REDISEÑO UBICACIONES MOBILE v2**: Ubicación ahora como badge oscuro prominente (`bg-slate-800 text-white font-extrabold`) con `shrink-0` para nunca cortarse. Layout simplificado a 1 fila flex: badge ubicación + match badge + SKUs + stock + chevron. Eliminado `overflow-hidden` del contenedor que recortaba contenido. Altura virtualizer 82→64px |

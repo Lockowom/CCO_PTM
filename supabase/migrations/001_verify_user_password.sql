@@ -1,3 +1,7 @@
+-- ⚠️ OBSOLETO: esta función fue ELIMINADA por la migración 006_remove_legacy_password_auth.sql
+-- (junto con la columna tms_usuarios.password_hash). Se conserva el archivo solo como historia.
+-- No re-ejecutar: reintroduciría auth legacy ya retirada.
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION verify_user_password(p_email TEXT, p_password TEXT)

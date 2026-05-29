@@ -81,14 +81,17 @@ tablas operacionales (confirmado por advisors: 30+ políticas "always true").
   **legible por cualquier autenticado** (política SELECT "always true"). El cliente nunca la lee
   (`Users.jsx` solo escribe un placeholder). Mitigación requiere confirmación (ver §S-5/auth).
 
-### 🟡 S-5 — Legacy de auth: `verify_user_password` + `password_hash` (ACCIÓN PENDIENTE — requiere OK)
-Auditoría live: **21/21 usuarios ya migrados** a `auth.users` (`auth_uid` no nulo) → el fallback
-legacy `verify_user_password` (que compara contra `password_hash`) **ya no es necesario**.
-- **No tocado aún (riesgo de lockout):** eliminar `verify_user_password` + la columna
-  `password_hash` + el fallback en `AuthContext.jsx` cierra la exposición de hashes y limpia
-  residuo, pero afecta la ruta de login. **Pendiente de tu confirmación.**
-- "Leaked password protection" de Supabase Auth está **desactivada** → activar en el dashboard
-  de Auth (no es SQL).
+### ✅ S-5 — Legacy de auth eliminado (RESUELTO, migración 006)
+Auditoría live: **21/21 usuarios migrados** a `auth.users`. Se eliminó (live + repo):
+- `verify_user_password()` (función) y la columna `tms_usuarios.password_hash` (cerraba la
+  exposición de hashes bcrypt a cualquier autenticado).
+- El fallback legacy de login en `AuthContext.jsx` y la escritura de `password_hash` en `Users.jsx`.
+- Verificado: función y columna ya no existen; 21 usuarios intactos con `auth_uid`.
+> ⚠️ **Coordinar despliegue:** la columna era `NOT NULL`. El frontend **debe desplegarse** con
+> estos cambios; la app actualmente en producción (que aún inserta `password_hash`) fallaría al
+> **crear usuarios nuevos** hasta el deploy. El login normal no se ve afectado.
+- **Pendiente (manual):** activar "Leaked password protection" en el dashboard de Supabase Auth
+  (no configurable por SQL).
 
 ### 🟡 S-6 — Sentry 7.114.0 desactualizado (MEDIO)
 `package.json`. La línea 8.x es la actual; 7.x puede acumular CVEs. Evaluar upgrade con pruebas.

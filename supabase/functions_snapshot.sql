@@ -112,22 +112,8 @@ CREATE OR REPLACE FUNCTION public.update_auth_password(p_auth_uid uuid, p_new_pa
  RETURNS void LANGUAGE plpgsql SET search_path TO 'public'
 AS $function$ BEGIN PERFORM private.update_auth_password(p_auth_uid, p_new_password); END; $function$;
 
--- LEGACY (deprecada): login fallback pre-Supabase Auth. Todos los usuarios ya están
--- migrados (auth_uid no nulo). Mantener solo hasta confirmar que ningún login usa el
--- fallback; luego eliminar junto con la columna tms_usuarios.password_hash.
-CREATE OR REPLACE FUNCTION public.verify_user_password(p_email text, p_password text)
- RETURNS TABLE(id uuid, nombre text, email text, rol text, activo boolean, es_admin_delegado boolean)
- LANGUAGE plpgsql
- SET search_path TO 'public', 'extensions'
-AS $function$
-BEGIN
-  RETURN QUERY
-  SELECT u.id, u.nombre::TEXT, u.email::TEXT, u.rol::TEXT, u.activo, u.es_admin_delegado
-  FROM tms_usuarios u
-  WHERE LOWER(u.email) = LOWER(p_email)
-    AND u.password_hash = crypt(p_password, u.password_hash);
-END;
-$function$;
+-- NOTA: verify_user_password() (login legacy) fue ELIMINADA en la migración 006 junto con
+-- la columna tms_usuarios.password_hash. Todos los usuarios usan Supabase Auth.
 
 
 -- ─────────────────────────────────────────────────────────────────────────
