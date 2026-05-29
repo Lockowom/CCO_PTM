@@ -108,3 +108,34 @@ select:focus {
 .custom-scrollbar-flat::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
 .custom-scrollbar-flat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .custom-scrollbar-flat::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Aviso de stock desactualizado (firma "Tío Inventario") ── */
+@keyframes ti-wave {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-7px); }
+}
+@keyframes ti-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes ti-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.0); }
+  50% { box-shadow: 0 0 28px 3px rgba(239, 68, 68, 0.22); }
+}
+/* Firma con degradado animado */
+.ti-signature {
+  background: linear-gradient(90deg, #f59e0b, #ef4444, #f97316, #f59e0b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: ti-shimmer 3s linear infinite;
+}
+/* Cada letra hace una ola, con retardo escalonado vía style inline */
+.ti-letter {
+  display: inline-block;
+  animation: ti-wave 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+.ti-banner-glow { animation: ti-glow 2.6s ease-in-out infinite; }

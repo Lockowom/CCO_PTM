@@ -8,6 +8,8 @@ import { supabase } from '../../supabase';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import gsap from 'gsap';
+import StockFreshness from '../../components/StockFreshness';
+import { STOCK_TABLES } from '../../hooks/useStockFreshness';
 
 // Componente para resaltar el texto buscado
 const HighlightText = ({ text, highlight }) => {
@@ -382,6 +384,9 @@ const Batches = () => {
             </div>
           </div>
         </div>
+
+        {/* AVISO DE FRESCURA / VIGENCIA DEL STOCK (24 hrs, ciclo 08:30→08:30) */}
+        <StockFreshness table={STOCK_TABLES[activeTab]} label={TABS.find(t => t.id === activeTab)?.label || ''} />
 
         {/* RESULTS SECTION */}
         {(searched || loading) && (

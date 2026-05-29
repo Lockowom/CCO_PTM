@@ -410,6 +410,10 @@ Búsqueda multi-tab de inventario por lote/serie/farmapack/pesos.
 - **4 tabs:** Partidas · Series · Farmapack · Pesos
 - **Tablas:** `tms_partidas`, `tms_series`, `tms_farmapack`, `tms_pesos`
 - **Features:** Highlight búsqueda, badges disponibilidad, export CSV
+- **Frescura de stock (`StockFreshness` + `useStockFreshness`):** muestra última
+  actualización (fecha/hora/usuario, desde `tms_historial_cargas`). Vigencia diaria
+  **08:30 → 08:30 hrs**; si el stock de Partidas/Series/Farmapack supera el ciclo, muestra
+  aviso "Favor actualizar stock" con firma animada "Atte, Tío Inventario".
 
 #### 4.5.2 Estado Pedido (`/queries/sales-status`)
 **Archivo:** `src/pages/Queries/SalesStatus.jsx`
@@ -910,6 +914,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| feat | 2026-05-29 | **VIGENCIA DE STOCK 24H + AVISO (Lotes y Series)**: Nuevo `StockFreshness` + hook `useStockFreshness` en el módulo Lotes y Series. Tarjeta vistosa con última actualización (fecha/hora/usuario desde `tms_historial_cargas`). Ciclo diario **08:30→08:30**; si Partidas/Series/Farmapack están fuera de vigencia, muestra aviso "Favor actualizar stock" + firma animada "Atte, Tío Inventario" (keyframes en `index.css`). Botón "Actualizar ahora" → Carga Masiva. Sin cambios de BD. |
 | perf | 2026-05-29 | **CARGA MASIVA RÁPIDA + FIX "CARGANDO ETERNO" (Series/Lotes/Farmapack)**: `bulk_upsert` reescrito a inserción **set-based** con `jsonb_to_recordset` (migración `007`) en vez de SQL dinámico fila por fila → mucho más rápido. `DataImport.handleUpload`: chunks de 1000 con **timeout/abort 90s por lote** (`abortSignal`) → si un lote se cuelga se cuenta como error y la carga no queda colgada. Verificados índices únicos y conflict keys de `tms_partidas/series/farmapack`. |
 | fix-routing | 2026-05-29 | **FIX REDIRECT A DASHBOARD (roles sin acceso)**: El botón "Reiniciar Módulo" del `ErrorBoundary` hacía `window.location.href='/dashboard'` (hardcodeado) → botaba a dashboard a roles que no lo ven, tras un error de chunk al actualizar la web. Ahora **recarga el módulo actual** (`reload()`, toma chunks nuevos) + botón "Ir al inicio" vía `/` (SmartRedirect → landing del rol). Mismo fix en `NotFound` y `AccessDenied` (ya no enlazan a `/dashboard`). |
 | perf | 2026-05-29 | **BÚSQUEDA UBICACIONES ULTRA-RÁPIDA + FIX "CARGANDO ETERNO"**: `warehouseStore.fetchWarehouseData` reescrito: paginación **paralela** (`Promise.all` sobre count) en vez de ~23 round-trips secuenciales, `select` solo de columnas necesarias, orden estable, **timeout/abort 30s** (evita spinner infinito si la red se cuelga), **caché con TTL 2 min** + dedupe de concurrencia (no recarga todo al navegar). `fetchWarehouseData(force)` para refrescos manuales/ediciones. Lotes/Series ya usa RPC server-side. |
