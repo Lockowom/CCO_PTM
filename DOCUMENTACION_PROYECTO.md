@@ -114,10 +114,11 @@ src/
 > - `tms_partidas`, `tms_series`, `tms_farmapack` e `tms_inventario_general` se cargan
 >   principalmente vía RPC `bulk_upsert` (carga masiva) y no por `.from()` directo desde el
 >   front; por eso pueden no aparecer en búsquedas de `.from('...')` en `src/`.
-> - El DDL de las tablas y varias RPC (`bulk_upsert`, `search_batches`, `fuzzy_search`,
->   `get_dashboard_kpis`, `batch_update_nv_estado`, `prepare_nv_import`) **no están en
->   `supabase/migrations/`**: residen en archivos `SUPABASE_*.sql` de la raíz y/o directamente
->   en la base de datos de Supabase (no versionados). Ver `REVISION_PROYECTO.md` §3.
+> - Las RPC (`bulk_upsert`, `search_batches`, `fuzzy_search`, `get_dashboard_kpis`,
+>   `batch_update_nv_estado`, `prepare_nv_import`, `sync_deleted_items`) y la capa de seguridad
+>   (`private.*` + wrappers) están versionadas en **`supabase/functions_snapshot.sql`**
+>   (exportadas de la BD live el 2026-05-29). El DDL `CREATE TABLE` de las tablas aún vive solo
+>   en la BD live. Scripts SQL históricos en `supabase/legacy_sql/` (no ejecutar).
 
 ---
 
@@ -910,6 +911,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| limpieza | 2026-05-29 | **CONSOLIDACIÓN BD + LIMPIEZA**: Migración `005` — eliminados helpers admin legacy `is_admin_safe`/`is_user_admin` (canónica única `private.is_admin()`). RPC versionadas en `supabase/functions_snapshot.sql`. ~15 SQL sueltos movidos a `supabase/legacy_sql/`. Eliminados 4 componentes muertos (`Placeholder`, `PageTransition`, `SkeletonCard`, `SkeletonTable`). Auditoría live: 21/21 usuarios migrados a Supabase Auth. Ver `REVISION_PROYECTO.md`. |
 | seguridad | 2026-05-29 | **HARDENING + FIXES**: Migración `004` — revocado EXECUTE de `anon`/`PUBLIC` en `bulk_upsert` y `search_batches` (cierra escritura/lectura no autenticada), `search_path` fijado, `mv_dashboard_kpis` fuera del API anónimo. Fixes de código: `await` faltante en `warehouseStore.moveItem`, promesas sin `.catch` en `MobileApp`/`Reception`/`DataImport`/`AuthContext`. Sincronizados archivos SQL stale del repo. Ver `REVISION_PROYECTO.md`. |
 | 1.4.13 | 2026-05-28 | **REDISEÑO UBICACIONES MOBILE v2**: Ubicación ahora como badge oscuro prominente (`bg-slate-800 text-white font-extrabold`) con `shrink-0` para nunca cortarse. Layout simplificado a 1 fila flex: badge ubicación + match badge + SKUs + stock + chevron. Eliminado `overflow-hidden` del contenedor que recortaba contenido. Altura virtualizer 82→64px |
 | 1.4.12 | 2026-05-28 | **FIX DISEÑO UBICACIONES MOBILE**: Header de LocationGroup rediseñado a 2 filas en mobile — ubicación (R-01, D-02, etc.) ahora en línea propia con font `text-base font-extrabold`, stats (SKUs/uds/coinciden) en segunda fila. Chevron en la misma línea de la ubicación. En desktop mantiene layout horizontal. Altura virtualizer ajustada 72→82px |

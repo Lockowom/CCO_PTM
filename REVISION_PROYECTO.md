@@ -69,18 +69,26 @@ En la BD live la tabla **tiene RLS habilitada** (1 política). El archivo
 server-side, los RPC sensibles son invocables saltándose la UI (DevTools / API directa).
 **Fix sugerido:** validar autorización dentro de cada RPC sensible (`is_admin()` u owner-check).
 
-### 🟠 S-4 — RLS Tier-1 "auth-only" en 29 tablas (ALTO / decisión de diseño)
-`003_rls_policies.sql:26-94`. Política única `auth.role() = 'authenticated'` para `ALL`:
-cualquier empleado autenticado puede leer/modificar/borrar datos de cualquier otro (rutas,
-entregas, recepciones, etc.). No hay segmentación por usuario/rol/depto.
-**A decidir:** ¿es aceptable el modelo "todos los autenticados escriben todo"? Si no, aplicar
-filtros de fila (p. ej. `usuario_id = auth.uid()` en registros personales).
+### 🟠 S-4 — RLS Tier-1 "auth-only" + exposición de `password_hash` (DECISIÓN + acción pendiente)
+`003_rls_policies.sql:26-94`. Política única `auth.role() = 'authenticated'` para `ALL` en las
+tablas operacionales (confirmado por advisors: 30+ políticas "always true").
+- **Decisión (2026-05-29): se mantiene** el modelo permisivo en tablas **operacionales**. Es un
+  WMS/TMS **interno** donde todos los empleados autenticados necesitan operar sobre los mismos
+  datos (NV, picking, packing, rutas). Segmentar por fila rompería los flujos. Las tablas
+  sensibles (`tms_usuarios`, `tms_roles`, `tms_modules_config`, `tms_tickets`) ya tienen Tier-2
+  (escritura solo admin). Se acepta como riesgo de diseño documentado.
+- **Sub-hallazgo real pendiente:** la columna legacy **`tms_usuarios.password_hash`** es
+  **legible por cualquier autenticado** (política SELECT "always true"). El cliente nunca la lee
+  (`Users.jsx` solo escribe un placeholder). Mitigación requiere confirmación (ver §S-5/auth).
 
-### 🟡 S-5 — `verify_user_password()` legacy aún expuesto (MEDIO)
-`001_verify_user_password.sql` + `AuthContext.jsx:329`. Endpoint de comparación de contraseña
-accesible tras la migración a Supabase Auth. Usa queries parametrizadas (sin SQLi) pero amplía
-superficie de ataque.
-**Fix sugerido:** deprecar con fecha; añadir check/limitar y eliminar tras periodo de migración.
+### 🟡 S-5 — Legacy de auth: `verify_user_password` + `password_hash` (ACCIÓN PENDIENTE — requiere OK)
+Auditoría live: **21/21 usuarios ya migrados** a `auth.users` (`auth_uid` no nulo) → el fallback
+legacy `verify_user_password` (que compara contra `password_hash`) **ya no es necesario**.
+- **No tocado aún (riesgo de lockout):** eliminar `verify_user_password` + la columna
+  `password_hash` + el fallback en `AuthContext.jsx` cierra la exposición de hashes y limpia
+  residuo, pero afecta la ruta de login. **Pendiente de tu confirmación.**
+- "Leaked password protection" de Supabase Auth está **desactivada** → activar en el dashboard
+  de Auth (no es SQL).
 
 ### 🟡 S-6 — Sentry 7.114.0 desactualizado (MEDIO)
 `package.json`. La línea 8.x es la actual; 7.x puede acumular CVEs. Evaluar upgrade con pruebas.
@@ -94,29 +102,27 @@ RPCs auth con queries parametrizadas; guard de sesión realtime (logout si el us
 
 ## 3. Base de datos / SQL
 
-### 🟠 DB-1 — SQL sin versionar ni ordenar (ALTO, deuda técnica)
-Solo hay 3 migraciones reales en `supabase/migrations/` (auth + RLS). El resto del esquema y la
-lógica vive en **~15 archivos sueltos en la raíz** con nombres no ordenables:
-`SUPABASE_FARMAPACK_FIX.sql`, `..._FIX_V2.sql`, `SUPABASE_FINAL_FIX.sql`, `SUPABASE_MODULES_FIX_V3.sql`,
-`SUPABASE_RECURSION_FIX.sql`, `..._FIX_V2.sql`, `SUPABASE_PACKING_FIX.sql`, `SUPABASE_PACKING_TV_FIX.sql`,
-`SUPABASE_TRANSACTIONAL.sql`, `SUPABASE_WMS_LOGIC.sql`, `SUPABASE_SECURITY.sql`, etc. + carpeta `database/`.
-No existe DDL `CREATE TABLE` versionado de las ~30 tablas.
-**Fix sugerido:** consolidar todo en migraciones numeradas (`004_…`, `005_…`) idempotentes y
-borrar los `*_FIX*` obsoletos.
+### ✅ DB-1 — SQL sin versionar ni ordenar (RESUELTO)
+Los **~15 archivos sueltos** de la raíz + carpeta `database/` se movieron a
+`supabase/legacy_sql/` (con README "no ejecutar"). La fuente de verdad ahora es
+`supabase/migrations/` (numeradas) + `supabase/functions_snapshot.sql`. Ver `supabase/README.md`.
+> Nota: el DDL `CREATE TABLE` de las ~30 tablas sigue sin versionarse (vive en la BD live). Se
+> puede generar un `000_schema.sql` con `pg_dump --schema-only` cuando se desee — pendiente menor.
 
-### 🟠 DB-2 — Cuatro definiciones distintas de "admin" (ALTO)
-`is_admin()`, `is_user_admin()`, `is_admin_safe()` y `auth.is_admin()` repartidas en varios
-`.sql`. Es la causa probable de los archivos `RECURSION_FIX`. Riesgo de comportamiento
-inconsistente en políticas RLS según cuál se use.
-**Fix sugerido:** dejar **una** función canónica y reemplazar referencias.
+### ✅ DB-2 — Definiciones de "admin" duplicadas (RESUELTO)
+Canónica única: **`private.is_admin()`** (por `auth_uid`, SECURITY DEFINER) + wrapper
+`public.is_admin()`. Se eliminaron los helpers legacy por email `is_admin_safe()` e
+`is_user_admin()` (migración `005`, aplicada en live). Confirmado: sin referencias en políticas,
+funciones ni código.
 
-### 🟠 DB-3 — RPCs usados en código pero no definidos en el repo (ALTO)
-Invocados desde `src/` pero sin definición en ningún `.sql` versionado (existen solo en la BD
-live): `bulk_upsert`, `search_batches`, `fuzzy_search`, `get_dashboard_kpis`,
-`batch_update_nv_estado`, `prepare_nv_import`. (Sí están en archivos raíz: `wms_move_stock`,
-`wms_reserve_stock`, `get_fefo_allocation`, `clean_operational_data`, y las de auth en migraciones.)
-**Fix sugerido:** exportar las definiciones desde Supabase (verificable vía Supabase MCP) e
-incorporarlas a migraciones.
+### ✅ DB-3 — RPCs no versionadas (RESUELTO)
+Se exportaron desde la BD live e incorporaron a `supabase/functions_snapshot.sql`:
+`bulk_upsert`, `search_batches`, `fuzzy_search`, `get_dashboard_kpis`, `batch_update_nv_estado`,
+`prepare_nv_import`, `sync_deleted_items` + capa de seguridad `private.*` y wrappers.
+> Hallazgo: `wms_move_stock`, `wms_reserve_stock`, `get_fefo_allocation` referencian tablas
+> **inexistentes** (`wms_inventory`, `wms_kardex`, `wms_allocations`) → código muerto a nivel de
+> datos, pero `InventoryService` se importa en `Picking.jsx` y `syncManager` referencia
+> `wms_move_stock`. Limpiar requiere desconectar esas rutas — pendiente (ver C-4).
 
 ### 🟡 DB-4 — Migración referencia tablas que no crea (MEDIO)
 `003_rls_policies.sql` habilita RLS / crea políticas sobre 30 tablas cuyo DDL no está en
@@ -204,19 +210,22 @@ histórico/de mejoras a `docs/archivo/`.
 2. ✅ **S-1** `clean_operational_data` — ya endurecida en prod; archivo stale del repo sincronizado.
 3. ✅ **S-2** RLS en `tms_inventario_general` — ya activa en prod; migración del repo corregida.
 
-### Corto plazo
+### Corto plazo — ✅ HECHO (2026-05-29)
 4. ✅ **C-1/C-2/C-3** Fix del `await` (`warehouseStore.js`) y promesas sin `.catch`
-   (`MobileApp.jsx`, `Reception.jsx`, `DataImport.jsx`, `AuthContext.jsx`). **Hecho.**
-5. **DB-1/DB-2/DB-3** Consolidar `SUPABASE_*.sql` en migraciones ordenadas; unificar `is_admin`
-   (existe canónica `private.is_admin()`; quedan legacy `is_admin_safe`/`is_user_admin` por
-   limpiar); versionar las RPC que solo viven en la BD (exportar desde Supabase). **Pendiente.**
-6. **S-4/S-5** Decidir modelo RLS por rol (advisors confirman 30+ políticas "always true");
-   deprecar `verify_user_password`; activar "leaked password protection" en Auth. **Pendiente.**
+   (`MobileApp.jsx`, `Reception.jsx`, `DataImport.jsx`, `AuthContext.jsx`).
+5. ✅ **DB-1/DB-2/DB-3** SQL suelto movido a `supabase/legacy_sql/`; `is_admin` unificado en
+   `private.is_admin()` (legacy `is_admin_safe`/`is_user_admin` eliminados, migración `005`);
+   RPC versionadas en `supabase/functions_snapshot.sql`.
+6. ✅ **C-4 (parcial)** Eliminados 4 componentes muertos (`Placeholder`, `PageTransition`,
+   `SkeletonCard`, `SkeletonTable`).
+7. ⏳ **S-4/S-5** Modelo RLS operacional permisivo: **se mantiene** (decisión documentada).
+   **Pendiente de tu OK:** eliminar `verify_user_password` + columna `password_hash` + fallback
+   de login (cierra exposición de hashes). Activar "leaked password protection" (dashboard Auth).
 
 ### Backlog
-7. **C-4/C-5/C-6/C-7** Eliminar código muerto, unificar `store/`↔`stores/`, dividir
-   god-components, limpiar `console.*` y centralizar utilidades de fecha.
-8. **D-4** Consolidar/archivar los 29 documentos.
+8. **C-5/C-6/C-7** Unificar `store/`↔`stores/`, dividir god-components, limpiar `console.*` y
+   centralizar utilidades de fecha. Limpiar RPCs/servicio de stock muerto (`wms_move_stock` etc.).
+9. **D-4** Consolidar/archivar los 29 documentos.
 9. **S-6** Upgrade Sentry 8.x.
 
 > Próximo bloque sugerido: **DB-1/DB-2/DB-3** (consolidar SQL y versionar RPCs) o **S-4/S-5**
