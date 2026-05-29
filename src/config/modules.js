@@ -78,7 +78,9 @@ export const APP_PERMISSIONS = [
       { id: 'view_drivers', label: 'Ver Conductores' },
       { id: 'manage_drivers', label: 'Gestionar Conductores' },
       { id: 'view_mobile_app', label: 'Acceder App Móvil' },
-      { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' }
+      { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' },
+      { id: 'view_stock', label: 'Ver Stock (PDA)' },
+      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' }
     ]
   },
   {
@@ -134,6 +136,7 @@ export const APP_PERMISSIONS = [
       { id: 'manage_views', label: 'Configurar Vistas/Módulos' },
       { id: 'manage_tickets', label: 'Gestionar Tickets' },
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
+      { id: 'admin_monitor', label: 'Monitor Tiempo Real' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' },
       { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS' }
     ]

@@ -546,9 +546,13 @@ Usuario ingresa email/contraseña
 ```
 
 ### Permisos (client-side)
-- **30+ rutas** mapeadas a permisos en `ROUTE_PERMISSIONS`
-- **6 secciones** (tms, dashboard, inbound, outbound, queries, admin)
-- **Navbar dinámico:** Solo muestra módulos con permiso
+- **Fuente única:** `ROUTE_PERMISSIONS` (`src/constants/permissions.js`) mapea cada ruta a sus
+  permisos. El catálogo otorgable está en `src/config/modules.js` (`APP_PERMISSIONS`), usado por
+  la matriz de Roles. Todo permiso que controla una ruta debe existir en el catálogo.
+- **Navbar 100% derivado:** un módulo/ruta se muestra solo si el usuario tiene el permiso de esa
+  ruta (`canAccessRoute`, **deny-by-default**: ruta sin permiso definido → no se muestra). Una
+  sección se muestra solo si el usuario puede acceder a ≥1 de sus rutas (`isModuleVisible`). Se
+  eliminó `SECTION_PERMISSIONS` (lista por sección que se desincronizaba).
 - **Guard en cada ruta:** `ProtectedRoute` verifica auth + permiso
 - **Roles especiales:** ADMIN, ADMIN_DEV tienen acceso total
 
@@ -914,6 +918,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| fix-permisos | 2026-05-29 | **ROLES VEÍAN MÓDULOS QUE NO LES CORRESPONDÍAN**: El Navbar mostraba rutas sin permiso definido (`canAccessRoute` devolvía `true` si la ruta no estaba en `ROUTE_PERMISSIONS`, p. ej. `/inbound/reception`) y la visibilidad de sección usaba una lista separada (`SECTION_PERMISSIONS`) desincronizada. Ahora: **deny-by-default** y visibilidad **derivada** de los permisos por ruta (`isModuleVisible` = sección visible si ≥1 ruta accesible). Añadida ruta `/inbound/reception` a `ROUTE_PERMISSIONS` y permisos faltantes al catálogo (`view_stock`, `manage_inventory`, `admin_monitor`). Eliminado `SECTION_PERMISSIONS`. |
 | feat | 2026-05-29 | **VIGENCIA DE STOCK 24H + AVISO (Lotes y Series)**: Nuevo `StockFreshness` + hook `useStockFreshness` en el módulo Lotes y Series. Tarjeta vistosa con última actualización (fecha/hora/usuario desde `tms_historial_cargas`). Ciclo diario **08:30→08:30**; si Partidas/Series/Farmapack están fuera de vigencia, muestra aviso "Favor actualizar stock" + firma animada "Atte, Tío Inventario" (keyframes en `index.css`). Botón "Actualizar ahora" → Carga Masiva. Sin cambios de BD. |
 | perf | 2026-05-29 | **CARGA MASIVA RÁPIDA + FIX "CARGANDO ETERNO" (Series/Lotes/Farmapack)**: `bulk_upsert` reescrito a inserción **set-based** con `jsonb_to_recordset` (migración `007`) en vez de SQL dinámico fila por fila → mucho más rápido. `DataImport.handleUpload`: chunks de 1000 con **timeout/abort 90s por lote** (`abortSignal`) → si un lote se cuelga se cuenta como error y la carga no queda colgada. Verificados índices únicos y conflict keys de `tms_partidas/series/farmapack`. |
 | fix-routing | 2026-05-29 | **FIX REDIRECT A DASHBOARD (roles sin acceso)**: El botón "Reiniciar Módulo" del `ErrorBoundary` hacía `window.location.href='/dashboard'` (hardcodeado) → botaba a dashboard a roles que no lo ven, tras un error de chunk al actualizar la web. Ahora **recarga el módulo actual** (`reload()`, toma chunks nuevos) + botón "Ir al inicio" vía `/` (SmartRedirect → landing del rol). Mismo fix en `NotFound` y `AccessDenied` (ya no enlazan a `/dashboard`). |

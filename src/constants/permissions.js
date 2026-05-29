@@ -11,6 +11,7 @@ export const ROUTE_PERMISSIONS = {
   '/mobile/pda': ['view_stock', 'manage_inventory'],
 
   // Inbound
+  '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
   '/inbound/cubing': ['view_reception', 'process_reception'],
   '/inbound/data-import': ['manage_data_import'],
@@ -45,11 +46,6 @@ export const ROUTE_PERMISSIONS = {
   '/admin/login-history': ['manage_users'],
 };
 
-export const SECTION_PERMISSIONS = {
-  'tms': ['view_routes', 'view_control_tower', 'view_drivers', 'view_mobile_app', 'view_tms_dashboard'],
-  'dashboard': ['view_dashboard', 'view_kpis'],
-  'inbound': ['view_entry', 'manage_data_import'],
-  'outbound': ['view_sales_orders', 'view_picking', 'view_packing', 'view_packing_tv', 'view_shipping'],
-  'queries': ['view_batches', 'view_sales_status', 'view_addresses', 'view_locations', 'view_historial_nv', 'view_dispatch_control'],
-  'admin': ['manage_users', 'manage_roles', 'manage_views', 'manage_reports', 'manage_tickets', 'admin_upload_history']
-};
+// La visibilidad de secciones/módulos en el Navbar se DERIVA de ROUTE_PERMISSIONS
+// (una sección se muestra si el usuario puede acceder a ≥1 de sus rutas). No mantener
+// una lista de permisos por sección por separado: causaba desincronización.

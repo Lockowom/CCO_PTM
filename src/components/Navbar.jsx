@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { ROUTE_PERMISSIONS, SECTION_PERMISSIONS } from '../constants/permissions';
+import { ROUTE_PERMISSIONS } from '../constants/permissions';
 
 const Navbar = () => {
   const location = useLocation();
@@ -53,23 +53,25 @@ const Navbar = () => {
     navigate('/login', { replace: true });
   };
 
-  const isSectionVisible = (sectionId) => {
-    if (!isModuleEnabled(sectionId)) return false;
-    if (user?.rol === 'ADMIN') return true;
-    if (sectionId === 'admin') return false;
-
-    const sectionPerms = SECTION_PERMISSIONS[sectionId] || [];
-    return sectionPerms.some(perm => hasPermission(perm));
-  };
-
+  // ¿El usuario puede acceder a esta ruta? Fuente única: ROUTE_PERMISSIONS.
   const canAccessRoute = (path, sectionId) => {
     if (user?.rol === 'ADMIN') return true;
-    if (sectionId === 'admin') return user?.rol === 'ADMIN';
-
+    if (sectionId === 'admin') return false; // sección admin: solo ADMIN
     const perms = ROUTE_PERMISSIONS[path];
-    if (!perms) return true;
+    // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
+    if (!perms || perms.length === 0) return false;
     const permList = Array.isArray(perms) ? perms : [perms];
     return permList.some(perm => hasPermission(perm));
+  };
+
+  // Un módulo/sección del navbar se muestra si está habilitado (Vistas) y el usuario
+  // puede acceder a AL MENOS una de sus rutas. La visibilidad queda SIEMPRE derivada de
+  // los permisos por ruta → se sincroniza sola al agregar/quitar módulos o permisos.
+  const isModuleVisible = (item) => {
+    if (!isModuleEnabled(item.id)) return false;
+    if (item.id === 'admin') return user?.rol === 'ADMIN';
+    if (item.isLink) return canAccessRoute(item.path, item.id);
+    return (item.modules || []).some(m => canAccessRoute(m.path, item.id));
   };
 
   const menuCategories = [
@@ -200,7 +202,7 @@ const Navbar = () => {
         {/* Center: Desktop Navigation */}
         <nav className="hidden xl:flex items-center gap-1">
           {menuCategories.map((category) => {
-            const visibleItems = category.items.filter(item => item.id ? isSectionVisible(item.id) : true);
+            const visibleItems = category.items.filter(isModuleVisible);
             if (visibleItems.length === 0) return null;
 
             return visibleItems.map((item) => {
@@ -359,7 +361,7 @@ const Navbar = () => {
         >
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 space-y-4 sm:space-y-6">
             {menuCategories.map((category) => {
-              const visibleItems = category.items.filter(item => item.id ? isSectionVisible(item.id) : true);
+              const visibleItems = category.items.filter(isModuleVisible);
               if (visibleItems.length === 0) return null;
 
               return (
