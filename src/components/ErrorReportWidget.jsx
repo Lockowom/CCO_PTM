@@ -19,10 +19,14 @@ const ErrorReportWidget = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim()) return;
+    if (!user?.id) { setStatus('error'); return; } // requiere sesión válida
 
     setLoading(true);
     setStatus(null);
 
+    // Timeout para que NUNCA quede "Enviando..." eternamente
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 15000);
     try {
       // Generar ID amigable: T-{YYYYMMDD}-{HHMM}
       const now = new Date();
@@ -33,18 +37,19 @@ const ErrorReportWidget = () => {
         .from('tms_tickets')
         .insert({
           ticket_id: ticketId,
-          usuario_id: user?.id || 'anon',
-          usuario_nombre: user?.nombre || 'Usuario Anónimo',
+          usuario_id: user.id,
+          usuario_nombre: user?.nombre || 'Usuario',
           descripcion: description,
           prioridad: 'MEDIA',
           estado: 'PENDIENTE'
-        });
+        })
+        .abortSignal(ctrl.signal);
 
       if (error) throw error;
 
       setStatus('success');
       setDescription('');
-      
+
       // Cerrar automáticamente después de 2s
       setTimeout(() => {
         setIsOpen(false);
@@ -54,6 +59,7 @@ const ErrorReportWidget = () => {
     } catch (err) {
       setStatus('error');
     } finally {
+      clearTimeout(tid);
       setLoading(false);
     }
   };
