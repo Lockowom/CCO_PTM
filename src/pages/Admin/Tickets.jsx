@@ -573,10 +573,13 @@ const Tickets = () => {
   };
 
   const handleCreate = async (form) => {
+    if (!user?.id) { toast.error('Sesión no válida. Vuelve a iniciar sesión.'); return; }
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 15000);
     try {
       const ticketData = {
         ticket_id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-        usuario_id: user?.id || 'anon',
+        usuario_id: user.id,
         usuario_nombre: user?.nombre || 'Usuario',
         asunto: form.asunto,
         descripcion: form.descripcion,
@@ -586,7 +589,7 @@ const Tickets = () => {
         created_at: new Date().toISOString()
       };
 
-      const { error } = await supabase.from('tms_tickets').insert(ticketData);
+      const { error } = await supabase.from('tms_tickets').insert(ticketData).abortSignal(ctrl.signal);
       if (error) throw error;
 
       // Push notification se envía automáticamente via DB trigger → Edge Function (notify-ticket)
@@ -595,7 +598,9 @@ const Tickets = () => {
       toast.success('Ticket creado exitosamente');
       fetchTickets();
     } catch (err) {
-      toast.error('Error creando ticket: ' + err.message);
+      toast.error('Error creando ticket: ' + (err?.message || 'tiempo de espera agotado'));
+    } finally {
+      clearTimeout(tid);
     }
   };
 
