@@ -1,5 +1,9 @@
 # 📋 DOCUMENTACIÓN TÉCNICA - CCO WMS (Centro de Control Operacional)
 
+> ⚠️ **Documento histórico (v1.0.0).** Superado por **`DOCUMENTACION_PROYECTO.md`**, que
+> refleja el estado actual (v1.4.13). Consérvese solo como referencia; el contenido vigente
+> está en `DOCUMENTACION_PROYECTO.md`.
+
 ## 📑 Tabla de Contenidos
 1. [Visión General](#visión-general)
 2. [Stack Tecnológico](#stack-tecnológico)

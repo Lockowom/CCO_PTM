@@ -2,7 +2,10 @@
 
 Plataforma integral de gestión logística (WMS + TMS) diseñada para optimizar el flujo de operaciones desde la recepción hasta la última milla.
 
-## 🚀 Stack Tecnológico (v2.0)
+> **Versión actual:** `1.4.13` (ver `package.json`). "v2.0" refiere al hito de rediseño
+> UI/UX, no a la versión semver publicada.
+
+## 🚀 Stack Tecnológico (rediseño v2.0)
 
 - **Frontend:** React 18 + Vite
 - **Estilos:** TailwindCSS + Glassmorphism UI

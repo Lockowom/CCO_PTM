@@ -1,5 +1,8 @@
 # Manual de Usuario - Actualización v2.0 (Marzo 2026)
 
+> Nota: "v2.0" es el nombre del hito de rediseño UI/UX. La versión semver de la app es
+> `1.4.13` (ver `package.json`).
+
 Este documento detalla las nuevas funcionalidades y cambios visuales implementados en la plataforma CCO.
 
 ## 1. 📊 Nuevo Dashboard Operacional

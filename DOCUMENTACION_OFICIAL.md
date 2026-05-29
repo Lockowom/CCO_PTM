@@ -1,5 +1,6 @@
 # 📦 DOCUMENTACIÓN OFICIAL: CCO WMS & TMS
-**Versión:** 2.0.0 (Enterprise Edition)
+**Versión app (semver):** 1.4.13 — ver `package.json`
+**Hito de producto:** "2.0 Enterprise Edition" (rediseño/branding, no es la versión semver)
 **Fecha de Actualización:** Mayo 2026
 **Arquitectura:** PWA Móvil / Web App React (Serverless Backend)
 

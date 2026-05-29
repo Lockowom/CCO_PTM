@@ -80,7 +80,8 @@ src/
 
 | Tabla | Propósito | Módulos que la usan |
 |---|---|---|
-| `tms_usuarios` | Cuentas de usuario, presencia, push_token | Auth, Admin, Monitor |
+| `tms_usuarios` | Cuentas de usuario, push_token, auth_uid | Auth, Admin, Monitor |
+| `tms_usuarios_activos` | Presencia/heartbeat de usuarios conectados | AuthContext, Monitor |
 | `tms_roles` | Roles con permisos JSON, landing page, import_tabs | Auth, Roles, Views |
 | `tms_accesos` | Auditoría de logins | Auth |
 | `tms_modules_config` | Feature flags por módulo | ConfigContext, Views |
@@ -106,7 +107,17 @@ src/
 | `tms_print_queue` | Cola impresión etiquetas ZPL | LabelPrinter |
 | `tms_picking_tasks` | Tareas picking asignadas | PDA |
 | `wms_ubicaciones` | Ubicaciones bodega (RACK-POS-NIVEL) | Entry, Heatmap, WmsLocations, LocationManager, Picking, PDA |
+| `wms_layout` | Layout físico de bodega (racks/niveles) | warehouseStore, Heatmap |
 | `tms_cubicaje_historial` | Historial cubicaje productos | CubingRegistry |
+
+> **Notas:**
+> - `tms_partidas`, `tms_series`, `tms_farmapack` e `tms_inventario_general` se cargan
+>   principalmente vía RPC `bulk_upsert` (carga masiva) y no por `.from()` directo desde el
+>   front; por eso pueden no aparecer en búsquedas de `.from('...')` en `src/`.
+> - El DDL de las tablas y varias RPC (`bulk_upsert`, `search_batches`, `fuzzy_search`,
+>   `get_dashboard_kpis`, `batch_update_nv_estado`, `prepare_nv_import`) **no están en
+>   `supabase/migrations/`**: residen en archivos `SUPABASE_*.sql` de la raíz y/o directamente
+>   en la base de datos de Supabase (no versionados). Ver `REVISION_PROYECTO.md` §3.
 
 ---
 
@@ -639,10 +650,10 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 ### Plugins instalados
 | Plugin | Versión | Uso |
 |---|---|---|
-| `@capacitor-mlkit/barcode-scanning` | 8.1.0 | Escaneo QR/barcode con cámara |
-| `@capacitor/haptics` | 7.0.5 | Vibración feedback |
-| `@capacitor/push-notifications` | 7.0.6 | Notificaciones push FCM |
-| `@capgo/capacitor-updater` | 7.45.10 | OTA updates |
+| `@capacitor-mlkit/barcode-scanning` | ^8.1.0 | Escaneo QR/barcode con cámara |
+| `@capacitor/haptics` | ^7.0.0 | Vibración feedback |
+| `@capacitor/push-notifications` | ^7.0.0 | Notificaciones push FCM |
+| `@capgo/capacitor-updater` | ^7.0.0 | OTA updates |
 
 ### OTA Updates (Capgo)
 **Config:** `autoUpdate: true` en capacitor.config.json
@@ -720,24 +731,26 @@ cd android && ./gradlew assembleRelease
 
 ## 10. Dependencias Principales
 
+> Versiones según rangos declarados en `package.json` (fuente de verdad).
+
 | Librería | Versión | Uso |
 |---|---|---|
-| React | 18.2.0 | UI Framework |
-| React Router | 6.20.0 | Routing SPA |
-| Vite | 5.4.21 | Build tool |
-| Supabase JS | 2.98.0 | Backend client |
-| TanStack React Query | 5.50.0 | Server state cache |
-| TanStack Virtual | 3.8.3 | Virtual scrolling |
-| TailwindCSS | 3.4.17 | CSS utility |
-| GSAP | 3.14.2 | Animaciones |
-| Recharts | 3.7.0 | Gráficos |
-| Leaflet | 1.9.4 | Mapas |
-| Dexie | 4.0.8 | IndexedDB offline |
-| Sonner | 1.7.4 | Toast notifications |
-| Zustand | 5.0.5 | State management |
-| date-fns | 4.1.0 | Fechas |
-| Sentry | 7.114.0 | Error tracking |
-| Capacitor | 8.2.0 | Native bridge |
+| React | ^18.2.0 | UI Framework |
+| React Router | ^6.20.0 | Routing SPA |
+| Vite | ^5.0.0 | Build tool |
+| Supabase JS | ^2.98.0 | Backend client |
+| TanStack React Query | ^5.50.0 | Server state cache |
+| TanStack Virtual | ^3.8.3 | Virtual scrolling |
+| TailwindCSS | ^3.3.5 | CSS utility |
+| GSAP | ^3.14.2 | Animaciones |
+| Recharts | ^3.7.0 | Gráficos |
+| Leaflet | ^1.9.4 | Mapas |
+| Dexie | ^4.0.8 | IndexedDB offline |
+| Sonner | ^2.0.7 | Toast notifications |
+| Zustand | ^4.5.2 | State management |
+| date-fns | ^4.1.0 | Fechas |
+| Sentry | ^7.114.0 | Error tracking |
+| Capacitor | ^8.2.0 | Native bridge |
 
 ---
 
