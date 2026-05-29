@@ -694,13 +694,33 @@ const DataImport = () => {
             const conflictKeys = (!currentTab.uniqueKey || currentTab.id === 'control_despacho') ? null : currentTab.uniqueKey;
 
             // ── SIEMPRE usar RPC bulk_upsert (SECURITY DEFINER = bypasea RLS) ──
-            // Chunks de 3000 filas para evitar timeout de 60s en Supabase free
-            const RPC_CHUNK = 3000;
+            // Set-based en el server; chunks de 1000 con timeout por lote para que
+            // NUNCA quede "cargando eterno" si una request se cuelga.
+            const RPC_CHUNK = 1000;
             const CONCURRENCY = 3;
+            const CHUNK_TIMEOUT_MS = 90000;
             const rpcChunks = [];
             for (let i = 0; i < newRows.length; i += RPC_CHUNK) {
                 rpcChunks.push(newRows.slice(i, i + RPC_CHUNK));
             }
+
+            // Llama bulk_upsert con abort/timeout: si un lote se cuelga, se aborta
+            // y se cuenta como error en vez de bloquear toda la carga.
+            const callChunk = (chunk) => {
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), CHUNK_TIMEOUT_MS);
+                return supabase
+                    .rpc('bulk_upsert', {
+                        p_table: currentTab.table,
+                        p_data: chunk,
+                        p_conflict_keys: conflictKeys
+                    })
+                    .abortSignal(ctrl.signal)
+                    .then(
+                        (r) => { clearTimeout(tid); return r; },
+                        (e) => { clearTimeout(tid); throw e; }
+                    );
+            };
 
             const totalChunks = rpcChunks.length;
             let completedChunks = 0;
@@ -708,15 +728,7 @@ const DataImport = () => {
 
             for (let i = 0; i < rpcChunks.length; i += CONCURRENCY) {
                 const wave = rpcChunks.slice(i, i + CONCURRENCY);
-                const results = await Promise.allSettled(
-                    wave.map(chunk =>
-                        supabase.rpc('bulk_upsert', {
-                            p_table: currentTab.table,
-                            p_data: chunk,
-                            p_conflict_keys: conflictKeys
-                        })
-                    )
-                );
+                const results = await Promise.allSettled(wave.map(callChunk));
 
                 results.forEach((res, idx) => {
                     completedChunks++;

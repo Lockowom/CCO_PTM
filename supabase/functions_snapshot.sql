@@ -230,7 +230,8 @@ BEGIN
 END;
 $function$;
 
--- Carga masiva server-side (whitelist de tablas). SECURITY DEFINER, batches de 500.
+-- Carga masiva server-side (whitelist de tablas). SECURITY DEFINER.
+-- Inserción SET-BASED con jsonb_to_recordset (rápida). Ver migración 007.
 CREATE OR REPLACE FUNCTION public.bulk_upsert(p_table text, p_data jsonb, p_conflict_keys text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -238,81 +239,50 @@ CREATE OR REPLACE FUNCTION public.bulk_upsert(p_table text, p_data jsonb, p_conf
  SET search_path TO 'public', 'extensions', 'pg_temp'
 AS $function$
 DECLARE
-  v_allowed_tables TEXT[] := ARRAY[
-    'tms_inventario_general', 'tms_nv_diarias', 'tms_control_despacho',
-    'tms_partidas', 'tms_series', 'tms_farmapack', 'wms_ubicaciones',
-    'tms_matriz_codigos'
+  v_allowed text[] := ARRAY[
+    'tms_inventario_general','tms_nv_diarias','tms_control_despacho',
+    'tms_partidas','tms_series','tms_farmapack','wms_ubicaciones','tms_matriz_codigos'
   ];
-  v_row JSONB;
-  v_keys TEXT[];
-  v_cols TEXT[];
-  v_col TEXT;
-  v_sql TEXT;
-  v_conflict_sql TEXT := '';
-  v_update_cols TEXT[];
-  v_inserted INT := 0;
-  v_updated INT := 0;
-  v_errors INT := 0;
-  v_total INT;
-  v_batch_size INT := 500;
-  v_batch_start INT := 0;
-  v_values_list TEXT[];
-  v_row_vals TEXT[];
-  v_i INT;
+  v_cols text[]; v_keys text[]; v_coldef text; v_collist text;
+  v_update text; v_conflict text := ''; v_total int; v_affected int := 0;
 BEGIN
-  IF NOT (p_table = ANY(v_allowed_tables)) THEN
+  IF NOT (p_table = ANY(v_allowed)) THEN
     RETURN jsonb_build_object('error', 'Tabla no permitida: ' || p_table);
   END IF;
-
   v_total := jsonb_array_length(p_data);
   IF v_total = 0 THEN
     RETURN jsonb_build_object('inserted', 0, 'updated', 0, 'errors', 0, 'total', 0);
   END IF;
-
-  SELECT array_agg(k) INTO v_cols FROM jsonb_object_keys(p_data->0) AS k;
-
-  IF p_conflict_keys IS NOT NULL AND p_conflict_keys != '' THEN
-    v_keys := string_to_array(p_conflict_keys, ',');
-    SELECT array_agg(c || ' = EXCLUDED.' || c) INTO v_update_cols
+  SELECT array_agg(k ORDER BY k) INTO v_cols
+  FROM jsonb_object_keys(p_data->0) AS k
+  WHERE k IN (SELECT column_name FROM information_schema.columns
+              WHERE table_schema='public' AND table_name=p_table);
+  IF v_cols IS NULL OR array_length(v_cols,1) = 0 THEN
+    RETURN jsonb_build_object('error', 'Sin columnas validas para ' || p_table);
+  END IF;
+  SELECT string_agg(format('%I %s', c.column_name,
+           CASE WHEN c.data_type = 'USER-DEFINED' THEN c.udt_name ELSE c.data_type END), ', ')
+  INTO v_coldef FROM information_schema.columns c
+  WHERE c.table_schema='public' AND c.table_name=p_table AND c.column_name = ANY(v_cols);
+  SELECT string_agg(quote_ident(c), ', ') INTO v_collist FROM unnest(v_cols) AS c;
+  IF p_conflict_keys IS NOT NULL AND p_conflict_keys <> '' THEN
+    v_keys := ARRAY(SELECT trim(x) FROM unnest(string_to_array(p_conflict_keys, ',')) AS x WHERE trim(x) <> '');
+    SELECT string_agg(format('%I = EXCLUDED.%I', c, c), ', ') INTO v_update
     FROM unnest(v_cols) AS c WHERE NOT (c = ANY(v_keys));
-
-    IF v_update_cols IS NOT NULL AND array_length(v_update_cols, 1) > 0 THEN
-      v_conflict_sql := ' ON CONFLICT (' || p_conflict_keys || ') DO UPDATE SET ' || array_to_string(v_update_cols, ', ');
+    IF v_update IS NOT NULL THEN
+      v_conflict := format(' ON CONFLICT (%s) DO UPDATE SET %s',
+        (SELECT string_agg(quote_ident(k), ', ') FROM unnest(v_keys) AS k), v_update);
     ELSE
-      v_conflict_sql := ' ON CONFLICT (' || p_conflict_keys || ') DO NOTHING';
+      v_conflict := format(' ON CONFLICT (%s) DO NOTHING',
+        (SELECT string_agg(quote_ident(k), ', ') FROM unnest(v_keys) AS k));
     END IF;
   END IF;
-
-  WHILE v_batch_start < v_total LOOP
-    v_values_list := ARRAY[]::TEXT[];
-    FOR v_i IN v_batch_start .. LEAST(v_batch_start + v_batch_size - 1, v_total - 1) LOOP
-      v_row := p_data->v_i;
-      v_row_vals := ARRAY[]::TEXT[];
-      FOREACH v_col IN ARRAY v_cols LOOP
-        IF v_row->v_col IS NULL OR v_row->>v_col IS NULL THEN
-          v_row_vals := array_append(v_row_vals, 'NULL');
-        ELSIF jsonb_typeof(v_row->v_col) = 'number' THEN
-          v_row_vals := array_append(v_row_vals, v_row->>v_col);
-        ELSE
-          v_row_vals := array_append(v_row_vals, quote_literal(v_row->>v_col));
-        END IF;
-      END LOOP;
-      v_values_list := array_append(v_values_list, '(' || array_to_string(v_row_vals, ',') || ')');
-    END LOOP;
-
-    v_sql := 'INSERT INTO ' || quote_ident(p_table) || ' (' || array_to_string(v_cols, ',') || ') VALUES '
-             || array_to_string(v_values_list, ',') || v_conflict_sql;
-    BEGIN
-      EXECUTE v_sql;
-      v_inserted := v_inserted + array_length(v_values_list, 1);
-    EXCEPTION WHEN OTHERS THEN
-      v_errors := v_errors + array_length(v_values_list, 1);
-      RAISE WARNING 'Batch error at %: %', v_batch_start, SQLERRM;
-    END;
-    v_batch_start := v_batch_start + v_batch_size;
-  END LOOP;
-
-  RETURN jsonb_build_object('inserted', v_inserted, 'updated', v_updated, 'errors', v_errors, 'total', v_total);
+  EXECUTE format('INSERT INTO public.%I (%s) SELECT %s FROM jsonb_to_recordset($1) AS x(%s)%s',
+    p_table, v_collist, v_collist, v_coldef, v_conflict) USING p_data;
+  GET DIAGNOSTICS v_affected = ROW_COUNT;
+  RETURN jsonb_build_object('inserted', v_affected, 'updated', 0, 'errors', 0, 'total', v_total);
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('error', SQLERRM, 'inserted', 0, 'updated', 0, 'errors', v_total, 'total', v_total);
 END;
 $function$;
 
