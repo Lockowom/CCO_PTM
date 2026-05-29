@@ -1,0 +1,1 @@
+function s(o){const t={};return(o||[]).forEach(n=>{const a=n.nv;t[a]||(t[a]={...n,items:[],total_items:0,total_cantidad:0}),t[a].items.push(n),t[a].total_items++,t[a].total_cantidad+=parseInt(n.cantidad)||0}),Object.values(t)}export{s as g};

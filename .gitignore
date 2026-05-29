@@ -90,7 +90,7 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+# dist — REMOVIDO: Render necesita dist/ en el repo para servir el build
 
 # Gatsby files
 .cache/
