@@ -265,7 +265,7 @@ const WmsLocations = () => {
               <span className="hidden sm:inline">Exportar</span>
             </button>
             <button
-              onClick={() => fetchWarehouseData()}
+              onClick={() => fetchWarehouseData(true)}
               className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all active:scale-95"
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />

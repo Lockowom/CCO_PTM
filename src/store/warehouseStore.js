@@ -7,6 +7,9 @@ export const useWarehouseStore = create((set, get) => ({
   inventory: {},
   stats: { total: 0, ocupadas: 0, vacias: 0, ocupacion: 0 },
   loading: false,
+  loaded: false,        // datos ya cargados al menos una vez (caché)
+  lastLoadedAt: 0,
+  _inflight: null,      // promesa de carga en curso (dedupe de concurrencia)
   ui: {
     activeCell: null,
     searchQuery: '',
@@ -19,8 +22,22 @@ export const useWarehouseStore = create((set, get) => ({
   toggleHeatmap: () => set((state) => ({ ui: { ...state.ui, heatmapMode: !state.ui.heatmapMode } })),
   setCamera: (camera) => set((state) => ({ ui: { ...state.ui, camera: { ...state.ui.camera, ...camera } } })),
 
-  fetchWarehouseData: async () => {
+  // force=false → usa caché si ya se cargó (no recarga al navegar).
+  // force=true  → recarga (botón refrescar / tras ediciones).
+  fetchWarehouseData: async (force = false) => {
+    // Dedupe: si ya hay una carga en curso, reutilizarla
+    const inflight = get()._inflight;
+    if (inflight) return inflight;
+    // Caché con TTL: si hay datos frescos (<2 min) y no se fuerza, no recargar
+    const CACHE_TTL = 2 * 60 * 1000;
+    if (!force && get().loaded && Object.keys(get().inventory).length > 0
+        && (Date.now() - get().lastLoadedAt) < CACHE_TTL) return;
+
+    const run = (async () => {
     set({ loading: true });
+    // Timeout de seguridad: aborta si la red se cuelga (evita "cargando eterno")
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
       const normalizeLoc = (loc) => {
         if (!loc) return '';
@@ -50,36 +67,42 @@ export const useWarehouseStore = create((set, get) => ({
         return cleaned;
       };
 
-      // Función auxiliar para traer TODOS los registros (Paginación automática)
-      const fetchAll = async (tableName) => {
-        let allData = [];
-        let from = 0;
+      // Trae TODOS los registros en PARALELO (1 round-trip de count + N páginas a la vez).
+      // Mucho más rápido que paginar secuencialmente y resistente a una página lenta.
+      const fetchAllParallel = async (tableName, columns, orderCol) => {
         const step = 1000;
-        let hasMore = true;
+        const { count, error: countErr } = await supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true })
+          .abortSignal(controller.signal);
+        if (countErr) throw countErr;
+        const total = count || 0;
+        if (total === 0) return [];
 
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select('*')
-            .range(from, from + step - 1);
-          
-          if (error) throw error;
-          allData = [...allData, ...data];
-          
-          if (data.length < step) {
-            hasMore = false;
-          } else {
-            from += step;
-          }
+        const pages = Math.ceil(total / step);
+        const requests = [];
+        for (let i = 0; i < pages; i++) {
+          const from = i * step;
+          requests.push(
+            supabase
+              .from(tableName)
+              .select(columns)
+              .order(orderCol, { ascending: true })
+              .range(from, from + step - 1)
+              .abortSignal(controller.signal)
+              .then(({ data, error }) => { if (error) throw error; return data || []; })
+          );
         }
-        return allData;
+        const chunks = await Promise.all(requests);
+        return chunks.flat();
       };
 
-      // 1. Get Real Inventory FIRST (Source of truth for occupancy)
-      const ubicacionesRows = await fetchAll('wms_ubicaciones');
-        
-      // 2. Get Physical Layout (Optional metadata)
-      const layoutRows = await fetchAll('wms_layout').catch(() => []);
+      // 1. Inventario real (fuente de verdad de ocupación) — solo columnas necesarias
+      // 2. Layout físico (metadata) — en paralelo con el inventario
+      const [ubicacionesRows, layoutRows] = await Promise.all([
+        fetchAllParallel('wms_ubicaciones', 'id,ubicacion,codigo,descripcion,cantidad', 'id'),
+        fetchAllParallel('wms_layout', '*', 'ubicacion').catch(() => [])
+      ]);
 
       const inventoryMap = {};
       const layoutMap = {};
@@ -160,12 +183,28 @@ export const useWarehouseStore = create((set, get) => ({
           vacias: Math.max(0, TOTAL_POSITIONS - occupiedCount),
           ocupacion: TOTAL_POSITIONS > 0 ? Math.round((occupiedCount / TOTAL_POSITIONS) * 100) : 0
         },
-        loading: false
+        loading: false,
+        loaded: true,
+        lastLoadedAt: Date.now()
       });
 
     } catch (_) {
-      console.error('Warehouse data fetch error:', _);
+      if (_?.name === 'AbortError') {
+        console.error('Warehouse data fetch: timeout/abort (red lenta)');
+      } else {
+        console.error('Warehouse data fetch error:', _);
+      }
       set({ loading: false });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    })();
+
+    set({ _inflight: run });
+    try {
+      await run;
+    } finally {
+      set({ _inflight: null });
     }
   },
 
@@ -223,9 +262,9 @@ export const useWarehouseStore = create((set, get) => ({
           .eq('id', itemId);
 
         if (error) throw error;
-        
-        // Refresh full state to ensure consistency
-        await get().fetchWarehouseData();
+
+        // Refresh full state to ensure consistency (forzado tras edición)
+        await get().fetchWarehouseData(true);
      } catch (error) {
        throw error;
      }

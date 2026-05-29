@@ -144,7 +144,7 @@ const Heatmap = () => {
       await updateLocationState(locCode, newState);
       setDetailModal(prev => prev ? { ...prev, estado: newState } : null);
       toast.success(`${locCode} → ${LOCATION_STATES[newState]?.label || newState}`);
-      fetchWarehouseData();
+      fetchWarehouseData(true);
     } catch {
       toast.error('Error al cambiar estado');
     } finally {
@@ -195,7 +195,7 @@ const Heatmap = () => {
             <button onClick={exportCSV} className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors active:scale-[0.97]">
               <Download size={15} /> Exportar
             </button>
-            <button onClick={() => fetchWarehouseData()} className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all active:scale-95">
+            <button onClick={() => fetchWarehouseData(true)} className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all active:scale-95">
               <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
