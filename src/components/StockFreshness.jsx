@@ -5,6 +5,7 @@ import {
   ArrowRight, CheckCircle2, ShieldAlert
 } from 'lucide-react';
 import { useStockFreshness, getCycleStart, TABLES_24H } from '../hooks/useStockFreshness';
+import { useAuth } from '../context/AuthContext';
 
 const fmtDate = (d) =>
   new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
@@ -24,7 +25,12 @@ const AnimatedSignature = ({ text }) => (
 
 const StockFreshness = ({ table, label }) => {
   const navigate = useNavigate();
+  const { user, hasPermission } = useAuth();
   const { data: latest } = useStockFreshness();
+
+  // Solo quien puede usar la Carga Masiva debe ver el botón que lleva ahí; al resto
+  // mostrarle el CTA solo provocaría una pantalla de "Acceso Denegado".
+  const canImport = user?.rol === 'ADMIN' || user?.es_admin_delegado || hasPermission('manage_data_import');
 
   const info = useMemo(() => {
     const rec = latest?.[table];
@@ -115,12 +121,19 @@ const StockFreshness = ({ table, label }) => {
               con corte diario a las <span className="font-black text-slate-800">08:30 hrs</span>.
             </p>
 
-            <button
-              onClick={() => navigate('/inbound/data-import')}
-              className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black rounded-xl shadow-lg shadow-red-500/20 hover:-translate-y-0.5 active:scale-95 transition-all"
-            >
-              Actualizar ahora <ArrowRight size={18} />
-            </button>
+            {canImport ? (
+              <button
+                onClick={() => navigate('/inbound/data-import')}
+                className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black rounded-xl shadow-lg shadow-red-500/20 hover:-translate-y-0.5 active:scale-95 transition-all"
+              >
+                Actualizar ahora <ArrowRight size={18} />
+              </button>
+            ) : (
+              <p className="mt-5 inline-flex items-center gap-2 px-5 py-3 bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-xl text-sm">
+                <Clock size={16} className="text-slate-400" />
+                Avisa al encargado de inventario para actualizar el stock.
+              </p>
+            )}
 
             {/* Firma animada */}
             <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col items-center">
