@@ -276,7 +276,8 @@ const Reception = () => {
   // ==================== ITEM MANAGEMENT ====================
 
   const addItem = () => {
-    if (!currentItem.reff) {
+    const reff = (currentItem.reff || '').trim().toUpperCase();
+    if (!reff) {
       toast.error('El código REFF es obligatorio');
       return;
     }
@@ -285,25 +286,26 @@ const Reception = () => {
       return;
     }
 
-    // Buscar descripción en matriz de códigos. Si la búsqueda falla, igual se agrega
-    // el item (con descripción vacía) para no perder el registro.
-    const addItem = (desc) => {
-      setItems(prev => [...prev, {
-        ...currentItem,
-        reff: currentItem.reff.toUpperCase(),
-        cantidad: parseInt(currentItem.cantidad) || 1,
-        descripcion: desc || '',
-        um: 'UNI',
-        _id: Date.now()
-      }]);
-      setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
-    };
-    lookupDescription(currentItem.reff)
-      .then(desc => addItem(desc))
-      .catch(err => {
-        console.error('[Reception] Falló lookup de descripción:', err);
-        addItem('');
-      });
+    // Agregar el ítem de INMEDIATO al estado local. No debe depender de una consulta de
+    // red: en bodega con señal intermitente el lookup puede colgarse y antes el ítem nunca
+    // se agregaba (parecía que el botón no hacía nada).
+    const _id = Date.now();
+    setItems(prev => [...prev, {
+      ...currentItem,
+      reff,
+      cantidad: parseInt(currentItem.cantidad) || 1,
+      descripcion: '',
+      um: 'UNI',
+      _id
+    }]);
+    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+
+    // Enriquecer la descripción en segundo plano (no bloquea el alta).
+    lookupDescription(reff)
+      .then(desc => {
+        if (desc) setItems(prev => prev.map(it => it._id === _id ? { ...it, descripcion: desc } : it));
+      })
+      .catch(err => console.error('[Reception] Falló lookup de descripción:', err));
   };
 
   const removeItem = (index) => {
@@ -903,6 +905,7 @@ const Reception = () => {
 
               {/* ===== BOTÓN AGREGAR ===== */}
               <button
+                type="button"
                 onClick={addItem}
                 className="w-full bg-emerald-50 border-2 border-emerald-400 hover:bg-emerald-100 text-emerald-700 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 transition-all active:scale-[0.97] hover:shadow-md"
               >
