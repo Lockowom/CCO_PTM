@@ -12,7 +12,7 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe
+  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -119,6 +119,7 @@ const Navbar = () => {
       items: [
         { id: 'queries', label: 'Consultas', icon: <Search size={18} />, modules: [
             { label: 'Lotes/Series', path: '/queries/batches', icon: <Barcode size={16} /> },
+            { label: 'Ficha Técnica', path: '/queries/datasheet', icon: <ScanLine size={16} /> },
             { label: 'Mapa Calor', path: '/queries/heatmap', icon: <Activity size={16} /> },
             { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPin size={16} /> },
             { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileSearch size={16} /> },

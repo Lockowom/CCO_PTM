@@ -45,6 +45,7 @@ export const APP_ROUTES = [
   { value: '/queries/heatmap', label: 'Consultas - Mapa Calor', module: 'queries' },
   { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.', module: 'queries' },
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
+  { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
   
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
@@ -121,6 +122,8 @@ export const APP_PERMISSIONS = [
       { id: 'view_sales_status', label: 'Ver Estado N.V.' },
       { id: 'view_addresses', label: 'Ver Direcciones' },
       { id: 'view_locations', label: 'Ver Ubicaciones' },
+      { id: 'view_fichas', label: 'Ver Ficha Técnica' },
+      { id: 'manage_fichas', label: 'Gestionar Fotos Ficha Técnica' },
       { id: 'export_data', label: 'Exportar Datos (CSV)' }
     ]
   },

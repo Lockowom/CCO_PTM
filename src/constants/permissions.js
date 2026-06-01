@@ -31,6 +31,7 @@ export const ROUTE_PERMISSIONS = {
   '/queries/heatmap': ['view_locations'],
   '/queries/historial-nv': ['view_historial_nv'],
   '/queries/dispatch-control': ['view_dispatch_control'],
+  '/queries/datasheet': ['view_fichas'],
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],

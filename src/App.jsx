@@ -46,6 +46,7 @@ const WmsLocations = React.lazy(() => import('./pages/Queries/WmsLocations'));
 const HistorialNV = React.lazy(() => import('./pages/Queries/HistorialNV'));
 const Heatmap = React.lazy(() => import('./pages/Queries/Heatmap'));
 const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl'));
+const ProductDatasheet = React.lazy(() => import('./pages/Queries/ProductDatasheet'));
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
@@ -356,6 +357,7 @@ function AppContent() {
           <Route path="queries/heatmap" element={<ErrorBoundary><Heatmap /></ErrorBoundary>} />
           <Route path="queries/historial-nv" element={<ErrorBoundary><HistorialNV /></ErrorBoundary>} />
           <Route path="queries/dispatch-control" element={<ErrorBoundary><DispatchControl /></ErrorBoundary>} />
+          <Route path="queries/datasheet" element={<ErrorBoundary><ProductDatasheet /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
