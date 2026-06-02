@@ -454,6 +454,106 @@ BEGIN
 END;
 $function$;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- FICHA TÉCNICA DEL PRODUCTO (módulo /queries/datasheet, v1.4.17). Ver migración 010.
+-- ─────────────────────────────────────────────────────────────────────────
+
+-- ¿El usuario actual puede gestionar fichas? (ADMIN / admin delegado / permiso manage_fichas)
+CREATE OR REPLACE FUNCTION public.can_manage_fichas()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.tms_usuarios u
+    LEFT JOIN public.tms_roles r ON r.id = u.rol
+    WHERE u.auth_uid = auth.uid()
+      AND u.activo = true
+      AND (
+        u.rol = 'ADMIN'
+        OR u.es_admin_delegado = true
+        OR (r.permisos_json ? 'manage_fichas')
+      )
+  );
+$function$;
+
+-- Ficha completa de un código: cabecera + partidas + imágenes.
+CREATE OR REPLACE FUNCTION public.get_ficha_producto(p_codigo text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_code     text := upper(trim(p_codigo));
+  v_header   jsonb;
+  v_partidas jsonb;
+  v_imagenes jsonb;
+BEGIN
+  SELECT to_jsonb(h) INTO v_header FROM (
+    SELECT codigo_producto, producto, unidad_medida FROM tms_partidas  WHERE upper(codigo_producto) = v_code
+    UNION ALL
+    SELECT codigo_producto, producto, unidad_medida FROM tms_series    WHERE upper(codigo_producto) = v_code
+    UNION ALL
+    SELECT codigo_producto, producto, unidad_medida FROM tms_farmapack WHERE upper(codigo_producto) = v_code
+    LIMIT 1
+  ) h;
+
+  SELECT coalesce(jsonb_agg(to_jsonb(p) ORDER BY p.fecha_vencimiento NULLS LAST), '[]'::jsonb)
+  INTO v_partidas FROM (
+    SELECT partida, fecha_vencimiento, unidad_medida,
+           disponible, reserva, transitoria, consignacion, stock_total
+    FROM tms_partidas WHERE upper(codigo_producto) = v_code
+  ) p;
+
+  SELECT coalesce(jsonb_agg(to_jsonb(i) ORDER BY i.es_principal DESC, i.orden, i.created_at), '[]'::jsonb)
+  INTO v_imagenes FROM (
+    SELECT id, imagen_url, storage_path, descripcion, es_principal, orden, created_at
+    FROM tms_fichas_imagenes WHERE upper(codigo_producto) = v_code
+  ) i;
+
+  RETURN jsonb_build_object(
+    'codigo',   v_code,
+    'header',   v_header,
+    'partidas', v_partidas,
+    'imagenes', v_imagenes
+  );
+END;
+$function$;
+
+-- Búsqueda de productos por código/nombre (con flag tiene_foto).
+CREATE OR REPLACE FUNCTION public.search_productos(p_query text, p_limit integer DEFAULT 30)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  WITH q AS (SELECT '%' || trim(p_query) || '%' AS term)
+  SELECT coalesce(jsonb_agg(row_to_json(t)), '[]'::jsonb)
+  FROM (
+    SELECT base.codigo_producto,
+           max(base.producto)       AS producto,
+           max(base.unidad_medida)  AS unidad_medida,
+           coalesce(bool_or(img.has_img), false) AS tiene_foto
+    FROM (
+      SELECT codigo_producto, producto, unidad_medida FROM tms_partidas
+      UNION ALL SELECT codigo_producto, producto, unidad_medida FROM tms_series
+      UNION ALL SELECT codigo_producto, producto, unidad_medida FROM tms_farmapack
+    ) base
+    LEFT JOIN LATERAL (
+      SELECT true AS has_img FROM tms_fichas_imagenes f
+      WHERE f.codigo_producto = base.codigo_producto LIMIT 1
+    ) img ON true
+    CROSS JOIN q
+    WHERE base.codigo_producto ILIKE q.term OR base.producto ILIKE q.term
+    GROUP BY base.codigo_producto
+    ORDER BY base.codigo_producto
+    LIMIT p_limit
+  ) t;
+$function$;
+
 -- ============================================================================
 -- GRANTS (estado deseado): RPCs SECURITY DEFINER NO ejecutables por anon.
 -- ============================================================================
@@ -461,3 +561,9 @@ REVOKE EXECUTE ON FUNCTION public.bulk_upsert(text, jsonb, text) FROM PUBLIC, an
 REVOKE EXECUTE ON FUNCTION public.search_batches(text, integer)   FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.bulk_upsert(text, jsonb, text) TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.search_batches(text, integer)   TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.can_manage_fichas()             FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_ficha_producto(text)        FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.search_productos(text, integer) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.can_manage_fichas()             TO authenticated, service_role;
+GRANT  EXECUTE ON FUNCTION public.get_ficha_producto(text)        TO authenticated, service_role;
+GRANT  EXECUTE ON FUNCTION public.search_productos(text, integer) TO authenticated, service_role;
