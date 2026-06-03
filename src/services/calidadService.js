@@ -59,13 +59,29 @@ export function useInformeItems(informeId) {
 }
 
 // ── Candidatos a monitoreo (stock actual + ubicación + semáforo) ───────────
+// Guarda de timeout (15s): evita que el spinner quede "cargando eternamente"
+// si la promesa de supabase-js no se resuelve (p. ej. bloqueo de auth-lock en
+// WebView o conexión colgada). Si vence, aborta la petición y lanza error.
 export async function fetchCandidatos(query, soloVencimiento = false) {
-  const { data, error } = await supabase.rpc('monitoreo_candidatos', {
-    p_query: query || '',
-    p_solo_vencimiento: soloVencimiento,
-  });
-  if (error) throw error;
-  return data || [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const { data, error } = await supabase
+      .rpc('monitoreo_candidatos', {
+        p_query: query || '',
+        p_solo_vencimiento: soloVencimiento,
+      })
+      .abortSignal(controller.signal);
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    if (e?.name === 'AbortError' || controller.signal.aborted) {
+      throw new Error('La búsqueda tardó demasiado (timeout 15s). Revisa tu conexión e inténtalo de nuevo.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── Crear informe + ítems ──────────────────────────────────────────────────
