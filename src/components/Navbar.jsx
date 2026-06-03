@@ -127,6 +127,10 @@ const Navbar = () => {
             { label: 'Control Despacho', path: '/queries/dispatch-control', icon: <ClipboardCheck size={16} /> },
             { label: 'Direcciones', path: '/queries/addresses', icon: <Globe size={16} /> }
           ]
+        },
+        { id: 'quality', label: 'Calidad', icon: <ClipboardCheck size={18} />, modules: [
+            { label: 'Monitoreo', path: '/quality/monitoreo', icon: <FileSearch size={16} /> }
+          ]
         }
       ]
     },

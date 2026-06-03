@@ -109,6 +109,10 @@ src/
 | `wms_ubicaciones` | Ubicaciones bodega (RACK-POS-NIVEL) | Entry, Heatmap, WmsLocations, LocationManager, Picking, PDA |
 | `wms_layout` | Layout físico de bodega (racks/niveles) | warehouseStore, Heatmap |
 | `tms_cubicaje_historial` | Historial cubicaje productos | CubingRegistry |
+| `tms_monitoreo_informes` | Cabecera de informes de monitoreo a Calidad (correlativo `MON-YYYY-NNNN`) | Monitoreo (Calidad) |
+| `tms_monitoreo_items` | Detalle por ítem del informe + dictamen de Calidad | Monitoreo (Calidad) |
+| `tms_calidad_flags` | Overlay persistente de estado de calidad por `codigo_producto`+`partida`+`ubicacion` (sobrevive la recarga del snapshot) | WmsLocations, Monitoreo, useCalidadFlags |
+| `tms_notificaciones` | Avisos persistentes (p.ej. movimiento sistémico a transitoria) dirigibles por rol/usuario | Monitoreo (Calidad), Layout |
 
 > **Notas:**
 > - `tms_partidas`, `tms_series`, `tms_farmapack` e `tms_inventario_general` se cargan
@@ -512,6 +516,38 @@ HOME → [PICKING] → Escanear ubicación → Escanear SKU → Confirmar cantid
 
 ---
 
+### 4.8 Calidad — Monitoreo (`/quality/monitoreo`)
+**Archivo:** `src/pages/Quality/Monitoreo.jsx`
+
+Implementa la celda *Inventario · Estancia · Monitoreo rutinario a Calidad* de la matriz
+de procesos de bodega. Inventario genera un **informe de monitoreo** sobre el stock; Calidad
+emite el **dictamen técnico**; el sistema persiste un **estado de calidad** que se superpone
+al inventario (visible para todos) y notifica a Inventario/Admin los **movimientos sistémicos**.
+
+**Flujo:**
+```
+Inventario → Nuevo informe → buscar candidatos (RPC monitoreo_candidatos: stock actual +
+  ubicación + semáforo de vencimiento) → agregar ítems (condición/motivo/obs) → Enviar a Calidad
+Calidad → abrir informe → dictaminar por ítem (LIBERAR/CUARENTENA/REPROCESO/RECHAZAR/BAJA
+  + bodega destino + acuse) → RPC monitoreo_dictaminar
+  → persiste dictamen + upsert en tms_calidad_flags + notifica MOV_TRANSITORIA al ADMIN
+```
+
+- **Tablas:** `tms_monitoreo_informes`, `tms_monitoreo_items`, `tms_calidad_flags`, `tms_notificaciones`
+- **RPCs:** `monitoreo_next_numero()`, `monitoreo_candidatos(text,bool)`, `monitoreo_dictaminar(...)`
+  (todas `SECURITY DEFINER`, `search_path=public`, sin EXECUTE para `anon`)
+- **Persistencia:** el estado de calidad vive en `tms_calidad_flags` anclado por
+  `codigo_producto`+`partida`+`ubicacion` → **sobrevive la recarga diaria del snapshot**
+  (`tms_partidas`/`tms_series`/`tms_farmapack`, ciclo 08:30→08:30).
+- **Overlay global:** `useCalidadFlags` + `CalidadBadge` pintan el estado
+  (EN AUDITORÍA / CUARENTENA / MALO / LIBERADO) en *Ubicaciones* (`WmsLocations.jsx`), visible
+  para cualquier usuario autenticado.
+- **Bodegas destino:** `5` = Servicio Técnico · `99` = Basura/Baja definitiva (estado `transitoria`).
+- **Permisos:** `manage_monitoreo` (Inventario crea informes) · `manage_quality` (Calidad dictamina).
+  RLS: lectura `authenticated`; escritura `can_manage_calidad()`.
+
+---
+
 ## 5. Sistema de Autenticación y Permisos
 
 ### Arquitectura Auth (Supabase Auth nativo — v1.3.7+)
@@ -575,9 +611,20 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 | `tms_modules_config` | All auth | Admin only | Admin only | — |
 | `tms_tickets` | Own o Admin | All auth | Admin only | Admin only |
 
+**Calidad / Monitoreo (migración 011, lectura `authenticated`, escritura por helper):**
+
+| Tabla | SELECT | INSERT | UPDATE | DELETE |
+|---|---|---|---|---|
+| `tms_monitoreo_informes` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
+| `tms_monitoreo_items` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
+| `tms_calidad_flags` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
+| `tms_notificaciones` | All auth | `can_manage_calidad()` | All auth (marcar leída) | Admin only |
+
 **Helpers RLS (SECURITY DEFINER):**
 - `get_user_role()` → TEXT — Obtiene rol del usuario desde `tms_usuarios.auth_uid`
 - `is_admin()` → BOOLEAN — Verifica `rol = 'ADMIN'` o `es_admin_delegado = true`
+- `can_manage_fichas()` → BOOLEAN — ADMIN / delegado / permiso `manage_fichas`
+- `can_manage_calidad()` → BOOLEAN — ADMIN / delegado / permiso `manage_quality` o `manage_monitoreo`
 - Canónicas en esquema `private` (`private.is_admin()`, `private.get_user_role()`) con wrapper
   `public`. Existen helpers legacy `is_admin_safe()` / `is_user_admin()` (por email) pendientes
   de limpieza — ver `REVISION_PROYECTO.md` §DB-2.
@@ -918,6 +965,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.18 | 2026-06-03 | **NUEVO MÓDULO: MONITOREO A CALIDAD (`/quality/monitoreo`)**: Implementa la celda *Inventario · Estancia · Monitoreo rutinario a Calidad* de la matriz de procesos. Inventario genera un **informe de monitoreo** sobre el stock (candidatos con ubicación y semáforo de vencimiento); Calidad emite el **dictamen** (LIBERAR/CUARENTENA/REPROCESO/RECHAZAR/BAJA) y el sistema persiste un **estado de calidad** que se superpone al inventario y notifica los movimientos sistémicos. **BD (migración `011_monitoreo_calidad.sql`, idempotente)**: tablas `tms_monitoreo_informes`, `tms_monitoreo_items`, `tms_calidad_flags` (overlay anclado por `codigo_producto`+`partida`+`ubicacion`, **sobrevive la recarga diaria del snapshot 08:30→08:30**) y `tms_notificaciones`; helper `can_manage_calidad()`; RPCs `monitoreo_next_numero()`, `monitoreo_candidatos(text,bool)` y `monitoreo_dictaminar(...)` (`SECURITY DEFINER`, `search_path=public`, sin `EXECUTE` para `anon`); RLS lectura `authenticated` / escritura `can_manage_calidad()`. **Frontend**: `src/pages/Quality/Monitoreo.jsx` (lista de informes, constructor con búsqueda de candidatos y export Excel multi-hoja, dictamen inline para Calidad), service `src/services/calidadService.js`, hook `useCalidadFlags` + componente `CalidadBadge`, helper reutilizable `src/lib/exportExcel.js`. **Overlay global**: badge EN AUDITORÍA / CUARENTENA / MALO / LIBERADO en *Ubicaciones* (`WmsLocations.jsx`), visible para todos. **Bodegas destino**: `5` Servicio Técnico · `99` Basura/Baja (estado `transitoria`). **Permisos**: `manage_monitoreo` (crear informes) y `manage_quality` (dictaminar) en grupo Calidad; ruta en `ROUTE_PERMISSIONS`, `modules.js` y Navbar (Inteligencia → Calidad → Monitoreo). ⚠️ La migración `011` debe aplicarse a la BD (no se aplica automáticamente en este commit). Sin cambios de comportamiento en datos existentes. |
 | docs-bd | 2026-06-01 | **DDL DE FICHA TÉCNICA VERSIONADO**: Los objetos de BD de la feature 1.4.17 (tabla `tms_fichas_imagenes` + RLS, funciones `can_manage_fichas()`/`get_ficha_producto()`/`search_productos()` con sus grants, bucket `fichas-productos` y políticas de Storage) se habían aplicado solo en la BD live. Se versionaron en `supabase/migrations/010_ficha_tecnica_producto.sql` (idempotente, ya aplicado en prod → no-op) y se reflejaron las 3 funciones en `supabase/functions_snapshot.sql`. Sin cambios funcionales. |
 | 1.4.17 | 2026-06-01 | **NUEVO MÓDULO: FICHA TÉCNICA DEL PRODUCTO (`/queries/datasheet`)**: Búsqueda por código/nombre que abre una ficha con cabecera (Cod. Producto, Producto, Cod. U. Medida), galería de fotos de "presentación" del SKU y tabla de partidas/tallas con fecha de vencimiento. **BD**: nueva tabla `tms_fichas_imagenes` (RLS: lectura `authenticated`, escritura solo `can_manage_fichas()`), helper `can_manage_fichas()` (ADMIN/admin delegado/rol con permiso `manage_fichas`), bucket Storage **público** `fichas-productos` (8MB, solo imágenes) con políticas de subida/borrado restringidas, RPCs `search_productos(p_query,p_limit)` y `get_ficha_producto(p_codigo)`. **Frontend**: `src/pages/Queries/ProductDatasheet.jsx` con captura de foto vía `<input type=file capture>` (abre cámara nativa en la WebView, **sin** plugin `@capacitor/camera` → compatible con OTA), compresión cliente a 1600px/JPEG 0.82, marcar principal / eliminar. **Permisos**: `view_fichas` (ver) y `manage_fichas` (editar fotos) en grupo Consultas; ruta en `ROUTE_PERMISSIONS`, `modules.js` y entrada en Navbar (Consultas → Ficha Técnica). **Hardening (advisor)**: revocado `EXECUTE` a `PUBLIC`/`anon` en `can_manage_fichas()`, `get_ficha_producto()` y `search_productos()` (solo `authenticated`/`service_role`, igual que `search_batches`); eliminada la política SELECT del bucket `fichas-productos` (los URLs públicos siguen sirviéndose sin listar el bucket). |
 | fix-recepcion | 2026-06-01 | **NO SE PODÍAN AGREGAR ÍTEMS EN RECEPCIÓN**: `addItem` (Reception.jsx) solo insertaba el ítem en el estado local **dentro del `.then()`** de `lookupDescription` (consulta a `tms_matriz_codigos`). En bodega con señal intermitente ese `fetch` (sin timeout) podía quedar colgado sin resolver → el ítem nunca se agregaba y el botón parecía no responder. Ahora el ítem se agrega **de inmediato** (síncrono) y la descripción se enriquece en segundo plano sin bloquear el alta. Añadido `type="button"` al botón. Sin cambios de BD. |

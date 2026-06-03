@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../store/warehouseStore';
+import { useCalidadFlags } from '../../hooks/useCalidadFlags';
+import CalidadBadge from '../../components/ui/CalidadBadge';
 
 // Estimaciones iniciales solamente — la altura real la mide el virtualizer
 // dinámicamente (measureElement), por lo que las filas nunca se solapan aunque
@@ -13,7 +15,7 @@ import { useWarehouseStore } from '../../store/warehouseStore';
 const COLLAPSED_HEIGHT = 96;
 const ITEM_HEIGHT = 44;
 
-const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) => {
+const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle, flagForItem }) => {
   const matchingItems = group.matchingItems;
   const totalItems = group.allItems.length;
   const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
@@ -71,6 +73,10 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) 
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 shrink-0">{item.codigo}</span>
+                {flagForItem && (() => {
+                  const flag = flagForItem(item.codigo, item.ubicacion || group.ubicacion);
+                  return flag ? <CalidadBadge estado={flag.estado_calidad} size="xs" title={flag.nota} /> : null;
+                })()}
                 <span className="text-slate-600 truncate">{item.descripcion}</span>
               </div>
               <span className="text-sm font-bold text-slate-800 tabular-nums shrink-0 ml-4">{Number(item.cantidad) || 0}</span>
@@ -92,6 +98,7 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle }) 
 
 const WmsLocations = () => {
   const { inventory, stats, loading, fetchWarehouseData } = useWarehouseStore();
+  const { flagForItem } = useCalidadFlags();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
@@ -361,6 +368,7 @@ const WmsLocations = () => {
                       searchQuery={debouncedSearch}
                       isExpanded={expandedKeys.has(group.ubicacion)}
                       onToggle={() => toggleExpand(group.ubicacion)}
+                      flagForItem={flagForItem}
                     />
                   </div>
                 );

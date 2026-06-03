@@ -33,6 +33,9 @@ export const ROUTE_PERMISSIONS = {
   '/queries/dispatch-control': ['view_dispatch_control'],
   '/queries/datasheet': ['view_fichas'],
 
+  // Calidad
+  '/quality/monitoreo': ['manage_monitoreo', 'manage_quality'],
+
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],

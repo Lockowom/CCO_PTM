@@ -9,6 +9,7 @@ export const APP_MODULES = [
   { id: 'inbound', label: 'Inbound', section: 'wms' },
   { id: 'outbound', label: 'Outbound', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
+  { id: 'quality', label: 'Calidad', section: 'intelligence' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
 
@@ -46,7 +47,10 @@ export const APP_ROUTES = [
   { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.', module: 'queries' },
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
-  
+
+  // Calidad
+  { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
+
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
   { value: '/admin/roles', label: 'Admin - Roles', module: 'admin' },
@@ -125,6 +129,14 @@ export const APP_PERMISSIONS = [
       { id: 'view_fichas', label: 'Ver Ficha Técnica' },
       { id: 'manage_fichas', label: 'Gestionar Fotos Ficha Técnica' },
       { id: 'export_data', label: 'Exportar Datos (CSV)' }
+    ]
+  },
+  {
+    id: 'quality',
+    label: 'Calidad',
+    permissions: [
+      { id: 'manage_monitoreo', label: 'Crear/Editar Informes de Monitoreo' },
+      { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' }
     ]
   },
   {
