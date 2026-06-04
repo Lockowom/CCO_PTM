@@ -2,16 +2,20 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   ClipboardCheck, Plus, ArrowLeft, Search, Loader2, Trash2, Download,
-  Send, FileSearch, ShieldCheck, CheckCircle2
+  Send, FileSearch, ShieldCheck, CheckCircle2, Pencil, AlertTriangle,
+  FileText, FileType, Save,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
+import { exportInformeDanosWord, exportInformeDanosPDF } from '../../lib/exportInformeDanos';
 import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
-  useDictaminar, fetchCandidatos,
-  DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS,
+  useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
+  useGuardarInformeDanos, useInformeEvidencias,
+  DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
+import PhotoUploader from '../../components/PhotoUploader';
 
 const SEMAFORO_CLS = {
   ROJO: 'bg-rose-500', NARANJA: 'bg-amber-500', VERDE: 'bg-emerald-500', NA: 'bg-slate-300',
@@ -22,20 +26,49 @@ const ESTADO_INFORME_CLS = {
   DICTAMINADO: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   CERRADO: 'bg-slate-800 text-white border-slate-800',
 };
+const TIPO_CLS = {
+  MONITOREO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  DANOS: 'bg-rose-50 text-rose-700 border-rose-200',
+};
 
-// ── Constructor de informe nuevo ───────────────────────────────────────────
-const InformeBuilder = ({ onCancel, onSaved }) => {
+// ── Constructor / editor de informe de MONITOREO rutinario ─────────────────
+const InformeBuilder = ({ informe, onCancel, onSaved }) => {
   const { user } = useAuth();
+  const editMode = !!informe;
   const crear = useCrearInforme();
+  const actualizar = useActualizarInforme();
+  const { data: itemsExistentes } = useInformeItems(editMode ? informe.id : null);
 
-  const [bodega, setBodega] = useState('');
-  const [periodicidad, setPeriodicidad] = useState('SEMANAL');
-  const [observaciones, setObservaciones] = useState('');
+  const [bodega, setBodega] = useState(informe?.bodega || '');
+  const [periodicidad, setPeriodicidad] = useState(informe?.periodicidad || 'SEMANAL');
+  const [observaciones, setObservaciones] = useState(informe?.observaciones || '');
   const [query, setQuery] = useState('');
   const [soloVenc, setSoloVenc] = useState(false);
   const [candidatos, setCandidatos] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [items, setItems] = useState([]);
+
+  // Precargar ítems en modo edición.
+  useEffect(() => {
+    if (editMode && itemsExistentes) {
+      setItems(itemsExistentes.map((it) => ({
+        _key: `${it.codigo_producto}|${it.partida || ''}|${it.ubicacion || ''}`,
+        codigo_producto: it.codigo_producto,
+        partida: it.partida || '',
+        ubicacion: it.ubicacion || '',
+        producto: it.producto || '',
+        unidad_medida: it.unidad_medida || '',
+        cantidad: Number(it.cantidad) || 0,
+        estado_inventario: it.estado_inventario || 'Disponible',
+        tipo: it.tipo || 'NO_PERECIBLE',
+        fecha_vencimiento: it.fecha_vencimiento || null,
+        semaforo: it.semaforo || 'NA',
+        condicion_observada: it.condicion_observada || 'OK',
+        motivo: it.motivo || 'Rutina',
+        observaciones: it.observaciones || '',
+      })));
+    }
+  }, [editMode, itemsExistentes]);
 
   const buscar = useCallback(async () => {
     setBuscando(true);
@@ -80,25 +113,37 @@ const InformeBuilder = ({ onCancel, onSaved }) => {
 
   const guardar = async (estado) => {
     if (items.length === 0) { toast.error('Agrega al menos un ítem'); return; }
-    const cabecera = {
-      fecha: new Date().toISOString().slice(0, 10),
-      analista_id: user?.id || null,
-      analista_nombre: user?.nombre || null,
-      bodega: bodega || null,
-      periodicidad,
-      estado,
-      observaciones: observaciones || null,
-    };
-    // Quitar la clave interna _key antes de insertar.
     const cleanItems = items.map(({ _key, ...rest }) => rest);
     try {
-      await crear.mutateAsync({ cabecera, items: cleanItems });
-      toast.success(estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado');
+      if (editMode) {
+        const cabecera = {
+          bodega: bodega || null,
+          periodicidad,
+          estado,
+          observaciones: observaciones || null,
+        };
+        await actualizar.mutateAsync({ informeId: informe.id, cabecera, items: cleanItems });
+        toast.success('Informe actualizado');
+      } else {
+        const cabecera = {
+          fecha: new Date().toISOString().slice(0, 10),
+          analista_id: user?.id || null,
+          analista_nombre: user?.nombre || null,
+          bodega: bodega || null,
+          periodicidad,
+          estado,
+          observaciones: observaciones || null,
+        };
+        await crear.mutateAsync({ cabecera, items: cleanItems });
+        toast.success(estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado');
+      }
       onSaved();
     } catch (e) {
       toast.error(`Error al guardar: ${e.message}`);
     }
   };
+
+  const saving = crear.isPending || actualizar.isPending;
 
   return (
     <div className="space-y-5">
@@ -106,8 +151,17 @@ const InformeBuilder = ({ onCancel, onSaved }) => {
         <button onClick={onCancel} className="p-3 bg-white hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-900 border border-slate-200 shadow-sm">
           <ArrowLeft size={22} />
         </button>
-        <h2 className="text-2xl font-black text-slate-900">Nuevo Informe de Monitoreo</h2>
+        <h2 className="text-2xl font-black text-slate-900">
+          {editMode ? `Editar Informe ${informe.numero}` : 'Nuevo Informe de Monitoreo'}
+        </h2>
       </div>
+
+      {editMode && informe.estado === 'DICTAMINADO' && (
+        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-sm">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+          <span>Este informe ya fue dictaminado. Al guardar, los ítems se reemplazan y se <b>reinician los dictámenes</b> (el overlay de calidad ya registrado se conserva).</span>
+        </div>
+      )}
 
       {/* Cabecera */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -235,22 +289,296 @@ const InformeBuilder = ({ onCancel, onSaved }) => {
         )}
 
         <div className="flex justify-end gap-3 mt-5">
-          <button onClick={() => guardar('BORRADOR')} disabled={crear.isPending}
+          <button onClick={() => guardar(editMode ? informe.estado : 'BORRADOR')} disabled={saving}
             className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50 disabled:opacity-50">
-            Guardar borrador
+            {editMode ? 'Guardar cambios' : 'Guardar borrador'}
           </button>
-          <button onClick={() => guardar('ENVIADO_CALIDAD')} disabled={crear.isPending}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-50">
-            {crear.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Enviar a Calidad
-          </button>
+          {!editMode && (
+            <button onClick={() => guardar('ENVIADO_CALIDAD')} disabled={saving}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-50">
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Enviar a Calidad
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-// ── Detalle + dictamen ──────────────────────────────────────────────────────
-const InformeDetail = ({ informe, onBack }) => {
+// ── Constructor / editor de INFORME DE DAÑOS / NO CONFORMIDAD ───────────────
+const REPORTE_VACIO = {
+  clasificacion: CLASIFICACIONES_DANO[0],
+  area_responsable: 'Control de Operaciones — Recepción de Mercancías',
+  fecha_recepcion: new Date().toISOString().slice(0, 10),
+  tipo_producto: '',
+  antecedentes: '',
+  descripcion_hallazgo: '',
+  analisis_causa: '',
+  acciones_recomendadas: [''],
+  cuadro_resumen: [{ indicador: '', valor: '' }],
+  elaborado_por: '',
+  revisado_por: '',
+};
+
+const InformeDanosBuilder = ({ informe, onCancel, onSaved }) => {
+  const { user } = useAuth();
+  const guardar = useGuardarInformeDanos();
+  const { data: itemsExistentes } = useInformeItems(informe?.id || null);
+
+  const [informeId, setInformeId] = useState(informe?.id || null);
+  const [numero, setNumero] = useState(informe?.numero || '');
+  const [bodega, setBodega] = useState(informe?.bodega || '');
+  const [estado, setEstado] = useState(informe?.estado || 'BORRADOR');
+  const [rep, setRep] = useState({ ...REPORTE_VACIO, ...(informe?.reporte || {}), elaborado_por: informe?.reporte?.elaborado_por || user?.nombre || '' });
+  const [hallazgos, setHallazgos] = useState([]);
+
+  const { data: evidencias = [], refetch: refetchEvidencias } = useInformeEvidencias(informeId);
+
+  // Precargar hallazgos en edición.
+  useEffect(() => {
+    if (informe?.id && itemsExistentes) {
+      setHallazgos(itemsExistentes.map((it) => ({
+        id: it.id,
+        _key: it.id,
+        codigo_producto: it.codigo_producto || '',
+        producto: it.producto || '',
+        partida: it.partida || '',
+        ubicacion: it.ubicacion || '',
+        unidad_medida: it.unidad_medida || '',
+        cantidad: Number(it.cantidad) || 0,
+        tipo_dano: it.tipo_dano || '',
+        componente_afectado: it.componente_afectado || '',
+        consecuencia: it.consecuencia || '',
+        observaciones: it.observaciones || '',
+      })));
+    }
+  }, [informe?.id, itemsExistentes]);
+
+  const setRepField = (f, v) => setRep(prev => ({ ...prev, [f]: v }));
+
+  const addHallazgo = () => setHallazgos(prev => [...prev, {
+    _key: `tmp-${crypto.randomUUID()}`, codigo_producto: '', producto: '', partida: '',
+    ubicacion: '', unidad_medida: '', cantidad: 0, tipo_dano: '', componente_afectado: '',
+    consecuencia: '', observaciones: '',
+  }]);
+  const updHallazgo = (key, f, v) => setHallazgos(prev => prev.map(h => h._key === key ? { ...h, [f]: v } : h));
+  const delHallazgo = (key) => setHallazgos(prev => prev.filter(h => h._key !== key));
+
+  // Cuadro resumen
+  const addResumen = () => setRep(prev => ({ ...prev, cuadro_resumen: [...(prev.cuadro_resumen || []), { indicador: '', valor: '' }] }));
+  const updResumen = (i, f, v) => setRep(prev => ({ ...prev, cuadro_resumen: prev.cuadro_resumen.map((r, idx) => idx === i ? { ...r, [f]: v } : r) }));
+  const delResumen = (i) => setRep(prev => ({ ...prev, cuadro_resumen: prev.cuadro_resumen.filter((_, idx) => idx !== i) }));
+
+  // Acciones recomendadas
+  const addAccion = () => setRep(prev => ({ ...prev, acciones_recomendadas: [...(prev.acciones_recomendadas || []), ''] }));
+  const updAccion = (i, v) => setRep(prev => ({ ...prev, acciones_recomendadas: prev.acciones_recomendadas.map((a, idx) => idx === i ? v : a) }));
+  const delAccion = (i) => setRep(prev => ({ ...prev, acciones_recomendadas: prev.acciones_recomendadas.filter((_, idx) => idx !== i) }));
+
+  const doGuardar = async (nuevoEstado) => {
+    const est = nuevoEstado || estado;
+    try {
+      const cabecera = informeId
+        ? { bodega: bodega || null, periodicidad: 'ADHOC', estado: est, observaciones: rep.descripcion_hallazgo || null }
+        : {
+          fecha: new Date().toISOString().slice(0, 10),
+          analista_id: user?.id || null,
+          analista_nombre: user?.nombre || null,
+          bodega: bodega || null,
+          periodicidad: 'ADHOC',
+          estado: est,
+          observaciones: rep.descripcion_hallazgo || null,
+        };
+      const limpios = hallazgos.map(({ _key, ...rest }) => rest);
+      const res = await guardar.mutateAsync({ informeId, cabecera, reporte: rep, hallazgos: limpios });
+      setInformeId(res.id);
+      if (res.numero) setNumero(res.numero);
+      setEstado(est);
+      // Reasignar ids a los hallazgos para habilitar fotos en los nuevos.
+      setHallazgos(res.hallazgos.map((h) => ({ ...h, _key: h.id })));
+      refetchEvidencias();
+      toast.success('Informe de daños guardado');
+    } catch (e) {
+      toast.error(`Error al guardar: ${e.message}`);
+    }
+  };
+
+  const informeObj = { id: informeId, numero, fecha: informe?.fecha || rep.fecha_recepcion, bodega, analista_nombre: rep.elaborado_por || user?.nombre, reporte: rep };
+
+  const exportar = async (fmt) => {
+    if (!informeId) { toast.error('Guarda el informe antes de exportar'); return; }
+    try {
+      if (fmt === 'word') await exportInformeDanosWord(informeObj, hallazgos, evidencias);
+      else await exportInformeDanosPDF(informeObj, hallazgos, evidencias);
+    } catch (e) {
+      toast.error(`Error al exportar: ${e.message}`);
+    }
+  };
+
+  const field = 'w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-rose-400';
+  const lbl = 'text-[10px] font-black text-slate-400 uppercase tracking-widest';
+  const evForItem = (id) => evidencias.filter(e => e.item_id === id);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <button onClick={onCancel} className="p-3 bg-white hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-900 border border-slate-200 shadow-sm">
+            <ArrowLeft size={22} />
+          </button>
+          <h2 className="text-2xl font-black text-slate-900">
+            {informeId ? `Informe de Daños ${numero}` : 'Nuevo Informe de Daños'}
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => exportar('word')} disabled={!informeId}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-blue-700 disabled:opacity-40">
+            <FileText size={16} /> Word
+          </button>
+          <button onClick={() => exportar('pdf')} disabled={!informeId}
+            className="px-4 py-2.5 bg-rose-600 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-rose-700 disabled:opacity-40">
+            <FileType size={16} /> PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Encabezado */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label className={lbl}>Fecha de recepción</label>
+          <input type="date" value={rep.fecha_recepcion || ''} onChange={e => setRepField('fecha_recepcion', e.target.value)} className={field} /></div>
+        <div><label className={lbl}>Tipo de producto</label>
+          <input value={rep.tipo_producto} onChange={e => setRepField('tipo_producto', e.target.value)} placeholder="Ej. Biombos (divisores modulares)" className={field} /></div>
+        <div><label className={lbl}>Área responsable</label>
+          <input value={rep.area_responsable} onChange={e => setRepField('area_responsable', e.target.value)} className={field} /></div>
+        <div><label className={lbl}>Clasificación</label>
+          <select value={rep.clasificacion} onChange={e => setRepField('clasificacion', e.target.value)} className={field}>
+            {CLASIFICACIONES_DANO.map(c => <option key={c} value={c}>{c}</option>)}
+          </select></div>
+        <div><label className={lbl}>Bodega</label>
+          <input value={bodega} onChange={e => setBodega(e.target.value)} placeholder="Ej. BD 21" className={field} /></div>
+      </div>
+
+      {/* Antecedentes + descripción */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+        <div><label className={lbl}>1. Antecedentes</label>
+          <textarea rows={3} value={rep.antecedentes} onChange={e => setRepField('antecedentes', e.target.value)} className={field} /></div>
+        <div><label className={lbl}>2. Descripción del hallazgo</label>
+          <textarea rows={3} value={rep.descripcion_hallazgo} onChange={e => setRepField('descripcion_hallazgo', e.target.value)} className={field} /></div>
+      </div>
+
+      {/* Daños identificados (hallazgos + fotos) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-slate-700">3. Daños identificados ({hallazgos.length})</h3>
+          <button onClick={addHallazgo} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-black flex items-center gap-1.5 hover:bg-slate-700">
+            <Plus size={14} /> Agregar hallazgo
+          </button>
+        </div>
+        {hallazgos.length === 0 ? (
+          <p className="text-sm text-slate-400 py-6 text-center">Agrega los hallazgos de daño con sus fotos de evidencia.</p>
+        ) : (
+          <div className="space-y-4">
+            {hallazgos.map((h, idx) => (
+              <div key={h._key} className="border border-slate-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-black text-rose-600">Hallazgo 3.{idx + 1}</span>
+                  <button onClick={() => delHallazgo(h._key)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50"><Trash2 size={15} /></button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div><label className={lbl}>Tipo de daño</label>
+                    <input value={h.tipo_dano} onChange={e => updHallazgo(h._key, 'tipo_dano', e.target.value)} placeholder="Deformación por aplastamiento" className={field} /></div>
+                  <div><label className={lbl}>Componente afectado</label>
+                    <input value={h.componente_afectado} onChange={e => updHallazgo(h._key, 'componente_afectado', e.target.value)} placeholder="Pilar / Panel" className={field} /></div>
+                  <div><label className={lbl}>Cantidad afectada</label>
+                    <input type="number" value={h.cantidad} onChange={e => updHallazgo(h._key, 'cantidad', e.target.value)} className={field} /></div>
+                  <div><label className={lbl}>Producto / SKU (opcional)</label>
+                    <input value={h.codigo_producto} onChange={e => updHallazgo(h._key, 'codigo_producto', e.target.value)} placeholder="SKU" className={field} /></div>
+                  <div><label className={lbl}>Ubicación (opcional)</label>
+                    <input value={h.ubicacion} onChange={e => updHallazgo(h._key, 'ubicacion', e.target.value)} className={field} /></div>
+                  <div><label className={lbl}>Lote (opcional)</label>
+                    <input value={h.partida} onChange={e => updHallazgo(h._key, 'partida', e.target.value)} className={field} /></div>
+                  <div className="sm:col-span-3"><label className={lbl}>Consecuencia</label>
+                    <input value={h.consecuencia} onChange={e => updHallazgo(h._key, 'consecuencia', e.target.value)} placeholder="No apto para despacho hasta evaluación técnica" className={field} /></div>
+                  <div className="sm:col-span-3"><label className={lbl}>Observaciones</label>
+                    <input value={h.observaciones} onChange={e => updHallazgo(h._key, 'observaciones', e.target.value)} className={field} /></div>
+                </div>
+                <div className="mt-3">
+                  <label className={lbl}>Evidencia fotográfica</label>
+                  <div className="mt-1.5">
+                    <PhotoUploader
+                      informeId={informeId}
+                      itemId={h.id}
+                      evidencias={evForItem(h.id)}
+                      onChanged={refetchEvidencias}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cuadro resumen */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-slate-700">4. Cuadro resumen de hallazgos</h3>
+          <button onClick={addResumen} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-black flex items-center gap-1.5 hover:bg-slate-700"><Plus size={14} /> Fila</button>
+        </div>
+        <div className="space-y-2">
+          {(rep.cuadro_resumen || []).map((r, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input value={r.indicador} onChange={e => updResumen(i, 'indicador', e.target.value)} placeholder="Indicador (ej. Total de bultos recepcionados)" className={`${field} mt-0 flex-1`} />
+              <input value={r.valor} onChange={e => updResumen(i, 'valor', e.target.value)} placeholder="Valor" className={`${field} mt-0 w-32`} />
+              <button onClick={() => delResumen(i)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50"><Trash2 size={15} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Análisis + acciones */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+        <div><label className={lbl}>5. Análisis y causa probable</label>
+          <textarea rows={3} value={rep.analisis_causa} onChange={e => setRepField('analisis_causa', e.target.value)} className={field} /></div>
+        <div>
+          <div className="flex items-center justify-between">
+            <label className={lbl}>6. Acciones recomendadas</label>
+            <button onClick={addAccion} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-black flex items-center gap-1.5 hover:bg-slate-700"><Plus size={14} /> Acción</button>
+          </div>
+          <div className="space-y-2 mt-1.5">
+            {(rep.acciones_recomendadas || []).map((a, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input value={a} onChange={e => updAccion(i, e.target.value)} placeholder="Acción recomendada" className={`${field} mt-0 flex-1`} />
+                <button onClick={() => delAccion(i)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50"><Trash2 size={15} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Firmas */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label className={lbl}>Elaborado por</label>
+          <input value={rep.elaborado_por} onChange={e => setRepField('elaborado_por', e.target.value)} className={field} /></div>
+        <div><label className={lbl}>Revisado por</label>
+          <input value={rep.revisado_por} onChange={e => setRepField('revisado_por', e.target.value)} className={field} /></div>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button onClick={() => doGuardar('BORRADOR')} disabled={guardar.isPending}
+          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2">
+          {guardar.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Guardar
+        </button>
+        <button onClick={() => doGuardar('ENVIADO_CALIDAD')} disabled={guardar.isPending}
+          className="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700 disabled:opacity-50">
+          <Send size={16} /> Guardar y enviar
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── Detalle + dictamen (MONITOREO) ──────────────────────────────────────────
+const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
   const { hasPermission } = useAuth();
   const canDictar = hasPermission('manage_quality');
   const { data: items = [], isLoading } = useInformeItems(informe.id);
@@ -329,9 +657,21 @@ const InformeDetail = ({ informe, onBack }) => {
             </p>
           </div>
         </div>
-        <button onClick={exportar} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-700">
-          <Download size={16} /> Exportar Excel
-        </button>
+        <div className="flex items-center gap-2">
+          {onEdit && (
+            <button onClick={() => onEdit(informe)} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-50">
+              <Pencil size={16} /> Editar
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={() => onDelete(informe)} className="px-4 py-2.5 bg-white border border-slate-200 text-rose-600 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-rose-50">
+              <Trash2 size={16} /> Eliminar
+            </button>
+          )}
+          <button onClick={exportar} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-700">
+            <Download size={16} /> Exportar Excel
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -435,7 +775,8 @@ const Monitoreo = () => {
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('manage_monitoreo') || hasPermission('manage_quality');
   const { data: informes = [], isLoading } = useInformes();
-  const [mode, setMode] = useState('list'); // list | new | detail
+  const eliminar = useEliminarInforme();
+  const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -445,6 +786,26 @@ const Monitoreo = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [informes]);
+
+  const abrirInforme = (inf) => {
+    setSelected(inf);
+    setMode(inf.tipo_informe === 'DANOS' ? 'edit-danos' : 'detail');
+  };
+  const editarInforme = (inf) => {
+    setSelected(inf);
+    setMode(inf.tipo_informe === 'DANOS' ? 'edit-danos' : 'edit');
+  };
+  const borrarInforme = async (inf) => {
+    if (!confirm(`¿Eliminar el informe ${inf.numero}? Esta acción no se puede deshacer.`)) return;
+    try {
+      await eliminar.mutateAsync(inf.id);
+      toast.success('Informe eliminado');
+      if (selected?.id === inf.id) { setSelected(null); setMode('list'); }
+    } catch (e) {
+      toast.error(`No se pudo eliminar: ${e.message}`);
+    }
+  };
+  const volver = () => { setMode('list'); setSelected(null); };
 
   return (
     <div className="h-full bg-slate-50 p-3 sm:p-6 min-h-screen">
@@ -457,23 +818,39 @@ const Monitoreo = () => {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Monitoreo a <span className="text-emerald-600">Calidad</span></h1>
-            <p className="text-slate-500 font-bold text-sm">Informes de inventario, dictámenes y estado de producto</p>
+            <p className="text-slate-500 font-bold text-sm">Informes de inventario, daños, dictámenes y estado de producto</p>
           </div>
         </div>
         {mode === 'list' && canCreate && (
-          <button onClick={() => setMode('new')}
-            className="px-6 py-3.5 bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-emerald-600/20 hover:bg-emerald-700">
-            <Plus size={22} /> Nuevo Informe
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { setSelected(null); setMode('new'); }}
+              className="px-5 py-3 bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-emerald-600/20 hover:bg-emerald-700">
+              <Plus size={20} /> Monitoreo
+            </button>
+            <button onClick={() => { setSelected(null); setMode('new-danos'); }}
+              className="px-5 py-3 bg-rose-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-rose-600/20 hover:bg-rose-700">
+              <AlertTriangle size={20} /> Informe de Daños
+            </button>
+          </div>
         )}
       </div>
 
       {mode === 'new' && (
-        <InformeBuilder onCancel={() => setMode('list')} onSaved={() => setMode('list')} />
+        <InformeBuilder onCancel={volver} onSaved={volver} />
       )}
-
+      {mode === 'edit' && selected && (
+        <InformeBuilder informe={selected} onCancel={volver} onSaved={volver} />
+      )}
+      {mode === 'new-danos' && (
+        <InformeDanosBuilder onCancel={volver} onSaved={volver} />
+      )}
+      {mode === 'edit-danos' && selected && (
+        <InformeDanosBuilder informe={selected} onCancel={volver} onSaved={volver} />
+      )}
       {mode === 'detail' && selected && (
-        <InformeDetail informe={selected} onBack={() => { setMode('list'); setSelected(null); }} />
+        <InformeDetail informe={selected} onBack={volver}
+          onEdit={canCreate ? editarInforme : null}
+          onDelete={canCreate ? borrarInforme : null} />
       )}
 
       {mode === 'list' && (
@@ -483,23 +860,45 @@ const Monitoreo = () => {
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <FileSearch size={44} className="text-slate-200 mb-4" />
             <h3 className="text-base font-bold text-slate-400">Sin informes de monitoreo</h3>
-            <p className="text-xs text-slate-300">{canCreate ? 'Crea el primero con “Nuevo Informe”.' : 'Aún no hay informes generados.'}</p>
+            <p className="text-xs text-slate-300">{canCreate ? 'Crea el primero con “Monitoreo” o “Informe de Daños”.' : 'Aún no hay informes generados.'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {informes.map(inf => (
-              <button key={inf.id} onClick={() => { setSelected(inf); setMode('detail'); }}
-                className="text-left bg-white rounded-2xl border border-slate-200 p-5 hover:border-emerald-300 hover:shadow-lg transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-black text-slate-900">{inf.numero}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${ESTADO_INFORME_CLS[inf.estado] || ''}`}>
-                    {inf.estado?.replace('_', ' ')}
-                  </span>
+            {informes.map(inf => {
+              const esDanos = inf.tipo_informe === 'DANOS';
+              return (
+                <div key={inf.id}
+                  className="text-left bg-white rounded-2xl border border-slate-200 p-5 hover:border-emerald-300 hover:shadow-lg transition-all">
+                  <div className="flex items-center justify-between mb-3 gap-2">
+                    <button onClick={() => abrirInforme(inf)} className="font-black text-slate-900 hover:text-emerald-600 truncate">{inf.numero}</button>
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border shrink-0 ${ESTADO_INFORME_CLS[inf.estado] || ''}`}>
+                      {inf.estado?.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <button onClick={() => abrirInforme(inf)} className="block w-full text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${TIPO_CLS[inf.tipo_informe] || TIPO_CLS.MONITOREO}`}>
+                        {esDanos ? 'Daños' : 'Monitoreo'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium">{inf.fecha} · {inf.bodega || 'Sin bodega'}</p>
+                    <p className="text-xs text-slate-400 mt-1">{inf.analista_nombre || '—'} · {inf.total_items} ítems · {inf.periodicidad}</p>
+                  </button>
+                  {canCreate && (
+                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+                      <button onClick={() => editarInforme(inf)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-black flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                        <Pencil size={14} /> Editar
+                      </button>
+                      <button onClick={() => borrarInforme(inf)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-rose-600 text-xs font-black flex items-center justify-center gap-1.5 hover:bg-rose-50">
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-slate-500 font-medium">{inf.fecha} · {inf.bodega || 'Sin bodega'}</p>
-                <p className="text-xs text-slate-400 mt-1">{inf.analista_nombre || '—'} · {inf.total_items} ítems · {inf.periodicidad}</p>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )
       )}

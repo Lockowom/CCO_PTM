@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.17 | **Última actualización:** 2026-06-01
+> **Versión:** 1.5.0 | **Última actualización:** 2026-06-04
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -109,8 +109,9 @@ src/
 | `wms_ubicaciones` | Ubicaciones bodega (RACK-POS-NIVEL) | Entry, Heatmap, WmsLocations, LocationManager, Picking, PDA |
 | `wms_layout` | Layout físico de bodega (racks/niveles) | warehouseStore, Heatmap |
 | `tms_cubicaje_historial` | Historial cubicaje productos | CubingRegistry |
-| `tms_monitoreo_informes` | Cabecera de informes de monitoreo a Calidad (correlativo `MON-YYYY-NNNN`) | Monitoreo (Calidad) |
-| `tms_monitoreo_items` | Detalle por ítem del informe + dictamen de Calidad | Monitoreo (Calidad) |
+| `tms_monitoreo_informes` | Cabecera de informes a Calidad (correlativo `MON-YYYY-NNNN`); `tipo_informe` MONITOREO\|DANOS + `reporte` jsonb (secciones narrativas del informe de daños) | Monitoreo (Calidad) |
+| `tms_monitoreo_items` | Detalle por ítem/hallazgo del informe + dictamen de Calidad (`tipo_dano`/`componente_afectado`/`consecuencia` para daños) | Monitoreo (Calidad) |
+| `tms_monitoreo_evidencias` | Evidencia fotográfica por hallazgo (bucket `monitoreo-evidencias`) del informe de daños | Monitoreo (Calidad) |
 | `tms_calidad_flags` | Overlay persistente de estado de calidad por `codigo_producto`+`partida`+`ubicacion` (sobrevive la recarga del snapshot) | WmsLocations, Monitoreo, useCalidadFlags |
 | `tms_notificaciones` | Avisos persistentes (p.ej. movimiento sistémico a transitoria) dirigibles por rol/usuario | Monitoreo (Calidad), Layout |
 
@@ -524,18 +525,40 @@ de procesos de bodega. Inventario genera un **informe de monitoreo** sobre el st
 emite el **dictamen técnico**; el sistema persiste un **estado de calidad** que se superpone
 al inventario (visible para todos) y notifica a Inventario/Admin los **movimientos sistémicos**.
 
+El módulo maneja **dos tipos de informe** (`tipo_informe`):
+- **`MONITOREO`** (rutinario): candidatos del stock + dictamen por ítem + export Excel.
+- **`DANOS`** (Informe de Daños / No Conformidad, v1.5.0): documento formal de mercadería
+  dañada con secciones narrativas (antecedentes, hallazgos, cuadro resumen, causa probable,
+  acciones, firmas) y **evidencia fotográfica por hallazgo**, exportable a **Word y PDF**.
+
 **Flujo:**
 ```
 Inventario → Nuevo informe → buscar candidatos (RPC monitoreo_candidatos: stock actual +
-  ubicación + semáforo de vencimiento) → agregar ítems (condición/motivo/obs) → Enviar a Calidad
+  ubicación REAL (wms_ubicaciones) + semáforo de vencimiento) → agregar ítems
+  (condición/motivo/obs) → Enviar a Calidad
 Calidad → abrir informe → dictaminar por ítem (LIBERAR/CUARENTENA/REPROCESO/RECHAZAR/BAJA
   + bodega destino + acuse) → RPC monitoreo_dictaminar
   → persiste dictamen + upsert en tms_calidad_flags + notifica MOV_TRANSITORIA al ADMIN
+Daños → Nuevo Informe de Daños → llenar secciones + hallazgos → Guardar (genera IDs) →
+  adjuntar fotos por hallazgo (bucket monitoreo-evidencias) → Exportar Word / PDF
 ```
 
-- **Tablas:** `tms_monitoreo_informes`, `tms_monitoreo_items`, `tms_calidad_flags`, `tms_notificaciones`
+- **Tablas:** `tms_monitoreo_informes` (+ `tipo_informe`, `reporte` jsonb), `tms_monitoreo_items`
+  (+ `tipo_dano`, `componente_afectado`, `consecuencia`), `tms_monitoreo_evidencias` (fotos),
+  `tms_calidad_flags`, `tms_notificaciones`
 - **RPCs:** `monitoreo_next_numero()`, `monitoreo_candidatos(text,bool)`, `monitoreo_dictaminar(...)`
-  (todas `SECURITY DEFINER`, `search_path=public`, sin EXECUTE para `anon`)
+  (todas `SECURITY DEFINER`, `search_path=public`, sin EXECUTE para `anon`).
+  `monitoreo_candidatos` (migración `012`) se basa en **`wms_ubicaciones`** (verdad física,
+  una fila por SKU+ubicación con stock>0), enriquecida con vencimiento/UM desde
+  `tms_partidas`/`tms_farmapack` — coincide con la vista *Ubicaciones WMS*.
+- **Storage:** bucket público `monitoreo-evidencias` (8MB, solo imágenes; escritura
+  `can_manage_calidad()`); fotos comprimidas en cliente (1600px/JPEG 0.82) vía
+  `src/components/PhotoUploader.jsx` y `src/lib/imageCompress.js`.
+- **Exportación de daños:** `src/lib/exportInformeDanos.js` (`docx` para Word, `pdfmake` para PDF,
+  ambos con import dinámico para no inflar el bundle principal; fotos embebidas).
+- **Editar/eliminar:** cualquier informe es editable o eliminable (`useActualizarInforme`,
+  `useGuardarInformeDanos`, `useEliminarInforme`); borrar un informe dictaminado conserva el
+  overlay `tms_calidad_flags`.
 - **Persistencia:** el estado de calidad vive en `tms_calidad_flags` anclado por
   `codigo_producto`+`partida`+`ubicacion` → **sobrevive la recarga diaria del snapshot**
   (`tms_partidas`/`tms_series`/`tms_farmapack`, ciclo 08:30→08:30).
@@ -617,6 +640,7 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 |---|---|---|---|---|
 | `tms_monitoreo_informes` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_monitoreo_items` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
+| `tms_monitoreo_evidencias` (mig. 013) | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_calidad_flags` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_notificaciones` | All auth | `can_manage_calidad()` | All auth (marcar leída) | Admin only |
 
@@ -965,6 +989,7 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.5.0 | 2026-06-04 | **MONITOREO A CALIDAD: fix de ubicaciones + editar/eliminar + INFORME DE DAÑOS con fotos (Word/PDF)**. **(1) Fix `monitoreo_candidatos`** (migración `012_monitoreo_candidatos_fix.sql`, `CREATE OR REPLACE`): ahora se basa en **`wms_ubicaciones`** (verdad física, una fila por SKU+ubicación con stock>0), enriquecida con vencimiento/UM desde `tms_partidas`/`tms_farmapack`; antes resolvía una sola ubicación por SKU desde el stock → no coincidía con *Ubicaciones WMS* y duplicaba filas. **(2) Editar/eliminar informes**: `useActualizarInforme`, `useEliminarInforme` (frontend, sin migración; RLS de la 011 ya lo permite); botones Editar/Eliminar en lista y detalle; borrar un dictaminado conserva el overlay `tms_calidad_flags`. **(3) Nuevo tipo de informe `DANOS` (Informe de Daños / No Conformidad)** (migración `013_informe_danos.sql`, idempotente y aditiva): `tms_monitoreo_informes` + `tipo_informe` (MONITOREO\|DANOS) + `reporte` jsonb (antecedentes, descripción, cuadro resumen, causa probable, acciones, firmas); `tms_monitoreo_items` + `tipo_dano`/`componente_afectado`/`consecuencia` (SKU/ubicación opcionales); nueva tabla **`tms_monitoreo_evidencias`** (fotos por hallazgo, RLS lectura `authenticated`/escritura `can_manage_calidad()`); bucket público **`monitoreo-evidencias`** (8MB, solo imágenes) con políticas de escritura por `can_manage_calidad()`. **Frontend**: `InformeDanosBuilder` en `Monitoreo.jsx` (formulario por secciones + hallazgos con fotos), componente reutilizable `src/components/PhotoUploader.jsx` (cámara/galería + compresión `src/lib/imageCompress.js`), exportación a **Word (`docx`) y PDF (`pdfmake`)** vía `src/lib/exportInformeDanos.js` con **import dinámico** (chunks aparte, no inflan el bundle principal); fotos embebidas. Nuevas deps: `docx`, `pdfmake`. ⚠️ Las migraciones `012` y `013` deben aplicarse a la BD. Aditivas: no modifican datos existentes (los informes actuales quedan `tipo_informe='MONITOREO'`). |
 | 1.4.18 | 2026-06-03 | **NUEVO MÓDULO: MONITOREO A CALIDAD (`/quality/monitoreo`)**: Implementa la celda *Inventario · Estancia · Monitoreo rutinario a Calidad* de la matriz de procesos. Inventario genera un **informe de monitoreo** sobre el stock (candidatos con ubicación y semáforo de vencimiento); Calidad emite el **dictamen** (LIBERAR/CUARENTENA/REPROCESO/RECHAZAR/BAJA) y el sistema persiste un **estado de calidad** que se superpone al inventario y notifica los movimientos sistémicos. **BD (migración `011_monitoreo_calidad.sql`, idempotente)**: tablas `tms_monitoreo_informes`, `tms_monitoreo_items`, `tms_calidad_flags` (overlay anclado por `codigo_producto`+`partida`+`ubicacion`, **sobrevive la recarga diaria del snapshot 08:30→08:30**) y `tms_notificaciones`; helper `can_manage_calidad()`; RPCs `monitoreo_next_numero()`, `monitoreo_candidatos(text,bool)` y `monitoreo_dictaminar(...)` (`SECURITY DEFINER`, `search_path=public`, sin `EXECUTE` para `anon`); RLS lectura `authenticated` / escritura `can_manage_calidad()`. **Frontend**: `src/pages/Quality/Monitoreo.jsx` (lista de informes, constructor con búsqueda de candidatos y export Excel multi-hoja, dictamen inline para Calidad), service `src/services/calidadService.js`, hook `useCalidadFlags` + componente `CalidadBadge`, helper reutilizable `src/lib/exportExcel.js`. **Overlay global**: badge EN AUDITORÍA / CUARENTENA / MALO / LIBERADO en *Ubicaciones* (`WmsLocations.jsx`), visible para todos. **Bodegas destino**: `5` Servicio Técnico · `99` Basura/Baja (estado `transitoria`). **Permisos**: `manage_monitoreo` (crear informes) y `manage_quality` (dictaminar) en grupo Calidad; ruta en `ROUTE_PERMISSIONS`, `modules.js` y Navbar (Inteligencia → Calidad → Monitoreo). ⚠️ La migración `011` debe aplicarse a la BD (no se aplica automáticamente en este commit). Sin cambios de comportamiento en datos existentes. |
 | docs-bd | 2026-06-01 | **DDL DE FICHA TÉCNICA VERSIONADO**: Los objetos de BD de la feature 1.4.17 (tabla `tms_fichas_imagenes` + RLS, funciones `can_manage_fichas()`/`get_ficha_producto()`/`search_productos()` con sus grants, bucket `fichas-productos` y políticas de Storage) se habían aplicado solo en la BD live. Se versionaron en `supabase/migrations/010_ficha_tecnica_producto.sql` (idempotente, ya aplicado en prod → no-op) y se reflejaron las 3 funciones en `supabase/functions_snapshot.sql`. Sin cambios funcionales. |
 | 1.4.17 | 2026-06-01 | **NUEVO MÓDULO: FICHA TÉCNICA DEL PRODUCTO (`/queries/datasheet`)**: Búsqueda por código/nombre que abre una ficha con cabecera (Cod. Producto, Producto, Cod. U. Medida), galería de fotos de "presentación" del SKU y tabla de partidas/tallas con fecha de vencimiento. **BD**: nueva tabla `tms_fichas_imagenes` (RLS: lectura `authenticated`, escritura solo `can_manage_fichas()`), helper `can_manage_fichas()` (ADMIN/admin delegado/rol con permiso `manage_fichas`), bucket Storage **público** `fichas-productos` (8MB, solo imágenes) con políticas de subida/borrado restringidas, RPCs `search_productos(p_query,p_limit)` y `get_ficha_producto(p_codigo)`. **Frontend**: `src/pages/Queries/ProductDatasheet.jsx` con captura de foto vía `<input type=file capture>` (abre cámara nativa en la WebView, **sin** plugin `@capacitor/camera` → compatible con OTA), compresión cliente a 1600px/JPEG 0.82, marcar principal / eliminar. **Permisos**: `view_fichas` (ver) y `manage_fichas` (editar fotos) en grupo Consultas; ruta en `ROUTE_PERMISSIONS`, `modules.js` y entrada en Navbar (Consultas → Ficha Técnica). **Hardening (advisor)**: revocado `EXECUTE` a `PUBLIC`/`anon` en `can_manage_fichas()`, `get_ficha_producto()` y `search_productos()` (solo `authenticated`/`service_role`, igual que `search_batches`); eliminada la política SELECT del bucket `fichas-productos` (los URLs públicos siguen sirviéndose sin listar el bucket). |
