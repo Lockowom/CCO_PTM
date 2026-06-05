@@ -35,13 +35,13 @@ AS $function$
   -- Base: una fila por (SKU, ubicación) REAL con stock físico (verdad de wms_ubicaciones).
   base AS (
     SELECT
-      u.codigo                              AS codigo_producto,
-      coalesce(v.producto, u.descripcion)   AS producto,
-      coalesce(nullif(u.partida, ''), '')   AS partida,
-      u.ubicacion                           AS ubicacion,
-      u.cantidad                            AS disponible,
-      v.unidad_medida                       AS unidad_medida,
-      v.fecha_vencimiento                   AS fecha_vencimiento
+      u.codigo                                       AS codigo_producto,
+      coalesce(v.producto, u.descripcion)            AS producto,
+      coalesce(nullif(u.partida, ''), '')            AS partida,
+      u.ubicacion                                    AS ubicacion,
+      u.cantidad                                     AS disponible,
+      v.unidad_medida                                AS unidad_medida,
+      coalesce(u.fecha_vencimiento, v.fecha_vencimiento) AS fecha_vencimiento
     FROM wms_ubicaciones u
     CROSS JOIN q
     LEFT JOIN LATERAL (
