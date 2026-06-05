@@ -125,6 +125,215 @@ export function useActualizarEstadoInforme() {
   });
 }
 
+// ── Editar informe (cabecera + reemplazo de ítems) ─────────────────────────
+// Usado por el informe de MONITOREO rutinario. Reemplaza la lista de ítems por
+// completo (borra los existentes y reinserta), por eso NO se usa para DANOS
+// (que conserva los IDs de ítem para no romper las evidencias fotográficas).
+export function useActualizarInforme() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ informeId, cabecera, items }) => {
+      const { error: infErr } = await supabase
+        .from('tms_monitoreo_informes')
+        .update({ ...cabecera, total_items: items.length })
+        .eq('id', informeId);
+      if (infErr) throw infErr;
+
+      const { error: delErr } = await supabase
+        .from('tms_monitoreo_items')
+        .delete()
+        .eq('informe_id', informeId);
+      if (delErr) throw delErr;
+
+      if (items.length > 0) {
+        const rows = items.map((it) => ({ ...it, informe_id: informeId }));
+        const { error: insErr } = await supabase.from('tms_monitoreo_items').insert(rows);
+        if (insErr) throw insErr;
+      }
+      return { id: informeId };
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
+      qc.invalidateQueries({ queryKey: ['monitoreo_items', vars.informeId] });
+    },
+  });
+}
+
+// ── Eliminar informe (cascade borra ítems y evidencias) ────────────────────
+export function useEliminarInforme() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (informeId) => {
+      const { error } = await supabase
+        .from('tms_monitoreo_informes')
+        .delete()
+        .eq('id', informeId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['monitoreo_informes'] }),
+  });
+}
+
+// ── Informe de Daños / No Conformidad ──────────────────────────────────────
+// Catálogos del informe de daños.
+export const CLASIFICACIONES_DANO = [
+  'Informe de No Conformidad / Daño en Transporte',
+  'Daño en Recepción',
+  'Daño en Almacenamiento',
+  'Daño por Manipulación',
+  'Producto Vencido / Deteriorado',
+];
+
+// Guarda (crea o actualiza) un informe de daños conservando los IDs de los
+// hallazgos (ítems) existentes, para no romper las evidencias asociadas.
+export function useGuardarInformeDanos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ informeId, cabecera, reporte, hallazgos }) => {
+      let id = informeId;
+
+      if (!id) {
+        const { data: numero, error: numErr } = await supabase.rpc('monitoreo_next_numero');
+        if (numErr) throw numErr;
+        const { data: inf, error } = await supabase
+          .from('tms_monitoreo_informes')
+          .insert({ ...cabecera, numero, tipo_informe: 'DANOS', reporte, total_items: hallazgos.length })
+          .select()
+          .single();
+        if (error) throw error;
+        id = inf.id;
+      } else {
+        const { error } = await supabase
+          .from('tms_monitoreo_informes')
+          .update({ ...cabecera, reporte, total_items: hallazgos.length })
+          .eq('id', id);
+        if (error) throw error;
+      }
+
+      // Diff de hallazgos preservando IDs.
+      const { data: existentes } = await supabase
+        .from('tms_monitoreo_items')
+        .select('id')
+        .eq('informe_id', id);
+      const existIds = new Set((existentes || []).map((r) => r.id));
+      const keepIds = new Set();
+      const out = [];
+
+      for (const h of hallazgos) {
+        const row = {
+          codigo_producto: h.codigo_producto || '',
+          partida: h.partida || '',
+          ubicacion: h.ubicacion || '',
+          producto: h.producto || '',
+          unidad_medida: h.unidad_medida || '',
+          cantidad: Number(h.cantidad) || 0,
+          estado_inventario: h.estado_inventario || 'Disponible',
+          tipo: h.tipo || 'NO_PERECIBLE',
+          semaforo: h.semaforo || 'NA',
+          condicion_observada: h.condicion_observada || 'Daño de producto',
+          motivo: h.motivo || 'Hallazgo',
+          observaciones: h.observaciones || '',
+          tipo_dano: h.tipo_dano || '',
+          componente_afectado: h.componente_afectado || '',
+          consecuencia: h.consecuencia || '',
+        };
+        if (h.id && existIds.has(h.id)) {
+          const { error } = await supabase.from('tms_monitoreo_items').update(row).eq('id', h.id);
+          if (error) throw error;
+          keepIds.add(h.id);
+          out.push({ ...h, id: h.id });
+        } else {
+          const { data: ins, error } = await supabase
+            .from('tms_monitoreo_items')
+            .insert({ ...row, informe_id: id })
+            .select('id')
+            .single();
+          if (error) throw error;
+          keepIds.add(ins.id);
+          out.push({ ...h, id: ins.id });
+        }
+      }
+
+      const toDelete = [...existIds].filter((x) => !keepIds.has(x));
+      if (toDelete.length) {
+        const { error } = await supabase.from('tms_monitoreo_items').delete().in('id', toDelete);
+        if (error) throw error;
+      }
+
+      return { id, hallazgos: out };
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
+      qc.invalidateQueries({ queryKey: ['monitoreo_items', res?.id] });
+    },
+  });
+}
+
+// ── Evidencia fotográfica (Supabase Storage + tabla) ───────────────────────
+export const EVIDENCIAS_BUCKET = 'monitoreo-evidencias';
+
+export function useInformeEvidencias(informeId) {
+  return useQuery({
+    queryKey: ['monitoreo_evidencias', informeId],
+    enabled: !!informeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tms_monitoreo_evidencias')
+        .select('*')
+        .eq('informe_id', informeId)
+        .order('orden', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+// Sube una imagen (blob ya comprimido) y registra la fila de evidencia.
+export async function uploadEvidencia({ informeId, itemId, blob, descripcion, user }) {
+  const path = `${informeId}/${itemId || 'general'}/${crypto.randomUUID()}.jpg`;
+  const { error: upErr } = await supabase.storage
+    .from(EVIDENCIAS_BUCKET)
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (upErr) throw upErr;
+
+  const { data: pub } = supabase.storage.from(EVIDENCIAS_BUCKET).getPublicUrl(path);
+
+  const { data, error } = await supabase
+    .from('tms_monitoreo_evidencias')
+    .insert({
+      informe_id: informeId,
+      item_id: itemId || null,
+      imagen_url: pub.publicUrl,
+      storage_path: path,
+      descripcion: descripcion || null,
+      creado_por: user?.id || null,
+      creado_nombre: user?.nombre || null,
+    })
+    .select()
+    .single();
+  if (error) {
+    // Limpiar el objeto huérfano si la fila falla.
+    await supabase.storage.from(EVIDENCIAS_BUCKET).remove([path]);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteEvidencia(ev) {
+  await supabase.storage.from(EVIDENCIAS_BUCKET).remove([ev.storage_path]);
+  const { error } = await supabase.from('tms_monitoreo_evidencias').delete().eq('id', ev.id);
+  if (error) throw error;
+}
+
+export async function updateEvidenciaDescripcion(id, descripcion) {
+  const { error } = await supabase
+    .from('tms_monitoreo_evidencias')
+    .update({ descripcion })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 // ── Dictamen de Calidad (RPC: persiste dictamen + flag + notificación) ─────
 export function useDictaminar() {
   const qc = useQueryClient();

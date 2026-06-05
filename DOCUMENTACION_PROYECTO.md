@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.21 | **Última actualización:** 2026-06-03
+> **Versión:** 1.4.22 | **Última actualización:** 2026-06-05
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -109,8 +109,9 @@ src/
 | `wms_ubicaciones` | Ubicaciones bodega (RACK-POS-NIVEL) | Entry, Heatmap, WmsLocations, LocationManager, Picking, PDA |
 | `wms_layout` | Layout físico de bodega (racks/niveles) | warehouseStore, Heatmap |
 | `tms_cubicaje_historial` | Historial cubicaje productos | CubingRegistry |
-| `tms_monitoreo_informes` | Cabecera de informes de monitoreo a Calidad (correlativo `MON-YYYY-NNNN`) | Monitoreo (Calidad) |
-| `tms_monitoreo_items` | Detalle por ítem del informe + dictamen de Calidad | Monitoreo (Calidad) |
+| `tms_monitoreo_informes` | Cabecera de informes a Calidad (correlativo `MON-YYYY-NNNN`); `tipo_informe` MONITOREO\|DANOS + `reporte` jsonb (secciones narrativas del informe de daños) | Monitoreo (Calidad) |
+| `tms_monitoreo_items` | Detalle por ítem/hallazgo del informe + dictamen de Calidad (`tipo_dano`/`componente_afectado`/`consecuencia` para daños) | Monitoreo (Calidad) |
+| `tms_monitoreo_evidencias` | Evidencia fotográfica por hallazgo (bucket `monitoreo-evidencias`) del informe de daños | Monitoreo (Calidad) |
 | `tms_calidad_flags` | Overlay persistente de estado de calidad por `codigo_producto`+`partida`+`ubicacion` (sobrevive la recarga del snapshot) | WmsLocations, Monitoreo, useCalidadFlags |
 | `tms_notificaciones` | Avisos persistentes (p.ej. movimiento sistémico a transitoria) dirigibles por rol/usuario | Monitoreo (Calidad), Layout |
 
@@ -415,9 +416,13 @@ Búsqueda multi-tab de inventario por lote/serie/farmapack/pesos.
 - **Tablas:** `tms_partidas`, `tms_series`, `tms_farmapack`, `tms_pesos`
 - **Features:** Highlight búsqueda, badges disponibilidad, export CSV
 - **Frescura de stock (`StockFreshness` + `useStockFreshness`):** muestra última
-  actualización (fecha/hora/usuario, desde `tms_historial_cargas`). Vigencia diaria
-  **08:30 → 08:30 hrs**; si el stock de Partidas/Series/Farmapack supera el ciclo, muestra
-  aviso "Favor actualizar stock" con firma animada "Atte, Tío Inventario".
+  actualización (fecha/hora/usuario, desde `tms_historial_cargas`). Vigencia diaria con
+  **corte a las 06:00 hrs** (ciclo `06:00 → 06:00`); si el stock de Partidas/Series/Farmapack
+  supera el ciclo, muestra aviso "Favor actualizar stock" con firma animada "Atte, Tío Inventario".
+  El corte se fija **antes** de la ventana de carga matutina real (~08:11–08:20) para que una
+  carga de la mañana cuente para el día en curso y no se marque desactualizada apenas pasada la
+  hora de corte (el corte previo de 08:30 coincidía con la carga y provocaba falsos "Desactualizado").
+  Hora de corte parametrizada en `RESET_HOUR`/`RESET_MIN` (`useStockFreshness.js`).
 
 #### 4.5.2 Estado Pedido (`/queries/sales-status`)
 **Archivo:** `src/pages/Queries/SalesStatus.jsx`
@@ -524,18 +529,40 @@ de procesos de bodega. Inventario genera un **informe de monitoreo** sobre el st
 emite el **dictamen técnico**; el sistema persiste un **estado de calidad** que se superpone
 al inventario (visible para todos) y notifica a Inventario/Admin los **movimientos sistémicos**.
 
+El módulo maneja **dos tipos de informe** (`tipo_informe`):
+- **`MONITOREO`** (rutinario): candidatos del stock + dictamen por ítem + export Excel.
+- **`DANOS`** (Informe de Daños / No Conformidad, v1.5.0): documento formal de mercadería
+  dañada con secciones narrativas (antecedentes, hallazgos, cuadro resumen, causa probable,
+  acciones, firmas) y **evidencia fotográfica por hallazgo**, exportable a **Word y PDF**.
+
 **Flujo:**
 ```
 Inventario → Nuevo informe → buscar candidatos (RPC monitoreo_candidatos: stock actual +
-  ubicación + semáforo de vencimiento) → agregar ítems (condición/motivo/obs) → Enviar a Calidad
+  ubicación REAL (wms_ubicaciones) + semáforo de vencimiento) → agregar ítems
+  (condición/motivo/obs) → Enviar a Calidad
 Calidad → abrir informe → dictaminar por ítem (LIBERAR/CUARENTENA/REPROCESO/RECHAZAR/BAJA
   + bodega destino + acuse) → RPC monitoreo_dictaminar
   → persiste dictamen + upsert en tms_calidad_flags + notifica MOV_TRANSITORIA al ADMIN
+Daños → Nuevo Informe de Daños → llenar secciones + hallazgos → Guardar (genera IDs) →
+  adjuntar fotos por hallazgo (bucket monitoreo-evidencias) → Exportar Word / PDF
 ```
 
-- **Tablas:** `tms_monitoreo_informes`, `tms_monitoreo_items`, `tms_calidad_flags`, `tms_notificaciones`
+- **Tablas:** `tms_monitoreo_informes` (+ `tipo_informe`, `reporte` jsonb), `tms_monitoreo_items`
+  (+ `tipo_dano`, `componente_afectado`, `consecuencia`), `tms_monitoreo_evidencias` (fotos),
+  `tms_calidad_flags`, `tms_notificaciones`
 - **RPCs:** `monitoreo_next_numero()`, `monitoreo_candidatos(text,bool)`, `monitoreo_dictaminar(...)`
-  (todas `SECURITY DEFINER`, `search_path=public`, sin EXECUTE para `anon`)
+  (todas `SECURITY DEFINER`, `search_path=public`, sin EXECUTE para `anon`).
+  `monitoreo_candidatos` (migración `012`) se basa en **`wms_ubicaciones`** (verdad física,
+  una fila por SKU+ubicación con stock>0), enriquecida con vencimiento/UM desde
+  `tms_partidas`/`tms_farmapack` — coincide con la vista *Ubicaciones WMS*.
+- **Storage:** bucket público `monitoreo-evidencias` (8MB, solo imágenes; escritura
+  `can_manage_calidad()`); fotos comprimidas en cliente (1600px/JPEG 0.82) vía
+  `src/components/PhotoUploader.jsx` y `src/lib/imageCompress.js`.
+- **Exportación de daños:** `src/lib/exportInformeDanos.js` (`docx` para Word, `pdfmake` para PDF,
+  ambos con import dinámico para no inflar el bundle principal; fotos embebidas).
+- **Editar/eliminar:** cualquier informe es editable o eliminable (`useActualizarInforme`,
+  `useGuardarInformeDanos`, `useEliminarInforme`); borrar un informe dictaminado conserva el
+  overlay `tms_calidad_flags`.
 - **Persistencia:** el estado de calidad vive en `tms_calidad_flags` anclado por
   `codigo_producto`+`partida`+`ubicacion` → **sobrevive la recarga diaria del snapshot**
   (`tms_partidas`/`tms_series`/`tms_farmapack`, ciclo 08:30→08:30).
@@ -617,6 +644,7 @@ Tablas: `wms_ubicaciones`, `tms_nv_diarias`, `tms_matriz_codigos`, `tms_partidas
 |---|---|---|---|---|
 | `tms_monitoreo_informes` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_monitoreo_items` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
+| `tms_monitoreo_evidencias` (mig. 013) | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_calidad_flags` | All auth | `can_manage_calidad()` | `can_manage_calidad()` | `can_manage_calidad()` |
 | `tms_notificaciones` | All auth | `can_manage_calidad()` | All auth (marcar leída) | Admin only |
 
@@ -965,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.22 | 2026-06-05 | **DEPLOY a producción** (sobre 1.4.21). Incluye el fix de frescura de stock y el trabajo de Monitoreo a Calidad / Informe de Daños descrito en la fila `monitoreo-danos`. **FIX aviso de frescura de stock en Lotes y Series (`StockFreshness`)**: el corte del ciclo estaba fijo a las **08:30**, pero la carga diaria real se hace ~08:11–08:20 (justo antes del corte). Por eso, apenas pasaban las 08:30, una carga de las 08:15 caía en el ciclo "anterior" y el aviso saltaba a **"Desactualizado"** (rojo) ~15 min después de haber cargado, quedándose rojo hasta que se recargara después de las 08:30 ("se ponía verde mucho más rato"). No era problema de zona horaria (`tms_historial_cargas.fecha_carga` es `timestamptz`, interpretado correctamente). **Solución**: se mueve el corte diario a las **06:00** (`RESET_HOUR=6`/`RESET_MIN=0` en `src/hooks/useStockFreshness.js`), antes de la ventana de carga matutina; así una carga de la mañana cuenta para el día en curso (verde hasta las 06:00 del día siguiente) y solo se muestra rojo entre las 06:00 y la carga (recordatorio útil). La copia visible del aviso (`StockFreshness.jsx`) ahora deriva la hora de la constante `RESET_LABEL` para evitar desajustes. Sin cambios de BD. |
+| monitoreo-danos | 2026-06-04 | **MONITOREO A CALIDAD: fix de ubicaciones + editar/eliminar + INFORME DE DAÑOS con fotos (Word/PDF)** (entra en producción en 1.4.22). **(1) Fix `monitoreo_candidatos`** (migración `012_monitoreo_candidatos_fix.sql`, `CREATE OR REPLACE`): ahora se basa en **`wms_ubicaciones`** (verdad física, una fila por SKU+ubicación con stock>0), enriquecida con vencimiento/UM desde `tms_partidas`/`tms_farmapack`; antes resolvía una sola ubicación por SKU desde el stock → no coincidía con *Ubicaciones WMS* y duplicaba filas. **(2) Editar/eliminar informes**: `useActualizarInforme`, `useEliminarInforme` (frontend, sin migración; RLS de la 011 ya lo permite); botones Editar/Eliminar en lista y detalle; borrar un dictaminado conserva el overlay `tms_calidad_flags`. **(3) Nuevo tipo de informe `DANOS` (Informe de Daños / No Conformidad)** (migración `013_informe_danos.sql`, idempotente y aditiva): `tms_monitoreo_informes` + `tipo_informe` (MONITOREO\|DANOS) + `reporte` jsonb (antecedentes, descripción, cuadro resumen, causa probable, acciones, firmas); `tms_monitoreo_items` + `tipo_dano`/`componente_afectado`/`consecuencia` (SKU/ubicación opcionales); nueva tabla **`tms_monitoreo_evidencias`** (fotos por hallazgo, RLS lectura `authenticated`/escritura `can_manage_calidad()`); bucket público **`monitoreo-evidencias`** (8MB, solo imágenes) con políticas de escritura por `can_manage_calidad()`. **Frontend**: `InformeDanosBuilder` en `Monitoreo.jsx` (formulario por secciones + hallazgos con fotos), componente reutilizable `src/components/PhotoUploader.jsx` (cámara/galería + compresión `src/lib/imageCompress.js`), exportación a **Word (`docx`) y PDF (`pdfmake`)** vía `src/lib/exportInformeDanos.js` con **import dinámico** (chunks aparte, no inflan el bundle principal); fotos embebidas. Nuevas deps: `docx`, `pdfmake`. ⚠️ Las migraciones `012` y `013` deben aplicarse a la BD. Aditivas: no modifican datos existentes (los informes actuales quedan `tipo_informe='MONITOREO'`). |
 | 1.4.21 | 2026-06-03 | **DEPLOY** del fix 1.4.20: bundle móvil `com.cco.wms@1.4.21` subido a Capgo OTA (canal `production`) y web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.20→1.4.21). |
 | 1.4.20 | 2026-06-03 | **FIX (Monitoreo a Calidad — búsqueda "cargando eternamente")**: La búsqueda de candidatos quedaba con spinner infinito aunque la RPC `monitoreo_candidatos` respondía `HTTP 200` rápido en el servidor (confirmado en logs API). La causa es del lado cliente (promesa de supabase-js que no se resuelve, p. ej. bloqueo de auth-lock en la WebView o conexión colgada). Se agregó una **guarda de timeout (15s) con `AbortController` + `.abortSignal()`** en `fetchCandidatos` (`src/services/calidadService.js`): si la petición no responde, se aborta y se muestra un toast de error en lugar de quedar cargando para siempre. Sin cambios de BD. |
 | 1.4.19 | 2026-06-03 | **DEPLOY**: Despliegue del módulo Monitoreo a Calidad a móvil (Capgo OTA canal `production`, bundle `com.cco.wms@1.4.19`) y web (Render). Verificado en BD live que la migración `011_monitoreo_calidad.sql` ya está aplicada (4 tablas + 4 funciones presentes). Sin cambios de código respecto a 1.4.18. |

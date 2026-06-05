@@ -9,12 +9,17 @@ export const STOCK_TABLES = {
   pesos: 'tms_pesos',
 };
 
-// Tablas sujetas a la regla de vigencia de 24 hrs (ciclo 08:30 → 08:30)
+// Tablas sujetas a la regla de vigencia de 24 hrs (ciclo 06:00 → 06:00)
 export const TABLES_24H = ['tms_partidas', 'tms_series', 'tms_farmapack'];
 
-// Inicio del ciclo de stock: 08:30 del día actual si ya pasó, si no el de ayer.
-export const RESET_HOUR = 8;
-export const RESET_MIN = 30;
+// Inicio del ciclo de stock: 06:00 del día actual si ya pasó, si no el de ayer.
+// El corte se fija ANTES de la ventana de carga matutina real (~08:11–08:20) para
+// que una carga de la mañana cuente para el día en curso y no se marque desactualizada.
+export const RESET_HOUR = 6;
+export const RESET_MIN = 0;
+
+// Etiqueta "HH:MM" derivada de las constantes, para la copia visible (evita desajustes).
+export const RESET_LABEL = `${String(RESET_HOUR).padStart(2, '0')}:${String(RESET_MIN).padStart(2, '0')}`;
 
 export function getCycleStart(now = new Date()) {
   const c = new Date(now);
@@ -41,7 +46,7 @@ export function useStockFreshness() {
       });
       return latest;
     },
-    // Se re-evalúa cada minuto para detectar el cruce de las 08:30 sin recargar.
+    // Se re-evalúa cada minuto para detectar el cruce de las 06:00 sin recargar.
     refetchInterval: 60000,
     staleTime: 30000,
   });

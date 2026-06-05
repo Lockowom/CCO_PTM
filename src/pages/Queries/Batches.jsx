@@ -385,7 +385,7 @@ const Batches = () => {
           </div>
         </div>
 
-        {/* AVISO DE FRESCURA / VIGENCIA DEL STOCK (24 hrs, ciclo 08:30→08:30) */}
+        {/* AVISO DE FRESCURA / VIGENCIA DEL STOCK (24 hrs, ciclo 06:00→06:00) */}
         <StockFreshness table={STOCK_TABLES[activeTab]} label={TABS.find(t => t.id === activeTab)?.label || ''} />
 
         {/* RESULTS SECTION */}
