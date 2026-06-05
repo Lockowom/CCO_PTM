@@ -4,7 +4,7 @@ import {
   PackageCheck, AlertTriangle, Clock, User, CalendarClock,
   ArrowRight, CheckCircle2, ShieldAlert
 } from 'lucide-react';
-import { useStockFreshness, getCycleStart, TABLES_24H } from '../hooks/useStockFreshness';
+import { useStockFreshness, getCycleStart, TABLES_24H, RESET_LABEL } from '../hooks/useStockFreshness';
 import { useAuth } from '../context/AuthContext';
 
 const fmtDate = (d) =>
@@ -90,7 +90,7 @@ const StockFreshness = ({ table, label }) => {
 
             {aplica24h && (
               <p className="mt-1.5 text-[11px] sm:text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                <Clock size={12} /> Vigencia: ciclo diario de <span className="font-black text-slate-500">08:30 a 08:30 hrs</span>
+                <Clock size={12} /> Vigencia: ciclo diario de <span className="font-black text-slate-500">{RESET_LABEL} a {RESET_LABEL} hrs</span>
               </p>
             )}
           </div>
@@ -118,7 +118,7 @@ const StockFreshness = ({ table, label }) => {
             <p className="text-slate-600 font-semibold max-w-xl mx-auto leading-relaxed">
               El stock se encuentra <span className="text-red-600 font-black">desactualizado</span>.
               Tiene un límite de vigencia de <span className="font-black text-slate-800">24 horas</span>,
-              con corte diario a las <span className="font-black text-slate-800">08:30 hrs</span>.
+              con corte diario a las <span className="font-black text-slate-800">{RESET_LABEL} hrs</span>.
             </p>
 
             {canImport ? (
