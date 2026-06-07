@@ -13,6 +13,10 @@ import { useActiveSession, useItemsStatus, usePickingTime, usePickingActions } f
 import { useProcessTimer } from '../../hooks/useProcessTimer';
 import { groupByNV } from '../../utils/groupOrders';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
+import { withTimeout } from '../../lib/supabaseQuery';
+import QueryErrorState from '../../components/ui/QueryErrorState';
+
+const PICKING_LIMIT = 2000;
 
 const Picking = () => {
   const { user } = useAuth();
@@ -54,17 +58,22 @@ const Picking = () => {
     });
   }, { scope: containerRef });
 
-  const { data: { nvData = [], stats = { pendientes: 0, enProceso: 0, completadasHoy: 0 } } = {}, isLoading: loading, refetch } = useQuery({
+  const { data: { nvData = [], stats = { pendientes: 0, enProceso: 0, completadasHoy: 0 }, truncated = false } = {}, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ['picking_data'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tms_nv_diarias')
-        .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
-        .in('estado', ['Pendiente Picking', 'Aprobada'])
-        .order('fecha_emision', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('tms_nv_diarias')
+          .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
+          .in('estado', ['Pendiente Picking', 'Aprobada'])
+          .order('fecha_emision', { ascending: true })
+          .limit(PICKING_LIMIT),
+        { ms: 12000, label: 'picking' }
+      );
 
       if (error) throw error;
 
+      const wasTruncated = (data?.length || 0) >= PICKING_LIMIT;
       const grouped = groupByNV(data);
       // Preserve usuario fields
       grouped.forEach(nv => {
@@ -74,15 +83,19 @@ const Picking = () => {
       const uniqueNVs = grouped;
 
       const today = new Date().toISOString().split('T')[0];
-      const { count: completados } = await supabase
-        .from('tms_mediciones_tiempos')
-        .select('*', { count: 'exact', head: true })
-        .eq('proceso', 'PICKING')
-        .eq('estado', 'COMPLETADO')
-        .gte('fin_at', `${today}T00:00:00`);
+      const { count: completados } = await withTimeout(
+        supabase
+          .from('tms_mediciones_tiempos')
+          .select('*', { count: 'exact', head: true })
+          .eq('proceso', 'PICKING')
+          .eq('estado', 'COMPLETADO')
+          .gte('fin_at', `${today}T00:00:00`),
+        { ms: 10000, label: 'picking' }
+      );
 
       return {
         nvData: uniqueNVs,
+        truncated: wasTruncated,
         stats: {
           pendientes: uniqueNVs.length,
           enProceso: uniqueNVs.filter(n => n.estado === 'Pendiente Picking').length,
@@ -416,6 +429,19 @@ const Picking = () => {
             </div>
           </div>
         </div>
+
+        {isError && !loading && (
+          <div className="relative z-10 bg-white border border-rose-200 rounded-2xl shadow-sm">
+            <QueryErrorState error={error} onRetry={refetch} />
+          </div>
+        )}
+
+        {truncated && (
+          <div className="relative z-10 flex items-center gap-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            <AlertCircle size={14} className="flex-shrink-0" />
+            Mostrando los primeros {PICKING_LIMIT.toLocaleString('es-CL')} registros. Refina los filtros para ver el resto.
+          </div>
+        )}
 
         <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-wms-neon/5 rounded-full blur-3xl pointer-events-none"></div>

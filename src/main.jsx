@@ -20,8 +20,11 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2,       // 2 min — los datos se consideran frescos
       gcTime: 1000 * 60 * 10,          // 10 min en caché antes de GC
       refetchOnWindowFocus: false,      // No refetch al volver a la pestaña
-      refetchOnReconnect: 'always',     // Sí refetch al recuperar conexión
+      refetchOnReconnect: true,         // Revalida SOLO queries stale al reconectar
+                                        // (evita la tormenta de 'always' refrescando todo)
+      networkMode: 'online',            // Falla rápido offline → surge error en vez de quedar en pausa
       retry: 1,                         // 1 reintento (no 3 por defecto)
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000), // backoff acotado (máx 8s)
     },
   },
 });

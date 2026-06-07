@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  */
 export const useRealtimeTable = (tableName, queryKeysToInvalidate = [tableName], options = {}) => {
   const queryClient = useQueryClient();
-  const { showToasts = false, event = '*', filter, debounceMs = 800 } = options;
+  const { showToasts = false, event = '*', filter, debounceMs = 1500 } = options;
   const keysRef = useRef(queryKeysToInvalidate);
   keysRef.current = queryKeysToInvalidate;
 
@@ -19,12 +19,15 @@ export const useRealtimeTable = (tableName, queryKeysToInvalidate = [tableName],
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+    // Jitter (+0–400ms): al reconectar, los ~18 canales no invalidan en el mismo
+    // tick → escalona la oleada de refetch y evita la tormenta de revalidación.
+    const delay = debounceMs + Math.random() * 400;
     debounceTimerRef.current = setTimeout(() => {
       keysRef.current.forEach(key => {
         queryClient.invalidateQueries({ queryKey: [key] });
       });
       debounceTimerRef.current = null;
-    }, debounceMs);
+    }, delay);
   }, [queryClient, debounceMs]);
 
   useEffect(() => {

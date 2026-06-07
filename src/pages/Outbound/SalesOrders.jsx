@@ -11,6 +11,8 @@ import gsap from 'gsap';
 import { groupByNV } from '../../utils/groupOrders';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
 import { ESTADOS_CONFIG, getEstadoConfig, ACCIONES_ESTADO, ESTADOS_PIPELINE } from '../../constants/estados';
+import { withTimeout } from '../../lib/supabaseQuery';
+import QueryErrorState from '../../components/ui/QueryErrorState';
 
 const SalesOrders = () => {
   const { hasPermission } = useAuth();
@@ -31,15 +33,18 @@ const SalesOrders = () => {
     });
   }, { scope: containerRef });
 
-  const { data: { orders = [], contadores = {} } = {}, isLoading: loading, refetch } = useQuery({
+  const { data: { orders = [], contadores = {} } = {}, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ['sales_orders'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tms_nv_diarias')
-        .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
-        .not('estado', 'eq', 'Despachado')
-        .order('fecha_emision', { ascending: false })
-        .limit(5000);
+      const { data, error } = await withTimeout(
+        supabase
+          .from('tms_nv_diarias')
+          .select('id, nv, estado, fecha_emision, cliente, vendedor, codigo_producto, descripcion_producto, cantidad, unidad, usuario_asignado, usuario_nombre, picking_status, cantidad_real')
+          .not('estado', 'eq', 'Despachado')
+          .order('fecha_emision', { ascending: false })
+          .limit(5000),
+        { ms: 12000, label: 'notas de venta' }
+      );
 
       if (error) throw error;
 
@@ -312,6 +317,12 @@ const SalesOrders = () => {
                   <td colSpan="8" className="px-2 sm:px-4 md:px-6 py-16 text-center">
                     <RefreshCw className="animate-spin mx-auto text-orange-500 mb-3" size={28} />
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Cargando datos...</p>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td colSpan="8" className="px-2 sm:px-4 md:px-6">
+                    <QueryErrorState error={error} onRetry={refetch} />
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (

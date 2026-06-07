@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
+import { withTimeout } from '../lib/supabaseQuery';
 
 // ── Catálogos (estados, dictámenes, bodegas destino) ──────────────────────
 export const DICTAMENES = [
@@ -32,10 +33,13 @@ export function useInformes() {
   return useQuery({
     queryKey: ['monitoreo_informes'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tms_monitoreo_informes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('tms_monitoreo_informes')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        { ms: 12000, label: 'informes de monitoreo' }
+      );
       if (error) throw error;
       return data || [];
     },
@@ -47,11 +51,14 @@ export function useInformeItems(informeId) {
     queryKey: ['monitoreo_items', informeId],
     enabled: !!informeId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tms_monitoreo_items')
-        .select('*')
-        .eq('informe_id', informeId)
-        .order('created_at', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('tms_monitoreo_items')
+          .select('*')
+          .eq('informe_id', informeId)
+          .order('created_at', { ascending: true }),
+        { ms: 12000, label: 'ítems del informe' }
+      );
       if (error) throw error;
       return data || [];
     },
