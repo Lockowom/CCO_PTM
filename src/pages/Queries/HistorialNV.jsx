@@ -9,6 +9,8 @@ import { supabase } from '../../supabase';
 import { useQuery } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { withTimeout } from '../../lib/supabaseQuery';
+import QueryErrorState from '../../components/ui/QueryErrorState';
 
 // Todos los estados REALES
 const TODOS_ESTADOS = [
@@ -53,7 +55,7 @@ const HistorialNV = () => {
     });
   }, { scope: container });
 
-  const { data: orders = [], isLoading: loading, error, refetch } = useQuery({
+  const { data: orders = [], isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ['historial_nv', filterFechaDesde, filterFechaHasta],
     queryFn: async () => {
       let query = supabase
@@ -68,7 +70,10 @@ const HistorialNV = () => {
         query = query.lte('fecha_emision', filterFechaHasta + 'T23:59:59');
       }
 
-      const { data, error } = await query.limit(2000);
+      const { data, error } = await withTimeout(
+        query.limit(2000),
+        { ms: 12000, label: 'historial de N.V.' }
+      );
 
       if (error) throw error;
       return data || [];
@@ -301,6 +306,12 @@ const HistorialNV = () => {
                       </div>
                       <p className="text-slate-500 font-medium animate-pulse">Consultando base de datos...</p>
                     </div>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td colSpan="8" className="px-6">
+                    <QueryErrorState error={error} onRetry={refetch} />
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (

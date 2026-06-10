@@ -20,7 +20,7 @@ const HighlightText = ({ text, highlight }) => {
     <span>
       {parts.map((part, i) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
-          <span key={i} className="bg-orange-100 text-orange-600 font-black px-0.5 rounded-sm">{part}</span>
+          <mark key={i} className="bg-yellow-300 text-black font-black px-1 rounded-[3px] ring-1 ring-yellow-500 shadow-sm">{part}</mark>
         ) : (
           <span key={i}>{part}</span>
         )

@@ -4,7 +4,9 @@ import { wmsToast } from '../lib/notifications';
 import { syncOfflineData } from '../lib/syncManager';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '../services/mobileService';
-import { setUserForTracking } from '../lib/sentry';
+import { setUserForTracking, logError } from '../lib/sentry';
+import { withTimeout } from '../lib/supabaseQuery';
+import { toast } from 'sonner';
 
 const AuthContext = createContext();
 
@@ -153,10 +155,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Timeout (10s): si getSession() o la carga de perfil se cuelga (auth-lock
+        // en WebView, red caída), el `await` nunca resolvería y la pantalla global
+        // "Cargando…" quedaría infinita. Con el timeout el `finally` siempre corre.
+        const { data: { session } } = await withTimeout(
+          supabase.auth.getSession(),
+          { ms: 10000, label: 'inicio de sesión' }
+        );
 
         if (session?.user?.email) {
-          const profile = await loadUserProfile(session.user.email);
+          const profile = await withTimeout(
+            loadUserProfile(session.user.email),
+            { ms: 10000, label: 'inicio de sesión' }
+          );
           if (profile) {
             await setUserState(profile);
           } else {
@@ -180,6 +191,9 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error('[Auth] Init session error:', err);
+        logError(err, { context: 'auth_init_session' });
+        // Caer a la pantalla de login en vez de quedar colgado en "Cargando…".
+        toast.error('No se pudo restaurar la sesión a tiempo. Inicia sesión de nuevo.');
       } finally {
         initDoneRef.current = true;
         setLoading(false);
@@ -201,9 +215,18 @@ export const AuthProvider = ({ children }) => {
           setPermissions([]);
           setLandingPage('/dashboard');
         } else if (event === 'SIGNED_IN' && session?.user?.email) {
-          const profile = await loadUserProfile(session.user.email);
-          if (profile) {
-            await setUserState(profile);
+          try {
+            const profile = await withTimeout(
+              loadUserProfile(session.user.email),
+              { ms: 10000, label: 'inicio de sesión' }
+            );
+            if (profile) {
+              await setUserState(profile);
+            }
+          } catch (err) {
+            console.error('[Auth] SIGNED_IN profile load error:', err);
+            logError(err, { context: 'auth_signed_in' });
+            toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
           }
         } else if (event === 'TOKEN_REFRESHED') {
           // Token renovado automáticamente — no hacer nada

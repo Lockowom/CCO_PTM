@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { withTimeout } from '../../lib/supabaseQuery';
+import QueryErrorState from '../../components/ui/QueryErrorState';
 
 const SalesStatus = () => {
     const queryClient = useQueryClient();
@@ -42,26 +44,33 @@ const SalesStatus = () => {
     }, [searchTerm]);
 
     // TanStack Query para Resultados
-    const { data: results = [], isLoading: loading } = useQuery({
+    const { data: results = [], isLoading: loading, isError, error, refetch } = useQuery({
         queryKey: ['sales_search', debouncedTerm],
         queryFn: async () => {
             if (!debouncedTerm) return [];
 
-            // Búsqueda exacta + fuzzy en paralelo
+            // Búsqueda exacta + fuzzy en paralelo (cada una con timeout propio para
+            // que ninguna deje el spinner "cargando eternamente").
             const [exactRes, fuzzyRes] = await Promise.all([
-                supabase
-                    .from('tms_nv_diarias')
-                    .select('*')
-                    .or(`nv.ilike.%${debouncedTerm}%,cliente.ilike.%${debouncedTerm}%,codigo_producto.ilike.%${debouncedTerm}%`)
-                    .order('fecha_emision', { ascending: false })
-                    .limit(20),
-                supabase.rpc('fuzzy_search', {
-                    p_table: 'tms_nv_diarias',
-                    p_column: 'cliente',
-                    p_query: debouncedTerm,
-                    p_limit: 15,
-                    p_threshold: 0.15
-                }).catch(() => ({ data: [] }))
+                withTimeout(
+                    supabase
+                        .from('tms_nv_diarias')
+                        .select('*')
+                        .or(`nv.ilike.%${debouncedTerm}%,cliente.ilike.%${debouncedTerm}%,codigo_producto.ilike.%${debouncedTerm}%`)
+                        .order('fecha_emision', { ascending: false })
+                        .limit(20),
+                    { ms: 10000, label: 'búsqueda de N.V.' }
+                ),
+                withTimeout(
+                    supabase.rpc('fuzzy_search', {
+                        p_table: 'tms_nv_diarias',
+                        p_column: 'cliente',
+                        p_query: debouncedTerm,
+                        p_limit: 15,
+                        p_threshold: 0.15
+                    }),
+                    { ms: 10000, label: 'búsqueda aproximada' }
+                ).catch(() => ({ data: [] }))
             ]);
 
             if (exactRes.error) throw exactRes.error;
@@ -72,11 +81,14 @@ const SalesStatus = () => {
             const fuzzyIds = (fuzzyRes.data || []).map(r => r.id).filter(id => !exactIds.has(id));
 
             if (fuzzyIds.length > 0) {
-                const { data: extra } = await supabase
-                    .from('tms_nv_diarias')
-                    .select('*')
-                    .in('id', fuzzyIds.slice(0, 10))
-                    .order('fecha_emision', { ascending: false });
+                const { data: extra } = await withTimeout(
+                    supabase
+                        .from('tms_nv_diarias')
+                        .select('*')
+                        .in('id', fuzzyIds.slice(0, 10))
+                        .order('fecha_emision', { ascending: false }),
+                    { ms: 10000, label: 'búsqueda de N.V.' }
+                );
                 if (extra) exactData.push(...extra);
             }
 
@@ -325,7 +337,9 @@ const SalesStatus = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/20">
-                        {results.length === 0 ? (
+                        {isError ? (
+                            <QueryErrorState error={error} onRetry={refetch} />
+                        ) : results.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-slate-500 p-6 text-center">
                                 <Zap size={64} className="mb-4 opacity-50 text-wms-neon" />
                                 <p className="font-black text-xl tracking-tight text-slate-500">EN ESPERA</p>

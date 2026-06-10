@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Package, Truck, User, FileText, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
+import { withTimeout } from '../../lib/supabaseQuery';
 
 const CommandPalette = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,19 +46,26 @@ const CommandPalette = () => {
       setIsLoading(true);
       
       try {
-        // Buscar en productos (wms_ubicaciones)
-        const { data: locs } = await supabase
-          .from('wms_ubicaciones')
-          .select('codigo, descripcion, ubicacion')
-          .ilike('codigo', `%${query}%`)
-          .limit(3);
-          
+        // Buscar en productos (wms_ubicaciones) — con timeout para que el
+        // spinner del palette no quede colgado si la red no responde.
+        const { data: locs } = await withTimeout(
+          supabase
+            .from('wms_ubicaciones')
+            .select('codigo, descripcion, ubicacion')
+            .ilike('codigo', `%${query}%`)
+            .limit(3),
+          { ms: 10000, label: 'búsqueda rápida' }
+        );
+
         // Buscar en notas de venta (tms_nv_diarias)
-        const { data: nvs } = await supabase
-          .from('tms_nv_diarias')
-          .select('nv, cliente, estado')
-          .ilike('nv', `%${query}%`)
-          .limit(3);
+        const { data: nvs } = await withTimeout(
+          supabase
+            .from('tms_nv_diarias')
+            .select('nv, cliente, estado')
+            .ilike('nv', `%${query}%`)
+            .limit(3),
+          { ms: 10000, label: 'búsqueda rápida' }
+        );
 
         const newResults = [];
         
