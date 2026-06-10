@@ -86,6 +86,7 @@ const Navbar = () => {
             { label: 'Torre de Control', path: '/tms/control-tower', icon: <Satellite size={16} /> },
             { label: 'Gestión Patios', path: '/tms/yard', icon: <Anchor size={16} /> },
             { label: 'Conductores', path: '/tms/drivers', icon: <Users size={16} /> },
+            { label: 'Costos Transporte', path: '/tms/costos', icon: <Truck size={16} /> },
             { label: 'App Móvil', path: '/tms/mobile', icon: <Smartphone size={16} /> },
             { label: 'PDA Operativa', path: '/mobile/pda', icon: <Scan size={16} /> }
           ]

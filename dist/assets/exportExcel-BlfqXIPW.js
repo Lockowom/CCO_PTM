@@ -1,0 +1,1 @@
+import{u as o,w as l}from"./xlsx-DrgRuPKf.js";function w({filename:t,sheets:n}){const e=o.book_new();(n||[]).forEach((s,c)=>{const r=o.json_to_sheet(s.rows||[]),i=(s.name||`Hoja${c+1}`).replace(/[\\/?*[\]:]/g," ").slice(0,31);o.book_append_sheet(e,r,i)});const a=new Date().toISOString().slice(0,10);l(e,`${t}_${a}.xlsx`)}export{w as e};

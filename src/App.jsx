@@ -25,6 +25,7 @@ const Drivers = React.lazy(() => import('./pages/TMS/Drivers'));
 const ControlTower = React.lazy(() => import('./pages/TMS/ControlTower'));
 const MobileApp = React.lazy(() => import('./pages/TMS/MobileApp'));
 const YardManagement = React.lazy(() => import('./pages/TMS/YardManagement')); // NUEVO
+const CostosTransporte = React.lazy(() => import('./pages/TMS/CostosTransporte')); // NUEVO
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA')); // NUEVO
 
 // Inbound Modules
@@ -327,6 +328,7 @@ function AppContent() {
           <Route path="tms/drivers" element={<ErrorBoundary><Drivers /></ErrorBoundary>} />
           <Route path="tms/mobile" element={<ErrorBoundary><MobileApp /></ErrorBoundary>} />
           <Route path="tms/yard" element={<ErrorBoundary><YardManagement /></ErrorBoundary>} />
+          <Route path="tms/costos" element={<ErrorBoundary><CostosTransporte /></ErrorBoundary>} />
           <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
 
           {/* Inbound Modules */}

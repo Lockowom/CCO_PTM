@@ -8,6 +8,7 @@ export const ROUTE_PERMISSIONS = {
   '/tms/drivers': ['view_drivers', 'manage_drivers'],
   '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
   '/tms/yard': ['view_control_tower'],
+  '/tms/costos': ['view_transport_costs'],
   '/mobile/pda': ['view_stock', 'manage_inventory'],
 
   // Inbound

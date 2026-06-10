@@ -23,6 +23,7 @@ export const APP_ROUTES = [
   { value: '/tms/control-tower', label: 'TMS - Torre de Control', module: 'tms' },
   { value: '/tms/yard', label: 'TMS - Gestión de Patio', module: 'tms' },
   { value: '/tms/drivers', label: 'TMS - Conductores', module: 'tms' },
+  { value: '/tms/costos', label: 'TMS - Costos Transporte', module: 'tms' },
   { value: '/tms/mobile', label: 'TMS - App Móvil', module: 'tms' },
   
   // Inbound
@@ -82,6 +83,7 @@ export const APP_PERMISSIONS = [
       { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
       { id: 'view_drivers', label: 'Ver Conductores' },
       { id: 'manage_drivers', label: 'Gestionar Conductores' },
+      { id: 'view_transport_costs', label: 'Ver Costos de Transporte' },
       { id: 'view_mobile_app', label: 'Acceder App Móvil' },
       { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' },
       { id: 'view_stock', label: 'Ver Stock (PDA)' },
