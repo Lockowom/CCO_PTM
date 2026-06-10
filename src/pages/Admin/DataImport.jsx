@@ -115,7 +115,7 @@ const IMPORT_TABS = [
     {
         id: 'series', label: 'Series', category: 'trazabilidad',
         icon: Barcode, table: 'tms_series',
-        uniqueKey: 'serie',
+        uniqueKey: 'codigo_producto, serie',
         columns: [
             { key: 'codigo_producto', label: 'Cod. Producto', required: true, type: 'text' },
             { key: 'producto', label: 'Producto', required: false, type: 'text' },
@@ -127,7 +127,7 @@ const IMPORT_TABS = [
             { key: 'consignacion', label: 'Consignación', required: false, type: 'number' },
             { key: 'stock_total', label: 'Stock Total', required: false, type: 'number' },
         ],
-        helpText: 'La columna "Serie" debe ser única para cada registro.',
+        helpText: 'La serie es única POR PRODUCTO: la clave es Cod. Producto + Serie (un mismo número de serie puede repetirse en productos distintos).',
         smartDedup: false,
     },
     {
