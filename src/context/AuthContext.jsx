@@ -206,7 +206,7 @@ export const AuthProvider = ({ children }) => {
   // ── Listener de cambios de sesión auth ──
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         // Solo procesar después de la inicialización
         if (!initDoneRef.current) return;
 
@@ -215,19 +215,27 @@ export const AuthProvider = ({ children }) => {
           setPermissions([]);
           setLandingPage('/dashboard');
         } else if (event === 'SIGNED_IN' && session?.user?.email) {
-          try {
-            const profile = await withTimeout(
-              loadUserProfile(session.user.email),
-              { ms: 10000, label: 'inicio de sesión' }
-            );
-            if (profile) {
-              await setUserState(profile);
+          // IMPORTANTE: NO hacer llamadas a supabase (`from`/`rpc`) directamente
+          // dentro del callback de onAuthStateChange. supabase-js mantiene un
+          // "auth lock" mientras corre el callback; cualquier consulta que a su
+          // vez necesite ese lock se DEADLOCKEA y nunca resuelve → el timeout de
+          // 10s disparaba "No se pudo cargar tu perfil" para TODOS los usuarios.
+          // La solución oficial es diferir el trabajo fuera del callback.
+          setTimeout(async () => {
+            try {
+              const profile = await withTimeout(
+                loadUserProfile(session.user.email),
+                { ms: 10000, label: 'inicio de sesión' }
+              );
+              if (profile) {
+                await setUserState(profile);
+              }
+            } catch (err) {
+              console.error('[Auth] SIGNED_IN profile load error:', err);
+              logError(err, { context: 'auth_signed_in' });
+              toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
             }
-          } catch (err) {
-            console.error('[Auth] SIGNED_IN profile load error:', err);
-            logError(err, { context: 'auth_signed_in' });
-            toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
-          }
+          }, 0);
         } else if (event === 'TOKEN_REFRESHED') {
           // Token renovado automáticamente — no hacer nada
         }
