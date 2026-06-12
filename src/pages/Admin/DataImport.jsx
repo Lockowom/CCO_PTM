@@ -9,6 +9,7 @@ import {
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import { IMPORT_CELL_MAX } from '../../lib/validation/limits';
 
 // ── CONFIGURACIÓN DE TABS ──
 const IMPORT_TABS = [
@@ -461,7 +462,8 @@ const DataImport = () => {
                         }
                     } else { value = null; }
                 } else {
-                    value = value.toString().trim();
+                    // Límite defensivo de longitud por celda (evita payloads gigantes en import masivo).
+                    value = value.toString().trim().slice(0, IMPORT_CELL_MAX);
                 }
                 row[col.key] = value;
             });

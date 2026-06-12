@@ -175,19 +175,9 @@ export const AuthProvider = ({ children }) => {
             await supabase.auth.signOut();
           }
         } else {
-          // Sin sesión auth — verificar si hay sesión legacy en localStorage
-          const stored = localStorage.getItem('currentUser');
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              // Intentar login automático con Supabase Auth no es posible sin contraseña
-              // Forzar re-login
-              console.warn('[Auth] Sesión legacy encontrada, requiere re-login con Supabase Auth');
-              localStorage.removeItem('currentUser');
-            } catch (_) {
-              localStorage.removeItem('currentUser');
-            }
-          }
+          // Sin sesión auth. Se elimina cualquier resto de sesión legacy (esquema previo a
+          // Supabase Auth) para reducir superficie ante XSS; ya no se usa para autenticar.
+          localStorage.removeItem('currentUser');
         }
       } catch (err) {
         console.error('[Auth] Init session error:', err);

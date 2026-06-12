@@ -9,6 +9,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
+import { userSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 
 // Las contraseñas ahora se gestionan via Supabase Auth + RPCs server-side
 // create_auth_user() y update_auth_password() en la BD
@@ -198,10 +201,13 @@ const UsersPage = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (!formData.nombre || !formData.email || !formData.rol) {
-      toast.error('Completa los campos requeridos');
+    // En creación la contraseña es obligatoria; en edición es opcional (vacía = no cambiar).
+    if (!editingUser && (!formData.password || formData.password.trim().length < LIMITS.PASSWORD_MIN)) {
+      toast.error(`La contraseña debe tener al menos ${LIMITS.PASSWORD_MIN} caracteres`);
       return;
     }
+    const { ok } = validateForm(userSchema, formData);
+    if (!ok) return;
     saveMutation.mutate(formData);
   };
 
@@ -451,7 +457,7 @@ const UsersPage = () => {
                   <div className="relative">
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
                     <input
-                      type="text" required
+                      type="text" required maxLength={LIMITS.NOMBRE}
                       className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="Ej: Juan Pérez"
                       value={formData.nombre}
@@ -465,7 +471,7 @@ const UsersPage = () => {
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black group-focus-within:text-indigo-400">@</div>
                     <input
-                      type="email" required
+                      type="email" required maxLength={LIMITS.EMAIL}
                       className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="usuario@empresa.com"
                       value={formData.email}
@@ -482,7 +488,7 @@ const UsersPage = () => {
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
                     <input
                       type={showPassword ? "text" : "password"}
-                      required={!editingUser} minLength={6}
+                      required={!editingUser} minLength={LIMITS.PASSWORD_MIN} maxLength={LIMITS.PASSWORD_MAX}
                       className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       value={formData.password}
                       onChange={e => setFormData({ ...formData, password: e.target.value })}

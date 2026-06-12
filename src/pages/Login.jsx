@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { loginSchema } from '../lib/validation/schemas';
+import { validateForm } from '../lib/validation/validateForm';
+import { LIMITS } from '../lib/validation/limits';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +30,14 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
-    
+
+    // Validación de formato (límites de entrada) antes de tocar el backend.
+    const { ok, errors } = validateForm(loginSchema, { email, password }, { silent: true });
+    if (!ok) {
+      setError(errors.email || errors.password || 'Datos inválidos');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setLoadingPhase(1); // Fase: Autenticación
@@ -160,6 +170,7 @@ const Login = () => {
                   </div>
                   <input
                     type="email"
+                    maxLength={LIMITS.EMAIL}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocusedInput('email')}
@@ -182,6 +193,7 @@ const Login = () => {
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
+                    maxLength={LIMITS.PASSWORD_MAX}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setFocusedInput('password')}

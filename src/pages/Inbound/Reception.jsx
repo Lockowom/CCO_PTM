@@ -15,6 +15,9 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { logUpload } from '../../utils/logUpload';
 import { toast } from 'sonner';
+import { receptionSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 import * as XLSX from 'xlsx';
 
 // ============================================================================
@@ -171,7 +174,8 @@ const Reception = () => {
   // Guardar recepción (crear o actualizar)
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!header.proveedor) throw new Error('Proveedor es obligatorio');
+      const { ok, errors } = validateForm(receptionSchema, header, { silent: true });
+      if (!ok) throw new Error(Object.values(errors)[0] || 'Datos de recepción inválidos');
       if (items.length === 0) throw new Error('Agrega al menos un ítem');
 
       let recepcionId = editingId;
@@ -758,7 +762,7 @@ const Reception = () => {
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Proveedor <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input type="text" value={header.proveedor} onChange={e => setHeader(p => ({ ...p, proveedor: e.target.value.toUpperCase() }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold uppercase outline-none focus:border-emerald-400" placeholder="SAIKANG, BCF..." required />
+                    <input type="text" maxLength={LIMITS.PROVEEDOR} value={header.proveedor} onChange={e => setHeader(p => ({ ...p, proveedor: e.target.value.toUpperCase() }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold uppercase outline-none focus:border-emerald-400" placeholder="SAIKANG, BCF..." required />
                   </div>
                 </div>
 
@@ -767,7 +771,7 @@ const Reception = () => {
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">OC <span className="text-amber-500 text-[9px]">(después de revisión)</span></label>
                   <div className="relative">
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input type="text" value={header.oc} onChange={e => setHeader(p => ({ ...p, oc: e.target.value }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="21073..." />
+                    <input type="text" maxLength={LIMITS.OC} value={header.oc} onChange={e => setHeader(p => ({ ...p, oc: e.target.value }))} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="21073..." />
                   </div>
                 </div>
 
@@ -775,11 +779,11 @@ const Reception = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cant Bultos <span className="text-red-500">*</span></label>
-                    <input type="number" value={header.cant_bultos} onChange={e => setHeader(p => ({ ...p, cant_bultos: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" />
+                    <input type="number" value={header.cant_bultos} onChange={e => setHeader(p => ({ ...p, cant_bultos: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" max={LIMITS.CANT_MAX} step="1" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pallets Usados</label>
-                    <input type="number" value={header.pallets_usados} onChange={e => setHeader(p => ({ ...p, pallets_usados: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" />
+                    <input type="number" value={header.pallets_usados} onChange={e => setHeader(p => ({ ...p, pallets_usados: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-400" placeholder="0" min="0" max={LIMITS.CANT_MAX} step="1" />
                   </div>
                 </div>
 
@@ -796,7 +800,7 @@ const Reception = () => {
                 {/* Notas */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notas</label>
-                  <textarea rows={2} value={header.notas} onChange={e => setHeader(p => ({ ...p, notas: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-400 resize-none" placeholder="Observaciones..." />
+                  <textarea rows={2} maxLength={LIMITS.NOTAS} value={header.notas} onChange={e => setHeader(p => ({ ...p, notas: e.target.value }))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-400 resize-none" placeholder="Observaciones..." />
                 </div>
               </div>
             </div>

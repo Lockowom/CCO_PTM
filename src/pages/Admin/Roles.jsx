@@ -4,6 +4,9 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { APP_PERMISSIONS } from '../../config/modules';
+import { roleSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
@@ -141,6 +144,8 @@ const RolesPage = () => {
   };
 
   const handleSaveRole = () => {
+    const { ok } = validateForm(roleSchema, selectedRole);
+    if (!ok) return;
     saveRoleMutation.mutate(selectedRole);
   };
 
@@ -284,6 +289,7 @@ const RolesPage = () => {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Nombre del Rol</label>
                         <input
                           type="text"
+                          maxLength={LIMITS.NOMBRE}
                           value={selectedRole.nombre}
                           onChange={e => setSelectedRole({ ...selectedRole, nombre: e.target.value })}
                           disabled={selectedRole.id === 'ADMIN'}
@@ -296,6 +302,7 @@ const RolesPage = () => {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Descripción</label>
                         <input
                           type="text"
+                          maxLength={LIMITS.DESC}
                           value={selectedRole.descripcion || ''}
                           onChange={e => setSelectedRole({ ...selectedRole, descripcion: e.target.value })}
                           className="w-full text-xl text-slate-600 font-bold bg-transparent border-b-2 border-slate-200 focus:border-emerald-500 outline-none px-0 py-2 transition-all"

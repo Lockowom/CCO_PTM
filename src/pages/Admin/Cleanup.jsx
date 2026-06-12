@@ -1,10 +1,32 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabase';
-import { Trash2, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Trash2, AlertTriangle, CheckCircle, RefreshCw, ShieldOff } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Cleanup = () => {
+  const { user, hasPermission } = useAuth();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
+
+  // Defensa en profundidad: además del guard de ruta y del check is_admin() del RPC,
+  // bloqueamos el render de esta zona destructiva si el usuario no es admin.
+  const canClean = user?.rol === 'ADMIN' || user?.es_admin_delegado || hasPermission('manage_cleanup');
+  if (!canClean) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+          <ShieldOff className="text-red-500 flex-shrink-0" size={28} />
+          <div>
+            <h3 className="text-red-800 font-bold text-lg">Acceso restringido</h3>
+            <p className="text-red-700 text-sm mt-1">
+              No tienes permisos para la limpieza de datos operativos. Esta acción está reservada
+              a administradores.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const [options, setOptions] = useState({
     cleanNV: false,

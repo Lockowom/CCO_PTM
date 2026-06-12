@@ -9,6 +9,7 @@ import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import { LIMITS } from '../../lib/validation/limits';
 
 const Entry = () => {
   const { user } = useAuth();
@@ -652,6 +653,7 @@ const Entry = () => {
                   className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xl font-bold text-wms-neon focus:border-wms-neon outline-none transition-all"
                   placeholder="0"
                   min="0.01"
+                  max={LIMITS.CANT_MAX}
                   step="0.01"
                   value={form.cantidad}
                   onChange={handleInputChange}
@@ -667,7 +669,7 @@ const Entry = () => {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
+                      <input type="text" name="serie" maxLength={LIMITS.CODIGO} value={form.serie} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S/N..." />
                       <button type="button" onClick={scanSerie} disabled={isScanning} className="px-2.5 bg-wms-alert/10 border border-wms-alert/40 text-wms-alert hover:bg-wms-alert hover:text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0" title="Escanear Serie">
                         <Camera size={16} />
                       </button>
@@ -677,7 +679,7 @@ const Entry = () => {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Partida</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
+                      <input type="text" name="partida" maxLength={LIMITS.CODIGO} value={form.partida} onChange={handleInputChange} className="flex-1 min-w-0 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Lote..." />
                       <button type="button" onClick={scanPartida} disabled={isScanning} className="px-2.5 bg-wms-alert/10 border border-wms-alert/40 text-wms-alert hover:bg-wms-alert hover:text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 flex-shrink-0" title="Escanear Partida">
                         <Camera size={16} />
                       </button>
@@ -686,7 +688,7 @@ const Entry = () => {
                   {/* PIEZA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pieza</label>
-                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Ej: Motor..." />
+                    <input type="text" name="pieza" maxLength={LIMITS.NOMBRE} value={form.pieza} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Ej: Motor..." />
                   </div>
                   {/* VENCIMIENTO */}
                   <div>
@@ -698,12 +700,12 @@ const Entry = () => {
                   {/* TALLA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Talla</label>
-                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S, M, L..." />
+                    <input type="text" name="talla" maxLength={LIMITS.CODIGO} value={form.talla} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="S, M, L..." />
                   </div>
                   {/* COLOR */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color</label>
-                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Rojo..." />
+                    <input type="text" name="color" maxLength={LIMITS.CODIGO} value={form.color} onChange={handleInputChange} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:border-wms-alert outline-none placeholder:text-slate-600" placeholder="Rojo..." />
                   </div>
                 </div>
               </div>

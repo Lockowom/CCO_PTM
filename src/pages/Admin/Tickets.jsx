@@ -11,6 +11,9 @@ import {
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { ticketSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 
 // ─── Status & Priority Config ──────────────────────────
 const STATUS_CONFIG = {
@@ -269,6 +272,7 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
               </p>
               <textarea
                 rows={3}
+                maxLength={LIMITS.NOTAS}
                 value={respuesta}
                 onChange={(e) => setRespuesta(e.target.value)}
                 placeholder="Escribe la respuesta o solución..."
@@ -299,10 +303,9 @@ const CreateModal = ({ onClose, onCreate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.asunto.trim() || !form.descripcion.trim()) {
-      toast.error('Completa asunto y descripción');
-      return;
-    }
+    if (creating) return; // anti doble-submit
+    const { ok } = validateForm(ticketSchema, form);
+    if (!ok) return;
     setCreating(true);
     await onCreate(form);
     setCreating(false);
@@ -334,6 +337,7 @@ const CreateModal = ({ onClose, onCreate }) => {
             <input
               required
               type="text"
+              maxLength={LIMITS.ASUNTO}
               value={form.asunto}
               onChange={e => setForm({ ...form, asunto: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -389,6 +393,7 @@ const CreateModal = ({ onClose, onCreate }) => {
             <textarea
               required
               rows={4}
+              maxLength={LIMITS.NOTAS}
               value={form.descripcion}
               onChange={e => setForm({ ...form, descripcion: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none leading-relaxed"

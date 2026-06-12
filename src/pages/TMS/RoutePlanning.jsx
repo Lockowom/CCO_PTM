@@ -6,6 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { routeSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 
 const API_URL = 'https://cco-ptm.onrender.com/api';
 
@@ -99,6 +102,9 @@ const RoutePlanning = () => {
       });
       return;
     }
+
+    const { ok } = validateForm(routeSchema, { rutaNombre });
+    if (!ok) return;
 
     createRouteMutation.mutate({
       nombre: rutaNombre,
@@ -229,8 +235,9 @@ const RoutePlanning = () => {
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Nombre de Ruta</label>
                     <div className="relative">
                         <Calendar className="absolute left-4 top-3.5 text-slate-500" size={18} />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
+                            maxLength={LIMITS.RUTA_NOMBRE}
                             className="w-full pl-12 pr-4 py-3 bg-slate-900 text-white transition-all shadow-inner"
                             value={rutaNombre}
                             onChange={e => setRutaNombre(e.target.value)}

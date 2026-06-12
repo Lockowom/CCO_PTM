@@ -9,6 +9,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { logUpload } from '../../utils/logUpload';
+import { cubingSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 
 const CubingRegistry = () => {
   const queryClient = useQueryClient();
@@ -199,6 +202,12 @@ const CubingRegistry = () => {
       gsap.to(formRef.current, { x: [-5, 5, -5, 5, 0], duration: 0.4 });
       return;
     }
+    // Valida rangos numéricos (peso/dimensiones) y longitudes antes de persistir.
+    const { ok } = validateForm(cubingSchema, formData);
+    if (!ok) {
+      gsap.to(formRef.current, { x: [-5, 5, -5, 5, 0], duration: 0.4 });
+      return;
+    }
     saveMutation.mutate();
   };
 
@@ -384,9 +393,11 @@ const CubingRegistry = () => {
                   <label className="block text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
                     <Scale size={16} /> Peso Unitario (Kg) <span className="text-wms-danger">*</span>
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.001"
+                    min="0"
+                    max={LIMITS.PESO_MAX}
                     name="peso_unitario"
                     value={formData.peso_unitario}
                     onChange={handleInputChange}
@@ -401,9 +412,11 @@ const CubingRegistry = () => {
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1 group-focus-within:text-blue-400 transition-colors">
                       <Ruler size={14} /> {dim} (cm)
                     </label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.1"
+                      min="0"
+                      max={LIMITS.DIM_MAX}
                       name={dim}
                       value={formData[dim]}
                       onChange={handleInputChange}
@@ -436,9 +449,10 @@ const CubingRegistry = () => {
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Observaciones</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="observaciones"
+                    maxLength={LIMITS.NOTAS}
                     value={formData.observaciones}
                     onChange={handleInputChange}
                     className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm text-slate-900 focus:border-blue-500 outline-none transition-colors placeholder:text-slate-600"

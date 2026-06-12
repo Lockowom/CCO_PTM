@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { driverSchema } from '../../lib/validation/schemas';
+import { validateForm } from '../../lib/validation/validateForm';
+import { LIMITS } from '../../lib/validation/limits';
 
 const Drivers = () => {
   const containerRef = useRef(null);
@@ -30,6 +33,7 @@ const Drivers = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [filterText, setFilterText] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
@@ -86,6 +90,10 @@ const Drivers = () => {
   // Guardar (crear o actualizar)
   const handleSave = async (e) => {
     e.preventDefault();
+    if (saving) return; // anti doble-submit
+    const { ok } = validateForm(driverSchema, formData);
+    if (!ok) return;
+    setSaving(true);
     try {
       if (editingId) {
         await actualizarConductor(editingId, formData);
@@ -96,6 +104,8 @@ const Drivers = () => {
       resetForm();
     } catch (err) {
       alert('Error: ' + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -340,6 +350,7 @@ const Drivers = () => {
                     <input
                       type="text"
                       required
+                      maxLength={LIMITS.NOMBRE}
                       value={formData.nombre}
                       onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                       className="w-full bg-slate-900 text-white rounded-xl px-4 py-3 focus:border-wms-neon outline-none transition-all font-medium placeholder-slate-600"
@@ -352,6 +363,7 @@ const Drivers = () => {
                     </label>
                     <input
                       type="text"
+                      maxLength={LIMITS.APELLIDO}
                       value={formData.apellido}
                       onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
                       className="w-full bg-slate-900 text-white rounded-xl px-4 py-3 focus:border-wms-neon outline-none transition-all font-medium placeholder-slate-600"
@@ -366,6 +378,7 @@ const Drivers = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={LIMITS.RUT}
                     value={formData.rut}
                     onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
                     className="w-full bg-slate-900 text-white rounded-xl px-4 py-3 focus:border-wms-neon outline-none transition-all font-medium placeholder-slate-600"
@@ -379,6 +392,7 @@ const Drivers = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={LIMITS.TELEFONO}
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                     className="w-full bg-slate-900 text-white rounded-xl px-4 py-3 focus:border-wms-neon outline-none transition-all font-medium placeholder-slate-600"
@@ -392,6 +406,7 @@ const Drivers = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={LIMITS.PATENTE}
                     value={formData.vehiculo_patente}
                     onChange={(e) => setFormData({ ...formData, vehiculo_patente: e.target.value })}
                     className="w-full bg-slate-900 text-white font-mono rounded-xl px-4 py-3 focus:border-wms-neon outline-none transition-all uppercase placeholder-slate-600"
@@ -427,10 +442,11 @@ const Drivers = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3.5 bg-wms-neon text-slate-900 rounded-xl font-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-neon-green uppercase text-xs tracking-widest"
+                  disabled={saving}
+                  className="flex-1 px-4 py-3.5 bg-wms-neon text-slate-900 rounded-xl font-black hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-neon-green uppercase text-xs tracking-widest disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Check size={18} strokeWidth={3} />
-                  {editingId ? 'Guardar' : 'Crear'}
+                  {saving ? 'Guardando...' : (editingId ? 'Guardar' : 'Crear')}
                 </button>
               </div>
             </form>

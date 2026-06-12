@@ -136,6 +136,12 @@ BEGIN
   IF p_clean_series THEN DELETE FROM tms_series; msg := msg || 'Series eliminadas. '; END IF;
   IF p_clean_farmapack THEN DELETE FROM tms_farmapack; msg := msg || 'Datos Farmapack eliminados. '; END IF;
   IF msg = '' THEN RETURN 'No se seleccionaron datos para eliminar.'; END IF;
+  -- Auditoría de la acción destructiva (migración 016).
+  INSERT INTO public.tms_auditoria(actor_auth_uid, actor_rol, tabla, accion, registro_id, datos_antes, datos_despues)
+  VALUES (auth.uid(), (SELECT rol FROM public.tms_usuarios WHERE auth_uid = auth.uid() LIMIT 1),
+    'tms_operacional', 'CLEAN_OPERATIONAL', NULL,
+    jsonb_build_object('nv', p_clean_nv, 'partidas', p_clean_partidas, 'series', p_clean_series, 'farmapack', p_clean_farmapack),
+    jsonb_build_object('resultado', msg));
   RETURN msg;
 EXCEPTION WHEN OTHERS THEN RETURN 'Error: ' || SQLERRM;
 END;
@@ -592,8 +598,41 @@ BEGIN
   RETURN NEW;
 END;
 $function$;
-REVOKE EXECUTE ON FUNCTION public.tms_usuarios_freeze_privileged() FROM PUBLIC, anon;
+-- Endurecido en migración 016: también se revoca a authenticated (es función de trigger).
+REVOKE EXECUTE ON FUNCTION public.tms_usuarios_freeze_privileged() FROM PUBLIC, anon, authenticated;
 -- Trigger asociado:
 --   DROP TRIGGER IF EXISTS trg_usuarios_freeze_privileged ON tms_usuarios;
 --   CREATE TRIGGER trg_usuarios_freeze_privileged BEFORE UPDATE ON tms_usuarios
 --     FOR EACH ROW EXECUTE FUNCTION public.tms_usuarios_freeze_privileged();
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- AUDITORÍA (migración 016): registro de cambios en usuarios/roles + limpieza masiva
+-- ─────────────────────────────────────────────────────────────────────────
+-- Tabla public.tms_auditoria (RLS: SELECT solo is_admin(); sin políticas de escritura —
+-- solo la rellenan los triggers/funciones SECURITY DEFINER).
+CREATE OR REPLACE FUNCTION public.tms_audit_row()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE v_actor uuid := auth.uid(); v_rol text;
+BEGIN
+  SELECT rol INTO v_rol FROM public.tms_usuarios WHERE auth_uid = v_actor LIMIT 1;
+  IF TG_OP = 'DELETE' THEN
+    INSERT INTO public.tms_auditoria(actor_auth_uid,actor_rol,tabla,accion,registro_id,datos_antes,datos_despues)
+    VALUES (v_actor,v_rol,TG_TABLE_NAME,TG_OP,OLD.id::text,to_jsonb(OLD),NULL); RETURN OLD;
+  ELSIF TG_OP = 'UPDATE' THEN
+    INSERT INTO public.tms_auditoria(actor_auth_uid,actor_rol,tabla,accion,registro_id,datos_antes,datos_despues)
+    VALUES (v_actor,v_rol,TG_TABLE_NAME,TG_OP,NEW.id::text,to_jsonb(OLD),to_jsonb(NEW)); RETURN NEW;
+  ELSE
+    INSERT INTO public.tms_auditoria(actor_auth_uid,actor_rol,tabla,accion,registro_id,datos_antes,datos_despues)
+    VALUES (v_actor,v_rol,TG_TABLE_NAME,TG_OP,NEW.id::text,NULL,to_jsonb(NEW)); RETURN NEW;
+  END IF;
+END;
+$function$;
+REVOKE EXECUTE ON FUNCTION public.tms_audit_row() FROM PUBLIC, anon, authenticated;
+-- Triggers asociados:
+--   trg_audit_tms_usuarios AFTER INSERT OR UPDATE OR DELETE ON tms_usuarios
+--   trg_audit_tms_roles    AFTER INSERT OR UPDATE OR DELETE ON tms_roles
+-- Nota hardening: public.update_updated_at_column() fija search_path = public, pg_temp.
