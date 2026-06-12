@@ -567,3 +567,33 @@ REVOKE EXECUTE ON FUNCTION public.search_productos(text, integer) FROM PUBLIC, a
 GRANT  EXECUTE ON FUNCTION public.can_manage_fichas()             TO authenticated, service_role;
 GRANT  EXECUTE ON FUNCTION public.get_ficha_producto(text)        TO authenticated, service_role;
 GRANT  EXECUTE ON FUNCTION public.search_productos(text, integer) TO authenticated, service_role;
+
+-- ============================================================================
+-- RBAC HARDENING (migración 014) — trigger que congela columnas privilegiadas
+-- de tms_usuarios para no-admins. Defensa en profundidad sobre la política
+-- usuarios_update_self_or_admin (presence tracking) para impedir auto-ascenso.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.tms_usuarios_freeze_privileged()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF public.is_admin() OR auth.uid() IS NULL THEN
+    RETURN NEW;  -- admin o service_role: sin restricción
+  END IF;
+  NEW.rol               := OLD.rol;
+  NEW.es_admin_delegado := OLD.es_admin_delegado;
+  NEW.activo            := OLD.activo;
+  NEW.email             := OLD.email;
+  NEW.auth_uid          := OLD.auth_uid;
+  NEW.id_usuario        := OLD.id_usuario;
+  RETURN NEW;
+END;
+$function$;
+REVOKE EXECUTE ON FUNCTION public.tms_usuarios_freeze_privileged() FROM PUBLIC, anon;
+-- Trigger asociado:
+--   DROP TRIGGER IF EXISTS trg_usuarios_freeze_privileged ON tms_usuarios;
+--   CREATE TRIGGER trg_usuarios_freeze_privileged BEFORE UPDATE ON tms_usuarios
+--     FOR EACH ROW EXECUTE FUNCTION public.tms_usuarios_freeze_privileged();

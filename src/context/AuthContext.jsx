@@ -435,9 +435,10 @@ export const AuthProvider = ({ children }) => {
 
   // ── Permisos ──
   const hasPermission = useCallback((permissionId) => {
-    if (user?.rol === 'ADMIN') return true;
+    // Bypass de admin alineado con el backend `is_admin()`: rol ADMIN o admin delegado.
+    if (user?.rol === 'ADMIN' || user?.es_admin_delegado) return true;
     return permissions.includes(permissionId);
-  }, [permissions, user?.rol]);
+  }, [permissions, user?.rol, user?.es_admin_delegado]);
 
   return (
     <AuthContext.Provider value={{

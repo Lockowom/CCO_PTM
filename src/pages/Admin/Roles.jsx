@@ -32,6 +32,18 @@ const modules = APP_PERMISSIONS.map(m => ({
   icon: MODULE_ICONS[m.id] || <Shield size={16} />
 }));
 
+// Genera el ID (PK) de un rol a partir de su nombre, de forma robusta: recorta
+// espacios, quita acentos, colapsa lo no alfanumérico a "_" y elimina "_" sobrantes
+// al inicio/fin. Evita IDs basura como "OPERARIO_3_" o "SUPERVISOR_" por espacios.
+const slugifyRoleId = (nombre) =>
+  (nombre || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
 const RolesPage = () => {
   const { refreshPermissions } = useAuth();
   const queryClient = useQueryClient();
@@ -64,8 +76,17 @@ const RolesPage = () => {
 
   const saveRoleMutation = useMutation({
     mutationFn: async (roleData) => {
-      const roleId = isCreating ? roleData.nombre.toUpperCase().replace(/\s+/g, '_') : roleData.id;
-      const roleName = roleData.id === 'ADMIN' ? 'Administrador' : roleData.nombre;
+      let roleId = roleData.id;
+      if (isCreating) {
+        roleId = slugifyRoleId(roleData.nombre);
+        if (!roleId) {
+          throw new Error('El nombre del rol no es válido (debe tener al menos una letra o número).');
+        }
+        if (roles.some(r => r.id === roleId)) {
+          throw new Error(`Ya existe un rol con el ID "${roleId}". Usa un nombre distinto.`);
+        }
+      }
+      const roleName = roleData.id === 'ADMIN' ? 'Administrador' : (roleData.nombre || '').trim();
 
       const { error } = await supabase
         .from('tms_roles')

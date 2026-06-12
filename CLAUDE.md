@@ -11,7 +11,7 @@
 
 ## Qué es el proyecto
 WMS + TMS (gestión de bodega y transporte). SPA React desplegada como Web (Render) y app
-Android (Capacitor + Capgo OTA). Versión actual: **1.4.13**.
+Android (Capacitor + Capgo OTA). Versión actual: **1.4.25** (fuente de verdad: `package.json`).
 
 ## Stack
 React 18 · Vite 5 · TailwindCSS 3 · Supabase (PostgreSQL + RLS + Realtime) · Zustand 4 ·
