@@ -11,7 +11,7 @@
 
 ## Qué es el proyecto
 WMS + TMS (gestión de bodega y transporte). SPA React desplegada como Web (Render) y app
-Android (Capacitor + Capgo OTA). Versión actual: **1.4.13**.
+Android (Capacitor + Capgo OTA). La versión vigente es la de `package.json` (fuente de verdad).
 
 ## Stack
 React 18 · Vite 5 · TailwindCSS 3 · Supabase (PostgreSQL + RLS + Realtime) · Zustand 4 ·
@@ -29,17 +29,21 @@ npm run deploy:mobile  # build + cap sync + subir bundle Capgo (scripts/deploy_m
 ```
 
 ## Estructura
-- `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Admin, Mobile)
-- `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`
+- `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
+- `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
 - `src/store/` y `src/stores/` — **ambas en uso** (warehouseStore vs pickingStore); pendiente unificar
-- `supabase/migrations/` — solo 3 migraciones (auth + RLS)
-- `SUPABASE_*.sql` (raíz) y `database/` — DDL/RPC sueltos, **no versionados como migraciones**
+- `supabase/migrations/` — migraciones versionadas (`001`…`016`); aplicar nuevas vía MCP/CLI
+- `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
+  Regenerar con `npm run build` y commitearlo al desplegar.
 
-## Notas de estado (ver `REVISION_PROYECTO.md`)
-- Parte del esquema y varias RPC viven en `SUPABASE_*.sql` de la raíz o solo en la BD live.
-- Existen hallazgos de seguridad pendientes (p. ej. `clean_operational_data` sin check de
-  admin, RLS faltante en `tms_inventario_general`). Revisar antes de tocar BD.
+## Despliegue
+- **Web**: push a `main` → Render. La web sirve el `dist/` del repo (commitearlo tras `npm run build`).
+- **Móvil**: `npm run deploy:mobile` (requiere `.env` cargado; auto-incrementa el patch de
+  `package.json` y sube bundle a Capgo OTA, canal `production`, app `com.cco.wms`).
+
+## Notas de estado
+- Existen hallazgos de seguridad históricos en la BD (políticas RLS permisivas `USING (true)`,
+  funciones `SECURITY DEFINER` ejecutables por `authenticated`). Revisar `get_advisors` antes de tocar BD.
 
 ## Git
-- Rama de trabajo actual: `claude/documentation-review-G3x0i`.
-- No crear PRs salvo petición explícita.
+- Rama de trabajo: `main`. No crear PRs salvo petición explícita.
