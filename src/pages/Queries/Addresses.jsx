@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Phone, Building, Loader2, Pencil, X, Save, Truck } from 'lucide-react';
+import { Search, MapPin, Phone, Building, Loader2, Pencil, X, Save, Truck, Trash2, Check } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { withTimeout } from '../../lib/supabaseQuery';
 import { toast } from 'sonner';
@@ -28,6 +28,11 @@ const Addresses = () => {
   const [editing, setEditing] = useState(null); // registro en edición (copia)
   const [saving, setSaving] = useState(false);
 
+  // Eliminación (confirmación de 2 pasos)
+  const [confirmId, setConfirmId] = useState(null); // id de fila pendiente de confirmar
+  const [deletingId, setDeletingId] = useState(null);
+  const [modalConfirm, setModalConfirm] = useState(false); // confirmación dentro del modal
+
   const handleSearch = async () => {
     if (!searchTerm || searchTerm.trim().length < 2) {
       toast.warning('Ingrese al menos 2 caracteres');
@@ -54,9 +59,29 @@ const Addresses = () => {
     }
   };
 
-  const openEdit = (item) => setEditing({ ...item });
-  const closeEdit = () => { if (!saving) setEditing(null); };
+  const openEdit = (item) => { setModalConfirm(false); setEditing({ ...item }); };
+  const closeEdit = () => { if (!saving) { setEditing(null); setModalConfirm(false); } };
   const setField = (key, value) => setEditing(prev => ({ ...prev, [key]: value }));
+
+  // Elimina un registro por id (lo usa tanto la fila como el modal).
+  const deleteRow = async (id) => {
+    setDeletingId(id);
+    try {
+      const { error } = await withTimeout(
+        supabase.from('tms_direcciones').delete().eq('id', id),
+        { ms: 12000, label: 'eliminar dirección' }
+      );
+      if (error) throw error;
+      setResults(prev => prev.filter(r => r.id !== id));
+      toast.success('Registro eliminado');
+      if (editing?.id === id) { setEditing(null); setModalConfirm(false); }
+    } catch (err) {
+      toast.error('No se pudo eliminar: ' + err.message);
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
+    }
+  };
 
   const saveEdit = async () => {
     if (!editing) return;
@@ -96,7 +121,7 @@ const Addresses = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-lg sm:text-2xl font-bold text-slate-800">Maestro de Direcciones</h2>
-          <p className="text-slate-500 text-xs sm:text-sm">Consulta y edición de clientes y puntos de entrega</p>
+          <p className="text-slate-500 text-xs sm:text-sm">Consulta, edición y limpieza de clientes y puntos de entrega</p>
         </div>
       </div>
 
@@ -154,7 +179,7 @@ const Addresses = () => {
                           <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Dirección</th>
                           <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Transporte</th>
                           <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Teléfono</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-12 text-center">Editar</th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-24 text-center">Acciones</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -198,14 +223,45 @@ const Addresses = () => {
                                 </div>
                               )}
                             </td>
-                            <td className="px-2 sm:px-4 py-3 align-top text-center">
-                              <button
-                                onClick={() => openEdit(item)}
-                                title="Editar registro"
-                                className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                              >
-                                <Pencil size={16} />
-                              </button>
+                            <td className="px-2 sm:px-4 py-3 align-top">
+                              <div className="flex items-center justify-center gap-1">
+                                {confirmId === item.id ? (
+                                  <>
+                                    <button
+                                      onClick={() => deleteRow(item.id)}
+                                      disabled={deletingId === item.id}
+                                      title="Confirmar eliminación"
+                                      className="p-2 rounded-lg text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-60"
+                                    >
+                                      {deletingId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmId(null)}
+                                      title="Cancelar"
+                                      className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => openEdit(item)}
+                                      title="Editar registro"
+                                      className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                    >
+                                      <Pencil size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => { setConfirmId(item.id); }}
+                                      title="Eliminar registro"
+                                      className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -266,15 +322,29 @@ const Addresses = () => {
               ))}
             </div>
 
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
-              <button onClick={closeEdit} disabled={saving}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 disabled:opacity-50">
-                Cancelar
-              </button>
-              <button onClick={saveEdit} disabled={saving}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50">
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Guardar
-              </button>
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+              {/* Eliminar (2 pasos) a la izquierda */}
+              {modalConfirm ? (
+                <button onClick={() => deleteRow(editing.id)} disabled={deletingId === editing.id}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700 disabled:opacity-60">
+                  {deletingId === editing.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} ¿Confirmar?
+                </button>
+              ) : (
+                <button onClick={() => setModalConfirm(true)} disabled={saving}
+                  className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 font-bold text-sm flex items-center gap-2 hover:bg-rose-50 disabled:opacity-50">
+                  <Trash2 size={16} /> Eliminar
+                </button>
+              )}
+              <div className="flex gap-3">
+                <button onClick={closeEdit} disabled={saving}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 disabled:opacity-50">
+                  Cancelar
+                </button>
+                <button onClick={saveEdit} disabled={saving}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50">
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Guardar
+                </button>
+              </div>
             </div>
           </div>
         </div>
