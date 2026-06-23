@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Phone, Building, Loader2, Pencil, X, Save, Truck, Trash2, Check } from 'lucide-react';
+import { Search, MapPin, Phone, Building, Loader2, Pencil, X, Save, Truck, Trash2, Check, Download } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { withTimeout } from '../../lib/supabaseQuery';
+import { exportToExcel } from '../../lib/exportExcel';
 import { toast } from 'sonner';
 
 // Campos editables del modal (clave en BD → etiqueta visible).
@@ -32,6 +33,54 @@ const Addresses = () => {
   const [confirmId, setConfirmId] = useState(null); // id de fila pendiente de confirmar
   const [deletingId, setDeletingId] = useState(null);
   const [modalConfirm, setModalConfirm] = useState(false); // confirmación dentro del modal
+
+  // Exportación de la matriz completa
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
+
+  // Descarga TODA la tabla tms_direcciones a Excel, paginando de a 1000
+  // (Supabase corta a ~1000 filas por request).
+  const descargarMatriz = async () => {
+    setExporting(true);
+    setExportMsg('Preparando…');
+    try {
+      const PAGE = 1000;
+      let from = 0;
+      const all = [];
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await withTimeout(
+          supabase
+            .from('tms_direcciones')
+            .select('razon_social, nombre, rut, transporte, direccion, comuna, ciudad, region, telefono_1, latitud, longitud')
+            .order('razon_social', { ascending: true })
+            .range(from, from + PAGE - 1),
+          { ms: 20000, label: 'descarga de matriz' }
+        );
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        setExportMsg(`${all.length} registros…`);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      if (all.length === 0) { toast.warning('No hay registros para exportar'); return; }
+
+      const rows = all.map((r) => ({
+        Razon_Social: r.razon_social || '', Nombre: r.nombre || '', RUT: r.rut || '',
+        Transporte: r.transporte || '', Direccion: r.direccion || '',
+        Comuna: r.comuna || '', Ciudad: r.ciudad || '', Region: r.region || '',
+        Telefono: r.telefono_1 || '', Latitud: r.latitud ?? '', Longitud: r.longitud ?? '',
+      }));
+      exportToExcel({ filename: 'Maestro_Direcciones', sheets: [{ name: 'Direcciones', rows }] });
+      toast.success(`Matriz descargada: ${all.length} registros`);
+    } catch (err) {
+      toast.error('No se pudo descargar: ' + err.message);
+    } finally {
+      setExporting(false);
+      setExportMsg('');
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchTerm || searchTerm.trim().length < 2) {
@@ -118,11 +167,20 @@ const Addresses = () => {
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
       {/* Header Corporativo */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-wrap justify-between items-end gap-3">
         <div>
           <h2 className="text-lg sm:text-2xl font-bold text-slate-800">Maestro de Direcciones</h2>
           <p className="text-slate-500 text-xs sm:text-sm">Consulta, edición y limpieza de clientes y puntos de entrega</p>
         </div>
+        <button
+          onClick={descargarMatriz}
+          disabled={exporting}
+          title="Descargar toda la matriz a Excel"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60 text-sm"
+        >
+          {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          {exporting ? (exportMsg || 'Descargando…') : 'Descargar matriz'}
+        </button>
       </div>
 
       {/* Área de Trabajo */}

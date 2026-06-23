@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.35 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.37 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.37 | 2026-06-14 | **DEPLOY** de la descarga de matriz: bundle móvil `com.cco.wms@1.4.37` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.36→1.4.37). |
+| 1.4.36 | 2026-06-14 | **Maestro de Direcciones — descargar matriz completa a Excel**: botón "Descargar matriz" en el header que exporta TODA la tabla `tms_direcciones` a `.xlsx` (hoja Direcciones), **paginando de a 1000 filas** con `.range()` (Supabase corta a ~1000/request) hasta traer las ~8.100 filas. Columnas: Razón Social, Nombre, RUT, Transporte, Dirección, Comuna, Ciudad, Región, Teléfono, Latitud, Longitud. Reusa `lib/exportExcel.js`; guarda `withTimeout` por página y muestra progreso. Sin cambios de BD. |
 | 1.4.35 | 2026-06-14 | **DEPLOY** del borrado en Direcciones: bundle móvil `com.cco.wms@1.4.35` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.34→1.4.35). |
 | 1.4.34 | 2026-06-14 | **Maestro de Direcciones — eliminar registros (limpieza de duplicados)**: en `Addresses.jsx` se añade borrar registros, con **confirmación de 2 pasos** para evitar borrados accidentales: en cada fila (botón papelera → ✓/✗ inline) y dentro del modal de edición (botón "Eliminar" → "¿Confirmar?"). Borra vía `supabase.from('tms_direcciones').delete().eq('id', …)` con guarda `withTimeout`, y quita la fila de los resultados sin re-buscar. Habilitado por la RLS existente `auth_all_direcciones`. Sin cambios de BD. |
 | mantención | 2026-06-14 | **Limpieza del repo**: se eliminan archivos basura sin referencias — scripts de un solo uso (`check_admins.cjs`, `fix_data_import.cjs`), tests scratch que escribían datos falsos (`test.mjs`, `test2.mjs`), un bundle descargado (`downloaded_index.js`) y `RESUMEN_FINAL.txt` — y la tanda de 16 markdowns de "Mejoras" del 2026-05-03 (índices/resúmenes/planes obsoletos). Se conservan `README.md`, `CLAUDE.md`, `DOCUMENTACION_PROYECTO.md` (canónica) y los demás `DOCUMENTACION_*`/manuales. `CLAUDE.md` actualizado (versión vía `package.json`, migraciones 001–016, rama `main`, `dist/` commiteado a propósito para Render). Sin cambios de código de la app ni de BD. |
