@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.37 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.39 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.39 | 2026-06-14 | **DEPLOY del módulo Recepción Productos Nacionales**: bundle móvil `com.cco.wms@1.4.39` a Capgo OTA + web a Render. Migración `017` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.38→1.4.39). |
+| 1.4.38 | 2026-06-14 | **NUEVO MÓDULO: RECEPCIÓN PRODUCTOS NACIONALES (`/inbound/reception-nacional`)**: clon del módulo de Recepción de Importaciones para mercadería nacional, **aislado** (no toca el flujo de importaciones). **BD (migración `017_recepcion_nacionales.sql`)**: tablas espejo `tms_recepciones_nacionales` y `tms_recepcion_items_nacionales` (mismas columnas que las de importaciones; FK con `ON DELETE CASCADE`, índice por `recepcion_id`; RLS `authenticated` igual que los módulos de recepción existentes). **Frontend**: `src/pages/Inbound/ReceptionNacional.jsx` (copia de `Reception.jsx` apuntando a las tablas nacionales, con `queryKey`/canal realtime `recepciones_nac` aislados para no colisionar la caché con Importaciones; dashboard + formulario + export Excel + escáner idénticos). **Permisos**: reutiliza `view_reception`/`process_reception` (quien ya hace recepción ve el módulo sin cambios de rol). Ruta en `App.jsx`, `ROUTE_PERMISSIONS`, `modules.js` y Navbar (Inbound → Recepción Nacionales). |
 | 1.4.37 | 2026-06-14 | **DEPLOY** de la descarga de matriz: bundle móvil `com.cco.wms@1.4.37` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.36→1.4.37). |
 | 1.4.36 | 2026-06-14 | **Maestro de Direcciones — descargar matriz completa a Excel**: botón "Descargar matriz" en el header que exporta TODA la tabla `tms_direcciones` a `.xlsx` (hoja Direcciones), **paginando de a 1000 filas** con `.range()` (Supabase corta a ~1000/request) hasta traer las ~8.100 filas. Columnas: Razón Social, Nombre, RUT, Transporte, Dirección, Comuna, Ciudad, Región, Teléfono, Latitud, Longitud. Reusa `lib/exportExcel.js`; guarda `withTimeout` por página y muestra progreso. Sin cambios de BD. |
 | 1.4.35 | 2026-06-14 | **DEPLOY** del borrado en Direcciones: bundle móvil `com.cco.wms@1.4.35` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.34→1.4.35). |

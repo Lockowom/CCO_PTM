@@ -13,6 +13,7 @@ export const ROUTE_PERMISSIONS = {
 
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
+  '/inbound/reception-nacional': ['view_reception', 'process_reception'],
   '/inbound/entry': ['view_entry', 'process_entry'],
   '/inbound/cubing': ['view_reception', 'process_reception'],
   '/inbound/data-import': ['manage_data_import'],
