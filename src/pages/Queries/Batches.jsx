@@ -117,10 +117,12 @@ const Batches = () => {
   const { data, isLoading: loading } = useQuery({
     queryKey: ['batches_search_v3', submittedTerm],
     queryFn: async () => {
-      // 1 SOLA llamada RPC que busca en las 4 tablas + fuzzy server-side
+      // 1 SOLA llamada RPC que busca en las 4 tablas + fuzzy server-side.
+      // p_limit por tabla: subido a 2000 para que un producto con muchas series
+      // (p.ej. buscar por su código) muestre TODAS y no se corte en 150.
       const { data, error } = await supabase.rpc('search_batches', {
         p_query: submittedTerm.trim(),
-        p_limit: 150
+        p_limit: 2000
       });
       if (error) throw error;
       return data || { partidas: [], series: [], farmapack: [], pesos: [] };

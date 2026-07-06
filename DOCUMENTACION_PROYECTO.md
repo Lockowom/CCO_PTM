@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.39 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.41 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.41 | 2026-06-14 | **DEPLOY del fix de Lotes y Series**: bundle móvil `com.cco.wms@1.4.41` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.40→1.4.41). |
+| 1.4.40 | 2026-06-14 | **FIX (Lotes y Series solo mostraba 150)**: el módulo `Batches.jsx` (buscador `/queries/batches`) llamaba a la RPC `search_batches` con `p_limit: 150`, por lo que una búsqueda mostraba máximo 150 series aunque la tabla `tms_series` tuviera miles (p. ej. una carga de 4608). No era pérdida de datos en la carga masiva (la carga reportó 4608 · 0 errores) sino un **tope de visualización**. Se sube `p_limit` a **2000** para que la búsqueda por producto muestre todas sus series. `search_batches` limita por tabla, así que el payload sigue acotado. Sin cambios de BD. |
 | 1.4.39 | 2026-06-14 | **DEPLOY del módulo Recepción Productos Nacionales**: bundle móvil `com.cco.wms@1.4.39` a Capgo OTA + web a Render. Migración `017` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.38→1.4.39). |
 | 1.4.38 | 2026-06-14 | **NUEVO MÓDULO: RECEPCIÓN PRODUCTOS NACIONALES (`/inbound/reception-nacional`)**: clon del módulo de Recepción de Importaciones para mercadería nacional, **aislado** (no toca el flujo de importaciones). **BD (migración `017_recepcion_nacionales.sql`)**: tablas espejo `tms_recepciones_nacionales` y `tms_recepcion_items_nacionales` (mismas columnas que las de importaciones; FK con `ON DELETE CASCADE`, índice por `recepcion_id`; RLS `authenticated` igual que los módulos de recepción existentes). **Frontend**: `src/pages/Inbound/ReceptionNacional.jsx` (copia de `Reception.jsx` apuntando a las tablas nacionales, con `queryKey`/canal realtime `recepciones_nac` aislados para no colisionar la caché con Importaciones; dashboard + formulario + export Excel + escáner idénticos). **Permisos**: reutiliza `view_reception`/`process_reception` (quien ya hace recepción ve el módulo sin cambios de rol). Ruta en `App.jsx`, `ROUTE_PERMISSIONS`, `modules.js` y Navbar (Inbound → Recepción Nacionales). |
 | 1.4.37 | 2026-06-14 | **DEPLOY** de la descarga de matriz: bundle móvil `com.cco.wms@1.4.37` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.36→1.4.37). |
