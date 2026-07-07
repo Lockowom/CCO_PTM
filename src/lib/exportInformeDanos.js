@@ -96,7 +96,7 @@ export async function exportInformeDanosWord(informe, hallazgos = [], evidencias
     children.push(new Paragraph({ text: `3.${i} ${titulo}`, heading: HeadingLevel.HEADING_3 }));
     const meta = [];
     if (h.producto || h.codigo_producto) meta.push(`Producto: ${h.producto || ''} ${h.codigo_producto ? `(${h.codigo_producto})` : ''}`.trim());
-    if (h.cantidad) meta.push(`Cantidad afectada: ${h.cantidad}`);
+    if (Number(h.cantidad) > 0) meta.push(`Cantidad: ${Number(h.cantidad)}`);
     if (h.ubicacion) meta.push(`Ubicación: ${h.ubicacion}`);
     if (h.partida) meta.push(`Lote: ${h.partida}`);
     if (h.tipo_dano) meta.push(`Tipo de daño: ${h.tipo_dano}`);
@@ -215,7 +215,7 @@ export async function exportInformeDanosPDF(informe, hallazgos = [], evidencias 
     content.push({ text: `3.${i} ${titulo}`, style: 'h3' });
     const meta = [];
     if (h.producto || h.codigo_producto) meta.push(`Producto: ${h.producto || ''} ${h.codigo_producto ? `(${h.codigo_producto})` : ''}`.trim());
-    if (h.cantidad) meta.push(`Cantidad afectada: ${h.cantidad}`);
+    if (Number(h.cantidad) > 0) meta.push(`Cantidad: ${Number(h.cantidad)}`);
     if (h.ubicacion) meta.push(`Ubicación: ${h.ubicacion}`);
     if (h.partida) meta.push(`Lote: ${h.partida}`);
     if (h.tipo_dano) meta.push(`Tipo de daño: ${h.tipo_dano}`);

@@ -3,7 +3,6 @@ import {
   Hand, Package, User, Clock, CheckCircle, Play, Pause, RefreshCw, Search, Timer, Users, FileText, ArrowLeft, Box, LayoutGrid, AlertCircle, MapPin, Truck, Hourglass
 } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { InventoryService } from '../../services/inventoryService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -224,26 +223,8 @@ const Picking = () => {
 
         if (state.status === 'COMPLETO') {
           qtyReal = item.cantidad;
-          await InventoryService.moveStock({
-            sku: item.codigo_producto,
-            batch: 'PICKING-BATCH',
-            fromLoc: 'PICKING-ZONA',
-            toLoc: 'PACKING-STATION',
-            qty: item.cantidad,
-            userId: user.id,
-            reason: `PICKING NV: ${nvActiva.nv}`
-          });
         } else if (state.status === 'PARCIAL') {
           qtyReal = parseInt(state.cantidad);
-          await InventoryService.moveStock({
-            sku: item.codigo_producto,
-            batch: 'PICKING-BATCH',
-            fromLoc: 'PICKING-ZONA',
-            toLoc: 'PACKING-STATION',
-            qty: qtyReal,
-            userId: user.id,
-            reason: `PICKING PARCIAL NV: ${nvActiva.nv}`
-          });
         } else if (state.status === 'ESPERA') {
           qtyReal = 0;
           itemStatus = 'ESPERA'; 

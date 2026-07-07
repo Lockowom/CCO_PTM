@@ -27,6 +27,11 @@ export const AuthProvider = ({ children }) => {
 
   const pathnameRef = useRef(window.location.pathname);
   const initDoneRef = useRef(false);
+  // Email del perfil ya cargado, para deduplicar la carga: login() llama a
+  // setUserState y además dispara SIGNED_IN, que volvería a cargar el mismo
+  // perfil (doble carga de rol + doble init push). Con esto SIGNED_IN se salta
+  // si el usuario ya está cargado.
+  const loadedEmailRef = useRef(null);
 
   useEffect(() => {
     const onPopState = () => { pathnameRef.current = window.location.pathname; };
@@ -142,6 +147,7 @@ export const AuthProvider = ({ children }) => {
       es_admin_delegado: profile.es_admin_delegado || false,
     };
 
+    loadedEmailRef.current = (userData.email || '').toLowerCase();
     setUser(userData);
     setUserForTracking(userData);
     await loadRoleConfig(userData.rol);
@@ -211,10 +217,13 @@ export const AuthProvider = ({ children }) => {
         if (!initDoneRef.current) return;
 
         if (event === 'SIGNED_OUT') {
+          loadedEmailRef.current = null;
           setUser(null);
           setPermissions([]);
           setLandingPage('/dashboard');
         } else if (event === 'SIGNED_IN' && session?.user?.email) {
+          // Deduplicar: si login() ya cargó este perfil, no re-cargar.
+          if (loadedEmailRef.current === session.user.email.toLowerCase()) return;
           // IMPORTANTE: NO hacer llamadas a supabase (`from`/`rpc`) directamente
           // dentro del callback de onAuthStateChange. supabase-js mantiene un
           // "auth lock" mientras corre el callback; cualquier consulta que a su
@@ -373,6 +382,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     const userId = user?.id;
 
+    loadedEmailRef.current = null;
     setUser(null);
     setPermissions([]);
     localStorage.removeItem('currentUser'); // Limpiar legacy

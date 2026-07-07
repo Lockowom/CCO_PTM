@@ -46,7 +46,10 @@ export const usePresence = (roomName) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, roomName]);
+    // Dependemos de primitivos (no del objeto `user`, que se recrea en cada
+    // setUser) para no recrear el canal ni generar join/leave espurios.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, roomName]);
 
   return activeUsers;
 };

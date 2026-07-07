@@ -95,6 +95,11 @@ export const initPushNotifications = async (userId) => {
 
     if (permStatus.receive !== 'granted') return;
 
+    // Evita acumular listeners: initPushNotifications se invoca en cada
+    // restauración de sesión / SIGNED_IN. Sin esto, cada login añade 4
+    // listeners nuevos → toasts duplicados y fuga de memoria.
+    try { await PushNotifications.removeAllListeners(); } catch (_) { /* noop */ }
+
     // Canales Android (requerido Android 8+)
     try {
       await PushNotifications.createChannel({

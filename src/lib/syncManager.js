@@ -103,6 +103,19 @@ export const syncOfflineData = async () => {
     const allItems = await db.syncQueue.toArray();
     const now = Date.now();
 
+    // Recuperación: items marcados 'syncing' por una corrida anterior que murió
+    // a mitad (cierre de app/WebView, recarga, crash) quedarían atascados para
+    // siempre — el filtro de reintento solo reincluye 'pending'/'failed' y el
+    // cleanup los excluye. Los devolvemos a 'pending' para no perder la operación.
+    const stuck = allItems.filter(it => it.status === 'syncing');
+    if (stuck.length > 0) {
+      await Promise.all(stuck.map(it =>
+        db.syncQueue.update(it.id, { status: 'pending', lastError: 'Reintento tras corte a mitad de sync' })
+      ));
+      // Reflejar el cambio en el array local para que el filtro los reincluya ya.
+      stuck.forEach(it => { it.status = 'pending'; });
+    }
+
     const pendingItems = allItems.filter(item => {
       if (item.status === 'pending') return true;
       if (item.status === 'failed' && item.retryCount < MAX_RETRIES) {

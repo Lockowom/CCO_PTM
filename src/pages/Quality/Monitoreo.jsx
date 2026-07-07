@@ -1,5 +1,11 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+
+// UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
+// viejos y lanzaría TypeError al agregar hallazgos o subir evidencia.
+const uid = () => (globalThis.crypto?.randomUUID
+  ? globalThis.crypto.randomUUID()
+  : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 import { toast } from 'sonner';
 import {
   ClipboardCheck, Plus, ArrowLeft, Search, Loader2, Trash2, Download,
@@ -130,9 +136,12 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
   const [items, setItems] = useState([]);
   const [manual, setManual] = useState(null); // alta manual (SKU no registrado)
 
-  // Precargar ítems en modo edición.
+  // Precargar ítems en modo edición — solo una vez, para no pisar el trabajo en
+  // curso si el usuario empieza a editar antes de que resuelva la query.
+  const preloadedRef = useRef(false);
   useEffect(() => {
-    if (editMode && itemsExistentes) {
+    if (editMode && itemsExistentes && !preloadedRef.current) {
+      preloadedRef.current = true;
       setItems(itemsExistentes.map((it) => ({
         _key: `${it.codigo_producto}|${it.partida || ''}|${it.ubicacion || ''}`,
         codigo_producto: it.codigo_producto,
@@ -225,6 +234,12 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
   const updateItem = (key, field, value) => {
     setItems(prev => prev.map(it => it._key === key ? { ...it, [field]: value } : it));
   };
+  // Al volver la condición a "OK" el input de "Uds afectadas" se desmonta; hay que
+  // limpiar el valor o quedaría persistido (condición OK con N afectadas → falsea
+  // Excel/resumen/informes Word-PDF).
+  const setCondicion = (key, c) => setItems(prev => prev.map(it =>
+    it._key === key ? { ...it, condicion_observada: c, ...(c === 'OK' ? { cantidad_afectada: 0 } : {}) } : it
+  ));
   const removeItem = (key) => setItems(prev => prev.filter(it => it._key !== key));
 
   const guardar = async (estado) => {
@@ -490,7 +505,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Condición observada</label>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {CONDICIONES.map(c => (
-                        <button key={c} type="button" onClick={() => updateItem(it._key, 'condicion_observada', c)}
+                        <button key={c} type="button" onClick={() => setCondicion(it._key, c)}
                           className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${condCls(c, it.condicion_observada === c)}`}>
                           {c !== 'OK' && it.condicion_observada === c && <AlertTriangle size={11} className="inline mr-1 -mt-0.5" />}{c}
                         </button>
@@ -561,9 +576,12 @@ const InformeDanosBuilder = ({ informe, onCancel, onSaved }) => {
 
   const { data: evidencias = [], refetch: refetchEvidencias } = useInformeEvidencias(informeId);
 
-  // Precargar hallazgos en edición.
+  // Precargar hallazgos en edición — solo una vez (ver nota en el builder de
+  // monitoreo): no pisar el trabajo en curso cuando resuelve la query.
+  const preloadedDanosRef = useRef(false);
   useEffect(() => {
-    if (informe?.id && itemsExistentes) {
+    if (informe?.id && itemsExistentes && !preloadedDanosRef.current) {
+      preloadedDanosRef.current = true;
       setHallazgos(itemsExistentes.map((it) => ({
         id: it.id,
         _key: it.id,
@@ -584,7 +602,7 @@ const InformeDanosBuilder = ({ informe, onCancel, onSaved }) => {
   const setRepField = (f, v) => setRep(prev => ({ ...prev, [f]: v }));
 
   const addHallazgo = () => setHallazgos(prev => [...prev, {
-    _key: `tmp-${crypto.randomUUID()}`, codigo_producto: '', producto: '', partida: '',
+    _key: `tmp-${uid()}`, codigo_producto: '', producto: '', partida: '',
     ubicacion: '', unidad_medida: '', cantidad: 0, tipo_dano: '', componente_afectado: '',
     consecuencia: '', observaciones: '',
   }]);

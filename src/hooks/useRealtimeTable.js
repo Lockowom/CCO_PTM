@@ -3,6 +3,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/supabase';
 import { toast } from 'sonner';
 
+// Contador de instancias para dar un topic único a cada canal: dos componentes
+// escuchando la misma tabla (con distinto `filter`) no deben compartir topic, o
+// al desmontar uno `removeChannel` afectaría la suscripción del otro.
+let channelSeq = 0;
+
 /**
  * Hook para escuchar cambios realtime en una tabla y refrescar queries.
  * Incluye debounce para evitar cascadas de invalidación en operaciones batch.
@@ -14,6 +19,8 @@ export const useRealtimeTable = (tableName, queryKeysToInvalidate = [tableName],
   keysRef.current = queryKeysToInvalidate;
 
   const debounceTimerRef = useRef(null);
+  const channelIdRef = useRef(null);
+  if (channelIdRef.current === null) channelIdRef.current = ++channelSeq;
 
   const debouncedInvalidate = useCallback(() => {
     if (debounceTimerRef.current) {
@@ -39,7 +46,7 @@ export const useRealtimeTable = (tableName, queryKeysToInvalidate = [tableName],
     };
 
     const channel = supabase
-      .channel(`realtime_${tableName}`)
+      .channel(`realtime_${tableName}_${channelIdRef.current}`)
       .on('postgres_changes', channelConfig, (payload) => {
         // Debounce: agrupar múltiples cambios rápidos en una sola invalidación
         debouncedInvalidate();

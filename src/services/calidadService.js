@@ -2,6 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 import { withTimeout } from '../lib/supabaseQuery';
 
+// UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
+// viejos y lanzaría TypeError al construir el path de la evidencia.
+const uid = () => (globalThis.crypto?.randomUUID
+  ? globalThis.crypto.randomUUID()
+  : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
 // ── Catálogos (estados, dictámenes, bodegas destino) ──────────────────────
 export const DICTAMENES = [
   { id: 'LIBERAR',    label: 'Liberar',     estado: 'LIBERADO',     mueve: false },
@@ -344,7 +350,7 @@ export function useInformeEvidencias(informeId) {
 
 // Sube una imagen (blob ya comprimido) y registra la fila de evidencia.
 export async function uploadEvidencia({ informeId, itemId, blob, descripcion, user }) {
-  const path = `${informeId}/${itemId || 'general'}/${crypto.randomUUID()}.jpg`;
+  const path = `${informeId}/${itemId || 'general'}/${uid()}.jpg`;
   const { error: upErr } = await supabase.storage
     .from(EVIDENCIAS_BUCKET)
     .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
