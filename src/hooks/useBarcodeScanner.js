@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 /**
@@ -30,6 +30,16 @@ const loadScanner = async () => {
 const useBarcodeScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isSupportedDevice, setIsSupportedDevice] = useState(Capacitor.isNativePlatform());
+
+  // Defensa: si el componente se desmonta mientras un escaneo sigue activo
+  // (navegación durante el scan), detener el scanner nativo para no dejarlo vivo.
+  useEffect(() => {
+    return () => {
+      if (BarcodeScanner?.stopScan) {
+        BarcodeScanner.stopScan().catch(() => {});
+      }
+    };
+  }, []);
 
   /**
    * Verifica si el scanner está disponible y solicita permisos

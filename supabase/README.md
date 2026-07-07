@@ -12,6 +12,8 @@
   - `006`…`016` — auth legacy, ficha técnica, monitoreo a calidad, informe de daños, series únicas por producto, direcciones y permiso de costos.
   - `017`…`024` — **sincronizadas desde la BD live** (2026-07-07): `operaciones`, `fix_rbac_privilege_escalation` (seguridad), `consolidar_roles_basura`, `audit_and_hardening` (seguridad), recepción nacionales, flags preliminares, lotes/series de calidad y no-registrado. Renumeradas cronológicamente; cada archivo mapea a su versión de `schema_migrations`.
   - `025_monitoreo_informe_transaccional.sql` — RPC atómica crear/editar informe de Monitoreo (fix de pérdida de datos y carrera del correlativo).
+  - `026_monitoreo_editar_preserva_dictamen.sql` — al reeditar un informe dictaminado se conserva el dictamen y se re-vinculan los flags de calidad (fix CA-7).
+  - `027_monitoreo_candidatos_venc_por_partida.sql` — el vencimiento solo se hereda cuando la partida de la ubicación coincide con el lote (fix CA-10).
 - `functions_snapshot.sql` — **snapshot autoritativo** (idempotente, `CREATE OR REPLACE`) de
   todas las funciones/RPC tal como existen en la BD live (capa de seguridad `private.*` +
   wrappers `public`, y RPC de negocio). Útil para recrear o auditar.

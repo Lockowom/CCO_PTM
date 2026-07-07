@@ -23,11 +23,14 @@ Tras la revisión se aplicó un **barrido de bugs** (commits en `claude/project-
 | **IN-5/IN-6/IN-8** realtime/login/presence | ✅ Corregidos |
 | **CA-1/CA-2/CA-3** informe no transaccional + carrera correlativo | ✅ RPC atómica (migración `025`, verificada) |
 | **CA-4/CA-5/CA-6/CA-8/CA-9** UI de Calidad + fuga Storage | ✅ Corregidos |
-| **CA-7** reeditar dictaminado desincroniza flags | ⏳ Pendiente (requiere decisión de UX) |
-| **CA-10** clasificación PERECIBLE en `monitoreo_candidatos` | ⏳ Pendiente (BAJO; cambia resultados, requiere validación) |
-| **IN-9** `useBarcodeScanner` sin stop al desmontar | ⏳ Revisado: `scan()` de ML Kit es modal → no es fuga real |
-| **S-A/S-B/S-C/S-D/S-E** seguridad/RLS/leaked-password | ⏳ Pendientes (varios por diseño/dashboard) |
-| **M-2/M-3/M-4/M-5** store, god-components, console, TODOs | ⏳ Backlog (refactor) |
+| **CA-7** reeditar dictaminado desincroniza flags | ✅ RPC preserva dictamen + re-vincula flags (mig `026`) |
+| **CA-10** clasificación PERECIBLE en `monitoreo_candidatos` | ✅ Vencimiento solo por partida coincidente (mig `027`) |
+| **IN-9** `useBarcodeScanner` sin stop al desmontar | ✅ Cleanup defensivo añadido |
+| **M-2** dos carpetas de store | ✅ Unificadas en `src/stores/` (+ retirado `moveItem` muerto) |
+| **S-C** `operaciones` RLS abierta | ✅ Moot: la tabla no existe en la BD live |
+| **S-E** `mv_dashboard_kpis` en API | ✅ Ya sin SELECT para `anon` (mitigado) |
+| **S-A/S-B/S-D** perms client-side / RLS por diseño / leaked-password | ⏳ Por diseño o acción de dashboard |
+| **M-3/M-4/M-5** god-components, console, TODOs | ⏳ Backlog (refactor con pruebas dedicadas) |
 
 Tests **45/45** y build **OK** tras los cambios. `dist/` se regenera al desplegar.
 

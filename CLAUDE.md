@@ -31,8 +31,8 @@ npm run deploy:mobile  # build + cap sync + subir bundle Capgo (scripts/deploy_m
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
-- `src/store/` y `src/stores/` — **ambas en uso** (warehouseStore vs pickingStore); pendiente unificar
-- `supabase/migrations/` — migraciones versionadas (`001`…`025`); aplicar nuevas vía MCP/CLI
+- `src/stores/` — stores Zustand unificadas (`warehouseStore`, `pickingStore`)
+- `supabase/migrations/` — migraciones versionadas (`001`…`027`); aplicar nuevas vía MCP/CLI
 - `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
   Regenerar con `npm run build` y commitearlo al desplegar.
 

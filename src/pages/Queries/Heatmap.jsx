@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useWarehouseStore } from '../../store/warehouseStore';
+import { useWarehouseStore } from '../../stores/warehouseStore';
 import {
   Warehouse, Info, Grid, RefreshCw, Search, X, Download, Layers, BarChart3, Package,
   Lock, Unlock, ChevronDown, Box, MapPin

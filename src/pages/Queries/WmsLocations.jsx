@@ -5,7 +5,7 @@ import {
   ArrowUpDown, Layers
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useWarehouseStore } from '../../store/warehouseStore';
+import { useWarehouseStore } from '../../stores/warehouseStore';
 import { useCalidadFlags } from '../../hooks/useCalidadFlags';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 

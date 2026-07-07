@@ -250,26 +250,6 @@ export const useWarehouseStore = create((set, get) => ({
     }
   },
 
-  moveItem: async (itemId, targetUbicacion, newQuantity) => {
-     try {
-        const normalizedTarget = targetUbicacion.toUpperCase().trim();
-        const { error } = await supabase
-          .from('wms_ubicaciones')
-          .update({ 
-              cantidad: Number(newQuantity),
-              ubicacion: normalizedTarget
-          })
-          .eq('id', itemId);
-
-        if (error) throw error;
-
-        // Refresh full state to ensure consistency (forzado tras edición)
-        await get().fetchWarehouseData(true);
-     } catch (error) {
-       throw error;
-     }
-  },
-
   subscribeToRealtime: () => {
     let debounceTimer = null;
     const debouncedFetch = () => {
