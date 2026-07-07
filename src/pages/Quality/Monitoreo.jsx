@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
 import { exportInformeDanosWord, exportInformeDanosPDF } from '../../lib/exportInformeDanos';
+import { exportInformeMonitoreoWord, exportInformeMonitoreoPDF } from '../../lib/exportInformeMonitoreo';
 import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
   useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
@@ -921,8 +922,16 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
               <Trash2 size={16} /> Eliminar
             </button>
           )}
-          <button onClick={exportar} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-700">
-            <Download size={16} /> Exportar Excel
+          <button onClick={() => exportInformeMonitoreoWord(informe, items)} title="Descargar Word"
+            className="px-3 py-2.5 bg-white border border-slate-200 text-blue-700 rounded-xl text-sm font-black flex items-center gap-1.5 hover:bg-blue-50">
+            <FileText size={16} /> Word
+          </button>
+          <button onClick={() => exportInformeMonitoreoPDF(informe, items)} title="Descargar PDF"
+            className="px-3 py-2.5 bg-white border border-slate-200 text-rose-700 rounded-xl text-sm font-black flex items-center gap-1.5 hover:bg-rose-50">
+            <FileType size={16} /> PDF
+          </button>
+          <button onClick={exportar} className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-slate-700">
+            <Download size={16} /> Excel
           </button>
         </div>
       </div>
