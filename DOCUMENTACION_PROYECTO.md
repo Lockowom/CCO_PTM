@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.47 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.49 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.49 | 2026-06-14 | **DEPLOY del selector de Lote/Serie**: bundle móvil `com.cco.wms@1.4.49` a Capgo OTA + web a Render. Migración `019` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.48→1.4.49). |
+| 1.4.48 | 2026-06-14 | **CALIDAD — Selector de Lote/Serie en la toma**: al capturar un ítem de auditoría se agrega un **selector desplegable** de lotes (P) y series (S) del producto, con **filtro rápido server-side** (para productos con muchas series), badge tipo (LOTE/SERIE), disponible y ubicación; al elegir uno **autocompleta la ubicación**. Si la partida/serie **no aparece**, permite **ingreso manual** («usar X») para continuar mientras Inventario ajusta. **BD (migración `019_calidad_lotes_series.sql`)**: RPC `calidad_lotes_series(codigo, query, limit)` (`SECURITY DEFINER`, sin anon) que une `tms_partidas` (lote + ubicación vía LATERAL a `wms_ubicaciones`) y `tms_series` (serie + ubicacion_actual), filtrable e IN­dizada por producto. Componente `LoteSerieSelector` + servicio `fetchLotesSeries` en `Monitoreo.jsx`/`calidadService.js`. |
 | 1.4.47 | 2026-06-14 | **DEPLOY de la toma de auditoría (Calidad Fase 1)**: bundle móvil `com.cco.wms@1.4.47` a Capgo OTA + web a Render. Migración `018` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.46→1.4.47). |
 | 1.4.46 | 2026-06-14 | **CALIDAD — Toma de auditoría mejorada + reflejo preliminar en Ubicaciones (Fase 1)**: rediseño de la captura de ítems en `InformeBuilder` (`Monitoreo.jsx`): cada producto se captura en tarjeta con **ubicación obligatoria** (no deja "Enviar a Calidad" si falta; se resalta en rojo y muestra contador "N sin ubicación"), **condición observada en chips de color** (OK verde / problema ámbar con ícono), **cantidad total** y **uds afectadas** (nuevo campo, solo si la condición ≠ OK) y nota. **BD (migración `018_monitoreo_flags_preliminares.sql`)**: columna `cantidad_afectada` en `tms_monitoreo_items` + RPC `monitoreo_marcar_preliminar(uuid)` (`SECURITY DEFINER`, gate `manage_monitoreo`/`manage_quality`/admin) que, al enviar a Calidad, crea flags **EN_AUDITORIA** en `tms_calidad_flags` para los ítems con condición problemática + ubicación → se ven de inmediato en el Explorador de Ubicaciones. El dictamen posterior de Calidad refina el flag (Cuarentena/Malo/Liberado) sin degradar severidades ya mayores. Servicio: `marcarPreliminarCalidad` en `calidadService.js`. |
 | 1.4.45 | 2026-06-14 | **DEPLOY del modo search-first de Ubicaciones**: bundle móvil `com.cco.wms@1.4.45` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.44→1.4.45). |

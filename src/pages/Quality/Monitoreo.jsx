@@ -12,7 +12,7 @@ import { exportInformeDanosWord, exportInformeDanosPDF } from '../../lib/exportI
 import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
   useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
-  useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad,
+  useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad, fetchLotesSeries,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
@@ -30,6 +30,83 @@ const ESTADO_INFORME_CLS = {
 const TIPO_CLS = {
   MONITOREO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   DANOS: 'bg-rose-50 text-rose-700 border-rose-200',
+};
+
+// ── Selector de Lote (P) / Serie (S) de un producto ────────────────────────
+// Muestra la lista desplegable con filtro rápido; permite ingreso manual si la
+// partida/serie no se encuentra (para continuar mientras Inventario ajusta).
+const LoteSerieSelector = ({ codigo, value, onSelect }) => {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const boxRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    setLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const data = await fetchLotesSeries(codigo, q);
+        if (alive) setList(data);
+      } catch { if (alive) setList([]); }
+      finally { if (alive) setLoading(false); }
+    }, 220);
+    return () => { alive = false; clearTimeout(t); };
+  }, [open, q, codigo]);
+
+  useEffect(() => {
+    const h = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
+    if (open) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+
+  const pick = (row) => { onSelect(row.valor, row.ubicacion || ''); setOpen(false); setQ(''); };
+  const usarManual = () => { if (q.trim()) { onSelect(q.trim().toUpperCase(), ''); setOpen(false); setQ(''); } };
+  const exacto = list.some(r => (r.valor || '').toUpperCase() === q.trim().toUpperCase());
+
+  return (
+    <div className="relative" ref={boxRef}>
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-left outline-none hover:border-emerald-400 flex items-center justify-between gap-2">
+        <span className={value ? 'text-slate-800 truncate' : 'text-slate-300'}>{value || 'Elegir lote / serie…'}</span>
+        <Search size={14} className="text-slate-400 shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-30 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-slate-100">
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)}
+              placeholder="Filtrar lote (P) o serie (S)…"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+          </div>
+          <div className="max-h-56 overflow-y-auto">
+            {loading ? (
+              <div className="py-6 text-center text-xs text-slate-400"><Loader2 size={16} className="animate-spin inline mr-1" /> Buscando…</div>
+            ) : list.length === 0 ? (
+              <div className="py-5 text-center text-xs text-slate-400">Sin lotes/series {q ? `para "${q}"` : ''}</div>
+            ) : (
+              list.map((r, i) => (
+                <button key={i} type="button" onClick={() => pick(r)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-emerald-50/50 border-b border-slate-50 last:border-0">
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${r.tipo === 'P' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>{r.tipo === 'P' ? 'LOTE' : 'SERIE'}</span>
+                  <span className="font-mono text-xs font-bold text-slate-800 truncate flex-1">{r.valor}</span>
+                  {r.ubicacion && <span className="text-[10px] text-slate-400 font-mono shrink-0">{r.ubicacion}</span>}
+                  <span className={`text-xs font-bold shrink-0 ${Number(r.disponible) > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>{Number(r.disponible) || 0}</span>
+                </button>
+              ))
+            )}
+          </div>
+          {q.trim() && !exacto && (
+            <button type="button" onClick={usarManual}
+              className="w-full px-3 py-2.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border-t border-amber-100 flex items-center gap-2">
+              <Plus size={13} /> No está en la lista — usar «{q.trim().toUpperCase()}» manualmente
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ── Constructor / editor de informe de MONITOREO rutinario ─────────────────
@@ -281,16 +358,24 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
                         <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-xs border border-emerald-100">{it.codigo_producto}</span>
                         <span className="text-sm text-slate-600 truncate">{it.producto}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400">lote {it.partida || '—'} · {it.unidad_medida || 'UN'}{it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}</span>
+                      <span className="text-[10px] text-slate-400">{it.unidad_medida || 'UN'}{it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}</span>
                     </div>
                     <button onClick={() => removeItem(it._key)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0">
                       <Trash2 size={15} />
                     </button>
                   </div>
 
-                  {/* Ubicación (obligatoria) + cantidad + uds afectadas */}
+                  {/* Lote/Serie + Ubicación (obligatoria) + cantidad + uds afectadas */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                    <div className="col-span-2 sm:col-span-2">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lote / Serie</label>
+                      <LoteSerieSelector
+                        codigo={it.codigo_producto}
+                        value={it.partida}
+                        onSelect={(valor, ubic) => { updateItem(it._key, 'partida', valor); if (ubic) updateItem(it._key, 'ubicacion', ubic); }}
+                      />
+                    </div>
+                    <div className="col-span-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">Ubicación {sinUbic && <span className="text-rose-500">*obligatoria</span>}</label>
                       <input value={it.ubicacion} onChange={e => updateItem(it._key, 'ubicacion', e.target.value.toUpperCase())}
                         placeholder="Ej. A-12-03"

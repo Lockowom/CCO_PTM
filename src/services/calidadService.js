@@ -91,6 +91,15 @@ export async function fetchCandidatos(query, soloVencimiento = false) {
   }
 }
 
+// ── Lotes y series de un producto (para elegir en la toma) ─────────────────
+export async function fetchLotesSeries(codigo, query = '') {
+  const { data, error } = await supabase.rpc('calidad_lotes_series', {
+    p_codigo: codigo, p_query: query || '', p_limit: 300,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
 // ── Reflejo preliminar en Ubicaciones al enviar a Calidad ──────────────────
 // Genera flags EN_AUDITORIA en tms_calidad_flags para los ítems con condición
 // problemática (≠ OK) y ubicación, para que se vean de inmediato en Ubicaciones.
