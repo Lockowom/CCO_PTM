@@ -25,6 +25,8 @@ import {
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
+import ChecklistIngreso from './ChecklistIngreso';
+import { useTareasPendientesCount } from '../../services/calidadService';
 
 const SEMAFORO_CLS = {
   ROJO: 'bg-rose-500', NARANJA: 'bg-amber-500', VERDE: 'bg-emerald-500', NA: 'bg-slate-300',
@@ -1092,6 +1094,8 @@ const Monitoreo = () => {
   const eliminar = useEliminarInforme();
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
+  const [tab, setTab] = useState('informes'); // informes | checklist
+  const pendCount = useTareasPendientesCount();
 
   useEffect(() => {
     if (mode === 'detail' && selected) {
@@ -1135,7 +1139,7 @@ const Monitoreo = () => {
             <p className="text-slate-500 font-bold text-sm">Informes de inventario, daños, dictámenes y estado de producto</p>
           </div>
         </div>
-        {mode === 'list' && canCreate && (
+        {mode === 'list' && tab === 'informes' && canCreate && (
           <div className="flex flex-wrap gap-2">
             <button onClick={() => { setSelected(null); setMode('new'); }}
               className="px-5 py-3 bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-emerald-600/20 hover:bg-emerald-700">
@@ -1148,6 +1152,25 @@ const Monitoreo = () => {
           </div>
         )}
       </div>
+
+      {/* Pestañas: Informes (Estancia) vs CheckList de Ingreso */}
+      {mode === 'list' && (
+        <div className="flex gap-2 mb-5">
+          <button onClick={() => setTab('informes')}
+            className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors ${tab === 'informes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+            Informes
+          </button>
+          <button onClick={() => setTab('checklist')}
+            className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors flex items-center gap-2 ${tab === 'checklist' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+            CheckList de Ingreso
+            {pendCount > 0 && (
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${tab === 'checklist' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-700'}`}>{pendCount}</span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {mode === 'list' && tab === 'checklist' && <ChecklistIngreso />}
 
       {mode === 'new' && (
         <InformeBuilder onCancel={volver} onSaved={volver} />
@@ -1167,7 +1190,7 @@ const Monitoreo = () => {
           onDelete={canCreate ? borrarInforme : null} />
       )}
 
-      {mode === 'list' && (
+      {mode === 'list' && tab === 'informes' && (
         isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>
         ) : informes.length === 0 ? (

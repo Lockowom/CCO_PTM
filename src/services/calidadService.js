@@ -409,3 +409,90 @@ export function useDictaminar() {
     },
   });
 }
+
+// ── CheckList de Ingreso (hito "Ingreso a bodega" de la matriz de Calidad) ──
+// Parámetros del checklist, agrupados por nivel (matriz: Nivel 1 revisión
+// documental del Packing List, Nivel 2 inspección física de embalajes).
+// Editar aquí para cambiar los ítems del checklist.
+export const CHECKLIST_INGRESO_NIVELES = [
+  {
+    nivel: 1,
+    titulo: 'Nivel 1 — Revisión documental (Packing List)',
+    params: [
+      { id: 'pl_adjunto',           label: 'Packing list / factura adjunta y legible' },
+      { id: 'pl_proveedor_oc',      label: 'Proveedor y OC coinciden con lo esperado' },
+      { id: 'pl_cantidad',          label: 'Cantidad recibida coincide con la declarada (packing list)' },
+      { id: 'pl_lote_serie',        label: 'Lote/serie identificado y documentado' },
+      { id: 'pl_vencimiento',       label: 'Fecha de vencimiento vigente y registrada' },
+      { id: 'pl_registro_sanitario',label: 'Registro sanitario / certificado del producto disponible' },
+      { id: 'pl_cadena_frio',       label: 'Condiciones de transporte / cadena de frío documentadas (si aplica)' },
+    ],
+  },
+  {
+    nivel: 2,
+    titulo: 'Nivel 2 — Inspección física de embalajes',
+    params: [
+      { id: 'fis_embalaje',       label: 'Embalaje externo íntegro (sin golpes, roturas o aplastamiento)' },
+      { id: 'fis_sellos',         label: 'Sellos / precintos íntegros' },
+      { id: 'fis_humedad',        label: 'Sin señales de humedad o mojado' },
+      { id: 'fis_etiquetado',     label: 'Etiquetado correcto y legible (producto, lote, vencimiento)' },
+      { id: 'fis_bultos',         label: 'N° de bultos coincide con lo declarado' },
+      { id: 'fis_dano_visible',   label: 'Producto sin daño visible' },
+      { id: 'fis_empaque_primario', label: 'Empaque primario / unidades de venta en buen estado' },
+    ],
+  },
+];
+
+export const CHECKLIST_TODOS_PARAMS = CHECKLIST_INGRESO_NIVELES.flatMap(n => n.params);
+export const RESP_OPCIONES = ['OK', 'NO', 'NA'];
+
+export const ESTADO_TAREA_META = {
+  PENDIENTE:    { label: 'Pendiente',    cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  EN_PROCESO:   { label: 'En proceso',   cls: 'bg-sky-100 text-sky-700 border-sky-200' },
+  CONFORME:     { label: 'Conforme',     cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  NO_CONFORME:  { label: 'No conforme',  cls: 'bg-rose-100 text-rose-700 border-rose-200' },
+};
+
+// Lista de tareas de checklist (cola). Pendientes/en proceso primero.
+export function useTareasChecklist() {
+  return useQuery({
+    queryKey: ['calidad_tareas'],
+    queryFn: async () => {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('tms_calidad_tareas')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        { ms: 12000, label: 'tareas de checklist' }
+      );
+      if (error) throw error;
+      const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
+      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+    },
+  });
+}
+
+// Nº de tareas pendientes/en proceso (para badge).
+export function useTareasPendientesCount() {
+  const { data = [] } = useTareasChecklist();
+  return data.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
+}
+
+// Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
+export function useGuardarChecklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tareaId, checklist, observaciones, finalizar, resultado }) => {
+      const { data, error } = await supabase.rpc('guardar_checklist_ingreso', {
+        p_tarea_id: tareaId,
+        p_checklist: checklist || {},
+        p_observaciones: observaciones ?? null,
+        p_finalizar: !!finalizar,
+        p_resultado: resultado ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_tareas'] }),
+  });
+}

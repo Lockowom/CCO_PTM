@@ -54,6 +54,14 @@ PDF/Word, página pública de verificación) con **llave de prueba**, y luego ca
 ---
 
 ## 3. Checklist de recepción (conecta Recepción → Calidad)
+> **ESTADO (2026-07-07): PARCIALMENTE IMPLEMENTADO (v1.4.62).** El **disparo + la cola de tareas +
+> el checklist operativo** ya están (hito "Ingreso a bodega"): trigger `AFTER INSERT` en
+> `tms_recepciones(_nacionales)` → tarea en `tms_calidad_tareas` → pestaña **"CheckList de Ingreso"**
+> en el módulo Calidad, con los parámetros por nivel (Rev. documental PL / Inspección física),
+> certificación **CONFORME** con folio o **NO CONFORME** con alerta urgente. Migración `028`.
+> **Sigue pendiente:** la **validación automática de cantidad leyendo el packing list** (punto 4);
+> hoy la cantidad es una verificación **manual** dentro del checklist. Fotos por parámetro: pendiente.
+
 **Qué:** al cerrar una recepción, un checklist:
 1. **Validación de cantidades** recibidas vs **packing list** (esperado) → PASS/FAIL con detalle de
    discrepancias (faltantes/sobrantes).
