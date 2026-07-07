@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ClipboardCheck, Plus, ArrowLeft, Search, Loader2, Trash2, Download,
@@ -11,7 +12,7 @@ import { exportInformeDanosWord, exportInformeDanosPDF } from '../../lib/exportI
 import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
   useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
-  useGuardarInformeDanos, useInformeEvidencias,
+  useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
@@ -34,6 +35,7 @@ const TIPO_CLS = {
 // ── Constructor / editor de informe de MONITOREO rutinario ─────────────────
 const InformeBuilder = ({ informe, onCancel, onSaved }) => {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const editMode = !!informe;
   const crear = useCrearInforme();
   const actualizar = useActualizarInforme();
@@ -64,6 +66,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
         fecha_vencimiento: it.fecha_vencimiento || null,
         semaforo: it.semaforo || 'NA',
         condicion_observada: it.condicion_observada || 'OK',
+        cantidad_afectada: Number(it.cantidad_afectada) || 0,
         motivo: it.motivo || 'Rutina',
         observaciones: it.observaciones || '',
       })));
@@ -101,6 +104,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
       fecha_vencimiento: c.fecha_vencimiento || null,
       semaforo: c.semaforo || 'NA',
       condicion_observada: 'OK',
+      cantidad_afectada: 0,
       motivo: 'Rutina',
       observaciones: '',
     }]);
@@ -113,15 +117,19 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
 
   const guardar = async (estado) => {
     if (items.length === 0) { toast.error('Agrega al menos un ítem'); return; }
+    // Ubicación OBLIGATORIA al enviar a Calidad: sin ella el estado no aterriza.
+    if (estado === 'ENVIADO_CALIDAD') {
+      const sinUbic = items.filter(it => !(it.ubicacion || '').trim());
+      if (sinUbic.length > 0) {
+        toast.error(`${sinUbic.length} ítem(s) sin ubicación. Es obligatoria para enviar a Calidad.`);
+        return;
+      }
+    }
     const cleanItems = items.map(({ _key, ...rest }) => rest);
     try {
+      let informeId = editMode ? informe.id : null;
       if (editMode) {
-        const cabecera = {
-          bodega: bodega || null,
-          periodicidad,
-          estado,
-          observaciones: observaciones || null,
-        };
+        const cabecera = { bodega: bodega || null, periodicidad, estado, observaciones: observaciones || null };
         await actualizar.mutateAsync({ informeId: informe.id, cabecera, items: cleanItems });
         toast.success('Informe actualizado');
       } else {
@@ -134,14 +142,31 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
           estado,
           observaciones: observaciones || null,
         };
-        await crear.mutateAsync({ cabecera, items: cleanItems });
+        const nuevo = await crear.mutateAsync({ cabecera, items: cleanItems });
+        informeId = nuevo?.id || null;
         toast.success(estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado');
+      }
+
+      // Reflejo preliminar en Ubicaciones (En Auditoría) al enviar a Calidad.
+      if (estado === 'ENVIADO_CALIDAD' && informeId) {
+        try {
+          const res = await marcarPreliminarCalidad(informeId);
+          if (res?.flags > 0) {
+            qc.invalidateQueries({ queryKey: ['calidad_flags'] });
+            toast.info(`${res.flags} ubicación(es) marcadas "En Auditoría"`);
+          }
+        } catch (e) { console.error('preliminar', e); }
       }
       onSaved();
     } catch (e) {
       toast.error(`Error al guardar: ${e.message}`);
     }
   };
+
+  const itemsSinUbic = items.filter(it => !(it.ubicacion || '').trim()).length;
+  const condCls = (c, active) => !active
+    ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+    : (c === 'OK' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300');
 
   const saving = crear.isPending || actualizar.isPending;
 
@@ -229,62 +254,89 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
         )}
       </div>
 
-      {/* Ítems seleccionados */}
+      {/* Ítems capturados en la auditoría */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
-        <h3 className="text-sm font-black text-slate-700 mb-3">Ítems del informe ({items.length})</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-slate-700">Ítems del informe ({items.length})</h3>
+          {itemsSinUbic > 0 && (
+            <span className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+              <AlertTriangle size={12} /> {itemsSinUbic} sin ubicación
+            </span>
+          )}
+        </div>
         {items.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">Busca y agrega productos al informe.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-wider text-left border-b border-slate-100">
-                  <th className="py-2 pr-3">SKU / Lote / Ubic.</th>
-                  <th className="py-2 pr-3">Cant.</th>
-                  <th className="py-2 pr-3">Vence</th>
-                  <th className="py-2 pr-3">Condición</th>
-                  <th className="py-2 pr-3">Motivo</th>
-                  <th className="py-2 pr-3">Obs.</th>
-                  <th className="py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(it => (
-                  <tr key={it._key} className="border-b border-slate-50">
-                    <td className="py-2 pr-3">
-                      <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            {items.map(it => {
+              const problema = it.condicion_observada !== 'OK';
+              const sinUbic = !(it.ubicacion || '').trim();
+              return (
+                <div key={it._key} className={`rounded-xl border p-4 ${problema ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'}`}>
+                  {/* Cabecera del ítem */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`w-2 h-2 rounded-full ${SEMAFORO_CLS[it.semaforo] || 'bg-slate-300'}`} />
-                        <span className="font-bold text-slate-800">{it.codigo_producto}</span>
+                        <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-xs border border-emerald-100">{it.codigo_producto}</span>
+                        <span className="text-sm text-slate-600 truncate">{it.producto}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400">{it.partida || '—'} · {it.ubicacion || 's/ubic'}</span>
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums">{it.cantidad}</td>
-                    <td className="py-2 pr-3 text-xs text-slate-500">{it.fecha_vencimiento || '—'}</td>
-                    <td className="py-2 pr-3">
-                      <select value={it.condicion_observada} onChange={e => updateItem(it._key, 'condicion_observada', e.target.value)}
-                        className="px-2 py-1 rounded-lg border border-slate-200 text-xs outline-none focus:border-emerald-400">
-                        {CONDICIONES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-3">
-                      <select value={it.motivo} onChange={e => updateItem(it._key, 'motivo', e.target.value)}
-                        className="px-2 py-1 rounded-lg border border-slate-200 text-xs outline-none focus:border-emerald-400">
-                        {MOTIVOS.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-3">
-                      <input value={it.observaciones} onChange={e => updateItem(it._key, 'observaciones', e.target.value)}
-                        className="px-2 py-1 rounded-lg border border-slate-200 text-xs outline-none focus:border-emerald-400 w-40" />
-                    </td>
-                    <td className="py-2">
-                      <button onClick={() => removeItem(it._key)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50">
-                        <Trash2 size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <span className="text-[10px] text-slate-400">lote {it.partida || '—'} · {it.unidad_medida || 'UN'}{it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}</span>
+                    </div>
+                    <button onClick={() => removeItem(it._key)} className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+
+                  {/* Ubicación (obligatoria) + cantidad + uds afectadas */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                    <div className="col-span-2 sm:col-span-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">Ubicación {sinUbic && <span className="text-rose-500">*obligatoria</span>}</label>
+                      <input value={it.ubicacion} onChange={e => updateItem(it._key, 'ubicacion', e.target.value.toUpperCase())}
+                        placeholder="Ej. A-12-03"
+                        className={`w-full mt-1 px-3 py-2 rounded-xl border text-sm font-mono font-bold outline-none focus:border-emerald-400 ${sinUbic ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200'}`} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cant. total</label>
+                      <input type="number" min="0" value={it.cantidad} onChange={e => updateItem(it._key, 'cantidad', Number(e.target.value) || 0)}
+                        className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-400" />
+                    </div>
+                    {problema && (
+                      <div>
+                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Uds afectadas</label>
+                        <input type="number" min="0" max={it.cantidad} value={it.cantidad_afectada} onChange={e => updateItem(it._key, 'cantidad_afectada', Number(e.target.value) || 0)}
+                          className="w-full mt-1 px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/50 text-sm font-bold text-amber-800 outline-none focus:border-amber-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Condición en chips */}
+                  <div className="mb-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Condición observada</label>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {CONDICIONES.map(c => (
+                        <button key={c} type="button" onClick={() => updateItem(it._key, 'condicion_observada', c)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${condCls(c, it.condicion_observada === c)}`}>
+                          {c !== 'OK' && it.condicion_observada === c && <AlertTriangle size={11} className="inline mr-1 -mt-0.5" />}{c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Nota + estado que aterrizará */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input value={it.observaciones} onChange={e => updateItem(it._key, 'observaciones', e.target.value)}
+                      placeholder="Nota / observación"
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+                  </div>
+                  {problema && !sinUbic && (
+                    <p className="mt-2 text-[11px] text-amber-700 bg-amber-100/60 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                      <AlertTriangle size={12} /> Al enviar, <b className="font-mono">{it.ubicacion}</b> se marcará "En Auditoría" en Ubicaciones.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

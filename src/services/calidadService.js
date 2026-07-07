@@ -91,6 +91,15 @@ export async function fetchCandidatos(query, soloVencimiento = false) {
   }
 }
 
+// ── Reflejo preliminar en Ubicaciones al enviar a Calidad ──────────────────
+// Genera flags EN_AUDITORIA en tms_calidad_flags para los ítems con condición
+// problemática (≠ OK) y ubicación, para que se vean de inmediato en Ubicaciones.
+export async function marcarPreliminarCalidad(informeId) {
+  const { data, error } = await supabase.rpc('monitoreo_marcar_preliminar', { p_informe_id: informeId });
+  if (error) throw error;
+  return data;
+}
+
 // ── Crear informe + ítems ──────────────────────────────────────────────────
 export function useCrearInforme() {
   const qc = useQueryClient();
