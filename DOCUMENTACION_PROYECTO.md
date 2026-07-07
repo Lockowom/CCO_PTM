@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.49 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.51 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.51 | 2026-06-14 | **DEPLOY del alta manual + alerta a Inventario**: bundle móvil `com.cco.wms@1.4.51` a Capgo OTA + web a Render. Migración `020` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.50→1.4.51). |
+| 1.4.50 | 2026-06-14 | **CALIDAD — Alta manual (SKU no registrado) + alerta a Inventario**: en la toma se agrega botón **"Agregar manual"** para capturar un producto hallado en auditoría que **no aparece** en la búsqueda (código + ubicación obligatorios + lote/serie + cantidad), aunque no esté registrado en ninguna ubicación. El ítem se marca **"No registrado"** (badge ámbar) y condición `Sobrante`. **BD (migración `020_monitoreo_no_registrado.sql`)**: columna `no_registrado` en `tms_monitoreo_items`; la RPC `monitoreo_marcar_preliminar` extendida para (a) crear flag `EN_AUDITORIA` también para ítems no registrados (nota "NO REGISTRADO —") y (b) **insertar una alerta en `tms_notificaciones`** (`tipo=CALIDAD_NO_REGISTRADO`, payload con código/ubicación/lote) para que Inventario lo dé de alta; devuelve `{flags, alertas}`. La alerta queda registrada (aún sin bandeja de notificaciones en el front) y el hallazgo es visible como flag en Ubicaciones. Toast de confirmación de alertas al enviar. |
 | 1.4.49 | 2026-06-14 | **DEPLOY del selector de Lote/Serie**: bundle móvil `com.cco.wms@1.4.49` a Capgo OTA + web a Render. Migración `019` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.48→1.4.49). |
 | 1.4.48 | 2026-06-14 | **CALIDAD — Selector de Lote/Serie en la toma**: al capturar un ítem de auditoría se agrega un **selector desplegable** de lotes (P) y series (S) del producto, con **filtro rápido server-side** (para productos con muchas series), badge tipo (LOTE/SERIE), disponible y ubicación; al elegir uno **autocompleta la ubicación**. Si la partida/serie **no aparece**, permite **ingreso manual** («usar X») para continuar mientras Inventario ajusta. **BD (migración `019_calidad_lotes_series.sql`)**: RPC `calidad_lotes_series(codigo, query, limit)` (`SECURITY DEFINER`, sin anon) que une `tms_partidas` (lote + ubicación vía LATERAL a `wms_ubicaciones`) y `tms_series` (serie + ubicacion_actual), filtrable e IN­dizada por producto. Componente `LoteSerieSelector` + servicio `fetchLotesSeries` en `Monitoreo.jsx`/`calidadService.js`. |
 | 1.4.47 | 2026-06-14 | **DEPLOY de la toma de auditoría (Calidad Fase 1)**: bundle móvil `com.cco.wms@1.4.47` a Capgo OTA + web a Render. Migración `018` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.46→1.4.47). |

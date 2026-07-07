@@ -126,6 +126,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
   const [candidatos, setCandidatos] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [items, setItems] = useState([]);
+  const [manual, setManual] = useState(null); // alta manual (SKU no registrado)
 
   // Precargar ítems en modo edición.
   useEffect(() => {
@@ -144,6 +145,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
         semaforo: it.semaforo || 'NA',
         condicion_observada: it.condicion_observada || 'OK',
         cantidad_afectada: Number(it.cantidad_afectada) || 0,
+        no_registrado: !!it.no_registrado,
         motivo: it.motivo || 'Rutina',
         observaciones: it.observaciones || '',
       })));
@@ -182,9 +184,40 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
       semaforo: c.semaforo || 'NA',
       condicion_observada: 'OK',
       cantidad_afectada: 0,
+      no_registrado: false,
       motivo: 'Rutina',
       observaciones: '',
     }]);
+  };
+
+  // Alta manual de un ítem hallado en auditoría pero no registrado en sistema.
+  const addManual = () => {
+    const cod = (manual.codigo || '').trim().toUpperCase();
+    const ubic = (manual.ubicacion || '').trim().toUpperCase();
+    if (!cod) { toast.error('Ingresa el código del producto'); return; }
+    if (!ubic) { toast.error('La ubicación es obligatoria'); return; }
+    const key = `MAN|${cod}|${(manual.partida || '').trim()}|${ubic}`;
+    if (items.some(it => it._key === key)) { toast.info('Ese ítem ya está en el informe'); return; }
+    setItems(prev => [...prev, {
+      _key: key,
+      codigo_producto: cod,
+      partida: (manual.partida || '').trim().toUpperCase(),
+      ubicacion: ubic,
+      producto: (manual.producto || '').trim() || 'SIN DESCRIPCIÓN',
+      unidad_medida: 'UN',
+      cantidad: Number(manual.cantidad) || 0,
+      estado_inventario: 'No registrado',
+      tipo: 'NO_PERECIBLE',
+      fecha_vencimiento: null,
+      semaforo: 'NA',
+      condicion_observada: 'Sobrante',
+      cantidad_afectada: Number(manual.cantidad) || 0,
+      no_registrado: true,
+      motivo: 'Hallazgo',
+      observaciones: '',
+    }]);
+    setManual(null);
+    toast.success('Ítem manual agregado (no registrado)');
   };
 
   const updateItem = (key, field, value) => {
@@ -232,6 +265,7 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
             qc.invalidateQueries({ queryKey: ['calidad_flags'] });
             toast.info(`${res.flags} ubicación(es) marcadas "En Auditoría"`);
           }
+          if (res?.alertas > 0) toast.warning(`${res.alertas} alerta(s) a Inventario por SKU no registrado`);
         } catch (e) { console.error('preliminar', e); }
       }
       onSaved();
@@ -333,14 +367,62 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
 
       {/* Ítems capturados en la auditoría */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <h3 className="text-sm font-black text-slate-700">Ítems del informe ({items.length})</h3>
-          {itemsSinUbic > 0 && (
-            <span className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex items-center gap-1">
-              <AlertTriangle size={12} /> {itemsSinUbic} sin ubicación
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {itemsSinUbic > 0 && (
+              <span className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                <AlertTriangle size={12} /> {itemsSinUbic} sin ubicación
+              </span>
+            )}
+            <button type="button" onClick={() => setManual(manual ? null : { codigo: '', producto: '', ubicacion: '', partida: '', cantidad: 1 })}
+              className="text-xs font-bold text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 flex items-center gap-1.5">
+              <Plus size={13} /> Agregar manual
+            </button>
+          </div>
         </div>
+
+        {/* Alta manual: SKU/ubicación no registrado en sistema */}
+        {manual && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <div className="flex items-center gap-2 mb-3 text-amber-800">
+              <AlertTriangle size={15} />
+              <span className="text-sm font-black">Agregar producto NO registrado en sistema</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="col-span-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Código *</label>
+                <input value={manual.codigo} onChange={e => setManual(m => ({ ...m, codigo: e.target.value.toUpperCase() }))}
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold outline-none focus:border-amber-400" placeholder="SKU" />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ubicación *</label>
+                <input value={manual.ubicacion} onChange={e => setManual(m => ({ ...m, ubicacion: e.target.value.toUpperCase() }))}
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold outline-none focus:border-amber-400" placeholder="A-12-03" />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lote / Serie</label>
+                <input value={manual.partida} onChange={e => setManual(m => ({ ...m, partida: e.target.value.toUpperCase() }))}
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono outline-none focus:border-amber-400" placeholder="opcional" />
+              </div>
+              <div className="col-span-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cantidad</label>
+                <input type="number" min="0" value={manual.cantidad} onChange={e => setManual(m => ({ ...m, cantidad: Number(e.target.value) || 0 }))}
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-amber-400" />
+              </div>
+              <div className="col-span-2 sm:col-span-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción (opcional)</label>
+                <input value={manual.producto} onChange={e => setManual(m => ({ ...m, producto: e.target.value }))}
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-amber-400" placeholder="Nombre del producto" />
+              </div>
+            </div>
+            <p className="text-[11px] text-amber-700 mt-2 flex items-center gap-1.5"><AlertTriangle size={12} /> Al enviar a Calidad se generará una alerta a Inventario para dar de alta este ítem.</p>
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => setManual(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-white">Cancelar</button>
+              <button onClick={addManual} className="px-4 py-2 rounded-xl bg-amber-600 text-white font-black text-sm hover:bg-amber-700 flex items-center gap-1.5"><Plus size={15} /> Agregar</button>
+            </div>
+          </div>
+        )}
         {items.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">Busca y agrega productos al informe.</p>
         ) : (
@@ -356,6 +438,9 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`w-2 h-2 rounded-full ${SEMAFORO_CLS[it.semaforo] || 'bg-slate-300'}`} />
                         <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-xs border border-emerald-100">{it.codigo_producto}</span>
+                        {it.no_registrado && (
+                          <span className="text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded uppercase tracking-wide">No registrado</span>
+                        )}
                         <span className="text-sm text-slate-600 truncate">{it.producto}</span>
                       </div>
                       <span className="text-[10px] text-slate-400">{it.unidad_medida || 'UN'}{it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}</span>
