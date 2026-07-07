@@ -843,8 +843,9 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
 
   const exportar = () => {
     const detalle = items.map(it => ({
-      SKU: it.codigo_producto, Lote: it.partida, Ubicacion: it.ubicacion,
+      SKU: it.codigo_producto, Lote_Serie: it.partida, Ubicacion: it.ubicacion,
       Producto: it.producto, UM: it.unidad_medida, Cantidad: it.cantidad,
+      Uds_Afectadas: it.cantidad_afectada || 0, No_Registrado: it.no_registrado ? 'SÍ' : '',
       Estado_Inv: it.estado_inventario, Tipo: it.tipo, Vence: it.fecha_vencimiento,
       Semaforo: it.semaforo, Condicion: it.condicion_observada, Motivo: it.motivo,
       Observaciones: it.observaciones,
@@ -852,9 +853,9 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
       Acuse: it.acuse_texto || '', Calidad: it.calidad_nombre || '',
       Fecha_Dictamen: it.fecha_dictamen || '',
     }));
-    const porSemaforo = ['ROJO', 'NARANJA', 'VERDE', 'NA'].map(s => ({
-      Semaforo: s, Items: items.filter(i => i.semaforo === s).length,
-    }));
+    const cuenta = (fn) => items.filter(fn).length;
+    const dictList = ['LIBERAR', 'CUARENTENA', 'REPROCESO', 'RECHAZAR', 'BAJA'];
+    const condList = [...new Set(items.map(i => i.condicion_observada).filter(Boolean))];
     const resumen = [
       { Campo: 'Informe', Valor: informe.numero },
       { Campo: 'Fecha', Valor: informe.fecha },
@@ -862,8 +863,16 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
       { Campo: 'Analista', Valor: informe.analista_nombre || '—' },
       { Campo: 'Estado', Valor: informe.estado },
       { Campo: 'Total ítems', Valor: items.length },
-      { Campo: 'Dictaminados', Valor: items.filter(i => i.dictamen).length },
-      ...porSemaforo.map(r => ({ Campo: `Semáforo ${r.Semaforo}`, Valor: r.Items })),
+      { Campo: 'Dictaminados', Valor: cuenta(i => i.dictamen) },
+      { Campo: 'Pendientes', Valor: cuenta(i => !i.dictamen) },
+      { Campo: 'Con problema (cond≠OK)', Valor: cuenta(i => i.condicion_observada && i.condicion_observada !== 'OK') },
+      { Campo: 'No registrados', Valor: cuenta(i => i.no_registrado) },
+      { Campo: '— Por semáforo —', Valor: '' },
+      ...['ROJO', 'NARANJA', 'VERDE', 'NA'].map(s => ({ Campo: `Semáforo ${s}`, Valor: cuenta(i => i.semaforo === s) })),
+      { Campo: '— Por dictamen —', Valor: '' },
+      ...dictList.map(d => ({ Campo: d, Valor: cuenta(i => i.dictamen === d) })),
+      { Campo: '— Por condición —', Valor: '' },
+      ...condList.map(c => ({ Campo: c, Valor: cuenta(i => i.condicion_observada === c) })),
     ];
     exportToExcel({
       filename: `Monitoreo_${informe.numero}`,
@@ -872,6 +881,15 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
   };
 
   const pendientes = useMemo(() => items.filter(i => !i.dictamen).length, [items]);
+  const resumen = useMemo(() => {
+    const total = items.length;
+    const dictaminados = items.filter(i => i.dictamen).length;
+    const noReg = items.filter(i => i.no_registrado).length;
+    const conProblema = items.filter(i => i.condicion_observada && i.condicion_observada !== 'OK').length;
+    const sem = { ROJO: 0, NARANJA: 0, VERDE: 0, NA: 0 };
+    items.forEach(i => { sem[i.semaforo] = (sem[i.semaforo] || 0) + 1; });
+    return { total, dictaminados, noReg, conProblema, sem, pct: total ? Math.round((dictaminados / total) * 100) : 0 };
+  }, [items]);
 
   return (
     <div className="space-y-5">
@@ -909,6 +927,38 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
         </div>
       </div>
 
+      {/* Panel de resumen del informe */}
+      {!isLoading && items.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-black text-slate-700">Avance del dictamen</span>
+            <span className="text-xs font-bold text-slate-500 tabular-nums">{resumen.dictaminados}/{resumen.total} · {resumen.pct}%</span>
+          </div>
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${resumen.pct}%` }} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {[
+              { label: 'Ítems', value: resumen.total, cls: 'text-slate-900' },
+              { label: 'Dictaminados', value: resumen.dictaminados, cls: 'text-emerald-600' },
+              { label: 'Pendientes', value: pendientes, cls: 'text-amber-600' },
+              { label: 'Con problema', value: resumen.conProblema, cls: 'text-orange-600' },
+              { label: 'No registrados', value: resumen.noReg, cls: 'text-rose-600' },
+            ].map(k => (
+              <div key={k.label} className="bg-slate-50 rounded-xl px-3 py-2.5">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{k.label}</div>
+                <div className={`text-2xl font-black tabular-nums ${k.cls}`}>{k.value}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {resumen.sem.ROJO > 0 && <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> {resumen.sem.ROJO} vence &lt;30d</span>}
+            {resumen.sem.NARANJA > 0 && <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> {resumen.sem.NARANJA} vence &lt;90d</span>}
+            {resumen.sem.VERDE > 0 && <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {resumen.sem.VERDE} vigente</span>}
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-emerald-500" size={32} /></div>
       ) : (
@@ -922,6 +972,7 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
                   <div className="flex items-center gap-3 min-w-0">
                     <span className={`w-2.5 h-2.5 rounded-full ${SEMAFORO_CLS[it.semaforo] || 'bg-slate-300'}`} />
                     <span className="font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{it.codigo_producto}</span>
+                    {it.no_registrado && <span className="text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded uppercase tracking-wide">No registrado</span>}
                     <span className="text-slate-600 truncate">{it.producto}</span>
                     <span className="text-[10px] text-slate-400">lote {it.partida || '—'} · {it.ubicacion || 's/ubic'} · {it.cantidad} uds</span>
                   </div>
@@ -940,7 +991,8 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                  <span>Condición: <b className="text-slate-700">{it.condicion_observada || '—'}</b></span>
+                  <span>Condición: <b className={it.condicion_observada && it.condicion_observada !== 'OK' ? 'text-amber-700' : 'text-slate-700'}>{it.condicion_observada || '—'}</b></span>
+                  {Number(it.cantidad_afectada) > 0 && <span>Afectadas: <b className="text-amber-700">{it.cantidad_afectada} uds</b></span>}
                   <span>Motivo: <b className="text-slate-700">{it.motivo || '—'}</b></span>
                   {it.observaciones && <span>Obs: <b className="text-slate-700">{it.observaciones}</b></span>}
                 </div>

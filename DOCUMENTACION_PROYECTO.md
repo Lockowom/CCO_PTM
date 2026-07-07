@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.55 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.57 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.57 | 2026-06-14 | **DEPLOY de la Fase 2 (informe de Calidad)**: bundle móvil `com.cco.wms@1.4.57` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.56→1.4.57). |
+| 1.4.56 | 2026-06-14 | **CALIDAD — Fase 2: rediseño del informe (pantalla + Excel)**. **Pantalla (`InformeDetail` en `Monitoreo.jsx`)**: nuevo **panel de resumen** con barra de avance del dictamen (%), KPIs (Ítems, Dictaminados, Pendientes, Con problema, No registrados) y chips de semáforo de vencimiento; tarjetas de ítem pulidas (badge "No registrado", condición resaltada en ámbar cuando ≠ OK, uds afectadas). **Excel** enriquecido: hoja Detalle con columnas nuevas (Lote_Serie, Uds_Afectadas, No_Registrado) y hoja Resumen ampliada (pendientes, con problema, no registrados, y desgloses por semáforo, por dictamen y por condición). Sin cambios de BD. |
 | 1.4.55 | 2026-06-14 | **DEPLOY del push en dictámenes**: bundle móvil `com.cco.wms@1.4.55` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.54→1.4.55). |
 | 1.4.54 | 2026-06-14 | **CALIDAD — Push a móvil también en dictámenes Cuarentena/Rechazar/Baja**: además del SKU no registrado, ahora cuando Calidad dictamina un ítem como **CUARENTENA, RECHAZAR o BAJA** se envía push a móvil (ADMIN) vía la misma Edge Function `notify-inventario`. Se refactoriza el helper a `pushAdminInventario({title,body,payload})` genérico + `notificarDictamenPush` en `calidadService.js`; se dispara en `enviarDictamen` de `InformeDetail` (`Monitoreo.jsx`). REPROCESO (En Auditoría) no notifica. |
 | 1.4.53 | 2026-06-14 | **DEPLOY del push a móvil (Calidad)**: bundle móvil `com.cco.wms@1.4.53` a Capgo OTA + web a Render. Edge Function `notify-inventario` desplegada y ACTIVE en Supabase. El script `deploy:mobile` auto-incrementa el patch (1.4.52→1.4.53). |
