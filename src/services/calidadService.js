@@ -143,27 +143,19 @@ export async function marcarPreliminarCalidad(informeId) {
   return data;
 }
 
-// ── Crear informe + ítems ──────────────────────────────────────────────────
+// ── Crear informe + ítems (RPC transaccional: cabecera + número + ítems en una
+//    sola transacción; el número se genera bajo lock → sin cabecera huérfana ni
+//    carrera del correlativo). ────────────────────────────────────────────────
 export function useCrearInforme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ cabecera, items }) => {
-      const { data: numero, error: numErr } = await supabase.rpc('monitoreo_next_numero');
-      if (numErr) throw numErr;
-
-      const { data: informe, error: infErr } = await supabase
-        .from('tms_monitoreo_informes')
-        .insert({ ...cabecera, numero, total_items: items.length })
-        .select()
-        .single();
-      if (infErr) throw infErr;
-
-      if (items.length > 0) {
-        const rows = items.map((it) => ({ ...it, informe_id: informe.id }));
-        const { error: itErr } = await supabase.from('tms_monitoreo_items').insert(rows);
-        if (itErr) throw itErr;
-      }
-      return informe;
+      const { data, error } = await supabase.rpc('crear_informe_monitoreo', {
+        p_cabecera: cabecera,
+        p_items: items,
+      });
+      if (error) throw error;
+      return data; // fila del informe (jsonb)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['monitoreo_informes'] }),
   });
@@ -185,31 +177,21 @@ export function useActualizarEstadoInforme() {
 }
 
 // ── Editar informe (cabecera + reemplazo de ítems) ─────────────────────────
-// Usado por el informe de MONITOREO rutinario. Reemplaza la lista de ítems por
-// completo (borra los existentes y reinserta), por eso NO se usa para DANOS
-// (que conserva los IDs de ítem para no romper las evidencias fotográficas).
+// Usado por el informe de MONITOREO rutinario. RPC transaccional: si el INSERT
+// de ítems falla, TODO revierte (incluido el DELETE) → nunca deja el informe sin
+// ítems (antes eran 3 peticiones sueltas y un fallo borraba los datos). NO se usa
+// para DANOS (que conserva los IDs de ítem para no romper las evidencias).
 export function useActualizarInforme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ informeId, cabecera, items }) => {
-      const { error: infErr } = await supabase
-        .from('tms_monitoreo_informes')
-        .update({ ...cabecera, total_items: items.length })
-        .eq('id', informeId);
-      if (infErr) throw infErr;
-
-      const { error: delErr } = await supabase
-        .from('tms_monitoreo_items')
-        .delete()
-        .eq('informe_id', informeId);
-      if (delErr) throw delErr;
-
-      if (items.length > 0) {
-        const rows = items.map((it) => ({ ...it, informe_id: informeId }));
-        const { error: insErr } = await supabase.from('tms_monitoreo_items').insert(rows);
-        if (insErr) throw insErr;
-      }
-      return { id: informeId };
+      const { data, error } = await supabase.rpc('actualizar_informe_monitoreo', {
+        p_informe_id: informeId,
+        p_cabecera: cabecera,
+        p_items: items,
+      });
+      if (error) throw error;
+      return data; // { id }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
@@ -315,6 +297,17 @@ export function useGuardarInformeDanos() {
 
       const toDelete = [...existIds].filter((x) => !keepIds.has(x));
       if (toDelete.length) {
+        // Limpiar evidencias en Storage antes de borrar los ítems: el ON DELETE
+        // CASCADE elimina las filas de tms_monitoreo_evidencias pero NO los
+        // objetos del bucket → quedarían huérfanos (fuga de almacenamiento).
+        const { data: evHuerfanas } = await supabase
+          .from('tms_monitoreo_evidencias')
+          .select('storage_path')
+          .in('item_id', toDelete);
+        const paths = (evHuerfanas || []).map((e) => e.storage_path).filter(Boolean);
+        if (paths.length) {
+          await supabase.storage.from(EVIDENCIAS_BUCKET).remove(paths);
+        }
         const { error } = await supabase.from('tms_monitoreo_items').delete().in('id', toDelete);
         if (error) throw error;
       }
