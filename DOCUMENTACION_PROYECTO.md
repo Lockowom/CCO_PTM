@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.41 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.43 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.43 | 2026-06-14 | **DEPLOY del rediseño de Ubicaciones**: bundle móvil `com.cco.wms@1.4.43` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.42→1.4.43). |
+| 1.4.42 | 2026-06-14 | **REDISEÑO: Explorador de Ubicaciones (`/queries/locations`)**: rediseño visual de `WmsLocations.jsx` con buscador central protagónico (estilo Lotes/Series), minimalista y claro. **Título "Ubicaciones" destacado** con degradado ámbar/naranja; barra de búsqueda con **halo animado** al enfocar (glow + ring + leve elevación) y contador de resultados en vivo. **Búsqueda instantánea** (se elimina el debounce de 250 ms → filtra en cada tecla sobre el inventario en memoria; escribir/borrar refleja al instante). Tarjetas de ubicación minimalistas: barra de color por estado de stock, código en monoespaciada, stock grande, y **estados de calidad resaltados** (En cuarentena, etc.) vía `CalidadBadge`. Se conserva toda la lógica: virtualización (TanStack Virtual), filtros Todos/Con stock/Vacías, orden, export CSV, atajo Ctrl+K y overlay de calidad. Sin cambios de BD. |
 | 1.4.41 | 2026-06-14 | **DEPLOY del fix de Lotes y Series**: bundle móvil `com.cco.wms@1.4.41` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.40→1.4.41). |
 | 1.4.40 | 2026-06-14 | **FIX (Lotes y Series solo mostraba 150)**: el módulo `Batches.jsx` (buscador `/queries/batches`) llamaba a la RPC `search_batches` con `p_limit: 150`, por lo que una búsqueda mostraba máximo 150 series aunque la tabla `tms_series` tuviera miles (p. ej. una carga de 4608). No era pérdida de datos en la carga masiva (la carga reportó 4608 · 0 errores) sino un **tope de visualización**. Se sube `p_limit` a **2000** para que la búsqueda por producto muestre todas sus series. `search_batches` limita por tabla, así que el payload sigue acotado. Sin cambios de BD. |
 | 1.4.39 | 2026-06-14 | **DEPLOY del módulo Recepción Productos Nacionales**: bundle móvil `com.cco.wms@1.4.39` a Capgo OTA + web a Render. Migración `017` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.38→1.4.39). |
