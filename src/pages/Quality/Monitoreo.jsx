@@ -13,7 +13,7 @@ import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
   useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
   useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad, fetchLotesSeries,
-  notificarInventarioPush,
+  notificarInventarioPush, notificarDictamenPush,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
@@ -827,6 +827,15 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
         acuse: f.acuse,
       });
       toast.success(`Dictamen registrado: ${def?.label}${def?.mueve ? ' · aviso enviado a Inventario' : ''}`);
+      // Push a móvil (ADMIN) para dictámenes que sacan producto de circulación.
+      if (['CUARENTENA', 'RECHAZAR', 'BAJA'].includes(f.dictamen)) {
+        notificarDictamenPush({
+          codigo: item.codigo_producto,
+          ubicacion: item.ubicacion,
+          estadoLabel: def?.label || f.dictamen,
+          tipo: 'CALIDAD_DICTAMEN',
+        });
+      }
     } catch (e) {
       toast.error(`Error: ${e.message}`);
     }

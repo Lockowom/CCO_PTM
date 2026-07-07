@@ -100,19 +100,32 @@ export async function fetchLotesSeries(codigo, query = '') {
   return data || [];
 }
 
-// ── Push a móvil (ADMIN) por SKU no registrado ─────────────────────────────
-// Invoca la Edge Function notify-inventario (FCM v1). No bloquea el flujo.
-export async function notificarInventarioPush(alertas, informeId) {
+// ── Push a móvil (ADMIN) — Edge Function notify-inventario (FCM v1) ─────────
+// Genérico; no bloquea el flujo si falla.
+export async function pushAdminInventario({ title, body, payload }) {
   try {
     await supabase.functions.invoke('notify-inventario', {
-      body: {
-        rol: 'ADMIN',
-        title: '🚨 SKU no registrado en auditoría',
-        body: `${alertas} SKU no registrado(s) hallados en auditoría de Calidad. Requieren alta/ajuste por Inventario.`,
-        payload: { informe_id: informeId, tipo: 'CALIDAD_NO_REGISTRADO' },
-      },
+      body: { rol: 'ADMIN', title, body, payload: payload || {} },
     });
-  } catch (e) { console.error('notificarInventarioPush', e); }
+  } catch (e) { console.error('pushAdminInventario', e); }
+}
+
+// Alerta por SKU no registrado hallado en auditoría.
+export function notificarInventarioPush(alertas, informeId) {
+  return pushAdminInventario({
+    title: '🚨 SKU no registrado en auditoría',
+    body: `${alertas} SKU no registrado(s) hallados en auditoría de Calidad. Requieren alta/ajuste por Inventario.`,
+    payload: { informe_id: informeId, tipo: 'CALIDAD_NO_REGISTRADO' },
+  });
+}
+
+// Aviso por dictamen que requiere movimiento (Cuarentena / Rechazar / Baja).
+export function notificarDictamenPush({ codigo, ubicacion, estadoLabel, tipo }) {
+  return pushAdminInventario({
+    title: `⚠️ Calidad: ${estadoLabel}`,
+    body: `${codigo}${ubicacion ? ` en ${ubicacion}` : ''} dictaminado como ${estadoLabel}. Requiere movimiento/gestión por Inventario.`,
+    payload: { codigo_producto: codigo, ubicacion: ubicacion || '', tipo: tipo || 'CALIDAD_DICTAMEN' },
+  });
 }
 
 // ── Reflejo preliminar en Ubicaciones al enviar a Calidad ──────────────────

@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.53 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.55 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.55 | 2026-06-14 | **DEPLOY del push en dictámenes**: bundle móvil `com.cco.wms@1.4.55` a Capgo OTA + web a Render. El script `deploy:mobile` auto-incrementa el patch (1.4.54→1.4.55). |
+| 1.4.54 | 2026-06-14 | **CALIDAD — Push a móvil también en dictámenes Cuarentena/Rechazar/Baja**: además del SKU no registrado, ahora cuando Calidad dictamina un ítem como **CUARENTENA, RECHAZAR o BAJA** se envía push a móvil (ADMIN) vía la misma Edge Function `notify-inventario`. Se refactoriza el helper a `pushAdminInventario({title,body,payload})` genérico + `notificarDictamenPush` en `calidadService.js`; se dispara en `enviarDictamen` de `InformeDetail` (`Monitoreo.jsx`). REPROCESO (En Auditoría) no notifica. |
 | 1.4.53 | 2026-06-14 | **DEPLOY del push a móvil (Calidad)**: bundle móvil `com.cco.wms@1.4.53` a Capgo OTA + web a Render. Edge Function `notify-inventario` desplegada y ACTIVE en Supabase. El script `deploy:mobile` auto-incrementa el patch (1.4.52→1.4.53). |
 | 1.4.52 | 2026-06-14 | **CALIDAD — Push a móvil por SKU no registrado**: la alerta de SKU no registrado ahora **llega como notificación push** al celular de los ADMIN (app Android). **Edge Function `notify-inventario`** (nueva, `verify_jwt`) — clon de `notify-ticket`: FCM HTTP **v1** (OAuth2 con Service Account `FCM_SERVICE_ACCOUNT`), busca `push_token` de los usuarios del rol destino (ADMIN) y envía. Cliente: `notificarInventarioPush` en `calidadService.js` invoca la función al enviar a Calidad cuando hay alertas (`Monitoreo.jsx`). Solo app móvil (no web); requiere permiso de notificaciones y sesión activa. Reutiliza el canal `cco_tickets` y el secreto FCM ya configurado. |
 | 1.4.51 | 2026-06-14 | **DEPLOY del alta manual + alerta a Inventario**: bundle móvil `com.cco.wms@1.4.51` a Capgo OTA + web a Render. Migración `020` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.50→1.4.51). |
