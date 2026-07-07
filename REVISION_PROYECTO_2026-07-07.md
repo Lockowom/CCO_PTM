@@ -9,6 +9,30 @@
 
 ---
 
+## 0. Estado de remediación (2026-07-07, mismo día — v1.4.60)
+
+Tras la revisión se aplicó un **barrido de bugs** (commits en `claude/project-review-zv6vu3`):
+
+| Hallazgo | Estado |
+|---|---|
+| **V-1/V-2** 8 migraciones fuera del repo | ✅ Sincronizadas (`017`–`024`) + renumeradas |
+| **IN-1** cola offline `syncing` atascada (crítico) | ✅ Recupera ítems al reintentar |
+| **IN-2** fuga de listeners push | ✅ `removeAllListeners` antes de re-registrar |
+| **IN-3** CSP bloquea OpenStreetMap | ✅ `connect-src` con nominatim/osrm |
+| **IN-4/IN-7** inventario ficticio + 11 archivos muertos | ✅ Retirado / eliminados |
+| **IN-5/IN-6/IN-8** realtime/login/presence | ✅ Corregidos |
+| **CA-1/CA-2/CA-3** informe no transaccional + carrera correlativo | ✅ RPC atómica (migración `025`, verificada) |
+| **CA-4/CA-5/CA-6/CA-8/CA-9** UI de Calidad + fuga Storage | ✅ Corregidos |
+| **CA-7** reeditar dictaminado desincroniza flags | ⏳ Pendiente (requiere decisión de UX) |
+| **CA-10** clasificación PERECIBLE en `monitoreo_candidatos` | ⏳ Pendiente (BAJO; cambia resultados, requiere validación) |
+| **IN-9** `useBarcodeScanner` sin stop al desmontar | ⏳ Revisado: `scan()` de ML Kit es modal → no es fuga real |
+| **S-A/S-B/S-C/S-D/S-E** seguridad/RLS/leaked-password | ⏳ Pendientes (varios por diseño/dashboard) |
+| **M-2/M-3/M-4/M-5** store, god-components, console, TODOs | ⏳ Backlog (refactor) |
+
+Tests **45/45** y build **OK** tras los cambios. `dist/` se regenera al desplegar.
+
+---
+
 ## 1. Resumen ejecutivo
 
 | Categoría | 🔴 Crítico | 🟠 Alto | 🟡 Medio | 🟢 Bajo |
