@@ -1,6 +1,6 @@
 # CCO PTM — Documentación Técnica Completa
 
-> **Versión:** 1.4.51 | **Última actualización:** 2026-06-14
+> **Versión:** 1.4.53 | **Última actualización:** 2026-06-14
 > **Stack:** React 18 + Vite 5 + Supabase + Capacitor 8 + TailwindCSS
 > **Plataformas:** Web (Render) + Android (Capgo OTA)
 
@@ -993,6 +993,8 @@ Extensión de trigramas habilitada para búsqueda tolerante a typos. Índices GI
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.4.53 | 2026-06-14 | **DEPLOY del push a móvil (Calidad)**: bundle móvil `com.cco.wms@1.4.53` a Capgo OTA + web a Render. Edge Function `notify-inventario` desplegada y ACTIVE en Supabase. El script `deploy:mobile` auto-incrementa el patch (1.4.52→1.4.53). |
+| 1.4.52 | 2026-06-14 | **CALIDAD — Push a móvil por SKU no registrado**: la alerta de SKU no registrado ahora **llega como notificación push** al celular de los ADMIN (app Android). **Edge Function `notify-inventario`** (nueva, `verify_jwt`) — clon de `notify-ticket`: FCM HTTP **v1** (OAuth2 con Service Account `FCM_SERVICE_ACCOUNT`), busca `push_token` de los usuarios del rol destino (ADMIN) y envía. Cliente: `notificarInventarioPush` en `calidadService.js` invoca la función al enviar a Calidad cuando hay alertas (`Monitoreo.jsx`). Solo app móvil (no web); requiere permiso de notificaciones y sesión activa. Reutiliza el canal `cco_tickets` y el secreto FCM ya configurado. |
 | 1.4.51 | 2026-06-14 | **DEPLOY del alta manual + alerta a Inventario**: bundle móvil `com.cco.wms@1.4.51` a Capgo OTA + web a Render. Migración `020` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.50→1.4.51). |
 | 1.4.50 | 2026-06-14 | **CALIDAD — Alta manual (SKU no registrado) + alerta a Inventario**: en la toma se agrega botón **"Agregar manual"** para capturar un producto hallado en auditoría que **no aparece** en la búsqueda (código + ubicación obligatorios + lote/serie + cantidad), aunque no esté registrado en ninguna ubicación. El ítem se marca **"No registrado"** (badge ámbar) y condición `Sobrante`. **BD (migración `020_monitoreo_no_registrado.sql`)**: columna `no_registrado` en `tms_monitoreo_items`; la RPC `monitoreo_marcar_preliminar` extendida para (a) crear flag `EN_AUDITORIA` también para ítems no registrados (nota "NO REGISTRADO —") y (b) **insertar una alerta en `tms_notificaciones`** (`tipo=CALIDAD_NO_REGISTRADO`, payload con código/ubicación/lote) para que Inventario lo dé de alta; devuelve `{flags, alertas}`. La alerta queda registrada (aún sin bandeja de notificaciones en el front) y el hallazgo es visible como flag en Ubicaciones. Toast de confirmación de alertas al enviar. |
 | 1.4.49 | 2026-06-14 | **DEPLOY del selector de Lote/Serie**: bundle móvil `com.cco.wms@1.4.49` a Capgo OTA + web a Render. Migración `019` ya aplicada en BD live. El script `deploy:mobile` auto-incrementa el patch (1.4.48→1.4.49). |

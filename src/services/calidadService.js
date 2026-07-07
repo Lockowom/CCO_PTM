@@ -100,6 +100,21 @@ export async function fetchLotesSeries(codigo, query = '') {
   return data || [];
 }
 
+// ── Push a móvil (ADMIN) por SKU no registrado ─────────────────────────────
+// Invoca la Edge Function notify-inventario (FCM v1). No bloquea el flujo.
+export async function notificarInventarioPush(alertas, informeId) {
+  try {
+    await supabase.functions.invoke('notify-inventario', {
+      body: {
+        rol: 'ADMIN',
+        title: '🚨 SKU no registrado en auditoría',
+        body: `${alertas} SKU no registrado(s) hallados en auditoría de Calidad. Requieren alta/ajuste por Inventario.`,
+        payload: { informe_id: informeId, tipo: 'CALIDAD_NO_REGISTRADO' },
+      },
+    });
+  } catch (e) { console.error('notificarInventarioPush', e); }
+}
+
 // ── Reflejo preliminar en Ubicaciones al enviar a Calidad ──────────────────
 // Genera flags EN_AUDITORIA en tms_calidad_flags para los ítems con condición
 // problemática (≠ OK) y ubicación, para que se vean de inmediato en Ubicaciones.

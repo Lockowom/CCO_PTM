@@ -13,6 +13,7 @@ import {
   useInformes, useInformeItems, useCrearInforme, useActualizarEstadoInforme,
   useActualizarInforme, useEliminarInforme, useDictaminar, fetchCandidatos,
   useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad, fetchLotesSeries,
+  notificarInventarioPush,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
@@ -265,7 +266,10 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
             qc.invalidateQueries({ queryKey: ['calidad_flags'] });
             toast.info(`${res.flags} ubicación(es) marcadas "En Auditoría"`);
           }
-          if (res?.alertas > 0) toast.warning(`${res.alertas} alerta(s) a Inventario por SKU no registrado`);
+          if (res?.alertas > 0) {
+            toast.warning(`${res.alertas} alerta(s) a Inventario por SKU no registrado`);
+            notificarInventarioPush(res.alertas, informeId); // push a móvil (ADMIN)
+          }
         } catch (e) { console.error('preliminar', e); }
       }
       onSaved();
