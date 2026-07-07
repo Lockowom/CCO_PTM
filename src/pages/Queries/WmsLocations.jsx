@@ -127,6 +127,9 @@ const WmsLocations = () => {
 
   const filteredGroups = useMemo(() => {
     const q = search.toLowerCase().trim();
+    // Search-first: sin término no renderizamos nada (evita construir/virtualizar
+    // miles de tarjetas al entrar → la vista abre instantánea y liviana).
+    if (!q) return [];
     let results = Object.values(locationGroups);
 
     results = results.map(group => {
@@ -309,7 +312,13 @@ const WmsLocations = () => {
       {/* RESULTADOS */}
       <main ref={parentRef} className="flex-1 overflow-y-auto px-3 sm:px-4 pb-6">
         <div className="max-w-3xl mx-auto">
-          {loading && filteredGroups.length === 0 ? (
+          {!search.trim() ? (
+            <div className="flex flex-col items-center justify-center py-28 text-center">
+              <Search size={40} className="text-slate-200 mb-4" />
+              <h3 className="text-base font-bold text-slate-400 mb-1">Empieza a escribir</h3>
+              <p className="text-xs text-slate-300">Busca por ubicación, SKU o descripción para ver resultados</p>
+            </div>
+          ) : loading && filteredGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28">
               <div className="w-11 h-11 border-4 border-amber-100 border-t-amber-500 rounded-full animate-spin mb-5" />
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando datos...</p>
@@ -318,7 +327,7 @@ const WmsLocations = () => {
             <div className="flex flex-col items-center justify-center py-28">
               <Layers size={40} className="text-slate-200 mb-4" />
               <h3 className="text-base font-bold text-slate-400 mb-1">Sin resultados</h3>
-              <p className="text-xs text-slate-300">{search ? `No se encontró "${search}"` : 'No hay ubicaciones que mostrar'}</p>
+              <p className="text-xs text-slate-300">No se encontró "{search}"</p>
             </div>
           ) : (
             <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
