@@ -1,0 +1,178 @@
+// Documento del CheckList de Ingreso de Calidad en Word (.docx) y PDF.
+// Si la tarea es CONFORME → "Certificado de Conformidad" (con folio);
+// si es NO CONFORME → "Acta de CheckList (No Conforme)".
+// Librerías pesadas (docx, pdfmake) por import dinámico (solo al exportar).
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+const RESP_LABEL = { OK: 'Conforme', NO: 'No conforme', NA: 'N/A' };
+const ORIGEN_LABEL = { IMPORTACION: 'Importación', NACIONAL: 'Nacional' };
+
+function tituloDoc(tarea) {
+  if (tarea.resultado === 'CONFORME') return 'CERTIFICADO DE CONFORMIDAD';
+  if (tarea.resultado === 'NO_CONFORME') return 'ACTA — CHECKLIST DE INGRESO (NO CONFORME)';
+  return 'ACTA — CHECKLIST DE INGRESO';
+}
+
+function nombreArchivo(tarea, ext) {
+  const base = tarea.folio || `CheckList_${tarea.oc || 'ingreso'}`;
+  return `${String(base).replace(/[^\w.-]+/g, '_')}.${ext}`;
+}
+
+// ── Word (.docx) ────────────────────────────────────────────────────────────
+export async function exportChecklistWord(tarea, niveles = []) {
+  const {
+    Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
+    TableCell, WidthType, AlignmentType,
+  } = await import('docx');
+
+  const kvRow = (k, v) => new TableRow({ children: [
+    new TableCell({ width: { size: 35, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: k, bold: true })] })] }),
+    new TableCell({ width: { size: 65, type: WidthType.PERCENTAGE }, children: [new Paragraph(String(v ?? '—'))] }),
+  ] });
+  const th = (t) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, size: 18 })] })] });
+  const td = (t) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(t ?? '—'), size: 18 })] })] });
+
+  const children = [];
+  children.push(new Paragraph({ text: tituloDoc(tarea), heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }));
+  if (tarea.folio) children.push(new Paragraph({ text: `Folio: ${tarea.folio}`, alignment: AlignmentType.CENTER }));
+  children.push(new Paragraph(''));
+
+  children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+    kvRow('Proveedor', tarea.proveedor),
+    kvRow('Orden de compra', tarea.oc),
+    kvRow('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
+    kvRow('Fecha de recepción', tarea.fecha_recepcion),
+    kvRow('Bultos', tarea.bultos),
+    kvRow('Resultado', tarea.resultado ? RESP_LABEL[tarea.resultado === 'CONFORME' ? 'OK' : 'NO'] : (tarea.estado || '—')),
+    kvRow('Responsable de Calidad', tarea.realizado_nombre),
+    kvRow('Fecha de finalización', tarea.completado_en ? new Date(tarea.completado_en).toLocaleString('es-CL') : '—'),
+  ] }));
+  children.push(new Paragraph(''));
+
+  const ans = tarea.checklist || {};
+  niveles.forEach((nivel) => {
+    children.push(new Paragraph({ text: nivel.titulo, heading: HeadingLevel.HEADING_2 }));
+    children.push(new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({ children: ['Ítem', 'Resultado', 'Nota'].map(th) }),
+        ...nivel.params.map(p => new TableRow({ children: [
+          td(p.label),
+          td(RESP_LABEL[ans[p.id]?.estado] || '—'),
+          td(ans[p.id]?.nota || ''),
+        ] })),
+      ],
+    }));
+    children.push(new Paragraph(''));
+  });
+
+  if (tarea.observaciones) {
+    children.push(new Paragraph({ text: 'Observaciones', heading: HeadingLevel.HEADING_2 }));
+    children.push(new Paragraph(tarea.observaciones));
+    children.push(new Paragraph(''));
+  }
+
+  children.push(new Paragraph(''));
+  children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ children: [
+    new TableCell({ children: [
+      new Paragraph('_______________________________'),
+      new Paragraph({ children: [new TextRun({ text: tarea.realizado_nombre || 'Nombre / Firma', bold: true })] }),
+      new Paragraph('Calidad — Inspección de ingreso'),
+    ] }),
+    new TableCell({ children: [
+      new Paragraph('_______________________________'),
+      new Paragraph({ children: [new TextRun({ text: 'Nombre / Firma', bold: true })] }),
+      new Paragraph('Recepción / Bodega'),
+    ] }),
+  ] })] }));
+
+  const doc = new Document({ sections: [{ children }] });
+  const blob = await Packer.toBlob(doc);
+  downloadBlob(blob, nombreArchivo(tarea, 'docx'));
+}
+
+// ── PDF (pdfmake) ────────────────────────────────────────────────────────────
+export async function exportChecklistPDF(tarea, niveles = []) {
+  const pdfMakeMod = await import('pdfmake/build/pdfmake');
+  const pdfFontsMod = await import('pdfmake/build/vfs_fonts');
+  const pdfMake = pdfMakeMod.default || pdfMakeMod;
+  const fonts = pdfFontsMod.default || pdfFontsMod;
+  pdfMake.vfs = fonts.pdfMake?.vfs || fonts.vfs || pdfMake.vfs;
+
+  const ans = tarea.checklist || {};
+  const conforme = tarea.resultado === 'CONFORME';
+  const kv = (k, v) => [{ text: k, bold: true }, { text: String(v ?? '—') }];
+  const content = [];
+
+  content.push({ text: tituloDoc(tarea), style: 'title', color: conforme ? '#047857' : (tarea.resultado === 'NO_CONFORME' ? '#be123c' : '#0f172a') });
+  if (tarea.folio) content.push({ text: `Folio: ${tarea.folio}`, alignment: 'center', bold: true, margin: [0, 0, 0, 10], color: '#047857' });
+  else content.push({ text: '', margin: [0, 0, 0, 6] });
+
+  content.push({
+    table: { widths: ['35%', '65%'], body: [
+      kv('Proveedor', tarea.proveedor),
+      kv('Orden de compra', tarea.oc),
+      kv('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
+      kv('Fecha de recepción', tarea.fecha_recepcion),
+      kv('Bultos', tarea.bultos),
+      kv('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+      kv('Responsable de Calidad', tarea.realizado_nombre),
+      kv('Fecha de finalización', tarea.completado_en ? new Date(tarea.completado_en).toLocaleString('es-CL') : '—'),
+    ] },
+    layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+  });
+
+  niveles.forEach((nivel) => {
+    content.push({ text: nivel.titulo, style: 'h2' });
+    content.push({
+      table: {
+        headerRows: 1,
+        widths: ['*', 'auto', '35%'],
+        body: [
+          ['Ítem', 'Resultado', 'Nota'].map(t => ({ text: t, bold: true, fontSize: 9 })),
+          ...nivel.params.map(p => {
+            const e = ans[p.id]?.estado;
+            return [
+              { text: p.label, fontSize: 9 },
+              { text: RESP_LABEL[e] || '—', fontSize: 9, bold: true, color: e === 'NO' ? '#be123c' : (e === 'OK' ? '#047857' : '#64748b') },
+              { text: ans[p.id]?.nota || '', fontSize: 9 },
+            ];
+          }),
+        ],
+      },
+      layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+    });
+  });
+
+  if (tarea.observaciones) {
+    content.push({ text: 'Observaciones', style: 'h2' });
+    content.push({ text: tarea.observaciones, margin: [0, 0, 0, 12] });
+  }
+
+  content.push({
+    columns: [
+      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: tarea.realizado_nombre || 'Nombre / Firma', bold: true }, { text: 'Calidad — Inspección de ingreso', fontSize: 9, color: '#64748b' }] },
+      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: 'Nombre / Firma', bold: true }, { text: 'Recepción / Bodega', fontSize: 9, color: '#64748b' }] },
+    ],
+    columnGap: 24,
+  });
+
+  pdfMake.createPdf({
+    content,
+    defaultStyle: { fontSize: 10 },
+    styles: {
+      title: { fontSize: 16, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
+      h2: { fontSize: 12, bold: true, margin: [0, 10, 0, 4] },
+    },
+  }).download(nombreArchivo(tarea, 'pdf'));
+}

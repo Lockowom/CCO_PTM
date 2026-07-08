@@ -2,13 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
-  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck,
+  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_INGRESO_NIVELES, CHECKLIST_TODOS_PARAMS, ESTADO_TAREA_META,
   useTareasChecklist, useGuardarChecklist,
 } from '../../services/calidadService';
+import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
 const ORIGEN_META = {
   IMPORTACION: { label: 'Importación', cls: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
@@ -38,6 +39,13 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
     }
     return { answeredAll: answered === CHECKLIST_TODOS_PARAMS.length, hasNo: no, faltan: CHECKLIST_TODOS_PARAMS.length - answered };
   }, [answers]);
+
+  const descargar = async (fmt) => {
+    try {
+      if (fmt === 'pdf') await exportChecklistPDF(tarea, CHECKLIST_INGRESO_NIVELES);
+      else await exportChecklistWord(tarea, CHECKLIST_INGRESO_NIVELES);
+    } catch (e) { toast.error(`No se pudo generar el documento: ${e.message}`); }
+  };
 
   const guardarAvance = async () => {
     try {
@@ -104,12 +112,24 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
             </p>
           </div>
         </div>
-        {tarea.folio && (
-          <div className="text-right">
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Certificado</p>
-            <p className="font-mono font-black text-emerald-700">{tarea.folio}</p>
+        <div className="flex items-center gap-3">
+          {tarea.folio && (
+            <div className="text-right">
+              <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Certificado</p>
+              <p className="font-mono font-black text-emerald-700">{tarea.folio}</p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button onClick={() => descargar('pdf')} title="Descargar PDF"
+              className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50">
+              <FileDown size={15} /> PDF
+            </button>
+            <button onClick={() => descargar('word')} title="Descargar Word"
+              className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50">
+              <FileText size={15} /> Word
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Niveles + parámetros */}
