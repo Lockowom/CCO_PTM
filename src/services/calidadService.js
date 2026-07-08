@@ -498,6 +498,7 @@ export function useTareasChecklist() {
         supabase
           .from('tms_calidad_tareas')
           .select('*')
+          .eq('tipo', 'CHECKLIST_INGRESO')   // solo hito 1 (excluye CERTIFICADO_SALIDA)
           .order('created_at', { ascending: false }),
         { ms: 12000, label: 'tareas de checklist' }
       );
