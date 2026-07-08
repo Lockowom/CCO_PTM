@@ -47,7 +47,7 @@ const ReceptionNacional = () => {
 
   // Form state - Header
   const [header, setHeader] = useState({
-    fecha_recepcion: new Date().toISOString().split('T')[0],
+    fecha_recepcion: new Date().toLocaleDateString('en-CA'),
     proveedor: '',
     oc: '',
     cant_bultos: '',
@@ -362,7 +362,7 @@ const ReceptionNacional = () => {
       if (error) throw error;
 
       setHeader({
-        fecha_recepcion: recepcion.fecha_recepcion || new Date().toISOString().split('T')[0],
+        fecha_recepcion: recepcion.fecha_recepcion || new Date().toLocaleDateString('en-CA'),
         proveedor: recepcion.proveedor || '',
         oc: recepcion.oc || '',
         cant_bultos: recepcion.cant_bultos || '',
@@ -455,7 +455,7 @@ const ReceptionNacional = () => {
       { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 8 }
     ];
     XLSX.utils.book_append_sheet(wb, ws, 'Recepciones');
-    XLSX.writeFile(wb, `Recepciones_Nacionales_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `Recepciones_Nacionales_${new Date().toLocaleDateString('en-CA')}.xlsx`);
     toast.success('Reporte exportado');
   };
 
@@ -463,7 +463,7 @@ const ReceptionNacional = () => {
 
   const resetForm = () => {
     setHeader({
-      fecha_recepcion: new Date().toISOString().split('T')[0],
+      fecha_recepcion: new Date().toLocaleDateString('en-CA'),
       proveedor: '', oc: '', cant_bultos: '', pallets_usados: '',
       tipo_contenedor: '3-4', notas: ''
     });

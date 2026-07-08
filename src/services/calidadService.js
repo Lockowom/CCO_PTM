@@ -509,13 +509,14 @@ export async function verificarCertificado(folio) {
 export function useGuardarChecklist() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ tareaId, checklist, observaciones, finalizar, resultado }) => {
+    mutationFn: async ({ tareaId, checklist, observaciones, finalizar, resultado, disposicion }) => {
       const { data, error } = await supabase.rpc('guardar_checklist_ingreso', {
         p_tarea_id: tareaId,
         p_checklist: checklist || {},
         p_observaciones: observaciones ?? null,
         p_finalizar: !!finalizar,
         p_resultado: resultado ?? null,
+        p_disposicion: disposicion ?? null,
       });
       if (error) throw error;
       return data;

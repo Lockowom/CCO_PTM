@@ -60,7 +60,7 @@ export async function exportChecklistWord(tarea, niveles = []) {
     new TableRow({ children: [ new TableCell({
       shading: { fill: conforme ? 'ECFDF5' : 'FEF2F2', type: ShadingType.CLEAR, color: 'auto' },
       children: [
-        new Paragraph({ children: [new TextRun({ text: conforme ? '✓ CERTIFICADO DE CONFORMIDAD' : '✗ RECEPCIÓN NO CONFORME', bold: true, color: conforme ? '047857' : 'BE123C' })] }),
+        new Paragraph({ children: [new TextRun({ text: conforme ? 'CERTIFICADO DE CONFORMIDAD — CONFORME' : 'RECEPCIÓN NO CONFORME', bold: true, color: conforme ? '047857' : 'BE123C' })] }),
         new Paragraph({ children: [new TextRun({ text: `Folio: ${tarea.folio || '—'}`, bold: true, size: 26 })] }),
         new Paragraph({ children: [new TextRun({ text: `${tarea.realizado_nombre || ''}${tarea.completado_en ? ' · ' + new Date(tarea.completado_en).toLocaleString('es-CL') : ''}`, size: 16, color: '475569' })] }),
       ],
@@ -75,6 +75,7 @@ export async function exportChecklistWord(tarea, niveles = []) {
     kvRow('Fecha de recepción', tarea.fecha_recepcion),
     kvRow('Bultos', tarea.bultos),
     kvRow('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+    ...(tarea.disposicion ? [kvRow('Disposición / Acción a tomar', tarea.disposicion)] : []),
     kvRow('Responsable de Calidad', tarea.realizado_nombre),
     kvRow('Fecha de finalización', tarea.completado_en ? new Date(tarea.completado_en).toLocaleString('es-CL') : '—'),
   ] }));
@@ -145,7 +146,7 @@ export async function exportChecklistPDF(tarea, niveles = []) {
     table: { widths: ['*'], body: [[{
       fillColor: conforme ? '#ecfdf5' : '#fef2f2', margin: [10, 8, 10, 8],
       stack: [
-        { text: conforme ? '✓ CERTIFICADO DE CONFORMIDAD' : '✗ RECEPCIÓN NO CONFORME', bold: true, fontSize: 11, color: conforme ? '#047857' : '#be123c' },
+        { text: conforme ? 'CERTIFICADO DE CONFORMIDAD — CONFORME' : 'RECEPCIÓN NO CONFORME', bold: true, fontSize: 11, color: conforme ? '#047857' : '#be123c' },
         { text: `Folio: ${tarea.folio || '—'}`, bold: true, fontSize: 14, margin: [0, 2, 0, 0] },
         { text: `${tarea.realizado_nombre || ''}${tarea.completado_en ? ' · ' + fechaFin : ''}`, fontSize: 8, color: '#475569', margin: [0, 2, 0, 0] },
       ],
@@ -163,6 +164,7 @@ export async function exportChecklistPDF(tarea, niveles = []) {
       kv('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
       kv('Fecha de recepción', tarea.fecha_recepcion), kv('Bultos', tarea.bultos),
       kv('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+      ...(tarea.disposicion ? [kv('Disposición / Acción a tomar', tarea.disposicion)] : []),
       kv('Responsable de Calidad', tarea.realizado_nombre), kv('Fecha de finalización', fechaFin),
     ] },
     layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],

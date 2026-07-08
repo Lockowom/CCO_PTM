@@ -25,8 +25,9 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const [answers, setAnswers] = useState(() => tarea.checklist || {});
   const [obs, setObs] = useState(tarea.observaciones || '');
+  const [disp, setDisp] = useState(tarea.disposicion || '');
 
-  useEffect(() => { setAnswers(tarea.checklist || {}); setObs(tarea.observaciones || ''); }, [tarea.id]);
+  useEffect(() => { setAnswers(tarea.checklist || {}); setObs(tarea.observaciones || ''); setDisp(tarea.disposicion || ''); }, [tarea.id]);
 
   const setResp = (pid, estado) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], estado } }));
   const setNota = (pid, nota) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], nota } }));
@@ -58,7 +59,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const guardarAvance = async () => {
     try {
-      await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, finalizar: false });
+      await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, disposicion: disp, finalizar: false });
       toast.success('Avance guardado');
     } catch (e) { toast.error(`No se pudo guardar: ${e.message}`); }
   };
@@ -68,11 +69,12 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const finalizarAuto = async () => {
     if (!answeredAll) { toast.error(`Faltan ${faltan} ítem(s) por responder`); return; }
     const resultado = hasNo ? 'NO_CONFORME' : 'CONFORME';
+    if (resultado === 'NO_CONFORME' && !disp) { toast.error('Selecciona la Disposición / Acción a tomar antes de finalizar'); return; }
     if (!confirm(resultado === 'CONFORME'
-      ? 'Todos los ítems conformes → se CERTIFICARÁ automáticamente (se emite folio) y la tarea quedará bloqueada. ¿Continuar?'
-      : 'Hay ítems NO conformes → se marcará NO CONFORME y se generará la tarea urgente del Informe de Daños. ¿Continuar?')) return;
+      ? 'Todos los ítems conformes → se CERTIFICARÁ automáticamente (se emite folio CERT-) y la tarea quedará bloqueada. ¿Continuar?'
+      : `Hay ítems NO conformes → se marcará NO CONFORME (folio ACTA-), disposición "${disp}", y se generará la tarea urgente del Informe de Daños. ¿Continuar?`)) return;
     try {
-      const res = await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, finalizar: true, resultado });
+      const res = await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, disposicion: disp, finalizar: true, resultado });
       if (resultado === 'CONFORME') {
         toast.success(`Certificado automáticamente ${res?.folio || ''} — recepción CONFORME`);
         onBack();
@@ -176,6 +178,11 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
                         onChange={e => setNota(p.id, e.target.value)} placeholder="Detalle de la no conformidad…"
                         className="mt-1.5 w-full px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50/40 text-xs outline-none focus:border-rose-400" />
                     )}
+                    {answers[p.id]?.estado === 'NA' && (
+                      <input value={answers[p.id]?.nota || ''} disabled={readOnly}
+                        onChange={e => setNota(p.id, e.target.value)} placeholder="Justificación del N/A (recomendada para auditoría ISO)…"
+                        className="mt-1.5 w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs outline-none focus:border-slate-400" />
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <RespBtn pid={p.id} val="OK" icon={<Check size={16} />} activeCls="bg-emerald-500 border-emerald-500 text-white" />
@@ -187,6 +194,24 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
             </div>
           </div>
         ))}
+
+        {/* Disposición / Acción a tomar — obligatoria si hay No Conformes */}
+        {(hasNo || disp) && (
+          <div className={`rounded-2xl border p-5 ${hasNo ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-slate-200'}`}>
+            <label className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 text-rose-500">
+              Disposición / Acción a tomar {hasNo && <span>*obligatoria</span>}
+            </label>
+            <select value={disp} disabled={readOnly} onChange={e => setDisp(e.target.value)}
+              className="mt-1.5 w-full px-3 py-2 rounded-xl border border-rose-200 text-sm font-bold outline-none focus:border-rose-400 bg-white">
+              <option value="">— Seleccionar disposición —</option>
+              <option value="Rechazar y devolver al proveedor">Rechazar y devolver al proveedor</option>
+              <option value="Cuarentena (retención para evaluación)">Cuarentena (retención para evaluación)</option>
+              <option value="Aceptar con salvedades">Aceptar con salvedades</option>
+              <option value="Reproceso / reacondicionamiento">Reproceso / reacondicionamiento</option>
+              <option value="Solicitud de No Conformidad (NC) al proveedor">Solicitud de No Conformidad (NC) al proveedor</option>
+            </select>
+          </div>
+        )}
 
         {/* Observaciones */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
