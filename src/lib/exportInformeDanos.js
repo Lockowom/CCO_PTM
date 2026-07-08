@@ -1,6 +1,8 @@
 // Exportación del "Informe de Daños / No Conformidad" a Word (.docx) y PDF.
 // Las librerías pesadas (docx, pdfmake) se cargan con import dinámico para no
 // inflar el bundle principal (se descargan solo al exportar).
+// Formato de control documental ISO 13485 (encabezado/pie + logo) vía docIso.
+import { isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
 
 // ── Utilidades de imágenes ─────────────────────────────────────────────────
 async function fetchArrayBuffer(url) {
@@ -45,10 +47,12 @@ function buildModel(informe, hallazgos, evidencias) {
 
 // ── Word (.docx) ────────────────────────────────────────────────────────────
 export async function exportInformeDanosWord(informe, hallazgos = [], evidencias = []) {
+  const docx = await import('docx');
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
     TableCell, WidthType, ImageRun, AlignmentType,
-  } = await import('docx');
+  } = docx;
+  const { header, footer } = isoWordHeaderFooter(docx, 'danos');
 
   const { rep, evByItem } = buildModel(informe, hallazgos, evidencias);
 
@@ -162,7 +166,7 @@ export async function exportInformeDanosWord(informe, hallazgos = [], evidencias
     ] })],
   }));
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
   downloadBlob(blob, `${informe.numero || 'Informe_Danos'}.docx`);
 }
@@ -266,6 +270,9 @@ export async function exportInformeDanosPDF(informe, hallazgos = [], evidencias 
   });
 
   const docDefinition = {
+    pageMargins: isoPageMargins,
+    header: isoPdfHeader('danos'),
+    footer: isoPdfFooter('danos'),
     content,
     defaultStyle: { fontSize: 10 },
     styles: {

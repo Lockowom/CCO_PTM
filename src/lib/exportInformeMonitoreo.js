@@ -1,5 +1,7 @@
 // Documento formal del "Informe de Monitoreo a Calidad" en Word (.docx) y PDF.
 // Librerías pesadas (docx, pdfmake) por import dinámico (solo al exportar).
+// Formato de control documental ISO 13485 (encabezado/pie + logo) vía docIso.
+import { isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -38,10 +40,12 @@ function stats(items) {
 
 // ── Word (.docx) ────────────────────────────────────────────────────────────
 export async function exportInformeMonitoreoWord(informe, items = []) {
+  const docx = await import('docx');
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
     TableCell, WidthType, AlignmentType,
-  } = await import('docx');
+  } = docx;
+  const { header, footer } = isoWordHeaderFooter(docx, 'monitoreo');
   const s = stats(items);
 
   const kvRow = (k, v) => new TableRow({ children: [
@@ -107,7 +111,7 @@ export async function exportInformeMonitoreoWord(informe, items = []) {
     ] }),
   ] })] }));
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
   downloadBlob(blob, `${informe.numero || 'Informe_Monitoreo'}.docx`);
 }
@@ -179,6 +183,9 @@ export async function exportInformeMonitoreoPDF(informe, items = []) {
   });
 
   pdfMake.createPdf({
+    pageMargins: isoPageMargins,
+    header: isoPdfHeader('monitoreo'),
+    footer: isoPdfFooter('monitoreo'),
     content,
     defaultStyle: { fontSize: 10 },
     styles: {
