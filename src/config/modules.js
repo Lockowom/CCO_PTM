@@ -62,6 +62,7 @@ export const APP_ROUTES = [
   { value: '/admin/tickets', label: 'Admin - Tickets TI', module: 'admin' },
   { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' },
   { value: '/admin/locations', label: 'Admin - Gestión Ubicaciones', module: 'admin' },
+  { value: '/admin/bodegas-softland', label: 'Admin - Bodegas Softland', module: 'admin' },
   { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' }
 ];
 

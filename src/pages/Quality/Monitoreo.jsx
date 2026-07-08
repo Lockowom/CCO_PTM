@@ -22,7 +22,7 @@ import {
   useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad, fetchLotesSeries,
   notificarInventarioPush, notificarDictamenPush,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
-  TIPOS_ACCION, useCrearAccion, useAreasCalidad,
+  TIPOS_ACCION, useCrearAccion, useAreasCalidad, useBodegasDestino,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
@@ -884,6 +884,7 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
   const dictaminar = useDictaminar();
   const crearAccion = useCrearAccion();
   const { data: areas = [] } = useAreasCalidad();
+  const { data: bodegasDestino = [] } = useBodegasDestino();
   const actualizarEstado = useActualizarEstadoInforme();
   const [dictForm, setDictForm] = useState({});
 
@@ -1105,11 +1106,12 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
                     </div>
                     {def?.mueve && (
                       <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bodega destino</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bodega destino (Softland)</label>
                         <select value={f.bodegaDestino || ''} onChange={e => setForm(it.id, { bodegaDestino: e.target.value })}
                           className="block mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-400">
                           <option value="">— Elegir —</option>
-                          {BODEGAS_DESTINO.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
+                          {bodegasDestino.map(b => <option key={b.codigo} value={b.codigo}>{b.codigo} — {b.nombre} ({b.estado === 'TRANSITORIO' ? 'Transitorio' : 'Disponible'})</option>)}
+                          {bodegasDestino.length === 0 && BODEGAS_DESTINO.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
                         </select>
                       </div>
                     )}

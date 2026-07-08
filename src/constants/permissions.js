@@ -47,6 +47,7 @@ export const ROUTE_PERMISSIONS = {
   '/admin/views': ['manage_views', 'view_views'],
   '/admin/cleanup': ['manage_cleanup'],
   '/admin/locations': ['manage_locations'],
+  '/admin/bodegas-softland': ['manage_locations'],
   '/admin/tickets': ['manage_tickets'],
   '/admin/upload-history': ['admin_upload_history'],
   '/admin/monitor': ['admin_monitor'],

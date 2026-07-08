@@ -58,6 +58,7 @@ const AccionesCalidad = React.lazy(() => import('./pages/Quality/AccionesCalidad
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
+const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
 const Roles = React.lazy(() => import('./pages/Admin/Roles'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
 const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
@@ -371,6 +372,7 @@ function AppContent() {
           <Route path="admin/tickets" element={<ErrorBoundary><Tickets /></ErrorBoundary>} />
           <Route path="admin/upload-history" element={<ErrorBoundary><UploadHistory /></ErrorBoundary>} />
           <Route path="admin/locations" element={<ErrorBoundary><LocationManager /></ErrorBoundary>} />
+          <Route path="admin/bodegas-softland" element={<ErrorBoundary><BodegasSoftland /></ErrorBoundary>} />
           <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
         </Route>
 

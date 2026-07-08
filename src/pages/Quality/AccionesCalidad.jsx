@@ -137,6 +137,7 @@ const AccionesCalidad = () => {
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-200">{TIPO_LABEL[a.tipo_accion] || a.tipo_accion}</span>
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-md border bg-teal-50 text-teal-700 border-teal-200">→ {area?.label || a.area_responsable}</span>
                   {a.dictamen && <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${DICTAMEN_CLS[a.dictamen] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>{a.dictamen}</span>}
+                  {a.bodega_destino && <span className="text-[10px] font-black px-2 py-0.5 rounded-md border bg-slate-100 text-slate-600 border-slate-200">BD {a.bodega_destino}</span>}
                 </div>
 
                 {a.descripcion && <p className="text-xs text-slate-600 mt-2 italic">“{a.descripcion}”</p>}

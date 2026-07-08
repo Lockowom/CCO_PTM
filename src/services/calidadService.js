@@ -765,6 +765,49 @@ export const ESTADO_ACCION_META = {
   ANULADA:    { label: 'Anulada',    cls: 'bg-slate-100 text-slate-500 border-slate-200' },
 };
 
+// ── Bodegas Softland (catálogo para el destino del dictamen) ────────────────
+export function useBodegasSoftland() {
+  return useQuery({
+    queryKey: ['bodegas_softland'],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tms_bodegas_softland').select('*').order('orden');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+// Solo las que sirven como destino del dictamen (activas).
+export function useBodegasDestino() {
+  const q = useBodegasSoftland();
+  return { ...q, data: (q.data || []).filter(b => b.es_destino_dictamen && b.activo) };
+}
+export function useGuardarBodegaSoftland() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ codigo, nombre, estado, esDestino, activo, orden }) => {
+      const { data, error } = await supabase.rpc('guardar_bodega_softland', {
+        p_codigo: codigo, p_nombre: nombre, p_estado: estado || 'DISPONIBLE',
+        p_es_destino: !!esDestino, p_activo: activo !== false, p_orden: orden ?? 100,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bodegas_softland'] }),
+  });
+}
+export function useEliminarBodegaSoftland() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (codigo) => {
+      const { data, error } = await supabase.rpc('eliminar_bodega_softland', { p_codigo: codigo });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bodegas_softland'] }),
+  });
+}
+
 // Áreas responsables (con su mapeo de roles, para saber si el usuario puede cerrar).
 export function useAreasCalidad() {
   return useQuery({
