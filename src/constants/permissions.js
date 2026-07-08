@@ -35,8 +35,9 @@ export const ROUTE_PERMISSIONS = {
   '/queries/dispatch-control': ['view_dispatch_control'],
   '/queries/datasheet': ['view_fichas'],
 
-  // Calidad
-  '/quality/monitoreo': ['manage_monitoreo', 'manage_quality'],
+  // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
+  // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).
+  '/quality/monitoreo': ['manage_monitoreo', 'manage_quality', 'manage_inventory'],
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],

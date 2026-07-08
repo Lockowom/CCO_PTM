@@ -534,6 +534,84 @@ export async function verificarCertificado(folio) {
   return data;
 }
 
+// ── Hito 2 — Asignaciones de instancia (Inventario → Calidad) ──────────────
+export const ESTADO_ASIGNACION_META = {
+  PENDIENTE:  { label: 'Pendiente',  cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  EN_PROCESO: { label: 'En proceso', cls: 'bg-sky-100 text-sky-700 border-sky-200' },
+  RESUELTA:   { label: 'Resuelta',   cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  ANULADA:    { label: 'Anulada',    cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+};
+
+// Cola de asignaciones del hito 2 (pendientes/en proceso primero).
+export function useAsignacionesCalidad() {
+  return useQuery({
+    queryKey: ['calidad_asignaciones'],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
+    queryFn: async () => {
+      const { data, error } = await withTimeout(
+        supabase.from('tms_calidad_asignaciones').select('*').order('created_at', { ascending: false }),
+        { ms: 12000, label: 'asignaciones de calidad' }
+      );
+      if (error) throw error;
+      const prio = { PENDIENTE: 0, EN_PROCESO: 1, RESUELTA: 2, ANULADA: 3 };
+      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+    },
+  });
+}
+
+// Nº de asignaciones pendientes/en proceso (badge del hito 2).
+export function useAsignacionesPendientesCount() {
+  const { data = [] } = useAsignacionesCalidad();
+  return data.filter(a => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO').length;
+}
+
+// Crear asignación (Inventario asigna SKUs a Calidad).
+export function useCrearAsignacion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ skus, motivo, prioridad }) => {
+      const { data, error } = await supabase.rpc('crear_asignacion_calidad', {
+        p_skus: skus || [], p_motivo: motivo ?? null, p_prioridad: prioridad || 'NORMAL',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] }),
+  });
+}
+
+// Resolver asignación enlazando el informe/dictamen generado.
+export function useResolverAsignacion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ asignacionId, informeId, estado }) => {
+      const { data, error } = await supabase.rpc('resolver_asignacion_calidad', {
+        p_asignacion_id: asignacionId, p_informe_id: informeId ?? null, p_estado: estado || 'RESUELTA',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] }),
+  });
+}
+
+// Anular asignación (antes de resolver).
+export function useAnularAsignacion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (asignacionId) => {
+      const { data, error } = await supabase.rpc('anular_asignacion_calidad', { p_asignacion_id: asignacionId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

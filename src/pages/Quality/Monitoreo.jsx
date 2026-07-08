@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   ClipboardCheck, Plus, ArrowLeft, Search, Loader2, Trash2, Download,
   Send, FileSearch, ShieldCheck, CheckCircle2, Pencil, AlertTriangle,
-  FileText, FileType, Save,
+  FileText, FileType, Save, PackageSearch, Truck, Boxes, Lock,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
@@ -26,7 +26,10 @@ import {
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
 import ChecklistIngreso from './ChecklistIngreso';
-import { useTareasPendientesCount } from '../../services/calidadService';
+import AsignacionesPanel from './AsignacionesCalidad';
+import {
+  useTareasPendientesCount, useAsignacionesPendientesCount, useResolverAsignacion,
+} from '../../services/calidadService';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
 
 const SEMAFORO_CLS = {
@@ -121,12 +124,13 @@ const LoteSerieSelector = ({ codigo, value, onSelect }) => {
 };
 
 // ── Constructor / editor de informe de MONITOREO rutinario ─────────────────
-const InformeBuilder = ({ informe, onCancel, onSaved }) => {
+const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved }) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const editMode = !!informe;
   const crear = useCrearInforme();
   const actualizar = useActualizarInforme();
+  const resolverAsig = useResolverAsignacion();
   const { data: itemsExistentes } = useInformeItems(editMode ? informe.id : null);
 
   const [bodega, setBodega] = useState(informe?.bodega || '');
@@ -165,6 +169,33 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
       })));
     }
   }, [editMode, itemsExistentes]);
+
+  // Pre-carga desde una asignación del hito 2 (SKUs que Inventario envió a
+  // revisión) — solo en informe nuevo, una vez.
+  const prefilledRef = useRef(false);
+  useEffect(() => {
+    if (!editMode && Array.isArray(prefillItems) && prefillItems.length && !prefilledRef.current) {
+      prefilledRef.current = true;
+      setItems(prefillItems.map((c) => ({
+        _key: `${c.codigo_producto}|${c.partida || ''}|${c.ubicacion || ''}`,
+        codigo_producto: c.codigo_producto,
+        partida: c.partida || '',
+        ubicacion: c.ubicacion || '',
+        producto: c.producto || '',
+        unidad_medida: c.unidad_medida || 'UN',
+        cantidad: Number(c.cantidad) || 0,
+        estado_inventario: 'Disponible',
+        tipo: c.tipo || 'NO_PERECIBLE',
+        fecha_vencimiento: c.fecha_vencimiento || null,
+        semaforo: c.semaforo || 'NA',
+        condicion_observada: 'OK',
+        cantidad_afectada: 0,
+        no_registrado: false,
+        motivo: 'Hallazgo',
+        observaciones: '',
+      })));
+    }
+  }, [editMode, prefillItems]);
 
   const buscar = useCallback(async () => {
     setBuscando(true);
@@ -275,6 +306,14 @@ const InformeBuilder = ({ informe, onCancel, onSaved }) => {
         const nuevo = await crear.mutateAsync({ cabecera, items: cleanItems });
         informeId = nuevo?.id || null;
         toast.success(estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado');
+
+        // Si el informe nace de una asignación del hito 2, enlazarla y resolverla.
+        if (asignacionId && informeId) {
+          try {
+            await resolverAsig.mutateAsync({ asignacionId, informeId, estado: 'RESUELTA' });
+            toast.success('Asignación de instancia resuelta');
+          } catch (e) { console.error('resolver asignación', e); toast.error(`No se pudo enlazar la asignación: ${e.message}`); }
+        }
       }
 
       // Reflejo preliminar en Ubicaciones (En Auditoría) al enviar a Calidad.
@@ -1100,17 +1139,22 @@ function def_estado(dictamen) {
 const Monitoreo = () => {
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('manage_monitoreo') || hasPermission('manage_quality');
+  const canAssign = hasPermission('manage_inventory') || canCreate; // Inventario asigna; Calidad también
   const { data: informes = [], isLoading } = useInformes();
   const eliminar = useEliminarInforme();
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
-  const [tab, setTab] = useState('informes'); // informes | checklist
+  // Hitos del proceso de calidad, en orden: 1 Recepción · 2 Instancia · 3 Salida
+  const [tab, setTab] = useState('hito1');
   const [danosPrefill, setDanosPrefill] = useState(null); // pre-carga del Informe de Daños desde un checklist NC
+  const [asigPrefill, setAsigPrefill] = useState(null);   // pre-carga del informe desde una asignación (hito 2)
   const pendCount = useTareasPendientesCount();
+  const asigPendCount = useAsignacionesPendientesCount();
 
-  // Realtime en la cola de checklist: una recepción nueva crea la tarea vía
-  // trigger → la cola y el badge de pendientes se refrescan de inmediato.
+  // Realtime en las colas de checklist (hito 1) y asignaciones (hito 2): una
+  // recepción o una asignación nueva refresca la cola y el badge de inmediato.
   useRealtimeTable('tms_calidad_tareas', ['calidad_tareas'], { debounceMs: 400 });
+  useRealtimeTable('tms_calidad_asignaciones', ['calidad_asignaciones'], { debounceMs: 400 });
 
   useEffect(() => {
     if (mode === 'detail' && selected) {
@@ -1138,7 +1182,7 @@ const Monitoreo = () => {
       toast.error(`No se pudo eliminar: ${e.message}`);
     }
   };
-  const volver = () => { setMode('list'); setSelected(null); setDanosPrefill(null); };
+  const volver = () => { setMode('list'); setSelected(null); setDanosPrefill(null); setAsigPrefill(null); };
 
   // Desde una tarea de checklist NO CONFORME: abre el Informe de Daños pre-cargado.
   const generarDanosDesdeChecklist = (tarea) => {
@@ -1147,8 +1191,17 @@ const Monitoreo = () => {
       proveedor: tarea.proveedor, oc: tarea.oc, origen: tarea.origen,
       fecha_recepcion: tarea.fecha_recepcion, recepcion_id: tarea.recepcion_id, tarea_id: tarea.id,
     });
-    setTab('informes');
+    setTab('hito2');
     setMode('new-danos');
+  };
+
+  // Hito 2: desde una asignación de Inventario, abre el Informe de Monitoreo
+  // pre-cargado con los SKUs; al guardarlo, la asignación queda resuelta.
+  const generarInformeDesdeAsignacion = (asig) => {
+    setSelected(null);
+    setAsigPrefill(asig);
+    setTab('hito2');
+    setMode('new');
   };
 
   return (
@@ -1161,11 +1214,11 @@ const Monitoreo = () => {
             <ClipboardCheck size={30} strokeWidth={2.4} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Monitoreo a <span className="text-emerald-600">Calidad</span></h1>
-            <p className="text-slate-500 font-bold text-sm">Informes de inventario, daños, dictámenes y estado de producto</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Módulo de <span className="text-emerald-600">Calidad</span></h1>
+            <p className="text-slate-500 font-bold text-sm">Proceso por hitos: Recepción · Instancia · Salida</p>
           </div>
         </div>
-        {mode === 'list' && tab === 'informes' && canCreate && (
+        {mode === 'list' && tab === 'hito2' && canCreate && (
           <div className="flex flex-wrap gap-2">
             <button onClick={() => { setSelected(null); setMode('new'); }}
               className="px-5 py-3 bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-emerald-600/20 hover:bg-emerald-700">
@@ -1179,27 +1232,48 @@ const Monitoreo = () => {
         )}
       </div>
 
-      {/* Pestañas: Informes (Estancia) vs CheckList de Ingreso */}
+      {/* Hitos del proceso de Calidad, en orden */}
       {mode === 'list' && (
-        <div className="flex gap-2 mb-5">
-          <button onClick={() => setTab('informes')}
-            className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors ${tab === 'informes' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-            Informes
-          </button>
-          <button onClick={() => setTab('checklist')}
-            className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors flex items-center gap-2 ${tab === 'checklist' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-            CheckList de Ingreso
-            {pendCount > 0 && (
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${tab === 'checklist' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-700'}`}>{pendCount}</span>
-            )}
-          </button>
+        <div className="flex flex-wrap gap-2 mb-5">
+          {[
+            { id: 'hito1', n: 1, label: 'Recepción', sub: 'Ingreso a bodega', icon: PackageSearch, badge: pendCount },
+            { id: 'hito2', n: 2, label: 'Instancia', sub: 'Producto en almacenamiento', icon: Boxes, badge: asigPendCount },
+            { id: 'hito3', n: 3, label: 'Salida', sub: 'Despacho', icon: Truck, badge: 0 },
+          ].map(h => {
+            const Icon = h.icon;
+            const active = tab === h.id;
+            return (
+              <button key={h.id} onClick={() => setTab(h.id)}
+                className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors flex items-center gap-2.5 ${active ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] ${active ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>{h.n}</span>
+                <Icon size={16} className="shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span>{h.label}</span>
+                  <span className={`text-[9px] font-bold ${active ? 'text-white/70' : 'text-slate-400'}`}>{h.sub}</span>
+                </span>
+                {h.badge > 0 && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${active ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-700'}`}>{h.badge}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {mode === 'list' && tab === 'checklist' && <ChecklistIngreso onGenerarDanos={generarDanosDesdeChecklist} />}
+      {/* Hito 1 — Recepción (CheckList de ingreso) */}
+      {mode === 'list' && tab === 'hito1' && <ChecklistIngreso onGenerarDanos={generarDanosDesdeChecklist} />}
+
+      {/* Hito 3 — Salida (en preparación) */}
+      {mode === 'list' && tab === 'hito3' && (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+          <Lock size={36} className="text-slate-200 mx-auto mb-3" />
+          <h3 className="text-base font-black text-slate-500">Hito 3 — Salida / Despacho</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">Certificado de Conformidad de salida previo al despacho. En preparación — se habilitará en una próxima entrega.</p>
+        </div>
+      )}
 
       {mode === 'new' && (
-        <InformeBuilder onCancel={volver} onSaved={volver} />
+        <InformeBuilder prefillItems={asigPrefill?.skus} asignacionId={asigPrefill?.id} onCancel={volver} onSaved={volver} />
       )}
       {mode === 'edit' && selected && (
         <InformeBuilder informe={selected} onCancel={volver} onSaved={volver} />
@@ -1216,14 +1290,22 @@ const Monitoreo = () => {
           onDelete={canCreate ? borrarInforme : null} />
       )}
 
-      {mode === 'list' && tab === 'informes' && (
-        isLoading ? (
+      {/* Hito 2 — Instancia: asignaciones de Inventario + informes/dictámenes */}
+      {mode === 'list' && tab === 'hito2' && (
+        <AsignacionesPanel canAssign={canAssign} canManageQuality={canCreate}
+          onGenerarInforme={generarInformeDesdeAsignacion} />
+      )}
+
+      {mode === 'list' && tab === 'hito2' && (
+        <>
+        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2 mb-3"><FileSearch size={16} className="text-emerald-500" /> Informes y dictámenes de instancia</h3>
+        {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>
         ) : informes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <FileSearch size={44} className="text-slate-200 mb-4" />
             <h3 className="text-base font-bold text-slate-400">Sin informes de monitoreo</h3>
-            <p className="text-xs text-slate-300">{canCreate ? 'Crea el primero con “Monitoreo” o “Informe de Daños”.' : 'Aún no hay informes generados.'}</p>
+            <p className="text-xs text-slate-300">{canCreate ? 'Crea el primero con “Monitoreo” o “Informe de Daños”, o desde una asignación de Inventario.' : 'Aún no hay informes generados.'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1263,7 +1345,8 @@ const Monitoreo = () => {
               );
             })}
           </div>
-        )
+        )}
+        </>
       )}
     </div>
   );
