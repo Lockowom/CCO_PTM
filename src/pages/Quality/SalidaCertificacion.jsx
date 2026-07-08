@@ -8,77 +8,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_SALIDA_NIVELES, CHECKLIST_SALIDA_TODOS, DISPOSICIONES_SALIDA, ESTADO_TAREA_META,
-  useTareasSalida, useCrearTareaSalida, useCrearTareaSalidaManual, useGuardarChecklist,
-  useFirmarCertificado, buscarDespachos, fetchCandidatos, useEliminarTareaCalidad,
+  useTareasSalida, useCrearTareaSalidaManual, useGuardarChecklist,
+  useFirmarCertificado, fetchCandidatos, useEliminarTareaCalidad,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
-
-// ── Modal: elegir el despacho a certificar ──────────────────────────────────
-const DespachoModal = ({ onClose, onCreated }) => {
-  const crear = useCrearTareaSalida();
-  const [query, setQuery] = useState('');
-  const [buscando, setBuscando] = useState(false);
-  const [rows, setRows] = useState([]);
-
-  const buscar = useCallback(async () => {
-    setBuscando(true);
-    try { setRows(await buscarDespachos(query)); }
-    catch (e) { toast.error(`Error buscando despachos: ${e.message}`); }
-    finally { setBuscando(false); }
-  }, [query]);
-
-  useEffect(() => { buscar(); }, []); // primera carga: últimos despachos
-
-  const certificar = async (d) => {
-    try {
-      const r = await crear.mutateAsync(d.id);
-      toast.success(r?.reused ? 'Ya existía una certificación en curso — abierta' : 'Certificación de salida creada');
-      onCreated(r?.id);
-    } catch (e) { toast.error(`No se pudo crear: ${e.message}`); }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-3" onClick={onClose}>
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h3 className="font-black text-slate-900 flex items-center gap-2"><Truck size={18} className="text-emerald-600" /> Certificar salida — elegir despacho</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
-        </div>
-        <div className="p-5 overflow-y-auto space-y-4">
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 focus-within:border-emerald-400">
-              <Search size={16} className="text-slate-400" />
-              <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && buscar()}
-                placeholder="Buscar por NV, cliente o guía…" className="flex-1 text-sm outline-none bg-transparent" />
-            </div>
-            <button onClick={buscar} disabled={buscando}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center gap-2 disabled:opacity-50">
-              {buscando ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />} Buscar
-            </button>
-          </div>
-          {rows.length === 0 ? (
-            <p className="text-xs text-slate-400 py-6 text-center">{buscando ? 'Buscando…' : 'Sin resultados.'}</p>
-          ) : (
-            <div className="border border-slate-100 rounded-xl divide-y divide-slate-50 max-h-80 overflow-y-auto">
-              {rows.map(d => (
-                <div key={d.id} className="px-3 py-2.5 hover:bg-emerald-50/40 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm text-slate-800 truncate">NV {d.nv || '—'} · {d.cliente || 's/cliente'}</p>
-                    <p className="text-xs text-slate-400">Guía {d.guia || '—'} · {d.bultos ?? 0} bultos · {d.transportista || d.empresa_transporte || 's/transportista'} · {d.fecha_despacho || 's/fecha'}</p>
-                  </div>
-                  <button onClick={() => certificar(d)} disabled={crear.isPending}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700 shrink-0 disabled:opacity-50">
-                    <Plus size={14} /> Certificar
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ── Modal: certificación de salida MANUAL (N.V. a mano + SKUs) ──────────────
 const ManualModal = ({ onClose, onCreated }) => {
@@ -458,7 +391,6 @@ const SalidaCertificacion = () => {
   const { data: tareas = [], isLoading, refetch, isFetching } = useTareasSalida();
   const eliminar = useEliminarTareaCalidad();
   const [sel, setSel] = useState(null);
-  const [modal, setModal] = useState(false);       // selector de despacho
   const [modalManual, setModalManual] = useState(false); // creación manual
 
   const borrar = async (t, e) => {
@@ -485,16 +417,10 @@ const SalidaCertificacion = () => {
             <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} /> Actualizar
           </button>
           {canManage && (
-            <>
-              <button onClick={() => setModalManual(true)}
-                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700">
-                <PencilLine size={14} /> Certificar manual (N.V. + SKU)
-              </button>
-              <button onClick={() => setModal(true)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50">
-                <Search size={14} /> Desde despacho
-              </button>
-            </>
+            <button onClick={() => setModalManual(true)}
+              className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700">
+              <PencilLine size={14} /> Certificar salida (N.V. + SKU)
+            </button>
           )}
         </div>
       </div>
@@ -538,7 +464,6 @@ const SalidaCertificacion = () => {
         </div>
       )}
 
-      {modal && <DespachoModal onClose={() => setModal(false)} onCreated={(id) => { setModal(false); if (id) setSel(id); }} />}
       {modalManual && <ManualModal onClose={() => setModalManual(false)} onCreated={(id) => { setModalManual(false); if (id) setSel(id); }} />}
     </div>
   );
