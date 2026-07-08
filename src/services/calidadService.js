@@ -717,6 +717,36 @@ export function useCrearTareaSalidaManual() {
   });
 }
 
+// ── Borrado por ADMIN (limpieza de pruebas) ────────────────────────────────
+// Elimina una tarea de calidad (hito 1 checklist de ingreso / hito 3 salida).
+export function useEliminarTareaCalidad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (tareaId) => {
+      const { data, error } = await supabase.rpc('eliminar_tarea_calidad', { p_tarea_id: tareaId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calidad_tareas'] });
+      qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] });
+    },
+  });
+}
+
+// Elimina una asignación de instancia (hito 2).
+export function useEliminarAsignacionCalidad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (asignacionId) => {
+      const { data, error } = await supabase.rpc('eliminar_asignacion_calidad', { p_asignacion_id: asignacionId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

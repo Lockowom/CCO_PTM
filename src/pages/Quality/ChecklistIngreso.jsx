@@ -3,12 +3,13 @@ import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
   ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck, RefreshCw,
-  Layers, Stamp, Info,
+  Layers, Stamp, Info, Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_INGRESO_NIVELES, ESTADO_TAREA_META, CATEGORIA_META,
   useTareasChecklist, useGuardarChecklist, useFirmarCertificado, useCategoriasTarea,
+  useEliminarTareaCalidad,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
@@ -333,10 +334,19 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
 // ── Cola de tareas de checklist ─────────────────────────────────────────────
 const ChecklistIngreso = ({ onGenerarDanos }) => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const canManage = hasPermission('manage_quality') || hasPermission('manage_monitoreo');
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
   const { data: tareas = [], isLoading, refetch, isFetching } = useTareasChecklist();
+  const eliminar = useEliminarTareaCalidad();
   const [sel, setSel] = useState(null);
+
+  const borrar = async (t, e) => {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar la tarea de ${t.proveedor || 'recepción'} (OC ${t.oc || '—'})? Esta acción no se puede deshacer.`)) return;
+    try { await eliminar.mutateAsync(t.id); toast.success('Tarea eliminada'); }
+    catch (err) { toast.error(`No se pudo eliminar: ${err.message}`); }
+  };
 
   // Refrescar la tarea seleccionada cuando cambian los datos.
   const selFresh = sel ? tareas.find(t => t.id === sel.id) || sel : null;
@@ -372,11 +382,17 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
         const om = ORIGEN_META[t.origen] || {};
         const pend = t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO';
         return (
-          <button key={t.id} onClick={() => setSel(t)}
-            className={`text-left bg-white rounded-2xl border p-5 transition-all hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}>
+          <div key={t.id} role="button" tabIndex={0} onClick={() => setSel(t)}
+            className={`cursor-pointer text-left bg-white rounded-2xl border p-5 transition-all hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}>
             <div className="flex items-center justify-between mb-3 gap-2">
               <span className="flex items-center gap-1.5 font-black text-slate-900 truncate"><Package size={16} className="text-slate-400 shrink-0" />{t.proveedor || 'Sin proveedor'}</span>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border shrink-0 ${meta.cls}`}>{meta.label || t.estado}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${meta.cls}`}>{meta.label || t.estado}</span>
+                {isAdmin && (
+                  <button onClick={(e) => borrar(t, e)} title="Eliminar (admin)"
+                    className="p-1.5 rounded-lg text-slate-300 hover:bg-rose-100 hover:text-rose-600"><Trash2 size={14} /></button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 mb-2">
               <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${om.cls}`}>{om.label || t.origen}</span>
@@ -384,7 +400,7 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
             </div>
             <p className="text-sm text-slate-500 font-medium">OC {t.oc || '—'} · {t.fecha_recepcion || '—'}</p>
             {t.bultos != null && <p className="text-xs text-slate-400 mt-1">{t.bultos} bultos</p>}
-          </button>
+          </div>
             );
           })}
         </div>

@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import {
   fetchCandidatos, useAsignacionesCalidad, useCrearAsignacion, useAnularAsignacion,
-  ESTADO_ASIGNACION_META,
+  useEliminarAsignacionCalidad, ESTADO_ASIGNACION_META,
 } from '../../services/calidadService';
+import { useAuth } from '../../context/AuthContext';
 
 // ── Modal: Inventario arma la asignación (busca stock y elige SKUs) ─────────
 const AsignarModal = ({ onClose }) => {
@@ -145,14 +146,22 @@ const AsignarModal = ({ onClose }) => {
 
 // ── Panel de asignaciones (cola de tareas del hito 2) ───────────────────────
 const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
   const { data: asignaciones = [], isLoading } = useAsignacionesCalidad();
   const anular = useAnularAsignacion();
+  const eliminar = useEliminarAsignacionCalidad();
   const [modal, setModal] = useState(false);
 
   const anularAsig = async (a) => {
     if (!confirm('¿Anular esta asignación? No se podrá revertir.')) return;
     try { await anular.mutateAsync(a.id); toast.success('Asignación anulada'); }
     catch (e) { toast.error(`No se pudo anular: ${e.message}`); }
+  };
+  const borrarAsig = async (a) => {
+    if (!confirm('¿Eliminar esta asignación definitivamente? Esta acción no se puede deshacer.')) return;
+    try { await eliminar.mutateAsync(a.id); toast.success('Asignación eliminada'); }
+    catch (e) { toast.error(`No se pudo eliminar: ${e.message}`); }
   };
 
   const pendientes = asignaciones.filter(a => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO').length;
@@ -190,9 +199,15 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
               <div key={a.id} className={`bg-white rounded-2xl border p-4 ${abierta ? 'border-amber-200' : 'border-slate-200'}`}>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${meta.cls}`}>{meta.label || a.estado}</span>
-                  {a.prioridad === 'URGENTE' && a.estado !== 'RESUELTA' && (
-                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border bg-rose-100 text-rose-700 border-rose-200 flex items-center gap-1"><AlertTriangle size={11} /> Urgente</span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {a.prioridad === 'URGENTE' && a.estado !== 'RESUELTA' && (
+                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border bg-rose-100 text-rose-700 border-rose-200 flex items-center gap-1"><AlertTriangle size={11} /> Urgente</span>
+                    )}
+                    {isAdmin && (
+                      <button onClick={() => borrarAsig(a)} title="Eliminar (admin)"
+                        className="p-1.5 rounded-lg text-slate-300 hover:bg-rose-100 hover:text-rose-600"><Trash2 size={14} /></button>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm font-black text-slate-800">{skus.length} SKU(s)</p>
                 <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">

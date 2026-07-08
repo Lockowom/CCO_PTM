@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_SALIDA_NIVELES, CHECKLIST_SALIDA_TODOS, DISPOSICIONES_SALIDA, ESTADO_TAREA_META,
   useTareasSalida, useCrearTareaSalida, useCrearTareaSalidaManual, useGuardarChecklist,
-  useFirmarCertificado, buscarDespachos, fetchCandidatos,
+  useFirmarCertificado, buscarDespachos, fetchCandidatos, useEliminarTareaCalidad,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
@@ -452,12 +452,21 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
 
 // ── Cola del hito 3 ─────────────────────────────────────────────────────────
 const SalidaCertificacion = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const canManage = hasPermission('manage_quality') || hasPermission('manage_monitoreo');
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
   const { data: tareas = [], isLoading, refetch, isFetching } = useTareasSalida();
+  const eliminar = useEliminarTareaCalidad();
   const [sel, setSel] = useState(null);
   const [modal, setModal] = useState(false);       // selector de despacho
   const [modalManual, setModalManual] = useState(false); // creación manual
+
+  const borrar = async (t, e) => {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar la certificación de salida (NV ${t.oc || '—'})? Esta acción no se puede deshacer.`)) return;
+    try { await eliminar.mutateAsync(t.id); toast.success('Certificación eliminada'); }
+    catch (err) { toast.error(`No se pudo eliminar: ${err.message}`); }
+  };
 
   const selFresh = sel ? tareas.find(t => t.id === sel) || null : null;
   if (selFresh) return <SalidaForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} />;
@@ -505,11 +514,17 @@ const SalidaCertificacion = () => {
             const ctx = t.contexto || {};
             const pend = t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO';
             return (
-              <button key={t.id} onClick={() => setSel(t.id)}
-                className={`text-left bg-white rounded-2xl border p-5 transition-all hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}>
+              <div key={t.id} role="button" tabIndex={0} onClick={() => setSel(t.id)}
+                className={`cursor-pointer text-left bg-white rounded-2xl border p-5 transition-all hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}>
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <span className="flex items-center gap-1.5 font-black text-slate-900 truncate"><Package size={16} className="text-slate-400 shrink-0" />{t.proveedor || ctx.cliente || 'Sin cliente'}</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border shrink-0 ${meta.cls}`}>{meta.label || t.estado}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${meta.cls}`}>{meta.label || t.estado}</span>
+                    {isAdmin && (
+                      <button onClick={(e) => borrar(t, e)} title="Eliminar (admin)"
+                        className="p-1.5 rounded-lg text-slate-300 hover:bg-rose-100 hover:text-rose-600"><Trash2 size={14} /></button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border bg-teal-50 text-teal-700 border-teal-200">NV {t.oc || ctx.nv || '—'}</span>
@@ -517,7 +532,7 @@ const SalidaCertificacion = () => {
                 </div>
                 <p className="text-sm text-slate-500 font-medium">Guía {ctx.guia || '—'} · {t.fecha_recepcion || '—'}</p>
                 {t.bultos != null && <p className="text-xs text-slate-400 mt-1">{t.bultos} bultos · {ctx.transportista || ctx.empresa_transporte || 's/transportista'}</p>}
-              </button>
+              </div>
             );
           })}
         </div>
