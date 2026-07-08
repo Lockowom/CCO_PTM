@@ -454,9 +454,13 @@ export const ESTADO_TAREA_META = {
 };
 
 // Lista de tareas de checklist (cola). Pendientes/en proceso primero.
+// staleTime 0 + refetchOnMount → al abrir la pestaña siempre trae lo último
+// (una recepción recién registrada aparece de inmediato); realtime complementa.
 export function useTareasChecklist() {
   return useQuery({
     queryKey: ['calidad_tareas'],
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase

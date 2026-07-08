@@ -27,6 +27,7 @@ import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
 import ChecklistIngreso from './ChecklistIngreso';
 import { useTareasPendientesCount } from '../../services/calidadService';
+import useRealtimeTable from '../../hooks/useRealtimeTable';
 
 const SEMAFORO_CLS = {
   ROJO: 'bg-rose-500', NARANJA: 'bg-amber-500', VERDE: 'bg-emerald-500', NA: 'bg-slate-300',
@@ -1096,6 +1097,10 @@ const Monitoreo = () => {
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState('informes'); // informes | checklist
   const pendCount = useTareasPendientesCount();
+
+  // Realtime en la cola de checklist: una recepción nueva crea la tarea vía
+  // trigger → la cola y el badge de pendientes se refrescan de inmediato.
+  useRealtimeTable('tms_calidad_tareas', ['calidad_tareas'], { debounceMs: 400 });
 
   useEffect(() => {
     if (mode === 'detail' && selected) {
