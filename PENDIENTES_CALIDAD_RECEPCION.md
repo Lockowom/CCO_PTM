@@ -7,6 +7,12 @@
 ---
 
 ## 1. Formato ISO 13485 en los informes de Calidad + sello/folio
+> **ESTADO (2026-07-07, v1.4.66): HECHO para el Certificado/Acta del CheckList de Ingreso** —
+> `src/lib/exportChecklistIngreso.js` tiene encabezado/pie de control documental (empresa, código
+> `FO-CAL-001`, revisión, norma ISO 13485:2016, Página X de Y) y el folio como sello. Config en la
+> constante `DOC_CONTROL`. **Sigue pendiente:** aplicar el MISMO formato ISO a los informes de
+> **Monitoreo y Daños** (`exportInformeMonitoreo.js` / `exportInformeDanos.js`), y el **logo** real.
+
 **Qué:** que los informes (Monitoreo y/o Daños) salgan con **formato de control documental ISO** para
 insumos médicos (ISO 13485), no un export genérico.
 
