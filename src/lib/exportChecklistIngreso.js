@@ -112,6 +112,14 @@ export async function exportChecklistWord(tarea, niveles = []) {
     ] }),
   ] })] }));
 
+  if (tarea.firma_digital) {
+    children.push(new Paragraph(''));
+    children.push(new Paragraph({ children: [new TextRun({ text: 'FIRMA ELECTRÓNICA', bold: true })] }));
+    children.push(new Paragraph({ children: [new TextRun({ text: `Algoritmo: ${tarea.firma_algoritmo || 'HMAC-SHA256'} · Firmado por: ${tarea.firmado_nombre || '—'} · ${tarea.firmado_en ? new Date(tarea.firmado_en).toLocaleString('es-CL') : ''}`, size: 16, color: '475569' })] }));
+    children.push(new Paragraph({ children: [new TextRun({ text: tarea.firma_digital, size: 12, color: '94A3B8' })] }));
+    children.push(new Paragraph({ children: [new TextRun({ text: `Verificar en: ${window.location.origin}/verificar?folio=${tarea.folio || ''}`, size: 14, color: '475569' })] }));
+  }
+
   const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
   downloadBlob(blob, nombreArchivo(tarea, 'docx'));
@@ -190,6 +198,27 @@ export async function exportChecklistPDF(tarea, niveles = []) {
     ],
     columnGap: 24,
   });
+
+  // Firma electrónica + QR de verificación
+  if (tarea.firma_digital) {
+    const url = `${window.location.origin}/verificar?folio=${encodeURIComponent(tarea.folio || '')}`;
+    content.push({
+      columns: [
+        { width: '*', stack: [
+          { text: 'FIRMA ELECTRÓNICA', bold: true, fontSize: 9, color: '#0f172a' },
+          { text: `Algoritmo: ${tarea.firma_algoritmo || 'HMAC-SHA256'}`, fontSize: 8, color: '#475569' },
+          { text: `Firmado por: ${tarea.firmado_nombre || '—'}`, fontSize: 8, color: '#475569' },
+          { text: `Fecha: ${tarea.firmado_en ? new Date(tarea.firmado_en).toLocaleString('es-CL') : '—'}`, fontSize: 8, color: '#475569' },
+          { text: tarea.firma_digital, fontSize: 6, color: '#94a3b8', margin: [0, 2, 0, 0] },
+        ] },
+        { width: 'auto', stack: [
+          { qr: url, fit: 84, foreground: '#0f172a', margin: [0, 2, 0, 0] },
+          { text: 'Escanee para verificar', fontSize: 7, alignment: 'center', color: '#64748b' },
+        ] },
+      ],
+      columnGap: 16, margin: [0, 14, 0, 0],
+    });
+  }
 
   pdfMake.createPdf({
     pageMargins: isoPageMargins,

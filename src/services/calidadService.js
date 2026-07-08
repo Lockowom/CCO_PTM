@@ -482,6 +482,26 @@ export function useTareasPendientesCount() {
   return data.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
 }
 
+// Firma electrónica del certificado/acta (HMAC-SHA256 server-side).
+export function useFirmarCertificado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (tareaId) => {
+      const { data, error } = await supabase.rpc('firmar_certificado', { p_tarea_id: tareaId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_tareas'] }),
+  });
+}
+
+// Verificación pública por folio (para el QR / página de verificación).
+export async function verificarCertificado(folio) {
+  const { data, error } = await supabase.rpc('verificar_certificado', { p_folio: folio });
+  if (error) throw error;
+  return data;
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

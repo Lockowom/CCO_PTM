@@ -16,6 +16,7 @@ import { toast, Toaster } from 'sonner';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
+const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertificado'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // TMS Modules
@@ -315,6 +316,7 @@ function AppContent() {
       <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/verificar" element={<VerificarCertificado />} />
 
         {/* Protected Routes (Wrapped in ProtectedRoute) */}
         <Route path="/" element={<ProtectedRoute />}>

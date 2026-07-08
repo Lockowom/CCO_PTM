@@ -35,6 +35,14 @@ migración para `folio` y campos de sello en `tms_monitoreo_informes`.
 ---
 
 ## 2. Firma digital de los informes
+> **ESTADO (2026-07-07, v1.4.69): HECHO para el Certificado/Acta del CheckList** — firma electrónica
+> **HMAC-SHA256** server-side (migración `030`): llave en esquema `private`, RPC `firmar_certificado`
+> y `verificar_certificado` (pública, para el QR), botón "Firmar digitalmente", QR en el PDF y página
+> pública `/verificar`. Es una firma criptográfica interna (autenticidad + integridad, tamper-evident).
+> **Sigue pendiente:** firma con **certificado acreditado (PAdES verificable en Adobe / FEA con
+> validez legal plena)** — requiere el `.p12`/proveedor del usuario (opciones B/C); y extender la firma
+> a los informes de Monitoreo/Daños si se desea.
+
 **Qué:** el usuario eligió **firma digital** (no solo sello/QR).
 
 **Regla de oro (seguridad, no negociable):** la **llave privada/certificado NUNCA va en el frontend**

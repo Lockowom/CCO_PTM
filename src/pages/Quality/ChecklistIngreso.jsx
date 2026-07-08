@@ -2,12 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
-  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText,
+  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_INGRESO_NIVELES, CHECKLIST_TODOS_PARAMS, ESTADO_TAREA_META,
-  useTareasChecklist, useGuardarChecklist,
+  useTareasChecklist, useGuardarChecklist, useFirmarCertificado,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
@@ -19,6 +19,7 @@ const ORIGEN_META = {
 // ── Formulario del checklist de una tarea ───────────────────────────────────
 const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const guardar = useGuardarChecklist();
+  const firmar = useFirmarCertificado();
   const finalizada = tarea.estado === 'CONFORME' || tarea.estado === 'NO_CONFORME';
   const readOnly = finalizada || !canManage;
 
@@ -39,6 +40,14 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
     }
     return { answeredAll: answered === CHECKLIST_TODOS_PARAMS.length, hasNo: no, faltan: CHECKLIST_TODOS_PARAMS.length - answered };
   }, [answers]);
+
+  const firmarDoc = async () => {
+    if (!confirm('¿Firmar digitalmente este documento? Quedará sellado y verificable por folio/QR. No se puede deshacer.')) return;
+    try {
+      const r = await firmar.mutateAsync(tarea.id);
+      toast.success(`Documento firmado digitalmente por ${r?.firmado_nombre || ''}`);
+    } catch (e) { toast.error(`No se pudo firmar: ${e.message}`); }
+  };
 
   const descargar = async (fmt) => {
     try {
@@ -131,6 +140,26 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
           </div>
         </div>
       </div>
+
+      {/* Firma electrónica */}
+      {tarea.firma_digital ? (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 flex items-start gap-3">
+          <BadgeCheck size={22} className="text-emerald-600 shrink-0 mt-0.5" />
+          <div className="text-sm min-w-0">
+            <p className="font-black text-emerald-800">Firmado digitalmente</p>
+            <p className="text-emerald-700 text-xs">{tarea.firmado_nombre || '—'} · {tarea.firmado_en ? new Date(tarea.firmado_en).toLocaleString('es-CL') : ''} · {tarea.firma_algoritmo}</p>
+            <p className="text-[10px] font-mono text-emerald-500 break-all mt-0.5">{(tarea.firma_digital || '').slice(0, 40)}…</p>
+          </div>
+        </div>
+      ) : (finalizada && canManage) ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-slate-600 flex items-center gap-2"><PenLine size={18} className="text-slate-400" /> Documento sin firmar.</div>
+          <button onClick={firmarDoc} disabled={firmar.isPending}
+            className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center gap-2 hover:bg-slate-800 disabled:opacity-50">
+            <PenLine size={16} /> Firmar digitalmente
+          </button>
+        </div>
+      ) : null}
 
       {/* Niveles + parámetros */}
       <div className="space-y-4">

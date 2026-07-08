@@ -16,6 +16,7 @@
   - `027_monitoreo_candidatos_venc_por_partida.sql` — el vencimiento solo se hereda cuando la partida de la ubicación coincide con el lote (fix CA-10).
   - `028_checklist_ingreso_calidad.sql` — hito "Ingreso a bodega": `tms_calidad_tareas` + triggers `AFTER INSERT` en las recepciones (Importaciones/Nacionales) que generan la tarea de CheckList a Calidad; RPC `guardar_checklist_ingreso` (certifica CONFORME con folio o marca NO CONFORME con alerta urgente).
   - `029_realtime_calidad_tareas.sql` — agrega `tms_calidad_tareas` a la publicación `supabase_realtime` (la cola de checklist se refresca en vivo al registrar una recepción).
+  - `030_firma_certificado_calidad.sql` — firma electrónica (HMAC-SHA256) del Certificado/Acta: llave secreta en esquema `private`, RPC `firmar_certificado` (SECURITY DEFINER, permiso Calidad) y `verificar_certificado` (público, para el QR; no expone la llave). Columnas de firma en `tms_calidad_tareas`.
 - `functions_snapshot.sql` — **snapshot autoritativo** (idempotente, `CREATE OR REPLACE`) de
   todas las funciones/RPC tal como existen en la BD live (capa de seguridad `private.*` +
   wrappers `public`, y RPC de negocio). Útil para recrear o auditar.
