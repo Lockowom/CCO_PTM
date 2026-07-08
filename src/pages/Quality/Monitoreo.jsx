@@ -1139,9 +1139,10 @@ function def_estado(dictamen) {
 
 // ── Página principal ────────────────────────────────────────────────────────
 const Monitoreo = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const canCreate = hasPermission('manage_monitoreo') || hasPermission('manage_quality');
-  const canAssign = hasPermission('manage_inventory') || canCreate; // Inventario asigna; Calidad también
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
+  const canAssign = isAdmin; // Solo ADMIN alimenta el hito 2 (asigna SKUs a Calidad)
   const { data: informes = [], isLoading } = useInformes();
   const eliminar = useEliminarInforme();
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
