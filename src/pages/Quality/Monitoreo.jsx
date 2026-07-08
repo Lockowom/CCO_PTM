@@ -22,6 +22,7 @@ import {
   useGuardarInformeDanos, useInformeEvidencias, marcarPreliminarCalidad, fetchLotesSeries,
   notificarInventarioPush, notificarDictamenPush,
   DICTAMENES, BODEGAS_DESTINO, CONDICIONES, MOTIVOS, CLASIFICACIONES_DANO,
+  TIPOS_ACCION, useCrearAccion, useAreasCalidad,
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
@@ -881,6 +882,8 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
   const canDictar = hasPermission('manage_quality');
   const { data: items = [], isLoading } = useInformeItems(informe.id);
   const dictaminar = useDictaminar();
+  const crearAccion = useCrearAccion();
+  const { data: areas = [] } = useAreasCalidad();
   const actualizarEstado = useActualizarEstadoInforme();
   const [dictForm, setDictForm] = useState({});
 
@@ -907,6 +910,19 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
           estadoLabel: def?.label || f.dictamen,
           tipo: 'CALIDAD_DICTAMEN',
         });
+      }
+      // Promulgar la acción recomendada como tarea para el área responsable.
+      if (f.tipoAccion) {
+        const tdef = TIPOS_ACCION.find(t => t.id === f.tipoAccion);
+        const area = f.area || tdef?.area;
+        if (!area) { toast.error('Selecciona el área responsable de la acción'); return; }
+        try {
+          const ra = await crearAccion.mutateAsync({
+            itemId: item.id, tipoAccion: f.tipoAccion, area,
+            descripcion: f.descAccion, prioridad: f.prioridad || 'NORMAL',
+          });
+          toast.success(`Acción promulgada ${ra?.folio || ''} → ${(areas.find(a => a.codigo === area)?.label) || area}`);
+        } catch (e) { toast.error(`Dictamen OK, pero no se pudo crear la acción: ${e.message}`); }
       }
     } catch (e) {
       toast.error(`Error: ${e.message}`);
@@ -1103,7 +1119,45 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
                         placeholder="Justificación del dictamen"
                         className="block w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
                     </div>
-                    <button onClick={() => enviarDictamen(it)} disabled={dictaminar.isPending}
+
+                    {/* Acción recomendada → tarea para un área */}
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acción recomendada</label>
+                      <select value={f.tipoAccion || ''}
+                        onChange={e => { const td = TIPOS_ACCION.find(t => t.id === e.target.value); setForm(it.id, { tipoAccion: e.target.value, area: td?.area || f.area }); }}
+                        className="block mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-400">
+                        <option value="">— Ninguna —</option>
+                        {TIPOS_ACCION.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                      </select>
+                    </div>
+                    {f.tipoAccion && (
+                      <>
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área responsable</label>
+                          <select value={f.area || ''} onChange={e => setForm(it.id, { area: e.target.value })}
+                            className="block mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-400">
+                            <option value="">— Elegir —</option>
+                            {areas.map(a => <option key={a.codigo} value={a.codigo}>{a.label}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
+                          <select value={f.prioridad || 'NORMAL'} onChange={e => setForm(it.id, { prioridad: e.target.value })}
+                            className="block mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-400">
+                            <option value="NORMAL">Normal</option>
+                            <option value="URGENTE">Urgente</option>
+                          </select>
+                        </div>
+                        <div className="flex-1 min-w-[180px]">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instrucción a la acción</label>
+                          <input value={f.descAccion || ''} onChange={e => setForm(it.id, { descAccion: e.target.value })}
+                            placeholder="Qué debe hacer el área (o la pregunta a responder)"
+                            className="block w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+                        </div>
+                      </>
+                    )}
+
+                    <button onClick={() => enviarDictamen(it)} disabled={dictaminar.isPending || crearAccion.isPending}
                       className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-black flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-50">
                       <ShieldCheck size={16} /> Dictaminar
                     </button>

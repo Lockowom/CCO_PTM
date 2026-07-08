@@ -747,6 +747,107 @@ export function useEliminarAsignacionCalidad() {
   });
 }
 
+// ── Acciones de Calidad (acción recomendada del dictamen → tarea promulgada) ─
+export const TIPOS_ACCION = [
+  { id: 'AJUSTE',          label: 'Ajuste de inventario',        area: 'BODEGA' },
+  { id: 'BAJA',            label: 'Dar de baja',                 area: 'BODEGA' },
+  { id: 'TRANSITORIO',     label: 'Enviar a transitorio',        area: 'BODEGA' },
+  { id: 'REACONDICIONAR',  label: 'Reacondicionar / reproceso',  area: 'BODEGA' },
+  { id: 'POST_VENTA',      label: 'Post-venta',                  area: 'VENTAS' },
+  { id: 'REPARACION',      label: 'Reparación / servicio técnico', area: 'CALIDAD' },
+  { id: 'OPINION_EXPERTA', label: 'Opinión experta',             area: 'CALIDAD' },
+];
+
+export const ESTADO_ACCION_META = {
+  PENDIENTE:  { label: 'Pendiente',  cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  EN_PROCESO: { label: 'En proceso', cls: 'bg-sky-100 text-sky-700 border-sky-200' },
+  RESUELTA:   { label: 'Resuelta',   cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  ANULADA:    { label: 'Anulada',    cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+};
+
+// Áreas responsables (con su mapeo de roles, para saber si el usuario puede cerrar).
+export function useAreasCalidad() {
+  return useQuery({
+    queryKey: ['areas_calidad'],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tms_areas_calidad').select('*').order('orden');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+// Cola/tablero de acciones (pendientes primero).
+export function useAccionesCalidad() {
+  return useQuery({
+    queryKey: ['calidad_acciones'],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
+    queryFn: async () => {
+      const { data, error } = await withTimeout(
+        supabase.from('tms_calidad_acciones').select('*').order('created_at', { ascending: false }),
+        { ms: 12000, label: 'acciones de calidad' }
+      );
+      if (error) throw error;
+      const prio = { PENDIENTE: 0, EN_PROCESO: 1, RESUELTA: 2, ANULADA: 3 };
+      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+    },
+  });
+}
+
+export function useAccionesPendientesCount() {
+  const { data = [] } = useAccionesCalidad();
+  return data.filter(a => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO').length;
+}
+
+// Crear (promulgar) una acción desde un ítem dictaminado.
+export function useCrearAccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemId, tipoAccion, area, descripcion, prioridad, fechaLimite }) => {
+      const { data, error } = await supabase.rpc('crear_accion_calidad', {
+        p_item_id: itemId, p_tipo_accion: tipoAccion, p_area: area,
+        p_descripcion: descripcion ?? null, p_prioridad: prioridad || 'NORMAL',
+        p_fecha_limite: fechaLimite ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_acciones'] }),
+  });
+}
+
+// Resolver (cerrar) una acción — la cierra el área responsable o admin.
+export function useResolverAccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ accionId, resolucion, estado }) => {
+      const { data, error } = await supabase.rpc('resolver_accion_calidad', {
+        p_accion_id: accionId, p_resolucion: resolucion ?? '', p_estado: estado || 'RESUELTA',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_acciones'] }),
+  });
+}
+
+export function useAnularAccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (accionId) => {
+      const { data, error } = await supabase.rpc('anular_accion_calidad', { p_accion_id: accionId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_acciones'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

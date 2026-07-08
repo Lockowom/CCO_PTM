@@ -52,6 +52,7 @@ export const APP_ROUTES = [
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
+  { value: '/quality/acciones', label: 'Calidad - Acciones', module: 'quality' },
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
@@ -139,7 +140,8 @@ export const APP_PERMISSIONS = [
     label: 'Calidad',
     permissions: [
       { id: 'manage_monitoreo', label: 'Crear/Editar Informes de Monitoreo' },
-      { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' }
+      { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' },
+      { id: 'view_acciones_calidad', label: 'Ver Acciones de Calidad (tablero por área)' }
     ]
   },
   {

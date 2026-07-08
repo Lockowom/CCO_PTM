@@ -38,6 +38,8 @@ export const ROUTE_PERMISSIONS = {
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).
   '/quality/monitoreo': ['manage_monitoreo', 'manage_quality', 'manage_inventory'],
+  // Tablero de Acciones de Calidad: visible para las áreas responsables.
+  '/quality/acciones': ['view_acciones_calidad', 'manage_quality', 'manage_monitoreo'],
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
