@@ -1,0 +1,73 @@
+name: Capgo OTA (móvil)
+
+# Sube automáticamente un bundle OTA a Capgo (app com.cco.wms, canal "production")
+# en cada push a main, SOLO cuando cambia la versión de package.json (Capgo rechaza
+# versiones duplicadas). La app Android con autoUpdate lo recibe sin pasar por Play.
+#
+# ÚNICO requisito de configuración: agregar el secreto de repositorio CAPGO_TOKEN
+# (GitHub → Settings → Secrets and variables → Actions → New repository secret).
+# Las variables de Supabase van embebidas porque son públicas (ya están en dist/).
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: capgo-ota
+  cancel-in-progress: false
+
+jobs:
+  ota:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # para comparar la versión con el commit anterior
+
+      - name: ¿Cambió la versión?
+        id: ver
+        run: |
+          NEW=$(node -p "require('./package.json').version")
+          git show HEAD~1:package.json > /tmp/old.json 2>/dev/null || echo '{}' > /tmp/old.json
+          OLD=$(node -p "(require('/tmp/old.json').version)||''")
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          if [ "$NEW" != "$OLD" ]; then echo "changed=yes" >> "$GITHUB_OUTPUT"; else echo "changed=no" >> "$GITHUB_OUTPUT"; fi
+          echo "Versión: '$OLD' -> '$NEW'"
+
+      - name: Setup Node
+        if: steps.ver.outputs.changed == 'yes'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        if: steps.ver.outputs.changed == 'yes'
+        run: npm ci
+
+      - name: Build web (con Supabase)
+        if: steps.ver.outputs.changed == 'yes'
+        env:
+          # Públicas: URL + clave anónima (ya embebidas en el dist commiteado).
+          VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
+          VITE_SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
+        run: npm run build
+
+      - name: Subir bundle a Capgo (canal production)
+        if: steps.ver.outputs.changed == 'yes'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "::warning::Falta el secreto CAPGO_TOKEN — se omite la subida OTA. Agrégalo en Settings → Secrets → Actions."
+            exit 0
+          fi
+          npx -y @capgo/cli@latest bundle upload com.cco.wms \
+            --apikey "$CAPGO_TOKEN" \
+            --channel production \
+            --bundle "${{ steps.ver.outputs.new }}"
+
+      - name: Sin cambio de versión
+        if: steps.ver.outputs.changed != 'yes'
+        run: echo "La versión de package.json no cambió; no se sube OTA (Capgo rechaza versiones duplicadas)."
