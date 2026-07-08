@@ -612,6 +612,93 @@ export function useAnularAsignacion() {
   });
 }
 
+// ── Hito 3 — Certificado de Conformidad de Salida (previo al despacho) ──────
+export const CHECKLIST_SALIDA_NIVELES = [
+  {
+    nivel: 1,
+    titulo: 'Nivel 1 — Documentación de salida',
+    params: [
+      { id: 'sal_nv',           label: 'Nota de Venta / pedido coincide con lo preparado' },
+      { id: 'sal_factura',      label: 'Factura / guía de despacho emitida y adjunta' },
+      { id: 'sal_cliente',      label: 'Cliente y dirección de destino correctos' },
+      { id: 'sal_transportista',label: 'Transportista / empresa de transporte asignada' },
+    ],
+  },
+  {
+    nivel: 2,
+    titulo: 'Nivel 2 — Verificación física de la carga',
+    params: [
+      { id: 'sal_producto',   label: 'Producto despachado coincide con la NV (SKU y descripción)' },
+      { id: 'sal_cantidad',   label: 'Cantidades coinciden con la NV' },
+      { id: 'sal_lote_serie', label: 'Lote/serie registrado para trazabilidad de salida' },
+      { id: 'sal_embalaje',   label: 'Embalaje de salida íntegro y adecuado para transporte' },
+      { id: 'sal_rotulado',   label: 'Rotulado / etiqueta de despacho correcta' },
+      { id: 'sal_bultos',     label: 'N° de bultos coincide con la guía' },
+      { id: 'sal_condiciones',label: 'Condiciones de transporte adecuadas (cadena de frío si aplica)' },
+    ],
+  },
+];
+export const CHECKLIST_SALIDA_TODOS = CHECKLIST_SALIDA_NIVELES.flatMap(n => n.params);
+export const DISPOSICIONES_SALIDA = [
+  'Retener / no despachar',
+  'Reacondicionar y reinspeccionar',
+  'Corregir documentación',
+  'Despachar con salvedades (autorizado)',
+];
+
+// Cola de certificaciones de salida (tipo CERTIFICADO_SALIDA).
+export function useTareasSalida() {
+  return useQuery({
+    queryKey: ['calidad_tareas_salida'],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
+    queryFn: async () => {
+      const { data, error } = await withTimeout(
+        supabase.from('tms_calidad_tareas').select('*')
+          .eq('tipo', 'CERTIFICADO_SALIDA').order('created_at', { ascending: false }),
+        { ms: 12000, label: 'certificaciones de salida' }
+      );
+      if (error) throw error;
+      const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
+      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+    },
+  });
+}
+
+export function useSalidaPendientesCount() {
+  const { data = [] } = useTareasSalida();
+  return data.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
+}
+
+// Buscar despachos para certificar (por NV, cliente o guía).
+export async function buscarDespachos(query) {
+  let q = supabase.from('tms_control_despacho')
+    .select('id, nv, cliente, guia, facturas, bultos, transportista, empresa_transporte, fecha_despacho, numero_envio')
+    .order('fecha_despacho', { ascending: false, nullsFirst: false })
+    .limit(25);
+  const term = (query || '').trim();
+  if (term) q = q.or(`nv.ilike.%${term}%,cliente.ilike.%${term}%,guia.ilike.%${term}%`);
+  const { data, error } = await withTimeout(q, { ms: 12000, label: 'despachos' });
+  if (error) throw error;
+  return data || [];
+}
+
+// Crear la tarea de certificación de salida a partir de un despacho.
+export function useCrearTareaSalida() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (despachoId) => {
+      const { data, error } = await supabase.rpc('crear_tarea_salida', { p_despacho_id: despachoId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();
@@ -628,6 +715,9 @@ export function useGuardarChecklist() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_tareas'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calidad_tareas'] });
+      qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] });
+    },
   });
 }

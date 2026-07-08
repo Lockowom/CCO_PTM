@@ -132,6 +132,16 @@ cargar después)?; confirmar arquitectura server-side.
 > por RPC `set_categoria_producto`); refinar la **clase de riesgo por SKU** con Regulatorios (hoy es por
 > familia); confirmar N° de decreto/registro ISP exactos con Asuntos Regulatorios.
 
+## 6. Los 3 hitos del proceso de Calidad (módulo ordenado)
+> **ESTADO (2026-07-08): HECHO.** El módulo de Calidad se reorganizó por los 3 hitos en orden.
+> **Hito 1 Recepción** (CheckList de ingreso, por familia — v1.5.0). **Hito 2 Instancia** (Inventario
+> asigna SKUs → Calidad dictamina, reusa Monitoreo — v1.6.0, migración `033`). **Hito 3 Salida**
+> (Certificado de Conformidad de despacho — v1.7.0, migración `034`): disparo manual eligiendo un
+> despacho, checklist de salida, folio `CERT-SAL-`/`ACTA-SAL-`, firmable + descargable.
+> **Pendiente menor:** ¿auto-disparar el hito 3 al llegar el despacho a un estado "listo para despachar"
+> si en el futuro los despachos se crean desde la app (hoy la tabla es histórica/masiva)?; lectura de
+> las **líneas de la NV** (`tms_nv_diarias`) para pre-cargar producto/cantidad en el checklist de salida.
+
 ---
 
 ## Orden sugerido cuando se retome

@@ -27,8 +27,10 @@ import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
 import ChecklistIngreso from './ChecklistIngreso';
 import AsignacionesPanel from './AsignacionesCalidad';
+import SalidaCertificacion from './SalidaCertificacion';
 import {
   useTareasPendientesCount, useAsignacionesPendientesCount, useResolverAsignacion,
+  useSalidaPendientesCount,
 } from '../../services/calidadService';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
 
@@ -1150,6 +1152,7 @@ const Monitoreo = () => {
   const [asigPrefill, setAsigPrefill] = useState(null);   // pre-carga del informe desde una asignación (hito 2)
   const pendCount = useTareasPendientesCount();
   const asigPendCount = useAsignacionesPendientesCount();
+  const salidaPendCount = useSalidaPendientesCount();
 
   // Realtime en las colas de checklist (hito 1) y asignaciones (hito 2): una
   // recepción o una asignación nueva refresca la cola y el badge de inmediato.
@@ -1238,7 +1241,7 @@ const Monitoreo = () => {
           {[
             { id: 'hito1', n: 1, label: 'Recepción', sub: 'Ingreso a bodega', icon: PackageSearch, badge: pendCount },
             { id: 'hito2', n: 2, label: 'Instancia', sub: 'Producto en almacenamiento', icon: Boxes, badge: asigPendCount },
-            { id: 'hito3', n: 3, label: 'Salida', sub: 'Despacho', icon: Truck, badge: 0 },
+            { id: 'hito3', n: 3, label: 'Salida', sub: 'Despacho', icon: Truck, badge: salidaPendCount },
           ].map(h => {
             const Icon = h.icon;
             const active = tab === h.id;
@@ -1263,14 +1266,8 @@ const Monitoreo = () => {
       {/* Hito 1 — Recepción (CheckList de ingreso) */}
       {mode === 'list' && tab === 'hito1' && <ChecklistIngreso onGenerarDanos={generarDanosDesdeChecklist} />}
 
-      {/* Hito 3 — Salida (en preparación) */}
-      {mode === 'list' && tab === 'hito3' && (
-        <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-10 text-center">
-          <Lock size={36} className="text-slate-200 mx-auto mb-3" />
-          <h3 className="text-base font-black text-slate-500">Hito 3 — Salida / Despacho</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">Certificado de Conformidad de salida previo al despacho. En preparación — se habilitará en una próxima entrega.</p>
-        </div>
-      )}
+      {/* Hito 3 — Salida (Certificado de Conformidad de despacho) */}
+      {mode === 'list' && tab === 'hito3' && <SalidaCertificacion />}
 
       {mode === 'new' && (
         <InformeBuilder prefillItems={asigPrefill?.skus} asignacionId={asigPrefill?.id} onCancel={volver} onSaved={volver} />

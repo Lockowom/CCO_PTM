@@ -20,6 +20,7 @@ export const DOC_CONTROL = {
     checklist:  { codigo: 'FO-CAL-001', revision: '01' },
     monitoreo:  { codigo: 'FO-CAL-002', revision: '01' },
     danos:      { codigo: 'FO-CAL-003', revision: '01' },
+    salida:     { codigo: 'FO-CAL-004', revision: '01' },
   },
 };
 

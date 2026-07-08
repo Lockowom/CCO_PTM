@@ -19,12 +19,46 @@ function downloadBlob(blob, filename) {
 const RESP_LABEL = { OK: 'Conforme', NO: 'No conforme', NA: 'N/A' };
 const ORIGEN_LABEL = { IMPORTACION: 'Importación', NACIONAL: 'Nacional' };
 
+function esSalida(tarea, opts = {}) {
+  return opts.tipo === 'SALIDA' || tarea.tipo === 'CERTIFICADO_SALIDA';
+}
+
 function tituloDoc(tarea, opts = {}) {
+  if (esSalida(tarea, opts)) {
+    if (tarea.resultado === 'CONFORME') return 'CERTIFICADO DE CONFORMIDAD DE SALIDA';
+    if (tarea.resultado === 'NO_CONFORME') return 'ACTA — CERTIFICACIÓN DE SALIDA (NO CONFORME)';
+    return 'CERTIFICACIÓN DE SALIDA';
+  }
   const noSan = opts.soloNoSanitario ? ' (PRODUCTO NO SANITARIO)' : '';
   if (tarea.resultado === 'CONFORME') return `CERTIFICADO DE CONFORMIDAD${noSan}`;
   if (tarea.resultado === 'NO_CONFORME') return 'ACTA — CHECKLIST DE INGRESO (NO CONFORME)';
   return 'ACTA — CHECKLIST DE INGRESO';
 }
+
+// Etiquetas y filas de contexto según el hito (ingreso vs salida).
+function contextoKV(tarea, opts = {}) {
+  const c = tarea.contexto || {};
+  if (esSalida(tarea, opts)) {
+    return [
+      ['Cliente', tarea.proveedor],
+      ['Nota de Venta', tarea.oc],
+      ['Guía de despacho', c.guia],
+      ['Factura', c.factura],
+      ['Transportista', c.transportista || c.empresa_transporte],
+      ['Fecha de despacho', tarea.fecha_recepcion],
+      ['Bultos', tarea.bultos],
+    ];
+  }
+  return [
+    ['Proveedor', tarea.proveedor],
+    ['Orden de compra', tarea.oc],
+    ['Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen],
+    ['Fecha de recepción', tarea.fecha_recepcion],
+    ['Bultos', tarea.bultos],
+  ];
+}
+
+const DOC_KEY = (tarea, opts) => (esSalida(tarea, opts) ? 'salida' : 'checklist');
 
 // Resumen legible de las familias de producto detectadas.
 function categoriasTexto(opts = {}) {
@@ -45,7 +79,8 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
     TableCell, WidthType, AlignmentType, ShadingType, BorderStyle,
   } = docx;
-  const { header, footer } = isoWordHeaderFooter(docx, 'checklist');
+  const { header, footer } = isoWordHeaderFooter(docx, DOC_KEY(tarea, opts));
+  const salida = esSalida(tarea, opts);
   const conforme = tarea.resultado === 'CONFORME';
   const noBorders = {
     top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE },
@@ -73,7 +108,7 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
     new TableRow({ children: [ new TableCell({
       shading: { fill: conforme ? 'ECFDF5' : 'FEF2F2', type: ShadingType.CLEAR, color: 'auto' },
       children: [
-        new Paragraph({ children: [new TextRun({ text: conforme ? 'CERTIFICADO DE CONFORMIDAD — CONFORME' : 'RECEPCIÓN NO CONFORME', bold: true, color: conforme ? '047857' : 'BE123C' })] }),
+        new Paragraph({ children: [new TextRun({ text: conforme ? (salida ? 'CERTIFICADO DE CONFORMIDAD DE SALIDA — CONFORME' : 'CERTIFICADO DE CONFORMIDAD — CONFORME') : (salida ? 'SALIDA NO CONFORME — NO DESPACHAR' : 'RECEPCIÓN NO CONFORME'), bold: true, color: conforme ? '047857' : 'BE123C' })] }),
         new Paragraph({ children: [new TextRun({ text: `Folio: ${tarea.folio || '—'}`, bold: true, size: 26 })] }),
         new Paragraph({ children: [new TextRun({ text: `${tarea.realizado_nombre || ''}${tarea.completado_en ? ' · ' + new Date(tarea.completado_en).toLocaleString('es-CL') : ''}`, size: 16, color: '475569' })] }),
       ],
@@ -82,11 +117,7 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
   children.push(new Paragraph(''));
 
   children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
-    kvRow('Proveedor', tarea.proveedor),
-    kvRow('Orden de compra', tarea.oc),
-    kvRow('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
-    kvRow('Fecha de recepción', tarea.fecha_recepcion),
-    kvRow('Bultos', tarea.bultos),
+    ...contextoKV(tarea, opts).map(([k, v]) => kvRow(k, v)),
     kvRow('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
     ...(categoriasTexto(opts) ? [kvRow('Familias de producto', categoriasTexto(opts))] : []),
     ...(tarea.disposicion ? [kvRow('Disposición / Acción a tomar', tarea.disposicion)] : []),
@@ -118,12 +149,12 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
     new TableCell({ borders: noBorders, children: [
       new Paragraph('_______________________________'),
       new Paragraph({ children: [new TextRun({ text: tarea.realizado_nombre || 'Nombre / Firma', bold: true })] }),
-      new Paragraph('Calidad — Inspección de ingreso'),
+      new Paragraph(salida ? 'Calidad — Certificación de salida' : 'Calidad — Inspección de ingreso'),
     ] }),
     new TableCell({ borders: noBorders, children: [
       new Paragraph('_______________________________'),
       new Paragraph({ children: [new TextRun({ text: 'Nombre / Firma', bold: true })] }),
-      new Paragraph('Recepción / Bodega'),
+      new Paragraph(salida ? 'Despacho / Bodega' : 'Recepción / Bodega'),
     ] }),
   ] })] }));
 
@@ -149,6 +180,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
   pdfMake.vfs = fonts.pdfMake?.vfs || fonts.vfs || pdfMake.vfs;
 
   const ans = tarea.checklist || {};
+  const salida = esSalida(tarea, opts);
   const conforme = tarea.resultado === 'CONFORME';
   const fechaFin = tarea.completado_en ? new Date(tarea.completado_en).toLocaleString('es-CL') : '—';
   const kv = (k, v) => [{ text: k, bold: true }, { text: String(v ?? '—') }];
@@ -163,7 +195,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
     table: { widths: ['*'], body: [[{
       fillColor: conforme ? '#ecfdf5' : '#fef2f2', margin: [10, 8, 10, 8],
       stack: [
-        { text: conforme ? 'CERTIFICADO DE CONFORMIDAD — CONFORME' : 'RECEPCIÓN NO CONFORME', bold: true, fontSize: 11, color: conforme ? '#047857' : '#be123c' },
+        { text: conforme ? (salida ? 'CERTIFICADO DE CONFORMIDAD DE SALIDA — CONFORME' : 'CERTIFICADO DE CONFORMIDAD — CONFORME') : (salida ? 'SALIDA NO CONFORME — NO DESPACHAR' : 'RECEPCIÓN NO CONFORME'), bold: true, fontSize: 11, color: conforme ? '#047857' : '#be123c' },
         { text: `Folio: ${tarea.folio || '—'}`, bold: true, fontSize: 14, margin: [0, 2, 0, 0] },
         { text: `${tarea.realizado_nombre || ''}${tarea.completado_en ? ' · ' + fechaFin : ''}`, fontSize: 8, color: '#475569', margin: [0, 2, 0, 0] },
       ],
@@ -177,9 +209,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
 
   content.push({
     table: { widths: ['35%', '65%'], body: [
-      kv('Proveedor', tarea.proveedor), kv('Orden de compra', tarea.oc),
-      kv('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
-      kv('Fecha de recepción', tarea.fecha_recepcion), kv('Bultos', tarea.bultos),
+      ...contextoKV(tarea, opts).map(([k, v]) => kv(k, v)),
       kv('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
       ...(categoriasTexto(opts) ? [kv('Familias de producto', categoriasTexto(opts))] : []),
       ...(tarea.disposicion ? [kv('Disposición / Acción a tomar', tarea.disposicion)] : []),
@@ -213,8 +243,8 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
 
   content.push({
     columns: [
-      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: tarea.realizado_nombre || 'Nombre / Firma', bold: true }, { text: 'Calidad — Inspección de ingreso', fontSize: 9, color: '#64748b' }] },
-      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: 'Nombre / Firma', bold: true }, { text: 'Recepción / Bodega', fontSize: 9, color: '#64748b' }] },
+      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: tarea.realizado_nombre || 'Nombre / Firma', bold: true }, { text: salida ? 'Calidad — Certificación de salida' : 'Calidad — Inspección de ingreso', fontSize: 9, color: '#64748b' }] },
+      { stack: [{ text: '_______________________________', margin: [0, 20, 0, 0] }, { text: 'Nombre / Firma', bold: true }, { text: salida ? 'Despacho / Bodega' : 'Recepción / Bodega', fontSize: 9, color: '#64748b' }] },
     ],
     columnGap: 24,
   });
@@ -242,8 +272,8 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
 
   pdfMake.createPdf({
     pageMargins: isoPageMargins,
-    header: isoPdfHeader('checklist'),
-    footer: isoPdfFooter('checklist'),
+    header: isoPdfHeader(DOC_KEY(tarea, opts)),
+    footer: isoPdfFooter(DOC_KEY(tarea, opts)),
     content,
     defaultStyle: { fontSize: 10 },
     styles: {
