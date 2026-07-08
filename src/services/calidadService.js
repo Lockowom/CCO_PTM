@@ -535,7 +535,7 @@ export async function verificarCertificado(folio) {
   return data;
 }
 
-// ── Hito 2 — Asignaciones de instancia (Inventario → Calidad) ──────────────
+// ── Hito 2 — Asignaciones de estancia (Inventario → Calidad) ──────────────
 export const ESTADO_ASIGNACION_META = {
   PENDIENTE:  { label: 'Pendiente',  cls: 'bg-amber-100 text-amber-700 border-amber-200' },
   EN_PROCESO: { label: 'En proceso', cls: 'bg-sky-100 text-sky-700 border-sky-200' },
@@ -734,7 +734,7 @@ export function useEliminarTareaCalidad() {
   });
 }
 
-// Elimina una asignación de instancia (hito 2).
+// Elimina una asignación de estancia (hito 2).
 export function useEliminarAsignacionCalidad() {
   const qc = useQueryClient();
   return useMutation({

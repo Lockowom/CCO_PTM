@@ -313,7 +313,7 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
         if (asignacionId && informeId) {
           try {
             await resolverAsig.mutateAsync({ asignacionId, informeId, estado: 'RESUELTA' });
-            toast.success('Asignación de instancia resuelta');
+            toast.success('Asignación de estancia resuelta');
           } catch (e) { console.error('resolver asignación', e); toast.error(`No se pudo enlazar la asignación: ${e.message}`); }
         }
       }
@@ -1147,7 +1147,7 @@ const Monitoreo = () => {
   const eliminar = useEliminarInforme();
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
-  // Hitos del proceso de calidad, en orden: 1 Recepción · 2 Instancia · 3 Salida
+  // Hitos del proceso de calidad, en orden: 1 Recepción · 2 Estancia · 3 Salida
   const [tab, setTab] = useState('hito1');
   const [danosPrefill, setDanosPrefill] = useState(null); // pre-carga del Informe de Daños desde un checklist NC
   const [asigPrefill, setAsigPrefill] = useState(null);   // pre-carga del informe desde una asignación (hito 2)
@@ -1219,7 +1219,7 @@ const Monitoreo = () => {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Módulo de <span className="text-emerald-600">Calidad</span></h1>
-            <p className="text-slate-500 font-bold text-sm">Proceso por hitos: Recepción · Instancia · Salida</p>
+            <p className="text-slate-500 font-bold text-sm">Proceso por hitos: Recepción · Estancia · Salida</p>
           </div>
         </div>
         {mode === 'list' && tab === 'hito2' && canCreate && (
@@ -1241,7 +1241,7 @@ const Monitoreo = () => {
         <div className="flex flex-wrap gap-2 mb-5">
           {[
             { id: 'hito1', n: 1, label: 'Recepción', sub: 'Ingreso a bodega', icon: PackageSearch, badge: pendCount },
-            { id: 'hito2', n: 2, label: 'Instancia', sub: 'Producto en almacenamiento', icon: Boxes, badge: asigPendCount },
+            { id: 'hito2', n: 2, label: 'Estancia', sub: 'Producto en almacenamiento', icon: Boxes, badge: asigPendCount },
             { id: 'hito3', n: 3, label: 'Salida', sub: 'Despacho', icon: Truck, badge: salidaPendCount },
           ].map(h => {
             const Icon = h.icon;
@@ -1288,7 +1288,7 @@ const Monitoreo = () => {
           onDelete={canCreate ? borrarInforme : null} />
       )}
 
-      {/* Hito 2 — Instancia: asignaciones de Inventario + informes/dictámenes */}
+      {/* Hito 2 — Estancia: asignaciones de Inventario + informes/dictámenes */}
       {mode === 'list' && tab === 'hito2' && (
         <AsignacionesPanel canAssign={canAssign} canManageQuality={canCreate}
           onGenerarInforme={generarInformeDesdeAsignacion} />
@@ -1296,7 +1296,7 @@ const Monitoreo = () => {
 
       {mode === 'list' && tab === 'hito2' && (
         <>
-        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2 mb-3"><FileSearch size={16} className="text-emerald-500" /> Informes y dictámenes de instancia</h3>
+        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2 mb-3"><FileSearch size={16} className="text-emerald-500" /> Informes y dictámenes de estancia</h3>
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>
         ) : informes.length === 0 ? (
