@@ -19,10 +19,18 @@ function downloadBlob(blob, filename) {
 const RESP_LABEL = { OK: 'Conforme', NO: 'No conforme', NA: 'N/A' };
 const ORIGEN_LABEL = { IMPORTACION: 'Importación', NACIONAL: 'Nacional' };
 
-function tituloDoc(tarea) {
-  if (tarea.resultado === 'CONFORME') return 'CERTIFICADO DE CONFORMIDAD';
+function tituloDoc(tarea, opts = {}) {
+  const noSan = opts.soloNoSanitario ? ' (PRODUCTO NO SANITARIO)' : '';
+  if (tarea.resultado === 'CONFORME') return `CERTIFICADO DE CONFORMIDAD${noSan}`;
   if (tarea.resultado === 'NO_CONFORME') return 'ACTA — CHECKLIST DE INGRESO (NO CONFORME)';
   return 'ACTA — CHECKLIST DE INGRESO';
+}
+
+// Resumen legible de las familias de producto detectadas.
+function categoriasTexto(opts = {}) {
+  const cats = opts.categorias || [];
+  if (!cats.length) return '';
+  return cats.map(c => `${c.label}${c.clase_riesgo ? ` (Clase ${c.clase_riesgo})` : ''} × ${c.items}`).join('; ');
 }
 
 function nombreArchivo(tarea, ext) {
@@ -31,7 +39,7 @@ function nombreArchivo(tarea, ext) {
 }
 
 // ── Word (.docx) ────────────────────────────────────────────────────────────
-export async function exportChecklistWord(tarea, niveles = []) {
+export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
   const docx = await import('docx');
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
@@ -53,7 +61,12 @@ export async function exportChecklistWord(tarea, niveles = []) {
   const td = (t) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(t ?? '—'), size: 18 })] })] });
 
   const children = [];
-  children.push(new Paragraph({ text: tituloDoc(tarea), heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }));
+  children.push(new Paragraph({ text: tituloDoc(tarea, opts), heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }));
+  if (opts.soloNoSanitario) {
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({
+      text: 'Documento de conformidad de recepción — no constituye certificación de dispositivo médico bajo ISO 13485.',
+      italics: true, size: 16, color: '64748B' })] }));
+  }
   children.push(new Paragraph(''));
 
   children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
@@ -75,6 +88,7 @@ export async function exportChecklistWord(tarea, niveles = []) {
     kvRow('Fecha de recepción', tarea.fecha_recepcion),
     kvRow('Bultos', tarea.bultos),
     kvRow('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+    ...(categoriasTexto(opts) ? [kvRow('Familias de producto', categoriasTexto(opts))] : []),
     ...(tarea.disposicion ? [kvRow('Disposición / Acción a tomar', tarea.disposicion)] : []),
     kvRow('Responsable de Calidad', tarea.realizado_nombre),
     kvRow('Fecha de finalización', tarea.completado_en ? new Date(tarea.completado_en).toLocaleString('es-CL') : '—'),
@@ -127,7 +141,7 @@ export async function exportChecklistWord(tarea, niveles = []) {
 }
 
 // ── PDF (pdfmake) ────────────────────────────────────────────────────────────
-export async function exportChecklistPDF(tarea, niveles = []) {
+export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
   const pdfMakeMod = await import('pdfmake/build/pdfmake');
   const pdfFontsMod = await import('pdfmake/build/vfs_fonts');
   const pdfMake = pdfMakeMod.default || pdfMakeMod;
@@ -140,7 +154,10 @@ export async function exportChecklistPDF(tarea, niveles = []) {
   const kv = (k, v) => [{ text: k, bold: true }, { text: String(v ?? '—') }];
   const content = [];
 
-  content.push({ text: tituloDoc(tarea), style: 'title', color: conforme ? '#047857' : (tarea.resultado === 'NO_CONFORME' ? '#be123c' : '#0f172a') });
+  content.push({ text: tituloDoc(tarea, opts), style: 'title', color: conforme ? '#047857' : (tarea.resultado === 'NO_CONFORME' ? '#be123c' : '#0f172a') });
+  if (opts.soloNoSanitario) {
+    content.push({ text: 'Documento de conformidad de recepción — no constituye certificación de dispositivo médico bajo ISO 13485.', italics: true, fontSize: 8, color: '#64748b', alignment: 'center', margin: [0, 0, 0, 4] });
+  }
 
   content.push({
     table: { widths: ['*'], body: [[{
@@ -164,6 +181,7 @@ export async function exportChecklistPDF(tarea, niveles = []) {
       kv('Origen', ORIGEN_LABEL[tarea.origen] || tarea.origen),
       kv('Fecha de recepción', tarea.fecha_recepcion), kv('Bultos', tarea.bultos),
       kv('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+      ...(categoriasTexto(opts) ? [kv('Familias de producto', categoriasTexto(opts))] : []),
       ...(tarea.disposicion ? [kv('Disposición / Acción a tomar', tarea.disposicion)] : []),
       kv('Responsable de Calidad', tarea.realizado_nombre), kv('Fecha de finalización', fechaFin),
     ] },

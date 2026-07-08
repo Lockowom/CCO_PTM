@@ -443,8 +443,37 @@ export const CHECKLIST_INGRESO_NIVELES = [
   },
 ];
 
+// Parámetros UNIVERSALES (aplican a toda recepción). Los parámetros específicos
+// por familia de producto (equipo activo, insumo estéril, etc.) se cargan por RPC
+// según lo que contenga la recepción (ver useCategoriasTarea / migración 032).
 export const CHECKLIST_TODOS_PARAMS = CHECKLIST_INGRESO_NIVELES.flatMap(n => n.params);
 export const RESP_OPCIONES = ['OK', 'NO', 'NA'];
+
+// Metadatos visuales de las familias de producto (chips del checklist).
+export const CATEGORIA_META = {
+  EQUIPO_ACTIVO:  { cls: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  INSUMO_ESTERIL: { cls: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  MOBILIARIO:     { cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  AYUDA_TECNICA:  { cls: 'bg-lime-100 text-lime-700 border-lime-200' },
+  BIENESTAR:      { cls: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' },
+  EMPAQUE:        { cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+  SIN_CLASIFICAR: { cls: 'bg-rose-100 text-rose-700 border-rose-200' },
+};
+
+// Familias de producto presentes en la recepción de una tarea (criterios de
+// aceptación específicos + flags regulatorios). Alimenta el checklist por familia.
+export function useCategoriasTarea(tareaId) {
+  return useQuery({
+    queryKey: ['calidad_categorias_tarea', tareaId],
+    enabled: !!tareaId,
+    staleTime: 60000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('calidad_categorias_tarea', { p_tarea_id: tareaId });
+      if (error) throw error;
+      return data || { categorias: [], total_items: 0 };
+    },
+  });
+}
 
 export const ESTADO_TAREA_META = {
   PENDIENTE:    { label: 'Pendiente',    cls: 'bg-amber-100 text-amber-700 border-amber-200' },

@@ -3,13 +3,22 @@ import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
   ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck, RefreshCw,
+  Layers, Stamp, Info,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
-  CHECKLIST_INGRESO_NIVELES, CHECKLIST_TODOS_PARAMS, ESTADO_TAREA_META,
-  useTareasChecklist, useGuardarChecklist, useFirmarCertificado,
+  CHECKLIST_INGRESO_NIVELES, ESTADO_TAREA_META, CATEGORIA_META,
+  useTareasChecklist, useGuardarChecklist, useFirmarCertificado, useCategoriasTarea,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
+
+// Convierte una familia (RPC) en un "nivel" de checklist con sus criterios propios.
+const categoriaANivel = (c) => ({
+  nivel: `cat_${c.codigo}`,
+  titulo: `Requisitos específicos — ${c.label}${c.clase_riesgo ? ` (Clase ${c.clase_riesgo})` : ''}`,
+  categoria: c.codigo,
+  params: c.params || [],
+});
 
 const ORIGEN_META = {
   IMPORTACION: { label: 'Importación', cls: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
@@ -20,6 +29,7 @@ const ORIGEN_META = {
 const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const guardar = useGuardarChecklist();
   const firmar = useFirmarCertificado();
+  const { data: catData, isLoading: catLoading } = useCategoriasTarea(tarea.id);
   const finalizada = tarea.estado === 'CONFORME' || tarea.estado === 'NO_CONFORME';
   const readOnly = finalizada || !canManage;
 
@@ -32,15 +42,31 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const setResp = (pid, estado) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], estado } }));
   const setNota = (pid, nota) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], nota } }));
 
+  // Familias detectadas en la recepción → secciones de criterios específicos.
+  const categorias = catData?.categorias || [];
+  const soloNoSanitario = !!catData?.solo_no_sanitario;
+  const sinClasificar = catData?.sin_clasificar || 0;
+
+  // Niveles del checklist = universales (documental + físico) + un nivel por cada
+  // familia con criterios propios. La validación exige TODOS estos ítems.
+  const niveles = useMemo(() => {
+    const catNiveles = categorias
+      .filter(c => (c.params || []).length > 0)
+      .map(categoriaANivel);
+    return [...CHECKLIST_INGRESO_NIVELES, ...catNiveles];
+  }, [categorias]);
+
+  const allParams = useMemo(() => niveles.flatMap(n => n.params), [niveles]);
+
   const { answeredAll, hasNo, faltan } = useMemo(() => {
     let answered = 0, no = false;
-    for (const p of CHECKLIST_TODOS_PARAMS) {
+    for (const p of allParams) {
       const e = answers[p.id]?.estado;
       if (e) answered++;
       if (e === 'NO') no = true;
     }
-    return { answeredAll: answered === CHECKLIST_TODOS_PARAMS.length, hasNo: no, faltan: CHECKLIST_TODOS_PARAMS.length - answered };
-  }, [answers]);
+    return { answeredAll: answered === allParams.length, hasNo: no, faltan: allParams.length - answered };
+  }, [answers, allParams]);
 
   const firmarDoc = async () => {
     if (!confirm('¿Firmar digitalmente este documento? Quedará sellado y verificable por folio/QR. No se puede deshacer.')) return;
@@ -52,8 +78,9 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const descargar = async (fmt) => {
     try {
-      if (fmt === 'pdf') await exportChecklistPDF(tarea, CHECKLIST_INGRESO_NIVELES);
-      else await exportChecklistWord(tarea, CHECKLIST_INGRESO_NIVELES);
+      const opts = { categorias, soloNoSanitario };
+      if (fmt === 'pdf') await exportChecklistPDF(tarea, niveles, opts);
+      else await exportChecklistWord(tarea, niveles, opts);
     } catch (e) { toast.error(`No se pudo generar el documento: ${e.message}`); }
   };
 
@@ -67,6 +94,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   // Certificación AUTOMÁTICA: el resultado se determina solo por las respuestas
   // (todos OK → CONFORME + folio; algún NO → NO CONFORME + tarea urgente de Daños).
   const finalizarAuto = async () => {
+    if (catLoading) { toast.error('Cargando las familias de producto de la recepción…'); return; }
     if (!answeredAll) { toast.error(`Faltan ${faltan} ítem(s) por responder`); return; }
     const resultado = hasNo ? 'NO_CONFORME' : 'CONFORME';
     if (resultado === 'NO_CONFORME' && !disp) { toast.error('Selecciona la Disposición / Acción a tomar antes de finalizar'); return; }
@@ -163,11 +191,55 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
         </div>
       ) : null}
 
+      {/* Familias de producto detectadas en la recepción */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Layers size={16} className="text-slate-400" />
+          <h3 className="text-sm font-black text-slate-800">Familias de producto de la recepción</h3>
+          {catLoading && <Loader2 size={14} className="animate-spin text-slate-300" />}
+        </div>
+        {categorias.length === 0 ? (
+          <p className="text-xs text-slate-400">{catLoading ? 'Detectando familias…' : 'Sin ítems clasificables en la recepción. Se aplican solo los controles universales.'}</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {categorias.map(c => (
+              <span key={c.codigo}
+                className={`text-[11px] font-black px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${CATEGORIA_META[c.codigo]?.cls || 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                title={c.descripcion || ''}>
+                {c.label} · {c.items}
+                {c.clase_riesgo && <span className="opacity-70">Clase {c.clase_riesgo}</span>}
+                {!c.es_dispositivo_medico && <span className="opacity-70">· no sanitario</span>}
+              </span>
+            ))}
+          </div>
+        )}
+        {catData?.requiere_registro_isp && (
+          <p className="mt-3 text-[11px] text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2 flex items-start gap-1.5">
+            <Info size={13} className="mt-0.5 shrink-0" />
+            Contiene insumos de posible <b>control obligatorio ISP</b> (jeringas, agujas, guantes, preservativos): verifique el <b>N° de registro sanitario</b> en la sección de insumo estéril.
+          </p>
+        )}
+        {soloNoSanitario && (
+          <p className="mt-3 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-start gap-1.5">
+            <Info size={13} className="mt-0.5 shrink-0" />
+            Recepción de <b>producto no sanitario</b> (bienestar / empaque). El documento se emite como conformidad de recepción, <b>no como certificado de dispositivo médico ISO 13485</b>.
+          </p>
+        )}
+        {sinClasificar > 0 && (
+          <p className="mt-3 text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 flex items-start gap-1.5">
+            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+            {sinClasificar} ítem(s) <b>sin clasificar</b> (sin descripción o familia desconocida): solo se aplican los controles universales; revise su clasificación.
+          </p>
+        )}
+      </div>
+
       {/* Niveles + parámetros */}
       <div className="space-y-4">
-        {CHECKLIST_INGRESO_NIVELES.map(nivel => (
-          <div key={nivel.nivel} className="bg-white rounded-2xl border border-slate-200 p-5">
-            <h3 className="text-sm font-black text-slate-800 mb-3">{nivel.titulo}</h3>
+        {niveles.map(nivel => (
+          <div key={nivel.nivel} className={`bg-white rounded-2xl border p-5 ${nivel.categoria ? 'border-emerald-200' : 'border-slate-200'}`}>
+            <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2">
+              {nivel.categoria && <Stamp size={14} className="text-emerald-500 shrink-0" />}{nivel.titulo}
+            </h3>
             <div className="space-y-2.5">
               {nivel.params.map(p => (
                 <div key={p.id} className="flex items-start gap-3 py-1.5 border-b border-slate-50 last:border-0">

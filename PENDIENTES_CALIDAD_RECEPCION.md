@@ -122,6 +122,18 @@ cargar después)?; confirmar arquitectura server-side.
 
 ---
 
+## 5. Segmentación del catálogo por familia (criterios ISO por tipo de producto)
+> **ESTADO (2026-07-08, v1.5.0): HECHO.** Migración `032` + frontend. El catálogo se clasifica
+> automáticamente en familias (equipo activo, insumo estéril, mobiliario, ayuda técnica, bienestar
+> MAXX **no sanitario**, empaque Farmapack **no sanitario**), y el CheckList aplica **criterios de
+> aceptación específicos por familia** además de los universales; flag de **control obligatorio ISP** y
+> disclaimer de **no sanitario**. Ver `MATRIZ_CATEGORIAS_CALIDAD.md`.
+> **Pendiente menor:** UI de administración para revisar/reasignar categorías (hoy la corrección se hace
+> por RPC `set_categoria_producto`); refinar la **clase de riesgo por SKU** con Regulatorios (hoy es por
+> familia); confirmar N° de decreto/registro ISP exactos con Asuntos Regulatorios.
+
+---
+
 ## Orden sugerido cuando se retome
 1. **Packing list read (4)** + **Checklist de recepción (3)** — van juntos (uno alimenta al otro).
 2. **Formato ISO (1)** — base documental.
