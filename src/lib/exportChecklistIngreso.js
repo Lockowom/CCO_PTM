@@ -4,6 +4,7 @@
 // Si la tarea es CONFORME → "Certificado de Conformidad" (con folio-sello);
 // si es NO CONFORME → "Acta de CheckList (No Conforme)".
 // Librerías pesadas (docx, pdfmake) por import dinámico (solo al exportar).
+import { LOGO_PTM } from '../assets/logoPtm';
 
 // ── CONTROL DOCUMENTAL — editar con los datos oficiales de la empresa ────────
 export const DOC_CONTROL = {
@@ -13,9 +14,19 @@ export const DOC_CONTROL = {
   codigo: 'FO-CAL-001',        // código del formato controlado
   revision: '01',              // revisión vigente
   fecha_revision: '2026-01',   // fecha de la revisión vigente
-  // logo: pega aquí un data URI (base64) para mostrar el logo; null = sin logo
-  logo: null,
+  // Logo (data URI PNG). Reemplazar LOGO_PTM en src/assets/logoPtm.js si cambia.
+  logo: LOGO_PTM,
+  logo_w: 257, logo_h: 77,     // dimensiones nativas del logo (para escalar)
 };
+
+// data URI → Uint8Array (para docx ImageRun).
+function dataUriToBytes(uri) {
+  const b64 = (uri || '').split(',')[1] || '';
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -47,7 +58,7 @@ export async function exportChecklistWord(tarea, niveles = []) {
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow,
     TableCell, WidthType, AlignmentType, Header, Footer, PageNumber,
-    ShadingType, BorderStyle,
+    ShadingType, BorderStyle, ImageRun,
   } = await import('docx');
 
   const D = DOC_CONTROL;
@@ -62,7 +73,8 @@ export async function exportChecklistWord(tarea, niveles = []) {
     new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, borders: noBorders, rows: [
       new TableRow({ children: [
         new TableCell({ width: { size: 60, type: WidthType.PERCENTAGE }, borders: noBorders, children: [
-          new Paragraph({ children: [new TextRun({ text: D.empresa, bold: true, size: 24 })] }),
+          ...(D.logo ? [new Paragraph({ children: [new ImageRun({ data: dataUriToBytes(D.logo), transformation: { width: 120, height: Math.round(120 * D.logo_h / D.logo_w) } })] })] : []),
+          new Paragraph({ children: [new TextRun({ text: D.empresa, bold: true, size: 22 })] }),
           new Paragraph({ children: [new TextRun({ text: D.subtitulo, size: 15, color: '64748B' })] }),
         ] }),
         new TableCell({ width: { size: 40, type: WidthType.PERCENTAGE }, borders: noBorders, children: [
@@ -174,7 +186,7 @@ export async function exportChecklistPDF(tarea, niveles = []) {
     stack: [
       {
         columns: [
-          ...(D.logo ? [{ image: D.logo, width: 42, margin: [0, 0, 8, 0] }] : []),
+          ...(D.logo ? [{ image: D.logo, width: 96, margin: [0, 0, 10, 0] }] : []),
           { width: '*', stack: [
             { text: D.empresa, bold: true, fontSize: 13 },
             { text: D.subtitulo, fontSize: 8, color: '#64748b' },
