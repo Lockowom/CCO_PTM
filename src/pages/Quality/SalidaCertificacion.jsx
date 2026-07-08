@@ -3,12 +3,13 @@ import { toast } from 'sonner';
 import {
   Truck, ArrowLeft, Loader2, Check, X, Minus, ShieldCheck, AlertTriangle,
   Calendar, FileDown, FileText, PenLine, BadgeCheck, RefreshCw, Search, Plus,
-  Package, Ban,
+  Package, Ban, Trash2, PencilLine,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   CHECKLIST_SALIDA_NIVELES, CHECKLIST_SALIDA_TODOS, DISPOSICIONES_SALIDA, ESTADO_TAREA_META,
-  useTareasSalida, useCrearTareaSalida, useGuardarChecklist, useFirmarCertificado, buscarDespachos,
+  useTareasSalida, useCrearTareaSalida, useCrearTareaSalidaManual, useGuardarChecklist,
+  useFirmarCertificado, buscarDespachos, fetchCandidatos,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
@@ -73,6 +74,147 @@ const DespachoModal = ({ onClose, onCreated }) => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Modal: certificación de salida MANUAL (N.V. a mano + SKUs) ──────────────
+const ManualModal = ({ onClose, onCreated }) => {
+  const crear = useCrearTareaSalidaManual();
+  const [nv, setNv] = useState('');
+  const [cliente, setCliente] = useState('');
+  const [guia, setGuia] = useState('');
+  const [transportista, setTransportista] = useState('');
+  const [bultos, setBultos] = useState('');
+  const [query, setQuery] = useState('');
+  const [buscando, setBuscando] = useState(false);
+  const [cand, setCand] = useState([]);
+  const [sel, setSel] = useState([]);
+
+  const buscar = useCallback(async () => {
+    setBuscando(true);
+    try { setCand(await fetchCandidatos(query, false)); }
+    catch (e) { toast.error(`Error buscando stock: ${e.message}`); }
+    finally { setBuscando(false); }
+  }, [query]);
+
+  const keyOf = (c) => `${c.codigo_producto}|${c.partida || ''}|${c.ubicacion || ''}`;
+  const add = (c) => {
+    const k = keyOf(c);
+    if (sel.some(s => s._key === k)) { toast.info('Ese SKU ya está agregado'); return; }
+    setSel(prev => [...prev, {
+      _key: k, codigo_producto: c.codigo_producto, producto: c.producto || '',
+      ubicacion: c.ubicacion || '', partida: c.partida || '',
+      cantidad: Number(c.disponible) || 0, unidad_medida: c.unidad_medida || 'UN',
+    }]);
+  };
+  const remove = (k) => setSel(prev => prev.filter(s => s._key !== k));
+
+  const crearCert = async () => {
+    if (!nv.trim()) { toast.error('Escribe la N.V.'); return; }
+    if (sel.length === 0) { toast.error('Agrega al menos un SKU'); return; }
+    try {
+      const skus = sel.map(({ _key, ...rest }) => rest);
+      const r = await crear.mutateAsync({
+        nv: nv.trim(), skus, cliente: cliente.trim() || null, guia: guia.trim() || null,
+        transportista: transportista.trim() || null, bultos: bultos ? Number(bultos) : null,
+      });
+      toast.success('Certificación de salida creada');
+      onCreated(r?.id);
+    } catch (e) { toast.error(`No se pudo crear: ${e.message}`); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-3" onClick={onClose}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <h3 className="font-black text-slate-900 flex items-center gap-2"><PencilLine size={18} className="text-emerald-600" /> Certificar salida (manual)</h3>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
+        </div>
+        <div className="p-5 overflow-y-auto space-y-4">
+          {/* Datos del despacho a mano */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">N.V. *</label>
+              <input value={nv} onChange={e => setNv(e.target.value)} placeholder="Ej. 95811"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-emerald-300 text-sm font-bold outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</label>
+              <input value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Opcional"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Guía</label>
+              <input value={guia} onChange={e => setGuia(e.target.value)} placeholder="Opcional"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bultos</label>
+              <input value={bultos} onChange={e => setBultos(e.target.value.replace(/[^0-9]/g, ''))} placeholder="0" inputMode="numeric"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+            </div>
+            <div className="col-span-2 sm:col-span-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transportista</label>
+              <input value={transportista} onChange={e => setTransportista(e.target.value)} placeholder="Opcional"
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+            </div>
+          </div>
+
+          {/* Buscador de SKUs (por SKU, descripción o ubicación) */}
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 focus-within:border-emerald-400">
+              <Search size={16} className="text-slate-400" />
+              <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && buscar()}
+                placeholder="Buscar SKU por código, descripción o ubicación…" className="flex-1 text-sm outline-none bg-transparent" />
+            </div>
+            <button onClick={buscar} disabled={buscando}
+              className="px-4 py-2 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center gap-2 disabled:opacity-50">
+              {buscando ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />} Buscar
+            </button>
+          </div>
+          {cand.length > 0 && (
+            <div className="border border-slate-100 rounded-xl divide-y divide-slate-50 max-h-44 overflow-y-auto">
+              {cand.map((c, i) => (
+                <button key={i} onClick={() => add(c)} className="w-full text-left px-3 py-2 hover:bg-emerald-50/50 flex items-center justify-between gap-2">
+                  <span className="min-w-0">
+                    <span className="font-bold text-sm text-slate-800 truncate block">{c.codigo_producto} · {c.producto}</span>
+                    <span className="text-xs text-slate-400">{c.ubicacion || 's/ubic'} · {c.partida || 's/partida'} · {c.disponible} {c.unidad_medida}</span>
+                  </span>
+                  <Plus size={16} className="text-emerald-500 shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* SKUs elegidos */}
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">SKUs del despacho ({sel.length})</p>
+            {sel.length === 0 ? (
+              <p className="text-xs text-slate-400">Agrega los SKUs que se están despachando en esta N.V.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {sel.map(s => (
+                  <div key={s._key} className="flex items-center justify-between gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                    <span className="min-w-0">
+                      <span className="font-bold text-sm text-slate-800 truncate block">{s.codigo_producto} · {s.producto}</span>
+                      <span className="text-xs text-slate-400">{s.ubicacion || 's/ubic'} · {s.partida || 's/partida'} · {s.cantidad} {s.unidad_medida}</span>
+                    </span>
+                    <button onClick={() => remove(s._key)} className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 shrink-0"><Trash2 size={15} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50">Cancelar</button>
+          <button onClick={crearCert} disabled={crear.isPending || !nv.trim() || sel.length === 0}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-40">
+            {crear.isPending ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} Crear certificación
+          </button>
         </div>
       </div>
     </div>
@@ -191,6 +333,21 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
         </div>
       </div>
 
+      {/* SKUs del despacho (si se cargaron al crear) */}
+      {Array.isArray(ctx.skus) && ctx.skus.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
+          <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2"><Package size={16} className="text-slate-400" /> SKUs del despacho ({ctx.skus.length})</h3>
+          <div className="space-y-1.5">
+            {ctx.skus.map((s, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 text-sm border-b border-slate-50 last:border-0 py-1.5">
+                <span className="min-w-0"><b className="text-slate-800">{s.codigo_producto}</b> <span className="text-slate-500">· {s.producto}</span></span>
+                <span className="text-xs text-slate-400 shrink-0">{s.ubicacion || '—'} · {s.cantidad} {s.unidad_medida || ''}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Firma electrónica */}
       {tarea.firma_digital ? (
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 flex items-start gap-3">
@@ -299,7 +456,8 @@ const SalidaCertificacion = () => {
   const canManage = hasPermission('manage_quality') || hasPermission('manage_monitoreo');
   const { data: tareas = [], isLoading, refetch, isFetching } = useTareasSalida();
   const [sel, setSel] = useState(null);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);       // selector de despacho
+  const [modalManual, setModalManual] = useState(false); // creación manual
 
   const selFresh = sel ? tareas.find(t => t.id === sel) || null : null;
   if (selFresh) return <SalidaForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} />;
@@ -318,10 +476,16 @@ const SalidaCertificacion = () => {
             <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} /> Actualizar
           </button>
           {canManage && (
-            <button onClick={() => setModal(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black flex items-center gap-1.5 hover:bg-slate-800">
-              <Plus size={14} /> Certificar salida
-            </button>
+            <>
+              <button onClick={() => setModalManual(true)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700">
+                <PencilLine size={14} /> Certificar manual (N.V. + SKU)
+              </button>
+              <button onClick={() => setModal(true)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50">
+                <Search size={14} /> Desde despacho
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -332,7 +496,7 @@ const SalidaCertificacion = () => {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Truck size={44} className="text-slate-200 mb-4" />
           <h3 className="text-base font-bold text-slate-400">Sin certificaciones de salida</h3>
-          <p className="text-xs text-slate-300">Usa “Certificar salida” para elegir un despacho y emitir su Certificado de Conformidad.</p>
+          <p className="text-xs text-slate-300">Usa “Certificar manual” (escribes la N.V. y agregas los SKUs) o “Desde despacho” para elegir uno existente.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -360,6 +524,7 @@ const SalidaCertificacion = () => {
       )}
 
       {modal && <DespachoModal onClose={() => setModal(false)} onCreated={(id) => { setModal(false); if (id) setSel(id); }} />}
+      {modalManual && <ManualModal onClose={() => setModalManual(false)} onCreated={(id) => { setModalManual(false); if (id) setSel(id); }} />}
     </div>
   );
 };

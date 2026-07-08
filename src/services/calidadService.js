@@ -699,6 +699,23 @@ export function useCrearTareaSalida() {
   });
 }
 
+// Crear la tarea de certificación de salida MANUAL (N.V. escrita a mano + SKUs).
+export function useCrearTareaSalidaManual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ nv, skus, cliente, guia, factura, transportista, bultos }) => {
+      const { data, error } = await supabase.rpc('crear_tarea_salida_manual', {
+        p_nv: nv, p_skus: skus || [], p_cliente: cliente ?? null, p_guia: guia ?? null,
+        p_factura: factura ?? null, p_transportista: transportista ?? null,
+        p_bultos: bultos ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

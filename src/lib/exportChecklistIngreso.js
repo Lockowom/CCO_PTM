@@ -126,6 +126,19 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
   ] }));
   children.push(new Paragraph(''));
 
+  // SKUs del despacho (certificación de salida).
+  const skusW = salida && Array.isArray(tarea.contexto?.skus) ? tarea.contexto.skus : [];
+  if (skusW.length) {
+    children.push(new Paragraph({ text: 'SKUs del despacho', heading: HeadingLevel.HEADING_2 }));
+    children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+      new TableRow({ children: ['Código', 'Producto', 'Ubicación', 'Cantidad'].map(th) }),
+      ...skusW.map(s => new TableRow({ children: [
+        td(s.codigo_producto), td(s.producto), td(s.ubicacion), td(`${s.cantidad ?? '—'} ${s.unidad_medida || ''}`.trim()),
+      ] })),
+    ] }));
+    children.push(new Paragraph(''));
+  }
+
   const ans = tarea.checklist || {};
   niveles.forEach((nivel) => {
     children.push(new Paragraph({ text: nivel.titulo, heading: HeadingLevel.HEADING_2 }));
@@ -217,6 +230,24 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
     ] },
     layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
   });
+
+  // SKUs del despacho (certificación de salida).
+  const skus = salida && Array.isArray(tarea.contexto?.skus) ? tarea.contexto.skus : [];
+  if (skus.length) {
+    content.push({ text: 'SKUs del despacho', style: 'h2' });
+    content.push({
+      table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: [
+        ['Código', 'Producto', 'Ubicación', 'Cantidad'].map(t => ({ text: t, bold: true, fontSize: 9 })),
+        ...skus.map(s => [
+          { text: s.codigo_producto || '—', fontSize: 9 },
+          { text: s.producto || '—', fontSize: 9 },
+          { text: s.ubicacion || '—', fontSize: 9 },
+          { text: `${s.cantidad ?? '—'} ${s.unidad_medida || ''}`.trim(), fontSize: 9 },
+        ]),
+      ] },
+      layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+    });
+  }
 
   niveles.forEach((nivel) => {
     content.push({ text: nivel.titulo, style: 'h2' });
