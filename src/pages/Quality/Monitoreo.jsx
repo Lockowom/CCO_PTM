@@ -565,16 +565,25 @@ const REPORTE_VACIO = {
   revisado_por: '',
 };
 
-const InformeDanosBuilder = ({ informe, onCancel, onSaved }) => {
+const InformeDanosBuilder = ({ informe, prefill, onCancel, onSaved }) => {
   const { user } = useAuth();
   const guardar = useGuardarInformeDanos();
   const { data: itemsExistentes } = useInformeItems(informe?.id || null);
+
+  // Pre-carga desde un checklist NO CONFORME (nuevo informe): antecedentes con la
+  // recepción y fecha de recepción; el analista completa el resto.
+  const prefillRep = (!informe && prefill) ? {
+    antecedentes: `Recepción ${prefill.oc || 's/OC'} de ${prefill.proveedor || 's/proveedor'} `
+      + `(${prefill.origen === 'NACIONAL' ? 'Nacional' : 'Importación'}) resultó NO CONFORME en el `
+      + `CheckList de ingreso. Se levanta el presente Informe de Daños / Solicitud de No Conformidad al proveedor.`,
+    fecha_recepcion: prefill.fecha_recepcion || REPORTE_VACIO.fecha_recepcion,
+  } : {};
 
   const [informeId, setInformeId] = useState(informe?.id || null);
   const [numero, setNumero] = useState(informe?.numero || '');
   const [bodega, setBodega] = useState(informe?.bodega || '');
   const [estado, setEstado] = useState(informe?.estado || 'BORRADOR');
-  const [rep, setRep] = useState({ ...REPORTE_VACIO, ...(informe?.reporte || {}), elaborado_por: informe?.reporte?.elaborado_por || user?.nombre || '' });
+  const [rep, setRep] = useState({ ...REPORTE_VACIO, ...(informe?.reporte || {}), ...prefillRep, elaborado_por: informe?.reporte?.elaborado_por || user?.nombre || '' });
   const [hallazgos, setHallazgos] = useState([]);
 
   const { data: evidencias = [], refetch: refetchEvidencias } = useInformeEvidencias(informeId);
@@ -1096,6 +1105,7 @@ const Monitoreo = () => {
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState('informes'); // informes | checklist
+  const [danosPrefill, setDanosPrefill] = useState(null); // pre-carga del Informe de Daños desde un checklist NC
   const pendCount = useTareasPendientesCount();
 
   // Realtime en la cola de checklist: una recepción nueva crea la tarea vía
@@ -1128,7 +1138,18 @@ const Monitoreo = () => {
       toast.error(`No se pudo eliminar: ${e.message}`);
     }
   };
-  const volver = () => { setMode('list'); setSelected(null); };
+  const volver = () => { setMode('list'); setSelected(null); setDanosPrefill(null); };
+
+  // Desde una tarea de checklist NO CONFORME: abre el Informe de Daños pre-cargado.
+  const generarDanosDesdeChecklist = (tarea) => {
+    setSelected(null);
+    setDanosPrefill({
+      proveedor: tarea.proveedor, oc: tarea.oc, origen: tarea.origen,
+      fecha_recepcion: tarea.fecha_recepcion, recepcion_id: tarea.recepcion_id, tarea_id: tarea.id,
+    });
+    setTab('informes');
+    setMode('new-danos');
+  };
 
   return (
     <div className="h-full bg-slate-50 p-3 sm:p-6 min-h-screen">
@@ -1175,7 +1196,7 @@ const Monitoreo = () => {
         </div>
       )}
 
-      {mode === 'list' && tab === 'checklist' && <ChecklistIngreso />}
+      {mode === 'list' && tab === 'checklist' && <ChecklistIngreso onGenerarDanos={generarDanosDesdeChecklist} />}
 
       {mode === 'new' && (
         <InformeBuilder onCancel={volver} onSaved={volver} />
@@ -1184,7 +1205,7 @@ const Monitoreo = () => {
         <InformeBuilder informe={selected} onCancel={volver} onSaved={volver} />
       )}
       {mode === 'new-danos' && (
-        <InformeDanosBuilder onCancel={volver} onSaved={volver} />
+        <InformeDanosBuilder prefill={danosPrefill} onCancel={volver} onSaved={volver} />
       )}
       {mode === 'edit-danos' && selected && (
         <InformeDanosBuilder informe={selected} onCancel={volver} onSaved={volver} />

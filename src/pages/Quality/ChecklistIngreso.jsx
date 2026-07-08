@@ -16,7 +16,7 @@ const ORIGEN_META = {
 };
 
 // ── Formulario del checklist de una tarea ───────────────────────────────────
-const ChecklistForm = ({ tarea, onBack, canManage }) => {
+const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const guardar = useGuardarChecklist();
   const finalizada = tarea.estado === 'CONFORME' || tarea.estado === 'NO_CONFORME';
   const readOnly = finalizada || !canManage;
@@ -46,19 +46,23 @@ const ChecklistForm = ({ tarea, onBack, canManage }) => {
     } catch (e) { toast.error(`No se pudo guardar: ${e.message}`); }
   };
 
-  const finalizar = async (resultado) => {
-    if (resultado === 'CONFORME' && (!answeredAll || hasNo)) {
-      toast.error(faltan > 0 ? `Faltan ${faltan} ítem(s) por responder` : 'Hay ítems NO conformes: no se puede certificar');
-      return;
-    }
+  // Certificación AUTOMÁTICA: el resultado se determina solo por las respuestas
+  // (todos OK → CONFORME + folio; algún NO → NO CONFORME + tarea urgente de Daños).
+  const finalizarAuto = async () => {
+    if (!answeredAll) { toast.error(`Faltan ${faltan} ítem(s) por responder`); return; }
+    const resultado = hasNo ? 'NO_CONFORME' : 'CONFORME';
     if (!confirm(resultado === 'CONFORME'
-      ? '¿Certificar la recepción como CONFORME? Se emitirá un folio y quedará bloqueada.'
-      : '¿Marcar la recepción como NO CONFORME? Se generará una alerta urgente para el Informe de Daños.')) return;
+      ? 'Todos los ítems conformes → se CERTIFICARÁ automáticamente (se emite folio) y la tarea quedará bloqueada. ¿Continuar?'
+      : 'Hay ítems NO conformes → se marcará NO CONFORME y se generará la tarea urgente del Informe de Daños. ¿Continuar?')) return;
     try {
       const res = await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, finalizar: true, resultado });
-      if (resultado === 'CONFORME') toast.success(`Certificado ${res?.folio || ''} — recepción CONFORME`);
-      else toast.warning('Recepción NO CONFORME. Alerta urgente enviada para el Informe de Daños.');
-      onBack();
+      if (resultado === 'CONFORME') {
+        toast.success(`Certificado automáticamente ${res?.folio || ''} — recepción CONFORME`);
+        onBack();
+      } else {
+        toast.warning('Recepción NO CONFORME. Tarea urgente del Informe de Daños generada.');
+        // Se queda en el detalle para ofrecer el botón "Generar Informe de Daños".
+      }
     } catch (e) { toast.error(`No se pudo finalizar: ${e.message}`); }
   };
 
@@ -144,31 +148,37 @@ const ChecklistForm = ({ tarea, onBack, canManage }) => {
         </div>
       </div>
 
-      {/* Acciones */}
+      {/* Acciones — certificación automática según las respuestas */}
       {!readOnly && (
         <div className="sticky bottom-3 mt-5 bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs font-bold text-slate-500">
-            {faltan > 0 ? `${faltan} ítem(s) por responder` : hasNo ? 'Hay ítems NO conformes' : 'Todos los ítems conformes'}
-          </p>
+          <div className="text-xs font-black">
+            {faltan > 0
+              ? <span className="text-slate-500">{faltan} ítem(s) por responder</span>
+              : hasNo
+                ? <span className="text-rose-600">Resultado automático: NO CONFORME</span>
+                : <span className="text-emerald-600">Resultado automático: CONFORME</span>}
+          </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={guardarAvance} disabled={guardar.isPending}
               className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50">
               Guardar avance
             </button>
-            <button onClick={() => finalizar('NO_CONFORME')} disabled={guardar.isPending}
-              className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700">
-              <FileWarning size={16} /> No Conforme
-            </button>
-            <button onClick={() => finalizar('CONFORME')} disabled={guardar.isPending || !answeredAll || hasNo}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-40">
-              <ShieldCheck size={16} /> Certificar Conforme
+            <button onClick={finalizarAuto} disabled={guardar.isPending || faltan > 0}
+              className={`px-4 py-2.5 rounded-xl text-white font-black text-sm flex items-center gap-2 disabled:opacity-40 ${hasNo ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+              {hasNo ? <><FileWarning size={16} /> Finalizar (No Conforme)</> : <><ShieldCheck size={16} /> Finalizar y certificar</>}
             </button>
           </div>
         </div>
       )}
       {tarea.estado === 'NO_CONFORME' && (
-        <div className="mt-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 flex items-center gap-2">
-          <AlertTriangle size={16} /> Recepción NO CONFORME. Genera el <b>Informe de Daños / Solicitud NC al proveedor</b> desde la pestaña Informes.
+        <div className="mt-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-2"><AlertTriangle size={16} /> Recepción <b>NO CONFORME</b>. Requiere Informe de Daños / Solicitud NC al proveedor.</span>
+          {onGenerarDanos && (
+            <button onClick={() => onGenerarDanos(tarea)}
+              className="px-4 py-2 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700 shrink-0">
+              <FileWarning size={16} /> Generar Informe de Daños
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -176,7 +186,7 @@ const ChecklistForm = ({ tarea, onBack, canManage }) => {
 };
 
 // ── Cola de tareas de checklist ─────────────────────────────────────────────
-const ChecklistIngreso = () => {
+const ChecklistIngreso = ({ onGenerarDanos }) => {
   const { hasPermission } = useAuth();
   const canManage = hasPermission('manage_quality') || hasPermission('manage_monitoreo');
   const { data: tareas = [], isLoading } = useTareasChecklist();
@@ -185,7 +195,7 @@ const ChecklistIngreso = () => {
   // Refrescar la tarea seleccionada cuando cambian los datos.
   const selFresh = sel ? tareas.find(t => t.id === sel.id) || sel : null;
 
-  if (selFresh) return <ChecklistForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} />;
+  if (selFresh) return <ChecklistForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} onGenerarDanos={onGenerarDanos} />;
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>;
 
