@@ -92,7 +92,7 @@ export function isoWordHeaderFooter(docx, tipo) {
     new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, borders: noBorders, rows: [
       new TableRow({ children: [
         new TableCell({ width: { size: 60, type: WidthType.PERCENTAGE }, borders: noBorders, children: [
-          ...(D.logo ? [new Paragraph({ children: [new ImageRun({ data: dataUriToBytes(D.logo), transformation: { width: 120, height: Math.round(120 * D.logo_h / D.logo_w) } })] })] : []),
+          ...(D.logo ? [new Paragraph({ children: [new ImageRun({ data: dataUriToBytes(D.logo), type: 'png', transformation: { width: 120, height: Math.round(120 * D.logo_h / D.logo_w) } })] })] : []),
           new Paragraph({ children: [new TextRun({ text: D.empresa, bold: true, size: 22 })] }),
           new Paragraph({ children: [new TextRun({ text: D.subtitulo, size: 15, color: '64748B' })] }),
         ] }),
