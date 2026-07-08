@@ -10,7 +10,10 @@ export const DOC_CONTROL = {
   subtitulo: 'Control de Calidad — Recepción de Insumos Médicos',
   norma: 'ISO 13485:2016',
   fecha_revision: '2026-01',
-  logo: LOGO_PTM,
+  // logo: LOGO_PTM está corrupto (base64 pegado en chat llegó dañado: IDAT con
+  // CRC inválido → rompe pdfmake y Word). Se desactiva hasta recibir un logo
+  // válido (subir como archivo). Volver a poner `LOGO_PTM` cuando esté sano.
+  logo: null,
   logo_w: 257, logo_h: 77,
   // Código/revisión por tipo de documento:
   codigos: {

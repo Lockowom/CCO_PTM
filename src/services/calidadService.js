@@ -461,6 +461,9 @@ export function useTareasChecklist() {
     queryKey: ['calidad_tareas'],
     staleTime: 0,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,   // al volver a la pestaña del navegador, refresca
+    refetchInterval: 20000,       // respaldo por si realtime no entrega (poll 20s)
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase

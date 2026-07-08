@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
-  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck,
+  ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -238,7 +238,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 const ChecklistIngreso = ({ onGenerarDanos }) => {
   const { hasPermission } = useAuth();
   const canManage = hasPermission('manage_quality') || hasPermission('manage_monitoreo');
-  const { data: tareas = [], isLoading } = useTareasChecklist();
+  const { data: tareas = [], isLoading, refetch, isFetching } = useTareasChecklist();
   const [sel, setSel] = useState(null);
 
   // Refrescar la tarea seleccionada cuando cambian los datos.
@@ -246,19 +246,31 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
 
   if (selFresh) return <ChecklistForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} onGenerarDanos={onGenerarDanos} />;
 
-  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>;
-
-  if (tareas.length === 0) return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <ClipboardList size={44} className="text-slate-200 mb-4" />
-      <h3 className="text-base font-bold text-slate-400">Sin tareas de checklist</h3>
-      <p className="text-xs text-slate-300">Las tareas se generan solas al registrar una recepción.</p>
-    </div>
-  );
+  const pendientes = tareas.filter(t => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO').length;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {tareas.map(t => {
+    <div>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <p className="text-sm font-bold text-slate-500">
+          {isLoading ? 'Cargando…' : `${tareas.length} tarea(s) · ${pendientes} pendiente(s)`}
+        </p>
+        <button onClick={() => refetch()} disabled={isFetching}
+          className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50">
+          <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} /> Actualizar
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={36} /></div>
+      ) : tareas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <ClipboardList size={44} className="text-slate-200 mb-4" />
+          <h3 className="text-base font-bold text-slate-400">Sin tareas de checklist</h3>
+          <p className="text-xs text-slate-300">Las tareas se generan solas al registrar una recepción. Usa “Actualizar” si acabas de registrar una.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tareas.map(t => {
         const meta = ESTADO_TAREA_META[t.estado] || {};
         const om = ORIGEN_META[t.origen] || {};
         const pend = t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO';
@@ -276,8 +288,10 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
             <p className="text-sm text-slate-500 font-medium">OC {t.oc || '—'} · {t.fecha_recepcion || '—'}</p>
             {t.bultos != null && <p className="text-xs text-slate-400 mt-1">{t.bultos} bultos</p>}
           </button>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
