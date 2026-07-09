@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import {
   RotateCcw, Plus, Lock, Unlock, Download, Search, Package, Boxes,
-  ClipboardCheck, Layers, Calculator, X, Trash2, QrCode, ExternalLink,
+  ClipboardCheck, Layers, Calculator, X, Trash2, QrCode, ExternalLink, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -332,45 +332,155 @@ function BloqueModal({ codigo, onClose }) {
   );
 }
 
-// ─── Proyección de palletizado ───────────────────────────────────────────────
+// ─── Proyección de palletizado (port fiel de t-o-inventario) ─────────────────
+// Cajas = Cant. OC ÷ unid. por caja (redondeo arriba), salvo Cajas (manual) que
+// manda. Cajas x pallet = pie × altura. Pallets = cajas ÷ cajas por pallet.
+function calcProy(p) {
+  const oc = Number(p.cantOc) || 0, manual = Number(p.cantBx) || 0, cxb = Number(p.cantXBx) || 0;
+  const pie = Number(p.pie) || 0, alt = Number(p.altura) || 0;
+  const cajasAuto = cxb > 0 ? Math.ceil(oc / cxb) : 0;
+  const cajas = manual > 0 ? Math.ceil(manual) : cajasAuto;
+  const esManual = manual > 0;
+  const bxPallet = pie * alt;
+  const pallets = bxPallet > 0 ? cajas / bxPallet : 0;
+  const palletsEnteros = Math.ceil(pallets);
+  const cajasUltimo = bxPallet > 0 ? cajas % bxPallet : 0;
+  const unidadesReales = cajas * cxb;
+  let balanceado = null;
+  if (palletsEnteros >= 2 && cajasUltimo > 0) {
+    const base = Math.floor(cajas / palletsEnteros);
+    const conUnaMas = cajas % palletsEnteros;
+    balanceado = { base, conUnaMas, conBase: palletsEnteros - conUnaMas };
+  }
+  return { cajas, cajasAuto, esManual, bxPallet, pallets, palletsEnteros, cajasUltimo, unidadesReales, balanceado };
+}
+function textoBalanceado(b) {
+  const total = b.conBase + b.conUnaMas;
+  if (b.conUnaMas === 0) return `${total} pallets de ${b.base} cajas`;
+  if (b.conBase === 0) return `${total} pallets de ${b.base + 1} cajas`;
+  return `${total} pallets: ${b.conUnaMas} de ${b.base + 1} y ${b.conBase} de ${b.base} cajas`;
+}
+const s0 = (v) => (Number(v) ? String(Number(v)) : '');
+const fromRow = (r) => ({ id: r.id, prod: r.prod || '', cantOc: s0(r.cant_oc), cantBx: s0(r.cant_bx), cantXBx: s0(r.cant_x_bx), pie: s0(r.pie), altura: s0(r.altura), creado_por_nombre: r.creado_por_nombre });
+const toNums = (p) => ({ prod: p.prod, cantOc: Number(p.cantOc) || 0, cantBx: Number(p.cantBx) || 0, cantXBx: Number(p.cantXBx) || 0, pie: Number(p.pie) || 0, altura: Number(p.altura) || 0 });
+
 function TabProyeccion() {
-  const { data: rows = [] } = useProyecciones();
+  const { data: server = [], isLoading } = useProyecciones();
   const guardar = useGuardarProyeccion();
   const eliminar = useEliminarProyeccion();
-  const [f, setF] = useState({ prod: '', cantOc: '', cantXBx: '', pie: '', altura: '' });
-  const add = async () => {
-    if (!f.prod) { toast.error('Producto'); return; }
-    try { await guardar.mutateAsync({ prod: f.prod, cantOc: Number(f.cantOc) || 0, cantXBx: Number(f.cantXBx) || 0, pie: Number(f.pie) || 0, altura: Number(f.altura) || 0 }); setF({ prod: '', cantOc: '', cantXBx: '', pie: '', altura: '' }); }
+  const [rows, setRows] = useState([]);
+  const [guardando, setGuardando] = useState(false);
+  const seeded = useRef(false);
+  const timers = useRef({});
+
+  // Sembramos el estado local una vez (luego mandamos nosotros para no pisar el tipeo).
+  useEffect(() => {
+    if (!seeded.current && !isLoading) { setRows(server.map(fromRow)); seeded.current = true; }
+  }, [isLoading, server]);
+
+  const set = (id, campo, valor) => {
+    setRows((rs) => {
+      const nuevos = rs.map((r) => (r.id === id ? { ...r, [campo]: valor } : r));
+      const row = nuevos.find((r) => r.id === id);
+      clearTimeout(timers.current[id]);
+      setGuardando(true);
+      timers.current[id] = setTimeout(async () => {
+        try { await guardar.mutateAsync({ id, ...toNums(row) }); }
+        catch (e) { toast.error(e.message || 'No se pudo guardar'); }
+        finally { setGuardando(false); }
+      }, 600);
+      return nuevos;
+    });
+  };
+  const agregar = async () => {
+    try { const nueva = await guardar.mutateAsync({ id: null, prod: '', cantOc: 0, cantBx: 0, cantXBx: 0, pie: 6, altura: 6 }); setRows((rs) => [...rs, fromRow(nueva)]); }
     catch (e) { toast.error(e.message); }
   };
-  const cajas = (r) => r.cant_bx > 0 ? r.cant_bx : (r.cant_x_bx > 0 ? Math.ceil((r.cant_oc || 0) / r.cant_x_bx) : 0);
-  const pallets = (r) => r.pie > 0 ? Math.ceil(cajas(r) / r.pie) : 0;
+  const duplicar = async (p) => {
+    try { const nueva = await guardar.mutateAsync({ id: null, ...toNums(p) }); setRows((rs) => [...rs, fromRow(nueva)]); }
+    catch (e) { toast.error(e.message); }
+  };
+  const borrar = async (id) => {
+    try { await eliminar.mutateAsync({ id }); setRows((rs) => rs.filter((r) => r.id !== id)); }
+    catch (e) { toast.error(e.message); }
+  };
+
+  const totales = rows.reduce((t, p) => { const c = calcProy(p); return { pallets: t.pallets + c.pallets, enteros: t.enteros + c.palletsEnteros, cajas: t.cajas + c.cajas }; }, { pallets: 0, enteros: 0, cajas: 0 });
+  const exportar = () => exportToExcel({ filename: 'proyeccion_pallets', sheets: [{ name: 'Proyección', rows: rows.map((p, i) => {
+    const c = calcProy(p);
+    return { Proyección: `Proyección ${i + 1}`, Producto: p.prod, 'Cant. OC': Number(p.cantOc) || 0, 'Cant. x caja': Number(p.cantXBx) || 0, Cajas: c.cajas, 'Origen cajas': c.esManual ? 'manual' : 'auto', 'Pie del pallet': Number(p.pie) || 0, Altura: Number(p.altura) || 0, 'Cajas x pallet': c.bxPallet, 'Pallets usados': Math.round(c.pallets * 100) / 100, 'Pallets completos': c.palletsEnteros, 'Distribución pareja': c.balanceado ? textoBalanceado(c.balanceado) : (c.palletsEnteros ? `${c.palletsEnteros} de ${c.bxPallet}` : ''), 'Unidades reales': c.unidadesReales };
+  }) }] });
+
+  const inp = 'w-full px-2 py-1.5 rounded-lg border border-slate-200 text-sm focus:border-orange-400 outline-none';
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-      <h2 className="font-black text-slate-900 flex items-center gap-2"><Calculator size={18} className="text-orange-500" /> Proyección de palletizado</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end bg-slate-50 rounded-xl p-3">
-        <input value={f.prod} onChange={(e) => setF({ ...f, prod: e.target.value })} placeholder="Producto" className="px-2 py-1.5 rounded-lg border border-slate-200 text-sm col-span-2" />
-        <input value={f.cantOc} onChange={(e) => setF({ ...f, cantOc: e.target.value })} type="number" placeholder="Cant. OC" className="px-2 py-1.5 rounded-lg border border-slate-200 text-sm" />
-        <input value={f.cantXBx} onChange={(e) => setF({ ...f, cantXBx: e.target.value })} type="number" placeholder="U x caja" className="px-2 py-1.5 rounded-lg border border-slate-200 text-sm" />
-        <input value={f.pie} onChange={(e) => setF({ ...f, pie: e.target.value })} type="number" placeholder="Cajas x pallet" className="px-2 py-1.5 rounded-lg border border-slate-200 text-sm" />
-        <button onClick={add} className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-sm font-black">+ Agregar</button>
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <Kpi label="Cajas totales" value={n(totales.cajas)} />
+        <Kpi label="Pallets exactos" value={n(Math.round(totales.pallets * 100) / 100)} />
+        <Kpi label="Pallets completos" value={n(totales.enteros)} tone="good" />
       </div>
-      <div className="border border-slate-100 rounded-xl overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-[10px] uppercase text-slate-400"><tr><th className="text-left px-3 py-2">Producto</th><th className="text-right px-3 py-2">OC</th><th className="text-right px-3 py-2">Cajas</th><th className="text-right px-3 py-2">Pallets</th><th></th></tr></thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-slate-50">
-                <td className="px-3 py-2">{r.prod}</td>
-                <td className="px-3 py-2 text-right">{n(r.cant_oc)}</td>
-                <td className="px-3 py-2 text-right font-bold">{n(cajas(r))}</td>
-                <td className="px-3 py-2 text-right font-black text-orange-600">{n(pallets(r))}</td>
-                <td className="px-3 py-2 text-right"><button onClick={() => eliminar.mutate({ id: r.id })} className="text-slate-400 hover:text-rose-500"><Trash2 size={13} /></button></td>
-              </tr>
-            ))}
-            {rows.length === 0 && <tr><td colSpan={5} className="px-3 py-4 text-center text-slate-400 text-xs">Sin proyecciones.</td></tr>}
-          </tbody>
-        </table>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-black text-slate-900 flex items-center gap-2"><Calculator size={18} className="text-orange-500" /> Proyección de palletizado{guardando && <span className="text-[11px] font-bold text-orange-500">· guardando…</span>}</h2>
+          <button onClick={exportar} disabled={!rows.length} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"><Download size={14} /> Excel</button>
+        </div>
+
+        {isLoading && <div className="text-slate-400 text-sm">Cargando…</div>}
+        {!isLoading && rows.length === 0 && <div className="text-slate-400 text-sm">Sin proyecciones. Agregá una para calcular pallets.</div>}
+
+        {rows.map((p, i) => {
+          const c = calcProy(p);
+          const ok = c.bxPallet > 0 && c.cajas > 0;
+          return (
+            <div key={p.id} className="rounded-2xl border border-slate-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-slate-700 text-sm">Proyección {i + 1}{p.creado_por_nombre && <span className="ml-2 text-xs font-normal text-slate-400">· {p.creado_por_nombre}</span>}</span>
+                <div className="flex gap-1">
+                  <button onClick={() => duplicar(p)} title="Duplicar" className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100"><Copy size={14} /></button>
+                  <button onClick={() => borrar(p.id)} title="Eliminar" className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-50"><Trash2 size={14} /></button>
+                </div>
+              </div>
+
+              <input className={inp} placeholder="Producto (ej: COMPRESA)" value={p.prod} onChange={(e) => set(p.id, 'prod', e.target.value)} />
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                <div><label className="text-[10px] font-black uppercase text-slate-400">Cant. OC</label><input className={inp} inputMode="numeric" placeholder="20000" value={p.cantOc} onChange={(e) => set(p.id, 'cantOc', e.target.value)} /></div>
+                <div><label className="text-[10px] font-black uppercase text-slate-400">Cajas (manual)</label><input className={inp} inputMode="numeric" placeholder={c.cajasAuto > 0 ? `auto: ${c.cajasAuto}` : 'auto'} value={p.cantBx} onChange={(e) => set(p.id, 'cantBx', e.target.value)} /></div>
+                <div><label className="text-[10px] font-black uppercase text-slate-400">Unid. x caja</label><input className={inp} inputMode="numeric" placeholder="50" value={p.cantXBx} onChange={(e) => set(p.id, 'cantXBx', e.target.value)} /></div>
+                <div><label className="text-[10px] font-black uppercase text-slate-400">Pie del pallet</label><input className={inp} inputMode="numeric" placeholder="6" value={p.pie} onChange={(e) => set(p.id, 'pie', e.target.value)} /></div>
+                <div><label className="text-[10px] font-black uppercase text-slate-400">Altura (pisos)</label><input className={inp} inputMode="numeric" placeholder="6" value={p.altura} onChange={(e) => set(p.id, 'altura', e.target.value)} /></div>
+              </div>
+
+              <div className={'rounded-xl p-3 text-sm ' + (ok ? 'bg-orange-50' : 'bg-slate-50 text-slate-400')}>
+                {ok ? (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-slate-600">
+                      <span>📦 Cajas: <b className="text-slate-800">{n(c.cajas)}</b>{c.esManual && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] font-semibold text-amber-700">manual</span>}</span>
+                      <span>🧱 Cajas x pallet: <b className="text-slate-800">{n(c.bxPallet)}</b></span>
+                      <span>Unid. reales: <b className="text-slate-800">{n(c.unidadesReales)}</b></span>
+                    </div>
+                    <div className="text-base font-black text-orange-600">🚛 {n(Math.round(c.pallets * 100) / 100)} pallets<span className="ml-2 text-sm font-semibold text-slate-500">→ {n(c.palletsEnteros)} pallet{c.palletsEnteros === 1 ? '' : 's'}</span></div>
+                    {c.balanceado ? (
+                      <div className="space-y-0.5 text-sm text-slate-600">
+                        <div>🤝 <b>Parejo:</b> {textoBalanceado(c.balanceado)}</div>
+                        <div className="text-slate-400">📚 Llenado máximo: {n(c.palletsEnteros - 1)} de {n(c.bxPallet)} y el último con {n(c.cajasUltimo)}</div>
+                      </div>
+                    ) : c.palletsEnteros >= 1 && (
+                      <div className="text-sm text-slate-500">{c.palletsEnteros === 1 ? `Un solo pallet con ${n(c.cajas)} caja${c.cajas === 1 ? '' : 's'}` : `Todos llenos: ${n(c.palletsEnteros)} pallets de ${n(c.bxPallet)} cajas justas`}</div>
+                    )}
+                  </div>
+                ) : 'Completá cantidad, unidades por caja, pie y altura para calcular.'}
+              </div>
+            </div>
+          );
+        })}
+
+        <button onClick={agregar} className="w-full px-3 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-black flex items-center justify-center gap-1.5 hover:bg-orange-700"><Plus size={15} /> Agregar proyección</button>
+
+        <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm text-slate-500">
+          💡 <b>Cajas</b> = Cant. OC ÷ unid. por caja (redondeado hacia arriba), salvo que llenes <b>Cajas (manual)</b>, que manda sobre el cálculo — igual que CANT BX en tu planilla. <b>Cajas x pallet</b> = pie × altura. <b>Pallets</b> = cajas ÷ cajas por pallet. Las proyecciones se guardan en la base: todos ven las mismas.
+        </div>
       </div>
     </div>
   );
