@@ -8,9 +8,10 @@ export const APP_MODULES = [
   { id: 'tms', label: 'TMS Logistics', section: 'core' },
   { id: 'inbound', label: 'Inbound', section: 'wms' },
   { id: 'outbound', label: 'Outbound', section: 'wms' },
+  { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
-  { id: 'postventa', label: 'Post-Venta', section: 'postventa' },
+  { id: 'postventa', label: 'Post-Venta (Servicio Técnico)', section: 'postventa' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
 
@@ -52,8 +53,8 @@ export const APP_ROUTES = [
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
 
   // Inventario
-  { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'wms' },
-  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico', module: 'wms' },
+  { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
+  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico', module: 'inventario' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
@@ -62,6 +63,9 @@ export const APP_ROUTES = [
 
   // Post-Venta
   { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },
+  { value: '/postventa/tickets?tab=bandeja', label: 'Post-Venta - Bandeja Correos', module: 'postventa' },
+  { value: '/postventa/tickets?tab=calendario', label: 'Post-Venta - Calendario', module: 'postventa' },
+  { value: '/postventa/tickets?tab=dashboard', label: 'Post-Venta - Dashboard', module: 'postventa' },
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
@@ -99,7 +103,15 @@ export const APP_PERMISSIONS = [
       { id: 'view_mobile_app', label: 'Acceder App Móvil' },
       { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' },
       { id: 'view_stock', label: 'Ver Stock (PDA)' },
-      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' },
+      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' }
+    ]
+  },
+  {
+    id: 'inventario',
+    label: 'Inventario (Traspasos + Conteo Cíclico)',
+    permissions: [
+      // Traspasos/Ajustes se abre con permisos de bodega ya existentes:
+      // manage_inventory, view_stock, view_batches o view_reception.
       { id: 'view_conteo', label: 'Ver Conteo Cíclico' },
       { id: 'manage_conteo', label: 'Contar (Conteo Cíclico)' },
       { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' }

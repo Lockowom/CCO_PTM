@@ -88,6 +88,18 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     hilo ordenado). Frontend: pestaña **Bandeja Correos** (`TabBandeja`) con chip **Interno/Externo**
     (`DOMINIOS_INTERNOS`, `ptm.cl`) y **lector estilo Outlook** (`ThreadReader`).
 
+## Regla permanente: checklist al agregar un MÓDULO nuevo
+Cada módulo/pantalla nueva DEBE quedar administrable en **Roles** y **Vistas**. En el mismo
+cambio, actualizar SIEMPRE:
+1. `src/App.jsx` — ruta lazy + `<Route>`.
+2. `src/constants/permissions.js` — `ROUTE_PERMISSIONS['/ruta']` (sin permiso definido se DENIEGA).
+3. `src/components/Navbar.jsx` — item en `menuCategories` (la visibilidad se deriva de ROUTE_PERMISSIONS).
+4. `src/config/modules.js` — los 3 catálogos: `APP_MODULES` (toggle en Admin → Vistas),
+   `APP_ROUTES` (landing pages por rol) y `APP_PERMISSIONS` (checkboxes en Admin → Roles).
+5. Migración SQL — permisos nuevos en `tms_permisos` (id/nombre/modulo) **y** fila del módulo en
+   `tms_modules_config` (Vistas solo muestra módulos con fila en esa tabla ∩ APP_MODULES).
+6. Docs: `DOCUMENTACION_PROYECTO.md` (+changelog), `supabase/README.md` y `supabase/DIAGRAMA_BD.md` si cambia la BD.
+
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
