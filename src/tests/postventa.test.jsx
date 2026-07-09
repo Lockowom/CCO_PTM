@@ -65,9 +65,9 @@ vi.mock('../context/AuthContext', () => ({
 
 import Postventa from '../pages/Postventa/Postventa';
 
-function wrap(ui) {
+function wrap(ui, route = '/postventa/tickets') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><MemoryRouter>{ui}</MemoryRouter></QueryClientProvider>);
+  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter></QueryClientProvider>);
 }
 
 describe('Post-Venta / Servicio Técnico (integrado en CCO)', () => {
@@ -82,36 +82,29 @@ describe('Post-Venta / Servicio Técnico (integrado en CCO)', () => {
     expect(screen.getAllByText('Abierto').length).toBeGreaterThan(0);
   });
 
-  it('la pestaña Dashboard muestra los KPIs derivados del stock de tickets', async () => {
-    wrap(<Postventa />);
-    fireEvent.click(screen.getByRole('button', { name: /Dashboard/i }));
-    // KPI "Total" = 2 y carga por técnico.
+  it('la sección Dashboard (deep-link ?tab=dashboard) muestra los KPIs', async () => {
+    wrap(<Postventa />, '/postventa/tickets?tab=dashboard');
     await waitFor(() => expect(screen.getByText('Carga por técnico')).toBeInTheDocument());
     expect(screen.getByText('Tiempos de resolución')).toBeInTheDocument();
   });
 
-  it('la pestaña Nuevo Ticket muestra el formulario de alta con catálogos', async () => {
-    wrap(<Postventa />);
-    fireEvent.click(screen.getByRole('button', { name: /Nuevo Ticket/i }));
+  it('la sección Nuevo Ticket (deep-link ?tab=nuevo) muestra el formulario de alta', async () => {
+    wrap(<Postventa />, '/postventa/tickets?tab=nuevo');
     await waitFor(() => expect(screen.getByText(/Nuevo ticket de servicio/i)).toBeInTheDocument());
     expect(screen.getByText(/Cliente \/ Hospital/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Crear Ticket/i })).toBeInTheDocument();
   });
 
-  it('la pestaña Calendario muestra la grilla mensual y ubica tickets por fecha', async () => {
-    wrap(<Postventa />);
-    fireEvent.click(screen.getByRole('button', { name: /Calendario/i }));
+  it('la sección Calendario (deep-link ?tab=calendario) muestra la grilla mensual', async () => {
+    wrap(<Postventa />, '/postventa/tickets?tab=calendario');
     await waitFor(() => expect(screen.getByText('Lun')).toBeInTheDocument());
-    // Encabezados de días de la semana + control "Ubicar por".
     expect(screen.getByText('Dom')).toBeInTheDocument();
     expect(screen.getByText(/Ubicar por/i)).toBeInTheDocument();
   });
 
-  it('la pestaña Técnicos (supervisor) lista el catálogo editable', async () => {
-    wrap(<Postventa />);
-    fireEvent.click(screen.getByRole('button', { name: /Técnicos/i }));
+  it('la sección Técnicos (deep-link ?tab=tecnicos) lista el catálogo editable', async () => {
+    wrap(<Postventa />, '/postventa/tickets?tab=tecnicos');
     expect(screen.getByPlaceholderText(/Nombre del técnico/i)).toBeInTheDocument();
-    // El catálogo sembrado aparece (carga asíncrona).
     await waitFor(() => expect(screen.getByText('Cesar Tapia')).toBeInTheDocument());
   });
 });

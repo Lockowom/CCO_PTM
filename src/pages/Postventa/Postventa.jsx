@@ -70,16 +70,6 @@ export default function Postventa() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {visibleTabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => irTab(id)}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black border flex items-center gap-1.5 transition-colors ${activeTab === id ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-            <Icon size={15} /> {label}
-          </button>
-        ))}
-      </div>
-
       {activeTab === 'tickets' && <TabTickets canManage={canManage} canSupervise={canSupervise} />}
       {activeTab === 'calendario' && <TabCalendario canManage={canManage} canSupervise={canSupervise} />}
       {activeTab === 'nuevo' && canManage && <TabNuevo onCreated={() => irTab('tickets')} />}
