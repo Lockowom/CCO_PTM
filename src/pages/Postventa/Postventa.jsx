@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Wrench, Plus, Search, X, Download, LayoutDashboard, ClipboardList, Users,
   Save, Trash2, Mail, AlertTriangle, Clock, CheckCircle2, Pencil,
@@ -25,8 +26,21 @@ const TABS = [
 
 export default function Postventa() {
   const { user, hasPermission } = useAuth();
-  const [tab, setTab] = useState('tickets');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get('tab') || 'tickets');
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
+
+  // Deep-link desde el menú (?tab=dashboard, ?tab=nuevo, ?tab=tecnicos).
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && t !== tab) setTab(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const irTab = (id) => {
+    setTab(id);
+    setSearchParams(id === 'tickets' ? {} : { tab: id }, { replace: true });
+  };
   const canManage = isAdmin || hasPermission('manage_postventa') || hasPermission('supervise_postventa');
   const canSupervise = isAdmin || hasPermission('supervise_postventa');
 
@@ -35,6 +49,8 @@ export default function Postventa() {
     if (t.id === 'tecnicos') return canSupervise;
     return true;
   });
+  // Si el deep-link apunta a una pestaña no autorizada, cae a Tickets.
+  const activeTab = visibleTabs.some((t) => t.id === tab) ? tab : 'tickets';
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
@@ -55,17 +71,17 @@ export default function Postventa() {
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
         {visibleTabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black border flex items-center gap-1.5 transition-colors ${tab === id ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+          <button key={id} onClick={() => irTab(id)}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black border flex items-center gap-1.5 transition-colors ${activeTab === id ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
             <Icon size={15} /> {label}
           </button>
         ))}
       </div>
 
-      {tab === 'tickets' && <TabTickets canManage={canManage} canSupervise={canSupervise} />}
-      {tab === 'nuevo' && canManage && <TabNuevo onCreated={() => setTab('tickets')} />}
-      {tab === 'dashboard' && <TabDashboard />}
-      {tab === 'tecnicos' && canSupervise && <TabTecnicos />}
+      {activeTab === 'tickets' && <TabTickets canManage={canManage} canSupervise={canSupervise} />}
+      {activeTab === 'nuevo' && canManage && <TabNuevo onCreated={() => irTab('tickets')} />}
+      {activeTab === 'dashboard' && <TabDashboard />}
+      {activeTab === 'tecnicos' && canSupervise && <TabTecnicos />}
     </div>
   );
 }

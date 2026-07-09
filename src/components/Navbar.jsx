@@ -57,7 +57,7 @@ const Navbar = () => {
   const canAccessRoute = (path, sectionId) => {
     if (user?.rol === 'ADMIN') return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN
-    const perms = ROUTE_PERMISSIONS[path];
+    const perms = ROUTE_PERMISSIONS[String(path).split('?')[0]]; // ignora ?query (deep-links de tabs)
     // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
     if (!perms || perms.length === 0) return false;
     const permList = Array.isArray(perms) ? perms : [perms];
@@ -140,8 +140,20 @@ const Navbar = () => {
             { label: 'Mi Bandeja', path: '/quality/bandeja', icon: <Package size={16} /> },
             { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
           ]
-        },
-        { id: 'postventa', label: 'Post-Venta', icon: <Wrench size={18} />, isLink: true, path: '/postventa/tickets' }
+        }
+      ]
+    },
+    {
+      id: 'postventa',
+      title: "Post-Venta",
+      items: [
+        { id: 'postventa', label: 'Servicio Técnico', icon: <Wrench size={18} />, modules: [
+            { label: 'Tickets', path: '/postventa/tickets', icon: <ClipboardCheck size={16} /> },
+            { label: 'Nuevo Ticket', path: '/postventa/tickets?tab=nuevo', icon: <FileText size={16} /> },
+            { label: 'Dashboard', path: '/postventa/tickets?tab=dashboard', icon: <LayoutDashboard size={16} /> },
+            { label: 'Técnicos', path: '/postventa/tickets?tab=tecnicos', icon: <Users size={16} /> }
+          ]
+        }
       ]
     },
     {

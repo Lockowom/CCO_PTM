@@ -10,7 +10,7 @@ export const APP_MODULES = [
   { id: 'outbound', label: 'Outbound', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
-  { id: 'postventa', label: 'Post-Venta', section: 'intelligence' },
+  { id: 'postventa', label: 'Post-Venta', section: 'postventa' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
 
