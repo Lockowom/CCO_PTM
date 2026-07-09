@@ -40,6 +40,8 @@ export const ROUTE_PERMISSIONS = {
   '/quality/monitoreo': ['manage_monitoreo', 'manage_quality', 'manage_inventory'],
   // Tablero de Acciones de Calidad: visible para las áreas responsables.
   '/quality/acciones': ['view_acciones_calidad', 'manage_quality', 'manage_monitoreo'],
+  // Mi Bandeja: cada área ve directo sus tareas (mismo permiso).
+  '/quality/bandeja': ['view_acciones_calidad', 'manage_quality', 'manage_monitoreo'],
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],

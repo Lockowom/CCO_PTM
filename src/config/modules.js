@@ -53,6 +53,7 @@ export const APP_ROUTES = [
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
   { value: '/quality/acciones', label: 'Calidad - Acciones', module: 'quality' },
+  { value: '/quality/bandeja', label: 'Calidad - Mi Bandeja', module: 'quality' },
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },

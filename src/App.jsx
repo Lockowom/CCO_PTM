@@ -55,6 +55,7 @@ const ProductDatasheet = React.lazy(() => import('./pages/Queries/ProductDatashe
 // Quality Modules
 const MonitoreoCalidad = React.lazy(() => import('./pages/Quality/Monitoreo'));
 const AccionesCalidad = React.lazy(() => import('./pages/Quality/AccionesCalidad'));
+const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
@@ -363,6 +364,7 @@ function AppContent() {
           {/* Quality Modules */}
           <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
           <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
+          <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />

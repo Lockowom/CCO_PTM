@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   ListChecks, Loader2, AlertTriangle, CheckCircle2, Ban, Clock, Package,
-  RefreshCw, Filter, ShieldCheck, PlayCircle,
+  RefreshCw, Filter, ShieldCheck, PlayCircle, GitBranch,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -10,6 +10,7 @@ import {
   TIPOS_ACCION, ESTADO_ACCION_META,
 } from '../../services/calidadService';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
+import TrazabilidadModal from './TrazabilidadModal';
 
 const TIPO_LABEL = Object.fromEntries(TIPOS_ACCION.map(t => [t.id, t.label]));
 
@@ -34,6 +35,7 @@ const AccionesCalidad = () => {
   const [filtro, setFiltro] = useState('pendientes'); // pendientes | mi_area | todas
   const [resolviendo, setResolviendo] = useState(null); // id en edición
   const [texto, setTexto] = useState('');
+  const [traza, setTraza] = useState(null);            // acción cuya trazabilidad se ve
 
   const areaByCode = useMemo(() => Object.fromEntries(areas.map(a => [a.codigo, a])), [areas]);
   // Áreas a las que pertenece el usuario (por su rol) → puede resolver.
@@ -145,6 +147,10 @@ const AccionesCalidad = () => {
                   {a.ubicacion ? `${a.ubicacion} · ` : ''}{a.cantidad != null ? `${a.cantidad} u · ` : ''}{a.creado_nombre ? `por ${a.creado_nombre}` : ''}
                   {a.fecha_limite ? ` · límite ${a.fecha_limite}` : ''}
                 </p>
+                <button onClick={() => setTraza(a)}
+                  className="mt-2 self-start px-2.5 py-1 rounded-lg border border-slate-200 text-slate-500 font-black text-[11px] flex items-center gap-1.5 hover:bg-slate-50">
+                  <GitBranch size={12} /> Trazabilidad
+                </button>
 
                 {a.estado === 'RESUELTA' && (
                   <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 mt-2">
@@ -199,6 +205,11 @@ const AccionesCalidad = () => {
             );
           })}
         </div>
+      )}
+
+      {traza && (
+        <TrazabilidadModal codigo={traza.codigo_producto} partida={traza.partida} ubicacion={traza.ubicacion}
+          producto={traza.producto} onClose={() => setTraza(null)} />
       )}
     </div>
   );

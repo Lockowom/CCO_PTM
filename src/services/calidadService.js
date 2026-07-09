@@ -808,6 +808,29 @@ export function useEliminarBodegaSoftland() {
   });
 }
 
+// ── Trazabilidad del producto (línea de tiempo por hito) ────────────────────
+export const HITO_META = {
+  RECEPCION: { label: 'Recepción', cls: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  ESTANCIA:  { label: 'Estancia',  cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  ACCION:    { label: 'Acción',    cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  SALIDA:    { label: 'Salida',    cls: 'bg-teal-100 text-teal-700 border-teal-200' },
+};
+
+export function useTrazabilidadProducto(codigo, partida, ubicacion) {
+  return useQuery({
+    queryKey: ['trazabilidad', codigo, partida || '', ubicacion || ''],
+    enabled: !!codigo,
+    staleTime: 30000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('trazabilidad_producto', {
+        p_codigo: codigo, p_partida: partida ?? null, p_ubicacion: ubicacion ?? null,
+      });
+      if (error) throw error;
+      return data || { codigo, estado_actual: null, eventos: [] };
+    },
+  });
+}
+
 // Áreas responsables (con su mapeo de roles, para saber si el usuario puede cerrar).
 export function useAreasCalidad() {
   return useQuery({
