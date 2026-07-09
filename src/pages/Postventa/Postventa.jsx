@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
+import { comunasDeRegion } from '../../constants/comunasChile';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls,
@@ -93,7 +94,7 @@ function TabTickets({ canManage, canSupervise }) {
       sheets: [{
         name: 'Tickets',
         rows: tickets.map((t) => ({
-          Número: t.numero, Fecha: fechaCL(t.fecha_apertura), Cliente: t.cliente, Región: t.region,
+          Número: t.numero, Fecha: fechaCL(t.fecha_apertura), Cliente: t.cliente, Región: t.region, Comuna: t.comuna || '',
           Equipo: t.equipo_modelo, 'N° Serie': t.numero_serie || '', Tipo: t.tipo_solicitud,
           Prioridad: t.prioridad, Técnico: t.tecnico_asignado, Estado: t.estado,
           Cotizar: t.cotizar, Cierre: fechaCL(t.fecha_cierre), Resultado: t.resultado || '',
@@ -154,7 +155,7 @@ function TabTickets({ canManage, canSupervise }) {
                   </td>
                   <td className="px-4 py-3 align-top">
                     <div className="font-semibold text-slate-700">{t.cliente}</div>
-                    <div className="text-[11px] text-slate-400">{t.region}</div>
+                    <div className="text-[11px] text-slate-400">{t.comuna ? `${t.comuna}, ` : ''}{t.region}</div>
                     <div className="text-xs text-slate-500 mt-0.5">{t.equipo_modelo}{t.numero_serie ? ` · ${t.numero_serie}` : ''}</div>
                   </td>
                   <td className="px-4 py-3 align-top text-slate-600">{t.tipo_solicitud}</td>
@@ -192,7 +193,7 @@ function FiltroSelect({ label, value, onChange, options }) {
 
 // ─── Formulario de alta ──────────────────────────────────────────────────────
 const FORM_VACIO = {
-  cliente: '', region: '', contacto: '', equipo_modelo: '', numero_serie: '',
+  cliente: '', region: '', comuna: '', contacto: '', equipo_modelo: '', numero_serie: '',
   tipo_solicitud: '', prioridad: 'Media', tecnico_asignado: 'Sin Asignar',
   estado: 'Abierto', cotizar: 'No', descripcion: '', observaciones: '',
   fecha_programada: '', hora_programada: '',
@@ -231,7 +232,8 @@ function TabNuevo({ onCreated }) {
       <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><Plus size={18} className="text-orange-600" /> Nuevo ticket de servicio</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Cliente / Hospital" req value={f.cliente} onChange={(v) => set('cliente', v)} />
-        <Sel label="Región" value={f.region} onChange={(v) => set('region', v)} options={PV_REGIONES} />
+        <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} />
+        <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={!f.region} allowFree />
         <Campo label="Contacto" value={f.contacto} onChange={(v) => set('contacto', v)} />
         <Sel label="Equipo / Modelo" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={PV_EQUIPOS} allowFree />
         <Campo label="N° de Serie" value={f.numero_serie} onChange={(v) => set('numero_serie', v)} />
@@ -264,6 +266,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
     estado: ticket.estado, tecnico_asignado: ticket.tecnico_asignado, prioridad: ticket.prioridad,
     cotizar: ticket.cotizar || 'No', resultado: ticket.resultado || '', observaciones: ticket.observaciones || '',
     descripcion: ticket.descripcion || '',
+    region: ticket.region || '', comuna: ticket.comuna || '',
     fecha_programada: ticket.fecha_programada || '', hora_programada: ticket.hora_programada || '',
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -291,7 +294,6 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <Info label="Región" value={ticket.region} />
             <Info label="Contacto" value={ticket.contacto || '—'} />
             <Info label="N° Serie" value={ticket.numero_serie || '—'} />
             <Info label="Tipo" value={ticket.tipo_solicitud} />
@@ -299,6 +301,8 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
             <Info label="Cierre" value={fechaCL(ticket.fecha_cierre)} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} disabled={readOnly} allowFree />
+            <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={readOnly || !f.region} allowFree />
             <Sel label="Estado" value={f.estado} onChange={(v) => set('estado', v)} options={PV_ESTADOS} disabled={readOnly} />
             <Sel label="Técnico" value={f.tecnico_asignado} onChange={(v) => set('tecnico_asignado', v)} options={tecnicos.map((t) => t.nombre)} disabled={readOnly} />
             <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} disabled={readOnly} />

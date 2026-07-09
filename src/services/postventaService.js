@@ -131,7 +131,7 @@ export function useCrearTicket() {
   return useMutation({
     mutationFn: async (p) => {
       const { data, error } = await supabase.rpc('crear_pv_ticket', {
-        p_cliente: p.cliente, p_region: p.region, p_equipo_modelo: p.equipo_modelo,
+        p_cliente: p.cliente, p_region: p.region, p_comuna: p.comuna || null, p_equipo_modelo: p.equipo_modelo,
         p_tipo_solicitud: p.tipo_solicitud, p_prioridad: p.prioridad, p_descripcion: p.descripcion,
         p_contacto: p.contacto || '', p_numero_serie: p.numero_serie || '',
         p_tecnico: p.tecnico_asignado || 'Sin Asignar', p_estado: p.estado || 'Abierto',
