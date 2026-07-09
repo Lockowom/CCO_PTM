@@ -1,36 +1,23 @@
-import React, { useRef, useState } from 'react';
-import { Loader2, ExternalLink, ArrowLeftRight, Cloud, Library, Download, Upload } from 'lucide-react';
+import React, { useState } from 'react';
+import { Loader2, ExternalLink, ArrowLeftRight } from 'lucide-react';
 
 // Registro de Traspasos · Correo (app estática vendorizada en public/traspasos).
 // Se embebe en un iframe para conservar el framework/navbar de CCO, con la
 // cabecera de módulo estándar de CCO alrededor. El topbar propio del iframe se
-// oculta (public/traspasos/cco-theme.css) y sus acciones (Sincronizar, Catálogo,
-// Exportar, Importar) se relocalizan en esta cabecera, proxeando el click al
-// botón interno del iframe (mismo origen). Datos en Supabase (cco-bridge.js) +
-// localStorage. Actualizable con `npm run update:traspasos`.
+// oculta cuando va embebido (public/traspasos/cco-theme.css); sus acciones
+// (Sincronizar, Catálogo, Exportar, Importar) siguen disponibles abriendo el
+// módulo en una pestaña ("Abrir"). Las acciones de trabajo (Generar correo,
+// Mejorar con IA) viven dentro del contenido/modal y se conservan siempre.
+// Datos en Supabase (cco-bridge.js) + localStorage. Actualizable con
+// `npm run update:traspasos`.
 const SRC = '/traspasos/index.html';
-
-// Acciones que viven dentro del iframe; disparamos su botón interno por id.
-const ACCIONES = [
-  { id: 'btnSync', label: 'Sincronizar', icon: Cloud },
-  { id: 'btnCatalog', label: 'Catálogo', icon: Library },
-  { id: 'btnExport', label: 'Exportar', icon: Download },
-  { id: 'btnImport', label: 'Importar', icon: Upload },
-];
 
 const Traspasos = () => {
   const [cargando, setCargando] = useState(true);
-  const iframeRef = useRef(null);
-
-  // Proxy: click en un botón interno del iframe (same-origin).
-  const accion = (id) => {
-    const el = iframeRef.current?.contentWindow?.document?.getElementById(id);
-    if (el) el.click();
-  };
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50 p-3 sm:p-6 gap-3 sm:gap-5">
-      {/* Cabecera estilo módulo CCO (con las acciones del módulo) */}
+      {/* Cabecera estilo módulo CCO */}
       <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5 flex flex-wrap items-center justify-between gap-4 shrink-0">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -46,30 +33,15 @@ const Traspasos = () => {
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {ACCIONES.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => accion(id)}
-              disabled={cargando}
-              title={label}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs sm:text-sm font-black flex items-center gap-1.5 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Icon size={15} /> <span className="hidden md:inline">{label}</span>
-            </button>
-          ))}
-          <a
-            href={SRC}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Abrir en pestaña"
-            className="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs sm:text-sm font-black flex items-center gap-1.5 hover:bg-slate-50 transition-colors"
-          >
-            <ExternalLink size={15} /> <span className="hidden lg:inline">Abrir</span>
-          </a>
-        </div>
+        <a
+          href={SRC}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Abrir en pestaña"
+          className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs sm:text-sm font-black flex items-center gap-2 hover:bg-slate-50 hover:border-orange-200 hover:text-orange-600 transition-colors shrink-0"
+        >
+          <ExternalLink size={15} /> <span className="hidden sm:inline">Abrir</span>
+        </a>
       </div>
 
       {/* Lienzo del módulo (iframe con la app vendorizada) */}
@@ -81,7 +53,6 @@ const Traspasos = () => {
           </div>
         )}
         <iframe
-          ref={iframeRef}
           src={SRC}
           title="Registro de Traspasos"
           onLoad={() => setCargando(false)}

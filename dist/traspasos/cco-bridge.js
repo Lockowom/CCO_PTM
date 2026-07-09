@@ -29,6 +29,18 @@
   if (window.__ccoEmilBridge) return;
   window.__ccoEmilBridge = true;
 
+  // Marca el documento como embebido cuando corre dentro del iframe de CCO,
+  // para que cco-theme.css oculte el topbar propio de em-il (la cabecera la
+  // provee el marco React). Abierto en pestaña independiente se conserva.
+  try {
+    if (window.self !== window.top) {
+      document.documentElement.classList.add("cco-embedded");
+    }
+  } catch (e) {
+    // Cross-origin al leer window.top ⇒ estamos embebidos.
+    document.documentElement.classList.add("cco-embedded");
+  }
+
   var SUPA_URL = "https://vtrtyzbgpsvqwbfoudaf.supabase.co";
   var SUPA_ANON =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM";
