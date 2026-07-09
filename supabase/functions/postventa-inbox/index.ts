@@ -5,20 +5,23 @@
 // crea el ticket (origen='Correo', idempotente por id_correo). Pensado para
 // correos POP: tu script lee el buzón, arma el JSON y hace un POST aquí.
 //
-// Autenticación: token compartido (no requiere JWT de Supabase). Se acepta en:
-//   - query string:  ?token=XXXX      (más simple si el script no manda headers)
+// Autenticación: token/API key compartido (no requiere JWT de Supabase). Se acepta en:
+//   - header:        X-API-Key: XXXX   (compatible con la macro Outlook de PTM)
 //   - header:        x-pv-token: XXXX
+//   - query string:  ?token=XXXX
 //   - body:          {"token":"XXXX", ...}
-// El token debe coincidir con el secret PV_INGEST_TOKEN.
+// El valor debe coincidir con el secret PV_INGEST_TOKEN.
 //
-// Payload (JSON o form-urlencoded). Acepta un objeto o un array de objetos.
+// Payload (JSON o form-urlencoded). Acepta:
+//   - un objeto,   - un array de objetos,   - {"correos":[...]}   o   {"filas":[...]}
+//     (este último es el que envía la macro VBA de Outlook de PTM).
 // Campos (con alias tolerantes a mayúsculas/acentos):
-//   id_correo | id | message_id | uid   → clave de dedup (recomendado; si falta se
-//                                          usa asunto+remitente como huella)
-//   cliente   | remitente | from | nombre | de
-//   contacto  | email | correo | from_email
+//   id_correo | id | message_id | uid | EntryID   → clave de dedup (recomendado)
+//   cliente   | remitente_nombre | remitente | from | nombre | de
+//   contacto  | remitente_email | email | correo | from_email
 //   asunto    | subject
 //   descripcion | cuerpo | body | mensaje   (si viene asunto, se antepone)
+//   adjuntos, recibido, para, cc   → se anexan a observaciones
 //   region, equipo_modelo, tipo_solicitud, prioridad, numero_serie,
 //   tecnico_asignado, estado, cotizar, observaciones  (opcionales)
 // Los campos de gestión que no vengan quedan como "Por Definir"/"Otro"/"Media"
@@ -44,13 +47,21 @@ function limpiar(t: string): string {
 async function crearTicket(supabase: any, raw: Record<string, any>) {
   const asunto = limpiar(pick(raw, ["asunto", "subject", "Asunto", "Subject"]));
   const cuerpo = limpiar(pick(raw, ["descripcion", "cuerpo", "body", "mensaje", "Descripcion", "Cuerpo", "texto"]));
-  const cliente = pick(raw, ["cliente", "remitente", "from", "nombre", "de", "Cliente", "Remitente", "From", "sender"]) || "Correo sin remitente";
-  const contacto = pick(raw, ["contacto", "email", "correo", "from_email", "Contacto", "Email", "correo_remitente"]);
-  const idCorreo = pick(raw, ["id_correo", "id", "message_id", "messageId", "uid", "Message-ID", "mensaje_id"]) ||
+  const cliente = pick(raw, ["cliente", "remitente_nombre", "remitente", "from", "nombre", "de", "Cliente", "Remitente", "From", "sender"]) || "Correo sin remitente";
+  const contacto = pick(raw, ["contacto", "remitente_email", "email", "correo", "from_email", "Contacto", "Email", "correo_remitente"]);
+  const idCorreo = pick(raw, ["id_correo", "id", "message_id", "messageId", "uid", "EntryID", "entryid", "Message-ID", "mensaje_id"]) ||
     (asunto || cliente ? `pop:${cliente}|${asunto}`.slice(0, 250) : "");
 
   const descripcion = [asunto, cuerpo].filter(Boolean).join("\n\n") || asunto || "(correo sin contenido)";
-  const observaciones = pick(raw, ["observaciones", "Observaciones"]) || (contacto ? `Correo de ${contacto}` : "");
+
+  // Metadatos del correo → observaciones (para no perderlos; la gestión va a otros campos).
+  const meta: string[] = [];
+  if (contacto) meta.push(`Correo de ${contacto}`);
+  const recibido = pick(raw, ["recibido", "receivedDateTime", "fecha"]);
+  if (recibido) meta.push(`Recibido: ${recibido}`);
+  const adjuntos = pick(raw, ["adjuntos", "attachments"]);
+  if (adjuntos && adjuntos.toLowerCase() !== "no identificado" && adjuntos.toLowerCase() !== "sin adjuntos") meta.push(`Adjuntos: ${adjuntos}`);
+  const observaciones = pick(raw, ["observaciones", "Observaciones"]) || meta.join(" · ");
 
   // Campos de gestión: se usan si vienen; si no, placeholder para completar a mano.
   const region = pick(raw, ["region", "Region", "región"]) || "Por Definir";
@@ -99,9 +110,10 @@ serve(async (req) => {
       const p = new URLSearchParams(rawText); body = Object.fromEntries(p.entries());
     }
 
-    // Token: query > header > body.
+    // Token/API key: header X-API-Key (macro Outlook) > x-pv-token > query > body.
     const url = new URL(req.url);
-    const token = url.searchParams.get("token") || req.headers.get("x-pv-token") || body?.token || "";
+    const token = req.headers.get("x-api-key") || req.headers.get("x-pv-token") ||
+      url.searchParams.get("token") || body?.token || "";
     if (token !== expected) {
       return new Response(JSON.stringify({ ok: false, error: "Token inválido" }), {
         status: 401, headers: { "Content-Type": "application/json" },
@@ -110,9 +122,11 @@ serve(async (req) => {
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
-    // Uno o varios correos: acepta objeto, array, o {correos:[...]}.
+    // Uno o varios correos: acepta objeto, array, {correos:[...]} o {filas:[...]}
+    // (este último es el envelope de la macro VBA de Outlook de PTM).
     let items: any[];
     if (Array.isArray(body)) items = body;
+    else if (Array.isArray(body?.filas)) items = body.filas;
     else if (Array.isArray(body?.correos)) items = body.correos;
     else items = [body];
 
@@ -123,10 +137,12 @@ serve(async (req) => {
       catch (e) { errores.push(String(e?.message || e)); }
     }
 
+    // Siempre 200 cuando la petición se procesó (la macro cuenta st=200 como enviado);
+    // los errores por fila van en el body. crear_pv_ticket es idempotente → reenviar es seguro.
     return new Response(JSON.stringify({
       ok: errores.length === 0, recibidos: items.length, tickets: numeros,
       errores: errores.slice(0, 20), total_errores: errores.length,
-    }), { status: errores.length ? 207 : 200, headers: { "Content-Type": "application/json" } });
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, error: String(e?.message || e) }), {
       status: 500, headers: { "Content-Type": "application/json" },
