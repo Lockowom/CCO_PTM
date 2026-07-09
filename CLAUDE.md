@@ -35,12 +35,18 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   (`src/pages/Tools/Traspasos.jsx`), enlace en menú *Operaciones WMS → Traspasos*. Actualizar con
   `npm run update:traspasos` + `npm run build`. Excluida del precache/fallback PWA. `X-Frame-Options`
   es `SAMEORIGIN` (server.js) para permitir el iframe propio.
+  - **Backend en Supabase**: `public/traspasos/cco-bridge.js` (archivo propio, no viene de em-il;
+    el update script lo re-inyecta en `index.html`) sustituye el sync Firestore de la app por
+    tablas Supabase — historial en `tms_emil_sync` (blob `{traspasos,ajustes}`) y catálogo maestro
+    en `tms_emil_catalogo` (12.514 SKUs, sembrado desde `data/catalog.js` la 1ª vez). No edita
+    `app.js`: intercepta `fetch`/`syncDocUrl` traduciendo el documento con forma Firestore a REST de
+    Supabase, autenticando con el `access_token` de la sesión CCO (mismo origen). Migración `041`.
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
 - `src/stores/` — stores Zustand unificadas (`warehouseStore`, `pickingStore`)
-- `supabase/migrations/` — migraciones versionadas (`001`…`040`); aplicar nuevas vía MCP/CLI
+- `supabase/migrations/` — migraciones versionadas (`001`…`041`); aplicar nuevas vía MCP/CLI
 - `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
   Regenerar con `npm run build` y commitearlo al desplegar.
 

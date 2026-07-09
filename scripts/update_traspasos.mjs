@@ -42,6 +42,34 @@ for (const item of RUNTIME) {
   console.log(`   ✓ ${item}`);
 }
 
+// 2.5) Re-inyectar el puente a Supabase (cco-bridge.js) en index.html.
+//      El index.html de origen no lo incluye; lo añadimos tras app.js/scene.js.
+//      cco-bridge.js es un archivo propio de CCO (no está en RUNTIME) y persiste.
+const INDEX = path.join(DEST, 'index.html');
+const BRIDGE_TAG =
+  '<!-- CCO_PTM: puente a Supabase (re-inyectado por scripts/update_traspasos.mjs) -->\n' +
+  '<script src="cco-bridge.js"></script>';
+try {
+  let html = fs.readFileSync(INDEX, 'utf8');
+  if (!html.includes('cco-bridge.js')) {
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', BRIDGE_TAG + '\n</body>');
+    } else {
+      html += '\n' + BRIDGE_TAG + '\n';
+    }
+    fs.writeFileSync(INDEX, html);
+    console.log('   ✓ cco-bridge.js re-inyectado en index.html');
+  } else {
+    console.log('   ✓ index.html ya referencia cco-bridge.js');
+  }
+  if (!fs.existsSync(path.join(DEST, 'cco-bridge.js'))) {
+    console.warn('   ⚠️  Falta public/traspasos/cco-bridge.js (el módulo no sincronizará con Supabase)');
+  }
+} catch (e) {
+  console.error('❌ No se pudo re-inyectar cco-bridge.js:', e.message);
+  process.exit(1);
+}
+
 // 3) Marcar el commit de origen para trazabilidad.
 let commit = 'desconocido';
 try { commit = execSync('git rev-parse HEAD', { cwd: TMP }).toString().trim(); } catch (_) { /* noop */ }
