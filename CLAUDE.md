@@ -26,7 +26,15 @@ npm test               # tests (Vitest)
 npm run test:watch     # tests en watch
 npm run test:coverage  # cobertura
 npm run deploy:mobile  # build + cap sync + subir bundle Capgo (scripts/deploy_mobile.js)
+npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) → public/traspasos/
 ```
+
+## Módulos externos integrados
+- **Traspasos/Ajustes** (`lockowom/em-il`): app estática vendorizada en `public/traspasos/`
+  (Vite → `dist/traspasos/`, express la sirve), embebida vía iframe en `/tools/traspasos`
+  (`src/pages/Tools/Traspasos.jsx`), enlace en menú *Operaciones WMS → Traspasos*. Actualizar con
+  `npm run update:traspasos` + `npm run build`. Excluida del precache/fallback PWA. `X-Frame-Options`
+  es `SAMEORIGIN` (server.js) para permitir el iframe propio.
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)

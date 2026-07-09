@@ -35,6 +35,9 @@ export const ROUTE_PERMISSIONS = {
   '/queries/dispatch-control': ['view_dispatch_control'],
   '/queries/datasheet': ['view_fichas'],
 
+  // Tools — Traspasos/Ajustes (módulo integrado). Visible para bodega/inventario.
+  '/tools/traspasos': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).
   '/quality/monitoreo': ['manage_monitoreo', 'manage_quality', 'manage_inventory'],

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Traspasos · Email</title>
+<script>
+  /* Aplica el tema antes de pintar para evitar parpadeo */
+  (function () {
+    var saved = localStorage.getItem("theme");
+    var sysDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = saved || (sysDark ? "dark" : "light");
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">📦</span>
+    <div>
+      <h1>Registro de Traspasos</h1>
+      <p class="subtitle">Captura productos · asigna estado · genera el correo</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnImmersive" class="iconbtn theme-toggle" type="button" title="Modo inmersivo 3D" aria-label="Modo inmersivo 3D">🌌</button>
+    <button id="themeToggle" class="iconbtn theme-toggle" type="button" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+    <button id="btnSync" class="btn ghost" type="button" title="Sincronizar entre dispositivos"><span class="bi">☁️</span> <span class="txt">Sync</span></button>
+    <button id="btnCatalog" class="btn ghost" type="button" title="Catálogo"><span class="bi">🗂</span> <span class="txt">Catálogo</span></button>
+    <button id="btnExport" class="btn ghost" type="button" title="Exportar"><span class="bi">⬇</span> <span class="txt">Exportar</span></button>
+    <button id="btnImport" class="btn ghost" type="button" title="Importar"><span class="bi">⬆</span> <span class="txt">Importar</span></button>
+    <input id="fileImport" type="file" accept="application/json" hidden>
+  </div>
+</header>
+
+<main class="layout">
+  <nav class="tabs">
+    <button class="tab active" data-module="traspasos" type="button"><span class="bi">📦</span> Traspasos</button>
+    <button class="tab" data-module="ajustes" type="button"><span class="bi">📊</span> Ajustes de inventario</button>
+  </nav>
+
+  <!-- ============ FORM ============ -->
+  <section class="card form-card reveal">
+    <h2><span class="h2-ico">✏️</span> Nuevo registro</h2>
+
+    <form id="itemForm" autocomplete="off">
+      <div class="field folder-field">
+        <label for="folder">📁 Carpeta / Traslado</label>
+        <div class="folder-input">
+          <select id="folder" name="folder"></select>
+          <button type="button" id="newFolder" class="btn ghost" title="Nueva carpeta">➕</button>
+        </div>
+        <small class="hint">Agrupa aquí los traspasos de este traslado para tenerlos ordenados.</small>
+      </div>
+
+      <!-- Paso 1: Producto -->
+      <div class="form-section">
+        <div class="section-title"><span class="step">1</span> Producto</div>
+
+        <div class="field">
+          <label for="sku">SKU / Código <span class="req">*</span></label>
+          <input id="sku" name="sku" list="skuList" placeholder="Ej: 0SK84800735S" required>
+          <datalist id="skuList"></datalist>
+          <small id="skuHint" class="hint">Escribe el código y se autocompleta desde el catálogo.</small>
+        </div>
+
+        <div class="field">
+          <label for="descripcion">Descripción <span class="req">*</span></label>
+          <input id="descripcion" name="descripcion" placeholder="Se completa solo si el SKU está en el catálogo" required>
+        </div>
+
+        <div class="field">
+          <label for="um">U.M <span class="req">*</span></label>
+          <input id="um" name="um" placeholder="UNI" required>
+        </div>
+      </div>
+
+      <!-- Paso 2: Partidas / Cantidades -->
+      <div class="form-section">
+        <div class="section-title"><span class="step">2</span> Partidas / Cantidades</div>
+        <div id="lotes" class="lotes"></div>
+        <button type="button" id="addLote" class="btn ghost block-sm">➕ Agregar partida</button>
+        <small class="hint">Cada partida con su cantidad y serie. Si solo hay una, usa la primera fila.</small>
+      </div>
+
+      <!-- Paso 3 (Traspasos): Movimiento -->
+      <div class="form-section" id="secMovimiento">
+        <div class="section-title"><span class="step">3</span> Movimiento <span class="opt">(origen → destino)</span></div>
+        <div class="field">
+          <label for="directriz">Directriz frecuente</label>
+          <select id="directriz"></select>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="origen">Origen</label>
+            <input id="origen" name="origen" placeholder='21 "DISPONIBLE"'>
+          </div>
+          <div class="field">
+            <label for="destino">Destino</label>
+            <input id="destino" name="destino" placeholder='21 "TRANSITORIO"'>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 3 (Ajustes): Ajuste de stock -->
+      <div class="form-section" id="secAjuste" hidden>
+        <div class="section-title"><span class="step">3</span> Ajuste de stock</div>
+        <div class="field">
+          <label for="accion">Acción de ajuste</label>
+          <select id="accion" name="accion">
+            <option value="SUMAR">SUMAR (agregar stock)</option>
+            <option value="DESCONTAR">DESCONTAR (quitar stock)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="obs">Observación <span class="opt">(opcional)</span></label>
+          <textarea id="obs" name="obs" rows="2" placeholder="Ej: Stock físico 0. Este lote no fue contado en ninguna oportunidad."></textarea>
+        </div>
+
+        <label class="chk dest-toggle"><input type="checkbox" id="destToggle"> El ajuste va a otro SKU</label>
+        <div id="destBlock" hidden>
+          <div class="field">
+            <label for="destSku">SKU destino</label>
+            <input id="destSku" name="destSku" list="skuList" placeholder="Ej: 0SK84800735S">
+            <small id="destHint" class="hint"></small>
+          </div>
+          <div class="field">
+            <label for="destDesc">Descripción destino</label>
+            <input id="destDesc" name="destDesc" placeholder="Se completa desde el catálogo">
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="destPartida">Partida</label>
+              <input id="destPartida" name="destPartida" placeholder="Ej: 21034-1">
+            </div>
+            <div class="field">
+              <label for="destSerie">Serie</label>
+              <input id="destSerie" name="destSerie" placeholder="Ej: 0000-00003">
+            </div>
+          </div>
+          <div class="field">
+            <label for="destVenc">Fecha de vencimiento</label>
+            <input id="destVenc" name="destVenc" type="date">
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 4: Estado y correo -->
+      <div class="form-section">
+        <div class="section-title"><span class="step">4</span> Estado y correo</div>
+        <div class="field">
+          <label for="estado">Acción / Estado</label>
+          <select id="estado" name="estado">
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="REVISAR">REVISAR</option>
+            <option value="ENVIADO">ENVIADO</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="asunto">Asunto del correo <span class="opt">(opcional)</span></label>
+          <input id="asunto" name="asunto" placeholder="Traspaso de existencias …">
+          <small class="hint">El código se añade automáticamente al asunto.</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn primary block" type="submit" id="submitBtn"><span class="bi">＋</span> Agregar registro</button>
+        <button class="btn ghost" type="reset" id="cancelEdit" hidden>Cancelar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ LIST ============ -->
+  <section class="card list-card reveal" style="--d:.06s">
+    <div class="list-head">
+      <h2><span class="h2-ico">📋</span> Registros <span id="count" class="badge">0</span></h2>
+      <div class="stats">
+        <button class="stat s-PENDIENTE" data-stat="PENDIENTE" type="button"><b id="stPend">0</b> Pendiente</button>
+        <button class="stat s-REVISAR" data-stat="REVISAR" type="button"><b id="stRev">0</b> Revisar</button>
+        <button class="stat s-ENVIADO" data-stat="ENVIADO" type="button"><b id="stEnv">0</b> Enviado</button>
+      </div>
+    </div>
+
+    <!-- Carpetas / Traslados -->
+    <div class="folderbar" id="folderbar"></div>
+    <div class="folder-info" id="folderInfo" hidden></div>
+
+    <!-- Flujo didáctico -->
+    <div class="flow" title="Haz clic en la etiqueta de estado de cada fila para avanzar">
+      <span class="flow-step s-PENDIENTE">● Pendiente</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step s-REVISAR">● Revisar</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step s-ENVIADO">● Enviado</span>
+      <span class="flow-tip">Clic en el estado de una fila para avanzarlo</span>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" type="search" class="grow" placeholder="🔍 Buscar por SKU, descripción, partida, serie…">
+      <select id="filterEstado" title="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+        <option value="REVISAR">REVISAR</option>
+        <option value="ENVIADO">ENVIADO</option>
+      </select>
+      <select id="filterDateField" title="¿Qué fecha filtrar?">
+        <option value="createdAt">Fecha de registro</option>
+        <option value="estadoAt">Fecha de cambio de estado</option>
+      </select>
+      <select id="sortBy" title="Ordenar">
+        <option value="createdAt_desc">Recientes primero</option>
+        <option value="createdAt_asc">Antiguos primero</option>
+        <option value="sku_asc">Código A→Z</option>
+        <option value="estado">Por estado</option>
+        <option value="folder">Por carpeta</option>
+      </select>
+      <label class="date-field">Desde <input id="filterFrom" type="date"></label>
+      <label class="date-field">Hasta <input id="filterTo" type="date"></label>
+      <button id="btnClearFilters" class="btn ghost" type="button">✕ Limpiar</button>
+    </div>
+
+    <div class="bulkbar">
+      <label class="chk"><input type="checkbox" id="checkAll"> Seleccionar todo</label>
+      <span id="shown" class="muted-sm"></span>
+      <span class="bulk-spacer"></span>
+      <button id="btnMail" class="btn primary" type="button" disabled><span class="bi">✉</span> Generar correo (<span id="selCount">0</span>)</button>
+      <button id="btnDelete" class="btn danger" type="button" disabled><span class="bi">🗑</span> Eliminar</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="table">
+        <thead>
+          <tr>
+            <th class="col-chk"></th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>U.M</th>
+            <th>Cant.</th>
+            <th>Partida</th>
+            <th>Serie</th>
+            <th id="thCol8">Directriz</th>
+            <th>Estado</th>
+            <th>F. Registro</th>
+            <th>F. Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div id="empty" class="empty-state">
+        <div class="empty-ico">📭</div>
+        <h3>Aún no hay registros</h3>
+        <p>Completa el formulario de la izquierda y pulsa <b>Agregar registro</b> para empezar.</p>
+      </div>
+      <div id="noMatch" class="empty-state" hidden>
+        <div class="empty-ico">🔍</div>
+        <h3>Sin coincidencias</h3>
+        <p>Ningún registro coincide con los filtros actuales.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ EMAIL MODAL ============ -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2><span class="h2-ico">✉️</span> Correo generado</h2>
+      <button id="modalClose" class="iconbtn" type="button">✕</button>
+    </div>
+    <div class="field">
+      <label for="mAsunto">Asunto</label>
+      <input id="mAsunto">
+    </div>
+    <div class="field">
+      <label>Vista previa</label>
+      <div id="mailPreview" class="mail-preview"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btnAI" class="btn ai" type="button">✨ Mejorar con IA</button>
+      <button id="btnCopyHtml" class="btn primary" type="button">📋 Copiar (con tabla)</button>
+      <button id="btnCopyText" class="btn ghost" type="button">📋 Copiar texto</button>
+      <button id="btnMailto" class="btn ghost" type="button">✉ Abrir en correo</button>
+      <button id="btnMarkSent" class="btn ok" type="button">✓ Marcar ENVIADO</button>
+    </div>
+    <small class="hint">Sugerencia: usa <b>Copiar (con tabla)</b> y pega en Gmail/Outlook para conservar el formato. El envío lo haces tú.</small>
+  </div>
+</div>
+
+<!-- ============ CATALOG MODAL ============ -->
+<div id="catModal" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2><span class="h2-ico">🗂️</span> Catálogo de productos</h2>
+      <button id="catClose" class="iconbtn" type="button">✕</button>
+    </div>
+
+    <div class="cat-stat">
+      <div><b id="catCount">0</b><span>productos</span></div>
+      <div class="cat-source" id="catSource">predeterminado</div>
+    </div>
+
+    <div class="field">
+      <label for="catFile">Actualizar desde Excel (.xlsx)</label>
+      <input id="catFile" type="file" accept=".xlsx,.xls,.csv">
+      <small class="hint">Lee las hojas <b>MATRIZ FARMAPACK</b> y <b>matriz PTM</b> (columnas: Código · Producto · U.M). Si tu archivo usa otros nombres de hoja, se leen todas tomando columna A = código, B = descripción, C = U.M.</small>
+    </div>
+
+    <label class="chk"><input type="checkbox" id="catMerge"> Combinar con el catálogo actual (en vez de reemplazarlo)</label>
+
+    <div class="modal-actions">
+      <button id="catRestore" class="btn ghost" type="button">↺ Restaurar predeterminado</button>
+    </div>
+    <small class="hint">El catálogo actualizado se guarda en este navegador. Para que sea el predeterminado de la versión publicada, envíame el Excel nuevo y lo dejo integrado.</small>
+  </div>
+</div>
+
+<!-- ============ SYNC MODAL ============ -->
+<div id="syncModal" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2><span class="h2-ico">☁️</span> Sincronizar entre dispositivos</h2>
+      <button id="syncClose" class="iconbtn" type="button">✕</button>
+    </div>
+    <p class="muted-sm">Guarda tus registros en Firebase (Firestore) para verlos iguales en PC y móvil. Pega los datos de tu app web de Firebase (Configuración del proyecto → Tus apps → SDK).</p>
+
+    <div class="cat-stat">
+      <div><b id="syncState">Desconectado</b><span id="syncInfo"></span></div>
+    </div>
+
+    <div class="field">
+      <label for="syncProject">Project ID</label>
+      <input id="syncProject" placeholder="mi-proyecto-12345" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="syncKey">Web API Key</label>
+      <input id="syncKey" type="password" placeholder="AIza…" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="syncSpace">Espacio compartido</label>
+      <input id="syncSpace" placeholder="default" value="default" autocomplete="off">
+      <small class="hint">Usa el mismo nombre en todos los dispositivos que deben compartir los datos.</small>
+    </div>
+
+    <div class="modal-actions">
+      <button id="syncSave" class="btn primary" type="button">Conectar y sincronizar</button>
+      <button id="syncNow" class="btn ghost" type="button">↻ Sincronizar ahora</button>
+      <button id="syncOff" class="btn danger" type="button">Desconectar</button>
+    </div>
+    <small class="hint">En Firebase → <b>Firestore Database</b>: crea la base y deja las reglas en modo de prueba (<code>allow read, write</code>). Nota: con esta configuración los datos son accesibles con la clave; úsalo solo para datos internos.</small>
+  </div>
+</div>
+
+<!-- ============ AI SETTINGS MODAL ============ -->
+<div id="aiModal" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2><span class="h2-ico">✨</span> Asistente de IA</h2>
+      <button id="aiClose" class="iconbtn" type="button">✕</button>
+    </div>
+    <p class="muted-sm">Redacta automáticamente un correo más profesional y elaborado con Claude. La tabla de productos se conserva intacta.</p>
+    <div class="field">
+      <label for="aiKey">Clave API de Anthropic</label>
+      <input id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+      <small class="hint">Se guarda <b>solo en este navegador</b>. Consíguela en console.anthropic.com → API Keys.</small>
+    </div>
+    <div class="modal-actions">
+      <button id="aiSave" class="btn primary" type="button">Guardar y redactar</button>
+      <button id="aiForget" class="btn ghost" type="button">Olvidar clave</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="data/catalog.js"></script>
+<script src="app.js"></script>
+<script src="scene.js"></script>
+</body>
+</html>

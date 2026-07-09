@@ -112,7 +112,8 @@ const Navbar = () => {
             { label: 'Monitor TV', path: '/outbound/packing-tv', icon: <Monitor size={16} /> },
             { label: 'Despachos', path: '/outbound/shipping', icon: <Ship size={16} /> }
           ]
-        }
+        },
+        { id: 'traspasos', label: 'Traspasos', icon: <ArrowLeftRight size={18} />, isLink: true, path: '/tools/traspasos' }
       ]
     },
     {

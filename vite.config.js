@@ -39,6 +39,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // El módulo integrado /traspasos (app estática vendorizada) NO se precachea
+        // (2.6MB) y NO debe recibir el fallback SPA: se sirve directo por express.
+        globIgnores: ['**/traspasos/**'],
+        navigateFallbackDenylist: [/^\/traspasos\//],
         runtimeCaching: [
           {
             // Estrategia StaleWhileRevalidate para datos de referencia (GET)

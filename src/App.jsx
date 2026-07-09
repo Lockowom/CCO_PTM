@@ -57,6 +57,9 @@ const MonitoreoCalidad = React.lazy(() => import('./pages/Quality/Monitoreo'));
 const AccionesCalidad = React.lazy(() => import('./pages/Quality/AccionesCalidad'));
 const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 
+// Tools (módulos externos integrados)
+const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
+
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
@@ -365,6 +368,9 @@ function AppContent() {
           <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
           <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
           <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
+
+          {/* Tools */}
+          <Route path="tools/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />

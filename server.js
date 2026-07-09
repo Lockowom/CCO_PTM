@@ -10,7 +10,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  // SAMEORIGIN (no DENY): permite embeber páginas propias como /traspasos en un
+  // iframe dentro del framework; sigue bloqueando el enmarcado por sitios externos.
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
