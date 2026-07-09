@@ -19,10 +19,8 @@ import {
 const fechaCL = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-CL') : '—';
 const n = (v) => (Number(v) || 0).toLocaleString('es-CL');
 // Opciones del selector Equipo/Modelo = familias del stock (3 primeros chars del código).
-const equipoOpciones = (familias) => (familias || []).map((f) => ({
-  value: f.familia,
-  label: `${f.familia} · ${String(f.ejemplo || '').slice(0, 30)}${f.skus ? ` (${f.skus})` : ''}`,
-}));
+// Por ahora solo el nombre de la familia.
+const equipoOpciones = (familias) => (familias || []).map((f) => f.familia);
 
 const TABS = [
   { id: 'tickets', label: 'Tickets', icon: ClipboardList },
