@@ -149,6 +149,7 @@ const Navbar = () => {
       items: [
         { id: 'postventa', label: 'Servicio Técnico', icon: <Wrench size={18} />, modules: [
             { label: 'Tickets', path: '/postventa/tickets', icon: <ClipboardCheck size={16} /> },
+            { label: 'Calendario', path: '/postventa/tickets?tab=calendario', icon: <Clock size={16} /> },
             { label: 'Nuevo Ticket', path: '/postventa/tickets?tab=nuevo', icon: <FileText size={16} /> },
             { label: 'Dashboard', path: '/postventa/tickets?tab=dashboard', icon: <LayoutDashboard size={16} /> },
             { label: 'Técnicos', path: '/postventa/tickets?tab=tecnicos', icon: <Users size={16} /> }

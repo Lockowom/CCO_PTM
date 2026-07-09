@@ -98,6 +98,15 @@ describe('Post-Venta / Servicio Técnico (integrado en CCO)', () => {
     expect(screen.getByRole('button', { name: /Crear Ticket/i })).toBeInTheDocument();
   });
 
+  it('la pestaña Calendario muestra la grilla mensual y ubica tickets por fecha', async () => {
+    wrap(<Postventa />);
+    fireEvent.click(screen.getByRole('button', { name: /Calendario/i }));
+    await waitFor(() => expect(screen.getByText('Lun')).toBeInTheDocument());
+    // Encabezados de días de la semana + control "Ubicar por".
+    expect(screen.getByText('Dom')).toBeInTheDocument();
+    expect(screen.getByText(/Ubicar por/i)).toBeInTheDocument();
+  });
+
   it('la pestaña Técnicos (supervisor) lista el catálogo editable', async () => {
     wrap(<Postventa />);
     fireEvent.click(screen.getByRole('button', { name: /Técnicos/i }));

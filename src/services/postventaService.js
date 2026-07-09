@@ -137,6 +137,7 @@ export function useCrearTicket() {
         p_tecnico: p.tecnico_asignado || 'Sin Asignar', p_estado: p.estado || 'Abierto',
         p_cotizar: p.cotizar || 'No', p_observaciones: p.observaciones || '',
         p_origen: 'Manual', p_id_correo: null,
+        p_fecha_programada: p.fecha_programada || null, p_hora_programada: p.hora_programada || null,
       });
       if (error) throw error;
       return data;

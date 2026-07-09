@@ -60,9 +60,13 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   servicio técnico de equipos médicos (folio `TKT-AAAA-###`). Migración `046` (dominio + RPCs +
   permisos). Frontend: `src/pages/Postventa/Postventa.jsx` (tabs Tickets, Nuevo, Dashboard,
   Técnicos) y `src/services/postventaService.js` (catálogos como constantes + hooks). Ruta
-  `/postventa/tickets`, menú *Inteligencia → Post-Venta*. Permisos
-  `view_postventa`/`manage_postventa`/`supervise_postventa`. Tickets en `tms_postventa_tickets`,
-  técnicos editables en `tms_postventa_tecnicos`.
+  `/postventa/tickets`, sección propia *Post-Venta* en el menú (tabs deep-link vía `?tab=`).
+  Permisos `view_postventa`/`manage_postventa`/`supervise_postventa`. Tickets en
+  `tms_postventa_tickets`, técnicos editables en `tms_postventa_tecnicos`.
+  - **Calendario / Agenda** (migración `047`): pestaña Calendario (grilla mensual) que ubica los
+    tickets por fecha (visita programada / apertura / cierre) con filtro por técnico. Campos
+    `fecha_programada`/`hora_programada` en el ticket; `crear_pv_ticket` (recreada, +2 params
+    opcionales) y `actualizar_pv_ticket` los manejan.
   - **Extractor de correos**: Edge Function `supabase/functions/postventa-extractor` (Deno, port
     del `main.py` de post-venta). Lee un buzón Outlook/M365 vía Microsoft Graph (client
     credentials, permiso `Mail.Read`), dedup por id de mensaje y crea tickets `origen='Correo'`
