@@ -96,21 +96,22 @@ html.cco-embedded[data-theme="dark"] {
    independiente, el topbar (Sincronizar, Catálogo, Exportar, Importar,
    tema) se conserva íntegro. */
 .cco-embedded .topbar { display: none !important; }
-/* Para que la TABLA no se corte: apilamos (formulario arriba, tabla abajo a
-   todo el ancho) por defecto, así la tabla tiene el ancho completo y caben
-   todas las columnas sin scroll. Solo volvemos a 2 columnas en pantallas muy
-   anchas (≥1400px), donde el 1fr ya supera el ancho mínimo de la tabla. */
+/* Para que NADA se corte a 100% de zoom: SIEMPRE apilamos (formulario arriba,
+   tabla abajo) — la tabla usa todo el ancho del módulo. Nunca 2 columnas. */
 .cco-embedded .layout {
-  grid-template-columns: 1fr;
+  display: block;
   max-width: none;
   padding: 14px 16px 22px;
 }
-.cco-embedded .form-card { position: static; }
+.cco-embedded .form-card { position: static; margin-bottom: 16px; }
 @media (max-width: 1000px) { .cco-embedded .layout { padding: 12px; } }
-@media (min-width: 1400px) {
-  .cco-embedded .layout { grid-template-columns: 370px minmax(0, 1fr); }
-  .cco-embedded .form-card { position: sticky; }
-}
+/* La tabla se AJUSTA al ancho disponible (sin forzar 940px) → entran todas las
+   columnas sin scroll. Celdas y fechas más compactas para ganar espacio. */
+.cco-embedded table { min-width: 0; width: 100%; }
+.cco-embedded thead th, .cco-embedded tbody td { padding-left: 8px; padding-right: 8px; }
+.cco-embedded thead th { font-size: 10px; }
+.cco-embedded .date-cell { white-space: normal; font-size: 10px; }
+.cco-embedded td .desc { max-width: 200px; }
 .cco-embedded, .cco-embedded body { overflow-x: hidden; }
 
 /* ---------- Minimalismo: sin fondo 3D ni modo inmersivo ---------- */
