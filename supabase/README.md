@@ -42,6 +42,12 @@
   tickets `origen='Correo'` con `crear_pv_ticket`. Secrets: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`,
   `GRAPH_CLIENT_SECRET`, `PV_MAILBOX` (+ opc. `PV_MAILBOX_FOLDER`, `PV_SOLO_DESDE`). Programar con
   pg_cron+pg_net o invocar manualmente.
+- `functions/postventa-inbox/` — Edge Function (Deno) **webhook de ingesta** para el módulo
+  **Post-Venta**: alternativa al extractor Graph para buzones **POP**. No lee correos; recibe por
+  POST (JSON o form) los datos que un script externo (lector POP) ya extrajo y crea el ticket
+  `origen='Correo'` con `crear_pv_ticket` (idempotente por `id_correo`). Acepta objeto o array de
+  correos, alias tolerantes de campos, y autentica por **token compartido** (`?token=`, header
+  `x-pv-token` o body) contra el secret `PV_INGEST_TOKEN`. `verify_jwt` off (auth propia por token).
 - `legacy_sql/` — scripts SQL **históricos/obsoletos** movidos desde la raíz del repo.
   Conservados solo como referencia. **No ejecutar**: pueden revertir el estado actual.
 

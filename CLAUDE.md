@@ -70,6 +70,11 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     requeridos** (Supabase → Edge Functions): `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`,
     `GRAPH_CLIENT_SECRET`, `PV_MAILBOX` (+ opcionales `PV_MAILBOX_FOLDER`, `PV_SOLO_DESDE`).
     Programar con pg_cron+pg_net o invocar manualmente (POST, `verify_jwt` on).
+  - **Webhook de ingesta (correos POP)**: Edge Function `supabase/functions/postventa-inbox` —
+    alternativa para buzones POP. No lee correos: un script externo (lector POP) hace POST con los
+    datos del correo y la función crea el ticket `origen='Correo'` (idempotente por `id_correo`).
+    Auth por **token compartido** (`?token=`/header `x-pv-token`/body) contra el secret
+    `PV_INGEST_TOKEN`; `verify_jwt` off. Acepta objeto o array; alias tolerantes de campos.
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
