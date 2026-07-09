@@ -37,12 +37,15 @@ const MiBandeja = () => {
   const puedeVerTodo = isAdmin || canQuality;
   const puedeResolver = (a) => isAdmin || misAreas.has(a.area_responsable);
 
+  // Un supervisor sin área asignada (admin/Calidad) ve todo por defecto; un rol de
+  // área ve solo lo suyo salvo que active "ver todas".
+  const efectivoTodas = (verTodas && puedeVerTodo) || (puedeVerTodo && misAreas.size === 0);
   const lista = useMemo(() => {
     let l = acciones;
-    if (!(verTodas && puedeVerTodo)) l = l.filter(a => misAreas.has(a.area_responsable));
+    if (!efectivoTodas) l = l.filter(a => misAreas.has(a.area_responsable));
     if (soloPend) l = l.filter(a => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO');
     return l;
-  }, [acciones, verTodas, puedeVerTodo, misAreas, soloPend]);
+  }, [acciones, efectivoTodas, misAreas, soloPend]);
 
   const pendientesMias = acciones.filter(a =>
     (a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO') && misAreas.has(a.area_responsable)).length;
