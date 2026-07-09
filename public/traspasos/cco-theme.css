@@ -83,6 +83,20 @@
   --pill-ok-bg: rgba(16, 185, 129, 0.18);   --pill-ok-bd: rgba(16, 185, 129, 0.4);
 }
 
+/* ---------- Integración como módulo CCO ---------- */
+/* La cabecera de módulo (título + icono) la provee el marco React
+   (src/pages/Tools/Traspasos.jsx). Ocultamos el branding duplicado del
+   topbar de em-il y lo convertimos en una barra de acciones limpia. */
+.brand { display: none !important; }
+.topbar {
+  justify-content: flex-end;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+/* El contenido arranca pegado al topbar; menos aire superior. */
+.layout { padding-top: 14px; }
+
 /* ---------- Minimalismo: sin fondo 3D ni modo inmersivo ---------- */
 /* El campo de partículas Three.js no encaja con la estética limpia de
    CCO; lo ocultamos y dejamos las micro-animaciones de UI (fade/hover). */
