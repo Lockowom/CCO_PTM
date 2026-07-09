@@ -164,6 +164,36 @@ export function useActualizarTicket() {
   });
 }
 
+// Eliminar un caso completo (descarta sus correos → no reingresan).
+export function useEliminarTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ numero, descartar = true }) => {
+      const { error } = await supabase.rpc('eliminar_pv_ticket', { p_numero: numero, p_descartar: descartar });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+      qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+    },
+  });
+}
+
+// Eliminar un correo puntual del hilo (lo descarta → no reingresa).
+export function useEliminarCorreo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ idCorreo, descartar = true }) => {
+      const { error } = await supabase.rpc('eliminar_pv_correo', { p_id_correo: idCorreo, p_descartar: descartar });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['pv_correos'] });
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+    },
+  });
+}
+
 // ============================================================================
 // Correos (hilo de conversación de un ticket) + interno/externo
 // ============================================================================

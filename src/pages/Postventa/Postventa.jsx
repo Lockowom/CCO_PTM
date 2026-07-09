@@ -14,7 +14,7 @@ import {
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
-  useCorreosTicket, esCorreoInterno,
+  useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo,
 } from '../../services/postventaService';
 
 const fechaCL = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-CL') : '—';
@@ -203,23 +203,31 @@ function TabBandeja({ canManage, canSupervise }) {
   const { data: todos = [], isLoading } = useTickets(q.trim() ? { q } : {});
   const { data: tecnicos = [] } = useTecnicos(true);
   const derivar = useActualizarTicket();
+  const eliminar = useEliminarTicket();
   const [editar, setEditar] = useState(null);
   const [leer, setLeer] = useState(null);
 
   // Solo tickets que entraron por correo.
   let correos = todos.filter((t) => t.origen === 'Correo');
   if (origen) correos = correos.filter((t) => (esCorreoInterno(t.contacto) ? 'interno' : 'externo') === origen);
-  // "Por gestionar": sin técnico, o con datos por definir, o recién abierto.
-  const porGestionar = (t) => t.tecnico_asignado === 'Sin Asignar' || t.region === 'Por Definir'
+  // "Por asignar": sin técnico. "Por gestionar": además datos por definir / recién abierto.
+  const porAsignar = (t) => t.tecnico_asignado === 'Sin Asignar';
+  const porGestionar = (t) => porAsignar(t) || t.region === 'Por Definir'
     || t.equipo_modelo === 'Por Definir' || t.estado === 'Abierto';
   const lista = soloPend ? correos.filter(porGestionar) : correos;
   const nPend = correos.filter(porGestionar).length;
+  const nAsignar = correos.filter(porAsignar).length;
 
   const asignar = async (t, tecnico) => {
     try {
       await derivar.mutateAsync({ numero: t.numero, campos: { tecnico_asignado: tecnico, estado: t.estado === 'Abierto' ? 'En Proceso' : t.estado } });
       toast.success(`${t.numero} derivado a ${tecnico}`);
     } catch (e) { toast.error(e.message || 'Error al derivar'); }
+  };
+  const borrar = async (t) => {
+    if (!confirm(`¿Eliminar el caso ${t.numero}? El/los correo(s) quedarán descartados y NO volverán a cargarse.`)) return;
+    try { await eliminar.mutateAsync({ numero: t.numero }); toast.success(`${t.numero} eliminado y descartado`); }
+    catch (e) { toast.error(e.message || 'Error al eliminar'); }
   };
 
   return (
@@ -229,7 +237,7 @@ function TabBandeja({ canManage, canSupervise }) {
         <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0"><Mail size={18} /></div>
         <div className="min-w-0">
           <div className="font-black text-slate-800">Bandeja de Correos</div>
-          <div className="text-xs text-slate-500">{correos.length} caso(s) desde correo · <span className="font-bold text-orange-600">{nPend} por gestionar</span></div>
+          <div className="text-xs text-slate-500">{correos.length} caso(s) · <span className="font-bold text-rose-600">{nAsignar} por asignar</span> · <span className="font-bold text-orange-600">{nPend} por gestionar</span></div>
         </div>
         <div className="flex-1" />
         <div className="relative">
@@ -279,9 +287,12 @@ function TabBandeja({ canManage, canSupervise }) {
                     {tecnicos.map((tc) => <option key={tc.id} value={tc.nombre}>{tc.nombre}</option>)}
                   </select>
                 )}
-                <button onClick={() => setEditar(t)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1">
-                  <Pencil size={13} /> Gestionar
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setEditar(t)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1">
+                    <Pencil size={13} /> Gestionar
+                  </button>
+                  <button onClick={() => borrar(t)} title="Eliminar y descartar" className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-rose-200"><Trash2 size={14} /></button>
+                </div>
               </div>
             </div>
           </div>
@@ -297,7 +308,13 @@ function TabBandeja({ canManage, canSupervise }) {
 // ─── Lector de correo (hilo estilo Outlook) ──────────────────────────────────
 function ThreadReader({ ticket, onClose, onGestionar }) {
   const { data: correos = [], isLoading } = useCorreosTicket(ticket.numero);
+  const elimCorreo = useEliminarCorreo();
   const asuntoHilo = correos[0]?.asunto || ticket.descripcion || ticket.numero;
+  const borrarCorreo = async (c) => {
+    if (!confirm('¿Eliminar este correo del caso? Quedará descartado y no volverá a cargarse.')) return;
+    try { await elimCorreo.mutateAsync({ idCorreo: c.id_correo }); toast.success('Correo eliminado'); }
+    catch (e) { toast.error(e.message || 'Error al eliminar'); }
+  };
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-3xl my-auto" onClick={(e) => e.stopPropagation()}>
@@ -324,7 +341,10 @@ function ThreadReader({ ticket, onClose, onGestionar }) {
                     {c.remitente_email && <span className="font-normal text-slate-400">&lt;{c.remitente_email}&gt;</span>}
                     <OrigenChip email={c.remitente_email} />
                   </div>
-                  <span className="text-[11px] text-slate-400">{fechaHoraCL(c.recibido)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-400">{fechaHoraCL(c.recibido)}</span>
+                    <button onClick={() => borrarCorreo(c)} title="Eliminar correo del caso" className="p-1 rounded text-rose-400 hover:bg-rose-50"><Trash2 size={13} /></button>
+                  </div>
                 </div>
                 <div className="mt-1 text-[11px] text-slate-500 space-y-0.5">
                   {c.para && <div><span className="font-bold text-slate-400">Para:</span> {c.para}</div>}
