@@ -131,7 +131,9 @@ const Navbar = () => {
           ]
         },
         { id: 'quality', label: 'Calidad', icon: <ClipboardCheck size={18} />, modules: [
-            { label: 'Monitoreo', path: '/quality/monitoreo', icon: <FileSearch size={16} /> }
+            { label: 'Monitoreo', path: '/quality/monitoreo', icon: <FileSearch size={16} /> },
+            { label: 'Mi Bandeja', path: '/quality/bandeja', icon: <Package size={16} /> },
+            { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
           ]
         }
       ]
@@ -147,6 +149,7 @@ const Navbar = () => {
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
             { label: 'Gestión Ubicaciones', path: '/admin/locations', icon: <MapPin size={16} /> },
+            { label: 'Bodegas Softland', path: '/admin/bodegas-softland', icon: <Package size={16} /> },
             { label: 'Monitor', path: '/admin/monitor', icon: <Activity size={16} /> },
             { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
           ]
