@@ -16,9 +16,9 @@ const Traspasos = () => {
   const [cargando, setCargando] = useState(true);
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50 p-3 sm:p-6 gap-3 sm:gap-5">
+    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50">
       {/* Cabecera estilo módulo CCO */}
-      <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5 flex flex-wrap items-center justify-between gap-4 shrink-0">
+      <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5 flex flex-wrap items-center justify-between gap-4 shrink-0 m-3 sm:m-6 mb-0 sm:mb-0">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center text-orange-600 shrink-0">
@@ -44,8 +44,8 @@ const Traspasos = () => {
         </a>
       </div>
 
-      {/* Lienzo del módulo (iframe con la app vendorizada) */}
-      <div className="relative flex-1 rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden bg-slate-50">
+      {/* Lienzo del módulo (iframe a todo el ancho, sin marco) */}
+      <div className="relative flex-1 mt-3 sm:mt-4 bg-slate-50">
         {cargando && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-50">
             <Loader2 className="animate-spin text-orange-500" size={34} />
