@@ -37,6 +37,8 @@ export const ROUTE_PERMISSIONS = {
 
   // Inventario — Traspasos/Ajustes (módulo integrado). Visible para bodega/inventario.
   '/inventory/traspasos': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  // Inventario — módulo de conteo cíclico / bloques / proyección.
+  '/inventory/proyeccion': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

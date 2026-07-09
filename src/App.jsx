@@ -60,6 +60,9 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 
+// Inventario (módulo Conteo Cíclico / Bloques / Proyección)
+const InvProyeccion = React.lazy(() => import('./pages/Inventory/Proyeccion'));
+
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
@@ -371,6 +374,7 @@ function AppContent() {
 
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
+          <Route path="inventory/proyeccion" element={<ErrorBoundary><InvProyeccion /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />

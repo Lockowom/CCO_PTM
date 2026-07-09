@@ -114,7 +114,8 @@ const Navbar = () => {
           ]
         },
         { id: 'inventario', label: 'Inventario', icon: <Warehouse size={18} />, modules: [
-            { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> }
+            { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> },
+            { label: 'Proyección de Pallets', path: '/inventory/proyeccion', icon: <Truck size={16} /> }
           ]
         }
       ]
