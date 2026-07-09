@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Wrench, Plus, Search, X, Download, LayoutDashboard, ClipboardList, Users,
   Save, Trash2, Mail, AlertTriangle, Clock, CheckCircle2, Pencil,
-  CalendarDays, ChevronLeft, ChevronRight,
+  CalendarDays, ChevronLeft, ChevronRight, MailOpen, Building2, Globe2, Paperclip,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -14,10 +14,21 @@ import {
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
+  useCorreosTicket, esCorreoInterno,
 } from '../../services/postventaService';
 
 const fechaCL = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-CL') : '—';
+const fechaHoraCL = (d) => { try { return d ? new Date(d).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }) : '—'; } catch { return d || '—'; } };
 const n = (v) => (Number(v) || 0).toLocaleString('es-CL');
+// Chip Interno/Externo según el dominio del correo del remitente.
+function OrigenChip({ email }) {
+  const interno = esCorreoInterno(email);
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold border ${interno ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-teal-100 text-teal-700 border-teal-200'}`}>
+      {interno ? <Building2 size={11} /> : <Globe2 size={11} />}{interno ? 'Interno' : 'Externo'}
+    </span>
+  );
+}
 // Opciones del selector Equipo/Modelo = familias del stock (3 primeros chars del código).
 // Por ahora solo el nombre de la familia.
 const equipoOpciones = (familias) => (familias || []).map((f) => f.familia);
@@ -188,13 +199,16 @@ function TabTickets({ canManage, canSupervise }) {
 function TabBandeja({ canManage, canSupervise }) {
   const [q, setQ] = useState('');
   const [soloPend, setSoloPend] = useState(true);
+  const [origen, setOrigen] = useState(''); // '', 'interno', 'externo'
   const { data: todos = [], isLoading } = useTickets(q.trim() ? { q } : {});
   const { data: tecnicos = [] } = useTecnicos(true);
   const derivar = useActualizarTicket();
   const [editar, setEditar] = useState(null);
+  const [leer, setLeer] = useState(null);
 
   // Solo tickets que entraron por correo.
-  const correos = todos.filter((t) => t.origen === 'Correo');
+  let correos = todos.filter((t) => t.origen === 'Correo');
+  if (origen) correos = correos.filter((t) => (esCorreoInterno(t.contacto) ? 'interno' : 'externo') === origen);
   // "Por gestionar": sin técnico, o con datos por definir, o recién abierto.
   const porGestionar = (t) => t.tecnico_asignado === 'Sin Asignar' || t.region === 'Por Definir'
     || t.equipo_modelo === 'Por Definir' || t.estado === 'Abierto';
@@ -223,6 +237,12 @@ function TabBandeja({ canManage, canSupervise }) {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar remitente, asunto…"
             className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm w-full sm:w-64" />
         </div>
+        <div className="flex items-center gap-1">
+          {[['', 'Todos'], ['interno', 'Internos'], ['externo', 'Externos']].map(([v, lbl]) => (
+            <button key={v} onClick={() => setOrigen(v)}
+              className={`px-2.5 py-2 rounded-xl text-xs font-black border ${origen === v ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}>{lbl}</button>
+          ))}
+        </div>
         <button onClick={() => setSoloPend((v) => !v)}
           className={`px-3 py-2 rounded-xl text-xs font-black border ${soloPend ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'}`}>
           {soloPend ? 'Por gestionar' : 'Todos los correos'}
@@ -240,14 +260,18 @@ function TabBandeja({ canManage, canSupervise }) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-black text-slate-800">{t.numero}</span>
                   <Mail size={13} className="text-sky-500" />
+                  <OrigenChip email={t.contacto} />
                   <span className={`inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border ${pvEstadoCls(t.estado)}`}>{t.estado}</span>
                   {porGestionar(t) && <span className="inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border bg-amber-100 text-amber-700 border-amber-200">Por gestionar</span>}
                   <span className="text-[11px] text-slate-400">{fechaCL(t.fecha_apertura)}</span>
                 </div>
-                <div className="font-semibold text-slate-700 mt-1">{t.cliente}{t.contacto ? ` · ${t.contacto}` : ''}</div>
+                <button onClick={() => setLeer(t)} className="text-left font-semibold text-slate-700 mt-1 hover:text-orange-600">{t.cliente}{t.contacto ? ` · ${t.contacto}` : ''}</button>
                 <div className="text-xs text-slate-500 line-clamp-2 whitespace-pre-line">{t.descripcion}</div>
               </div>
               <div className="flex flex-col items-end gap-2 shrink-0">
+                <button onClick={() => setLeer(t)} className="px-3 py-1.5 rounded-lg border border-sky-200 text-sky-700 bg-sky-50 text-xs font-black hover:bg-sky-100 inline-flex items-center gap-1">
+                  <MailOpen size={13} /> Leer
+                </button>
                 {canManage && (
                   <select defaultValue="" onChange={(e) => e.target.value && asignar(t, e.target.value)}
                     className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 bg-white">
@@ -264,7 +288,62 @@ function TabBandeja({ canManage, canSupervise }) {
         ))}
       </div>
 
+      {leer && <ThreadReader ticket={leer} onClose={() => setLeer(null)} onGestionar={(t) => { setLeer(null); setEditar(t); }} />}
       {editar && <ModalEditar ticket={editar} canManage={canManage} canSupervise={canSupervise} onClose={() => setEditar(null)} />}
+    </div>
+  );
+}
+
+// ─── Lector de correo (hilo estilo Outlook) ──────────────────────────────────
+function ThreadReader({ ticket, onClose, onGestionar }) {
+  const { data: correos = [], isLoading } = useCorreosTicket(ticket.numero);
+  const asuntoHilo = correos[0]?.asunto || ticket.descripcion || ticket.numero;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-3xl my-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-100 gap-3">
+          <div className="min-w-0">
+            <h3 className="font-black text-slate-800 truncate">{asuntoHilo}</h3>
+            <p className="text-xs text-slate-400">{ticket.numero} · {correos.length} mensaje(s) en el hilo</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 shrink-0"><X size={18} /></button>
+        </div>
+        <div className="p-4 sm:p-5 space-y-3 max-h-[65vh] overflow-y-auto bg-slate-50">
+          {isLoading && <div className="text-slate-400 text-center py-8">Cargando conversación…</div>}
+          {!isLoading && !correos.length && (
+            <div className="text-slate-500 text-sm bg-white rounded-xl border border-slate-200 p-4">
+              Este caso no tiene el hilo guardado (es un ticket anterior a la lectura de correos). Vuelve a enviarlo desde Outlook y el hilo completo aparecerá aquí.
+            </div>
+          )}
+          {correos.map((c, i) => (
+            <div key={c.id_correo || i} className="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    {c.remitente_nombre || c.remitente_email || 'Remitente'}
+                    {c.remitente_email && <span className="font-normal text-slate-400">&lt;{c.remitente_email}&gt;</span>}
+                    <OrigenChip email={c.remitente_email} />
+                  </div>
+                  <span className="text-[11px] text-slate-400">{fechaHoraCL(c.recibido)}</span>
+                </div>
+                <div className="mt-1 text-[11px] text-slate-500 space-y-0.5">
+                  {c.para && <div><span className="font-bold text-slate-400">Para:</span> {c.para}</div>}
+                  {c.cc && <div><span className="font-bold text-slate-400">CC:</span> {c.cc}</div>}
+                  {c.asunto && <div><span className="font-bold text-slate-400">Asunto:</span> {c.asunto}</div>}
+                  {c.adjuntos && <div className="flex items-center gap-1 text-slate-500"><Paperclip size={11} /> {c.adjuntos}</div>}
+                </div>
+              </div>
+              <div className="px-4 py-3 text-sm text-slate-700 whitespace-pre-wrap break-words">{c.cuerpo || '(sin cuerpo)'}</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Cerrar</button>
+          <button onClick={() => onGestionar(ticket)} className="px-5 py-2 rounded-xl bg-orange-600 text-white font-black text-sm hover:bg-orange-700 inline-flex items-center gap-2">
+            <Pencil size={15} /> Gestionar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

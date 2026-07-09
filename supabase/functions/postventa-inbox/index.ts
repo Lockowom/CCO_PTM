@@ -46,44 +46,24 @@ function limpiar(t: string): string {
 
 async function crearTicket(supabase: any, raw: Record<string, any>) {
   const asunto = limpiar(pick(raw, ["asunto", "subject", "Asunto", "Subject"]));
-  const cuerpo = limpiar(pick(raw, ["descripcion", "cuerpo", "body", "mensaje", "Descripcion", "Cuerpo", "texto"]));
-  const cliente = pick(raw, ["cliente", "remitente_nombre", "remitente", "from", "nombre", "de", "Cliente", "Remitente", "From", "sender"]) || "Correo sin remitente";
-  const contacto = pick(raw, ["contacto", "remitente_email", "email", "correo", "from_email", "Contacto", "Email", "correo_remitente"]);
+  const cuerpo = pick(raw, ["cuerpo", "body", "descripcion", "mensaje", "Cuerpo", "texto"]);
+  const remitenteNombre = pick(raw, ["remitente_nombre", "remitente", "from", "nombre", "de", "Remitente", "From", "sender"]);
+  const remitenteEmail = pick(raw, ["remitente_email", "email", "correo", "from_email", "Email", "correo_remitente"]);
   const idCorreo = pick(raw, ["id_correo", "id", "message_id", "messageId", "uid", "EntryID", "entryid", "Message-ID", "mensaje_id"]) ||
-    (asunto || cliente ? `pop:${cliente}|${asunto}`.slice(0, 250) : "");
+    (asunto || remitenteNombre ? `pop:${remitenteNombre || remitenteEmail}|${asunto}`.slice(0, 250) : "");
+  if (!idCorreo) throw new Error("correo sin id (EntryID/id/message_id)");
 
-  const descripcion = [asunto, cuerpo].filter(Boolean).join("\n\n") || asunto || "(correo sin contenido)";
-
-  // Metadatos del correo → observaciones (para no perderlos; la gestión va a otros campos).
-  const meta: string[] = [];
-  if (contacto) meta.push(`Correo de ${contacto}`);
-  const recibido = pick(raw, ["recibido", "receivedDateTime", "fecha"]);
-  if (recibido) meta.push(`Recibido: ${recibido}`);
-  const adjuntos = pick(raw, ["adjuntos", "attachments"]);
-  if (adjuntos && adjuntos.toLowerCase() !== "no identificado" && adjuntos.toLowerCase() !== "sin adjuntos") meta.push(`Adjuntos: ${adjuntos}`);
-  const observaciones = pick(raw, ["observaciones", "Observaciones"]) || meta.join(" · ");
-
-  // Campos de gestión: se usan si vienen; si no, placeholder para completar a mano.
-  const region = pick(raw, ["region", "Region", "región"]) || "Por Definir";
-  const equipo = pick(raw, ["equipo_modelo", "equipo", "modelo", "Equipo"]) || "Por Definir";
-  const tipo = pick(raw, ["tipo_solicitud", "tipo", "Tipo"]) || "Otro";
-  const prioridad = pick(raw, ["prioridad", "Prioridad"]) || "Media";
-
-  const { data, error } = await supabase.rpc("crear_pv_ticket", {
-    p_cliente: cliente,
-    p_region: region,
-    p_equipo_modelo: equipo,
-    p_tipo_solicitud: tipo,
-    p_prioridad: prioridad,
-    p_descripcion: descripcion,
-    p_contacto: contacto,
-    p_numero_serie: pick(raw, ["numero_serie", "serie", "n_serie"]),
-    p_tecnico: pick(raw, ["tecnico_asignado", "tecnico"]) || "Sin Asignar",
-    p_estado: pick(raw, ["estado"]) || "Abierto",
-    p_cotizar: pick(raw, ["cotizar"]) || "No",
-    p_observaciones: observaciones,
-    p_origen: "Correo",
-    p_id_correo: idCorreo || null,
+  const { data, error } = await supabase.rpc("ingesta_pv_correo", {
+    p_id_correo: idCorreo,
+    p_conversation_id: pick(raw, ["conversation_id", "conversationId", "ConversationID", "conversationid"]) || null,
+    p_recibido: pick(raw, ["recibido", "receivedDateTime", "fecha", "Recibido"]) || null,
+    p_remitente_nombre: remitenteNombre,
+    p_remitente_email: remitenteEmail,
+    p_para: pick(raw, ["para", "to", "Para", "To"]),
+    p_cc: pick(raw, ["cc", "CC", "Cc"]),
+    p_asunto: asunto,
+    p_cuerpo: limpiar(cuerpo),
+    p_adjuntos: pick(raw, ["adjuntos", "attachments", "Adjuntos"]),
   });
   if (error) throw new Error(error.message);
   return data?.numero || null;

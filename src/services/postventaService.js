@@ -165,6 +165,29 @@ export function useActualizarTicket() {
 }
 
 // ============================================================================
+// Correos (hilo de conversación de un ticket) + interno/externo
+// ============================================================================
+// Dominios considerados "internos" (PTM). Ajustar si cambian.
+export const DOMINIOS_INTERNOS = ['ptm.cl'];
+export function esCorreoInterno(email) {
+  const dom = String(email || '').split('@')[1]?.toLowerCase().trim();
+  return dom ? DOMINIOS_INTERNOS.includes(dom) : false;
+}
+
+export function useCorreosTicket(numero) {
+  return useQuery({
+    queryKey: ['pv_correos', numero || ''],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('pv_correos_ticket', { p_numero: numero });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!numero,
+    staleTime: 30_000,
+  });
+}
+
+// ============================================================================
 // Familias de equipos (del stock de CCO: primeros 3 chars del código de producto)
 // ============================================================================
 export function useFamiliasStock() {

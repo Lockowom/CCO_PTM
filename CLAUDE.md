@@ -78,11 +78,15 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     requeridos** (Supabase → Edge Functions): `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`,
     `GRAPH_CLIENT_SECRET`, `PV_MAILBOX` (+ opcionales `PV_MAILBOX_FOLDER`, `PV_SOLO_DESDE`).
     Programar con pg_cron+pg_net o invocar manualmente (POST, `verify_jwt` on).
-  - **Webhook de ingesta (correos POP)**: Edge Function `supabase/functions/postventa-inbox` —
-    alternativa para buzones POP. No lee correos: un script externo (lector POP) hace POST con los
-    datos del correo y la función crea el ticket `origen='Correo'` (idempotente por `id_correo`).
-    Auth por **token compartido** (`?token=`/header `x-pv-token`/body) contra el secret
-    `PV_INGEST_TOKEN`; `verify_jwt` off. Acepta objeto o array; alias tolerantes de campos.
+  - **Webhook de ingesta (correos POP / macro Outlook)**: Edge Function `supabase/functions/postventa-inbox` —
+    un script/macro externo hace POST con los datos del correo y la función llama la RPC
+    `ingesta_pv_correo`. Auth por **token compartido** (header `X-API-Key`/`x-pv-token`/`?token=`/body)
+    contra el secret `PV_INGEST_TOKEN`; `verify_jwt` off. Acepta objeto, array, `{filas:[…]}` (macro VBA).
+  - **Hilos de correo + lector (migración `050`)**: tabla `tms_postventa_correos` (cada correo con
+    De/Para/CC/Asunto/cuerpo/adjuntos/recibido, dedup por `id_correo`/EntryID) + `conversation_id` en
+    el ticket → **un hilo = un caso** (RPC `ingesta_pv_correo`; `pv_correos_ticket(numero)` devuelve el
+    hilo ordenado). Frontend: pestaña **Bandeja Correos** (`TabBandeja`) con chip **Interno/Externo**
+    (`DOMINIOS_INTERNOS`, `ptm.cl`) y **lector estilo Outlook** (`ThreadReader`).
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)

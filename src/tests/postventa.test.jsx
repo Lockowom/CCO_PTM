@@ -37,6 +37,7 @@ const RPC_DATA = {
   crear_pv_ticket: TICKETS[0],
   actualizar_pv_ticket: TICKETS[0],
   pv_familias_stock: [{ familia: 'NGE', skus: 423, ejemplo: 'MANGO DE BISTURI Nº 3' }, { familia: '0GI', skus: 52, ejemplo: 'CINTURON GIVAS' }],
+  pv_correos_ticket: [{ id_correo: 'EID-A', remitente_nombre: 'Juan', remitente_email: 'juan@hospital.cl', para: 'postventa@ptm.cl', cc: '', asunto: 'Falla balanza', cuerpo: 'No enciende', adjuntos: '', recibido: '2026-06-18T10:00:00Z' }],
 };
 
 function builder(data) {
