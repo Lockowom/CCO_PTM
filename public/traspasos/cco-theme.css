@@ -25,7 +25,12 @@
 }
 
 /* ---------- Tema claro (CCO por defecto) ---------- */
-[data-theme="light"] {
+/* Embebido en CCO SIEMPRE usa la paleta clara (aunque el tema guardado sea
+   oscuro), para no desentonar con el resto de la app; el inline script del
+   <head> ya fija data-theme=light, esto es la red de seguridad. */
+[data-theme="light"],
+html.cco-embedded,
+html.cco-embedded[data-theme="dark"] {
   --bg: #f6f7f9;
   /* Glow cálido apenas perceptible arriba-derecha (minimalista). */
   --bg-accent:

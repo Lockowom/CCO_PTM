@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="styles.css">
 <!-- CCO_PTM: tema de marca (re-inyectado por scripts/update_traspasos.mjs) -->
 <link rel="stylesheet" href="cco-theme.css">
+<!-- CCO_PTM: embebido en CCO → forzar tema claro antes de pintar (evita el flash oscuro) -->
+<script>if(window.self!==window.top){document.documentElement.classList.add('cco-embedded');document.documentElement.dataset.theme='light';}</script>
 </head>
 <body>
 <canvas id="bg" aria-hidden="true"></canvas>

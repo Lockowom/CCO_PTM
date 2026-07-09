@@ -49,7 +49,9 @@ for (const item of RUNTIME) {
 const INDEX = path.join(DEST, 'index.html');
 const THEME_TAG =
   '<!-- CCO_PTM: tema de marca (re-inyectado por scripts/update_traspasos.mjs) -->\n' +
-  '<link rel="stylesheet" href="cco-theme.css">';
+  '<link rel="stylesheet" href="cco-theme.css">\n' +
+  '<!-- CCO_PTM: embebido en CCO → forzar tema claro antes de pintar -->\n' +
+  "<script>if(window.self!==window.top){document.documentElement.classList.add('cco-embedded');document.documentElement.dataset.theme='light';}</script>";
 const BRIDGE_TAG =
   '<!-- CCO_PTM: puente a Supabase (re-inyectado por scripts/update_traspasos.mjs) -->\n' +
   '<script src="cco-bridge.js"></script>';
