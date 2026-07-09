@@ -13,11 +13,16 @@ import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
-  useTickets, useCrearTicket, useActualizarTicket, usePvDashboard,
+  useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
 } from '../../services/postventaService';
 
 const fechaCL = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-CL') : '—';
 const n = (v) => (Number(v) || 0).toLocaleString('es-CL');
+// Opciones del selector Equipo/Modelo = familias del stock (3 primeros chars del código).
+const equipoOpciones = (familias) => (familias || []).map((f) => ({
+  value: f.familia,
+  label: `${f.familia} · ${String(f.ejemplo || '').slice(0, 30)}${f.skus ? ` (${f.skus})` : ''}`,
+}));
 
 const TABS = [
   { id: 'tickets', label: 'Tickets', icon: ClipboardList },
@@ -202,6 +207,7 @@ const FORM_VACIO = {
 function TabNuevo({ onCreated }) {
   const crear = useCrearTicket();
   const { data: tecnicos = [] } = useTecnicos(true);
+  const { data: familias = [] } = useFamiliasStock();
   const [f, setF] = useState(FORM_VACIO);
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
@@ -235,7 +241,7 @@ function TabNuevo({ onCreated }) {
         <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} />
         <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={!f.region} allowFree />
         <Campo label="Contacto" value={f.contacto} onChange={(v) => set('contacto', v)} />
-        <Sel label="Equipo / Modelo" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={PV_EQUIPOS} allowFree />
+        <Sel label="Equipo / Modelo (familia del stock)" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} allowFree />
         <Campo label="N° de Serie" value={f.numero_serie} onChange={(v) => set('numero_serie', v)} />
         <Sel label="Tipo de Solicitud" value={f.tipo_solicitud} onChange={(v) => set('tipo_solicitud', v)} options={PV_TIPOS_SOLICITUD} />
         <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} />
@@ -262,10 +268,11 @@ function TabNuevo({ onCreated }) {
 function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
   const actualizar = useActualizarTicket();
   const { data: tecnicos = [] } = useTecnicos(true);
+  const { data: familias = [] } = useFamiliasStock();
   const [f, setF] = useState({
     estado: ticket.estado, tecnico_asignado: ticket.tecnico_asignado, prioridad: ticket.prioridad,
     cotizar: ticket.cotizar || 'No', resultado: ticket.resultado || '', observaciones: ticket.observaciones || '',
-    descripcion: ticket.descripcion || '',
+    descripcion: ticket.descripcion || '', equipo_modelo: ticket.equipo_modelo || '',
     region: ticket.region || '', comuna: ticket.comuna || '',
     fecha_programada: ticket.fecha_programada || '', hora_programada: ticket.hora_programada || '',
   });
@@ -303,6 +310,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} disabled={readOnly} allowFree />
             <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={readOnly || !f.region} allowFree />
+            <Sel label="Equipo / Modelo (familia)" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} disabled={readOnly} allowFree />
             <Sel label="Estado" value={f.estado} onChange={(v) => set('estado', v)} options={PV_ESTADOS} disabled={readOnly} />
             <Sel label="Técnico" value={f.tecnico_asignado} onChange={(v) => set('tecnico_asignado', v)} options={tecnicos.map((t) => t.nombre)} disabled={readOnly} />
             <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} disabled={readOnly} />
@@ -598,14 +606,17 @@ function Campo({ label, value, onChange, req, disabled, type = 'text' }) {
   );
 }
 function Sel({ label, value, onChange, options, req, disabled, allowFree }) {
-  const known = options.includes(value) || !value;
+  // options: array de strings o de {value, label}
+  const opts = (options || []).map((o) => (typeof o === 'string' ? { value: o, label: o } : o));
+  const values = opts.map((o) => o.value);
+  const known = values.includes(value) || !value;
   return (
     <div>
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{label}{req && <span className="text-orange-500"> *</span>}</label>
       <select value={known ? value : '__free__'} onChange={(e) => onChange(e.target.value === '__free__' ? '' : e.target.value)} disabled={disabled}
         className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400">
         <option value="">— Seleccionar —</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         {allowFree && !known && <option value="__free__">{value} (otro)</option>}
       </select>
     </div>

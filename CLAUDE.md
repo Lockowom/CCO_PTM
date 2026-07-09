@@ -67,6 +67,10 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     tickets por fecha (visita programada / apertura / cierre) con filtro por técnico. Campos
     `fecha_programada`/`hora_programada` en el ticket; `crear_pv_ticket` (recreada, +2 params
     opcionales) y `actualizar_pv_ticket` los manejan.
+  - **Región → Comuna** (migración `048`): columna `comuna` + selector en cascada
+    (`src/constants/comunasChile.js`, 16 regiones → 346 comunas). **Equipo/Modelo desde el stock**
+    (migración `049`): RPC `pv_familias_stock()` alimenta el selector con las familias reales del
+    stock (familia = 3 primeros chars de `tms_partidas.codigo_producto`).
   - **Extractor de correos**: Edge Function `supabase/functions/postventa-extractor` (Deno, port
     del `main.py` de post-venta). Lee un buzón Outlook/M365 vía Microsoft Graph (client
     credentials, permiso `Mail.Read`), dedup por id de mensaje y crea tickets `origen='Correo'`

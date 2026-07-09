@@ -36,6 +36,7 @@ const RPC_DATA = {
   pv_dashboard: DASHBOARD,
   crear_pv_ticket: TICKETS[0],
   actualizar_pv_ticket: TICKETS[0],
+  pv_familias_stock: [{ familia: 'NGE', skus: 423, ejemplo: 'MANGO DE BISTURI Nº 3' }, { familia: '0GI', skus: 52, ejemplo: 'CINTURON GIVAS' }],
 };
 
 function builder(data) {

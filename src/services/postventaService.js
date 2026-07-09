@@ -165,6 +165,21 @@ export function useActualizarTicket() {
 }
 
 // ============================================================================
+// Familias de equipos (del stock de CCO: primeros 3 chars del código de producto)
+// ============================================================================
+export function useFamiliasStock() {
+  return useQuery({
+    queryKey: ['pv_familias_stock'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('pv_familias_stock');
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+// ============================================================================
 // Dashboard
 // ============================================================================
 export function usePvDashboard() {
