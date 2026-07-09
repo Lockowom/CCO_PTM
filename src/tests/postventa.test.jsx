@@ -96,6 +96,14 @@ describe('Post-Venta / Servicio Técnico (integrado en CCO)', () => {
     expect(screen.getByRole('button', { name: /Crear Ticket/i })).toBeInTheDocument();
   });
 
+  it('la Bandeja de Correos (deep-link ?tab=bandeja) muestra los casos de correo por gestionar', async () => {
+    wrap(<Postventa />, '/postventa/tickets?tab=bandeja');
+    expect(screen.getByText('Bandeja de Correos')).toBeInTheDocument();
+    // El ticket origen='Correo' (TKT-2026-002) aparece (carga asíncrona) y se puede derivar.
+    await waitFor(() => expect(screen.getByText('TKT-2026-002')).toBeInTheDocument());
+    expect(screen.getByText(/Derivar a técnico/i)).toBeInTheDocument();
+  });
+
   it('la sección Calendario (deep-link ?tab=calendario) muestra la grilla mensual', async () => {
     wrap(<Postventa />, '/postventa/tickets?tab=calendario');
     await waitFor(() => expect(screen.getByText('Lun')).toBeInTheDocument());

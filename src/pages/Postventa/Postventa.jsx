@@ -24,6 +24,7 @@ const equipoOpciones = (familias) => (familias || []).map((f) => f.familia);
 
 const TABS = [
   { id: 'tickets', label: 'Tickets', icon: ClipboardList },
+  { id: 'bandeja', label: 'Bandeja Correos', icon: Mail },
   { id: 'calendario', label: 'Calendario', icon: CalendarDays },
   { id: 'nuevo', label: 'Nuevo Ticket', icon: Plus },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -75,6 +76,7 @@ export default function Postventa() {
       </div>
 
       {activeTab === 'tickets' && <TabTickets canManage={canManage} canSupervise={canSupervise} />}
+      {activeTab === 'bandeja' && <TabBandeja canManage={canManage} canSupervise={canSupervise} />}
       {activeTab === 'calendario' && <TabCalendario canManage={canManage} canSupervise={canSupervise} />}
       {activeTab === 'nuevo' && canManage && <TabNuevo onCreated={() => irTab('tickets')} />}
       {activeTab === 'dashboard' && <TabDashboard />}
@@ -175,6 +177,91 @@ function TabTickets({ canManage, canSupervise }) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {editar && <ModalEditar ticket={editar} canManage={canManage} canSupervise={canSupervise} onClose={() => setEditar(null)} />}
+    </div>
+  );
+}
+
+// ─── Bandeja de Correos (triage / derivar) ───────────────────────────────────
+function TabBandeja({ canManage, canSupervise }) {
+  const [q, setQ] = useState('');
+  const [soloPend, setSoloPend] = useState(true);
+  const { data: todos = [], isLoading } = useTickets(q.trim() ? { q } : {});
+  const { data: tecnicos = [] } = useTecnicos(true);
+  const derivar = useActualizarTicket();
+  const [editar, setEditar] = useState(null);
+
+  // Solo tickets que entraron por correo.
+  const correos = todos.filter((t) => t.origen === 'Correo');
+  // "Por gestionar": sin técnico, o con datos por definir, o recién abierto.
+  const porGestionar = (t) => t.tecnico_asignado === 'Sin Asignar' || t.region === 'Por Definir'
+    || t.equipo_modelo === 'Por Definir' || t.estado === 'Abierto';
+  const lista = soloPend ? correos.filter(porGestionar) : correos;
+  const nPend = correos.filter(porGestionar).length;
+
+  const asignar = async (t, tecnico) => {
+    try {
+      await derivar.mutateAsync({ numero: t.numero, campos: { tecnico_asignado: tecnico, estado: t.estado === 'Abierto' ? 'En Proceso' : t.estado } });
+      toast.success(`${t.numero} derivado a ${tecnico}`);
+    } catch (e) { toast.error(e.message || 'Error al derivar'); }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Barra */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0"><Mail size={18} /></div>
+        <div className="min-w-0">
+          <div className="font-black text-slate-800">Bandeja de Correos</div>
+          <div className="text-xs text-slate-500">{correos.length} caso(s) desde correo · <span className="font-bold text-orange-600">{nPend} por gestionar</span></div>
+        </div>
+        <div className="flex-1" />
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar remitente, asunto…"
+            className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm w-full sm:w-64" />
+        </div>
+        <button onClick={() => setSoloPend((v) => !v)}
+          className={`px-3 py-2 rounded-xl text-xs font-black border ${soloPend ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'}`}>
+          {soloPend ? 'Por gestionar' : 'Todos los correos'}
+        </button>
+      </div>
+
+      {/* Lista de casos */}
+      <div className="space-y-2">
+        {isLoading && <div className="text-slate-400 text-center py-10">Cargando…</div>}
+        {!isLoading && !lista.length && <div className="text-slate-400 text-center py-10 bg-white rounded-2xl border border-slate-200">Sin correos {soloPend ? 'por gestionar' : ''}.</div>}
+        {lista.map((t) => (
+          <div key={t.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-slate-800">{t.numero}</span>
+                  <Mail size={13} className="text-sky-500" />
+                  <span className={`inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border ${pvEstadoCls(t.estado)}`}>{t.estado}</span>
+                  {porGestionar(t) && <span className="inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border bg-amber-100 text-amber-700 border-amber-200">Por gestionar</span>}
+                  <span className="text-[11px] text-slate-400">{fechaCL(t.fecha_apertura)}</span>
+                </div>
+                <div className="font-semibold text-slate-700 mt-1">{t.cliente}{t.contacto ? ` · ${t.contacto}` : ''}</div>
+                <div className="text-xs text-slate-500 line-clamp-2 whitespace-pre-line">{t.descripcion}</div>
+              </div>
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                {canManage && (
+                  <select defaultValue="" onChange={(e) => e.target.value && asignar(t, e.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 bg-white">
+                    <option value="">Derivar a técnico…</option>
+                    {tecnicos.map((tc) => <option key={tc.id} value={tc.nombre}>{tc.nombre}</option>)}
+                  </select>
+                )}
+                <button onClick={() => setEditar(t)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1">
+                  <Pencil size={13} /> Gestionar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {editar && <ModalEditar ticket={editar} canManage={canManage} canSupervise={canSupervise} onClose={() => setEditar(null)} />}
