@@ -84,18 +84,14 @@
 }
 
 /* ---------- Integración como módulo CCO ---------- */
-/* La cabecera de módulo (título + icono) la provee el marco React
-   (src/pages/Tools/Traspasos.jsx). Ocultamos el branding duplicado del
-   topbar de em-il y lo convertimos en una barra de acciones limpia. */
-.brand { display: none !important; }
-.topbar {
-  justify-content: flex-end;
-  padding: 10px 16px;
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  border-bottom: 1px solid var(--line);
-}
-/* El contenido arranca pegado al topbar; menos aire superior. */
-.layout { padding-top: 14px; }
+/* La cabecera de módulo (título + icono + acciones) la provee el marco React
+   (src/pages/Tools/Traspasos.jsx). Ocultamos por completo el topbar propio de
+   em-il: sus acciones (Sincronizar, Catálogo, Exportar, Importar) se
+   relocalizaron en la cabecera naranja y se disparan por proxy. */
+.topbar { display: none !important; }
+/* El contenido ya no cuelga de un topbar; padding superior cómodo. */
+.layout { padding-top: 20px; }
+@media (max-width: 1000px) { .layout { padding-top: 16px; } }
 
 /* ---------- Minimalismo: sin fondo 3D ni modo inmersivo ---------- */
 /* El campo de partículas Three.js no encaja con la estética limpia de
