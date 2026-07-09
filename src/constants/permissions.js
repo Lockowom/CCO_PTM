@@ -39,6 +39,8 @@ export const ROUTE_PERMISSIONS = {
   '/inventory/traspasos': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
   // Inventario — módulo de conteo cíclico / bloques / proyección.
   '/inventory/proyeccion': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  '/inventory/bloques': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  '/inventory/bloque': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

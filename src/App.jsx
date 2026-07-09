@@ -62,6 +62,9 @@ const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 
 // Inventario (módulo Conteo Cíclico / Bloques / Proyección)
 const InvProyeccion = React.lazy(() => import('./pages/Inventory/Proyeccion'));
+const InvBloques = React.lazy(() => import('./pages/Inventory/Bloques'));
+const InvBloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle'));
+const InvBloqueAuditar = React.lazy(() => import('./pages/Inventory/BloqueAuditar'));
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
@@ -375,6 +378,9 @@ function AppContent() {
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
           <Route path="inventory/proyeccion" element={<ErrorBoundary><InvProyeccion /></ErrorBoundary>} />
+          <Route path="inventory/bloques" element={<ErrorBoundary><InvBloques /></ErrorBoundary>} />
+          <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><InvBloqueDetalle /></ErrorBoundary>} />
+          <Route path="inventory/bloque/:codigo/auditar" element={<ErrorBoundary><InvBloqueAuditar /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
