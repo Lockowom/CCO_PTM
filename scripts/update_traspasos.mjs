@@ -42,31 +42,55 @@ for (const item of RUNTIME) {
   console.log(`   ✓ ${item}`);
 }
 
-// 2.5) Re-inyectar el puente a Supabase (cco-bridge.js) en index.html.
-//      El index.html de origen no lo incluye; lo añadimos tras app.js/scene.js.
-//      cco-bridge.js es un archivo propio de CCO (no está en RUNTIME) y persiste.
+// 2.5) Re-inyectar en index.html los archivos propios de CCO (no vienen de
+//      em-il y no están en RUNTIME, así que persisten entre updates):
+//        - cco-theme.css   → tema de marca (en <head>, tras styles.css)
+//        - cco-bridge.js   → puente a Supabase (antes de </body>)
 const INDEX = path.join(DEST, 'index.html');
+const THEME_TAG =
+  '<!-- CCO_PTM: tema de marca (re-inyectado por scripts/update_traspasos.mjs) -->\n' +
+  '<link rel="stylesheet" href="cco-theme.css">';
 const BRIDGE_TAG =
   '<!-- CCO_PTM: puente a Supabase (re-inyectado por scripts/update_traspasos.mjs) -->\n' +
   '<script src="cco-bridge.js"></script>';
 try {
   let html = fs.readFileSync(INDEX, 'utf8');
+
+  // Tema de marca (tras el <link> de styles.css; si no, antes de </head>).
+  if (!html.includes('cco-theme.css')) {
+    if (html.includes('href="styles.css">')) {
+      html = html.replace('href="styles.css">', 'href="styles.css">\n' + THEME_TAG);
+    } else if (html.includes('</head>')) {
+      html = html.replace('</head>', THEME_TAG + '\n</head>');
+    } else {
+      html = THEME_TAG + '\n' + html;
+    }
+    console.log('   ✓ cco-theme.css re-inyectado en index.html');
+  } else {
+    console.log('   ✓ index.html ya referencia cco-theme.css');
+  }
+
+  // Puente a Supabase (antes de </body>).
   if (!html.includes('cco-bridge.js')) {
     if (html.includes('</body>')) {
       html = html.replace('</body>', BRIDGE_TAG + '\n</body>');
     } else {
       html += '\n' + BRIDGE_TAG + '\n';
     }
-    fs.writeFileSync(INDEX, html);
     console.log('   ✓ cco-bridge.js re-inyectado en index.html');
   } else {
     console.log('   ✓ index.html ya referencia cco-bridge.js');
   }
-  if (!fs.existsSync(path.join(DEST, 'cco-bridge.js'))) {
-    console.warn('   ⚠️  Falta public/traspasos/cco-bridge.js (el módulo no sincronizará con Supabase)');
+
+  fs.writeFileSync(INDEX, html);
+
+  for (const f of ['cco-theme.css', 'cco-bridge.js']) {
+    if (!fs.existsSync(path.join(DEST, f))) {
+      console.warn(`   ⚠️  Falta public/traspasos/${f} (archivo propio de CCO)`);
+    }
   }
 } catch (e) {
-  console.error('❌ No se pudo re-inyectar cco-bridge.js:', e.message);
+  console.error('❌ No se pudo re-inyectar los archivos de CCO:', e.message);
   process.exit(1);
 }
 

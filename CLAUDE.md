@@ -41,6 +41,10 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     en `tms_emil_catalogo` (12.514 SKUs, sembrado desde `data/catalog.js` la 1ª vez). No edita
     `app.js`: intercepta `fetch`/`syncDocUrl` traduciendo el documento con forma Firestore a REST de
     Supabase, autenticando con el `access_token` de la sesión CCO (mismo origen). Migración `041`.
+  - **Tema de marca**: `public/traspasos/cco-theme.css` (archivo propio, re-inyectado en `<head>` por
+    el update script) re-mapea las variables de diseño de em-il a la identidad CCO (naranja `#f97316`,
+    superficies claras/oscuras, verde `#10b981`) y oculta el fondo 3D para una estética minimalista.
+    No edita `styles.css`.
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)

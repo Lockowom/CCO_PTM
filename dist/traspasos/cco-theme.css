@@ -1,0 +1,134 @@
+/* ============================================================
+   cco-theme.css — Tema CCO_PTM para el módulo Traspasos/Ajustes
+   (app em-il vendorizada). Se carga DESPUÉS de styles.css y sólo
+   re-mapea las variables de diseño de la app a la identidad de
+   CCO (naranja de marca, superficies claras, animaciones sutiles,
+   estética minimalista), sin editar styles.css — así el módulo
+   sigue siendo actualizable con `npm run update:traspasos`
+   (el update script re-inyecta este <link>).
+
+   Identidad CCO: brand #f97316 (naranja), oscuro slate #0f172a,
+   verde #10b981, tipografía Inter/Poppins, tarjetas glass claras,
+   transiciones 0.15–0.3s. Minimalista = una sola familia de color
+   de acento (sin arcoíris) y sin fondo 3D ruidoso.
+   ============================================================ */
+
+/* ---------- Tokens base ---------- */
+:root {
+  --accent: #f97316;
+  --accent-2: #ea580c;
+  --accent-3: #fb923c;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 10px;
+}
+
+/* ---------- Tema claro (CCO por defecto) ---------- */
+[data-theme="light"] {
+  --bg: #f6f7f9;
+  /* Glow cálido apenas perceptible arriba-derecha (minimalista). */
+  --bg-accent:
+    radial-gradient(820px 380px at 100% -8%, rgba(249, 115, 22, 0.06), transparent 60%),
+    radial-gradient(700px 340px at -10% 0%, rgba(16, 185, 129, 0.04), transparent 60%);
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --line: #e5e7eb;
+  --line-strong: #d5dae2;
+  --text: #0f172a;   /* slate-900 (secondary de CCO) */
+  --muted: #64748b;  /* slate-500 */
+  --muted-2: #94a3b8;/* slate-400 */
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.16);
+  --accent: #f97316;
+  --accent-2: #ea580c;
+  --accent-3: #fb923c;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --ok: #10b981;
+  --warn: #f59e0b;
+  --blue: #3b82f6;
+  --danger: #ef4444;
+  --pill-warn-bg: #fff7ed; --pill-warn-bd: #fed7aa;
+  --pill-blue-bg: #eff6ff; --pill-blue-bd: #bfdbfe;
+  --pill-ok-bg: #ecfdf5;   --pill-ok-bd: #a7f3d0;
+}
+
+/* ---------- Tema oscuro (alineado a la paleta void/base de CCO) ---------- */
+[data-theme="dark"] {
+  --bg: #07080a;
+  --bg-accent:
+    radial-gradient(900px 460px at 100% -10%, rgba(249, 115, 22, 0.12), transparent 55%),
+    radial-gradient(760px 400px at -10% 0%, rgba(16, 185, 129, 0.06), transparent 60%);
+  --surface: #12151c;
+  --surface-2: #181b24;
+  --surface-3: #1e2330;
+  --line: #232836;
+  --line-strong: #2e3545;
+  --text: #eef1f8;
+  --muted: #94a3b8;
+  --muted-2: #64748b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 34px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 30px 72px rgba(0, 0, 0, 0.6);
+  --accent: #fb923c;
+  --accent-2: #f97316;
+  --accent-3: #fdba74;
+  --accent-soft: rgba(249, 115, 22, 0.18);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --blue: #60a5fa;
+  --danger: #f87171;
+  --pill-warn-bg: rgba(245, 158, 11, 0.16); --pill-warn-bd: rgba(245, 158, 11, 0.4);
+  --pill-blue-bg: rgba(96, 165, 250, 0.16); --pill-blue-bd: rgba(96, 165, 250, 0.4);
+  --pill-ok-bg: rgba(16, 185, 129, 0.18);   --pill-ok-bd: rgba(16, 185, 129, 0.4);
+}
+
+/* ---------- Minimalismo: sin fondo 3D ni modo inmersivo ---------- */
+/* El campo de partículas Three.js no encaja con la estética limpia de
+   CCO; lo ocultamos y dejamos las micro-animaciones de UI (fade/hover). */
+#bg { display: none !important; }
+#btnImmersive { display: none !important; }
+body.imm { /* neutraliza el modo inmersivo si se activara */
+  background: var(--bg) !important;
+  background-image: var(--bg-accent) !important;
+}
+
+/* ---------- Tipografía CCO (Inter/Poppins con fallback de sistema) ---------- */
+/* El CSP de la página es font-src 'self', así que no cargamos fuentes web;
+   usamos las de sistema/CCO si están disponibles. */
+body {
+  font-family: "Inter", "Poppins", system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+.topbar h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.code { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+/* ---------- Tarjetas glass más limpias (CCO) ---------- */
+.card {
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+[data-theme="light"] .card {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* ---------- Marca: logo naranja sólido, sutil ---------- */
+.logo {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.28);
+}
+
+/* ---------- Pestañas activas: naranja de marca ---------- */
+.tab.active {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ---------- Scrollbar y foco en tono de marca ---------- */
+* { scrollbar-color: var(--line-strong) transparent; }
+::selection { background: rgba(249, 115, 22, 0.22); }
