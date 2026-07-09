@@ -89,6 +89,15 @@ describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ajuste ERP/i }));
     await waitFor(() => expect(screen.getByText('(sin partida)')).toBeInTheDocument());
   });
+
+  it('la pestaña Contar (por defecto) muestra el formulario de registro de conteo', async () => {
+    wrap(<ConteoCiclico />);
+    // Pestaña por defecto = Contar: campos del formulario visibles.
+    expect(screen.getByText('Ubicación')).toBeInTheDocument();
+    expect(screen.getByText('Cantidad contada')).toBeInTheDocument();
+    expect(screen.getByText('Producto (código o descripción)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Registrar conteo/i })).toBeInTheDocument();
+  });
 });
 
 describe('Conteo Cíclico — PDA (integrado en CCO)', () => {

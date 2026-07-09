@@ -13,6 +13,7 @@ import {
   useBloques, useBloque, useCrearBloque, useEditarBloque,
   useAgregarBloqueItem, useEliminarBloqueItem, useRegistrarAuditoria,
   useProyecciones, useGuardarProyeccion, useEliminarProyeccion,
+  useRegistrarConteo, useConteos, useEliminarConteo, fetchLotesSeries, conteoStockSistema,
   estadoConteoMeta,
 } from '../../services/conteoService';
 
@@ -30,6 +31,7 @@ const chip = (estado) => {
 };
 
 const TABS = [
+  { id: 'contar', label: 'Contar', icon: Package },
   { id: 'sesiones', label: 'Sesiones', icon: Layers },
   { id: 'conciliacion', label: 'Conciliación', icon: ClipboardCheck },
   { id: 'ajuste', label: 'Ajuste ERP', icon: Download },
@@ -39,7 +41,7 @@ const TABS = [
 
 export default function ConteoCiclico() {
   const { user } = useAuth();
-  const [tab, setTab] = useState('sesiones');
+  const [tab, setTab] = useState('contar');
   const [sesionId, setSesionId] = useState('');
   const { data: sesiones = [] } = useSesionesConteo();
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
@@ -75,11 +77,188 @@ export default function ConteoCiclico() {
         ))}
       </div>
 
+      {tab === 'contar' && <TabContar sesionId={sesionId} setSesionId={setSesionId} sesiones={sesiones} />}
       {tab === 'sesiones' && <TabSesiones sesiones={sesiones} isAdmin={isAdmin} onOpen={(id) => { setSesionId(id); setTab('conciliacion'); }} />}
       {tab === 'conciliacion' && <TabConciliacion sesionId={sesionId} isAdmin={isAdmin} />}
       {tab === 'ajuste' && <TabAjuste sesionId={sesionId} />}
       {tab === 'bloques' && <TabBloques />}
       {tab === 'proyeccion' && <TabProyeccion />}
+    </div>
+  );
+}
+
+// ─── Contar (registro de conteo, igual que la app original) ──────────────────
+function TabContar({ sesionId, setSesionId, sesiones }) {
+  const crear = useCrearSesion();
+  const registrar = useRegistrarConteo();
+  const eliminar = useEliminarConteo();
+  const abiertas = sesiones.filter((s) => s.estado === 'abierta');
+  const sesionObj = sesiones.find((s) => s.id === sesionId);
+  const activa = sesionObj && sesionObj.estado === 'abierta' ? sesionObj : null;
+  const { data: recientes = [] } = useConteos(activa ? activa.id : undefined);
+
+  const [ubicacion, setUbicacion] = useState('');
+  const [sku, setSku] = useState('');
+  const [detalle, setDetalle] = useState(null);   // { rows } lotes/series
+  const [stockTotal, setStockTotal] = useState(0);
+  const [partida, setPartida] = useState('');
+  const [serie, setSerie] = useState('');
+  const [cantidad, setCantidad] = useState('');
+  const [obs, setObs] = useState('');
+
+  const buscarSku = async (codigo) => {
+    const c = (codigo || '').trim().toUpperCase();
+    if (!c) return;
+    setSku(c); setPartida(''); setSerie(''); setDetalle({ rows: [], loading: true });
+    try {
+      const [rows, total] = await Promise.all([fetchLotesSeries(c, ''), conteoStockSistema(c)]);
+      setDetalle({ rows: rows || [], loading: false });
+      setStockTotal(Number(total) || 0);
+    } catch (e) { setDetalle({ rows: [], loading: false }); toast.error(e.message || 'Error al buscar'); }
+  };
+
+  // Stock esperado en vivo según lo elegido/tipeado.
+  let esperado = null;
+  if (detalle) {
+    if (serie) { const r = detalle.rows.find((x) => x.tipo === 'S' && x.valor === serie); esperado = r ? Number(r.disponible) : 0; }
+    else if (partida) { const r = detalle.rows.find((x) => x.tipo === 'P' && x.valor === partida); esperado = r ? Number(r.disponible) : 0; }
+    else esperado = stockTotal;
+  }
+  const dif = esperado != null && cantidad !== '' ? Number(cantidad) - esperado : null;
+  const step = (d) => setCantidad(String(Math.max(0, (Number(cantidad) || 0) + d)));
+
+  const limpiar = () => { setSku(''); setDetalle(null); setPartida(''); setSerie(''); setCantidad(''); setObs(''); };
+  const nueva = async () => {
+    const nombre = (window.prompt('Nombre de la sesión de conteo:') || '').trim();
+    if (!nombre) return;
+    try { const s = await crear.mutateAsync({ nombre }); setSesionId(s.id); toast.success('Sesión creada'); }
+    catch (e) { toast.error(e.message); }
+  };
+  const guardar = async () => {
+    if (!activa) { toast.error('Elegí una sesión abierta'); return; }
+    if (!sku) { toast.error('Escaneá o escribí el SKU'); return; }
+    if (cantidad === '' || isNaN(Number(cantidad)) || Number(cantidad) < 0) { toast.error('Ingresá la cantidad contada'); return; }
+    try {
+      const row = await registrar.mutateAsync({ sesionId: activa.id, codigo: sku, cantidad: Number(cantidad), ubicacion, partida, serie, observaciones: obs, dispositivo: 'WEB' });
+      const m = estadoConteoMeta(row.estado);
+      toast[row.estado === 'CUADRADO' ? 'success' : 'info'](`${m.emoji} ${row.codigo_producto} — ${m.label} (contado ${n(row.cantidad_contada)} / sistema ${n(row.cantidad_sistema)})`);
+      limpiar();
+    } catch (e) { toast.error(e.message || 'No se pudo registrar'); }
+  };
+  const borrar = async (id) => { if (!window.confirm('¿Eliminar este conteo?')) return; try { await eliminar.mutateAsync({ id }); } catch (e) { toast.error(e.message); } };
+
+  const inp = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-orange-400 outline-none';
+  const lbl = 'text-xs font-black uppercase tracking-wide text-slate-500 mb-1 block';
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {/* Formulario */}
+      <div className="lg:col-span-2 space-y-4">
+        {/* Sesión activa / selección */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-black uppercase text-slate-400">Sesión</span>
+          <select value={sesionId} onChange={(e) => setSesionId(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold flex-1 min-w-[12rem]">
+            <option value="">— Elegí una sesión abierta —</option>
+            {abiertas.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+          </select>
+          <button onClick={nueva} className="px-3 py-2 rounded-xl bg-orange-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-orange-700"><Plus size={14} /> Nueva</button>
+        </div>
+
+        {!activa && <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-700">Elegí (o creá) una <b>sesión abierta</b> para agrupar los conteos.</div>}
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-3">
+          <div>
+            <label className={lbl}>Ubicación</label>
+            <input className={inp} value={ubicacion} onChange={(e) => setUbicacion(e.target.value.toUpperCase())} placeholder="Ej: G-29-03" />
+          </div>
+          <div>
+            <label className={lbl}>Producto (código o descripción)</label>
+            <input className={inp} value={sku} onChange={(e) => setSku(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); buscarSku(sku); } }}
+              onBlur={() => sku && !detalle && buscarSku(sku)} placeholder="Escaneá o escribí el SKU…" />
+          </div>
+
+          {detalle && (
+            <div className="rounded-xl bg-slate-50 p-3 text-sm">
+              {detalle.loading ? <span className="text-slate-400">Buscando stock…</span> : (
+                <>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500">
+                    <span>Stock sistema: <b className="text-slate-700">{n(stockTotal)}</b></span>
+                    <span>{detalle.rows.length} lote(s)/serie(s)</span>
+                  </div>
+                  {detalle.rows.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {detalle.rows.map((r, i) => {
+                        const on = (r.tipo === 'P' && partida === r.valor) || (r.tipo === 'S' && serie === r.valor);
+                        return (
+                          <button key={i} type="button"
+                            onClick={() => { if (r.tipo === 'P') { setPartida(on ? '' : r.valor); setSerie(''); } else { setSerie(on ? '' : r.valor); setPartida(''); } }}
+                            className={'text-xs font-bold px-2 py-1 rounded-lg border ' + (on ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50')}>
+                            {r.tipo === 'P' ? '' : '🔢 '}{r.valor || '(sin partida)'} · {n(r.disponible)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={lbl}>Partida / Talla</label><input className={inp} value={partida} onChange={(e) => setPartida(e.target.value)} placeholder="Opcional" /></div>
+            <div><label className={lbl}>Serie</label><input className={inp} value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" /></div>
+          </div>
+
+          <div>
+            <label className={lbl}>Cantidad contada</label>
+            <div className="flex items-stretch gap-2">
+              <button type="button" onClick={() => step(-1)} className="w-14 rounded-xl border border-slate-200 text-2xl font-black text-slate-600 hover:bg-slate-50">−</button>
+              <input className={inp + ' flex-1 text-center text-2xl font-black'} inputMode="decimal" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); guardar(); } }} placeholder="0" />
+              <button type="button" onClick={() => step(1)} className="w-14 rounded-xl border border-slate-200 text-2xl font-black text-slate-600 hover:bg-slate-50">+</button>
+            </div>
+            {dif != null && (
+              <div className={'mt-2 rounded-lg px-3 py-2 text-center text-sm font-bold ' + (dif === 0 ? 'bg-emerald-100 text-emerald-700' : dif < 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}>
+                {dif === 0 ? '✅ Cuadrado' : dif < 0 ? `❌ Faltan ${n(Math.abs(dif))}` : `⚠️ Sobran ${n(dif)}`} · esperado {n(esperado)}
+              </div>
+            )}
+          </div>
+
+          <input className={inp} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Observaciones (opcional)" />
+
+          <div className="flex gap-2">
+            <button type="button" onClick={limpiar} className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 font-black hover:bg-slate-50">Limpiar</button>
+            <button type="button" onClick={guardar} disabled={registrar.isPending || !activa} className="flex-[2] px-4 py-3 rounded-xl bg-orange-600 text-white font-black flex items-center justify-center gap-2 hover:bg-orange-700 disabled:opacity-50">
+              <Package size={18} /> {registrar.isPending ? 'Guardando…' : 'Registrar conteo'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Recientes */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 h-fit">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-black text-slate-700 text-sm">Últimos conteos</h3>
+          <span className="text-xs text-slate-400">{recientes.length}</span>
+        </div>
+        {recientes.length === 0 && <div className="text-slate-400 text-sm">Aún no hay conteos en esta sesión.</div>}
+        <div className="divide-y divide-slate-100">
+          {recientes.map((r) => {
+            const m = estadoConteoMeta(r.estado);
+            return (
+              <div key={r.id} className="flex items-center gap-2 py-2 text-sm">
+                <span>{m.emoji}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-bold text-slate-700">{r.codigo_producto}{r.partida ? <span className="text-slate-400"> · {r.partida}</span> : ''}</div>
+                  <div className="truncate text-xs text-slate-400">{r.ubicacion || 's/ubic'} · contado {n(r.cantidad_contada)} / sist {n(r.cantidad_sistema)}</div>
+                </div>
+                <button onClick={() => borrar(r.id)} className="text-slate-400 hover:text-rose-500"><Trash2 size={13} /></button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
