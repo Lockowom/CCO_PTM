@@ -56,6 +56,8 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
 
 ## Despliegue
 - **Web**: push a `main` → Render. La web sirve el `dist/` del repo (commitearlo tras `npm run build`).
+  - **Env var** `ANTHROPIC_API_KEY` (Render → Environment): habilita el asistente "Mejorar con IA" del
+    módulo Traspasos vía el proxy `POST /api/traspasos-ai` (la clave vive solo en el servidor).
 - **Móvil**: `npm run deploy:mobile` (requiere `.env` cargado; auto-incrementa el patch de
   `package.json` y sube bundle a Capgo OTA, canal `production`, app `com.cco.wms`).
 

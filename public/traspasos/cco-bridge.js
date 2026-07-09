@@ -125,6 +125,19 @@
   /* ---------- Shim de fetch para la URL centinela ---------- */
   window.fetch = function (input, init) {
     var url = typeof input === "string" ? input : (input && input.url) || "";
+
+    // Asistente de IA de em-il ("Mejorar con IA"): redirigimos la llamada a
+    // Anthropic al proxy same-origin (/api/traspasos-ai). La clave real vive
+    // en el servidor; el navegador nunca la ve. Enviamos el token de sesión
+    // CCO para que el servidor valide antes de gastar la clave.
+    if (url.indexOf("https://api.anthropic.com") === 0) {
+      return origFetch("/api/traspasos-ai", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: (init && init.body) || null,
+      });
+    }
+
     if (url.indexOf(SENTINEL) !== 0) return origFetch(input, init);
 
     var method =
@@ -207,6 +220,11 @@
       "sync_cfg",
       JSON.stringify({ projectId: "cco-supabase", apiKey: "cco", space: SPACE })
     );
+    // La IA usa el proxy del servidor; sembramos un valor para que la app no
+    // pida clave (getAIKey() truthy). La clave real vive en el servidor.
+    if (!localStorage.getItem("anthropic_key")) {
+      localStorage.setItem("anthropic_key", "cco-proxy");
+    }
   } catch (e) {}
 
   // Redirigir el transporte al centinela (app.js define syncDocUrl global).
