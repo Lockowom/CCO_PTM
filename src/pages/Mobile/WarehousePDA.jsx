@@ -11,6 +11,7 @@ import gsap from 'gsap';
 import { toast } from 'sonner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import ConteoPDA from './ConteoPDA';
 
 // ============================================================================
 // WMS PDA / HANDHELD MODE
@@ -605,10 +606,16 @@ const WarehousePDA = () => {
     );
   }
 
-  // ==================== INVENTORY / QUERY PLACEHOLDER ====================
+  // ==================== CONTEO CÍCLICO (módulo real) ====================
 
-  if (mode === 'INVENTORY' || mode === 'QUERY') {
-    const isInventory = mode === 'INVENTORY';
+  if (mode === 'INVENTORY') {
+    return <ConteoPDA onHome={goHome} />;
+  }
+
+  // ==================== QUERY PLACEHOLDER ====================
+
+  if (mode === 'QUERY') {
+    const isInventory = false;
     return (
       <div className="min-h-screen bg-black text-white flex flex-col font-mono">
         {/* Header */}
