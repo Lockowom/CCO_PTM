@@ -60,6 +60,17 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 
+// Inventario (módulo Conteo Cíclico / Bloques / Proyección)
+const InvProyeccion = React.lazy(() => import('./pages/Inventory/Proyeccion'));
+const InvBloques = React.lazy(() => import('./pages/Inventory/Bloques'));
+const InvBloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle'));
+const InvBloqueAuditar = React.lazy(() => import('./pages/Inventory/BloqueAuditar'));
+const InvConteo = React.lazy(() => import('./pages/Inventory/Conteo'));
+const InvSesiones = React.lazy(() => import('./pages/Inventory/Sesiones'));
+const InvConciliacion = React.lazy(() => import('./pages/Inventory/Conciliacion'));
+const InvAjusteErp = React.lazy(() => import('./pages/Inventory/AjusteErp'));
+const InvAnalisis = React.lazy(() => import('./pages/Inventory/Analisis'));
+
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
@@ -371,6 +382,15 @@ function AppContent() {
 
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
+          <Route path="inventory/proyeccion" element={<ErrorBoundary><InvProyeccion /></ErrorBoundary>} />
+          <Route path="inventory/bloques" element={<ErrorBoundary><InvBloques /></ErrorBoundary>} />
+          <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><InvBloqueDetalle /></ErrorBoundary>} />
+          <Route path="inventory/bloque/:codigo/auditar" element={<ErrorBoundary><InvBloqueAuditar /></ErrorBoundary>} />
+          <Route path="inventory/conteo" element={<ErrorBoundary><InvConteo /></ErrorBoundary>} />
+          <Route path="inventory/sesiones" element={<ErrorBoundary><InvSesiones /></ErrorBoundary>} />
+          <Route path="inventory/conciliacion" element={<ErrorBoundary><InvConciliacion /></ErrorBoundary>} />
+          <Route path="inventory/ajuste" element={<ErrorBoundary><InvAjusteErp /></ErrorBoundary>} />
+          <Route path="inventory/analisis" element={<ErrorBoundary><InvAnalisis /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />

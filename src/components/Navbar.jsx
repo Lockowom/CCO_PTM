@@ -114,6 +114,13 @@ const Navbar = () => {
           ]
         },
         { id: 'inventario', label: 'Inventario', icon: <Warehouse size={18} />, modules: [
+            { label: 'Conteo Cíclico', path: '/inventory/conteo', icon: <ClipboardCheck size={16} /> },
+            { label: 'Sesiones de Conteo', path: '/inventory/sesiones', icon: <Layers size={16} /> },
+            { label: 'Bloques (QR + Auditoría)', path: '/inventory/bloques', icon: <ScanLine size={16} /> },
+            { label: 'Conciliación', path: '/inventory/conciliacion', icon: <Scale size={16} /> },
+            { label: 'Ajuste ERP', path: '/inventory/ajuste', icon: <RefreshCw size={16} /> },
+            { label: 'Análisis', path: '/inventory/analisis', icon: <FileBarChart size={16} /> },
+            { label: 'Proyección de Pallets', path: '/inventory/proyeccion', icon: <Truck size={16} /> },
             { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> }
           ]
         }
