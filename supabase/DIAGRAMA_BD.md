@@ -22,7 +22,7 @@
 | Conteo Cíclico | `tms_conteo_sesiones`, `tms_conteos`, `tms_conteo_bloques`(+`_items`), `tms_conteo_auditorias`(+`_items`), `tms_conteo_proyecciones`, `tms_conteo_costos` | — |
 | Post-Venta | `tms_postventa_tickets`, `tms_postventa_correos`, `tms_postventa_tecnicos`, `tms_postventa_descartados` | tickets 999 · correos 2.166 |
 | Traspasos (em-il) | `tms_emil_sync`, `tms_emil_catalogo` | blobs (1 c/u) |
-| **MUERTAS** (restos, 0 filas, sin referencias) | `wms_bloques`, `wms_bloque_items`, `wms_bloque_auditorias`, `wms_bloque_auditoria_items`, `wms_cc_sesiones`, `wms_cc_conteos`, `wms_cc_costos`, `wms_proyecciones` | 0 — candidatas a DROP (§6.4) |
+| ~~Muertas~~ (eliminadas en mig `053`) | ~~`wms_bloques(+3)`, `wms_cc_*(3)`, `wms_proyecciones`~~ | eliminadas 2026-07-09 (§6.4) |
 
 ---
 
@@ -157,7 +157,7 @@ fijo, gate interno por `_*_assert*` (usuario activo + permisos jsonb del rol) y
 | Conteo Cíclico | `crear/cerrar_conteo_sesion`, `registrar/editar/eliminar_conteo`, `crear/editar_conteo_bloque`, `agregar/eliminar_conteo_bloque_item`, `registrar_conteo_auditoria`, `conteo_conciliacion`, `conteo_ajuste_erp`, `conteo_stock_sistema`, `guardar/eliminar_conteo_proyeccion`, `guardar_conteo_costo` | `_conteo_assert`, `_conteo_user`, `_conteo_es_super`, `_conteo_estado` |
 | Post-Venta | `crear_pv_ticket`, `actualizar_pv_ticket`, `eliminar_pv_ticket`, `ingesta_pv_correo`, `eliminar_pv_correo`, `pv_correos_ticket`, `pv_dashboard`, `pv_familias_stock`, `siguiente_pv_numero`, `guardar/eliminar_pv_tecnico` | `_pv_assert` (acepta `service_role` para las Edge Functions) |
 | Notificaciones | — | `notify_new_ticket`, `notify_ticket_update` (triggers → Edge) |
-| **Muertas (sin referencias)** | `wms_reserve_stock`, `get_fefo_allocation`, `fn_auto_complete_picking`, `fn_trigger_replenishment` (sin triggers asociados) — candidatas a DROP (§6.4) | |
+| ~~Muertas~~ | ~~`wms_reserve_stock`, `get_fefo_allocation`, `fn_auto_complete_picking`, `fn_trigger_replenishment`~~ — eliminadas en mig `053` (§6.4) | |
 
 ## 5. Edge Functions (5 activas)
 
@@ -194,12 +194,13 @@ fijo, gate interno por `_*_assert*` (usuario activo + permisos jsonb del rol) y
 - **Protección de contraseñas filtradas (HIBP) desactivada** en Auth → se activa a mano en
   Dashboard → Authentication → Settings (no configurable por SQL).
 
-### 6.4 Limpieza propuesta (pendiente de aprobación)
-- **8 tablas muertas** `wms_bloques(+3)`, `wms_cc_*(3)`, `wms_proyecciones` — 0 filas, 0
-  referencias en frontend/BD (restos del primer intento del Conteo Cíclico; el módulo vivo usa
-  `tms_conteo_*`).
-- **4 funciones muertas** `wms_reserve_stock`, `get_fefo_allocation`,
+### 6.4 Limpieza ejecutada ✅ (migración `053`, aprobada por el usuario 2026-07-09)
+- **8 tablas muertas eliminadas**: `wms_bloques(+3)`, `wms_cc_*(3)`, `wms_proyecciones` —
+  tenían 0 filas y 0 referencias (restos del primer intento del Conteo Cíclico; el módulo vivo
+  usa `tms_conteo_*`). Verificado en vivo justo antes del DROP.
+- **4 funciones muertas eliminadas**: `wms_reserve_stock`, `get_fefo_allocation`,
   `fn_auto_complete_picking`, `fn_trigger_replenishment` — sin llamadas ni triggers.
-- **NO tocar**: `wms_layout`, `wms_ubicaciones` (vivas), `wms_move_stock` (cola offline del
-  PDA), `get_dashboard_kpis`+`mv_dashboard_kpis` (Dashboard), `fuzzy_search` (Estado N.V.),
-  `batch_update_nv_estado` (N.V.), `tms_inventario_general` (DataImport).
+- **Conservado (vivo, verificado por referencias)**: `wms_layout`, `wms_ubicaciones`,
+  `wms_move_stock` (cola offline del PDA), `get_dashboard_kpis`+`mv_dashboard_kpis` (Dashboard),
+  `fuzzy_search` (Estado N.V.), `batch_update_nv_estado` (N.V.), `tms_inventario_general`
+  (DataImport). El esquema queda en **61 tablas**, todas vivas y conectadas.
