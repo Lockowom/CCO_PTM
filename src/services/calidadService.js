@@ -914,6 +914,39 @@ export function useAnularAccion() {
   });
 }
 
+// Acción → ticket de Servicio Técnico (Post-Venta) con el informe de calidad adjunto.
+export function useAccionATicketPv() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (accionId) => {
+      const { data, error } = await supabase.rpc('accion_a_ticket_pv', { p_accion_id: accionId });
+      if (error) throw error;
+      return data; // ticket completo (numero, ...)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calidad_acciones'] });
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+      qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+    },
+  });
+}
+
+// Registrar la referencia de ejecución (traspaso/correo generado por Inventario)
+// → la acción pasa a EN_PROCESO y queda en la trazabilidad.
+export function useAccionReferencia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ accionId, referencia }) => {
+      const { data, error } = await supabase.rpc('accion_registrar_referencia', {
+        p_accion_id: accionId, p_referencia: referencia,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_acciones'] }),
+  });
+}
+
 // Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.
 export function useGuardarChecklist() {
   const qc = useQueryClient();

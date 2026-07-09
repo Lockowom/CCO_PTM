@@ -11,6 +11,7 @@ import {
 } from '../../services/calidadService';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
 import TrazabilidadModal from './TrazabilidadModal';
+import AccionIntegracion from './AccionIntegracion';
 
 const TIPO_LABEL = Object.fromEntries(TIPOS_ACCION.map(t => [t.id, t.label]));
 
@@ -133,6 +134,7 @@ const MiBandeja = () => {
                 </div>
 
                 {a.descripcion && <p className="text-xs text-slate-600 mt-2 italic">“{a.descripcion}”</p>}
+                <AccionIntegracion accion={a} puedeActuar={puedeResolver(a)} />
                 <p className="text-[11px] text-slate-400 mt-2">{a.ubicacion ? `${a.ubicacion} · ` : ''}{a.cantidad != null ? `${a.cantidad} u · ` : ''}{a.creado_nombre ? `por ${a.creado_nombre}` : ''}</p>
 
                 {a.estado === 'RESUELTA' && a.resolucion && (

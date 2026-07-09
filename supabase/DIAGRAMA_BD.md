@@ -129,6 +129,9 @@ El sistema importa datos del ERP (Softland) y de correos; muchas uniones son por
 | `tms_calidad_tareas.recepcion_id` | `tms_recepciones(_nacionales)` | uuid sin FK (tipo-aware) | checklist hito 1/3 |
 | `tms_calidad_flags.codigo_producto+partida` | stock | SKU+lote | estado de calidad vigente |
 | `tms_calidad_acciones.bodega_destino` | `tms_bodegas_softland.codigo` | código ERP | dictamen |
+| `tms_calidad_acciones.ticket_postventa` | `tms_postventa_tickets.numero` | folio TKT | acción → ticket ST (mig 055) |
+| `tms_postventa_tickets.accion_folio` / `.informe_numero` | `tms_calidad_acciones.folio` / `tms_monitoreo_informes.numero` | folios | ticket derivado de Calidad con informe adjunto |
+| `tms_calidad_acciones.referencia` | traspaso/correo (em-il) | texto libre | Inventario registra la ejecución |
 | `wms_ubicaciones.codigo` ↔ `wms_layout` | mapa bodega | código ubicación | heatmap/putaway |
 
 > Estas uniones son intencionales (datos re-importados semanalmente desde el ERP; una FK dura

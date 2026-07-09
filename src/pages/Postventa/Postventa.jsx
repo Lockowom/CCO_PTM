@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
   Wrench, Plus, Search, X, Download, LayoutDashboard, ClipboardList, Users,
   Save, Trash2, Mail, AlertTriangle, Clock, CheckCircle2, Pencil,
@@ -166,6 +166,12 @@ function TabTickets({ canManage, canSupervise }) {
                     <div className="font-black text-slate-800 flex items-center gap-1.5">
                       {t.numero}
                       {t.origen === 'Correo' && <Mail size={13} className="text-sky-500" title="Creado desde correo" />}
+                      {t.origen === 'Calidad' && (
+                        <span title={`Generado desde Acción de Calidad ${t.accion_folio || ''}`}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border bg-emerald-100 text-emerald-700 border-emerald-200">
+                          <ClipboardList size={10} /> Calidad
+                        </span>
+                      )}
                     </div>
                     <div className="text-[11px] text-slate-400">{fechaCL(t.fecha_apertura)}</div>
                   </td>
@@ -478,12 +484,28 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
           <div>
             <h3 className="font-black text-slate-800 flex items-center gap-2">{ticket.numero}
               {ticket.origen === 'Correo' && <Mail size={14} className="text-sky-500" />}
+              {ticket.origen === 'Calidad' && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border bg-emerald-100 text-emerald-700 border-emerald-200">
+                  <ClipboardList size={10} /> Calidad
+                </span>
+              )}
             </h3>
             <p className="text-xs text-slate-400">{ticket.cliente} · {ticket.equipo_modelo}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-4">
+          {(ticket.accion_folio || ticket.informe_numero) && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm">
+              <div className="font-black text-emerald-800 flex items-center gap-1.5 mb-1"><ClipboardList size={14} /> Caso derivado de Calidad</div>
+              <div className="text-emerald-800 text-xs space-y-0.5">
+                {ticket.accion_folio && <div>Acción de Calidad: <b>{ticket.accion_folio}</b></div>}
+                {ticket.informe_numero && (
+                  <div>Informe adjunto: <b>{ticket.informe_numero}</b> — <Link to="/quality/monitoreo" className="underline font-bold" onClick={onClose}>abrir en Calidad → Monitoreo</Link></div>
+                )}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Info label="Contacto" value={ticket.contacto || '—'} />
             <Info label="N° Serie" value={ticket.numero_serie || '—'} />
