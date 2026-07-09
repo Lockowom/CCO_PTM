@@ -204,12 +204,22 @@ function TabNuevo({ onCreated }) {
   const [f, setF] = useState(FORM_VACIO);
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
-  const faltan = PV_CAMPOS_OBLIGATORIOS.filter((c) => !String(f[c] || '').trim());
+  // Solo cliente + descripción son obligatorios; el resto se autocompleta al guardar
+  // (igual que los tickets que entran por correo, con "Por Definir"/"Otro"/"Media").
+  const OBLIGATORIOS = ['cliente', 'descripcion'];
+  const faltan = OBLIGATORIOS.filter((c) => !String(f[c] || '').trim());
 
   const guardar = async () => {
-    if (faltan.length) return toast.error('Faltan campos obligatorios');
+    if (faltan.length) return toast.error('Falta: cliente y/o descripción');
     try {
-      const t = await crear.mutateAsync(f);
+      const payload = {
+        ...f,
+        region: f.region?.trim() || 'Por Definir',
+        equipo_modelo: f.equipo_modelo?.trim() || 'Por Definir',
+        tipo_solicitud: f.tipo_solicitud?.trim() || 'Otro',
+        prioridad: f.prioridad?.trim() || 'Media',
+      };
+      const t = await crear.mutateAsync(payload);
       toast.success(`Ticket ${t.numero} creado`);
       setF(FORM_VACIO);
       onCreated?.();
@@ -221,12 +231,12 @@ function TabNuevo({ onCreated }) {
       <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><Plus size={18} className="text-orange-600" /> Nuevo ticket de servicio</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Cliente / Hospital" req value={f.cliente} onChange={(v) => set('cliente', v)} />
-        <Sel label="Región" req value={f.region} onChange={(v) => set('region', v)} options={PV_REGIONES} />
+        <Sel label="Región" value={f.region} onChange={(v) => set('region', v)} options={PV_REGIONES} />
         <Campo label="Contacto" value={f.contacto} onChange={(v) => set('contacto', v)} />
-        <Sel label="Equipo / Modelo" req value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={PV_EQUIPOS} allowFree />
+        <Sel label="Equipo / Modelo" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={PV_EQUIPOS} allowFree />
         <Campo label="N° de Serie" value={f.numero_serie} onChange={(v) => set('numero_serie', v)} />
-        <Sel label="Tipo de Solicitud" req value={f.tipo_solicitud} onChange={(v) => set('tipo_solicitud', v)} options={PV_TIPOS_SOLICITUD} />
-        <Sel label="Prioridad" req value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} />
+        <Sel label="Tipo de Solicitud" value={f.tipo_solicitud} onChange={(v) => set('tipo_solicitud', v)} options={PV_TIPOS_SOLICITUD} />
+        <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} />
         <Sel label="Técnico Asignado" value={f.tecnico_asignado} onChange={(v) => set('tecnico_asignado', v)} options={tecnicos.map((t) => t.nombre)} />
         <Sel label="Estado" value={f.estado} onChange={(v) => set('estado', v)} options={PV_ESTADOS} />
         <Sel label="¿Cotizar?" value={f.cotizar} onChange={(v) => set('cotizar', v)} options={PV_COTIZAR} />
@@ -236,7 +246,7 @@ function TabNuevo({ onCreated }) {
       <Area label="Descripción" req value={f.descripcion} onChange={(v) => set('descripcion', v)} />
       <Area label="Observaciones" value={f.observaciones} onChange={(v) => set('observaciones', v)} />
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs text-slate-400">{faltan.length ? `Faltan: ${faltan.join(', ')}` : 'Listo para guardar'}</span>
+        <span className="text-xs text-slate-400">{faltan.length ? 'Obligatorio: cliente y descripción' : 'Listo · lo vacío queda "Por Definir"'}</span>
         <button onClick={guardar} disabled={crear.isPending || faltan.length > 0}
           className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-black text-sm hover:bg-orange-700 disabled:opacity-40 flex items-center gap-2">
           <Save size={16} /> {crear.isPending ? 'Guardando…' : 'Crear Ticket'}
