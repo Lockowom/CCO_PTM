@@ -46,11 +46,20 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     superficies claras/oscuras, verde `#10b981`) y oculta el fondo 3D para una estética minimalista.
     No edita `styles.css`.
 
+## Módulo nativo: Conteo Cíclico
+- **Conteo Cíclico de Inventario** (port nativo del proyecto `lockowom/t-o-inventario`, NO iframe):
+  reescrito sobre Supabase reusando el stock de CCO (`tms_partidas`/`tms_series`). Migraciones
+  `042` (dominio + RPCs) y `043` (reportes). Frontend: `src/pages/Mobile/ConteoPDA.jsx` (conteo en
+  el PDA, reemplaza el placeholder "CONTEO CÍCLICO"), `src/pages/Inventory/ConteoCiclico.jsx`
+  (escritorio: sesiones, conciliación, ajuste ERP, bloques/QR, proyección) y `BloqueDetalle.jsx`
+  (destino del QR `/inventory/bloque/:codigo`). Servicio `src/services/conteoService.js`. Permisos
+  `view_conteo`/`manage_conteo`/`supervise_conteo`. Genera QR con la dependencia `qrcode`.
+
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
 - `src/stores/` — stores Zustand unificadas (`warehouseStore`, `pickingStore`)
-- `supabase/migrations/` — migraciones versionadas (`001`…`042`); aplicar nuevas vía MCP/CLI
+- `supabase/migrations/` — migraciones versionadas (`001`…`043`); aplicar nuevas vía MCP/CLI
 - `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
   Regenerar con `npm run build` y commitearlo al desplegar.
 

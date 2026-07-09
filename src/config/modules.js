@@ -52,6 +52,7 @@ export const APP_ROUTES = [
 
   // Inventario
   { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'wms' },
+  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico', module: 'wms' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
@@ -94,7 +95,10 @@ export const APP_PERMISSIONS = [
       { id: 'view_mobile_app', label: 'Acceder App Móvil' },
       { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' },
       { id: 'view_stock', label: 'Ver Stock (PDA)' },
-      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' }
+      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' },
+      { id: 'view_conteo', label: 'Ver Conteo Cíclico' },
+      { id: 'manage_conteo', label: 'Contar (Conteo Cíclico)' },
+      { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' }
     ]
   },
   {

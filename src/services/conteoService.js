@@ -139,3 +139,188 @@ export function useEliminarConteo() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['conteos'] }),
   });
 }
+
+// ── Reportes ────────────────────────────────────────────────────────────────
+export function useConciliacion(sesionId) {
+  return useQuery({
+    queryKey: ['conteo_conciliacion', sesionId || 'todas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('conteo_conciliacion', { p_sesion_id: sesionId || null });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 10_000,
+  });
+}
+
+export function useAjusteErp(sesionId) {
+  return useQuery({
+    queryKey: ['conteo_ajuste', sesionId || 'todas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('conteo_ajuste_erp', { p_sesion_id: sesionId || null });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 10_000,
+  });
+}
+
+// Resumen valorizado (análisis) derivado de la conciliación.
+export function resumenAnalisis(conciliacion = []) {
+  const total = conciliacion.length;
+  const cuadrados = conciliacion.filter((r) => r.estado === 'CUADRADO').length;
+  const impacto = conciliacion.reduce((a, r) => a + (Number(r.impacto) || 0), 0);
+  const faltante = conciliacion.filter((r) => r.diferencia < 0).reduce((a, r) => a + (Number(r.impacto) || 0), 0);
+  const sobrante = conciliacion.filter((r) => r.diferencia > 0).reduce((a, r) => a + (Number(r.impacto) || 0), 0);
+  return {
+    total, cuadrados,
+    exactitud: total ? Math.round((cuadrados / total) * 100) : 0,
+    impacto, faltante, sobrante,
+  };
+}
+
+// ── Bloques + auditoría (QR) ─────────────────────────────────────────────────
+export function useBloques(q = '') {
+  return useQuery({
+    queryKey: ['conteo_bloques', q],
+    queryFn: async () => {
+      let query = supabase.from('tms_conteo_bloques').select('*').order('created_at', { ascending: false }).limit(200);
+      if (q) query = query.or(`codigo.ilike.%${q}%,bodega.ilike.%${q}%,nombre.ilike.%${q}%`);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 10_000,
+  });
+}
+
+export function useBloque(codigo) {
+  return useQuery({
+    queryKey: ['conteo_bloque', codigo],
+    queryFn: async () => {
+      const { data: b, error } = await supabase.from('tms_conteo_bloques').select('*').eq('codigo', codigo).maybeSingle();
+      if (error) throw error;
+      if (!b) return null;
+      const { data: items } = await supabase.from('tms_conteo_bloque_items').select('*').eq('bloque_id', b.id).order('created_at');
+      const { data: auds } = await supabase.from('tms_conteo_auditorias').select('*').eq('bloque_id', b.id).order('created_at', { ascending: false });
+      return { ...b, items: items || [], auditorias: auds || [] };
+    },
+    enabled: !!codigo,
+    staleTime: 5_000,
+  });
+}
+
+export function useCrearBloque() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bodega, nombre, descripcion, ubicacion }) => {
+      const { data, error } = await supabase.rpc('crear_conteo_bloque', {
+        p_bodega: bodega, p_nombre: nombre || null, p_descripcion: descripcion || null, p_ubicacion: ubicacion || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conteo_bloques'] }),
+  });
+}
+
+export function useEditarBloque() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p) => {
+      const { data, error } = await supabase.rpc('editar_conteo_bloque', {
+        p_id: p.id, p_bodega: p.bodega ?? null, p_nombre: p.nombre ?? null,
+        p_descripcion: p.descripcion ?? null, p_estado: p.estado ?? null, p_ubicacion: p.ubicacion ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (d) => { qc.invalidateQueries({ queryKey: ['conteo_bloques'] }); if (d?.codigo) qc.invalidateQueries({ queryKey: ['conteo_bloque', d.codigo] }); },
+  });
+}
+
+export function useAgregarBloqueItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p) => {
+      const { data, error } = await supabase.rpc('agregar_conteo_bloque_item', {
+        p_bloque_id: p.bloqueId, p_codigo: p.codigo, p_cantidad: p.cantidad,
+        p_descripcion: p.descripcion || '', p_um: p.um || '', p_partida: p.partida || '',
+        p_serie: p.serie || '', p_fecha_venc: p.fechaVenc || null, p_observaciones: p.observaciones || '',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, v) => v.codigoBloque && qc.invalidateQueries({ queryKey: ['conteo_bloque', v.codigoBloque] }),
+  });
+}
+
+export function useEliminarBloqueItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }) => { const { error } = await supabase.rpc('eliminar_conteo_bloque_item', { p_id: id }); if (error) throw error; },
+    onSuccess: (_d, v) => v.codigoBloque && qc.invalidateQueries({ queryKey: ['conteo_bloque', v.codigoBloque] }),
+  });
+}
+
+export function useRegistrarAuditoria() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bloqueId, items, observaciones }) => {
+      const { data, error } = await supabase.rpc('registrar_conteo_auditoria', {
+        p_bloque_id: bloqueId, p_items: items, p_observaciones: observaciones || '',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, v) => v.codigoBloque && qc.invalidateQueries({ queryKey: ['conteo_bloque', v.codigoBloque] }),
+  });
+}
+
+// ── Proyecciones (palletizado) ──────────────────────────────────────────────
+export function useProyecciones() {
+  return useQuery({
+    queryKey: ['conteo_proyecciones'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tms_conteo_proyecciones').select('*').order('created_at', { ascending: false }).limit(200);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 10_000,
+  });
+}
+
+export function useGuardarProyeccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p) => {
+      const { data, error } = await supabase.rpc('guardar_conteo_proyeccion', {
+        p_id: p.id || null, p_prod: p.prod || '', p_cant_oc: p.cantOc || 0, p_cant_bx: p.cantBx || 0,
+        p_cant_x_bx: p.cantXBx || 0, p_pie: p.pie || 0, p_altura: p.altura || 0,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conteo_proyecciones'] }),
+  });
+}
+
+export function useEliminarProyeccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }) => { const { error } = await supabase.rpc('eliminar_conteo_proyeccion', { p_id: id }); if (error) throw error; },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['conteo_proyecciones'] }),
+  });
+}
+
+export function useGuardarCosto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ codigo, costo }) => {
+      const { data, error } = await supabase.rpc('guardar_conteo_costo', { p_codigo: codigo, p_costo: costo });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['conteo_conciliacion'] }); qc.invalidateQueries({ queryKey: ['conteo_ajuste'] }); },
+  });
+}
