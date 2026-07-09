@@ -96,14 +96,20 @@ html.cco-embedded[data-theme="dark"] {
    independiente, el topbar (Sincronizar, Catálogo, Exportar, Importar,
    tema) se conserva íntegro. */
 .cco-embedded .topbar { display: none !important; }
-/* Contenido a todo el ancho, sin el max-width centrado de em-il. */
-.cco-embedded .layout { padding: 14px 16px 22px; max-width: none; }
+/* Para que la TABLA no se corte: apilamos (formulario arriba, tabla abajo a
+   todo el ancho) por defecto, así la tabla tiene el ancho completo y caben
+   todas las columnas sin scroll. Solo volvemos a 2 columnas en pantallas muy
+   anchas (≥1400px), donde el 1fr ya supera el ancho mínimo de la tabla. */
+.cco-embedded .layout {
+  grid-template-columns: 1fr;
+  max-width: none;
+  padding: 14px 16px 22px;
+}
+.cco-embedded .form-card { position: static; }
 @media (max-width: 1000px) { .cco-embedded .layout { padding: 12px; } }
-/* Sin scroll horizontal de PÁGINA: la columna derecha puede encogerse
-   (minmax(0,1fr)) y la tabla scrollea dentro de su propio .table-wrap
-   (que ya es overflow-x:auto). Solo en desktop (2 columnas). */
-@media (min-width: 1001px) {
+@media (min-width: 1400px) {
   .cco-embedded .layout { grid-template-columns: 370px minmax(0, 1fr); }
+  .cco-embedded .form-card { position: sticky; }
 }
 .cco-embedded, .cco-embedded body { overflow-x: hidden; }
 
