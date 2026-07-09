@@ -369,8 +369,8 @@ function AppContent() {
           <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
           <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
 
-          {/* Tools */}
-          <Route path="tools/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
+          {/* Inventario */}
+          <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />

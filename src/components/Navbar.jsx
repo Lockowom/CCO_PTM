@@ -113,7 +113,10 @@ const Navbar = () => {
             { label: 'Despachos', path: '/outbound/shipping', icon: <Ship size={16} /> }
           ]
         },
-        { id: 'traspasos', label: 'Traspasos', icon: <ArrowLeftRight size={18} />, isLink: true, path: '/tools/traspasos' }
+        { id: 'inventario', label: 'Inventario', icon: <Warehouse size={18} />, modules: [
+            { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> }
+          ]
+        }
       ]
     },
     {

@@ -50,8 +50,8 @@ export const APP_ROUTES = [
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
 
-  // Tools
-  { value: '/tools/traspasos', label: 'Traspasos / Correo', module: 'wms' },
+  // Inventario
+  { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'wms' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
