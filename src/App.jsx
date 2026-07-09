@@ -61,6 +61,7 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const BloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle'));
+const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
 const Users = React.lazy(() => import('./pages/Admin/Users'));
@@ -370,6 +371,9 @@ function AppContent() {
           <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
           <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
           <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
+
+          {/* Post-Venta / Servicio Técnico */}
+          <Route path="postventa/tickets" element={<ErrorBoundary><Postventa /></ErrorBoundary>} />
 
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />

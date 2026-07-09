@@ -10,6 +10,7 @@ export const APP_MODULES = [
   { id: 'outbound', label: 'Outbound', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
+  { id: 'postventa', label: 'Post-Venta', section: 'intelligence' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
 
@@ -58,6 +59,9 @@ export const APP_ROUTES = [
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
   { value: '/quality/acciones', label: 'Calidad - Acciones', module: 'quality' },
   { value: '/quality/bandeja', label: 'Calidad - Mi Bandeja', module: 'quality' },
+
+  // Post-Venta
+  { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
@@ -151,6 +155,15 @@ export const APP_PERMISSIONS = [
       { id: 'manage_monitoreo', label: 'Crear/Editar Informes de Monitoreo' },
       { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' },
       { id: 'view_acciones_calidad', label: 'Ver Acciones de Calidad (tablero por área)' }
+    ]
+  },
+  {
+    id: 'postventa',
+    label: 'Post-Venta (Servicio Técnico)',
+    permissions: [
+      { id: 'view_postventa', label: 'Ver Post-Venta' },
+      { id: 'manage_postventa', label: 'Gestionar tickets Post-Venta' },
+      { id: 'supervise_postventa', label: 'Supervisar Post-Venta (cerrar/eliminar/técnicos)' }
     ]
   },
   {

@@ -48,6 +48,9 @@ export const ROUTE_PERMISSIONS = {
   // Mi Bandeja: cada área ve directo sus tareas (mismo permiso).
   '/quality/bandeja': ['view_acciones_calidad', 'manage_quality', 'manage_monitoreo'],
 
+  // Post-Venta / Servicio Técnico — visible para quien ve/gestiona/supervisa post-venta.
+  '/postventa/tickets': ['view_postventa', 'manage_postventa', 'supervise_postventa'],
+
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],

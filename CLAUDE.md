@@ -55,6 +55,22 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   (destino del QR `/inventory/bloque/:codigo`). Servicio `src/services/conteoService.js`. Permisos
   `view_conteo`/`manage_conteo`/`supervise_conteo`. Genera QR con la dependencia `qrcode`.
 
+## Módulo nativo: Post-Venta / Servicio Técnico
+- **Post-Venta** (port nativo de `lockowom/post-venta`, NO iframe): gestión de tickets de
+  servicio técnico de equipos médicos (folio `TKT-AAAA-###`). Migración `046` (dominio + RPCs +
+  permisos). Frontend: `src/pages/Postventa/Postventa.jsx` (tabs Tickets, Nuevo, Dashboard,
+  Técnicos) y `src/services/postventaService.js` (catálogos como constantes + hooks). Ruta
+  `/postventa/tickets`, menú *Inteligencia → Post-Venta*. Permisos
+  `view_postventa`/`manage_postventa`/`supervise_postventa`. Tickets en `tms_postventa_tickets`,
+  técnicos editables en `tms_postventa_tecnicos`.
+  - **Extractor de correos**: Edge Function `supabase/functions/postventa-extractor` (Deno, port
+    del `main.py` de post-venta). Lee un buzón Outlook/M365 vía Microsoft Graph (client
+    credentials, permiso `Mail.Read`), dedup por id de mensaje y crea tickets `origen='Correo'`
+    (borrador, campos de gestión "Por Definir") con la RPC idempotente `crear_pv_ticket`. **Secrets
+    requeridos** (Supabase → Edge Functions): `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`,
+    `GRAPH_CLIENT_SECRET`, `PV_MAILBOX` (+ opcionales `PV_MAILBOX_FOLDER`, `PV_SOLO_DESDE`).
+    Programar con pg_cron+pg_net o invocar manualmente (POST, `verify_jwt` on).
+
 ## Estructura
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`

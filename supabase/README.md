@@ -31,11 +31,17 @@
   - `045_tms_series_normalizar_serie.sql` — mismo fix para `tms_series` (serie NULL): trigger de normalización + limpieza única (respaldo `tms_series_backup_20260709`; 49.432→5.074 filas).
   - `043_conteo_reportes.sql` — reportes del Conteo Cíclico: RPCs `conteo_conciliacion(p_sesion_id)` (contado Σ vs stock actual por SKU, con impacto valorizado desde `tms_conteo_costos`) y `conteo_ajuste_erp(p_sesion_id)` (por SKU+partida, para cuadrar con el ERP). Sólo lectura, `authenticated`.
   - `042_conteo_ciclico.sql` — **Conteo Cíclico de Inventario** (port nativo de `lockowom/t-o-inventario`): tablas `tms_conteo_sesiones`, `tms_conteos`, `tms_conteo_bloques`(+`_items`), `tms_conteo_auditorias`(+`_items`), `tms_conteo_proyecciones`, `tms_conteo_costos`. Reusa el stock de CCO (`tms_partidas`/`tms_series`) para el snapshot `cantidad_sistema` (RPC `conteo_stock_sistema`, prioridad serie>partida>SKU) y el estado CUADRADO/FALTA/SOBRA/SIN_STOCK. Escrituras por RPCs SECURITY DEFINER (`registrar_conteo`, `editar_conteo`, `crear_conteo_bloque`, `registrar_conteo_auditoria`, …) gateadas por permisos nuevos `view_conteo`/`manage_conteo`/`supervise_conteo`; lectura por RLS `authenticated`. Regla: contador edita solo lo propio en sesión abierta; supervisor/admin, todo.
+  - `046_postventa_tickets.sql` — módulo **Post-Venta / Servicio Técnico** (port nativo de `lockowom/post-venta`): `tms_postventa_tickets` (folio `TKT-AAAA-###`, cliente/región/equipo/serie, tipo, prioridad, técnico, estado, cotizar, resultado, `origen` Manual|Correo, `id_correo` con índice único parcial para dedup del extractor) y `tms_postventa_tecnicos` (catálogo editable). RPCs SECURITY DEFINER `crear_pv_ticket` (idempotente por `id_correo` + advisory lock del folio), `actualizar_pv_ticket`, `pv_dashboard`, `guardar_pv_tecnico`, `eliminar_pv_tecnico`; helper `_pv_assert` (permite `service_role` para el extractor). Permisos `view_postventa`/`manage_postventa`/`supervise_postventa`; lectura por RLS `authenticated`.
   - `041_emil_traspasos_supabase.sql` — backend del módulo **Inventario → Traspasos/Ajustes** (app em-il): `tms_emil_sync` (historial compartido blob `{traspasos,ajustes}` por `space`, reemplaza el sync Firestore vía `public/traspasos/cco-bridge.js`) y `tms_emil_catalogo` (catálogo maestro de SKUs blob, sembrado desde el catálogo estático la 1ª vez). Ambas con RLS `authenticated` (ledger interno compartido).
 - `functions_snapshot.sql` — **snapshot autoritativo** (idempotente, `CREATE OR REPLACE`) de
   todas las funciones/RPC tal como existen en la BD live (capa de seguridad `private.*` +
   wrappers `public`, y RPC de negocio). Útil para recrear o auditar.
 - `functions/send-push/` — Edge Function (push FCM).
+- `functions/postventa-extractor/` — Edge Function (Deno) del módulo **Post-Venta**: lee un buzón
+  Outlook/M365 vía Microsoft Graph (client credentials, `Mail.Read`), dedup por id de mensaje y crea
+  tickets `origen='Correo'` con `crear_pv_ticket`. Secrets: `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`,
+  `GRAPH_CLIENT_SECRET`, `PV_MAILBOX` (+ opc. `PV_MAILBOX_FOLDER`, `PV_SOLO_DESDE`). Programar con
+  pg_cron+pg_net o invocar manualmente.
 - `legacy_sql/` — scripts SQL **históricos/obsoletos** movidos desde la raíz del repo.
   Conservados solo como referencia. **No ejecutar**: pueden revertir el estado actual.
 

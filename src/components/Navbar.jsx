@@ -12,7 +12,7 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine
+  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -140,7 +140,8 @@ const Navbar = () => {
             { label: 'Mi Bandeja', path: '/quality/bandeja', icon: <Package size={16} /> },
             { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
           ]
-        }
+        },
+        { id: 'postventa', label: 'Post-Venta', icon: <Wrench size={18} />, isLink: true, path: '/postventa/tickets' }
       ]
     },
     {
