@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import {
   RotateCcw, Plus, Lock, Unlock, Download, Search, Package, Boxes,
@@ -42,10 +43,25 @@ const TABS = [
 
 export default function ConteoCiclico() {
   const { user } = useAuth();
-  const [tab, setTab] = useState('contar');
+  // La sección activa la decide el MENÚ (Inventario → Conteo · …) vía ?tab=,
+  // igual que los demás módulos; la página no muestra fila de pestañas.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get('tab') || 'contar');
   const [sesionId, setSesionId] = useState('');
   const { data: sesiones = [] } = useSesionesConteo();
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && t !== tab) setTab(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const irTab = (id) => {
+    setTab(id);
+    setSearchParams(id === 'contar' ? {} : { tab: id }, { replace: true });
+  };
+  const activeTab = TABS.some((t) => t.id === tab) ? tab : 'contar';
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
@@ -68,22 +84,12 @@ export default function ConteoCiclico() {
         </select>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black border flex items-center gap-1.5 transition-colors ${tab === id ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-            <Icon size={15} /> {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'contar' && <TabContar sesionId={sesionId} setSesionId={setSesionId} sesiones={sesiones} />}
-      {tab === 'sesiones' && <TabSesiones sesiones={sesiones} isAdmin={isAdmin} onOpen={(id) => { setSesionId(id); setTab('conciliacion'); }} />}
-      {tab === 'conciliacion' && <TabConciliacion sesionId={sesionId} isAdmin={isAdmin} />}
-      {tab === 'ajuste' && <TabAjuste sesionId={sesionId} />}
-      {tab === 'bloques' && <TabBloques />}
-      {tab === 'proyeccion' && <TabProyeccion />}
+      {activeTab === 'contar' && <TabContar sesionId={sesionId} setSesionId={setSesionId} sesiones={sesiones} />}
+      {activeTab === 'sesiones' && <TabSesiones sesiones={sesiones} isAdmin={isAdmin} onOpen={(id) => { setSesionId(id); irTab('conciliacion'); }} />}
+      {activeTab === 'conciliacion' && <TabConciliacion sesionId={sesionId} isAdmin={isAdmin} />}
+      {activeTab === 'ajuste' && <TabAjuste sesionId={sesionId} />}
+      {activeTab === 'bloques' && <TabBloques />}
+      {activeTab === 'proyeccion' && <TabProyeccion />}
     </div>
   );
 }

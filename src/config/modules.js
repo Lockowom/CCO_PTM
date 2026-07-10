@@ -54,7 +54,12 @@ export const APP_ROUTES = [
 
   // Inventario
   { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
-  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico', module: 'inventario' },
+  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico (Contar)', module: 'inventario' },
+  { value: '/inventory/conteo?tab=sesiones', label: 'Inventario - Conteo · Sesiones', module: 'inventario' },
+  { value: '/inventory/conteo?tab=conciliacion', label: 'Inventario - Conteo · Conciliación', module: 'inventario' },
+  { value: '/inventory/conteo?tab=ajuste', label: 'Inventario - Conteo · Ajuste ERP', module: 'inventario' },
+  { value: '/inventory/conteo?tab=bloques', label: 'Inventario - Conteo · Bloques/QR', module: 'inventario' },
+  { value: '/inventory/conteo?tab=proyeccion', label: 'Inventario - Conteo · Proyección', module: 'inventario' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },

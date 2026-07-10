@@ -59,9 +59,9 @@ vi.mock('@capacitor/haptics', () => ({ Haptics: { impact: vi.fn() }, ImpactStyle
 import ConteoCiclico from '../pages/Inventory/ConteoCiclico';
 import ConteoPDA from '../pages/Mobile/ConteoPDA';
 
-function wrap(ui) {
+function wrap(ui, route = '/inventory/conteo') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><MemoryRouter>{ui}</MemoryRouter></QueryClientProvider>);
+  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter></QueryClientProvider>);
 }
 
 describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
@@ -74,9 +74,8 @@ describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
     await waitFor(() => expect(screen.getAllByText('Semana 28').length).toBeGreaterThan(0));
   });
 
-  it('la pestaña Conciliación muestra el impacto valorizado desde el stock de CCO', async () => {
-    wrap(<ConteoCiclico />);
-    fireEvent.click(screen.getByRole('button', { name: /Conciliación/i }));
+  it('la sección Conciliación (deep-link ?tab=conciliacion) muestra el impacto valorizado', async () => {
+    wrap(<ConteoCiclico />, '/inventory/conteo?tab=conciliacion');
     // Fila del SKU real + estado FALTA calculado (contado 5 vs sistema 150).
     await waitFor(() => expect(screen.getByText('0010950005')).toBeInTheDocument());
     expect(screen.getByText('FALTA')).toBeInTheDocument();
@@ -84,9 +83,8 @@ describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
 
-  it('la pestaña Ajuste ERP renderiza la tabla por SKU+partida', async () => {
-    wrap(<ConteoCiclico />);
-    fireEvent.click(screen.getByRole('button', { name: /Ajuste ERP/i }));
+  it('la sección Ajuste ERP (deep-link ?tab=ajuste) renderiza la tabla por SKU+partida', async () => {
+    wrap(<ConteoCiclico />, '/inventory/conteo?tab=ajuste');
     await waitFor(() => expect(screen.getByText('(sin partida)')).toBeInTheDocument());
   });
 
