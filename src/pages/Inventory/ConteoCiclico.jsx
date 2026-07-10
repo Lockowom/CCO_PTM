@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import {
   RotateCcw, Plus, Lock, Unlock, Download, Search, Package, Boxes,
-  ClipboardCheck, Layers, Calculator, X, Trash2, QrCode, ExternalLink, Copy,
+  ClipboardCheck, Layers, Calculator, X, Trash2, QrCode, ExternalLink, Copy, Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import { exportToExcel } from '../../lib/exportExcel';
 import {
   useSesionesConteo, useCrearSesion, useCerrarSesion,
@@ -92,6 +93,8 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
   const crear = useCrearSesion();
   const registrar = useRegistrarConteo();
   const eliminar = useEliminarConteo();
+  // Cámara (ML Kit nativo, igual que Recepción Importaciones).
+  const { startScan, isScanning } = useBarcodeScanner();
   const abiertas = sesiones.filter((s) => s.estado === 'abierta');
   const sesionObj = sesiones.find((s) => s.id === sesionId);
   const activa = sesionObj && sesionObj.estado === 'abierta' ? sesionObj : null;
@@ -150,6 +153,25 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
   const inp = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-orange-400 outline-none';
   const lbl = 'text-xs font-black uppercase tracking-wide text-slate-500 mb-1 block';
 
+  // Escaneo por campo (mismo patrón de Recepción Importaciones).
+  const scanUbicacion = () => startScan({
+    onScan: (v) => { const val = v.trim().toUpperCase(); setUbicacion(val); toast.success(`Ubicación escaneada: ${val}`); },
+    onError: (msg) => toast.error(msg),
+  });
+  const scanSku = () => startScan({
+    onScan: (v) => { const val = v.trim().toUpperCase(); toast.success(`SKU escaneado: ${val}`); buscarSku(val); },
+    onError: (msg) => toast.error(msg),
+  });
+  const scanPartida = () => startScan({
+    onScan: (v) => { setPartida(v.trim()); setSerie(''); toast.success(`Partida escaneada: ${v.trim()}`); },
+    onError: (msg) => toast.error(msg),
+  });
+  const scanSerie = () => startScan({
+    onScan: (v) => { setSerie(v.trim()); setPartida(''); toast.success(`Serie escaneada: ${v.trim()}`); },
+    onError: (msg) => toast.error(msg),
+  });
+  const btnScan = 'px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 font-bold text-sm shadow-md active:scale-95 shrink-0';
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {/* Formulario */}
@@ -169,13 +191,23 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-3">
           <div>
             <label className={lbl}>Ubicación</label>
-            <input className={inp} value={ubicacion} onChange={(e) => setUbicacion(e.target.value.toUpperCase())} placeholder="Ej: G-29-03" />
+            <div className="flex gap-2">
+              <input className={inp} value={ubicacion} onChange={(e) => setUbicacion(e.target.value.toUpperCase())} placeholder="Ej: G-29-03" />
+              <button type="button" onClick={scanUbicacion} disabled={isScanning} title="Escanear ubicación" className={btnScan}>
+                <Camera size={18} /><span className="hidden sm:inline">ESCANEAR</span>
+              </button>
+            </div>
           </div>
           <div>
             <label className={lbl}>Producto (código o descripción)</label>
-            <input className={inp} value={sku} onChange={(e) => setSku(e.target.value.toUpperCase())}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); buscarSku(sku); } }}
-              onBlur={() => sku && !detalle && buscarSku(sku)} placeholder="Escaneá o escribí el SKU…" />
+            <div className="flex gap-2">
+              <input className={inp} value={sku} onChange={(e) => setSku(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); buscarSku(sku); } }}
+                onBlur={() => sku && !detalle && buscarSku(sku)} placeholder="Escaneá o escribí el SKU…" />
+              <button type="button" onClick={scanSku} disabled={isScanning} title="Escanear SKU (busca el stock al escanear)" className={btnScan}>
+                <Camera size={18} /><span className="hidden sm:inline">ESCANEAR</span>
+              </button>
+            </div>
           </div>
 
           {detalle && (
@@ -206,8 +238,24 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>Partida / Talla</label><input className={inp} value={partida} onChange={(e) => setPartida(e.target.value)} placeholder="Opcional" /></div>
-            <div><label className={lbl}>Serie</label><input className={inp} value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" /></div>
+            <div>
+              <label className={lbl}>Partida / Talla</label>
+              <div className="flex gap-2">
+                <input className={inp} value={partida} onChange={(e) => setPartida(e.target.value)} placeholder="Opcional" />
+                <button type="button" onClick={scanPartida} disabled={isScanning} title="Escanear partida/lote" className={btnScan + ' px-3'}>
+                  <Camera size={18} />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={lbl}>Serie</label>
+              <div className="flex gap-2">
+                <input className={inp} value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="Opcional" />
+                <button type="button" onClick={scanSerie} disabled={isScanning} title="Escanear serie" className={btnScan + ' px-3'}>
+                  <Camera size={18} />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div>
