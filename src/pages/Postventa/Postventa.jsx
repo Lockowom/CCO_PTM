@@ -11,7 +11,7 @@ import { exportToExcel } from '../../lib/exportExcel';
 import { comunasDeRegion } from '../../constants/comunasChile';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
-  PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls,
+  PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
   useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo,
@@ -98,7 +98,7 @@ export default function Postventa() {
 
 // ─── Tickets (lista + filtros + edición) ─────────────────────────────────────
 function TabTickets({ canManage, canSupervise }) {
-  const [filtros, setFiltros] = useState({ estado: '', tecnico: '', prioridad: '', tipo: '', q: '' });
+  const [filtros, setFiltros] = useState({ estado: '', tecnico: '', prioridad: '', tipo: '', origen: '', q: '' });
   const { data: tickets = [], isLoading } = useTickets(filtros);
   const { data: tecnicos = [] } = useTecnicos();
   const [editar, setEditar] = useState(null);
@@ -135,6 +135,7 @@ function TabTickets({ canManage, canSupervise }) {
           </div>
         </div>
         <FiltroSelect label="Tipo" value={filtros.tipo} onChange={(v) => setF('tipo', v)} options={PV_TIPOS_SOLICITUD} />
+        <FiltroSelect label="Origen" value={filtros.origen} onChange={(v) => setF('origen', v)} options={['Manual', 'Correo', 'Calidad']} />
         <FiltroSelect label="Estado" value={filtros.estado} onChange={(v) => setF('estado', v)} options={PV_ESTADOS} />
         <FiltroSelect label="Prioridad" value={filtros.prioridad} onChange={(v) => setF('prioridad', v)} options={PV_PRIORIDADES} />
         <FiltroSelect label="Técnico" value={filtros.tecnico} onChange={(v) => setF('tecnico', v)} options={tecnicos.map((t) => t.nombre)} />
@@ -174,7 +175,7 @@ function TabTickets({ canManage, canSupervise }) {
                         </span>
                       )}
                     </div>
-                    {t.folio_tipo && <div className="text-[11px] font-mono font-bold text-slate-500">{t.folio_tipo}</div>}
+                    {t.folio_tipo && <div className="mt-0.5"><span className={`inline-block px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold border ${pvFolioCls(t)}`}>{t.folio_tipo}</span></div>}
                     <div className="text-[11px] text-slate-400">{fechaCL(t.fecha_apertura)}</div>
                   </td>
                   <td className="px-4 py-3 align-top">
@@ -277,7 +278,7 @@ function TabBandeja({ canManage, canSupervise }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-black text-slate-800">{t.numero}</span>
-                  {t.folio_tipo && <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold border ${pvTipoCls(t.tipo_solicitud)}`}>{t.folio_tipo}</span>}
+                  {t.folio_tipo && <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold border ${pvFolioCls(t)}`}>{t.folio_tipo}</span>}
                   <Mail size={13} className="text-sky-500" />
                   <OrigenChip email={t.contacto} />
                   <span className={`inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border ${pvEstadoCls(t.estado)}`}>{t.estado}</span>
@@ -488,7 +489,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div>
             <h3 className="font-black text-slate-800 flex items-center gap-2">{ticket.numero}
-              {ticket.folio_tipo && <span className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold border ${pvTipoCls(ticket.tipo_solicitud)}`}>{ticket.folio_tipo}</span>}
+              {ticket.folio_tipo && <span className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold border ${pvFolioCls(ticket)}`}>{ticket.folio_tipo}</span>}
               {ticket.origen === 'Correo' && <Mail size={14} className="text-sky-500" />}
               {ticket.origen === 'Calidad' && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border bg-emerald-100 text-emerald-700 border-emerald-200">

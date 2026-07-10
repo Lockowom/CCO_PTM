@@ -67,6 +67,11 @@ export const PV_TIPO_META = {
   'Otro':                  'bg-slate-100 text-slate-600 border-slate-200',
 };
 export const pvTipoCls = (t) => PV_TIPO_META[t] || PV_TIPO_META['Otro'];
+// Color del chip del FOLIO: la serie CAL- (casos de Calidad) usa verde esmeralda;
+// el resto hereda el color de su tipo de solicitud.
+export const pvFolioCls = (t) => (t?.folio_tipo || '').startsWith('CAL-')
+  ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+  : pvTipoCls(t?.tipo_solicitud);
 
 export const PV_PRIORIDAD_META = {
   'Alta':  'bg-rose-100 text-rose-700 border-rose-200',
@@ -121,9 +126,9 @@ export function useEliminarTecnico() {
 // Tickets
 // ============================================================================
 export function useTickets(filtros = {}) {
-  const { estado, tecnico, prioridad, tipo, q } = filtros;
+  const { estado, tecnico, prioridad, tipo, origen, q } = filtros;
   return useQuery({
-    queryKey: ['pv_tickets', estado || '', tecnico || '', prioridad || '', tipo || '', q || ''],
+    queryKey: ['pv_tickets', estado || '', tecnico || '', prioridad || '', tipo || '', origen || '', q || ''],
     queryFn: async () => {
       let query = supabase.from('tms_postventa_tickets').select('*')
         .order('created_at', { ascending: false }).limit(500);
@@ -131,6 +136,7 @@ export function useTickets(filtros = {}) {
       if (tecnico) query = query.eq('tecnico_asignado', tecnico);
       if (prioridad) query = query.eq('prioridad', prioridad);
       if (tipo) query = query.eq('tipo_solicitud', tipo);
+      if (origen) query = query.eq('origen', origen);
       if (q && q.trim()) {
         const s = q.trim();
         query = query.or(`numero.ilike.%${s}%,folio_tipo.ilike.%${s}%,cliente.ilike.%${s}%,equipo_modelo.ilike.%${s}%,numero_serie.ilike.%${s}%`);
