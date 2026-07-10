@@ -52,6 +52,22 @@ export const PV_ESTADO_META = {
 };
 export const pvEstadoCls = (e) => PV_ESTADO_META[e] || 'bg-slate-100 text-slate-600 border-slate-200';
 
+// Chips por TIPO de solicitud (distingue visualmente cada serie de tickets).
+export const PV_TIPO_META = {
+  'Instalación':           'bg-sky-100 text-sky-700 border-sky-200',
+  'Capacitación':          'bg-violet-100 text-violet-700 border-violet-200',
+  'Mantención Preventiva': 'bg-teal-100 text-teal-700 border-teal-200',
+  'Mantención Correctiva': 'bg-amber-100 text-amber-700 border-amber-200',
+  'Falla Técnica':         'bg-rose-100 text-rose-700 border-rose-200',
+  'Visita Técnica':        'bg-indigo-100 text-indigo-700 border-indigo-200',
+  'Puesta en Marcha':      'bg-cyan-100 text-cyan-700 border-cyan-200',
+  'Gestión de Garantía':   'bg-purple-100 text-purple-700 border-purple-200',
+  'Venta Servicios':       'bg-emerald-100 text-emerald-700 border-emerald-200',
+  'Diagnósticos':          'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200',
+  'Otro':                  'bg-slate-100 text-slate-600 border-slate-200',
+};
+export const pvTipoCls = (t) => PV_TIPO_META[t] || PV_TIPO_META['Otro'];
+
 export const PV_PRIORIDAD_META = {
   'Alta':  'bg-rose-100 text-rose-700 border-rose-200',
   'Media': 'bg-amber-100 text-amber-700 border-amber-200',
@@ -105,18 +121,19 @@ export function useEliminarTecnico() {
 // Tickets
 // ============================================================================
 export function useTickets(filtros = {}) {
-  const { estado, tecnico, prioridad, q } = filtros;
+  const { estado, tecnico, prioridad, tipo, q } = filtros;
   return useQuery({
-    queryKey: ['pv_tickets', estado || '', tecnico || '', prioridad || '', q || ''],
+    queryKey: ['pv_tickets', estado || '', tecnico || '', prioridad || '', tipo || '', q || ''],
     queryFn: async () => {
       let query = supabase.from('tms_postventa_tickets').select('*')
         .order('created_at', { ascending: false }).limit(500);
       if (estado) query = query.eq('estado', estado);
       if (tecnico) query = query.eq('tecnico_asignado', tecnico);
       if (prioridad) query = query.eq('prioridad', prioridad);
+      if (tipo) query = query.eq('tipo_solicitud', tipo);
       if (q && q.trim()) {
         const s = q.trim();
-        query = query.or(`numero.ilike.%${s}%,cliente.ilike.%${s}%,equipo_modelo.ilike.%${s}%,numero_serie.ilike.%${s}%`);
+        query = query.or(`numero.ilike.%${s}%,folio_tipo.ilike.%${s}%,cliente.ilike.%${s}%,equipo_modelo.ilike.%${s}%,numero_serie.ilike.%${s}%`);
       }
       const { data, error } = await query;
       if (error) throw error;
