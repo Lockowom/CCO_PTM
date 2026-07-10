@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
+import { signedUrls } from '../../lib/storageUrl';
 import { comunasDeRegion } from '../../constants/comunasChile';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
@@ -483,6 +484,15 @@ function InformeCalidadModal({ numero, onClose }) {
   const { data, isLoading } = useInformeCalidadTicket(numero);
   const inf = data?.informe; const item = data?.item; const acc = data?.accion;
   const evidencias = data?.evidencias || [];
+  // Bucket privado (mig 065): las evidencias se muestran con URLs firmadas.
+  const [fotoUrls, setFotoUrls] = useState({});
+  useEffect(() => {
+    let on = true;
+    signedUrls('monitoreo-evidencias', evidencias.map((e) => e.storage_path))
+      .then((m) => { if (on) setFotoUrls(m); });
+    return () => { on = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-2xl my-auto" onClick={(e) => e.stopPropagation()}>
@@ -546,8 +556,8 @@ function InformeCalidadModal({ numero, onClose }) {
                   <div className="text-xs font-black text-slate-500 uppercase mb-2">Evidencias ({evidencias.length})</div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {evidencias.map((e, i) => (
-                      <a key={i} href={e.imagen_url} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-slate-200 hover:opacity-90">
-                        <img src={e.imagen_url} alt={e.descripcion || `Evidencia ${i + 1}`} className="w-full h-28 object-cover" loading="lazy" />
+                      <a key={i} href={fotoUrls[e.storage_path] || '#'} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-slate-200 hover:opacity-90">
+                        <img src={fotoUrls[e.storage_path] || ''} alt={e.descripcion || `Evidencia ${i + 1}`} className="w-full h-28 object-cover" loading="lazy" />
                         {e.descripcion && <div className="text-[10px] text-slate-500 px-2 py-1 truncate">{e.descripcion}</div>}
                       </a>
                     ))}

@@ -408,6 +408,19 @@ export const AuthProvider = ({ children }) => {
       usePickingStore.getState().endSession();
       localStorage.removeItem('picking-session');
     } catch (_) { /* best-effort */ }
+    // Datos operativos del turno en un PDA compartido: cola de recepción,
+    // estado de patios y cachés offline de Dexie (se conserva la cola de
+    // sincronización pendiente para no perder trabajo sin subir).
+    try {
+      localStorage.removeItem('wms_entry_queue');
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('yard_'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch (_) { /* best-effort */ }
+    try {
+      const { db } = await import('../lib/db');
+      await Promise.allSettled([db.cachedProducts.clear(), db.cachedLocations.clear()]);
+    } catch (_) { /* best-effort */ }
     try {
       if (typeof caches !== 'undefined') {
         const keys = await caches.keys();

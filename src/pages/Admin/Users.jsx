@@ -171,15 +171,18 @@ const UsersPage = ({ embedded = false }) => {
     }
   });
 
-  // Mutation: Eliminar Usuario
+  // Mutation: Eliminar Usuario — supresión COMPLETA (Ley 21.719): además de la
+  // fila, la RPC elimina la cuenta de auth, el log de accesos y la presencia,
+  // y anonimiza mediciones/errores/tickets. Antes el DELETE directo dejaba la
+  // cuenta auth viva y todo el rastro nominativo.
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      const { error } = await supabase.from('tms_usuarios').delete().eq('id', id);
+      const { error } = await supabase.rpc('eliminar_usuario_completo', { p_id: id });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin_users'] });
-      toast.success('Usuario eliminado exitosamente');
+      toast.success('Usuario eliminado (cuenta, accesos y rastros anonimizados)');
     },
     onError: (err) => toast.error('Error al eliminar: ' + err.message)
   });

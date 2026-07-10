@@ -42,6 +42,20 @@ for (const item of RUNTIME) {
   console.log(`   ✓ ${item}`);
 }
 
+// 2.6) Seguridad: em-il trae xlsx 0.18.5 (CVE-2023-30533 prototype pollution /
+//      CVE-2024-22363 ReDoS) y esta app parsea archivos subidos por el usuario.
+//      Se pisa el vendor con la build parcheada instalada en node_modules
+//      (alias npm "xlsx" → @e965/xlsx 0.20.x, mismo SheetJS).
+try {
+  fs.copyFileSync(
+    path.resolve('node_modules/xlsx/dist/xlsx.full.min.js'),
+    path.join(DEST, 'vendor', 'xlsx.full.min.js')
+  );
+  console.log('   ✓ vendor/xlsx.full.min.js → build parcheada (0.20.x)');
+} catch (e) {
+  console.warn('⚠️  No se pudo reemplazar el xlsx del vendor:', e.message);
+}
+
 // 2.5) Re-inyectar en index.html los archivos propios de CCO (no vienen de
 //      em-il y no están en RUNTIME, así que persisten entre updates):
 //        - cco-theme.css   → tema de marca (en <head>, tras styles.css)

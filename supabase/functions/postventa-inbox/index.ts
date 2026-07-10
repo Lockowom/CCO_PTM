@@ -5,12 +5,11 @@
 // crea el ticket (origen='Correo', idempotente por id_correo). Pensado para
 // correos POP: tu script lee el buzón, arma el JSON y hace un POST aquí.
 //
-// Autenticación: token/API key compartido (no requiere JWT de Supabase). Se acepta en:
-//   - header:        X-API-Key: XXXX   (compatible con la macro Outlook de PTM)
-//   - header:        x-pv-token: XXXX
-//   - query string:  ?token=XXXX
-//   - body:          {"token":"XXXX", ...}
-// El valor debe coincidir con el secret PV_INGEST_TOKEN.
+// Autenticación: token/API key compartido (no requiere JWT de Supabase). Se
+// acepta SOLO por header (X-API-Key — el que usa la macro Outlook de PTM — o
+// x-pv-token). Ya no se acepta por query string ni body: un token en la URL
+// queda registrado en logs de proxies/accesos (hallazgo S10 del informe de
+// seguridad). El valor debe coincidir con el secret PV_INGEST_TOKEN.
 //
 // Payload (JSON o form-urlencoded). Acepta:
 //   - un objeto,   - un array de objetos,   - {"correos":[...]}   o   {"filas":[...]}
@@ -111,10 +110,8 @@ serve(async (req) => {
       body = Object.fromEntries(p.entries());
     }
 
-    // Token/API key: header X-API-Key (macro Outlook) > x-pv-token > query > body.
-    const url = new URL(req.url);
-    const token = req.headers.get("x-api-key") || req.headers.get("x-pv-token") ||
-      url.searchParams.get("token") || body?.token || "";
+    // Token/API key: SOLO por header (X-API-Key de la macro Outlook o x-pv-token).
+    const token = req.headers.get("x-api-key") || req.headers.get("x-pv-token") || "";
     if (token !== expected) {
       return new Response(JSON.stringify({ ok: false, error: "Token inválido" }), {
         status: 401, headers: { "Content-Type": "application/json" },

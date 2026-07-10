@@ -8,13 +8,15 @@ export const initSentry = () => {
 
   Sentry.init({
     dsn,
+    // Sin Session Replay (Ley 21.719, hallazgo S6): la grabación de sesión
+    // enviaba a un tercero capturas del trabajo del empleado con datos de
+    // clientes/correos visibles en pantalla. Solo tracing de performance.
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
     ],
     tracesSampleRate: IS_PROD ? 0.2 : 1.0,
-    replaysSessionSampleRate: IS_PROD ? 0.05 : 0.1,
-    replaysOnErrorSampleRate: 1.0,
+    // Minimización: no adjuntar IP del usuario a los eventos.
+    sendDefaultPii: false,
   });
 };
 
@@ -24,5 +26,7 @@ export const logError = (error, context = {}) => {
 
 export const setUserForTracking = (user) => {
   if (!user) return;
-  Sentry.setUser({ id: user.id, email: user.email, username: user.nombre });
+  // Solo el id interno — sin email ni nombre real (minimización de PII hacia
+  // el tercero; con el id un admin puede correlacionar internamente si hace falta).
+  Sentry.setUser({ id: user.id });
 };

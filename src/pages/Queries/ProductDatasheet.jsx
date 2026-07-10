@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
+import { signedUrls } from '../../lib/storageUrl';
 import { toast } from 'sonner';
 
 const BUCKET = 'fichas-productos';
@@ -156,6 +157,16 @@ const ProductDatasheet = () => {
 
   const imagenes = ficha?.imagenes || [];
   const principal = imagenes.find(i => i.es_principal) || imagenes[0] || null;
+
+  // Bucket privado (mig 065): las fotos de la ficha usan URLs firmadas.
+  const [fotoUrls, setFotoUrls] = useState({});
+  useEffect(() => {
+    let on = true;
+    signedUrls(BUCKET, (ficha?.imagenes || []).map((i) => i.storage_path))
+      .then((m) => { if (on) setFotoUrls(m); });
+    return () => { on = false; };
+  }, [ficha]);
+  const fotoUrl = (img) => (img ? fotoUrls[img.storage_path] || '' : '');
   const partidas = ficha?.partidas || [];
   const header = ficha?.header || (selected ? { codigo_producto: selected } : null);
 
@@ -260,10 +271,10 @@ const ProductDatasheet = () => {
                     <div className="relative bg-slate-100 aspect-square sm:aspect-auto sm:min-h-[280px] flex items-center justify-center">
                       {principal ? (
                         <img
-                          src={principal.imagen_url}
+                          src={fotoUrl(principal)}
                           alt={header?.producto || selected}
                           className="w-full h-full object-cover cursor-zoom-in"
-                          onClick={() => setLightbox(principal.imagen_url)}
+                          onClick={() => fotoUrl(principal) && setLightbox(fotoUrl(principal))}
                         />
                       ) : (
                         <div className="text-center text-slate-300 p-8">
@@ -329,10 +340,10 @@ const ProductDatasheet = () => {
                       {imagenes.map((img) => (
                         <div key={img.id} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
                           <img
-                            src={img.imagen_url}
+                            src={fotoUrl(img)}
                             alt=""
                             className="w-full h-full object-cover cursor-zoom-in"
-                            onClick={() => setLightbox(img.imagen_url)}
+                            onClick={() => fotoUrl(img) && setLightbox(fotoUrl(img))}
                           />
                           {img.es_principal && (
                             <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 text-[9px] font-black uppercase">

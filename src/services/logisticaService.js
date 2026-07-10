@@ -1,18 +1,20 @@
 // ── Servicios de logística: geocodificación + distancia real ───────────────
-// Usa servicios públicos GRATUITOS de OpenStreetMap:
-//   • Nominatim  → geocodifica (dirección de texto → lat/long). Límite de uso:
-//     ~1 petición/segundo. El caller DEBE throttlear (ver `sleep`).
-//   • OSRM       → distancia REAL de carretera (ruta de manejo) entre 2 puntos.
-// Ambos responden con CORS y no requieren API key. Para volúmenes grandes
-// conviene migrar a un proveedor pagado (Google/Mapbox) o self-host de OSRM.
+// Privacidad (Ley 21.719, hallazgo S7): las direcciones de clientes ya NO se
+// envían desde el navegador a los servidores públicos de OpenStreetMap.
+// El navegador llama a los proxies same-origin del server (/api/geocode y
+// /api/route, ver server.js): el servidor consulta Nominatim/OSRM con caché
+// propia, User-Agent identificado y rate-limit, y las IPs de los usuarios
+// nunca llegan al tercero. Para volúmenes grandes sigue recomendado contratar
+// un proveedor con DPA (Google/Mapbox) — el cambio queda acotado a server.js.
 
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
+// En la app Android (Capacitor) el origin es https://localhost: se usa la URL
+// pública de la web para llegar al proxy.
+const API_BASE = /localhost|capacitor/i.test(window.location.origin) ? 'https://cco-ptm.onrender.com' : '';
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Distancia geodésica (línea recta) en km — fallback instantáneo si OSRM falla.
+ * Distancia geodésica (línea recta) en km — fallback instantáneo si la ruta falla.
  */
 export function haversineKm(a, b) {
   const R = 6371;
@@ -32,32 +34,33 @@ export function haversineKm(a, b) {
  * Componentes: direccion, comuna, ciudad, region (los vacíos se omiten).
  */
 export async function geocodeAddress({ direccion, comuna, ciudad, region }, { signal } = {}) {
-  const parts = [direccion, comuna, ciudad, region, 'Chile']
+  const parts = [direccion, comuna, ciudad, region]
     .map((p) => (p == null ? '' : String(p).trim()))
     .filter(Boolean);
-  if (parts.length <= 1) return null; // solo "Chile" → no hay nada que geocodificar
-  const q = parts.join(', ');
-  const url = `${NOMINATIM_URL}?format=jsonv2&limit=1&countrycodes=cl&q=${encodeURIComponent(q)}`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' }, signal });
+  if (!parts.length) return null;
+  const qs = new URLSearchParams({ q: parts.join(', ') });
+  const res = await fetch(`${API_BASE}/api/geocode?${qs}`, { headers: { Accept: 'application/json' }, signal });
   if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
   const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  const lat = parseFloat(data[0].lat);
-  const lon = parseFloat(data[0].lon);
+  if (!data || data.lat == null || data.lon == null) return null;
+  const lat = parseFloat(data.lat);
+  const lon = parseFloat(data.lon);
   if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
   return { lat, lon };
 }
 
 /**
- * Distancia REAL de carretera (km) entre origen y destino vía OSRM.
- * Lanza si OSRM no responde o no hay ruta (el caller puede caer a haversine).
+ * Distancia REAL de carretera (km) entre origen y destino (vía proxy del server).
+ * Lanza si no hay ruta (el caller puede caer a haversine).
  */
 export async function routeDistanceKm(origin, dest, { signal } = {}) {
-  const coords = `${origin.lon},${origin.lat};${dest.lon},${dest.lat}`;
-  const url = `${OSRM_URL}/${coords}?overview=false&alternatives=false&steps=false`;
-  const res = await fetch(url, { signal });
-  if (!res.ok) throw new Error(`OSRM HTTP ${res.status}`);
+  const qs = new URLSearchParams({
+    olat: String(origin.lat), olon: String(origin.lon),
+    dlat: String(dest.lat), dlon: String(dest.lon),
+  });
+  const res = await fetch(`${API_BASE}/api/route?${qs}`, { signal });
+  if (!res.ok) throw new Error(`Ruta HTTP ${res.status}`);
   const data = await res.json();
-  if (data.code !== 'Ok' || !data.routes?.length) throw new Error('OSRM: sin ruta');
-  return data.routes[0].distance / 1000; // metros → km
+  if (data?.km == null) throw new Error('Sin ruta');
+  return Number(data.km);
 }

@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ImagePlus, RefreshCw, Trash2, ImageOff, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../lib/imageCompress';
-import { uploadEvidencia, deleteEvidencia } from '../services/calidadService';
+import { signedUrls } from '../lib/storageUrl';
+import { uploadEvidencia, deleteEvidencia, EVIDENCIAS_BUCKET } from '../services/calidadService';
 
 /**
  * Cargador de evidencia fotográfica (cámara o galería) reutilizable.
@@ -22,6 +23,14 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [lightbox, setLightbox] = useState(null);
+  // El bucket es PRIVADO (mig 065): las miniaturas usan URLs firmadas.
+  const [urls, setUrls] = useState({});
+  useEffect(() => {
+    let on = true;
+    signedUrls(EVIDENCIAS_BUCKET, evidencias.map((ev) => ev.storage_path))
+      .then((m) => { if (on) setUrls(m); });
+    return () => { on = false; };
+  }, [evidencias]);
 
   const puedeSubir = canManage && !!informeId && !!itemId;
 
@@ -68,10 +77,10 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
         {evidencias.map((ev) => (
           <div key={ev.id} className={`relative group ${thumb} rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0`}>
             <img
-              src={ev.imagen_url}
+              src={urls[ev.storage_path] || ''}
               alt={ev.descripcion || ''}
               className="w-full h-full object-cover cursor-zoom-in"
-              onClick={() => setLightbox(ev.imagen_url)}
+              onClick={() => urls[ev.storage_path] && setLightbox(urls[ev.storage_path])}
             />
             {canManage && (
               <button

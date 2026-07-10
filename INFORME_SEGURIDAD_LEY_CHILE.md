@@ -91,7 +91,20 @@
 
 ## 5. Qué falta — plan de acción priorizado
 
-### A. Técnico inmediato (días — puedo implementarlo yo)
+### A. Técnico inmediato — ✅ **IMPLEMENTADO COMPLETO en v1.19.0 (2026-07-10)**
+
+> Migraciones `062`–`065` + cambios de app/server (ver changelog v1.19.0 en
+> `DOCUMENTACION_PROYECTO.md`). Resultado: S1 resuelto (auditoría purgada:
+> 102.441→35 filas, BD 239→103 MB, retenciones programadas), S2 resuelto
+> (xlsx 0.20.3), S3 resuelto (CSP con hash, sin unsafe-inline), S4 resuelto
+> (RLS por permiso en usuarios/conductores/Post-Venta/accesos/mediciones/
+> errores), S5 resuelto (buckets privados + URLs firmadas), S6 resuelto
+> (Sentry sin replay ni email), S7 mitigado (proxy propio con caché — falta el
+> proveedor con DPA, punto 12 del Bloque B), S8 resuelto (sanitizado IA),
+> S9 resuelto (rate-limit), S10 resuelto (token solo header). S11 (HIBP/MFA)
+> sigue pendiente: se activa a mano en el dashboard de Supabase → Auth.
+> Además: supresión completa de usuarios (punto 7) y limpieza de PDA al
+> logout (punto 8) operativas.
 1. **S1**: excluir el heartbeat del trigger de auditoría (auditar solo cambios de rol/permisos/activo, no `last_seen/current_*`), purgar el histórico acumulado (139 MB) y agregar retención pg_cron a `tms_auditoria` (p.ej. 1 año).
 2. **S4**: endurecer RLS — `tms_usuarios` legible solo el propio registro (+admins); restringir lectura de `tms_conductores` (RUT/teléfono), `tms_postventa_correos` (solo permisos de Post-Venta), `tms_mediciones_tiempos`/`tms_errores_picking`/`tms_accesos` (solo admin/supervisión).
 3. **S2**: actualizar `xlsx` a la build parcheada de SheetJS (app y copia vendorizada de Traspasos).

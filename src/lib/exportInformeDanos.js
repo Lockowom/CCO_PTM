@@ -3,6 +3,12 @@
 // inflar el bundle principal (se descargan solo al exportar).
 // Formato de control documental ISO 13485 (encabezado/pie + logo) vía docIso.
 import { isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
+import { signedUrl } from './storageUrl';
+
+// Bucket privado (mig 065): la URL pública guardada en imagen_url ya no
+// resuelve; se firma storage_path con la sesión del usuario que exporta.
+const urlEvidencia = (ev) =>
+  ev?.storage_path ? signedUrl('monitoreo-evidencias', ev.storage_path) : Promise.resolve(ev?.imagen_url || '');
 
 // ── Utilidades de imágenes ─────────────────────────────────────────────────
 async function fetchArrayBuffer(url) {
@@ -112,7 +118,7 @@ export async function exportInformeDanosWord(informe, hallazgos = [], evidencias
     const fotos = evByItem[h.id] || [];
     for (const ev of fotos) {
       try {
-        const data = await fetchArrayBuffer(ev.imagen_url);
+        const data = await fetchArrayBuffer(await urlEvidencia(ev));
         children.push(new Paragraph({ children: [new ImageRun({ data, type: 'jpg', transformation: { width: 320, height: 240 } })] }));
         if (ev.descripcion) children.push(new Paragraph({ children: [new TextRun({ text: ev.descripcion, italics: true, size: 18 })] }));
       } catch (_) { /* imagen no disponible: se omite */ }
@@ -232,7 +238,7 @@ export async function exportInformeDanosPDF(informe, hallazgos = [], evidencias 
     const imgs = [];
     for (const ev of fotos) {
       try {
-        const dataUrl = await fetchDataUrl(ev.imagen_url);
+        const dataUrl = await fetchDataUrl(await urlEvidencia(ev));
         imgs.push({ image: dataUrl, width: 220, margin: [0, 4, 8, 4] });
       } catch (_) { /* omitir */ }
     }

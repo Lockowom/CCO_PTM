@@ -194,6 +194,13 @@ fijo, gate interno por `_*_assert*` (usuario activo + permisos jsonb del rol) y
   compartido: stock, NV, despachos…). Cualquier usuario logueado puede leer/escribir esas
   tablas vía API aunque la UI lo esconda. Mitigación futura: mover escrituras a RPC + política
   de INSERT/UPDATE restrictiva. **Decisión pendiente del negocio** (afecta a las cargas masivas).
+  - **Actualización 2026-07-10 (migración `063`, Bloque A de seguridad)**: las tablas con
+    **datos personales** ya salieron de este grupo — `tms_usuarios` (solo fila propia+admin),
+    `tms_conductores`, `tms_accesos`, `tms_mediciones_tiempos`, `tms_errores_picking` y las
+    de Post-Venta (correos/tickets/técnicos) ahora exigen el permiso del módulo. El pendiente
+    queda acotado al ledger operativo sin PII (stock/NV/despachos). Ver
+    `INFORME_SEGURIDAD_LEY_CHILE.md`. Además: auditoría sin heartbeat + retenciones (`062`),
+    supresión completa de usuarios (`064`) y **Storage privado con URLs firmadas** (`065`).
 - **Protección de contraseñas filtradas (HIBP) desactivada** en Auth → se activa a mano en
   Dashboard → Authentication → Settings (no configurable por SQL).
 

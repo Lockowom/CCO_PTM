@@ -8,6 +8,29 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Detrás del proxy de Render: la IP real del cliente llega en X-Forwarded-For
+// (necesario para que el rate-limit por IP no vea la IP del balanceador).
+app.set('trust proxy', 1);
+
+// Rate-limit simple en memoria (por clave): devuelve false si se excedió.
+const rateBuckets = new Map();
+function rateLimitOk(key, max, windowMs) {
+  const now = Date.now();
+  const fresh = (rateBuckets.get(key) || []).filter((t) => now - t < windowMs);
+  if (fresh.length >= max) { rateBuckets.set(key, fresh); return false; }
+  fresh.push(now);
+  rateBuckets.set(key, fresh);
+  return true;
+}
+// Poda periódica para que el Map no crezca sin límite.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, arr] of rateBuckets) {
+    const fresh = arr.filter((t) => now - t < 10 * 60 * 1000);
+    if (fresh.length) rateBuckets.set(k, fresh); else rateBuckets.delete(k);
+  }
+}, 5 * 60 * 1000).unref?.();
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   // SAMEORIGIN (no DENY): permite embeber páginas propias como /traspasos en un
@@ -19,10 +42,13 @@ app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader(
     'Content-Security-Policy',
-    // El asistente de IA de Traspasos NO llama a Anthropic desde el navegador:
-    // pasa por el proxy same-origin /api/traspasos-ai (la clave vive en el
-    // servidor). Por eso connect-src no incluye api.anthropic.com.
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://nominatim.openstreetmap.org https://router.project-osrm.org; font-src 'self';"
+    // script-src SIN 'unsafe-inline' (hallazgo S3): el único script inline del
+    // sitio es el fijador de tema de /traspasos, permitido por su hash sha256
+    // (si cambia ese inline, recalcular el hash). El asistente de IA no llama
+    // a Anthropic desde el navegador (proxy /api/traspasos-ai) y el geocoding
+    // ya no sale del origen (proxy /api/geocode | /api/route) → connect-src
+    // sin nominatim/osrm.
+    "default-src 'self'; script-src 'self' 'sha256-FS5pu9F1XSI0eqDWQs2P/lSOYdkqq1PG0kBMjc4+SfE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; font-src 'self';"
   );
   next();
 });
@@ -51,6 +77,11 @@ app.post('/api/traspasos-ai', express.json({ limit: '1mb' }), async (req, res) =
   const authz = req.headers['authorization'] || '';
   const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
   if (!token) return res.status(401).json({ error: { message: 'Falta sesión CCO.' } });
+  // Rate-limit por sesión (fallback IP): un usuario autenticado no puede quemar
+  // la cuota de la API key en bucle.
+  if (!rateLimitOk(`ia:${token.slice(-24) || req.ip}`, 20, 5 * 60 * 1000)) {
+    return res.status(429).json({ error: { message: 'Demasiadas peticiones de IA. Espera unos minutos.' } });
+  }
   try {
     const u = await fetch(`${SUPA_URL}/auth/v1/user`, {
       headers: { apikey: SUPA_ANON, Authorization: `Bearer ${token}` },
@@ -93,6 +124,67 @@ app.post('/api/traspasos-ai', express.json({ limit: '1mb' }), async (req, res) =
     res.status(timedOut ? 504 : 502).json({
       error: { message: timedOut ? 'La IA tardó demasiado en responder.' : 'Error al contactar la IA: ' + String(e) },
     });
+  }
+});
+
+// ============================================================
+// Proxies de geocoding (privacidad, Ley 21.719): las direcciones de clientes
+// ya no salen del navegador hacia los servicios públicos de OSM. El servidor
+// consulta Nominatim/OSRM con caché en memoria, User-Agent identificado
+// (requisito de la política de uso de Nominatim) y rate-limit por IP; las IPs
+// de los usuarios nunca llegan al tercero. Pendiente organizacional: contratar
+// un proveedor con DPA (Google/Mapbox) y apuntar estos proxies allí.
+// ============================================================
+const GEO_UA = 'CCO-PTM-WMS/1.0 (logistica@ptm.cl)';
+const geoCache = new Map();   // q → { v, exp }
+const routeCache = new Map(); // coords → { v, exp }
+const cacheGet = (m, k) => { const e = m.get(k); return e && e.exp > Date.now() ? e.v : undefined; };
+const cachePut = (m, k, v, ttlMs) => { if (m.size > 5000) m.clear(); m.set(k, { v, exp: Date.now() + ttlMs }); };
+
+app.get('/api/geocode', async (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 300);
+  if (!q) return res.status(400).json({ error: { message: 'Falta q.' } });
+  if (!rateLimitOk(`geo:${req.ip}`, 90, 60 * 1000)) {
+    return res.status(429).json({ error: { message: 'Demasiadas peticiones.' } });
+  }
+  const hit = cacheGet(geoCache, q.toLowerCase());
+  if (hit !== undefined) return res.json(hit);
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=cl&q=${encodeURIComponent(q + ', Chile')}`;
+    const r = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': GEO_UA }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) return res.status(502).json({ error: { message: `Geocoder HTTP ${r.status}` } });
+    const data = await r.json();
+    const out = Array.isArray(data) && data.length
+      ? { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) }
+      : null;
+    cachePut(geoCache, q.toLowerCase(), out, 30 * 24 * 3600 * 1000);
+    res.json(out);
+  } catch (e) {
+    res.status(502).json({ error: { message: 'Geocoder no disponible.' } });
+  }
+});
+
+app.get('/api/route', async (req, res) => {
+  const { olat, olon, dlat, dlon } = req.query;
+  const nums = [olat, olon, dlat, dlon].map(Number);
+  if (nums.some((n) => Number.isNaN(n))) return res.status(400).json({ error: { message: 'Coordenadas inválidas.' } });
+  if (!rateLimitOk(`geo:${req.ip}`, 90, 60 * 1000)) {
+    return res.status(429).json({ error: { message: 'Demasiadas peticiones.' } });
+  }
+  const key = nums.map((n) => n.toFixed(5)).join(',');
+  const hit = cacheGet(routeCache, key);
+  if (hit !== undefined) return res.json(hit);
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${nums[1]},${nums[0]};${nums[3]},${nums[2]}?overview=false&alternatives=false&steps=false`;
+    const r = await fetch(url, { headers: { 'User-Agent': GEO_UA }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) return res.status(502).json({ error: { message: `OSRM HTTP ${r.status}` } });
+    const data = await r.json();
+    if (data.code !== 'Ok' || !data.routes?.length) return res.status(404).json({ error: { message: 'Sin ruta.' } });
+    const out = { km: data.routes[0].distance / 1000 };
+    cachePut(routeCache, key, out, 7 * 24 * 3600 * 1000);
+    res.json(out);
+  } catch (e) {
+    res.status(502).json({ error: { message: 'Servicio de rutas no disponible.' } });
   }
 });
 

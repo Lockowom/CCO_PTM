@@ -123,18 +123,48 @@
   }
 
   /* ---------- Shim de fetch para la URL centinela ---------- */
+
+  // Sanitiza el texto que devuelve el modelo de IA antes de que app.js lo
+  // inserte con innerHTML en el preview del correo: se eliminan <script>,
+  // <iframe>/<object>/<embed>, handlers on*= y URLs javascript:. El HTML del
+  // modelo no es contenido confiable y la CSP ya no permite scripts inline.
+  function sanitizeAiHtml(t) {
+    return String(t || "")
+      .replace(/<\s*(script|iframe|object|embed|link|meta)\b[\s\S]*?(<\s*\/\s*\1\s*>|>)/gi, "")
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+      .replace(/(href|src)\s*=\s*(["']?)\s*javascript:[^"'>\s]*\2/gi, "");
+  }
+
   window.fetch = function (input, init) {
     var url = typeof input === "string" ? input : (input && input.url) || "";
 
     // Asistente de IA de em-il ("Mejorar con IA"): redirigimos la llamada a
     // Anthropic al proxy same-origin (/api/traspasos-ai). La clave real vive
     // en el servidor; el navegador nunca la ve. Enviamos el token de sesión
-    // CCO para que el servidor valide antes de gastar la clave.
+    // CCO para que el servidor valide antes de gastar la clave, y saneamos el
+    // texto de la respuesta antes de entregarlo a app.js.
     if (url.indexOf("https://api.anthropic.com") === 0) {
       return origFetch("/api/traspasos-ai", {
         method: "POST",
         headers: headers({ "Content-Type": "application/json" }),
         body: (init && init.body) || null,
+      }).then(function (res) {
+        return res
+          .clone()
+          .json()
+          .then(function (j) {
+            if (j && Array.isArray(j.content)) {
+              j.content = j.content.map(function (b) {
+                if (b && typeof b.text === "string") b.text = sanitizeAiHtml(b.text);
+                return b;
+              });
+            }
+            return new Response(JSON.stringify(j), {
+              status: res.status,
+              headers: { "content-type": "application/json" },
+            });
+          })
+          .catch(function () { return res; });
       });
     }
 
