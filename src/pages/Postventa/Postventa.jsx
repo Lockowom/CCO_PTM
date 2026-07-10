@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   Wrench, Plus, Search, X, Download, LayoutDashboard, ClipboardList, Users,
   Save, Trash2, Mail, AlertTriangle, Clock, CheckCircle2, Pencil,
@@ -15,6 +15,7 @@ import {
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
   useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo,
+  useInformeCalidadTicket,
 } from '../../services/postventaService';
 
 const fechaCL = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-CL') : '—';
@@ -460,6 +461,103 @@ function TabNuevo({ onCreated }) {
   );
 }
 
+// ─── Visor del Informe de Calidad (adjunto al ticket) ───────────────────────
+const DICTAMEN_PV_CLS = {
+  LIBERAR: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  CUARENTENA: 'bg-orange-100 text-orange-700 border-orange-200',
+  BAJA: 'bg-rose-100 text-rose-700 border-rose-200',
+  RECHAZAR: 'bg-rose-100 text-rose-700 border-rose-200',
+  REPROCESO: 'bg-amber-100 text-amber-700 border-amber-200',
+};
+
+function InformeCalidadModal({ numero, onClose }) {
+  const { data, isLoading } = useInformeCalidadTicket(numero);
+  const inf = data?.informe; const item = data?.item; const acc = data?.accion;
+  const evidencias = data?.evidencias || [];
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-2xl my-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-100 gap-3">
+          <div className="min-w-0">
+            <h3 className="font-black text-slate-800 flex items-center gap-2">
+              <ClipboardList size={16} className="text-emerald-600" /> Informe de Calidad {inf?.numero || ''}
+            </h3>
+            <p className="text-xs text-slate-400">
+              {inf?.fecha ? `Fecha ${fechaCL(inf.fecha)}` : ''}{inf?.analista_nombre ? ` · Analista: ${inf.analista_nombre}` : ''}
+              {inf?.tipo_informe ? ` · ${inf.tipo_informe}` : ''}{inf?.periodicidad ? ` (${inf.periodicidad})` : ''}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 shrink-0"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+          {isLoading && <div className="text-slate-400 text-center py-8">Cargando informe…</div>}
+          {!isLoading && !data && <div className="text-slate-500 text-sm">Este ticket no tiene informe de Calidad asociado.</div>}
+
+          {item && (
+            <>
+              {/* Dictamen */}
+              <div className="flex flex-wrap items-center gap-2">
+                {item.dictamen && <span className={`px-3 py-1 rounded-xl text-sm font-black border ${DICTAMEN_PV_CLS[item.dictamen] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>Dictamen: {item.dictamen}</span>}
+                {acc?.tipo_accion && <span className="px-2.5 py-1 rounded-xl text-xs font-black border bg-indigo-50 text-indigo-700 border-indigo-200">Acción: {acc.tipo_accion}</span>}
+                {acc?.folio && <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold border bg-slate-100 text-slate-600 border-slate-200">{acc.folio}</span>}
+              </div>
+
+              {/* Producto dictaminado */}
+              <div className="rounded-xl border border-slate-200 p-4">
+                <div className="font-black text-slate-800 text-sm mb-2">{item.codigo_producto} — {item.producto}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <Info label="Partida / Lote" value={item.partida || '—'} />
+                  <Info label="Ubicación" value={item.ubicacion || '—'} />
+                  <Info label="Cantidad" value={`${item.cantidad ?? '—'} ${item.unidad_medida || ''}`} />
+                  <Info label="Condición observada" value={item.condicion_observada || '—'} />
+                  <Info label="Motivo" value={item.motivo || '—'} />
+                  <Info label="Bodega destino" value={item.bodega_destino ? `BD ${item.bodega_destino}` : '—'} />
+                  {item.tipo_dano && <Info label="Tipo de daño" value={item.tipo_dano} />}
+                  {item.componente_afectado && <Info label="Componente" value={item.componente_afectado} />}
+                  {item.consecuencia && <Info label="Consecuencia" value={item.consecuencia} />}
+                  <Info label="Dictaminó" value={item.calidad_nombre || '—'} />
+                  <Info label="Fecha dictamen" value={item.fecha_dictamen ? fechaHoraCL(item.fecha_dictamen) : '—'} />
+                  {item.fecha_vencimiento && <Info label="Vencimiento" value={fechaCL(item.fecha_vencimiento)} />}
+                </div>
+                {item.observaciones && <p className="text-xs text-slate-600 mt-3 italic">“{item.observaciones}”</p>}
+                {item.acuse_texto && <p className="text-xs text-slate-500 mt-1">Acuse: {item.acuse_texto}</p>}
+              </div>
+
+              {/* Instrucción de la acción */}
+              {acc?.descripcion && (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800">
+                  <b>Instrucción de Calidad:</b> {acc.descripcion}
+                  {acc.referencia && <div className="mt-1">Ref. ejecución: {acc.referencia}</div>}
+                </div>
+              )}
+
+              {/* Evidencias fotográficas */}
+              {evidencias.length > 0 && (
+                <div>
+                  <div className="text-xs font-black text-slate-500 uppercase mb-2">Evidencias ({evidencias.length})</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {evidencias.map((e, i) => (
+                      <a key={i} href={e.imagen_url} target="_blank" rel="noreferrer" className="block rounded-xl overflow-hidden border border-slate-200 hover:opacity-90">
+                        <img src={e.imagen_url} alt={e.descripcion || `Evidencia ${i + 1}`} className="w-full h-28 object-cover" loading="lazy" />
+                        {e.descripcion && <div className="text-[10px] text-slate-500 px-2 py-1 truncate">{e.descripcion}</div>}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {inf?.observaciones && <p className="text-xs text-slate-500">Observaciones del informe: {inf.observaciones}</p>}
+            </>
+          )}
+        </div>
+        <div className="flex items-center justify-end px-5 py-4 border-t border-slate-100">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Modal editar ────────────────────────────────────────────────────────────
 function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
   const actualizar = useActualizarTicket();
@@ -474,6 +572,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const readOnly = !canManage;
+  const [verInforme, setVerInforme] = useState(false);
 
   const guardar = async () => {
     try {
@@ -504,12 +603,18 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
         <div className="p-5 space-y-4">
           {(ticket.accion_folio || ticket.informe_numero) && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm">
-              <div className="font-black text-emerald-800 flex items-center gap-1.5 mb-1"><ClipboardList size={14} /> Caso derivado de Calidad</div>
-              <div className="text-emerald-800 text-xs space-y-0.5">
-                {ticket.accion_folio && <div>Acción de Calidad: <b>{ticket.accion_folio}</b></div>}
-                {ticket.informe_numero && (
-                  <div>Informe adjunto: <b>{ticket.informe_numero}</b> — <Link to="/quality/monitoreo" className="underline font-bold" onClick={onClose}>abrir en Calidad → Monitoreo</Link></div>
-                )}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="font-black text-emerald-800 flex items-center gap-1.5 mb-1"><ClipboardList size={14} /> Caso derivado de Calidad</div>
+                  <div className="text-emerald-800 text-xs space-y-0.5">
+                    {ticket.accion_folio && <div>Acción de Calidad: <b>{ticket.accion_folio}</b></div>}
+                    {ticket.informe_numero && <div>Informe adjunto: <b>{ticket.informe_numero}</b></div>}
+                  </div>
+                </div>
+                <button onClick={() => setVerInforme(true)}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black hover:bg-emerald-700 inline-flex items-center gap-1.5 shrink-0">
+                  <ClipboardList size={14} /> Ver informe
+                </button>
               </div>
             </div>
           )}
@@ -544,6 +649,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
             </button>
           )}
         </div>
+        {verInforme && <InformeCalidadModal numero={ticket.numero} onClose={() => setVerInforme(false)} />}
       </div>
     </div>
   );

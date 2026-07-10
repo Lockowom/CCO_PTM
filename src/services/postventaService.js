@@ -241,6 +241,22 @@ export function useCorreosTicket(numero) {
 }
 
 // ============================================================================
+// Informe de Calidad adjunto a un ticket (visor para Servicio Técnico)
+// ============================================================================
+export function useInformeCalidadTicket(numero, enabled = true) {
+  return useQuery({
+    queryKey: ['pv_informe_calidad', numero || ''],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('pv_informe_calidad', { p_numero: numero });
+      if (error) throw error;
+      return data; // { informe, item, evidencias, accion } o null
+    },
+    enabled: !!numero && enabled,
+    staleTime: 60_000,
+  });
+}
+
+// ============================================================================
 // Familias de equipos (del stock de CCO: primeros 3 chars del código de producto)
 // ============================================================================
 export function useFamiliasStock() {
