@@ -54,6 +54,9 @@ export default function ConteoCiclico() {
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && t !== tab) setTab(t);
+    // Sin ?tab (item "Contar" del menú, botón atrás) se vuelve a Contar: antes
+    // el estado quedaba pegado en la sección anterior.
+    else if (!t && tab !== 'contar') setTab('contar');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -126,11 +129,14 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
     } catch (e) { setDetalle({ rows: [], loading: false }); toast.error(e.message || 'Error al buscar'); }
   };
 
-  // Stock esperado en vivo según lo elegido/tipeado.
+  // Stock esperado en vivo según lo elegido/tipeado. Si la partida/serie
+  // tipeada no está en el detalle (lote nuevo), esperado queda null (se muestra
+  // "—"): el RPC al guardar calcula el stock real y afirmar "esperado 0" aquí
+  // contradecía el resultado guardado.
   let esperado = null;
   if (detalle) {
-    if (serie) { const r = detalle.rows.find((x) => x.tipo === 'S' && x.valor === serie); esperado = r ? Number(r.disponible) : 0; }
-    else if (partida) { const r = detalle.rows.find((x) => x.tipo === 'P' && x.valor === partida); esperado = r ? Number(r.disponible) : 0; }
+    if (serie) { const r = detalle.rows.find((x) => x.tipo === 'S' && x.valor === serie); esperado = r ? Number(r.disponible) : null; }
+    else if (partida) { const r = detalle.rows.find((x) => x.tipo === 'P' && x.valor === partida); esperado = r ? Number(r.disponible) : null; }
     else esperado = stockTotal;
   }
   const dif = esperado != null && cantidad !== '' ? Number(cantidad) - esperado : null;
@@ -275,6 +281,11 @@ function TabContar({ sesionId, setSesionId, sesiones }) {
             {dif != null && (
               <div className={'mt-2 rounded-lg px-3 py-2 text-center text-sm font-bold ' + (dif === 0 ? 'bg-emerald-100 text-emerald-700' : dif < 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}>
                 {dif === 0 ? '✅ Cuadrado' : dif < 0 ? `❌ Faltan ${n(Math.abs(dif))}` : `⚠️ Sobran ${n(dif)}`} · esperado {n(esperado)}
+              </div>
+            )}
+            {esperado == null && (partida || serie) && detalle && !detalle.loading && (
+              <div className="mt-2 rounded-lg px-3 py-2 text-center text-sm font-bold bg-slate-100 text-slate-500">
+                Partida/serie no listada: el sistema calculará el esperado al guardar.
               </div>
             )}
           </div>
@@ -472,7 +483,11 @@ function BloqueModal({ codigo, onClose }) {
   const [qr, setQr] = useState('');
 
   useEffect(() => {
-    const url = `${window.location.origin}/inventory/bloque/${codigo}`;
+    // En la app Android (Capacitor) el origin del WebView es https://localhost:
+    // un QR generado ahí no resolvería en otros teléfonos. Siempre se codifica
+    // la URL pública de la web.
+    const origin = /localhost|capacitor/i.test(window.location.origin) ? 'https://cco-ptm.onrender.com' : window.location.origin;
+    const url = `${origin}/inventory/bloque/${codigo}`;
     QRCode.toDataURL(url, { width: 220, margin: 1 }).then(setQr).catch(() => setQr(''));
   }, [codigo]);
 
@@ -506,7 +521,9 @@ function BloqueModal({ codigo, onClose }) {
           <span className="font-mono font-black text-slate-900">{codigo}</span>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X size={20} /></button>
         </div>
-        {isLoading || !b ? <div className="p-6 text-slate-400">Cargando…</div> : (
+        {isLoading ? <div className="p-6 text-slate-400">Cargando…</div>
+          : !b ? <div className="p-6 text-slate-400">Bloque no encontrado (puede haber sido eliminado).</div>
+          : (
           <div className="p-4 space-y-4">
             <div className="flex flex-wrap gap-4 items-center">
               {qr && <img src={qr} alt="QR" className="w-32 h-32 rounded-lg border border-slate-200" />}
@@ -611,19 +628,31 @@ function TabProyeccion() {
     if (!seeded.current && !isLoading) { setRows(server.map(fromRow)); seeded.current = true; }
   }, [isLoading, server]);
 
+  // Cancelar los debounce pendientes al desmontar (cambiar de sección): si no,
+  // el timer dispara sobre un componente desmontado.
+  const vivo = useRef(true);
+  useEffect(() => () => {
+    vivo.current = false;
+    Object.values(timers.current).forEach(clearTimeout);
+  }, []);
+
   const set = (id, campo, valor) => {
+    // El agendado del autoguardado vive FUERA del updater de setRows: un updater
+    // debe ser puro (StrictMode lo ejecuta doble → doble timer/doble RPC).
+    let row;
     setRows((rs) => {
       const nuevos = rs.map((r) => (r.id === id ? { ...r, [campo]: valor } : r));
-      const row = nuevos.find((r) => r.id === id);
-      clearTimeout(timers.current[id]);
-      setGuardando(true);
-      timers.current[id] = setTimeout(async () => {
-        try { await guardar.mutateAsync({ id, ...toNums(row) }); }
-        catch (e) { toast.error(e.message || 'No se pudo guardar'); }
-        finally { setGuardando(false); }
-      }, 600);
+      row = nuevos.find((r) => r.id === id);
       return nuevos;
     });
+    clearTimeout(timers.current[id]);
+    setGuardando(true);
+    timers.current[id] = setTimeout(async () => {
+      delete timers.current[id];
+      try { if (row) await guardar.mutateAsync({ id, ...toNums(row) }); }
+      catch (e) { if (vivo.current) toast.error(e.message || 'No se pudo guardar'); }
+      finally { if (vivo.current) setGuardando(false); }
+    }, 600);
   };
   const agregar = async () => {
     try { const nueva = await guardar.mutateAsync({ id: null, prod: '', cantOc: 0, cantBx: 0, cantXBx: 0, pie: 6, altura: 6 }); setRows((rs) => [...rs, fromRow(nueva)]); }
@@ -634,6 +663,10 @@ function TabProyeccion() {
     catch (e) { toast.error(e.message); }
   };
   const borrar = async (id) => {
+    // Cancelar el autoguardado pendiente de la fila: si dispara después del
+    // DELETE, el RPC lanza "Proyección inexistente" (toast de error espurio).
+    clearTimeout(timers.current[id]);
+    delete timers.current[id];
     try { await eliminar.mutateAsync({ id }); setRows((rs) => rs.filter((r) => r.id !== id)); }
     catch (e) { toast.error(e.message); }
   };

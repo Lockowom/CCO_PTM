@@ -50,9 +50,12 @@ export default function Postventa() {
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
 
   // Deep-link desde el menú (?tab=dashboard, ?tab=nuevo, ?tab=tecnicos).
+  // Sin ?tab (item "Tickets" del menú, botón atrás) se vuelve a Tickets: antes
+  // el estado quedaba pegado en la pestaña anterior.
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && t !== tab) setTab(t);
+    else if (!t && tab !== 'tickets') setTab('tickets');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -301,10 +304,14 @@ function TabBandeja({ canManage, canSupervise }) {
                   </select>
                 )}
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setEditar(t)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1">
-                    <Pencil size={13} /> Gestionar
-                  </button>
-                  <button onClick={() => borrar(t)} title="Eliminar y descartar" className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-rose-200"><Trash2 size={14} /></button>
+                  {canManage && (
+                    <button onClick={() => setEditar(t)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1">
+                      <Pencil size={13} /> Gestionar
+                    </button>
+                  )}
+                  {canSupervise && (
+                    <button onClick={() => borrar(t)} title="Eliminar y descartar" className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-rose-200"><Trash2 size={14} /></button>
+                  )}
                 </div>
               </div>
             </div>
@@ -312,14 +319,14 @@ function TabBandeja({ canManage, canSupervise }) {
         ))}
       </div>
 
-      {leer && <ThreadReader ticket={leer} onClose={() => setLeer(null)} onGestionar={(t) => { setLeer(null); setEditar(t); }} />}
+      {leer && <ThreadReader ticket={leer} canSupervise={canSupervise} onClose={() => setLeer(null)} onGestionar={(t) => { setLeer(null); setEditar(t); }} />}
       {editar && <ModalEditar ticket={editar} canManage={canManage} canSupervise={canSupervise} onClose={() => setEditar(null)} />}
     </div>
   );
 }
 
 // ─── Lector de correo (hilo estilo Outlook) ──────────────────────────────────
-function ThreadReader({ ticket, onClose, onGestionar }) {
+function ThreadReader({ ticket, canSupervise, onClose, onGestionar }) {
   const { data: correos = [], isLoading } = useCorreosTicket(ticket.numero);
   const elimCorreo = useEliminarCorreo();
   const asuntoHilo = correos[0]?.asunto || ticket.descripcion || ticket.numero;
@@ -356,7 +363,9 @@ function ThreadReader({ ticket, onClose, onGestionar }) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-slate-400">{fechaHoraCL(c.recibido)}</span>
-                    <button onClick={() => borrarCorreo(c)} title="Eliminar correo del caso" className="p-1 rounded text-rose-400 hover:bg-rose-50"><Trash2 size={13} /></button>
+                    {canSupervise && (
+                      <button onClick={() => borrarCorreo(c)} title="Eliminar correo del caso" className="p-1 rounded text-rose-400 hover:bg-rose-50"><Trash2 size={13} /></button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-1 text-[11px] text-slate-500 space-y-0.5">
@@ -936,7 +945,10 @@ function Sel({ label, value, onChange, options, req, disabled, allowFree }) {
         className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400">
         <option value="">— Seleccionar —</option>
         {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        {allowFree && !known && <option value="__free__">{value} (otro)</option>}
+        {/* Valor fuera de catálogo (p.ej. técnico desactivado): mostrarlo igual;
+            sin esta opción el <select> renderizaba "— Seleccionar —" y el usuario
+            creía que el campo estaba vacío aunque el ticket conserva el valor. */}
+        {!known && <option value="__free__">{value}{allowFree ? ' (otro)' : ' (no vigente)'}</option>}
       </select>
     </div>
   );

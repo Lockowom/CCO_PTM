@@ -27,7 +27,8 @@ export const APP_ROUTES = [
   { value: '/tms/drivers', label: 'TMS - Conductores', module: 'tms' },
   { value: '/tms/costos', label: 'TMS - Costos Transporte', module: 'tms' },
   { value: '/tms/mobile', label: 'TMS - App Móvil', module: 'tms' },
-  
+  { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'tms' },
+
   // Inbound
   { value: '/inbound/reception', label: 'Inbound - Recepción', module: 'inbound' },
   { value: '/inbound/reception-nacional', label: 'Inbound - Recepción Nacionales', module: 'inbound' },
@@ -70,7 +71,9 @@ export const APP_ROUTES = [
   { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },
   { value: '/postventa/tickets?tab=bandeja', label: 'Post-Venta - Bandeja Correos', module: 'postventa' },
   { value: '/postventa/tickets?tab=calendario', label: 'Post-Venta - Calendario', module: 'postventa' },
+  { value: '/postventa/tickets?tab=nuevo', label: 'Post-Venta - Nuevo Ticket', module: 'postventa' },
   { value: '/postventa/tickets?tab=dashboard', label: 'Post-Venta - Dashboard', module: 'postventa' },
+  { value: '/postventa/tickets?tab=tecnicos', label: 'Post-Venta - Técnicos', module: 'postventa' },
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios y Roles', module: 'admin' },

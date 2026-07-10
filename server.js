@@ -60,6 +60,21 @@ app.post('/api/traspasos-ai', express.json({ limit: '1mb' }), async (req, res) =
     return res.status(502).json({ error: { message: 'No se pudo validar la sesión.' } });
   }
   // Reenviar la petición a Anthropic con la clave del servidor.
+  // Solo se aceptan los campos que usa el asistente de Traspasos; el resto se
+  // descarta para que la clave no pueda usarse con parámetros arbitrarios
+  // (modelos caros, streaming, tokens ilimitados) desde otra sesión.
+  const b = req.body || {};
+  if (typeof b.model !== 'string' || !b.model.startsWith('claude-')) {
+    return res.status(400).json({ error: { message: 'Modelo no permitido.' } });
+  }
+  const payload = {
+    model: b.model,
+    max_tokens: Math.min(Number(b.max_tokens) || 1024, 2048),
+    messages: b.messages,
+    ...(b.system ? { system: b.system } : {}),
+    ...(typeof b.temperature === 'number' ? { temperature: b.temperature } : {}),
+    stream: false,
+  };
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -68,21 +83,41 @@ app.post('/api/traspasos-ai', express.json({ limit: '1mb' }), async (req, res) =
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(req.body || {}),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(60000),
     });
     const text = await r.text();
     res.status(r.status).type('application/json').send(text);
   } catch (e) {
-    res.status(502).json({ error: { message: 'Error al contactar la IA: ' + String(e) } });
+    const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+    res.status(timedOut ? 504 : 502).json({
+      error: { message: timedOut ? 'La IA tardó demasiado en responder.' : 'Error al contactar la IA: ' + String(e) },
+    });
   }
 });
 
+// Cualquier otra ruta /api inexistente responde 404 en vez de caer al
+// fallback SPA (que devolvería index.html con 200 y enmascararía errores).
+app.all('/api/*', (req, res) => res.status(404).json({ error: { message: 'Endpoint no existe.' } }));
+
 app.use(express.static(join(__dirname, 'dist'), {
-  maxAge: '1d',
   etag: true,
+  setHeaders: (res, filePath) => {
+    // HTML, manifest y service worker SIEMPRE revalidan: si se cachean, tras un
+    // deploy el navegador pide chunks hasheados que ya no existen → pantalla blanca.
+    if (/\.(html|webmanifest)$/.test(filePath) || /(?:^|[\\/])(sw\.js|registerSW\.js|workbox-[^\\/]+\.js)$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else if (/[\\/]assets[\\/]/.test(filePath)) {
+      // Assets con hash en el nombre: inmutables por un año.
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+  },
 }));
 
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 

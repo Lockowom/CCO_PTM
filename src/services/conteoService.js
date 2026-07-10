@@ -105,6 +105,10 @@ export function useRegistrarConteo() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['conteos', vars.sesionId || 'sin_sesion'] });
+      // Los reportes derivan de los conteos (staleTime 10 s): sin esto, el flujo
+      // "registro → abro Conciliación/Ajuste" mostraba el reporte sin el conteo recién guardado.
+      qc.invalidateQueries({ queryKey: ['conteo_conciliacion'] });
+      qc.invalidateQueries({ queryKey: ['conteo_ajuste'] });
     },
   });
 }
@@ -125,7 +129,11 @@ export function useEditarConteo() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['conteos'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conteos'] });
+      qc.invalidateQueries({ queryKey: ['conteo_conciliacion'] });
+      qc.invalidateQueries({ queryKey: ['conteo_ajuste'] });
+    },
   });
 }
 
@@ -136,7 +144,11 @@ export function useEliminarConteo() {
       const { error } = await supabase.rpc('eliminar_conteo', { p_id: id });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['conteos'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conteos'] });
+      qc.invalidateQueries({ queryKey: ['conteo_conciliacion'] });
+      qc.invalidateQueries({ queryKey: ['conteo_ajuste'] });
+    },
   });
 }
 

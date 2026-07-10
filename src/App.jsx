@@ -6,7 +6,7 @@ import CommandPalette from './components/ui/CommandPalette';
 import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
-import { ROUTE_PERMISSIONS } from './constants/permissions';
+import { ROUTE_PERMISSIONS, permisosDeRuta } from './constants/permissions';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
@@ -153,11 +153,14 @@ const SmartRedirect = () => {
     );
   }
 
-  // 1. PRIORIDAD: Si el rol tiene una landing_page configurada y tiene acceso, ir allí
+  // 1. PRIORIDAD: Si el rol tiene una landing_page configurada y tiene acceso, ir allí.
+  // Se recorta el query string (?tab=...) porque las landing de APP_ROUTES incluyen
+  // deep-links de pestañas y el mapa de permisos se indexa por pathname puro.
   if (landingPage && landingPage !== '/') {
-    const requiredPerms = ROUTE_PERMISSIONS[landingPage] || [];
-    const hasAccess = user?.rol === 'ADMIN' || requiredPerms.length === 0 || requiredPerms.some(perm => hasPermission(perm));
-    
+    const requiredPerms = permisosDeRuta(String(landingPage).split('?')[0]);
+    const hasAccess = user?.rol === 'ADMIN' || user?.es_admin_delegado ||
+      (Array.isArray(requiredPerms) && (requiredPerms.length === 0 || requiredPerms.some(perm => hasPermission(perm))));
+
     if (hasAccess) {
       return <Navigate to={landingPage} replace />;
     }
@@ -212,15 +215,24 @@ const ProtectedRoute = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // Conservar el destino: Login vuelve aquí tras autenticarse (clave para el
+    // QR de bloques /inventory/bloque/:codigo escaneado sin sesión activa).
+    return <Navigate to="/login" replace state={{ from: { pathname: location.pathname, search: location.search } }} />;
   }
 
-  const requiredPermissions = ROUTE_PERMISSIONS[location.pathname] || [];
-  const hasAccess = user?.rol === 'ADMIN' || user?.es_admin_delegado || requiredPermissions.length === 0 ||
-    requiredPermissions.some(perm => hasPermission(perm));
+  // Contrato del proyecto: una ruta SIN permisos declarados se DENIEGA (antes el
+  // guard hacía lo contrario: cualquier pathname no registrado —incluido
+  // "/Admin/Users/" con mayúsculas o slash final, que React Router sí renderiza—
+  // quedaba abierto a todo usuario autenticado). permisosDeRuta normaliza el
+  // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
+  // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
+  const requiredPermissions = permisosDeRuta(location.pathname);
+  const hasAccess = location.pathname === '/' || user?.rol === 'ADMIN' || user?.es_admin_delegado ||
+    (Array.isArray(requiredPermissions) &&
+      (requiredPermissions.length === 0 || requiredPermissions.some(perm => hasPermission(perm))));
 
   if (!hasAccess) {
-    return <AccessDenied requiredPermissions={requiredPermissions} route={location.pathname} />;
+    return <AccessDenied requiredPermissions={requiredPermissions || []} route={location.pathname} />;
   }
 
   return (
@@ -311,7 +323,10 @@ function AppContent() {
       supabase.removeChannel(channel);
       supabase.removeChannel(ticketChannel);
     };
-  }, [user]);
+    // Solo el nombre se usa dentro de los callbacks: depender del objeto `user`
+    // completo destruía y re-suscribía ambos canales en cada setUser (heartbeats,
+    // session guard), con ventanas donde se perdían eventos.
+  }, [user?.nombre]);
 
   return (
     <Router>

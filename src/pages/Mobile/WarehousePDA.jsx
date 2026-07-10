@@ -29,12 +29,8 @@ const hapticError = async () => {
 const WarehousePDA = () => {
   const { user, logout } = useAuth();
   const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
-  const [mode, setMode] = useState('HOME'); // HOME, PICKING, PUTAWAY, INVENTORY, QUERY
+  const [mode, setMode] = useState('HOME'); // HOME, PUTAWAY, INVENTORY, QUERY
   const [scannedValue, setScannedValue] = useState('');
-
-  // PICKING STATE
-  const [activeTask, setActiveTask] = useState(null);
-  const [pickStep, setPickStep] = useState('SCAN_LOC'); // SCAN_LOC -> SCAN_SKU -> CONFIRM_QTY
 
   // PUTAWAY STATE
   const [putawayStep, setPutawayStep] = useState('SCAN_LOC'); // SCAN_LOC -> SCAN_SKU -> ENTER_QTY -> CONFIRM
@@ -55,58 +51,11 @@ const WarehousePDA = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [mode, pickStep, putawayStep]);
+  }, [mode, putawayStep]);
 
-  // ==================== PICKING ====================
-
-  const loadPickingTask = async () => {
-    try {
-      toast.loading('Buscando tarea...', { id: 'loading-task' });
-
-      const { data, error } = await supabase
-        .from('tms_picking_tasks')
-        .select('id, ubicacion, sku, descripcion, cantidad_requerida, lote, prioridad')
-        .eq('estado', 'PENDIENTE')
-        .order('prioridad', { ascending: false })
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      toast.dismiss('loading-task');
-
-      if (error) throw error;
-
-      if (!data) {
-        toast.info('No hay tareas de picking pendientes');
-        return;
-      }
-
-      // Mark task as in progress
-      await supabase
-        .from('tms_picking_tasks')
-        .update({ estado: 'EN_PROCESO', operario_id: user?.id })
-        .eq('id', data.id);
-
-      setActiveTask({
-        id: data.id,
-        location: data.ubicacion,
-        sku: data.sku,
-        desc: data.descripcion,
-        qty_needed: data.cantidad_requerida,
-        qty_picked: 0,
-        batch: data.lote
-      });
-      setMode('PICKING');
-      setPickStep('SCAN_LOC');
-      hapticSuccess();
-      toast.success('Nueva tarea asignada');
-    } catch (err) {
-      console.error('Error loading picking task:', err);
-      toast.dismiss('loading-task');
-      hapticError();
-      toast.error('Error al buscar tarea: ' + (err.message || 'Error desconocido'));
-    }
-  };
+  // NOTA: el antiguo modo "PICKING guiado" se eliminó: leía la tabla
+  // tms_picking_tasks, que nunca existió en esta base (el botón siempre
+  // terminaba en error). El picking real de CCO vive en /outbound/picking.
 
   // Abre la cámara nativa para escanear código de barras / QR
   const openCameraScanner = async () => {
@@ -131,54 +80,8 @@ const WarehousePDA = () => {
   };
 
   const processInput = (val) => {
-    if (mode === 'PICKING') {
-      processPickingInput(val);
-    } else if (mode === 'PUTAWAY') {
+    if (mode === 'PUTAWAY') {
       processPutawayInput(val);
-    }
-  };
-
-  const processPickingInput = (val) => {
-    if (pickStep === 'SCAN_LOC') {
-      if (val === activeTask.location) {
-        hapticSuccess();
-        setPickStep('SCAN_SKU');
-        toast.success('Ubicación Correcta');
-      } else {
-        hapticError();
-        toast.error('Ubicación Incorrecta');
-      }
-    } else if (pickStep === 'SCAN_SKU') {
-      if (val === activeTask.sku || val === activeTask.batch) {
-        hapticSuccess();
-        setPickStep('CONFIRM_QTY');
-        toast.success('Producto Correcto');
-      } else {
-        hapticError();
-        toast.error('Producto Incorrecto');
-      }
-    }
-  };
-
-  const confirmQty = async (qty) => {
-    if (parseInt(qty) === activeTask.qty_needed) {
-      try {
-        await supabase
-          .from('tms_picking_tasks')
-          .update({ estado: 'COMPLETADO', fecha_completado: new Date().toISOString() })
-          .eq('id', activeTask.id);
-
-        hapticSuccess();
-        toast.success('TAREA COMPLETADA');
-      } catch (err) {
-        console.error('Error completing task:', err);
-        toast.error('Error al completar tarea');
-      }
-      setActiveTask(null);
-      setMode('HOME');
-    } else {
-      hapticError();
-      toast.warning('Cantidad difiere. ¿Confirmar faltante?');
     }
   };
 
@@ -268,7 +171,6 @@ const WarehousePDA = () => {
 
   const goHome = () => {
     setMode('HOME');
-    setActiveTask(null);
     setPutawayStep('SCAN_LOC');
     setPutawayData({ ubicacion: '', codigo: '', descripcion: '', cantidad: 1 });
   };
@@ -299,12 +201,6 @@ const WarehousePDA = () => {
         {/* Menu Grid */}
         <div className="flex-1 p-3 sm:p-4 grid grid-cols-2 gap-3 sm:gap-4 content-start mt-3 sm:mt-4">
           <MenuButton
-            icon={<ClipboardList size={32} />}
-            label="PICKING"
-            color="bg-indigo-600"
-            onClick={loadPickingTask}
-          />
-          <MenuButton
             icon={<ArrowRight size={32} />}
             label="UBICAR (PUTAWAY)"
             color="bg-emerald-600"
@@ -329,98 +225,6 @@ const WarehousePDA = () => {
           <br />
           Zebra / Honeywell Compatible
         </div>
-      </div>
-    );
-  }
-
-  // ==================== PICKING VIEW ====================
-
-  if (mode === 'PICKING' && activeTask) {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col font-mono">
-        {/* Task Header */}
-        <div className="bg-slate-50 p-2 border-b border-slate-300 flex justify-between items-center">
-          <span className="text-xs font-bold text-slate-500">TASK: {activeTask.id}</span>
-          <button onClick={goHome} className="text-slate-500">
-            <ArrowLeft size={20} />
-          </button>
-        </div>
-
-        {/* Status Bar */}
-        <div className="p-2 text-center text-sm font-bold transition-colors bg-white">
-          ESPERANDO ESCANEO...
-        </div>
-
-        {/* Main Info */}
-        <div className="flex-1 p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
-          {/* STEP 1: LOCATION */}
-          <div className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'SCAN_LOC' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
-          }`}>
-            <label className="block text-[10px] text-slate-500 uppercase">IR A UBICACIÓN</label>
-            <div className="text-3xl sm:text-4xl font-black text-yellow-400">{activeTask.location}</div>
-          </div>
-
-          {/* STEP 2: PRODUCT */}
-          <div className={`p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'SCAN_SKU' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
-          }`}>
-            <label className="block text-[10px] text-slate-500 uppercase">PRODUCTO / LOTE</label>
-            <div className="text-xl font-bold text-slate-900 mb-1">{activeTask.sku}</div>
-            <div className="text-sm text-slate-700 truncate">{activeTask.desc}</div>
-            <div className="mt-2 inline-block bg-white px-2 py-1 rounded text-xs text-cyan-400">
-              LOTE: {activeTask.batch}
-            </div>
-          </div>
-
-          {/* STEP 3: QTY */}
-          <div className={`p-4 rounded-xl border-2 transition-all ${
-            pickStep === 'CONFIRM_QTY' ? 'border-yellow-400 bg-slate-50' : 'border-slate-200 opacity-50'
-          }`}>
-            <div className="flex justify-between items-end">
-              <div>
-                <label className="block text-[10px] text-slate-500 uppercase">CANTIDAD REQUERIDA</label>
-                <div className="text-5xl font-black text-slate-900">{activeTask.qty_needed}</div>
-              </div>
-              {pickStep === 'CONFIRM_QTY' && (
-                <button
-                  onClick={() => confirmQty(activeTask.qty_needed)}
-                  className="bg-yellow-400 text-black px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-bold text-lg sm:text-xl animate-pulse min-h-[44px]"
-                >
-                  CONFIRMAR
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Scanner Input + Camera Button */}
-        <form onSubmit={handleScan} className="p-2 bg-slate-50">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-              <input
-                ref={inputRef}
-                type="text"
-                value={scannedValue}
-                onChange={e => setScannedValue(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-indigo-500 min-h-[44px]"
-                placeholder="Escanear aquí..."
-                autoComplete="off"
-              />
-            </div>
-            {isSupportedDevice && (
-              <button
-                type="button"
-                onClick={openCameraScanner}
-                disabled={isScanning}
-                className="px-4 min-w-[44px] min-h-[44px] bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-sm disabled:opacity-50 transition-colors"
-              >
-                <Camera size={20} />
-              </button>
-            )}
-          </div>
-        </form>
       </div>
     );
   }

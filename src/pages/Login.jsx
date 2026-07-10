@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -11,17 +11,24 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [focusedInput, setFocusedInput] = useState(null);
   const [loadingPhase, setLoadingPhase] = useState(0); // 0: IDLE, 1: AUTH, 2: SYNC, 3: REDIRECT
-  
+
   const navigate = useNavigate();
+  const location = useLocation();
   const containerRef = useRef(null);
 
   const { login, isAuthenticated } = useAuth();
 
+  // Si el guard nos mandó aquí desde un deep-link (p.ej. el QR de un bloque de
+  // conteo), volver a esa URL tras autenticarse en vez de a la landing del rol.
+  const from = location.state?.from
+    ? `${location.state.from.pathname || ''}${location.state.from.search || ''}` || '/'
+    : '/';
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, from]);
 
 
   const handleLogin = async (e) => {
@@ -42,7 +49,7 @@ const Login = () => {
         setLoadingPhase(3); // Fase: Estableciendo Conexión
 
         await new Promise(r => setTimeout(r, 600));
-        navigate('/', { replace: true });
+        navigate(from, { replace: true });
       } else {
         setLoadingPhase(0);
         setError("Acceso denegado. Verifica tus credenciales.");

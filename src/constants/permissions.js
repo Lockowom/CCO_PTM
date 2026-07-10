@@ -39,6 +39,9 @@ export const ROUTE_PERMISSIONS = {
   '/inventory/traspasos': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
   '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
+  // Detalle de bloque (destino del QR impreso). Ruta con parámetro: el guard
+  // la resuelve con matchPath (ver ProtectedRoute en App.jsx).
+  '/inventory/bloque/:codigo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).
@@ -61,14 +64,29 @@ export const ROUTE_PERMISSIONS = {
   '/admin/tickets': ['manage_tickets'],
   '/admin/upload-history': ['admin_upload_history'],
   '/admin/monitor': ['admin_monitor'],
-  '/admin/mediciones': ['manage_mediciones'],
-  '/admin/time-reports': ['view_time_reports'],
-  '/admin/login-history': ['manage_users'],
 };
 
 // La visibilidad de secciones/módulos en el Navbar se DERIVA de ROUTE_PERMISSIONS
 // (una sección se muestra si el usuario puede acceder a ≥1 de sus rutas). No mantener
 // una lista de permisos por sección por separado: causaba desincronización.
+
+// ── Resolución de permisos de una URL real ──────────────────────────────────
+// React Router matchea rutas ignorando mayúsculas y slash final, pero un lookup
+// exacto del mapa no: "/Admin/Users/" renderizaría la página sin pasar por el
+// permiso. Se normaliza el pathname y, si no hay match exacto, se prueban las
+// claves parametrizadas (p.ej. '/inventory/bloque/:codigo') con matchPath.
+// Devuelve undefined si la ruta NO está declarada: el guard DENIEGA por defecto
+// (regla del proyecto: sin permiso definido se deniega).
+import { matchPath } from 'react-router-dom';
+
+export function permisosDeRuta(pathname) {
+  const clean = (String(pathname || '').toLowerCase().replace(/\/+$/, '')) || '/';
+  if (Object.prototype.hasOwnProperty.call(ROUTE_PERMISSIONS, clean)) return ROUTE_PERMISSIONS[clean];
+  for (const key of Object.keys(ROUTE_PERMISSIONS)) {
+    if (key.includes(':') && matchPath({ path: key, end: true }, clean)) return ROUTE_PERMISSIONS[key];
+  }
+  return undefined;
+}
 
 // ── Vista previa de accesos ─────────────────────────────────────────────────
 // Dado el set de permisos de un rol, calcula QUÉ rutas/módulos desbloquea

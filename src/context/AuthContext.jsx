@@ -25,19 +25,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const pathnameRef = useRef(window.location.pathname);
   const initDoneRef = useRef(false);
   // Email del perfil ya cargado, para deduplicar la carga: login() llama a
   // setUserState y además dispara SIGNED_IN, que volvería a cargar el mismo
   // perfil (doble carga de rol + doble init push). Con esto SIGNED_IN se salta
   // si el usuario ya está cargado.
   const loadedEmailRef = useRef(null);
-
-  useEffect(() => {
-    const onPopState = () => { pathnameRef.current = window.location.pathname; };
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
 
   // ── Cargar configuración de rol ──
   const loadRoleConfig = useCallback(async (rolId) => {
@@ -238,6 +231,11 @@ export const AuthProvider = ({ children }) => {
               );
               if (profile) {
                 await setUserState(profile);
+              } else {
+                // Perfil inexistente o desactivado: destruir también el token de
+                // auth (igual que initSession); si queda en localStorage, un
+                // usuario desactivado conserva un JWT utilizable contra la API.
+                await supabase.auth.signOut();
               }
             } catch (err) {
               console.error('[Auth] SIGNED_IN profile load error:', err);
@@ -283,7 +281,10 @@ export const AuthProvider = ({ children }) => {
             nombre: user.nombre,
             rol: user.rol,
             ultima_actividad: new Date().toISOString(),
-            modulo_actual: pathnameRef.current,
+            // Leer la URL real en el momento del latido: pathnameRef solo se
+            // actualizaba con popstate y React Router navega con pushState,
+            // así que el módulo reportado quedaba congelado en el de entrada.
+            modulo_actual: window.location.pathname,
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
       } catch (_) { console.error('Heartbeat update failed:', _); }
@@ -387,20 +388,39 @@ export const AuthProvider = ({ children }) => {
     setPermissions([]);
     localStorage.removeItem('currentUser'); // Limpiar legacy
 
+    // Limpieza que REQUIERE el token (debe correr ANTES de signOut, que lo destruye):
+    // presencia en Admin Monitor y push token del dispositivo (en PDA compartida,
+    // el siguiente usuario no debe recibir las notificaciones del anterior).
+    if (userId) {
+      try {
+        await Promise.allSettled([
+          supabase.from('tms_usuarios_activos').delete().eq('usuario_id', userId),
+          supabase.from('tms_usuarios').update({ push_token: null }).eq('id', userId),
+        ]);
+      } catch (_) { /* best-effort */ }
+    }
+
+    // Estado local persistido de otros usuarios en el mismo equipo:
+    // sesión de picking (zustand persist) y cachés del service worker con
+    // respuestas autenticadas de Supabase.
+    try {
+      const { usePickingStore } = await import('../stores/pickingStore');
+      usePickingStore.getState().endSession();
+      localStorage.removeItem('picking-session');
+    } catch (_) { /* best-effort */ }
+    try {
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.allSettled(
+          keys.filter((k) => k.includes('supabase')).map((k) => caches.delete(k))
+        );
+      }
+    } catch (_) { /* best-effort */ }
+
     // Cerrar sesión Supabase Auth
     try {
       await supabase.auth.signOut();
     } catch (_) { console.error('Auth signOut error:', _); }
-
-    if (userId) {
-      supabase
-        .from('tms_usuarios_activos')
-        .delete()
-        .eq('usuario_id', userId)
-        .then(({ error }) => {
-          if (error) console.warn('[Auth] No se pudo limpiar la presencia al cerrar sesión:', error);
-        });
-    }
   }, [user?.id]);
 
   // ── Session Guard (realtime) ──
@@ -427,17 +447,25 @@ export const AuthProvider = ({ children }) => {
             if (newUser.activo === false) {
               alert('Tu sesión ha sido cerrada por un administrador.');
               logout();
-            } else if (newUser.rol && newUser.rol !== user.rol) {
-              const updatedUser = {
-                ...user,
-                rol: newUser.rol,
-                nombre: newUser.nombre !== undefined ? newUser.nombre : user.nombre,
-                email: newUser.email !== undefined ? newUser.email : user.email,
-                activo: newUser.activo !== undefined ? newUser.activo : user.activo,
-                es_admin_delegado: newUser.es_admin_delegado !== undefined ? newUser.es_admin_delegado : user.es_admin_delegado
-              };
-              setUser(updatedUser);
-              loadRoleConfig(newUser.rol);
+            } else {
+              const rolCambio = newUser.rol && newUser.rol !== user.rol;
+              // También aplicar en caliente la concesión/revocación de admin
+              // delegado: antes solo se reaccionaba al cambio de rol y un
+              // delegado revocado conservaba acceso total hasta recargar.
+              const delegadoCambio = newUser.es_admin_delegado !== undefined &&
+                newUser.es_admin_delegado !== user.es_admin_delegado;
+              if (rolCambio || delegadoCambio) {
+                const updatedUser = {
+                  ...user,
+                  rol: newUser.rol || user.rol,
+                  nombre: newUser.nombre !== undefined ? newUser.nombre : user.nombre,
+                  email: newUser.email !== undefined ? newUser.email : user.email,
+                  activo: newUser.activo !== undefined ? newUser.activo : user.activo,
+                  es_admin_delegado: newUser.es_admin_delegado !== undefined ? newUser.es_admin_delegado : user.es_admin_delegado
+                };
+                setUser(updatedUser);
+                if (rolCambio) loadRoleConfig(newUser.rol);
+              }
             }
           }
         }
@@ -449,13 +477,16 @@ export const AuthProvider = ({ children }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, user?.rol, logout, loadRoleConfig]);
+  }, [user?.id, user?.rol, user?.es_admin_delegado, logout, loadRoleConfig]);
 
   // ── Permisos ──
+  // El admin delegado equivale a ADMIN: el guard de rutas ya le concede todo,
+  // pero los botones internos y el Navbar consultan hasPermission — sin esta
+  // línea el delegado tenía acceso por URL y una UI llena de acciones denegadas.
   const hasPermission = useCallback((permissionId) => {
-    if (user?.rol === 'ADMIN') return true;
+    if (user?.rol === 'ADMIN' || user?.es_admin_delegado === true) return true;
     return permissions.includes(permissionId);
-  }, [permissions, user?.rol]);
+  }, [permissions, user?.rol, user?.es_admin_delegado]);
 
   return (
     <AuthContext.Provider value={{

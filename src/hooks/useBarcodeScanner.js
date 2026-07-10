@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 /**
@@ -11,6 +11,10 @@ import { Capacitor } from '@capacitor/core';
 
 let BarcodeScanner = null;
 let BarcodeFormat = null;
+// La cámara nativa es un singleton: este flag (síncrono, a nivel de módulo)
+// bloquea un segundo scan lanzado antes de que isScanning (async) alcance a
+// activarse — p.ej. doble tap, o tocar el botón de escanear de otro campo.
+let scanEnCurso = false;
 
 // Lazy import para evitar error en web cuando el plugin no está disponible
 const loadScanner = async () => {
@@ -30,12 +34,17 @@ const loadScanner = async () => {
 const useBarcodeScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isSupportedDevice, setIsSupportedDevice] = useState(Capacitor.isNativePlatform());
+  // ¿El scan activo lo inició ESTA instancia del hook?
+  const scanPropio = useRef(false);
 
-  // Defensa: si el componente se desmonta mientras un escaneo sigue activo
-  // (navegación durante el scan), detener el scanner nativo para no dejarlo vivo.
+  // Defensa: si el componente se desmonta mientras SU escaneo sigue activo
+  // (navegación durante el scan), detener el scanner nativo para no dejarlo
+  // vivo. Solo si el scan es propio: antes, desmontar cualquier componente que
+  // usara el hook mataba el escaneo activo de otro componente.
   useEffect(() => {
     return () => {
-      if (BarcodeScanner?.stopScan) {
+      if (scanPropio.current && BarcodeScanner?.stopScan) {
+        scanEnCurso = false;
         BarcodeScanner.stopScan().catch(() => {});
       }
     };
@@ -85,8 +94,15 @@ const useBarcodeScanner = () => {
    * @returns {Promise<string|null>} - Valor escaneado o null si se canceló
    */
   const startScan = useCallback(async ({ onScan, onError, formats } = {}) => {
+    // Guard SÍNCRONO antes de cualquier await: ignora el doble tap / segundo
+    // botón mientras la cámara está (o está por estar) abierta.
+    if (scanEnCurso) return null;
+    scanEnCurso = true;
+    scanPropio.current = true;
+
     const loaded = await loadScanner();
     if (!loaded || !BarcodeScanner) {
+      scanEnCurso = false; scanPropio.current = false;
       onError?.('Scanner no disponible en este dispositivo');
       return null;
     }
@@ -94,6 +110,7 @@ const useBarcodeScanner = () => {
     try {
       const hasPermission = await checkPermissions();
       if (!hasPermission) {
+        scanEnCurso = false; scanPropio.current = false;
         onError?.('Permiso de cámara denegado. Actívelo en Configuración.');
         return null;
       }
@@ -121,6 +138,7 @@ const useBarcodeScanner = () => {
       });
 
       setIsScanning(false);
+      scanEnCurso = false; scanPropio.current = false;
 
       if (result.barcodes && result.barcodes.length > 0) {
         const scannedValue = result.barcodes[0].rawValue;
@@ -131,6 +149,7 @@ const useBarcodeScanner = () => {
       return null;
     } catch (err) {
       setIsScanning(false);
+      scanEnCurso = false; scanPropio.current = false;
 
       // El usuario canceló el scan (botón atrás)
       if (err.message?.includes('canceled') || err.message?.includes('cancelled')) {
@@ -151,6 +170,7 @@ const useBarcodeScanner = () => {
     try {
       await BarcodeScanner.stopScan();
     } catch (_) {}
+    scanEnCurso = false; scanPropio.current = false;
     setIsScanning(false);
   }, []);
 

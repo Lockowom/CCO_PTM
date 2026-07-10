@@ -25,9 +25,15 @@ export const useWarehouseStore = create((set, get) => ({
   // force=false → usa caché si ya se cargó (no recarga al navegar).
   // force=true  → recarga (botón refrescar / tras ediciones).
   fetchWarehouseData: async (force = false) => {
-    // Dedupe: si ya hay una carga en curso, reutilizarla
+    // Dedupe: si ya hay una carga en curso, reutilizarla. Con force=true no se
+    // puede descartar la recarga (el refetch post-edición traería datos viejos):
+    // se espera a que termine la carga en vuelo y se recarga a continuación.
     const inflight = get()._inflight;
-    if (inflight) return inflight;
+    if (inflight) {
+      if (!force) return inflight;
+      await inflight.catch(() => {});
+      return get().fetchWarehouseData(true);
+    }
     // Caché con TTL: si hay datos frescos (<2 min) y no se fuerza, no recargar
     const CACHE_TTL = 2 * 60 * 1000;
     if (!force && get().loaded && Object.keys(get().inventory).length > 0

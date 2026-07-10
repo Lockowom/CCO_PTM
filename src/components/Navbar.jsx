@@ -54,9 +54,13 @@ const Navbar = () => {
   };
 
   // ¿El usuario puede acceder a esta ruta? Fuente única: ROUTE_PERMISSIONS.
+  // El admin delegado ve lo mismo que ADMIN: el guard de rutas (ProtectedRoute)
+  // ya le concede acceso total, así que ocultarle el menú solo desincronizaba
+  // ambas fuentes de verdad.
+  const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const canAccessRoute = (path, sectionId) => {
-    if (user?.rol === 'ADMIN') return true;
-    if (sectionId === 'admin') return false; // sección admin: solo ADMIN
+    if (esAdmin) return true;
+    if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
     const perms = ROUTE_PERMISSIONS[String(path).split('?')[0]]; // ignora ?query (deep-links de tabs)
     // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
     if (!perms || perms.length === 0) return false;
@@ -69,7 +73,7 @@ const Navbar = () => {
   // los permisos por ruta → se sincroniza sola al agregar/quitar módulos o permisos.
   const isModuleVisible = (item) => {
     if (!isModuleEnabled(item.id)) return false;
-    if (item.id === 'admin') return user?.rol === 'ADMIN';
+    if (item.id === 'admin') return esAdmin;
     if (item.isLink) return canAccessRoute(item.path, item.id);
     return (item.modules || []).some(m => canAccessRoute(m.path, item.id));
   };

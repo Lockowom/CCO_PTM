@@ -39,7 +39,8 @@ const ESTADOS_FILTRO = [
 
 const HistorialNV = () => {
   const container = useRef();
-  const [searchTerm, setSearchTerm] = useState('');
+  // ?q= permite llegar con la búsqueda pre-cargada (Command Palette → NV).
+  const [searchTerm, setSearchTerm] = useState(() => (new URLSearchParams(window.location.search).get('q') || '').trim());
   const [filterEstado, setFilterEstado] = useState('TODOS');
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');

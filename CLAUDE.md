@@ -31,8 +31,8 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
 
 ## Módulos externos integrados
 - **Traspasos/Ajustes** (`lockowom/em-il`): app estática vendorizada en `public/traspasos/`
-  (Vite → `dist/traspasos/`, express la sirve), embebida vía iframe en `/tools/traspasos`
-  (`src/pages/Tools/Traspasos.jsx`), enlace en menú *Operaciones WMS → Traspasos*. Actualizar con
+  (Vite → `dist/traspasos/`, express la sirve), embebida vía iframe en `/inventory/traspasos`
+  (`src/pages/Tools/Traspasos.jsx`), enlace en menú *Inventario → Traspasos y Ajustes*. Actualizar con
   `npm run update:traspasos` + `npm run build`. Excluida del precache/fallback PWA. `X-Frame-Options`
   es `SAMEORIGIN` (server.js) para permitir el iframe propio.
   - **Backend en Supabase**: `public/traspasos/cco-bridge.js` (archivo propio, no viene de em-il;
@@ -104,7 +104,7 @@ cambio, actualizar SIEMPRE:
 - `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
 - `src/stores/` — stores Zustand unificadas (`warehouseStore`, `pickingStore`)
-- `supabase/migrations/` — migraciones versionadas (`001`…`045`); aplicar nuevas vía MCP/CLI
+- `supabase/migrations/` — migraciones versionadas (`001`…`061`); aplicar nuevas vía MCP/CLI
 - `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
   Regenerar con `npm run build` y commitearlo al desplegar.
 

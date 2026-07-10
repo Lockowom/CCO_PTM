@@ -31,8 +31,10 @@ const HighlightText = ({ text, highlight }) => {
 
 const Batches = () => {
   const containerRef = useRef(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [submittedTerm, setSubmittedTerm] = useState('');
+  // ?q= permite llegar con la búsqueda pre-cargada (Command Palette → producto).
+  const initialQ = (new URLSearchParams(window.location.search).get('q') || '').trim();
+  const [searchTerm, setSearchTerm] = useState(initialQ);
+  const [submittedTerm, setSubmittedTerm] = useState(initialQ);
   const [activeTab, setActiveTab] = useState('partidas');
   const [subFilter, setSubFilter] = useState('');
   const [isFocused, setIsFocused] = useState(false);

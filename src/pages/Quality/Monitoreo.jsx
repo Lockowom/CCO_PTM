@@ -895,6 +895,13 @@ const InformeDetail = ({ informe, onBack, onEdit, onDelete }) => {
     if (!f.dictamen) { toast.error('Selecciona un dictamen'); return; }
     const def = DICTAMENES.find(d => d.id === f.dictamen);
     if (def?.mueve && !f.bodegaDestino) { toast.error('Indica la bodega destino'); return; }
+    // Validar el área ANTES de persistir el dictamen: el formulario desaparece
+    // una vez dictaminado (render con !it.dictamen), así que si esto fallaba
+    // después, la acción recomendada quedaba imposible de promulgar.
+    if (f.tipoAccion) {
+      const tdefPre = TIPOS_ACCION.find(t => t.id === f.tipoAccion);
+      if (!(f.area || tdefPre?.area)) { toast.error('Selecciona el área responsable de la acción'); return; }
+    }
     try {
       await dictaminar.mutateAsync({
         itemId: item.id,
@@ -1226,7 +1233,10 @@ const Monitoreo = () => {
 
   const abrirInforme = (inf) => {
     setSelected(inf);
-    setMode(inf.tipo_informe === 'DANOS' ? 'edit-danos' : 'detail');
+    // Los informes de Daños solo abren en modo edición para quien puede
+    // gestionarlos: /quality/monitoreo también es accesible con manage_inventory
+    // y ese perfil entraba directo al editor (con guardar y subir/borrar fotos).
+    setMode(inf.tipo_informe === 'DANOS' && canCreate ? 'edit-danos' : 'detail');
   };
   const editarInforme = (inf) => {
     setSelected(inf);

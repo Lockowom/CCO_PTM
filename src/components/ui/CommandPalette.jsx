@@ -76,7 +76,7 @@ const CommandPalette = () => {
               icon: <Package size={16} className="text-emerald-400" />,
               title: l.codigo,
               subtitle: l.descripcion,
-              action: () => navigate(`/queries/kardex?q=${l.codigo}`)
+              action: () => navigate(`/queries/batches?q=${encodeURIComponent(l.codigo)}`)
             });
           });
         }
@@ -96,7 +96,7 @@ const CommandPalette = () => {
         // Acciones globales
         const globalActions = [
           { title: 'Dashboard TMS', path: '/tms/dashboard', icon: <Truck size={16} className="text-blue-400"/> },
-          { title: 'Kardex', path: '/queries/kardex', icon: <Package size={16} className="text-emerald-400"/> },
+          { title: 'Lotes / Series', path: '/queries/batches', icon: <Package size={16} className="text-emerald-400"/> },
           { title: 'Picking', path: '/outbound/picking', icon: <FileText size={16} className="text-amber-400"/> },
         ].filter(a => a.title.toLowerCase().includes(query.toLowerCase()));
 

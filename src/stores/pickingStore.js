@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
 const resetState = { activeSession: null, itemsStatus: {}, tiempoTranscurrido: 0, tiempoOcio: 0 };
 
@@ -44,10 +45,13 @@ export const usePickingStore = create(
 // Selectores granulares para evitar re-renders innecesarios
 export const useActiveSession = () => usePickingStore(s => s.activeSession);
 export const useItemsStatus = () => usePickingStore(s => s.itemsStatus);
-export const usePickingTime = () => usePickingStore(s => ({ tiempo: s.tiempoTranscurrido, ocio: s.tiempoOcio }));
-export const usePickingActions = () => usePickingStore(s => ({
+// useShallow: sin él, estos selectores devuelven un objeto nuevo en cada
+// evaluación y cualquier set del store (p.ej. el timer de updateTime) re-renderiza
+// a TODOS los suscriptores en cada tick.
+export const usePickingTime = () => usePickingStore(useShallow(s => ({ tiempo: s.tiempoTranscurrido, ocio: s.tiempoOcio })));
+export const usePickingActions = () => usePickingStore(useShallow(s => ({
   startSession: s.startSession,
   updateItemStatus: s.updateItemStatus,
   updateTime: s.updateTime,
   endSession: s.endSession,
-}));
+})));

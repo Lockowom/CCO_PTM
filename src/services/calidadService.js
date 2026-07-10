@@ -343,10 +343,19 @@ export function useInformeEvidencias(informeId) {
 
 // Sube una imagen (blob ya comprimido) y registra la fila de evidencia.
 export async function uploadEvidencia({ informeId, itemId, blob, descripcion, user }) {
-  const path = `${informeId}/${itemId || 'general'}/${uid()}.jpg`;
+  // Si la compresión falló (p.ej. HEIC de iPhone), compressImage devuelve el
+  // archivo ORIGINAL: respetar su tipo real (subirlo como .jpg no renderiza) y
+  // no intentar subir algo que exceda el límite del bucket (8 MB).
+  const MAX_BYTES = 7.5 * 1024 * 1024;
+  if (blob?.size > MAX_BYTES) {
+    throw new Error('La foto pesa demasiado y no se pudo comprimir en este navegador. Prueba con otra foto (JPG/PNG).');
+  }
+  const tipo = blob?.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/gif': 'gif' }[tipo] || 'jpg';
+  const path = `${informeId}/${itemId || 'general'}/${uid()}.${ext}`;
   const { error: upErr } = await supabase.storage
     .from(EVIDENCIAS_BUCKET)
-    .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+    .upload(path, blob, { contentType: tipo, upsert: false });
   if (upErr) throw upErr;
 
   const { data: pub } = supabase.storage.from(EVIDENCIAS_BUCKET).getPublicUrl(path);
@@ -373,7 +382,10 @@ export async function uploadEvidencia({ informeId, itemId, blob, descripcion, us
 }
 
 export async function deleteEvidencia(ev) {
-  await supabase.storage.from(EVIDENCIAS_BUCKET).remove([ev.storage_path]);
+  // storage.remove() NO lanza: devuelve { error }. Si el objeto no se pudo
+  // borrar, abortar antes de eliminar la fila (si no, queda huérfano en el bucket).
+  const { error: stErr } = await supabase.storage.from(EVIDENCIAS_BUCKET).remove([ev.storage_path]);
+  if (stErr) throw new Error(`No se pudo borrar la imagen del almacenamiento: ${stErr.message}`);
   const { error } = await supabase.from('tms_monitoreo_evidencias').delete().eq('id', ev.id);
   if (error) throw error;
 }
