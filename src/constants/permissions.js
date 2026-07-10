@@ -42,6 +42,9 @@ export const ROUTE_PERMISSIONS = {
   // Detalle de bloque (destino del QR impreso). Ruta con parámetro: el guard
   // la resuelve con matchPath (ver ProtectedRoute en App.jsx).
   '/inventory/bloque/:codigo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
+  // Análisis de Códigos (port del Excel de actualización P/S). Mismos permisos
+  // de bodega/stock; la RPC re-verifica server-side (mig 067).
+  '/inventory/analisis': ['manage_inventory', 'view_stock', 'view_batches', 'manage_data_import'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

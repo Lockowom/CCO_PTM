@@ -64,6 +64,12 @@ export const APP_ROUTES = [
   { value: '/inventory/conteo?tab=ajuste', label: 'Inventario - Conteo · Ajuste ERP', module: 'inventario' },
   { value: '/inventory/conteo?tab=bloques', label: 'Inventario - Conteo · Bloques/QR', module: 'inventario' },
   { value: '/inventory/conteo?tab=proyeccion', label: 'Inventario - Conteo · Proyección', module: 'inventario' },
+  { value: '/inventory/analisis', label: 'Inventario - Análisis · Resumen', module: 'inventario' },
+  { value: '/inventory/analisis?tab=antiguos_disp', label: 'Inventario - Análisis · Antiguos c/Disponible', module: 'inventario' },
+  { value: '/inventory/analisis?tab=no_activos_stock', label: 'Inventario - Análisis · No Activos c/Stock', module: 'inventario' },
+  { value: '/inventory/analisis?tab=duplicados', label: 'Inventario - Análisis · Duplicados', module: 'inventario' },
+  { value: '/inventory/analisis?tab=anomalias', label: 'Inventario - Análisis · Anomalías', module: 'inventario' },
+  { value: '/inventory/analisis?tab=detalle', label: 'Inventario - Análisis · Detalle', module: 'inventario' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },

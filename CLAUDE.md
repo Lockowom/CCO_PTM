@@ -88,6 +88,20 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     hilo ordenado). Frontend: pestaña **Bandeja Correos** (`TabBandeja`) con chip **Interno/Externo**
     (`DOMINIOS_INTERNOS`, `ptm.cl`) y **lector estilo Outlook** (`ThreadReader`).
 
+## Módulo nativo: Análisis de Códigos (Inventario)
+- **Análisis de Códigos** (`/inventory/analisis`, port del Excel "STOCK NAME" de PTM): mide el avance
+  de la actualización de códigos a la nomenclatura **P/S** y sus riesgos. Migración `067`:
+  tabla `tms_productos_activo` (catálogo Activo Si/No del ERP, se carga desde la propia pantalla
+  vía `bulk_upsert` — tabla agregada a su allowlist) + RPCs `analisis_codigos(filtro,q)` y
+  `analisis_codigos_resumen()` que calculan EN VIVO sobre `tms_inventario_general` (sumado por SKU
+  entre bodegas; se carga por Carga Masiva → Consolidado): estado Nuevo (P)/Nuevo (S)/Antiguo,
+  antiguos con Disponible, duplicados por descripción contra P/S (+código equivalente), activos/no
+  activos/no encontrados, no activos con stock y **anomalías** con diagnóstico (punto final, código
+  corto, sin dígitos, sufijo inválido, filas de prueba). Frontend `src/pages/Inventory/AnalisisCodigos.jsx`
+  (secciones por menú `?tab=`), servicio `src/services/analisisService.js`, export Excel de 6 hojas.
+  Permisos: los de bodega/stock existentes (sin permiso nuevo). El "HUB" de pallets del Excel ya
+  existía como Conteo · Proyección.
+
 ## Regla permanente: checklist al agregar un MÓDULO nuevo
 Cada módulo/pantalla nueva DEBE quedar administrable en **Roles** y **Vistas**. En el mismo
 cambio, actualizar SIEMPRE:

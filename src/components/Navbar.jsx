@@ -139,7 +139,13 @@ const Navbar = () => {
             { label: 'Conteo · Conciliación', path: '/inventory/conteo?tab=conciliacion', icon: <ClipboardCheck size={16} /> },
             { label: 'Conteo · Ajuste ERP', path: '/inventory/conteo?tab=ajuste', icon: <FileBarChart size={16} /> },
             { label: 'Conteo · Bloques / QR', path: '/inventory/conteo?tab=bloques', icon: <Scan size={16} /> },
-            { label: 'Conteo · Proyección', path: '/inventory/conteo?tab=proyeccion', icon: <TrendingUp size={16} /> }
+            { label: 'Conteo · Proyección', path: '/inventory/conteo?tab=proyeccion', icon: <TrendingUp size={16} /> },
+            { label: 'Análisis · Resumen', path: '/inventory/analisis', icon: <FileBarChart size={16} /> },
+            { label: 'Análisis · Antiguos c/ Disponible', path: '/inventory/analisis?tab=antiguos_disp', icon: <Siren size={16} /> },
+            { label: 'Análisis · No Activos c/ Stock', path: '/inventory/analisis?tab=no_activos_stock', icon: <Siren size={16} /> },
+            { label: 'Análisis · Duplicados', path: '/inventory/analisis?tab=duplicados', icon: <Layers size={16} /> },
+            { label: 'Análisis · Anomalías', path: '/inventory/analisis?tab=anomalias', icon: <FileSearch size={16} /> },
+            { label: 'Análisis · Detalle completo', path: '/inventory/analisis?tab=detalle', icon: <FileText size={16} /> }
           ]
         }
       ]
