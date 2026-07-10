@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
-import { APP_PERMISSIONS } from '../../config/modules';
+import { APP_PERMISSIONS, APP_ROUTES } from '../../config/modules';
+import { accesosConPermisos } from '../../constants/permissions';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
@@ -32,7 +33,7 @@ const modules = APP_PERMISSIONS.map(m => ({
   icon: MODULE_ICONS[m.id] || <Shield size={16} />
 }));
 
-const RolesPage = () => {
+const RolesPage = ({ embedded = false }) => {
   const { refreshPermissions } = useAuth();
   const queryClient = useQueryClient();
   const containerRef = React.useRef();
@@ -73,6 +74,7 @@ const RolesPage = () => {
           id: roleId,
           nombre: roleName,
           descripcion: roleData.descripcion,
+          landing_page: roleData.landing_page || null,
           permisos_json: roleData.permisos || []
         }, { onConflict: 'id' });
 
@@ -107,13 +109,40 @@ const RolesPage = () => {
     }
   });
 
+  // Usuarios que tienen el rol seleccionado (precisión: ver a quién afecta).
+  const { data: usuariosRol = [] } = useQuery({
+    queryKey: ['rol_usuarios', selectedRole?.id || ''],
+    enabled: !!selectedRole?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from('tms_usuarios')
+        .select('nombre, activo').eq('rol', selectedRole.id).order('nombre');
+      return data || [];
+    },
+  });
+
   const handleCreateRole = () => {
     setSelectedRole({
       id: '',
       nombre: 'Nuevo Rol',
       descripcion: 'Descripción del rol',
+      landing_page: '',
       usuarios: 0,
       permisos: []
+    });
+    setIsCreating(true);
+    setIsEditing(true);
+  };
+
+  // Duplicar un rol existente (mismos permisos y landing, nuevo nombre/ID).
+  const handleDuplicateRole = (role, e) => {
+    e?.stopPropagation();
+    setSelectedRole({
+      id: '',
+      nombre: `${role.nombre} (copia)`,
+      descripcion: role.descripcion || '',
+      landing_page: role.landing_page || '',
+      usuarios: 0,
+      permisos: [...(role.permisos || [])],
     });
     setIsCreating(true);
     setIsEditing(true);
@@ -161,8 +190,9 @@ const RolesPage = () => {
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col space-y-4 sm:space-y-6 bg-slate-50 p-3 sm:p-6 min-h-screen">
-      {/* Header */}
+    <div ref={containerRef} className={embedded ? 'flex flex-col space-y-4 sm:space-y-6' : 'h-full flex flex-col space-y-4 sm:space-y-6 bg-slate-50 p-3 sm:p-6 min-h-screen'}>
+      {/* Header (oculto en modo embebido: la cabecera vive en AccessControl) */}
+      {!embedded && (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 bg-white p-4 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60"></div>
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"></div>
@@ -187,6 +217,7 @@ const RolesPage = () => {
           </button>
         )}
       </div>
+      )}
 
       <div className="flex flex-col gap-8 flex-1">
         {(!selectedRole || isCreating) && !isEditing ? (
@@ -205,11 +236,17 @@ const RolesPage = () => {
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${role.id === 'ADMIN' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
                     {role.id === 'ADMIN' ? <Lock size={28} /> : <Users size={28} />}
                   </div>
-                  {role.id !== 'ADMIN' && (
-                    <span className="bg-slate-50 text-slate-500 border border-slate-100 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
-                      {role.usuarios} usuarios
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {role.id !== 'ADMIN' && (
+                      <span className="bg-slate-50 text-slate-500 border border-slate-100 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                        {role.usuarios} usuarios
+                      </span>
+                    )}
+                    <button onClick={(e) => handleDuplicateRole(role, e)} title="Duplicar rol (mismos permisos)"
+                      className="p-2 rounded-xl border border-slate-100 text-slate-300 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all">
+                      <Layers size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-emerald-600 transition-colors tracking-tight">
@@ -281,6 +318,20 @@ const RolesPage = () => {
                           placeholder="Descripción breve del rol"
                         />
                       </div>
+                      <div className="flex-1 w-full">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Página de inicio</label>
+                        <select
+                          value={selectedRole.landing_page || ''}
+                          onChange={e => setSelectedRole({ ...selectedRole, landing_page: e.target.value })}
+                          className="w-full text-sm font-bold text-slate-700 bg-white border-2 border-slate-200 focus:border-emerald-500 outline-none rounded-xl px-3 py-2.5 transition-all"
+                        >
+                          <option value="">— Por defecto —</option>
+                          {APP_ROUTES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                        </select>
+                        {isCreating && selectedRole.nombre && (
+                          <p className="text-[10px] text-slate-400 font-bold mt-1.5">ID del rol: {selectedRole.nombre.toUpperCase().replace(/\s+/g, '_')}</p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div>
@@ -343,6 +394,46 @@ const RolesPage = () => {
 
             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-3 sm:p-12">
               <div className="max-w-7xl mx-auto">
+                {/* PRECISIÓN: qué otorga este set de permisos + a quién afecta (en vivo) */}
+                {(() => {
+                  const { modulos } = accesosConPermisos(selectedRole.permisos || []);
+                  const landingLabel = APP_ROUTES.find(r => r.value === selectedRole.landing_page)?.label;
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                      <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">
+                          Accesos que otorga {isEditing ? '(se actualiza al marcar permisos)' : ''}
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {modulos.map(m => (
+                            <span key={m.id} title={m.rutas.map(r => r.label).join('\n')}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-black ${m.soloAdmin ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                              {m.label} · {m.rutas.length} pantalla(s)
+                            </span>
+                          ))}
+                          {modulos.length === 0 && <span className="text-slate-400 text-sm font-bold">Sin accesos aún — marca permisos abajo y verás aquí qué pantallas desbloquean.</span>}
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-slate-500">
+                          {landingLabel && <span>Inicio: <b className="text-slate-700">{landingLabel}</b></span>}
+                          <span>{(selectedRole.permisos || []).length} permiso(s) marcados</span>
+                          {modulos.some(m => m.soloAdmin) && <span className="text-orange-600 font-bold">Configuración requiere además rol ADMIN</span>}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Usuarios con este rol ({usuariosRol.length})</h4>
+                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                          {usuariosRol.map((u, i) => (
+                            <span key={i} className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold ${u.activo ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-100 text-slate-400 border-slate-200 line-through'}`}>
+                              {u.nombre}
+                            </span>
+                          ))}
+                          {usuariosRol.length === 0 && <span className="text-slate-400 text-xs font-bold">Nadie tiene este rol todavía.</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex items-center justify-between mb-10">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
                     <Shield size={20} className="text-emerald-500" /> Configuración de Accesos por Módulo

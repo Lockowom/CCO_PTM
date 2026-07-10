@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { accesosConPermisos } from '../../constants/permissions';
+import { APP_ROUTES } from '../../config/modules';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
@@ -13,7 +15,7 @@ import { toast } from 'sonner';
 // Las contraseñas ahora se gestionan via Supabase Auth + RPCs server-side
 // create_auth_user() y update_auth_password() en la BD
 
-const UsersPage = () => {
+const UsersPage = ({ embedded = false }) => {
   const queryClient = useQueryClient();
   const containerRef = useRef(null);
   const modalRef = useRef(null);
@@ -47,7 +49,7 @@ const UsersPage = () => {
   const { data: roles = [], isLoading: loadingRoles } = useQuery({
     queryKey: ['admin_roles'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tms_roles').select('id, nombre').order('nombre');
+      const { data, error } = await supabase.from('tms_roles').select('id, nombre, descripcion, landing_page, permisos_json').order('nombre');
       if (error) throw error;
       return data || [];
     }
@@ -261,25 +263,27 @@ const UsersPage = () => {
   );
 
   return (
-    <div ref={containerRef} className="space-y-4 sm:space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-3 sm:p-6 text-slate-700">
+    <div ref={containerRef} className={embedded ? 'space-y-4 sm:space-y-8 text-slate-700 relative' : 'space-y-4 sm:space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-3 sm:p-6 text-slate-700'}>
       
       {/* Background Decorativo */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
         <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/10 blur-[100px] rounded-full"></div>
       </div>
 
-      {/* Header */}
+      {/* Header (oculto en modo embebido: la cabecera vive en AccessControl) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-        <div>
-          <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-sm">
-              <Users className="text-indigo-400" size={28} />
-            </div>
-            Control de <span className="text-indigo-400">Accesos</span>
-          </h1>
-          <p className="text-slate-500 text-sm mt-2 font-medium">Administración centralizada de usuarios y roles del sistema</p>
-        </div>
-        <div className="flex gap-3">
+        {!embedded && (
+          <div>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-sm">
+                <Users className="text-indigo-400" size={28} />
+              </div>
+              Control de <span className="text-indigo-400">Accesos</span>
+            </h1>
+            <p className="text-slate-500 text-sm mt-2 font-medium">Administración centralizada de usuarios y roles del sistema</p>
+          </div>
+        )}
+        <div className="flex gap-3 md:ml-auto">
           <button
             onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_users'] })}
             className="p-3 text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-600 rounded-xl transition-all shadow-sm"
@@ -530,6 +534,34 @@ const UsersPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Resumen PRECISO del rol elegido: qué otorga antes de guardar */}
+                {formData.rol && (() => {
+                  const rolSel = roles.find(r => r.id === formData.rol);
+                  if (!rolSel) return null;
+                  const permisos = rolSel.permisos_json || [];
+                  const { modulos } = accesosConPermisos(permisos);
+                  const landing = APP_ROUTES.find(r => r.value === rolSel.landing_page)?.label || rolSel.landing_page;
+                  return (
+                    <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 text-xs space-y-2">
+                      <div className="font-black text-indigo-800">
+                        Este rol otorga {permisos.length} permiso(s) · verá {modulos.length} módulo(s)
+                        {rolSel.descripcion ? <span className="font-medium text-indigo-500"> — {rolSel.descripcion}</span> : null}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {modulos.map(m => (
+                          <span key={m.id} title={m.rutas.map(r => r.label).join('\n')}
+                            className={`px-2 py-0.5 rounded-md border font-bold ${m.soloAdmin ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-white text-indigo-700 border-indigo-200'}`}>
+                            {m.label} · {m.rutas.length}
+                          </span>
+                        ))}
+                        {modulos.length === 0 && <span className="text-indigo-400 font-medium">Sin accesos — configura los permisos del rol en la pestaña Roles.</span>}
+                      </div>
+                      {landing && <div className="text-indigo-600">Página de inicio: <b>{landing}</b></div>}
+                      {modulos.some(m => m.soloAdmin) && <div className="text-orange-600 text-[11px]">Las rutas de Configuración además requieren rol ADMIN.</div>}
+                    </div>
+                  );
+                })()}
 
                 <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 mt-4 flex items-start gap-3">
                   <div className="bg-amber-500/20 text-amber-400 p-2 rounded-lg flex-shrink-0 mt-1">

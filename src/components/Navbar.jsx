@@ -163,8 +163,7 @@ const Navbar = () => {
       title: "Sistema",
       items: [
         { id: 'admin', label: 'Configuración', icon: <Settings size={18} />, modules: [
-            { label: 'Usuarios', path: '/admin/users', icon: <Users size={16} /> },
-            { label: 'Roles', path: '/admin/roles', icon: <Lock size={16} /> },
+            { label: 'Usuarios y Roles', path: '/admin/users', icon: <Users size={16} /> },
             { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },

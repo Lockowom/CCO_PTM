@@ -68,8 +68,8 @@ export const APP_ROUTES = [
   { value: '/postventa/tickets?tab=dashboard', label: 'Post-Venta - Dashboard', module: 'postventa' },
 
   // System
-  { value: '/admin/users', label: 'Admin - Usuarios', module: 'admin' },
-  { value: '/admin/roles', label: 'Admin - Roles', module: 'admin' },
+  { value: '/admin/users', label: 'Admin - Usuarios y Roles', module: 'admin' },
+  { value: '/admin/roles', label: 'Admin - Roles y Permisos', module: 'admin' },
   { value: '/admin/views', label: 'Admin - Vistas', module: 'admin' },
   { value: '/admin/cleanup', label: 'Admin - Limpieza', module: 'admin' },
   { value: '/admin/tickets', label: 'Admin - Tickets TI', module: 'admin' },

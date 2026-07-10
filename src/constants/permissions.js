@@ -69,3 +69,24 @@ export const ROUTE_PERMISSIONS = {
 // La visibilidad de secciones/módulos en el Navbar se DERIVA de ROUTE_PERMISSIONS
 // (una sección se muestra si el usuario puede acceder a ≥1 de sus rutas). No mantener
 // una lista de permisos por sección por separado: causaba desincronización.
+
+// ── Vista previa de accesos ─────────────────────────────────────────────────
+// Dado el set de permisos de un rol, calcula QUÉ rutas/módulos desbloquea
+// (cruzando ROUTE_PERMISSIONS con el catálogo APP_ROUTES/APP_MODULES). Alimenta
+// el resumen del rol en Admin → Usuarios y Roles. Nota: las rutas del módulo
+// "admin" además exigen rol ADMIN en el Navbar.
+import { APP_ROUTES, APP_MODULES } from '../config/modules';
+
+export function accesosConPermisos(permisos = []) {
+  const set = new Set(permisos || []);
+  const rutas = APP_ROUTES.filter((r) => {
+    const req = ROUTE_PERMISSIONS[String(r.value).split('?')[0]];
+    return Array.isArray(req) && req.some((p) => set.has(p));
+  });
+  const porModulo = {};
+  rutas.forEach((r) => { (porModulo[r.module] ||= []).push(r); });
+  const modulos = APP_MODULES
+    .filter((m) => (porModulo[m.id] || []).length > 0)
+    .map((m) => ({ id: m.id, label: m.label, rutas: porModulo[m.id], soloAdmin: m.id === 'admin' }));
+  return { rutas, modulos };
+}

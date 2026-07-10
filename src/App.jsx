@@ -64,9 +64,8 @@ const BloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle')
 const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
-const Users = React.lazy(() => import('./pages/Admin/Users'));
+const AccessControl = React.lazy(() => import('./pages/Admin/AccessControl')); // Usuarios y Roles unificados
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
-const Roles = React.lazy(() => import('./pages/Admin/Roles'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
 const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
 const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
@@ -381,8 +380,8 @@ function AppContent() {
           <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><BloqueDetalle /></ErrorBoundary>} />
 
           {/* Admin Modules */}
-          <Route path="admin/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
-          <Route path="admin/roles" element={<ErrorBoundary><Roles /></ErrorBoundary>} />
+          <Route path="admin/users" element={<ErrorBoundary><AccessControl /></ErrorBoundary>} />
+          <Route path="admin/roles" element={<ErrorBoundary><AccessControl /></ErrorBoundary>} />
           <Route path="admin/views" element={<ErrorBoundary><Views /></ErrorBoundary>} />
           <Route path="admin/cleanup" element={<ErrorBoundary><Cleanup /></ErrorBoundary>} />
           <Route path="admin/tickets" element={<ErrorBoundary><Tickets /></ErrorBoundary>} />
