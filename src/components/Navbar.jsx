@@ -132,6 +132,8 @@ const Navbar = () => {
         },
         { id: 'inventario', label: 'Inventario', icon: <Warehouse size={18} />, modules: [
             { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> },
+            { label: 'Mapa de Calor', path: '/queries/heatmap', icon: <Activity size={16} /> },
+            { label: 'Gestión de Ubicaciones', path: '/admin/locations', icon: <MapPin size={16} /> },
             { label: 'Conteo · Contar', path: '/inventory/conteo', icon: <Package size={16} /> },
             { label: 'Conteo · Sesiones', path: '/inventory/conteo?tab=sesiones', icon: <Layers size={16} /> },
             { label: 'Conteo · Conciliación', path: '/inventory/conteo?tab=conciliacion', icon: <ClipboardCheck size={16} /> },
@@ -149,7 +151,6 @@ const Navbar = () => {
         { id: 'queries', label: 'Consultas', icon: <Search size={18} />, modules: [
             { label: 'Lotes/Series', path: '/queries/batches', icon: <Barcode size={16} /> },
             { label: 'Ficha Técnica', path: '/queries/datasheet', icon: <ScanLine size={16} /> },
-            { label: 'Mapa Calor', path: '/queries/heatmap', icon: <Activity size={16} /> },
             { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPin size={16} /> },
             { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileSearch size={16} /> },
             { label: 'Estado N.V.', path: '/queries/sales-status', icon: <History size={16} /> },
@@ -189,7 +190,6 @@ const Navbar = () => {
             { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
-            { label: 'Gestión Ubicaciones', path: '/admin/locations', icon: <MapPin size={16} /> },
             { label: 'Bodegas Softland', path: '/admin/bodegas-softland', icon: <Package size={16} /> },
             { label: 'Monitor', path: '/admin/monitor', icon: <Activity size={16} /> },
             { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }

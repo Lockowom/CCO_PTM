@@ -48,13 +48,16 @@ export const APP_ROUTES = [
   { value: '/queries/sales-status', label: 'Consultas - Estado N.V.', module: 'queries' },
   { value: '/queries/addresses', label: 'Consultas - Direcciones', module: 'queries' },
   { value: '/queries/locations', label: 'Consultas - Ubicaciones', module: 'queries' },
-  { value: '/queries/heatmap', label: 'Consultas - Mapa Calor', module: 'queries' },
   { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.', module: 'queries' },
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
 
   // Inventario
   { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
+  // Reubicados al módulo Inventario (2026-07-10): conservan su URL histórica
+  // para no romper accesos directos ni landing pages ya guardadas en roles.
+  { value: '/queries/heatmap', label: 'Inventario - Mapa de Calor', module: 'inventario' },
+  { value: '/admin/locations', label: 'Inventario - Gestión de Ubicaciones', module: 'inventario' },
   { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico (Contar)', module: 'inventario' },
   { value: '/inventory/conteo?tab=sesiones', label: 'Inventario - Conteo · Sesiones', module: 'inventario' },
   { value: '/inventory/conteo?tab=conciliacion', label: 'Inventario - Conteo · Conciliación', module: 'inventario' },
@@ -82,7 +85,6 @@ export const APP_ROUTES = [
   { value: '/admin/cleanup', label: 'Admin - Limpieza', module: 'admin' },
   { value: '/admin/tickets', label: 'Admin - Tickets TI', module: 'admin' },
   { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' },
-  { value: '/admin/locations', label: 'Admin - Gestión Ubicaciones', module: 'admin' },
   { value: '/admin/bodegas-softland', label: 'Admin - Bodegas Softland', module: 'admin' },
   { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' }
 ];
@@ -122,7 +124,12 @@ export const APP_PERMISSIONS = [
       // manage_inventory, view_stock, view_batches o view_reception.
       { id: 'view_conteo', label: 'Ver Conteo Cíclico' },
       { id: 'manage_conteo', label: 'Contar (Conteo Cíclico)' },
-      { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' }
+      { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' },
+      // Reubicado desde Administración (2026-07-10): la gestión de ubicaciones
+      // y el mapa de calor son operación de bodega. El Mapa de Calor se abre
+      // con view_locations (permiso del grupo Consultas, compartido con
+      // Consultas → Ubicaciones).
+      { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS (y Bodegas Softland)' }
     ]
   },
   {
@@ -199,8 +206,7 @@ export const APP_PERMISSIONS = [
       { id: 'manage_tickets', label: 'Gestionar Tickets' },
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
       { id: 'admin_monitor', label: 'Monitor Tiempo Real' },
-      { id: 'manage_cleanup', label: 'Limpieza de Datos' },
-      { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS' }
+      { id: 'manage_cleanup', label: 'Limpieza de Datos' }
     ]
   }
 ];
