@@ -68,6 +68,19 @@ const Navbar = () => {
     return permList.some(perm => hasPermission(perm));
   };
 
+  // ¿El item del menú corresponde a la pantalla actual? Los items con deep-link
+  // (?tab=…) solo están activos si coincide la ruta Y la pestaña; el item base
+  // (sin ?tab) solo cuando la URL no trae pestaña. Antes se comparaba solo el
+  // pathname y el item base quedaba "encendido" para todas las pestañas
+  // (Conteo · Contar se veía activo estando en Ajuste ERP, ídem Post-Venta).
+  const esRutaActiva = (path) => {
+    const [base, query] = String(path).split('?');
+    if (location.pathname !== base) return false;
+    const tabItem = query ? new URLSearchParams(query).get('tab') : null;
+    const tabActual = new URLSearchParams(location.search).get('tab');
+    return (tabItem || null) === (tabActual || null);
+  };
+
   // Un módulo/sección del navbar se muestra si está habilitado (Vistas) y el usuario
   // puede acceder a AL MENOS una de sus rutas. La visibilidad queda SIEMPRE derivada de
   // los permisos por ruta → se sincroniza sola al agregar/quitar módulos o permisos.
@@ -244,7 +257,7 @@ const Navbar = () => {
             if (visibleItems.length === 0) return null;
 
             return visibleItems.map((item) => {
-              const isActive = (item.path && location.pathname.startsWith(item.path)) || (item.modules && item.modules.some(m => location.pathname === m.path));
+              const isActive = (item.path && location.pathname.startsWith(item.path)) || (item.modules && item.modules.some(m => esRutaActiva(m.path)));
               const isOpen = activeDropdown === item.id;
 
               return (
@@ -295,19 +308,19 @@ const Navbar = () => {
                                     key={module.path}
                                     to={module.path}
                                     className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all group/item
-                                      ${location.pathname === module.path 
+                                      ${esRutaActiva(module.path) 
                                         ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-xl shadow-orange-200' 
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
                                   >
                                     <div className={`p-2 rounded-lg transition-colors
-                                      ${location.pathname === module.path 
+                                      ${esRutaActiva(module.path) 
                                         ? 'bg-white/20 text-white' 
                                         : 'bg-orange-50 text-orange-500 group-hover/item:bg-orange-100'}`}>
                                       {module.icon}
                                     </div>
                                     <div className="flex flex-col">
                                       <span className="text-sm font-black tracking-tight">{module.label}</span>
-                                      {location.pathname !== module.path && (
+                                      {!esRutaActiva(module.path) && (
                                         <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-slate-500 transition-colors uppercase tracking-widest">Acceso Directo</span>
                                       )}
                                     </div>
@@ -410,7 +423,7 @@ const Navbar = () => {
                   <div className="space-y-1">
                     {visibleItems.map((item) => {
                       const isExpanded = activeDropdown === item.id;
-                      const isActive = item.path ? location.pathname.startsWith(item.path) : (item.modules && item.modules.some(m => location.pathname === m.path));
+                      const isActive = item.path ? location.pathname.startsWith(item.path) : (item.modules && item.modules.some(m => esRutaActiva(m.path)));
 
                       return item.isLink ? (
                         <Link
@@ -449,7 +462,7 @@ const Navbar = () => {
                                   to={module.path}
                                   onClick={() => setMobileMenuOpen(false)}
                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all
-                                    ${location.pathname === module.path 
+                                    ${esRutaActiva(module.path) 
                                       ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
                                       : 'text-slate-500 hover:text-orange-600 hover:bg-white'}`}
                                 >
