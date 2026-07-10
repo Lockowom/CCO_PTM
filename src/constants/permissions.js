@@ -45,6 +45,8 @@ export const ROUTE_PERMISSIONS = {
   // Análisis de Códigos (port del Excel de actualización P/S). Mismos permisos
   // de bodega/stock; la RPC re-verifica server-side (mig 067).
   '/inventory/analisis': ['manage_inventory', 'view_stock', 'view_batches', 'manage_data_import'],
+  // Carteles de bodega (impresión único/doble/cuádruple con CODE128).
+  '/inventory/carteles': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

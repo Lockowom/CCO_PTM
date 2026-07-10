@@ -102,6 +102,15 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   Permisos: los de bodega/stock existentes (sin permiso nuevo). El "HUB" de pallets del Excel ya
   existía como Conteo · Proyección.
 
+## Módulo nativo: Carteles de Bodega (Inventario)
+- **Carteles de Bodega** (`/inventory/carteles`, port del Excel "CARTELES PTM"): impresión de
+  carteles de producto (código gigante + descripción + código de barras **CODE128** generado al
+  vuelo con `src/lib/code128.js`, sin dependencias) en formatos **Único / Doble / Cuádruple**
+  (1/2/4 por hoja A4, `window.print` con CSS de impresión). La "tabla de códigos" del Excel (hoja
+  BD) ES la tabla maestra existente `tms_matriz_codigos`: se busca ahí (con opción de código
+  manual), cola con copias por producto y vista previa fiel. Sin migración (sin tablas ni permisos
+  nuevos; usa permisos de bodega). Frontend `src/pages/Inventory/Carteles.jsx`.
+
 ## Regla permanente: checklist al agregar un MÓDULO nuevo
 Cada módulo/pantalla nueva DEBE quedar administrable en **Roles** y **Vistas**. En el mismo
 cambio, actualizar SIEMPRE:

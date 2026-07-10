@@ -70,6 +70,7 @@ export const APP_ROUTES = [
   { value: '/inventory/analisis?tab=duplicados', label: 'Inventario - Análisis · Duplicados', module: 'inventario' },
   { value: '/inventory/analisis?tab=anomalias', label: 'Inventario - Análisis · Anomalías', module: 'inventario' },
   { value: '/inventory/analisis?tab=detalle', label: 'Inventario - Análisis · Detalle', module: 'inventario' },
+  { value: '/inventory/carteles', label: 'Inventario - Carteles de Bodega', module: 'inventario' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
