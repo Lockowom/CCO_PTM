@@ -931,6 +931,23 @@ export function useAccionATicketPv() {
   });
 }
 
+// "Correo enviado" desde Inventario (carpeta CALIDAD TRAZABILIDAD en Traspasos):
+// resuelve la tarea de Calidad automáticamente según el dictamen (acuse auto
+// "Correo de traspaso enviado · Dictamen X · Acción Y → BD Z").
+export function useAccionCorreoEnviado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ accionId, referencia }) => {
+      const { data, error } = await supabase.rpc('accion_correo_enviado', {
+        p_accion_id: accionId, p_referencia: referencia || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_acciones'] }),
+  });
+}
+
 // Registrar la referencia de ejecución (traspaso/correo generado por Inventario)
 // → la acción pasa a EN_PROCESO y queda en la trazabilidad.
 export function useAccionReferencia() {
