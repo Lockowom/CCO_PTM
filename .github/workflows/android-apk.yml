@@ -54,17 +54,22 @@ jobs:
       - name: Sincronizar Capacitor (copia el web al proyecto Android)
         run: npx cap sync android
 
-      # --- Firma de release (solo variant=release y si están los secretos) ---
+      # --- Firma de release (solo variant=release) ---
       - name: Preparar keystore de release
-        if: ${{ github.event.inputs.variant == 'release' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ github.event.inputs.variant == 'release' }}
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KS_KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/cco-release.jks
-          cat > android/keystore.properties <<EOF
-          storeFile=cco-release.jks
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          EOF
+          if [ -z "$KS" ]; then
+            echo "::error::Faltan los secretos del keystore (ANDROID_KEYSTORE_BASE64, etc.) para la variante release."
+            exit 1
+          fi
+          echo "$KS" | base64 -d > android/cco-release.jks
+          printf 'storeFile=cco-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$KS_PW" "$KS_ALIAS" "$KS_KEY_PW" > android/keystore.properties
 
       - name: Compilar APK
         run: |
