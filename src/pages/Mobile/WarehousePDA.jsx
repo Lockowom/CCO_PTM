@@ -227,7 +227,7 @@ const WarehousePDA = () => {
 
   if (mode === 'HOME') {
     return (
-      <div className="min-h-dvh bg-slate-900 text-white flex flex-col">
+      <div key="home" className="anim-slide-in min-h-dvh bg-slate-900 text-white flex flex-col">
         {/* Top Bar (respeta el notch / barra de estado) */}
         <div className="bg-white text-slate-900 p-3 sm:p-4 flex justify-between items-center shadow-md" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2 min-w-0">
@@ -306,7 +306,7 @@ const WarehousePDA = () => {
     const currentStepIdx = steps.indexOf(putawayStep) + 1;
 
     return (
-      <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
+      <div key="putaway" className="anim-slide-in min-h-dvh bg-black text-white flex flex-col font-mono">
         {/* Header (respeta el notch / barra de estado) */}
         <div className="bg-emerald-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">

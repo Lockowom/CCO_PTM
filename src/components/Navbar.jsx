@@ -18,6 +18,9 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ROUTE_PERMISSIONS } from '../constants/permissions';
 
+// Versión instalada (inyectada por Vite desde package.json).
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -485,6 +488,10 @@ const Navbar = () => {
                 </div>
               );
             })}
+          </div>
+          {/* Versión instalada (visible en el menú móvil) */}
+          <div className="shrink-0 border-t border-slate-100 px-4 py-3 text-center bg-white">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">CCO WMS · v{APP_VERSION}</span>
           </div>
         </div>
       </div>

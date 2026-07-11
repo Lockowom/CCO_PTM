@@ -68,7 +68,7 @@ const ConsultaPDA = ({ onHome }) => {
   const onSubmit = (e) => { e.preventDefault(); buscar(); };
 
   return (
-    <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
+    <div className="anim-slide-in min-h-dvh bg-black text-white flex flex-col font-mono">
       {/* Header (respeta el notch/barra de estado) */}
       <div className="bg-blue-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-2">
