@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Scan, Package, ArrowRight, CheckCircle,
   AlertTriangle, RotateCcw, Search, LogOut,
-  Box, MapPin, ClipboardList, ArrowLeft, Wifi,
+  Box, MapPin, ClipboardList, ArrowLeft, Wifi, WifiOff,
   Plus, Minus, ChevronRight, Archive, Camera
 } from 'lucide-react';
 import { supabase } from '../../supabase';
@@ -11,7 +11,12 @@ import gsap from 'gsap';
 import { toast } from 'sonner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import ConteoPDA from './ConteoPDA';
+import ConsultaPDA from './ConsultaPDA';
+
+// Versión real de la app (inyectada por Vite desde package.json).
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
 
 // ============================================================================
 // WMS PDA / HANDHELD MODE
@@ -29,6 +34,7 @@ const hapticError = async () => {
 const WarehousePDA = () => {
   const { user, logout } = useAuth();
   const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
+  const online = useOnlineStatus();
   const [mode, setMode] = useState('HOME'); // HOME, PUTAWAY, INVENTORY, QUERY
   const [scannedValue, setScannedValue] = useState('');
 
@@ -180,23 +186,33 @@ const WarehousePDA = () => {
   if (mode === 'HOME') {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-        {/* Top Bar */}
-        <div className="bg-white p-3 sm:p-4 flex justify-between items-center shadow-md">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold flex-shrink-0">
-              {user?.email?.charAt(0).toUpperCase()}
+        {/* Top Bar (respeta el notch / barra de estado) */}
+        <div className="bg-white text-slate-900 p-3 sm:p-4 flex justify-between items-center shadow-md" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+              {(user?.nombre || user?.email || '?').charAt(0).toUpperCase()}
             </div>
-            <div className="text-xs">
-              <div className="font-bold">{user?.email?.split('@')[0]}</div>
-              <div className="text-emerald-400 flex items-center gap-1">
-                <Wifi size={10} /> Online
-              </div>
+            <div className="text-xs min-w-0">
+              <div className="font-bold truncate">{user?.nombre || user?.email?.split('@')[0] || 'Operario'}</div>
+              {online ? (
+                <div className="text-emerald-600 flex items-center gap-1"><Wifi size={10} /> Conectado</div>
+              ) : (
+                <div className="text-rose-600 flex items-center gap-1 font-bold"><WifiOff size={10} /> Sin señal</div>
+              )}
             </div>
           </div>
-          <button onClick={logout} className="p-2 bg-slate-100 rounded-lg">
+          <button onClick={logout} className="p-2 bg-slate-100 rounded-lg active:bg-slate-200" aria-label="Cerrar sesión">
             <LogOut size={18} />
           </button>
         </div>
+
+        {/* Banner offline: en bodega el operario DEBE saber que no se guarda */}
+        {!online && (
+          <div className="bg-rose-600 text-white text-xs font-bold px-3 py-2 flex items-center gap-2">
+            <WifiOff size={14} className="shrink-0" />
+            Sin conexión: no escanees ni guardes hasta recuperar la señal.
+          </div>
+        )}
 
         {/* Menu Grid */}
         <div className="flex-1 p-3 sm:p-4 grid grid-cols-2 gap-3 sm:gap-4 content-start mt-3 sm:mt-4">
@@ -220,10 +236,8 @@ const WarehousePDA = () => {
           />
         </div>
 
-        <div className="p-4 text-center text-slate-500 text-xs font-mono">
-          WMS HANDHELD v2.0
-          <br />
-          Zebra / Honeywell Compatible
+        <div className="p-4 text-center text-slate-500 text-xs font-mono" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          WMS HANDHELD · v{APP_VERSION}
         </div>
       </div>
     );
@@ -237,15 +251,16 @@ const WarehousePDA = () => {
 
     return (
       <div className="min-h-screen bg-black text-white flex flex-col font-mono">
-        {/* Header */}
-        <div className="bg-emerald-900 p-3 flex justify-between items-center">
+        {/* Header (respeta el notch / barra de estado) */}
+        <div className="bg-emerald-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
-            <button onClick={goHome} className="text-emerald-300 hover:text-white">
+            <button onClick={goHome} className="text-emerald-300 hover:text-white" aria-label="Volver">
               <ArrowLeft size={20} />
             </button>
             <span className="text-sm font-bold text-emerald-300">PUTAWAY</span>
           </div>
           <div className="flex items-center gap-2">
+            {!online && <WifiOff size={13} className="text-rose-400" />}
             <Archive size={14} className="text-emerald-400" />
             <span className="text-xs text-emerald-400 font-bold">Items ubicados: {putawayCount}</span>
           </div>
@@ -416,51 +431,10 @@ const WarehousePDA = () => {
     return <ConteoPDA onHome={goHome} />;
   }
 
-  // ==================== QUERY PLACEHOLDER ====================
+  // ==================== CONSULTA DE STOCK (módulo real) ====================
 
   if (mode === 'QUERY') {
-    const isInventory = false;
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col font-mono">
-        {/* Header */}
-        <div className={`p-3 flex justify-between items-center ${isInventory ? 'bg-amber-900' : 'bg-blue-900'}`}>
-          <div className="flex items-center gap-2">
-            <button onClick={goHome} className={`${isInventory ? 'text-amber-300' : 'text-blue-300'} hover:text-white`}>
-              <ArrowLeft size={20} />
-            </button>
-            <span className={`text-sm font-bold ${isInventory ? 'text-amber-300' : 'text-blue-300'}`}>
-              {isInventory ? 'CONTEO CÍCLICO' : 'CONSULTA'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isInventory ? 'bg-amber-900/50' : 'bg-blue-900/50'}`}>
-            {isInventory
-              ? <RotateCcw size={40} className="text-amber-500" />
-              : <Search size={40} className="text-blue-500" />
-            }
-          </div>
-          <h2 className={`text-xl font-black ${isInventory ? 'text-amber-400' : 'text-blue-400'}`}>
-            Próximamente
-          </h2>
-          <p className="text-slate-500 text-sm text-center leading-relaxed">
-            {isInventory
-              ? 'El módulo de conteo cíclico estará disponible en la próxima actualización. Permitirá realizar conteos parciales y completos con validación en tiempo real.'
-              : 'El módulo de consulta permitirá buscar productos por SKU, ubicación o descripción y ver su stock disponible.'
-            }
-          </p>
-          <button
-            onClick={goHome}
-            className={`mt-4 px-6 py-3 rounded-xl font-bold active:scale-95 transition-transform ${
-              isInventory ? 'bg-amber-600 text-black' : 'bg-blue-600 text-white'
-            }`}
-          >
-            VOLVER AL MENÚ
-          </button>
-        </div>
-      </div>
-    );
+    return <ConsultaPDA onHome={goHome} />;
   }
 
   // Fallback

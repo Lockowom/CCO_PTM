@@ -2,9 +2,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { readFileSync } from 'fs'
+
+// Versión real de la app (package.json) expuesta al bundle como __APP_VERSION__
+// para mostrarla en el PDA/pie y que soporte sepa qué build corre.
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'))
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
