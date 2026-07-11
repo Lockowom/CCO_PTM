@@ -93,4 +93,19 @@ describe('Análisis de Códigos (Inventario) — port del Excel', () => {
     await waitFor(() => expect(screen.getByText(/Generar Ajuste/)).toBeInTheDocument());
     expect(screen.getByText(/Generar Traspaso/)).toBeInTheDocument();
   });
+
+  it('correo de Actualización de Códigos: crear con P/S y vencimiento requerido si P', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    wrap(<AnalisisCodigos />, '/inventory/analisis?tab=duplicados');
+    await waitFor(() => expect(screen.getByText('N010500035')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('checkbox')[1]);
+    fireEvent.click(await screen.findByText(/Correo Actualización de Códigos/));
+    // El modal precarga el código P/S equivalente y el selector Crear con P/S
+    await waitFor(() => expect(screen.getByText(/Correo · Actualización de Códigos/)).toBeInTheDocument());
+    expect(screen.getByDisplayValue('NGE10500035P')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/P \(con vencimiento\)/)).toBeInTheDocument();
+    // Con creación P y sin fecha, avisa que falta el vencimiento
+    expect(screen.getByText(/Falta la fecha de vencimiento/)).toBeInTheDocument();
+    expect(screen.getByText(/ACTUALIZACIÓN DE CÓDIGOS/)).toBeInTheDocument();
+  });
 });

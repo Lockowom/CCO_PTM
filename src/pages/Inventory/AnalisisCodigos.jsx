@@ -10,7 +10,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   BarChart3, Search, Download, Upload, RefreshCw, AlertTriangle, FileWarning,
-  CheckCircle2, XCircle, Layers, Database, Send, X, ExternalLink,
+  CheckCircle2, XCircle, Layers, Database, Send, X, ExternalLink, Mail, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -257,14 +257,18 @@ function TablaAnalisis({ filtro, titulo, alerta = false, conDiagnostico = false 
   );
 }
 
-// ─── Barra de acciones sobre la selección → Traspaso / Ajuste ────────────────
+// ─── Barra de acciones sobre la selección → Traspaso / Ajuste / Correo ───────
 function BarraSeleccion({ sel, setSel, rows }) {
-  const [modal, setModal] = useState(null); // 'traspasos' | 'ajustes'
+  const [modal, setModal] = useState(null); // 'traspasos' | 'ajustes' | 'correo'
   if (!sel.size) return null;
   const seleccionadas = rows.filter((r) => sel.has(r.codigo));
   return (
     <div className="flex items-center gap-2 flex-wrap bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
       <span className="text-xs font-black text-orange-700">{n(sel.size)} seleccionado{sel.size === 1 ? '' : 's'}</span>
+      <button onClick={() => setModal('correo')}
+        className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-black hover:bg-indigo-700 inline-flex items-center gap-1.5">
+        <Mail size={13} /> Correo Actualización de Códigos
+      </button>
       <button onClick={() => setModal('ajustes')}
         className="px-3 py-1.5 rounded-xl bg-orange-600 text-white text-xs font-black hover:bg-orange-700 inline-flex items-center gap-1.5">
         <Send size={13} /> Generar Ajuste
@@ -277,10 +281,190 @@ function BarraSeleccion({ sel, setSel, rows }) {
         className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-500 hover:bg-slate-50 inline-flex items-center gap-1">
         <X size={13} /> Limpiar
       </button>
-      {modal && (
+      {(modal === 'traspasos' || modal === 'ajustes') && (
         <EnviarEmilModal tipo={modal} rows={seleccionadas}
           onClose={(ok) => { setModal(null); if (ok) setSel(new Set()); }} />
       )}
+      {modal === 'correo' && (
+        <CorreoActualizacionModal rows={seleccionadas} onClose={() => setModal(null)} />
+      )}
+    </div>
+  );
+}
+
+// ─── Correo "Actualización de Códigos": crear con P o S (+vencimiento si P) ──
+// Por cada código antiguo seleccionado se informa CÓMO debe crearse el código
+// nuevo: con sufijo P (requiere fecha de vencimiento) o S, más el código
+// P/S equivalente si ya existe (editable). Genera el correo con tabla HTML.
+function CorreoActualizacionModal({ rows, onClose }) {
+  const { user } = useAuth();
+  const [dest, setDest] = useState(() => { try { return localStorage.getItem('analisis_correo_dest') || ''; } catch { return ''; } });
+  useEffect(() => { try { localStorage.setItem('analisis_correo_dest', dest); } catch { /* sin storage */ } }, [dest]);
+  const [obs, setObs] = useState('');
+  const [info, setInfo] = useState(() => {
+    const m = {};
+    rows.forEach((r) => {
+      m[r.codigo] = {
+        // Si ya existe un equivalente, hereda su sufijo; si no, P por defecto.
+        tipo: (r.ps_equivalente || '').trim().toUpperCase().endsWith('S') ? 'S' : 'P',
+        venc: '',
+        nuevo: r.ps_equivalente || '',
+      };
+    });
+    return m;
+  });
+  const set = (codigo, campo, v) => setInfo((m) => ({ ...m, [codigo]: { ...m[codigo], [campo]: v } }));
+  const sinVenc = rows.filter((r) => (info[r.codigo]?.tipo === 'P') && !info[r.codigo]?.venc);
+
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const fmtVenc = (v) => (v ? v.split('-').reverse().join('-') : 'POR DEFINIR');
+  const asunto = `Actualización de códigos a nomenclatura P/S — ${rows.length} código(s)`;
+
+  const cuerpo = [
+    'Estimados:', '',
+    `Se solicita la ACTUALIZACIÓN DE CÓDIGOS a la nomenclatura P/S de los siguientes productos (${hoy}):`, '',
+    ...rows.flatMap((r) => {
+      const i = info[r.codigo] || {};
+      return [
+        `• ${r.codigo} — ${r.producto || ''} (${r.unidad_medida || 'UNI'})`,
+        `   Stock: Disponible ${n(r.disponible)} · Total ${n(r.stock_total)}`,
+        `   Crear con: ${i.tipo}${i.tipo === 'P' ? ` · Vencimiento: ${fmtVenc(i.venc)}` : ''}${i.nuevo ? ` · Código nuevo: ${i.nuevo}` : ' · Código nuevo: POR CREAR'}`,
+      ];
+    }),
+    ...(obs.trim() ? ['', `Observaciones: ${obs.trim()}`] : []),
+    '', 'Atentamente,', user?.nombre || '', 'Generado desde CCO · Análisis de Códigos',
+  ].join('\n');
+
+  const td = 'padding:3px 8px;border:1px solid #cbd5e1';
+  const filaHtml = (r) => {
+    const i = info[r.codigo] || {};
+    return `<tr><td style="${td};font-family:monospace">${r.codigo}</td><td style="${td}">${(r.producto || '').replace(/</g, '&lt;')}</td><td style="${td}">${r.unidad_medida || ''}</td><td style="${td};text-align:right">${n(r.disponible)}</td><td style="${td};text-align:right">${n(r.stock_total)}</td><td style="${td};text-align:center;font-weight:bold;color:${i.tipo === 'P' ? '#c2410c' : '#0369a1'}">${i.tipo}</td><td style="${td};text-align:center">${i.tipo === 'P' ? fmtVenc(i.venc) : '—'}</td><td style="${td};font-family:monospace;font-weight:bold">${i.nuevo || 'POR CREAR'}</td></tr>`;
+  };
+  const html = `<p>Estimados:</p><p>Se solicita la <b>ACTUALIZACIÓN DE CÓDIGOS</b> a la nomenclatura P/S de los siguientes productos (${hoy}):</p>
+<table style="border-collapse:collapse;font-size:13px"><tr>${['Código antiguo', 'Descripción', 'UM', 'Disponible', 'Stock Total', 'Crear con', 'Vencimiento', 'Código nuevo'].map((h) => `<th style="padding:4px 8px;border:1px solid #94a3b8;background:#f1f5f9;text-align:left">${h}</th>`).join('')}</tr>${rows.map(filaHtml).join('')}</table>${obs.trim() ? `<p><b>Observaciones:</b> ${obs.trim().replace(/</g, '&lt;')}</p>` : ''}<p>Atentamente,<br/>${user?.nombre || ''}<br/><span style="color:#94a3b8;font-size:11px">Generado desde CCO · Análisis de Códigos</span></p>`;
+
+  const validar = () => {
+    if (sinVenc.length) {
+      toast.error(`Falta la fecha de vencimiento en ${n(sinVenc.length)} código(s) que se crean con P.`);
+      return false;
+    }
+    return true;
+  };
+  const copiar = async () => {
+    if (!validar()) return;
+    try {
+      if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([cuerpo], { type: 'text/plain' }),
+        })]);
+      } else {
+        await navigator.clipboard.writeText(cuerpo);
+      }
+      toast.success('Correo copiado — pégalo en Outlook (mantiene la tabla)');
+    } catch (_) {
+      try { await navigator.clipboard.writeText(cuerpo); toast.success('Correo copiado (texto plano)'); }
+      catch (e) { toast.error('No se pudo copiar'); }
+    }
+  };
+  const abrirCorreo = () => {
+    if (!validar()) return;
+    const url = `mailto:${encodeURIComponent(dest)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    if (url.length > 7500) {
+      toast.info('Selección muy grande para abrir directo: usa "Copiar" y pégalo en el correo.');
+      return;
+    }
+    window.location.href = url;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-4xl my-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 flex items-center gap-2">
+            <Mail size={17} className="text-indigo-500" /> Correo · Actualización de Códigos ({n(rows.length)})
+          </h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Para (opcional)</label>
+              <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="correo@ptm.cl; otro@ptm.cl"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Observaciones (opcional)</label>
+              <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Comentario general del correo…"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-slate-400 uppercase tracking-wide border-b border-slate-100 bg-slate-50/60">
+                  <th className="py-2 px-3">Código antiguo</th>
+                  <th className="py-2 pr-3">Producto</th>
+                  <th className="py-2 pr-3 text-right">Disp.</th>
+                  <th className="py-2 pr-3">Crear con</th>
+                  <th className="py-2 pr-3">Vencimiento</th>
+                  <th className="py-2 pr-3">Código nuevo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const i = info[r.codigo] || {};
+                  return (
+                    <tr key={r.codigo} className="border-b border-slate-50 align-middle">
+                      <td className="py-1.5 px-3 font-mono font-bold text-slate-800 whitespace-nowrap">{r.codigo}</td>
+                      <td className="py-1.5 pr-3 text-slate-600 max-w-[16rem] truncate" title={r.producto || ''}>{r.producto || '—'}</td>
+                      <td className="py-1.5 pr-3 text-right font-bold">{n(r.disponible)}</td>
+                      <td className="py-1.5 pr-3">
+                        <select value={i.tipo} onChange={(e) => set(r.codigo, 'tipo', e.target.value)}
+                          className={`px-2 py-1 rounded-lg border text-xs font-black ${i.tipo === 'P' ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-sky-300 bg-sky-50 text-sky-700'}`}>
+                          <option value="P">P (con vencimiento)</option>
+                          <option value="S">S (sin vencimiento)</option>
+                        </select>
+                      </td>
+                      <td className="py-1.5 pr-3">
+                        {i.tipo === 'P' ? (
+                          <input type="date" value={i.venc} onChange={(e) => set(r.codigo, 'venc', e.target.value)}
+                            className={`px-2 py-1 rounded-lg border text-xs ${i.venc ? 'border-slate-200' : 'border-rose-300 bg-rose-50'}`} />
+                        ) : <span className="text-slate-300">—</span>}
+                      </td>
+                      <td className="py-1.5 pr-3">
+                        <input value={i.nuevo} onChange={(e) => set(r.codigo, 'nuevo', e.target.value)} placeholder="POR CREAR"
+                          className="px-2 py-1 rounded-lg border border-slate-200 text-xs font-mono w-36" />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {sinVenc.length > 0 && (
+            <p className="text-xs font-bold text-rose-600">
+              ⚠ Falta la fecha de vencimiento en {n(sinVenc.length)} código(s) con creación P.
+            </p>
+          )}
+
+          <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+            <div className="text-[11px] font-bold text-slate-400 uppercase mb-1">Vista previa</div>
+            <pre className="text-[11px] text-slate-600 whitespace-pre-wrap font-sans max-h-40 overflow-y-auto">{cuerpo}</pre>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black text-slate-600 hover:bg-slate-50">Cerrar</button>
+          <button onClick={copiar} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-700 inline-flex items-center gap-1.5">
+            <Copy size={13} /> Copiar (con tabla)
+          </button>
+          <button onClick={abrirCorreo} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-black hover:bg-indigo-700 inline-flex items-center gap-1.5">
+            <Mail size={13} /> Abrir en correo
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
