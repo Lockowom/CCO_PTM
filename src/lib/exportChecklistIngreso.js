@@ -2,8 +2,14 @@
 // formato de CONTROL DOCUMENTAL ISO 13485 (encabezado/pie compartido en docIso).
 // CONFORME → "Certificado de Conformidad" (con folio-sello); NO CONFORME → "Acta".
 import { DOC_CONTROL, isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
+import { semaforoSalida, RIESGOS_SALIDA, resultadoPeso } from '../services/calidadService';
 
 export { DOC_CONTROL };
+
+// Extras del certificado de salida (pesos, bultos, riesgos, evidencias) que
+// viven dentro del jsonb checklist bajo la clave reservada `_extras`.
+const extrasDe = (tarea) => (tarea.checklist && tarea.checklist._extras) || {};
+const EV_LABEL = { PALLET: 'Foto del pallet', EMBALAJE: 'Foto del embalaje', CAMION: 'Foto dentro del camión' };
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -119,6 +125,7 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
   children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
     ...contextoKV(tarea, opts).map(([k, v]) => kvRow(k, v)),
     kvRow('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+    ...(salida ? [kvRow('Estado de despacho', `${semaforoSalida(tarea).emoji} ${semaforoSalida(tarea).label}`)] : []),
     ...(categoriasTexto(opts) ? [kvRow('Familias de producto', categoriasTexto(opts))] : []),
     ...(tarea.disposicion ? [kvRow('Disposición / Acción a tomar', tarea.disposicion)] : []),
     kvRow('Responsable de Calidad', tarea.realizado_nombre),
@@ -150,6 +157,49 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
     ] }));
     children.push(new Paragraph(''));
   });
+
+  // ── Extras del certificado de salida ──
+  if (salida) {
+    const ex = extrasDe(tarea);
+    const resPeso = resultadoPeso(ex.pesos?.esperado, ex.pesos?.registrado);
+    if (ex.pesos?.esperado || ex.pesos?.registrado) {
+      children.push(new Paragraph({ text: 'Control de peso', heading: HeadingLevel.HEADING_2 }));
+      children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+        kvRow('Peso esperado', ex.pesos?.esperado ? `${ex.pesos.esperado} kg` : '—'),
+        kvRow('Peso registrado', ex.pesos?.registrado ? `${ex.pesos.registrado} kg` : '—'),
+        kvRow('Resultado', resPeso || '—'),
+      ] }));
+      children.push(new Paragraph(''));
+    }
+    const totalB = Number(ex.bultosTotal ?? tarea.bultos) || 0;
+    if (totalB > 0) {
+      const et = Array.isArray(ex.bultosEtiquetas) ? ex.bultosEtiquetas : [];
+      children.push(new Paragraph({ text: 'Verificación de bultos', heading: HeadingLevel.HEADING_2 }));
+      children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+        new TableRow({ children: ['Bulto', 'Etiqueta'].map(th) }),
+        ...Array.from({ length: Math.min(totalB, 60) }, (_, i) => new TableRow({ children: [
+          td(`Bulto ${i + 1}/${totalB}`), td(et[i] ? 'Etiqueta OK' : 'Pendiente'),
+        ] })),
+      ] }));
+      children.push(new Paragraph(''));
+    }
+    if (Array.isArray(ex.riesgos) && ex.riesgos.length) {
+      children.push(new Paragraph({ text: 'Riesgos evaluados', heading: HeadingLevel.HEADING_2 }));
+      RIESGOS_SALIDA.forEach(r => {
+        children.push(new Paragraph(`${ex.riesgos.includes(r.id) ? '☑' : '☐'} ${r.label}`));
+      });
+      children.push(new Paragraph(''));
+    }
+    if (Array.isArray(ex.evidencias) && ex.evidencias.length) {
+      children.push(new Paragraph({ text: 'Evidencia fotográfica', heading: HeadingLevel.HEADING_2 }));
+      ['PALLET', 'EMBALAJE', 'CAMION'].forEach(t => {
+        const nFotos = ex.evidencias.filter(e2 => e2.tipo === t).length;
+        if (nFotos) children.push(new Paragraph(`📷 ${EV_LABEL[t]}: ${nFotos} foto(s) asociada(s) al certificado.`));
+      });
+      children.push(new Paragraph({ children: [new TextRun({ text: 'Las imágenes quedan almacenadas junto al certificado en el sistema CCO (se incluyen en la versión PDF).', size: 16, color: '64748B' })] }));
+      children.push(new Paragraph(''));
+    }
+  }
 
   if (tarea.observaciones) {
     children.push(new Paragraph({ text: 'Observaciones', heading: HeadingLevel.HEADING_2 }));
@@ -209,6 +259,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
       fillColor: conforme ? '#ecfdf5' : '#fef2f2', margin: [10, 8, 10, 8],
       stack: [
         { text: conforme ? (salida ? 'CERTIFICADO DE CONFORMIDAD DE SALIDA — CONFORME' : 'CERTIFICADO DE CONFORMIDAD — CONFORME') : (salida ? 'SALIDA NO CONFORME — NO DESPACHAR' : 'RECEPCIÓN NO CONFORME'), bold: true, fontSize: 11, color: conforme ? '#047857' : '#be123c' },
+        ...(salida ? [{ text: `● ${semaforoSalida(tarea).label}`, bold: true, fontSize: 12, color: semaforoSalida(tarea).color, margin: [0, 2, 0, 0] }] : []),
         { text: `Folio: ${tarea.folio || '—'}`, bold: true, fontSize: 14, margin: [0, 2, 0, 0] },
         { text: `${tarea.realizado_nombre || ''}${tarea.completado_en ? ' · ' + fechaFin : ''}`, fontSize: 8, color: '#475569', margin: [0, 2, 0, 0] },
       ],
@@ -224,6 +275,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
     table: { widths: ['35%', '65%'], body: [
       ...contextoKV(tarea, opts).map(([k, v]) => kv(k, v)),
       kv('Resultado', conforme ? 'CONFORME' : (tarea.resultado === 'NO_CONFORME' ? 'NO CONFORME' : (tarea.estado || '—'))),
+      ...(salida ? [[{ text: 'Estado de despacho', bold: true }, { text: semaforoSalida(tarea).label, bold: true, color: semaforoSalida(tarea).color }]] : []),
       ...(categoriasTexto(opts) ? [kv('Familias de producto', categoriasTexto(opts))] : []),
       ...(tarea.disposicion ? [kv('Disposición / Acción a tomar', tarea.disposicion)] : []),
       kv('Responsable de Calidad', tarea.realizado_nombre), kv('Fecha de finalización', fechaFin),
@@ -266,6 +318,68 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
       layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
     });
   });
+
+  // ── Extras del certificado de salida ──
+  if (salida) {
+    const ex = extrasDe(tarea);
+    const resPeso = resultadoPeso(ex.pesos?.esperado, ex.pesos?.registrado);
+    if (ex.pesos?.esperado || ex.pesos?.registrado) {
+      content.push({ text: 'Control de peso', style: 'h2' });
+      content.push({
+        table: { widths: ['35%', '65%'], body: [
+          kv('Peso esperado', ex.pesos?.esperado ? `${ex.pesos.esperado} kg` : '—'),
+          kv('Peso registrado', ex.pesos?.registrado ? `${ex.pesos.registrado} kg` : '—'),
+          [{ text: 'Resultado', bold: true }, { text: resPeso || '—', bold: true, color: resPeso === 'CONFORME' ? '#047857' : '#be123c' }],
+        ] },
+        layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+      });
+    }
+    const totalB = Number(ex.bultosTotal ?? tarea.bultos) || 0;
+    if (totalB > 0) {
+      const et = Array.isArray(ex.bultosEtiquetas) ? ex.bultosEtiquetas : [];
+      content.push({ text: 'Verificación de bultos', style: 'h2' });
+      content.push({
+        table: { headerRows: 1, widths: ['auto', '*'], body: [
+          ['Bulto', 'Etiqueta'].map(t => ({ text: t, bold: true, fontSize: 9 })),
+          ...Array.from({ length: Math.min(totalB, 60) }, (_, i) => [
+            { text: `Bulto ${i + 1}/${totalB}`, fontSize: 9 },
+            { text: et[i] ? 'Etiqueta OK' : 'Pendiente', fontSize: 9, bold: true, color: et[i] ? '#047857' : '#b45309' },
+          ]),
+        ] },
+        layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+      });
+    }
+    if (Array.isArray(ex.riesgos) && ex.riesgos.length) {
+      content.push({ text: 'Riesgos evaluados', style: 'h2' });
+      content.push({
+        columns: [0, 1].map(col => ({
+          stack: RIESGOS_SALIDA.filter((_, i) => i % 2 === col)
+            .map(r => ({ text: `${ex.riesgos.includes(r.id) ? '☑' : '☐'} ${r.label}`, fontSize: 9, margin: [0, 1, 0, 1] })),
+        })),
+        columnGap: 24, margin: [0, 0, 0, 12],
+      });
+    }
+    const imgs = Array.isArray(opts.evidenciasImg) ? opts.evidenciasImg : [];
+    if (imgs.length || (Array.isArray(ex.evidencias) && ex.evidencias.length)) {
+      content.push({ text: 'Evidencia fotográfica', style: 'h2' });
+      if (imgs.length) {
+        for (let i = 0; i < imgs.length; i += 2) {
+          content.push({
+            columns: imgs.slice(i, i + 2).map(im => ({
+              width: '50%',
+              stack: [
+                { image: im.dataUrl, fit: [230, 160] },
+                { text: EV_LABEL[im.tipo] || im.tipo, fontSize: 8, color: '#64748b', margin: [0, 2, 0, 0] },
+              ],
+            })),
+            columnGap: 12, margin: [0, 0, 0, 8],
+          });
+        }
+      } else {
+        content.push({ text: `${(ex.evidencias || []).length} foto(s) asociada(s) al certificado en el sistema CCO.`, fontSize: 9, color: '#64748b', margin: [0, 0, 0, 12] });
+      }
+    }
+  }
 
   if (tarea.observaciones) {
     content.push({ text: 'Observaciones', style: 'h2' });

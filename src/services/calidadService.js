@@ -650,6 +650,18 @@ export const CHECKLIST_SALIDA_NIVELES = [
       { id: 'sal_condiciones',label: 'Condiciones de transporte adecuadas (cadena de frío si aplica)' },
     ],
   },
+  {
+    nivel: 3,
+    titulo: 'Nivel 3 — Trazabilidad del producto',
+    params: [
+      { id: 'sal_tz_lote',       label: 'SKU corresponde al lote/partida despachado' },
+      { id: 'sal_tz_serie',      label: 'Serie coincide (si aplica)' },
+      { id: 'sal_tz_venc',       label: 'Fecha de vencimiento validada' },
+      { id: 'sal_tz_bloqueo',    label: 'Producto no posee bloqueo de calidad' },
+      { id: 'sal_tz_cuarentena', label: 'Producto no posee cuarentena vigente' },
+      { id: 'sal_tz_liberado',   label: 'Producto fue liberado para despacho' },
+    ],
+  },
 ];
 export const CHECKLIST_SALIDA_TODOS = CHECKLIST_SALIDA_NIVELES.flatMap(n => n.params);
 export const DISPOSICIONES_SALIDA = [
@@ -658,6 +670,65 @@ export const DISPOSICIONES_SALIDA = [
   'Corregir documentación',
   'Despachar con salvedades (autorizado)',
 ];
+
+// ── Extras del certificado de salida (viven en checklist._extras, jsonb) ────
+export const RIESGOS_SALIDA = [
+  { id: 'ESTERIL',   label: 'Producto estéril' },
+  { id: 'FRAGIL',    label: 'Producto frágil' },
+  { id: 'VERTICAL',  label: 'Mantener vertical' },
+  { id: 'NO_APILAR', label: 'No apilar' },
+  { id: 'FRIO',      label: 'Cadena de frío' },
+  { id: 'PELIGROSO', label: 'Material peligroso' },
+  { id: 'NINGUNO',   label: 'Ninguno' },   // exclusivo
+];
+export const EVIDENCIAS_SALIDA_TIPOS = [
+  { id: 'PALLET',   label: 'Foto del pallet' },
+  { id: 'EMBALAJE', label: 'Foto del embalaje' },
+  { id: 'CAMION',   label: 'Foto dentro del camión' },
+];
+// Tolerancia del control de peso (±2% se considera CONFORME).
+export const TOLERANCIA_PESO = 0.02;
+export const resultadoPeso = (esperado, registrado) => {
+  const e = Number(String(esperado ?? '').replace(',', '.'));
+  const r = Number(String(registrado ?? '').replace(',', '.'));
+  if (!Number.isFinite(e) || !Number.isFinite(r) || e <= 0) return null;
+  return Math.abs(r - e) / e <= TOLERANCIA_PESO ? 'CONFORME' : 'REVISAR';
+};
+
+// Semáforo de calidad del despacho (más intuitivo que CONFORME/NO_CONFORME).
+export const SEMAFORO_SALIDA = {
+  VERDE:     { emoji: '🟢', label: 'LIBERADO PARA DESPACHO',    color: '#047857', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  NARANJA:   { emoji: '🟠', label: 'DESPACHO CON OBSERVACIONES', color: '#c2410c', cls: 'bg-orange-100 text-orange-800 border-orange-300' },
+  ROJO:      { emoji: '🔴', label: 'NO DESPACHAR',               color: '#be123c', cls: 'bg-rose-100 text-rose-800 border-rose-300' },
+  PENDIENTE: { emoji: '⚪', label: 'EN EVALUACIÓN',              color: '#64748b', cls: 'bg-slate-100 text-slate-600 border-slate-300' },
+};
+export function semaforoSalida(tarea) {
+  if (tarea?.resultado === 'CONFORME') return { key: 'VERDE', ...SEMAFORO_SALIDA.VERDE };
+  if (tarea?.resultado === 'NO_CONFORME') {
+    const conSalvedades = (tarea.disposicion || '') === 'Despachar con salvedades (autorizado)';
+    return conSalvedades ? { key: 'NARANJA', ...SEMAFORO_SALIDA.NARANJA } : { key: 'ROJO', ...SEMAFORO_SALIDA.ROJO };
+  }
+  return { key: 'PENDIENTE', ...SEMAFORO_SALIDA.PENDIENTE };
+}
+
+// Evidencia fotográfica del certificado de salida: el archivo va al bucket
+// privado de evidencias (salida/<tareaId>/…) y la referencia queda en
+// checklist._extras.evidencias — asociada (y firmada) con el certificado.
+export async function uploadEvidenciaSalida({ tareaId, tipo, blob }) {
+  const MAX_BYTES = 7.5 * 1024 * 1024;
+  if (blob?.size > MAX_BYTES) throw new Error('La foto pesa demasiado y no se pudo comprimir. Prueba con otra (JPG/PNG).');
+  const mime = blob?.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/gif': 'gif' }[mime] || 'jpg';
+  const path = `salida/${tareaId}/${tipo.toLowerCase()}-${uid()}.${ext}`;
+  const { error } = await supabase.storage.from(EVIDENCIAS_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw error;
+  return path;
+}
+export async function deleteEvidenciaSalida(path) {
+  const { error } = await supabase.storage.from(EVIDENCIAS_BUCKET).remove([path]);
+  if (error) throw error;
+}
 
 // Cola de certificaciones de salida (tipo CERTIFICADO_SALIDA).
 export function useTareasSalida() {
