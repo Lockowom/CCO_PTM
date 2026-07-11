@@ -30,14 +30,78 @@ export function useAnalisisCodigos(filtro = 'todos', q = '') {
   return useQuery({
     queryKey: ['analisis_codigos', filtro, q || ''],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('analisis_codigos', {
-        p_filtro: filtro, p_q: q || '',
-      });
-      if (error) throw error;
-      return data || [];
+      // PostgREST corta cada respuesta en 1.000 filas (max-rows): paginar con
+      // range() hasta traer TODO (el ORDER BY codigo de la RPC es estable).
+      const PAGE = 1000;
+      const out = [];
+      for (let desde = 0; ; desde += PAGE) {
+        const req = supabase.rpc('analisis_codigos', { p_filtro: filtro, p_q: q || '' });
+        const { data, error } = await (req.range ? req.range(desde, desde + PAGE - 1) : req);
+        if (error) throw error;
+        out.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+      }
+      return out;
     },
     staleTime: 60_000,
   });
+}
+
+// ── Envío de la selección al módulo Traspasos/Ajustes (em-il) ───────────────
+// El módulo embebido guarda su historial en tms_emil_sync (blob
+// {traspasos:[…], ajustes:[…]} + rev). Insertamos los registros directamente
+// en ese blob con rev nuevo: la app del iframe lo adopta al abrir (syncStartup)
+// o en su poll de 12 s, sin tocar su código.
+const emilUid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+export async function enviarAEmil({ tipo, rows, accion = 'DESCONTAR', obs = '', cantidadDe = 'disponible' }) {
+  const { data: cur, error } = await supabase
+    .from('tms_emil_sync').select('rev,data').eq('space', 'default').maybeSingle();
+  if (error) throw error;
+  const blob = cur?.data && typeof cur.data === 'object' ? cur.data : {};
+  const lista = Array.isArray(blob[tipo]) ? blob[tipo] : [];
+  const existentes = new Set(lista.map((x) => String(x.sku || '').trim().toUpperCase()));
+  const now = Date.now();
+  const nuevos = [];
+  let omitidos = 0;
+  for (const r of rows) {
+    const sku = String(r.codigo || '').trim();
+    if (!sku) continue;
+    if (existentes.has(sku.toUpperCase())) { omitidos += 1; continue; }
+    existentes.add(sku.toUpperCase());
+    const cant = Number(cantidadDe === 'total' ? r.stock_total : r.disponible) || 0;
+    const rec = {
+      id: emilUid(), createdAt: now, estadoAt: now,
+      sku, descripcion: r.producto || '', um: r.unidad_medida || 'UNI',
+      lotes: [{ cantidad: String(cant), partida: '', serie: '' }],
+      folder: '', estado: 'PENDIENTE', asunto: '',
+    };
+    if (tipo === 'traspasos') {
+      rec.origen = ''; rec.destino = '';
+    } else {
+      rec.accion = accion; rec.obs = obs;
+      if (r.ps_equivalente) {
+        // Recodificación: descuenta el antiguo y suma en el código P/S nuevo.
+        rec.destSku = r.ps_equivalente; rec.destDesc = r.producto || '';
+        rec.destPartida = ''; rec.destSerie = ''; rec.destVenc = '';
+      }
+    }
+    nuevos.push(rec);
+  }
+  if (nuevos.length) {
+    const { error: upErr } = await supabase.from('tms_emil_sync').upsert(
+      { space: 'default', rev: now, data: { ...blob, [tipo]: [...nuevos, ...lista] }, updated_at: new Date().toISOString() },
+      { onConflict: 'space' },
+    );
+    if (upErr) throw upErr;
+  }
+  // Deja el módulo abierto en la pestaña correcta (mismo origen que el iframe).
+  try { localStorage.setItem('module', tipo); } catch { /* sin storage */ }
+  return { agregados: nuevos.length, omitidos };
+}
+
+export function useEnviarEmil() {
+  return useMutation({ mutationFn: enviarAEmil });
 }
 
 // Carga del catálogo ACTIVO (hoja del ERP con la marca Si/No) → upsert por

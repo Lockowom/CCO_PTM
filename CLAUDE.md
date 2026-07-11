@@ -100,7 +100,13 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   corto, sin dígitos, sufijo inválido, filas de prueba). Frontend `src/pages/Inventory/AnalisisCodigos.jsx`
   (secciones por menú `?tab=`), servicio `src/services/analisisService.js`, export Excel de 6 hojas.
   Permisos: los de bodega/stock existentes (sin permiso nuevo). El "HUB" de pallets del Excel ya
-  existía como Conteo · Proyección.
+  existía como Conteo · Proyección. El stock se carga DIRECTO desde el Resumen ("Cargar reporte de
+  stock (Excel IW)": `parseStockFile` mapea columnas por nombre, bodega fija `CONSOLIDADO`, reemplazo
+  total); `useAnalisisCodigos` pagina con `.range()` (PostgREST max-rows corta en 1.000). Las tablas
+  son dinámicas (filtros por columna, orden por encabezado, fila de totales, export de lo filtrado)
+  y la selección genera **Traspasos/Ajustes**: `enviarAEmil` inserta registros PENDIENTE en el blob
+  de `tms_emil_sync` (dedup por SKU; con `ps_equivalente` va como recodificación con `destSku`) que
+  la app em-il adopta al abrir o en su poll de 12 s.
 
 ## Módulo nativo: Carteles de Bodega (Inventario)
 - **Carteles de Bodega** (`/inventory/carteles`, port del Excel "CARTELES PTM"): impresión de

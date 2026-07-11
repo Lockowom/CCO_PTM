@@ -78,4 +78,19 @@ describe('Análisis de Códigos (Inventario) — port del Excel', () => {
     await waitFor(() => expect(screen.getByText('N010500035')).toBeInTheDocument());
     expect(screen.getByText('NGE10500035P')).toBeInTheDocument();
   });
+
+  it('la tabla es dinámica: filtros por columna, totales y selección → Ajuste/Traspaso', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    wrap(<AnalisisCodigos />, '/inventory/analisis?tab=antiguos');
+    await waitFor(() => expect(screen.getByText('N010500035')).toBeInTheDocument());
+    // Filtros tipo tabla dinámica + fila de totales
+    expect(screen.getByText('Estado: todos')).toBeInTheDocument();
+    expect(screen.getByText('Alertas: todas')).toBeInTheDocument();
+    expect(screen.getByText(/TOTAL \(/)).toBeInTheDocument();
+    // Seleccionar una fila → aparece la barra de acciones
+    const checks = screen.getAllByRole('checkbox');
+    fireEvent.click(checks[1]);
+    await waitFor(() => expect(screen.getByText(/Generar Ajuste/)).toBeInTheDocument());
+    expect(screen.getByText(/Generar Traspaso/)).toBeInTheDocument();
+  });
 });
