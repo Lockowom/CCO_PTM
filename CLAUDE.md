@@ -148,7 +148,10 @@ cambio, actualizar SIEMPRE:
   **Admin → Monitor** (`src/components/CanalOTA.jsx`, solo nativo). `npm run deploy:mobile`
   sube a beta por defecto (`-- production` para forzar). Rollback: panel Capgo (Set bundle a
   la versión anterior) + auto-rollback por `notifyAppReady`. App `com.cco.wms`. Secreto CI:
-  `CAPGO_TOKEN`.
+  `CAPGO_TOKEN`. **Build nativa** (solo cuando cambian plugins nativos; el OTA no cruza cambios
+  nativos): ver `docs/BUILD_APK.md`. `android/app/build.gradle` tiene `versionCode`/`versionName`
+  (subir el code en cada build nativa) + `signingConfig` de release desde `keystore.properties`
+  (secreto, en `.gitignore`). Generar la APK con el constructor en la nube de Capgo o `./gradlew`.
 
 ## Notas de estado
 - Existen hallazgos de seguridad históricos en la BD (políticas RLS permisivas `USING (true)`,

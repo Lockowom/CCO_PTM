@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// Firma de release: se lee de keystore.properties (en la raíz de android/, NO se
+// commitea — contiene secretos). Si no existe (p. ej. primer build de prueba),
+// cae a la firma de debug para que el build no se rompa. El constructor en la
+// nube de Capgo administra su propia firma; esto habilita además builds locales/CI.
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 android {
     namespace = "com.cco.wms"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,10 @@ android {
         applicationId "com.cco.wms"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // La versión nativa se alinea con la serie OTA (package.json). Subir el
+        // versionCode en CADA build nativa nueva (Android exige que aumente).
+        versionCode 2
+        versionName "1.26.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +28,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Firma real si hay keystore.properties; si no, debug (build no se rompe).
+            signingConfig keystorePropsFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
