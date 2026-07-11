@@ -131,3 +131,73 @@ select:focus {
   will-change: transform;
 }
 .ti-banner-glow { animation: ti-glow 2.6s ease-in-out infinite; }
+
+/* ============================================================================
+   MÓVIL / PDA — responsividad universal y animaciones
+   Objetivo: que la app se vea IGUAL de bien en cualquier modelo (320px → tablet),
+   sin elementos cortados, ni demasiado grandes/chicos. Todo entra por OTA.
+   ============================================================================ */
+
+/* Alto de viewport DINÁMICO: 100vh en móviles incluye la barra del navegador/OS
+   y corta el contenido de abajo (botones CONFIRMAR, etc.). dvh mide el área REAL
+   visible. Fallbacks en cascada para webviews viejos. */
+.min-h-dvh { min-height: 100vh; min-height: 100svh; min-height: 100dvh; }
+.h-dvh     { height: 100vh; height: 100svh; height: 100dvh; }
+
+/* Safe-area: notch, isla dinámica y barra de gestos (variables reutilizables). */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+.pt-safe { padding-top: max(0.75rem, var(--sat)); }
+.pb-safe { padding-bottom: max(0.75rem, var(--sab)); }
+
+/* En la app instalada (Capacitor) escalamos la tipografía base de forma FLUIDA:
+   Tailwind usa rem, así que al hacer el root fluido TODO (texto, iconos, padding
+   en rem) escala en proporción al ancho del equipo, acotado para que nunca se vea
+   ni gigante (tablet) ni minúsculo (PDA de 320px). No afecta a la web de escritorio. */
+html.is-native {
+  font-size: clamp(14px, 4vw, 18px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html.is-native body {
+  -webkit-tap-highlight-color: transparent;   /* sin flash gris al tocar */
+  overscroll-behavior-y: none;                 /* sin "rubber band" tipo web */
+  touch-action: manipulation;                  /* sin zoom por doble-tap */
+}
+
+/* ---- Animaciones (CSS puro: fluidas en cualquier equipo, sin costo de JS) ---- */
+@keyframes pda-fade-up   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes pda-scale-in  { from { opacity: 0; transform: scale(0.92); }      to { opacity: 1; transform: none; } }
+@keyframes pda-pop       { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pda-shimmer   { 100% { transform: translateX(100%); } }
+
+.anim-fade-up  { animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-scale-in { animation: pda-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-pop      { animation: pda-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Entrada escalonada (los hijos aparecen uno tras otro) */
+.anim-stagger > * { animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.anim-stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.anim-stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.anim-stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.anim-stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.anim-stagger > *:nth-child(6) { animation-delay: 0.34s; }
+
+/* Skeleton shimmer para estados de carga */
+.pda-skeleton { position: relative; overflow: hidden; background: rgba(148,163,184,0.15); }
+.pda-skeleton::after {
+  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  animation: pda-shimmer 1.4s infinite;
+}
+
+/* Respeta a quien pide menos movimiento (accesibilidad). */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up, .anim-scale-in, .anim-pop, .anim-stagger > * { animation: none !important; }
+  .pda-skeleton::after { animation: none; }
+}

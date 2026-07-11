@@ -185,7 +185,7 @@ const WarehousePDA = () => {
 
   if (mode === 'HOME') {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="min-h-dvh bg-slate-900 text-white flex flex-col">
         {/* Top Bar (respeta el notch / barra de estado) */}
         <div className="bg-white text-slate-900 p-3 sm:p-4 flex justify-between items-center shadow-md" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2 min-w-0">
@@ -214,8 +214,8 @@ const WarehousePDA = () => {
           </div>
         )}
 
-        {/* Menu Grid */}
-        <div className="flex-1 p-3 sm:p-4 grid grid-cols-2 gap-3 sm:gap-4 content-start mt-3 sm:mt-4">
+        {/* Menu Grid — entrada escalonada */}
+        <div className="anim-stagger flex-1 p-3 sm:p-4 grid grid-cols-2 gap-3 sm:gap-4 content-start mt-3 sm:mt-4">
           <MenuButton
             icon={<ArrowRight size={32} />}
             label="UBICAR (PUTAWAY)"
@@ -250,7 +250,7 @@ const WarehousePDA = () => {
     const currentStepIdx = steps.indexOf(putawayStep) + 1;
 
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col font-mono">
+      <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
         {/* Header (respeta el notch / barra de estado) */}
         <div className="bg-emerald-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ const WarehousePDA = () => {
         <div className="flex-1 p-4 flex flex-col gap-4">
           {/* STEP 1: SCAN LOCATION */}
           {putawayStep === 'SCAN_LOC' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div key="s1" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
               <MapPin size={48} className="text-emerald-400" />
               <h2 className="text-2xl font-black text-emerald-400">ESCANEAR UBICACIÓN</h2>
               <p className="text-slate-500 text-sm text-center">Escanee o escriba la ubicación destino<br/>(RACK-POSICIÓN-NIVEL)</p>
@@ -297,7 +297,7 @@ const WarehousePDA = () => {
 
           {/* STEP 2: SCAN SKU */}
           {putawayStep === 'SCAN_SKU' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div key="s2" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
               <div className="bg-slate-800 rounded-xl p-3 w-full">
                 <label className="text-[10px] text-slate-500 uppercase">Ubicación seleccionada</label>
                 <div className="text-2xl font-black text-emerald-400">{putawayData.ubicacion}</div>
@@ -310,7 +310,7 @@ const WarehousePDA = () => {
 
           {/* STEP 3: ENTER QUANTITY */}
           {putawayStep === 'ENTER_QTY' && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div key="s3" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
               <div className="bg-slate-800 rounded-xl p-3 w-full">
                 <label className="text-[10px] text-slate-500 uppercase">Ubicación</label>
                 <div className="text-lg font-bold text-emerald-400">{putawayData.ubicacion}</div>
@@ -355,7 +355,7 @@ const WarehousePDA = () => {
 
           {/* STEP 4: CONFIRM */}
           {putawayStep === 'CONFIRM' && (
-            <div className="flex-1 flex flex-col gap-4">
+            <div key="s4" className="anim-fade-up flex-1 flex flex-col gap-4">
               <h2 className="text-xl font-black text-emerald-400 text-center">CONFIRMAR UBICACIÓN</h2>
 
               <div className="bg-slate-800 rounded-xl p-4 space-y-3">
@@ -439,7 +439,7 @@ const WarehousePDA = () => {
 
   // Fallback
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+    <div className="min-h-dvh bg-slate-900 text-white flex items-center justify-center">
       <div className="text-center p-8">
         <Package size={64} className="mx-auto mb-4 text-slate-700" />
         <h2 className="text-xl font-bold text-slate-500">Error de Estado</h2>

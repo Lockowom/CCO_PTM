@@ -68,7 +68,7 @@ const ConsultaPDA = ({ onHome }) => {
   const onSubmit = (e) => { e.preventDefault(); buscar(); };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-mono">
+    <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
       {/* Header (respeta el notch/barra de estado) */}
       <div className="bg-blue-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ const ConsultaPDA = ({ onHome }) => {
           </div>
         )}
         {grupos?.map((g) => (
-          <div key={g.codigo || g.descripcion} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <div key={g.codigo || g.descripcion} className="anim-fade-up bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             <div className="p-3 bg-slate-800/60 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-blue-400 font-black text-lg truncate">{g.codigo || '—'}</div>

@@ -51,7 +51,7 @@ const UpdateOverlay = ({ updateInfo, onApplyNow }) => {
       </div>
 
       {/* Tarjeta */}
-      <div className="relative w-full max-w-sm rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden">
+      <div className="anim-scale-in relative w-full max-w-sm rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden">
         {/* Barra superior de marca */}
         <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500" />
 
@@ -78,7 +78,7 @@ const UpdateOverlay = ({ updateInfo, onApplyNow }) => {
                 </linearGradient>
               </defs>
             </svg>
-            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-orange-500/30">
+            <div className="anim-pop absolute inset-3 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-orange-500/30">
               {phase === 'applying'
                 ? <RefreshCw size={44} className="text-white animate-spin" />
                 : <Download size={44} className="text-white" strokeWidth={2.2} />}

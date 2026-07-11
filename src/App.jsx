@@ -258,6 +258,9 @@ function AppContent() {
   // Inicializar OTA Updates y Notificaciones Globales
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
+      // Marca la app instalada → activa el escalado fluido y el "app-feel"
+      // (tap sin flash, sin rubber-band) definidos en index.css para .is-native.
+      document.documentElement.classList.add('is-native');
       initOTAUpdates();
       onUpdateAvailable((info) => setPendingUpdate(info));
     }

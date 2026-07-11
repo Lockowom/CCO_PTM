@@ -47,7 +47,7 @@ function SelectorSesion({ onHome, onPick }) {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-mono">
+    <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
       <div className="p-3 flex justify-between items-center bg-amber-900">
         <div className="flex items-center gap-2">
           <button onClick={onHome} className="text-amber-300 hover:text-white"><ArrowLeft size={20} /></button>
@@ -159,7 +159,7 @@ function Contador({ sesion, onBack, onHome, user }) {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-mono">
+    <div className="min-h-dvh bg-black text-white flex flex-col font-mono">
       {/* Header */}
       <div className="p-3 flex justify-between items-center bg-amber-900">
         <div className="flex items-center gap-2 min-w-0">
