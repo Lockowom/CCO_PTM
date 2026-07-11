@@ -63,8 +63,14 @@ execSync('npm run build', { stdio: 'inherit' });
 console.log('🔄 Sincronizando assets con Capacitor...');
 execSync('npx cap sync android', { stdio: 'inherit' });
 
-// 4. Subida a Capgo
-console.log('☁️ Subiendo el bundle a Capgo Cloud...');
-execSync('npx @capgo/cli bundle upload', { stdio: 'inherit' });
+// 4. Subida a Capgo — por defecto al canal BETA (seguro). Para ir directo a
+//    producción: `npm run deploy:mobile -- production` (NO recomendado; usa el
+//    flujo beta → validar → promover). Ver docs/DESPLIEGUE_MOVIL.md.
+const canal = process.argv.includes('production') ? 'production' : 'beta';
+console.log(`☁️ Subiendo el bundle a Capgo Cloud (canal ${canal})...`);
+execSync(`npx @capgo/cli bundle upload com.cco.wms --channel ${canal}`, { stdio: 'inherit' });
 
-console.log('✅ Despliegue móvil finalizado con éxito.');
+console.log(`✅ Despliegue móvil finalizado (canal ${canal}).`);
+if (canal === 'beta') {
+  console.log('👉 Valida en un PDA de prueba (canal beta) y luego promueve a producción.');
+}

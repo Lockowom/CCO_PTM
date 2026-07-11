@@ -1,0 +1,45 @@
+name: Capgo PROMOVER a producción (móvil)
+
+# Promueve un bundle YA subido al canal "beta" hacia "production" (toda la
+# bodega). Es MANUAL a propósito: solo lo ejecutas cuando validaste la versión
+# en un PDA de prueba. No recompila ni re-sube — solo enlaza el bundle existente
+# al canal production, así el equipo recibe exactamente lo que probaste en beta.
+#
+# Uso: GitHub → Actions → "Capgo PROMOVER a producción" → Run workflow →
+#      escribe la versión (ej. 1.22.1) → Run.
+#
+# Si tu plan de Capgo no permite 'channel set' por CLI, promueve desde el panel:
+#   app.capgo.io → tu app → Channels → production → "Set bundle" → elige la versión.
+#   (un clic, disponible en todos los planes).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión a promover a producción (ej. 1.22.1). Debe existir ya en el canal beta.'
+        required: true
+        type: string
+
+concurrency:
+  group: capgo-promote
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promover bundle beta → production
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "::error::Falta el secreto CAPGO_TOKEN."
+            exit 1
+          fi
+          echo "Promoviendo $VERSION al canal production…"
+          # Enlaza el bundle existente al canal production (sin recompilar).
+          npx -y @capgo/cli@latest channel set production com.cco.wms \
+            --apikey "$CAPGO_TOKEN" \
+            --bundle "$VERSION"
+          echo "::notice::Versión $VERSION promovida a PRODUCTION. Toda la bodega la recibirá con autoUpdate."

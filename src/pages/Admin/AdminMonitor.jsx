@@ -7,6 +7,7 @@ import { supabase } from '../../supabase';
 import { useQuery } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import CanalOTA from '../../components/CanalOTA';
 
 const AdminMonitor = () => {
   const containerRef = useRef(null);
@@ -119,6 +120,9 @@ const AdminMonitor = () => {
           <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} /> Actualizar
         </button>
       </div>
+
+      {/* Canal OTA de este dispositivo (solo visible en la app Android) */}
+      <CanalOTA />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">

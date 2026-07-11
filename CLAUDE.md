@@ -141,8 +141,14 @@ cambio, actualizar SIEMPRE:
 - **Web**: push a `main` → Render. La web sirve el `dist/` del repo (commitearlo tras `npm run build`).
   - **Env var** `ANTHROPIC_API_KEY` (Render → Environment): habilita el asistente "Mejorar con IA" del
     módulo Traspasos vía el proxy `POST /api/traspasos-ai` (la clave vive solo en el servidor).
-- **Móvil**: `npm run deploy:mobile` (requiere `.env` cargado; auto-incrementa el patch de
-  `package.json` y sube bundle a Capgo OTA, canal `production`, app `com.cco.wms`).
+- **Móvil**: OTA con Capgo en **dos canales** (ver `docs/DESPLIEGUE_MOVIL.md`). Push a `main`
+  que cambie la versión → CI sube a **`beta`** (`.github/workflows/capgo-ota.yml`); la bodega
+  (`production`) NO se actualiza hasta **promover** con el workflow `capgo-promote.yml`
+  (`workflow_dispatch`) o desde el panel Capgo. Los PDA de prueba se asignan a `beta` desde
+  **Admin → Monitor** (`src/components/CanalOTA.jsx`, solo nativo). `npm run deploy:mobile`
+  sube a beta por defecto (`-- production` para forzar). Rollback: panel Capgo (Set bundle a
+  la versión anterior) + auto-rollback por `notifyAppReady`. App `com.cco.wms`. Secreto CI:
+  `CAPGO_TOKEN`.
 
 ## Notas de estado
 - Existen hallazgos de seguridad históricos en la BD (políticas RLS permisivas `USING (true)`,

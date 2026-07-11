@@ -1,12 +1,43 @@
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { App as CapApp } from '@capacitor/core';
+import { App as CapApp, Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
 
 // ── Estado global del update para que el componente UI pueda reaccionar ──
 let updateCallback = null;
 export const onUpdateAvailable = (cb) => { updateCallback = cb; };
+
+// ── Canal OTA de ESTE dispositivo (Capgo) ──────────────────────────────────
+// Producción recibe solo bundles promovidos; los PDA de PRUEBA se asignan al
+// canal 'beta' para validar una versión antes de soltarla a toda la bodega.
+// Guardado por dispositivo (no es una preferencia de usuario/servidor).
+export const CANALES_OTA = ['production', 'beta'];
+
+export const getOTAChannel = async () => {
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    const r = await CapacitorUpdater.getChannel();
+    return r?.channel || 'production';
+  } catch (err) {
+    console.error('OTA getChannel error:', err);
+    return null;
+  }
+};
+
+// Asigna este dispositivo a un canal (requiere que el canal permita
+// "self-assign" en el panel de Capgo). Al volver a 'production' se deshace.
+export const setOTAChannel = async (channel) => {
+  if (!Capacitor.isNativePlatform()) throw new Error('Solo disponible en la app Android.');
+  if (!CANALES_OTA.includes(channel)) throw new Error(`Canal inválido: ${channel}`);
+  if (channel === 'production') {
+    // Volver al canal por defecto = quitar la asignación explícita.
+    await CapacitorUpdater.unsetChannel({ triggerAutoUpdate: true });
+    return 'production';
+  }
+  await CapacitorUpdater.setChannel({ channel, triggerAutoUpdate: true });
+  return channel;
+};
 
 export const initOTAUpdates = async () => {
   try {

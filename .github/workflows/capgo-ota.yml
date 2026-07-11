@@ -1,8 +1,11 @@
-name: Capgo OTA (móvil)
+name: Capgo OTA → BETA (móvil)
 
-# Sube automáticamente un bundle OTA a Capgo (app com.cco.wms, canal "production")
+# Sube automáticamente un bundle OTA a Capgo al canal "beta" (app com.cco.wms)
 # en cada push a main, SOLO cuando cambia la versión de package.json (Capgo rechaza
-# versiones duplicadas). La app Android con autoUpdate lo recibe sin pasar por Play.
+# versiones duplicadas). SOLO los PDA asignados al canal "beta" lo reciben; la
+# bodega (canal "production") NO se actualiza hasta que promuevas la versión con
+# el workflow "Capgo PROMOVER a producción". Así una versión rota nunca llega de
+# golpe a todos los equipos.
 #
 # ÚNICO requisito de configuración: agregar el secreto de repositorio CAPGO_TOKEN
 # (GitHub → Settings → Secrets and variables → Actions → New repository secret).
@@ -54,7 +57,7 @@ jobs:
           VITE_SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
         run: npm run build
 
-      - name: Subir bundle a Capgo (canal production)
+      - name: Subir bundle a Capgo (canal BETA)
         if: steps.ver.outputs.changed == 'yes'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
@@ -65,8 +68,9 @@ jobs:
           fi
           npx -y @capgo/cli@latest bundle upload com.cco.wms \
             --apikey "$CAPGO_TOKEN" \
-            --channel production \
+            --channel beta \
             --bundle "${{ steps.ver.outputs.new }}"
+          echo "::notice::Bundle ${{ steps.ver.outputs.new }} subido a BETA. Valida en un PDA de prueba y luego ejecuta 'Capgo PROMOVER a producción'."
 
       - name: Sin cambio de versión
         if: steps.ver.outputs.changed != 'yes'
