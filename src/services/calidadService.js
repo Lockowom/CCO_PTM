@@ -671,6 +671,70 @@ export const DISPOSICIONES_SALIDA = [
   'Despachar con salvedades (autorizado)',
 ];
 
+// ── Extras del checklist de INGRESO (viven en checklist._extras, jsonb) ─────
+export const CLASIFICACION_INGRESO = [
+  { id: 'EQUIPO',         label: 'Equipo médico' },
+  { id: 'INSUMO_ESTERIL', label: 'Insumo estéril' },
+  { id: 'REACTIVO',       label: 'Reactivo' },
+  { id: 'AYUDA_TECNICA',  label: 'Ayuda técnica' },
+  { id: 'MOBILIARIO',     label: 'Mobiliario clínico' },
+  { id: 'REPUESTO',       label: 'Repuesto' },
+];
+// Evaluación del embalaje: bloque exclusivo (no solo "embalaje íntegro").
+export const EMBALAJE_INGRESO = [
+  { id: 'pallet',    label: 'Estado del pallet', opciones: ['Excelente', 'Bueno', 'Regular', 'Malo'] },
+  { id: 'film',      label: 'Film stretch',      opciones: ['Correcto', 'Incorrecto'] },
+  { id: 'golpes',    label: 'Golpes visibles',   opciones: ['No', 'Sí'] },
+  { id: 'deformada', label: 'Caja deformada',    opciones: ['No', 'Sí'] },
+  { id: 'humedad',   label: 'Humedad',           opciones: ['No', 'Sí'] },
+];
+// Disposición inmediata de la recepción (no depende del informe posterior).
+export const DISPOSICION_INMEDIATA_INGRESO = [
+  'Recepción aceptada', 'Recepción parcial', 'Cuarentena',
+  'Rechazo proveedor', 'Devuelto', 'Pendiente evaluación',
+];
+// Cómo se verificó cada requisito (columna Evidencia, estilo auditoría ISO).
+export const EVIDENCIA_OPCIONES = [
+  'Documento', 'Conteo', 'Inspección visual', 'Medición', 'Registro fotográfico', 'Sistema',
+];
+
+// Indicador de riesgo de la recepción (calculado automáticamente).
+export const RIESGO_META = {
+  BAJO:  { emoji: '🟢', label: 'RIESGO BAJO',  color: '#047857', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  MEDIO: { emoji: '🟠', label: 'RIESGO MEDIO', color: '#c2410c', cls: 'bg-orange-100 text-orange-800 border-orange-300' },
+  ALTO:  { emoji: '🔴', label: 'RIESGO ALTO',  color: '#be123c', cls: 'bg-rose-100 text-rose-800 border-rose-300' },
+};
+export function riesgoIngreso(checklist) {
+  const ex = (checklist || {})._extras || {};
+  const emb = ex.embalaje || {};
+  let score = 0;
+  if (emb.pallet === 'Malo') score += 2; else if (emb.pallet === 'Regular') score += 1;
+  if (emb.film === 'Incorrecto') score += 1;
+  ['golpes', 'deformada', 'humedad'].forEach(k => { if (emb[k] === 'Sí') score += 2; });
+  Object.entries(checklist || {}).forEach(([k, v]) => { if (k !== '_extras' && v?.estado === 'NO') score += 2; });
+  const key = score >= 4 ? 'ALTO' : score >= 1 ? 'MEDIO' : 'BAJO';
+  return { key, score, ...RIESGO_META[key] };
+}
+
+// Indicadores ISO del checklist (alimentan dashboards y van al pie del doc).
+export function indicadoresIso(tarea) {
+  const chk = tarea?.checklist || {};
+  let ok = 0, no = 0, na = 0;
+  Object.entries(chk).forEach(([k, v]) => {
+    if (k === '_extras') return;
+    if (v?.estado === 'OK') ok += 1; else if (v?.estado === 'NO') no += 1; else if (v?.estado === 'NA') na += 1;
+  });
+  const evaluados = ok + no;
+  const ini = tarea?.created_at ? new Date(tarea.created_at) : null;
+  const fin = tarea?.completado_en ? new Date(tarea.completado_en) : null;
+  return {
+    items: ok + no + na, ok, no, na,
+    pct: evaluados ? Math.round((ok / evaluados) * 1000) / 10 : null,
+    minutos: ini && fin ? Math.max(0, Math.round((fin - ini) / 60000)) : null,
+    inspector: tarea?.realizado_nombre || null,
+  };
+}
+
 // ── Extras del certificado de salida (viven en checklist._extras, jsonb) ────
 export const RIESGOS_SALIDA = [
   { id: 'ESTERIL',   label: 'Producto estéril' },

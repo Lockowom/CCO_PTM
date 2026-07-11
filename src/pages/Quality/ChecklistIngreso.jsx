@@ -10,6 +10,8 @@ import {
   CHECKLIST_INGRESO_NIVELES, ESTADO_TAREA_META, CATEGORIA_META,
   useTareasChecklist, useGuardarChecklist, useFirmarCertificado, useCategoriasTarea,
   useEliminarTareaCalidad,
+  CLASIFICACION_INGRESO, EMBALAJE_INGRESO, DISPOSICION_INMEDIATA_INGRESO,
+  EVIDENCIA_OPCIONES, riesgoIngreso, indicadoresIso,
 } from '../../services/calidadService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
@@ -28,20 +30,38 @@ const ORIGEN_META = {
 
 // ── Formulario del checklist de una tarea ───────────────────────────────────
 const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
+  const { user } = useAuth();
   const guardar = useGuardarChecklist();
   const firmar = useFirmarCertificado();
   const { data: catData, isLoading: catLoading } = useCategoriasTarea(tarea.id);
   const finalizada = tarea.estado === 'CONFORME' || tarea.estado === 'NO_CONFORME';
   const readOnly = finalizada || !canManage;
 
-  const [answers, setAnswers] = useState(() => tarea.checklist || {});
+  // El checklist jsonb guarda las respuestas por ítem y, bajo `_extras`, los
+  // complementos ISO (clasificación, embalaje, disposición inmediata).
+  const partir = (chk) => { const { _extras, ...resp } = chk || {}; return { resp, extras: _extras || {} }; };
+  const [answers, setAnswers] = useState(() => partir(tarea.checklist).resp);
+  const [extras, setExtras] = useState(() => partir(tarea.checklist).extras);
   const [obs, setObs] = useState(tarea.observaciones || '');
   const [disp, setDisp] = useState(tarea.disposicion || '');
 
-  useEffect(() => { setAnswers(tarea.checklist || {}); setObs(tarea.observaciones || ''); setDisp(tarea.disposicion || ''); }, [tarea.id]);
+  useEffect(() => {
+    const { resp, extras: ex } = partir(tarea.checklist);
+    setAnswers(resp); setExtras(ex); setObs(tarea.observaciones || ''); setDisp(tarea.disposicion || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tarea.id]);
 
   const setResp = (pid, estado) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], estado } }));
   const setNota = (pid, nota) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], nota } }));
+  const setEvid = (pid, evidencia) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], evidencia } }));
+  const setEx = (k, v) => setExtras(prev => ({ ...prev, [k]: v }));
+  const checklistCompleto = () => ({ ...answers, _extras: extras });
+
+  const toggleClasif = (id) => setExtras(prev => {
+    const cur = new Set(prev.clasificacion || []);
+    if (cur.has(id)) cur.delete(id); else cur.add(id);
+    return { ...prev, clasificacion: [...cur] };
+  });
 
   // Familias detectadas en la recepción → secciones de criterios específicos.
   const categorias = catData?.categorias || [];
@@ -87,7 +107,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const guardarAvance = async () => {
     try {
-      await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, disposicion: disp, finalizar: false });
+      await guardar.mutateAsync({ tareaId: tarea.id, checklist: checklistCompleto(), observaciones: obs, disposicion: disp, finalizar: false });
       toast.success('Avance guardado');
     } catch (e) { toast.error(`No se pudo guardar: ${e.message}`); }
   };
@@ -99,11 +119,12 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
     if (!answeredAll) { toast.error(`Faltan ${faltan} ítem(s) por responder`); return; }
     const resultado = hasNo ? 'NO_CONFORME' : 'CONFORME';
     if (resultado === 'NO_CONFORME' && !disp) { toast.error('Selecciona la Disposición / Acción a tomar antes de finalizar'); return; }
+    if (resultado === 'NO_CONFORME' && !extras.disposicionInmediata) { toast.error('Marca la Disposición inmediata de la recepción (cuarentena, rechazo, etc.)'); return; }
     if (!confirm(resultado === 'CONFORME'
       ? 'Todos los ítems conformes → se CERTIFICARÁ automáticamente (se emite folio CERT-) y la tarea quedará bloqueada. ¿Continuar?'
       : `Hay ítems NO conformes → se marcará NO CONFORME (folio ACTA-), disposición "${disp}", y se generará la tarea urgente del Informe de Daños. ¿Continuar?`)) return;
     try {
-      const res = await guardar.mutateAsync({ tareaId: tarea.id, checklist: answers, observaciones: obs, disposicion: disp, finalizar: true, resultado });
+      const res = await guardar.mutateAsync({ tareaId: tarea.id, checklist: checklistCompleto(), observaciones: obs, disposicion: disp, finalizar: true, resultado });
       if (resultado === 'CONFORME') {
         toast.success(`Certificado automáticamente ${res?.folio || ''} — recepción CONFORME`);
         onBack();
@@ -126,6 +147,12 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   };
 
   const meta = ESTADO_TAREA_META[tarea.estado] || {};
+
+  // Riesgo calculado en vivo (embalaje + no conformidades) e indicadores ISO.
+  const riesgo = useMemo(() => riesgoIngreso({ ...answers, _extras: extras }), [answers, extras]);
+  const ind = useMemo(() => indicadoresIso({ ...tarea, checklist: { ...answers, _extras: extras } }), [answers, extras, tarea]);
+  const minutosRecepcion = ind.minutos ?? (tarea.created_at ? Math.max(0, Math.round((Date.now() - new Date(tarea.created_at).getTime()) / 60000)) : null);
+  const embalaje = extras.embalaje || {};
 
   return (
     <div>
@@ -234,6 +261,55 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
         )}
       </div>
 
+      {/* Clasificación del producto (manual, complementa las familias detectadas) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
+        <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2"><Package size={16} className="text-slate-400" /> Clasificación del producto</h3>
+        <div className="flex flex-wrap gap-2">
+          {CLASIFICACION_INGRESO.map(c => {
+            const on = (extras.clasificacion || []).includes(c.id);
+            return (
+              <button key={c.id} type="button" disabled={readOnly} onClick={() => toggleClasif(c.id)}
+                className={`px-3 py-2 rounded-xl border text-xs font-black transition-colors ${on ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-emerald-300'}`}>
+                {on ? '☑' : '☐'} {c.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Evaluación del embalaje (bloque exclusivo) + riesgo automático */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+          <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><Package size={16} className="text-slate-400" /> Evaluación del embalaje</h3>
+          <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${riesgo.cls}`}>
+            {riesgo.emoji} {riesgo.label}
+          </span>
+        </div>
+        <div className="space-y-2.5">
+          {EMBALAJE_INGRESO.map(f => (
+            <div key={f.id} className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-50 last:border-0 flex-wrap">
+              <p className="text-sm text-slate-700 font-semibold">{f.label}</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {f.opciones.map(op => {
+                  const on = embalaje[f.id] === op;
+                  const esMala = ['Malo', 'Incorrecto', 'Sí'].includes(op) || (f.id === 'pallet' && op === 'Regular');
+                  return (
+                    <button key={op} type="button" disabled={readOnly}
+                      onClick={() => setEx('embalaje', { ...embalaje, [f.id]: on ? undefined : op })}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-black transition-colors ${on
+                        ? (esMala ? 'bg-rose-500 border-rose-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white')
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                      {op}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-400 mt-2">El indicador de riesgo se calcula solo: embalaje dañado y no conformidades del checklist suben el nivel.</p>
+      </div>
+
       {/* Niveles + parámetros */}
       <div className="space-y-4">
         {niveles.map(nivel => (
@@ -246,6 +322,17 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
                 <div key={p.id} className="flex items-start gap-3 py-1.5 border-b border-slate-50 last:border-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-700 font-semibold">{p.label}</p>
+                    {answers[p.id]?.estado && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Evidencia:</span>
+                        <select value={answers[p.id]?.evidencia || ''} disabled={readOnly}
+                          onChange={e => setEvid(p.id, e.target.value)}
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-bold ${answers[p.id]?.evidencia ? 'border-emerald-200 bg-emerald-50/50 text-emerald-700' : 'border-slate-200 text-slate-400'}`}>
+                          <option value="">— cómo se verificó —</option>
+                          {EVIDENCIA_OPCIONES.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </div>
+                    )}
                     {answers[p.id]?.estado === 'NO' && (
                       <input value={answers[p.id]?.nota || ''} disabled={readOnly}
                         onChange={e => setNota(p.id, e.target.value)} placeholder="Detalle de la no conformidad…"
@@ -267,6 +354,28 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
             </div>
           </div>
         ))}
+
+        {/* Disposición inmediata de la recepción (no espera el informe posterior) */}
+        <div className={`bg-white rounded-2xl border p-5 ${hasNo && !extras.disposicionInmediata ? 'border-rose-200' : 'border-slate-200'}`}>
+          <label className={`text-[10px] font-black uppercase tracking-widest ${hasNo && !extras.disposicionInmediata ? 'text-rose-500' : 'text-slate-400'}`}>
+            Disposición inmediata {hasNo && <span>*obligatoria (hay no conformes)</span>}
+          </label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {DISPOSICION_INMEDIATA_INGRESO.map(d => {
+              const on = extras.disposicionInmediata === d;
+              const critica = ['Cuarentena', 'Rechazo proveedor', 'Devuelto'].includes(d);
+              return (
+                <button key={d} type="button" disabled={readOnly}
+                  onClick={() => setEx('disposicionInmediata', on ? undefined : d)}
+                  className={`px-3 py-2 rounded-xl border text-xs font-black transition-colors ${on
+                    ? (critica ? 'bg-rose-500 border-rose-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white')
+                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                  {on ? '☑' : '☐'} {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Disposición / Acción a tomar — obligatoria si hay No Conformes */}
         {(hasNo || disp) && (
@@ -292,6 +401,26 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
           <textarea value={obs} disabled={readOnly} onChange={e => setObs(e.target.value)} rows={2}
             placeholder="Notas del checklist…"
             className="mt-1.5 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400 resize-none" />
+        </div>
+
+        {/* Indicadores ISO (alimentan dashboards) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <h3 className="text-sm font-black text-slate-800 mb-3">Indicadores ISO</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              ['Tiempo recepción', minutosRecepcion != null ? `${minutosRecepcion} min` : '—'],
+              ['Inspector', ind.inspector || user?.nombre || '—'],
+              ['N° ítems', ind.items || 0],
+              ['Conformes', ind.ok || 0],
+              ['No conformes', ind.no || 0],
+              ['Resultado', ind.pct != null ? `${String(ind.pct).replace('.', ',')}%` : '—'],
+            ].map(([k, v]) => (
+              <div key={k} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wide">{k}</div>
+                <div className={`text-lg font-black ${k === 'No conformes' && ind.no > 0 ? 'text-rose-600' : 'text-slate-900'} truncate`} title={String(v)}>{v}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

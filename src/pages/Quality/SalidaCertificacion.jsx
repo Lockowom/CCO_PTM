@@ -11,7 +11,7 @@ import {
   useTareasSalida, useCrearTareaSalidaManual, useGuardarChecklist,
   useFirmarCertificado, fetchCandidatos, useEliminarTareaCalidad,
   RIESGOS_SALIDA, EVIDENCIAS_SALIDA_TIPOS, resultadoPeso, semaforoSalida, SEMAFORO_SALIDA,
-  uploadEvidenciaSalida, deleteEvidenciaSalida, EVIDENCIAS_BUCKET,
+  uploadEvidenciaSalida, deleteEvidenciaSalida, EVIDENCIAS_BUCKET, EVIDENCIA_OPCIONES,
 } from '../../services/calidadService';
 import { fetchNvPanel } from '../../services/panelPtm';
 import { compressImage } from '../../lib/imageCompress';
@@ -252,6 +252,7 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
 
   const setResp = (pid, estado) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], estado } }));
   const setNota = (pid, nota) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], nota } }));
+  const setEvid = (pid, evidencia) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], evidencia } }));
   const setEx = (k, v) => setExtras(prev => ({ ...prev, [k]: v }));
 
   const { answeredAll, hasNo, faltan } = useMemo(() => {
@@ -517,6 +518,17 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
                 <div key={p.id} className="flex items-start gap-3 py-1.5 border-b border-slate-50 last:border-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-700 font-semibold">{p.label}</p>
+                    {answers[p.id]?.estado && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Evidencia:</span>
+                        <select value={answers[p.id]?.evidencia || ''} disabled={readOnly}
+                          onChange={e => setEvid(p.id, e.target.value)}
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-bold ${answers[p.id]?.evidencia ? 'border-emerald-200 bg-emerald-50/50 text-emerald-700' : 'border-slate-200 text-slate-400'}`}>
+                          <option value="">— cómo se verificó —</option>
+                          {EVIDENCIA_OPCIONES.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </div>
+                    )}
                     {answers[p.id]?.estado === 'NO' && (
                       <input value={answers[p.id]?.nota || ''} disabled={readOnly} onChange={e => setNota(p.id, e.target.value)}
                         placeholder="Detalle de la no conformidad…"

@@ -2,7 +2,10 @@
 // formato de CONTROL DOCUMENTAL ISO 13485 (encabezado/pie compartido en docIso).
 // CONFORME → "Certificado de Conformidad" (con folio-sello); NO CONFORME → "Acta".
 import { DOC_CONTROL, isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
-import { semaforoSalida, RIESGOS_SALIDA, resultadoPeso } from '../services/calidadService';
+import {
+  semaforoSalida, RIESGOS_SALIDA, resultadoPeso,
+  CLASIFICACION_INGRESO, EMBALAJE_INGRESO, riesgoIngreso, indicadoresIso,
+} from '../services/calidadService';
 
 export { DOC_CONTROL };
 
@@ -146,17 +149,55 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
     children.push(new Paragraph(''));
   }
 
+  // Tabla estilo auditoría: la columna Evidencia indica CÓMO se verificó cada
+  // requisito (Documento / Conteo / Inspección visual / …) — objetividad ISO.
   const ans = tarea.checklist || {};
   niveles.forEach((nivel) => {
     children.push(new Paragraph({ text: nivel.titulo, heading: HeadingLevel.HEADING_2 }));
     children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
-      new TableRow({ children: ['Ítem', 'Resultado', 'Nota'].map(th) }),
+      new TableRow({ children: ['Requisito', 'Resultado', 'Evidencia', 'Observación'].map(th) }),
       ...nivel.params.map(p => new TableRow({ children: [
-        td(p.label), td(RESP_LABEL[ans[p.id]?.estado] || '—'), td(ans[p.id]?.nota || ''),
+        td(p.label), td(RESP_LABEL[ans[p.id]?.estado] || '—'), td(ans[p.id]?.evidencia || '—'), td(ans[p.id]?.nota || ''),
       ] })),
     ] }));
     children.push(new Paragraph(''));
   });
+
+  // ── Extras del checklist de INGRESO ──
+  if (!salida) {
+    const ex = extrasDe(tarea);
+    if (Array.isArray(ex.clasificacion) && ex.clasificacion.length) {
+      children.push(new Paragraph({ text: 'Clasificación del producto', heading: HeadingLevel.HEADING_2 }));
+      CLASIFICACION_INGRESO.forEach(c => {
+        children.push(new Paragraph(`${ex.clasificacion.includes(c.id) ? '☑' : '☐'} ${c.label}`));
+      });
+      children.push(new Paragraph(''));
+    }
+    if (ex.embalaje && Object.values(ex.embalaje).some(Boolean)) {
+      children.push(new Paragraph({ text: 'Evaluación del embalaje', heading: HeadingLevel.HEADING_2 }));
+      children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows:
+        EMBALAJE_INGRESO.map(f => kvRow(f.label, ex.embalaje[f.id] || '—')),
+      }));
+      children.push(new Paragraph(''));
+    }
+    const riesgo = riesgoIngreso(tarea.checklist);
+    children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+      ...(ex.disposicionInmediata ? [kvRow('Disposición inmediata', ex.disposicionInmediata)] : []),
+      kvRow('Riesgo de la recepción', `${riesgo.emoji} ${riesgo.label}`),
+    ] }));
+    children.push(new Paragraph(''));
+    const ind = indicadoresIso(tarea);
+    children.push(new Paragraph({ text: 'Indicadores ISO', heading: HeadingLevel.HEADING_2 }));
+    children.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [
+      kvRow('Tiempo recepción', ind.minutos != null ? `${ind.minutos} minutos` : '—'),
+      kvRow('Inspector', ind.inspector || '—'),
+      kvRow('N° ítems', ind.items),
+      kvRow('Conformes', ind.ok),
+      kvRow('No conformes', ind.no),
+      kvRow('Resultado', ind.pct != null ? `${String(ind.pct).replace('.', ',')}%` : '—'),
+    ] }));
+    children.push(new Paragraph(''));
+  }
 
   // ── Extras del certificado de salida ──
   if (salida) {
@@ -301,16 +342,18 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
     });
   }
 
+  // Tabla estilo auditoría con columna Evidencia (cómo se verificó el requisito).
   niveles.forEach((nivel) => {
     content.push({ text: nivel.titulo, style: 'h2' });
     content.push({
-      table: { headerRows: 1, widths: ['*', 'auto', '35%'], body: [
-        ['Ítem', 'Resultado', 'Nota'].map(t => ({ text: t, bold: true, fontSize: 9 })),
+      table: { headerRows: 1, widths: ['*', 'auto', 'auto', '28%'], body: [
+        ['Requisito', 'Resultado', 'Evidencia', 'Observación'].map(t => ({ text: t, bold: true, fontSize: 9 })),
         ...nivel.params.map(p => {
           const e = ans[p.id]?.estado;
           return [
             { text: p.label, fontSize: 9 },
             { text: RESP_LABEL[e] || '—', fontSize: 9, bold: true, color: e === 'NO' ? '#be123c' : (e === 'OK' ? '#047857' : '#64748b') },
+            { text: ans[p.id]?.evidencia || '—', fontSize: 9, color: '#475569' },
             { text: ans[p.id]?.nota || '', fontSize: 9 },
           ];
         }),
@@ -318,6 +361,56 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
       layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
     });
   });
+
+  // ── Extras del checklist de INGRESO ──
+  if (!salida) {
+    const ex = extrasDe(tarea);
+    if (Array.isArray(ex.clasificacion) && ex.clasificacion.length) {
+      content.push({ text: 'Clasificación del producto', style: 'h2' });
+      content.push({
+        columns: [0, 1].map(col => ({
+          stack: CLASIFICACION_INGRESO.filter((_, i) => i % 2 === col)
+            .map(c => ({ text: `${ex.clasificacion.includes(c.id) ? '☑' : '☐'} ${c.label}`, fontSize: 9, margin: [0, 1, 0, 1] })),
+        })),
+        columnGap: 24, margin: [0, 0, 0, 12],
+      });
+    }
+    if (ex.embalaje && Object.values(ex.embalaje).some(Boolean)) {
+      content.push({ text: 'Evaluación del embalaje', style: 'h2' });
+      content.push({
+        table: { widths: ['35%', '65%'], body: EMBALAJE_INGRESO.map(f => {
+          const v = ex.embalaje[f.id] || '—';
+          const mala = ['Malo', 'Incorrecto', 'Sí'].includes(v) || (f.id === 'pallet' && v === 'Regular');
+          return [{ text: f.label, bold: true }, { text: v, bold: true, color: v === '—' ? '#64748b' : (mala ? '#be123c' : '#047857') }];
+        }) },
+        layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+      });
+    }
+    const riesgo = riesgoIngreso(tarea.checklist);
+    content.push({
+      table: { widths: ['35%', '65%'], body: [
+        ...(ex.disposicionInmediata ? [[{ text: 'Disposición inmediata', bold: true }, { text: ex.disposicionInmediata, bold: true }]] : []),
+        [{ text: 'Riesgo de la recepción', bold: true }, { text: `● ${riesgo.label}`, bold: true, color: riesgo.color }],
+      ] },
+      layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+    });
+    const ind = indicadoresIso(tarea);
+    content.push({ text: 'Indicadores ISO', style: 'h2' });
+    content.push({
+      table: { headerRows: 1, widths: ['*', '*', '*', '*', '*', '*'], body: [
+        ['Tiempo recepción', 'Inspector', 'N° ítems', 'Conformes', 'No conformes', 'Resultado'].map(t => ({ text: t, bold: true, fontSize: 8 })),
+        [
+          { text: ind.minutos != null ? `${ind.minutos} min` : '—', fontSize: 9 },
+          { text: ind.inspector || '—', fontSize: 9 },
+          { text: String(ind.items), fontSize: 9 },
+          { text: String(ind.ok), fontSize: 9, color: '#047857', bold: true },
+          { text: String(ind.no), fontSize: 9, color: ind.no > 0 ? '#be123c' : '#64748b', bold: true },
+          { text: ind.pct != null ? `${String(ind.pct).replace('.', ',')}%` : '—', fontSize: 9, bold: true },
+        ],
+      ] },
+      layout: 'lightHorizontalLines', margin: [0, 0, 0, 12],
+    });
+  }
 
   // ── Extras del certificado de salida ──
   if (salida) {
