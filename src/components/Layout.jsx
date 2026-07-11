@@ -131,8 +131,10 @@ const Layout = ({ children }) => {
       {/* Main App Shell Container */}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar relative pt-[72px] sm:pt-[100px]">
+        {/* Main Content Area — overflow-x-hidden contiene cualquier elemento ancho
+            para que NINGÚN módulo empuje la página de lado en el celular. Las tablas
+            anchas siguen con su propio scroll interno (overflow-x-auto en su wrapper). */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative pt-[72px] sm:pt-[100px]">
           <div ref={mainRef} className="max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10 pb-24">
             {children}
           </div>
