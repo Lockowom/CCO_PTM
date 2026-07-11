@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import {
   RotateCcw, Plus, Lock, Unlock, Download, Search, Package, Boxes,
   ClipboardCheck, Layers, Calculator, X, Trash2, QrCode, ExternalLink, Copy, Camera,
+  Mail, Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -373,6 +374,164 @@ function TabSesiones({ sesiones, isAdmin, onOpen }) {
 }
 
 // ─── Conciliación ────────────────────────────────────────────────────────────
+// ─── Correo de ajuste (faltantes / sobrantes) ────────────────────────────────
+// Toma las diferencias de la Conciliación o del Ajuste ERP y arma el correo de
+// solicitud de ajuste: selección de filas, cuerpo con la tabla lista para
+// pegar (copia con formato HTML) o abrir directo en el cliente de correo.
+const esDiferencia = (x) => x.estado !== 'CUADRADO' && x.estado !== 'NO_CONTADO';
+const keyDif = (x) => `${x.codigo_producto}|${x.partida || ''}`;
+
+function BotonCorreoAjuste({ rows, conPartida = false }) {
+  const [abierto, setAbierto] = useState(false);
+  const difs = rows.filter(esDiferencia);
+  return (
+    <>
+      <button onClick={() => setAbierto(true)} disabled={!difs.length}
+        title={difs.length ? `Generar correo con ${difs.length} diferencia(s)` : 'Sin faltantes ni sobrantes'}
+        className="px-3 py-2 rounded-xl bg-orange-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-orange-700 disabled:opacity-40">
+        <Mail size={14} /> Correo de ajuste ({n(difs.length)})
+      </button>
+      {abierto && <CorreoAjusteModal difs={difs} conPartida={conPartida} onClose={() => setAbierto(false)} />}
+    </>
+  );
+}
+
+function CorreoAjusteModal({ difs, conPartida, onClose }) {
+  const { user } = useAuth();
+  const [sel, setSel] = useState(() => new Set(difs.map(keyDif)));
+  const [dest, setDest] = useState(() => localStorage.getItem('conteo_correo_dest') || '');
+  const [obs, setObs] = useState('');
+  useEffect(() => { localStorage.setItem('conteo_correo_dest', dest); }, [dest]);
+
+  const elegidos = difs.filter((x) => sel.has(keyDif(x)));
+  const faltas = elegidos.filter((x) => x.estado === 'FALTA');
+  const sobras = elegidos.filter((x) => x.estado !== 'FALTA');
+  const impacto = elegidos.reduce((t, x) => t + Number(x.impacto || 0), 0);
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const asunto = `Solicitud de ajuste de inventario · Conteo cíclico ${hoy} · ${elegidos.length} diferencia(s)`;
+
+  const linea = (x) => {
+    const partida = conPartida && x.partida ? ` · Partida ${x.partida}` : '';
+    return `  - ${x.codigo_producto}${partida} · ${x.descripcion || ''} · Contado ${n(x.contado)} / Sistema ${n(x.sistema)} → Ajuste ${x.diferencia > 0 ? '+' : ''}${n(x.diferencia)}`;
+  };
+  const cuerpo = [
+    'Estimados:',
+    '',
+    `Según el conteo cíclico realizado, se solicita el siguiente AJUSTE DE INVENTARIO (${hoy}):`,
+    '',
+    ...(faltas.length ? [`FALTANTES (${faltas.length}):`, ...faltas.map(linea), ''] : []),
+    ...(sobras.length ? [`SOBRANTES (${sobras.length}):`, ...sobras.map(linea), ''] : []),
+    `Impacto valorizado neto: ${money(impacto)}`,
+    ...(obs.trim() ? ['', `Observaciones: ${obs.trim()}`] : []),
+    '',
+    'Atentamente,',
+    user?.nombre || '',
+    'Generado desde CCO · Conteo Cíclico',
+  ].join('\n');
+
+  const filaHtml = (x) => `<tr><td style="padding:3px 8px;border:1px solid #cbd5e1;font-family:monospace">${x.codigo_producto}</td>${conPartida ? `<td style=\"padding:3px 8px;border:1px solid #cbd5e1;font-family:monospace\">${x.partida || ''}</td>` : ''}<td style="padding:3px 8px;border:1px solid #cbd5e1">${x.descripcion || ''}</td><td style="padding:3px 8px;border:1px solid #cbd5e1;text-align:right">${n(x.contado)}</td><td style="padding:3px 8px;border:1px solid #cbd5e1;text-align:right">${n(x.sistema)}</td><td style="padding:3px 8px;border:1px solid #cbd5e1;text-align:right;font-weight:bold;color:${x.diferencia < 0 ? '#e11d48' : '#b45309'}">${x.diferencia > 0 ? '+' : ''}${n(x.diferencia)}</td><td style="padding:3px 8px;border:1px solid #cbd5e1">${x.estado}</td></tr>`;
+  const html = `<p>Estimados:</p><p>Según el conteo cíclico realizado, se solicita el siguiente <b>AJUSTE DE INVENTARIO</b> (${hoy}):</p>
+<table style="border-collapse:collapse;font-size:13px"><tr>${['SKU', ...(conPartida ? ['Partida'] : []), 'Descripción', 'Contado', 'Sistema', 'Ajuste', 'Estado'].map((h) => `<th style="padding:4px 8px;border:1px solid #94a3b8;background:#f1f5f9;text-align:left">${h}</th>`).join('')}</tr>${elegidos.map(filaHtml).join('')}</table>
+<p><b>Impacto valorizado neto:</b> ${money(impacto)}</p>${obs.trim() ? `<p><b>Observaciones:</b> ${obs.trim().replace(/</g, '&lt;')}</p>` : ''}<p>Atentamente,<br/>${user?.nombre || ''}<br/><span style="color:#94a3b8;font-size:11px">Generado desde CCO · Conteo Cíclico</span></p>`;
+
+  const copiar = async () => {
+    try {
+      if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([cuerpo], { type: 'text/plain' }),
+        })]);
+      } else {
+        await navigator.clipboard.writeText(cuerpo);
+      }
+      toast.success('Correo copiado — pégalo en Outlook (mantiene la tabla)');
+    } catch (_) {
+      try { await navigator.clipboard.writeText(cuerpo); toast.success('Correo copiado (texto plano)'); }
+      catch (e) { toast.error('No se pudo copiar'); }
+    }
+  };
+  const abrirCorreo = () => {
+    const url = `mailto:${encodeURIComponent(dest)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    if (url.length > 7500) {
+      toast.info('Selección muy grande para abrir directo: usa "Copiar" y pégalo en el correo.');
+      return;
+    }
+    window.location.href = url;
+  };
+  const toggle = (k) => setSel((s) => { const nx = new Set(s); nx.has(k) ? nx.delete(k) : nx.add(k); return nx; });
+  const todos = sel.size === difs.length;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-3xl my-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 flex items-center gap-2"><Mail size={17} className="text-orange-500" /> Correo de ajuste de inventario</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Para (opcional)</label>
+              <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="inventario@ptm.cl; jefatura@ptm.cl"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Observaciones (opcional)</label>
+              <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ej: conteo semana 28, bodega 21"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
+              <label className="flex items-center gap-2 text-xs font-black text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={todos}
+                  onChange={() => setSel(todos ? new Set() : new Set(difs.map(keyDif)))} />
+                Diferencias a incluir ({elegidos.length}/{difs.length})
+              </label>
+              <span className={`text-xs font-black ${impacto < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>Impacto: {money(impacto)}</span>
+            </div>
+            <div className="max-h-52 overflow-y-auto divide-y divide-slate-50">
+              {difs.map((x) => {
+                const k = keyDif(x);
+                return (
+                  <label key={k} className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" checked={sel.has(k)} onChange={() => toggle(k)} />
+                    <span className="font-mono font-bold text-slate-800">{x.codigo_producto}</span>
+                    {conPartida && x.partida && <span className="font-mono text-slate-400">{x.partida}</span>}
+                    <span className="flex-1 text-slate-500 truncate">{x.descripcion}</span>
+                    <span className={`font-black ${x.diferencia < 0 ? 'text-rose-600' : 'text-amber-600'}`}>{x.diferencia > 0 ? '+' : ''}{n(x.diferencia)}</span>
+                    <span className={`px-1.5 py-0.5 rounded-md border text-[10px] font-bold ${chip(x.estado)}`}>{x.estado}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Vista previa</label>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600 whitespace-pre-wrap font-mono max-h-44 overflow-y-auto">
+              <div className="font-sans font-bold text-slate-800 mb-1">Asunto: {asunto}</div>
+              {cuerpo}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Cerrar</button>
+          <button onClick={copiar} disabled={!elegidos.length}
+            className="px-4 py-2 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-black hover:bg-orange-100 disabled:opacity-40 inline-flex items-center gap-1.5">
+            <Copy size={15} /> Copiar (con tabla)
+          </button>
+          <button onClick={abrirCorreo} disabled={!elegidos.length}
+            className="px-5 py-2 rounded-xl bg-orange-600 text-white font-black text-sm hover:bg-orange-700 disabled:opacity-40 inline-flex items-center gap-1.5">
+            <Send size={15} /> Abrir en correo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TabConciliacion({ sesionId }) {
   const { data: rows = [], isLoading } = useConciliacion(sesionId);
   const r = resumenAnalisis(rows);
@@ -395,7 +554,10 @@ function TabConciliacion({ sesionId }) {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-black text-slate-900 flex items-center gap-2"><ClipboardCheck size={18} className="text-orange-500" /> Conciliación</h2>
-          <button onClick={exportar} disabled={!rows.length} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"><Download size={14} /> Excel</button>
+          <div className="flex items-center gap-2">
+            <BotonCorreoAjuste rows={rows} />
+            <button onClick={exportar} disabled={!rows.length} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"><Download size={14} /> Excel</button>
+          </div>
         </div>
         <TablaReporte isLoading={isLoading} rows={rows} cols={[
           ['codigo_producto', 'SKU', 'mono'], ['descripcion', 'Descripción'], ['contado', 'Contado', 'num'],
@@ -420,7 +582,10 @@ function TabAjuste({ sesionId }) {
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between p-4">
         <h2 className="font-black text-slate-900 flex items-center gap-2"><Download size={18} className="text-orange-500" /> Ajuste para el ERP (por SKU + partida)</h2>
-        <button onClick={exportar} disabled={!rows.length} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"><Download size={14} /> Excel</button>
+        <div className="flex items-center gap-2">
+          <BotonCorreoAjuste rows={rows} conPartida />
+          <button onClick={exportar} disabled={!rows.length} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"><Download size={14} /> Excel</button>
+        </div>
       </div>
       <TablaReporte isLoading={isLoading} rows={rows} cols={[
         ['codigo_producto', 'SKU', 'mono'], ['descripcion', 'Descripción'], ['partida', 'Partida', 'mono'],

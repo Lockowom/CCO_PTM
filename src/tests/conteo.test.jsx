@@ -83,6 +83,17 @@ describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
 
+  it('Conciliación: el botón "Correo de ajuste" abre el modal con el faltante listo', async () => {
+    wrap(<ConteoCiclico />, '/inventory/conteo?tab=conciliacion');
+    await waitFor(() => expect(screen.getByText('0010950005')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Correo de ajuste \(1\)/i }));
+    await waitFor(() => expect(screen.getByText(/Correo de ajuste de inventario/i)).toBeInTheDocument());
+    expect(screen.getByText(/Diferencias a incluir \(1\/1\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/FALTANTES \(1\):/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Abrir en correo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Copiar \(con tabla\)/i })).toBeInTheDocument();
+  });
+
   it('la sección Ajuste ERP (deep-link ?tab=ajuste) renderiza la tabla por SKU+partida', async () => {
     wrap(<ConteoCiclico />, '/inventory/conteo?tab=ajuste');
     await waitFor(() => expect(screen.getByText('(sin partida)')).toBeInTheDocument());
