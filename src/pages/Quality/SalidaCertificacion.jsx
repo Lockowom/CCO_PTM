@@ -52,20 +52,33 @@ const ManualModal = ({ onClose, onCreated }) => {
     } finally { setBuscandoNv(false); }
   }, [nv]);
 
+  // Para el despacho la ubicación no aporta: se agrupa el stock por SKU+partida
+  // (sumando el disponible de todas las ubicaciones) y no se muestra ubicación.
+  const agruparPorSku = (lista) => {
+    const m = new Map();
+    (lista || []).forEach((c) => {
+      const k = `${c.codigo_producto}|${c.partida || ''}`;
+      const prev = m.get(k);
+      if (prev) prev.disponible = Number(prev.disponible || 0) + (Number(c.disponible) || 0);
+      else m.set(k, { ...c, ubicacion: '', disponible: Number(c.disponible) || 0 });
+    });
+    return [...m.values()];
+  };
+
   const buscar = useCallback(async () => {
     setBuscando(true);
-    try { setCand(await fetchCandidatos(query, false)); }
+    try { setCand(agruparPorSku(await fetchCandidatos(query, false))); }
     catch (e) { toast.error(`Error buscando stock: ${e.message}`); }
     finally { setBuscando(false); }
   }, [query]);
 
-  const keyOf = (c) => `${c.codigo_producto}|${c.partida || ''}|${c.ubicacion || ''}`;
+  const keyOf = (c) => `${c.codigo_producto}|${c.partida || ''}`;
   const add = (c) => {
     const k = keyOf(c);
     if (sel.some(s => s._key === k)) { toast.info('Ese SKU ya está agregado'); return; }
     setSel(prev => [...prev, {
       _key: k, codigo_producto: c.codigo_producto, producto: c.producto || '',
-      ubicacion: c.ubicacion || '', partida: c.partida || '',
+      ubicacion: '', partida: c.partida || '',
       cantidad: Number(c.disponible) || 0, unidad_medida: c.unidad_medida || 'UN',
     }]);
   };
@@ -94,8 +107,8 @@ const ManualModal = ({ onClose, onCreated }) => {
         </div>
         <div className="p-5 overflow-y-auto space-y-4">
           {/* Datos del despacho a mano */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="col-span-2 sm:col-span-1">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">N.V. *</label>
               <div className="flex gap-1.5 mt-1">
                 <input value={nv} onChange={e => setNv(e.target.value)} onKeyDown={e => e.key === 'Enter' && traerDelPanel()}
@@ -108,11 +121,6 @@ const ManualModal = ({ onClose, onCreated }) => {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</label>
-              <input value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Opcional"
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
-            </div>
-            <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Guía</label>
               <input value={guia} onChange={e => setGuia(e.target.value)} placeholder="Opcional"
                 className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
@@ -122,7 +130,12 @@ const ManualModal = ({ onClose, onCreated }) => {
               <input value={bultos} onChange={e => setBultos(e.target.value.replace(/[^0-9]/g, ''))} placeholder="0" inputMode="numeric"
                 className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
             </div>
-            <div className="col-span-2 sm:col-span-4">
+            <div className="col-span-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</label>
+              <input value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Opcional" title={cliente}
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
+            </div>
+            <div className="col-span-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transportista</label>
               <input value={transportista} onChange={e => setTransportista(e.target.value)} placeholder="Opcional"
                 className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
@@ -172,7 +185,7 @@ const ManualModal = ({ onClose, onCreated }) => {
                 <button key={i} onClick={() => add(c)} className="w-full text-left px-3 py-2 hover:bg-emerald-50/50 flex items-center justify-between gap-2">
                   <span className="min-w-0">
                     <span className="font-bold text-sm text-slate-800 truncate block">{c.codigo_producto} · {c.producto}</span>
-                    <span className="text-xs text-slate-400">{c.ubicacion || 's/ubic'} · {c.partida || 's/partida'} · {c.disponible} {c.unidad_medida}</span>
+                    <span className="text-xs text-slate-400">{c.partida || 's/partida'} · {c.disponible} {c.unidad_medida} disponibles</span>
                   </span>
                   <Plus size={16} className="text-emerald-500 shrink-0" />
                 </button>
@@ -191,7 +204,7 @@ const ManualModal = ({ onClose, onCreated }) => {
                   <div key={s._key} className="flex items-center justify-between gap-2 bg-slate-50 rounded-lg px-3 py-2">
                     <span className="min-w-0">
                       <span className="font-bold text-sm text-slate-800 truncate block">{s.codigo_producto} · {s.producto}</span>
-                      <span className="text-xs text-slate-400">{s.ubicacion || 's/ubic'} · {s.partida || 's/partida'} · {s.cantidad} {s.unidad_medida}</span>
+                      <span className="text-xs text-slate-400">{s.partida || 's/partida'} · {s.cantidad} {s.unidad_medida}</span>
                     </span>
                     <button onClick={() => remove(s._key)} className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 shrink-0"><Trash2 size={15} /></button>
                   </div>
