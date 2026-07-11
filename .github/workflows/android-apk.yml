@@ -1,0 +1,85 @@
+name: Build APK Android
+
+# Compila el APK Android en los runners de GitHub (traen Android SDK) y lo deja
+# como ARTEFACTO descargable. Manual (workflow_dispatch).
+#
+# - "debug" (por defecto): firmado con la clave de debug, sirve para INSTALAR y
+#   PROBAR en el teléfono (sideload). No requiere secretos. Ojo: como su firma
+#   difiere de la app publicada, hay que DESINSTALAR la app anterior antes de
+#   instalar este APK (los datos viven en Supabase, no se pierden).
+# - "release": firmado con tu keystore (requiere los secretos ANDROID_KEYSTORE_BASE64,
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD). Para Play
+#   Store / distribución oficial.
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Tipo de APK'
+        type: choice
+        default: debug
+        options: [debug, release]
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build web (con Supabase)
+        env:
+          VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
+          VITE_SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
+        run: npm run build
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sincronizar Capacitor (copia el web al proyecto Android)
+        run: npx cap sync android
+
+      # --- Firma de release (solo variant=release y si están los secretos) ---
+      - name: Preparar keystore de release
+        if: ${{ github.event.inputs.variant == 'release' && secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/cco-release.jks
+          cat > android/keystore.properties <<EOF
+          storeFile=cco-release.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Compilar APK
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ "${{ github.event.inputs.variant }}" = "release" ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            ./gradlew assembleDebug --no-daemon
+          fi
+
+      - name: Subir APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: cco-wms-${{ github.event.inputs.variant }}-apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
