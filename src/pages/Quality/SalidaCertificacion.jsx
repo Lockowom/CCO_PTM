@@ -11,6 +11,7 @@ import {
   useTareasSalida, useCrearTareaSalidaManual, useGuardarChecklist,
   useFirmarCertificado, fetchCandidatos, useEliminarTareaCalidad,
 } from '../../services/calidadService';
+import { fetchNvPanel } from '../../services/panelPtm';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
 // ── Modal: certificación de salida MANUAL (N.V. a mano + SKUs) ──────────────
@@ -25,6 +26,31 @@ const ManualModal = ({ onClose, onCreated }) => {
   const [buscando, setBuscando] = useState(false);
   const [cand, setCand] = useState([]);
   const [sel, setSel] = useState([]);
+  const [panelInfo, setPanelInfo] = useState(null);
+  const [buscandoNv, setBuscandoNv] = useState(false);
+
+  // Trae los datos de la N.V desde el Panel Dashboard PTM y autollena el
+  // formulario (cliente, guía, transportista, bultos) + tarjeta informativa.
+  const traerDelPanel = useCallback(async () => {
+    if (!nv.trim()) { toast.error('Escribe primero el número de N.V.'); return; }
+    setBuscandoNv(true);
+    try {
+      const info = await fetchNvPanel(nv);
+      if (!info) {
+        setPanelInfo(null);
+        toast.info(`La N.V ${nv.trim()} no está en el Panel PTM (puedes seguir a mano).`);
+        return;
+      }
+      setPanelInfo(info);
+      if (info.cliente) setCliente(info.cliente);
+      if (info.guia) setGuia(info.guia);
+      if (info.transportista) setTransportista(info.transportista);
+      if (info.bultos) setBultos(info.bultos);
+      toast.success(`N.V ${info.nv} encontrada en el Panel: datos cargados`);
+    } catch (e) {
+      toast.error(`No se pudo consultar el Panel PTM: ${e.message}`);
+    } finally { setBuscandoNv(false); }
+  }, [nv]);
 
   const buscar = useCallback(async () => {
     setBuscando(true);
@@ -71,8 +97,15 @@ const ManualModal = ({ onClose, onCreated }) => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="col-span-2 sm:col-span-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">N.V. *</label>
-              <input value={nv} onChange={e => setNv(e.target.value)} placeholder="Ej. 95811"
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-emerald-300 text-sm font-bold outline-none focus:border-emerald-500" />
+              <div className="flex gap-1.5 mt-1">
+                <input value={nv} onChange={e => setNv(e.target.value)} onKeyDown={e => e.key === 'Enter' && traerDelPanel()}
+                  placeholder="Ej. 95811"
+                  className="w-full px-3 py-2 rounded-xl border border-emerald-300 text-sm font-bold outline-none focus:border-emerald-500" />
+                <button onClick={traerDelPanel} disabled={buscandoNv || !nv.trim()} title="Traer datos de la N.V desde el Panel PTM"
+                  className="px-3 py-2 rounded-xl bg-indigo-600 text-white shrink-0 hover:bg-indigo-700 disabled:opacity-40">
+                  {buscandoNv ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</label>
@@ -95,6 +128,31 @@ const ManualModal = ({ onClose, onCreated }) => {
                 className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400" />
             </div>
           </div>
+
+          {/* Info de la N.V traída del Panel Dashboard PTM */}
+          {panelInfo && (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs space-y-1.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="font-black text-indigo-700 uppercase tracking-widest text-[10px]">
+                  N.V {panelInfo.nv} · Panel Dashboard PTM
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {panelInfo.urgente && <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black">URGENTE</span>}
+                  {panelInfo.estado && <span className="px-1.5 py-0.5 rounded-md bg-white text-indigo-700 border border-indigo-200 text-[10px] font-black">{panelInfo.estado}</span>}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-slate-600">
+                {panelInfo.vendedor && <span><b className="text-slate-400">Vendedor:</b> {panelInfo.vendedor}</span>}
+                {panelInfo.factura && <span><b className="text-slate-400">Factura:</b> {panelInfo.factura}</span>}
+                {panelInfo.numeroEnvio && <span><b className="text-slate-400">N° envío:</b> {panelInfo.numeroEnvio}</span>}
+                {panelInfo.tipoDespacho && <span><b className="text-slate-400">Tipo despacho:</b> {panelInfo.tipoDespacho}</span>}
+                {panelInfo.fechaCompromiso && <span><b className="text-slate-400">Compromiso:</b> {panelInfo.fechaCompromiso.split('-').reverse().join('-')}</span>}
+                {panelInfo.fechaDespacho && <span><b className="text-slate-400">Despacho:</b> {panelInfo.fechaDespacho.split('-').reverse().join('-')}</span>}
+                {panelInfo.division && <span><b className="text-slate-400">División:</b> {panelInfo.division}</span>}
+                {panelInfo.centroCosto && <span><b className="text-slate-400">Centro costo:</b> {panelInfo.centroCosto}</span>}
+              </div>
+            </div>
+          )}
 
           {/* Buscador de SKUs (por SKU, descripción o ubicación) */}
           <div className="flex gap-2">
