@@ -4,19 +4,20 @@
 // duplicados contra P/S, no activos con stock y anomalías de formato, con el
 // resumen de avance de la actualización de códigos. Las secciones se navegan
 // desde el MENÚ (Inventario → Análisis · …) vía ?tab=, como el resto de los
-// módulos. Datos: tms_inventario_general (Carga Masiva → Consolidado) +
-// catálogo ACTIVO cargado desde esta misma pantalla.
+// módulos. Datos: tms_inventario_general (reporte IW cargado desde el Resumen,
+// o Carga Masiva → Consolidado) + catálogo ACTIVO cargado desde esta pantalla.
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   BarChart3, Search, Download, Upload, RefreshCw, AlertTriangle, FileWarning,
-  CheckCircle2, XCircle, Layers, ArrowRight, Database,
+  CheckCircle2, XCircle, Layers, Database,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
 import {
   useAnalisisResumen, useAnalisisCodigos, useCargarActivo, parseActivoFile,
+  useCargarStock, parseStockFile,
 } from '../../services/analisisService';
 
 const TABS = ['resumen', 'antiguos', 'antiguos_disp', 'no_activos_stock', 'duplicados', 'anomalias', 'detalle'];
@@ -93,8 +94,11 @@ export default function AnalisisCodigos() {
 function TabResumen({ canCargar }) {
   const { data: r = {}, isLoading, refetch, isFetching } = useAnalisisResumen();
   const cargar = useCargarActivo();
+  const cargarStock = useCargarStock();
   const fileRef = useRef(null);
+  const stockRef = useRef(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [subiendoStock, setSubiendoStock] = useState(false);
 
   const onFile = async (e) => {
     const file = e.target.files?.[0];
@@ -108,6 +112,20 @@ function TabResumen({ canCargar }) {
     } catch (err) {
       toast.error(err.message || 'No se pudo cargar el catálogo');
     } finally { setSubiendo(false); }
+  };
+
+  const onFileStock = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setSubiendoStock(true);
+    try {
+      const rows = await parseStockFile(file);
+      const res = await cargarStock.mutateAsync(rows);
+      toast.success(`Stock cargado: ${n(res.total)} SKUs (reemplazó la carga anterior)`);
+    } catch (err) {
+      toast.error(err.message || 'No se pudo cargar el reporte de stock');
+    } finally { setSubiendoStock(false); }
   };
 
   const sinStock = !isLoading && Number(r.total || 0) === 0;
@@ -136,9 +154,14 @@ function TabResumen({ canCargar }) {
             <div className="font-bold text-slate-800 text-sm">1 · Reporte de stock (ERP)</div>
             <div className="text-xs text-slate-500 mt-0.5">{n(r.total)} SKUs · última carga: {fechaCL(r.stock_cargado_el)}</div>
             {sinStock && <div className="text-xs font-bold text-amber-700 mt-1">⚠ Aún no hay stock cargado: el análisis saldrá vacío.</div>}
-            <Link to="/inbound/data-import" className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-700">
-              <Upload size={13} /> Cargar en Carga Masiva → Consolidado <ArrowRight size={13} />
-            </Link>
+            {canCargar && (
+              <button onClick={() => stockRef.current?.click()} disabled={subiendoStock}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white text-xs font-black hover:bg-orange-700 disabled:opacity-50">
+                {subiendoStock ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />} Cargar reporte de stock (Excel IW)
+              </button>
+            )}
+            <input ref={stockRef} type="file" accept=".xlsx,.xls,.csv" onChange={onFileStock} className="hidden" />
+            <p className="text-[10px] text-slate-400 mt-1.5">Detecta las columnas por nombre ("Cod. Producto", "Disponible", …) y reemplaza la carga anterior. Alternativa: <Link to="/inbound/data-import" className="underline">Carga Masiva → Consolidado</Link> (requiere columna Bodega).</p>
           </div>
           <div className={`rounded-xl border p-4 ${sinActivo ? 'border-amber-300 bg-amber-50' : 'border-slate-200'}`}>
             <div className="font-bold text-slate-800 text-sm">2 · Catálogo ACTIVO (Si/No del ERP)</div>
@@ -229,7 +252,7 @@ function Tabla({ rows, isLoading, conDiagnostico }) {
   return (
     <div className="overflow-x-auto">
       {isLoading && <div className="text-slate-400 text-center py-10">Calculando análisis…</div>}
-      {!isLoading && !rows.length && <div className="text-slate-400 text-center py-10">Sin resultados. ¿Está cargado el stock (Carga Masiva → Consolidado)?</div>}
+      {!isLoading && !rows.length && <div className="text-slate-400 text-center py-10">Sin resultados. ¿Está cargado el stock? (Resumen → Cargar reporte de stock)</div>}
       {!isLoading && rows.length > 0 && (
         <table className="w-full text-xs">
           <thead>
