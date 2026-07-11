@@ -3,7 +3,7 @@ import {
   Scan, Package, ArrowRight, CheckCircle,
   AlertTriangle, RotateCcw, Search, LogOut,
   Box, MapPin, ClipboardList, ArrowLeft, Wifi, WifiOff,
-  Plus, Minus, ChevronRight, Archive, Camera
+  Plus, Minus, ChevronRight, Archive, Camera, CloudOff, UploadCloud
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -12,8 +12,15 @@ import { toast } from 'sonner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
+import useSyncQueue from '../../hooks/useSyncQueue';
+import { enqueueSyncItem } from '../../lib/syncManager';
 import ConteoPDA from './ConteoPDA';
 import ConsultaPDA from './ConsultaPDA';
+
+// ¿El error de una escritura es por falta de red? (para caer a la cola offline)
+const esErrorDeRed = (err) =>
+  !navigator.onLine ||
+  /network|fetch|failed to fetch|timeout|Load failed|ERR_/i.test(err?.message || '');
 
 // Versión real de la app (inyectada por Vite desde package.json).
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -35,6 +42,7 @@ const WarehousePDA = () => {
   const { user, logout } = useAuth();
   const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
   const online = useOnlineStatus();
+  const { pending, syncNow } = useSyncQueue();
   const [mode, setMode] = useState('HOME'); // HOME, PUTAWAY, INVENTORY, QUERY
   const [scannedValue, setScannedValue] = useState('');
 
@@ -95,48 +103,67 @@ const WarehousePDA = () => {
 
   const processPutawayInput = async (val) => {
     if (putawayStep === 'SCAN_LOC') {
-      // Validate location exists
+      // Offline: no se puede validar contra la BD → se acepta la ubicación tal cual
+      // (la operación queda en cola y se valida al sincronizar en el servidor).
+      if (!online) {
+        hapticSuccess();
+        setPutawayData(prev => ({ ...prev, ubicacion: val }));
+        setPutawayStep('SCAN_SKU');
+        toast.success(`Ubicación: ${val} (offline)`);
+        return;
+      }
       try {
-        const { data, error } = await supabase
-          .from('wms_ubicaciones')
-          .select('ubicacion')
-          .eq('ubicacion', val)
-          .limit(1);
-
+        const { error } = await supabase
+          .from('wms_ubicaciones').select('ubicacion').eq('ubicacion', val).limit(1);
         if (error) throw error;
-
-        // Accept the location whether it already has items or is new
         hapticSuccess();
         setPutawayData(prev => ({ ...prev, ubicacion: val }));
         setPutawayStep('SCAN_SKU');
         toast.success(`Ubicación: ${val}`);
       } catch (err) {
+        // Caída de red a mitad → dejar seguir en modo offline.
+        if (esErrorDeRed(err)) {
+          hapticSuccess();
+          setPutawayData(prev => ({ ...prev, ubicacion: val }));
+          setPutawayStep('SCAN_SKU');
+          toast.warning(`Ubicación: ${val} (sin validar, offline)`);
+          return;
+        }
         hapticError();
         toast.error('Error validando ubicación');
       }
     } else if (putawayStep === 'SCAN_SKU') {
-      // Lookup SKU in tms_matriz_codigos
+      // Offline: sin catálogo → se acepta el código con descripción "por validar".
+      if (!online) {
+        hapticSuccess();
+        setPutawayData(prev => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
+        setPutawayStep('ENTER_QTY');
+        toast.success(`Producto: ${val} (offline)`);
+        return;
+      }
       try {
         const { data, error } = await supabase
           .from('tms_matriz_codigos')
           .select('codigo_producto, producto')
-          .eq('codigo_producto', val)
-          .limit(1)
-          .maybeSingle();
-
+          .eq('codigo_producto', val).limit(1).maybeSingle();
         if (error) throw error;
-
         if (!data) {
           hapticError();
           toast.error('SKU no encontrado en matriz de códigos');
           return;
         }
-
         hapticSuccess();
         setPutawayData(prev => ({ ...prev, codigo: data.codigo_producto, descripcion: data.producto }));
         setPutawayStep('ENTER_QTY');
         toast.success(`Producto: ${data.producto}`);
       } catch (err) {
+        if (esErrorDeRed(err)) {
+          hapticSuccess();
+          setPutawayData(prev => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
+          setPutawayStep('ENTER_QTY');
+          toast.warning(`Producto: ${val} (sin validar, offline)`);
+          return;
+        }
         hapticError();
         toast.error('Error buscando producto');
       }
@@ -144,33 +171,48 @@ const WarehousePDA = () => {
   };
 
   const confirmPutaway = async () => {
-    try {
-      toast.loading('Guardando...', { id: 'putaway-save' });
+    const registro = {
+      ubicacion: putawayData.ubicacion,
+      codigo: putawayData.codigo,
+      descripcion: putawayData.descripcion,
+      cantidad: putawayData.cantidad,
+    };
 
-      const { error } = await supabase
-        .from('wms_ubicaciones')
-        .insert({
-          ubicacion: putawayData.ubicacion,
-          codigo: putawayData.codigo,
-          descripcion: putawayData.descripcion,
-          cantidad: putawayData.cantidad
-        });
-
-      toast.dismiss('putaway-save');
-
-      if (error) throw error;
-
+    // Continúa al siguiente ítem (se guardó online o quedó en cola offline).
+    const avanzar = () => {
       hapticSuccess();
-      setPutawayCount(prev => prev + 1);
-      toast.success('Producto ubicado correctamente');
-
-      // Reset for next item
+      setPutawayCount((prev) => prev + 1);
       setPutawayData({ ubicacion: '', codigo: '', descripcion: '', cantidad: 1 });
       setPutawayStep('SCAN_LOC');
+    };
+
+    // Guarda la operación en la cola local para subirla al reconectar.
+    const encolar = async () => {
+      await enqueueSyncItem({
+        type: 'insert', tableName: 'wms_ubicaciones',
+        recordId: `putaway_${registro.ubicacion}_${registro.codigo}_${Date.now()}`,
+        data: registro,
+      });
+      // enqueueSyncItem ya muestra "Operación guardada offline".
+      avanzar();
+    };
+
+    // Sin señal → directo a la cola (no intentamos la red).
+    if (!online) { await encolar(); return; }
+
+    try {
+      toast.loading('Guardando...', { id: 'putaway-save' });
+      const { error } = await supabase.from('wms_ubicaciones').insert(registro);
+      toast.dismiss('putaway-save');
+      if (error) throw error;
+      toast.success('Producto ubicado correctamente');
+      avanzar();
     } catch (err) {
       toast.dismiss('putaway-save');
-      hapticError();
       console.error('Error putaway:', err);
+      // Si fue caída de red → guardar offline en vez de perder el trabajo.
+      if (esErrorDeRed(err)) { await encolar(); return; }
+      hapticError();
       toast.error('Error al ubicar: ' + (err.message || 'Error desconocido'));
     }
   };
@@ -201,16 +243,30 @@ const WarehousePDA = () => {
               )}
             </div>
           </div>
-          <button onClick={logout} className="p-2 bg-slate-100 rounded-lg active:bg-slate-200" aria-label="Cerrar sesión">
-            <LogOut size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {pending > 0 && (
+              <button onClick={syncNow} title="Sincronizar pendientes"
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-black ${online ? 'bg-amber-100 text-amber-700 active:bg-amber-200' : 'bg-slate-200 text-slate-600'}`}>
+                {online ? <UploadCloud size={14} /> : <CloudOff size={14} />} {pending}
+              </button>
+            )}
+            <button onClick={logout} className="p-2 bg-slate-100 rounded-lg active:bg-slate-200" aria-label="Cerrar sesión">
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Banner offline: en bodega el operario DEBE saber que no se guarda */}
+        {/* Banner offline: se PUEDE seguir trabajando (queda en cola local) */}
         {!online && (
           <div className="bg-rose-600 text-white text-xs font-bold px-3 py-2 flex items-center gap-2">
             <WifiOff size={14} className="shrink-0" />
-            Sin conexión: no escanees ni guardes hasta recuperar la señal.
+            Sin conexión: puedes seguir, las operaciones se guardan y se subirán al reconectar.
+          </div>
+        )}
+        {online && pending > 0 && (
+          <div className="bg-amber-500 text-white text-xs font-bold px-3 py-2 flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2"><UploadCloud size={14} className="shrink-0" /> {pending} operación(es) por subir…</span>
+            <button onClick={syncNow} className="underline underline-offset-2">Sincronizar</button>
           </div>
         )}
 
@@ -260,9 +316,14 @@ const WarehousePDA = () => {
             <span className="text-sm font-bold text-emerald-300">PUTAWAY</span>
           </div>
           <div className="flex items-center gap-2">
+            {pending > 0 && (
+              <span className="flex items-center gap-1 text-[11px] font-black text-amber-300" title="Pendientes de subir">
+                {online ? <UploadCloud size={12} /> : <CloudOff size={12} />} {pending}
+              </span>
+            )}
             {!online && <WifiOff size={13} className="text-rose-400" />}
             <Archive size={14} className="text-emerald-400" />
-            <span className="text-xs text-emerald-400 font-bold">Items ubicados: {putawayCount}</span>
+            <span className="text-xs text-emerald-400 font-bold">Ubicados: {putawayCount}</span>
           </div>
         </div>
 
