@@ -4,12 +4,14 @@ import {
   Wrench, Plus, Search, X, Download, LayoutDashboard, ClipboardList, Users,
   Save, Trash2, Mail, AlertTriangle, Clock, CheckCircle2, Pencil,
   CalendarDays, ChevronLeft, ChevronRight, MailOpen, Building2, Globe2, Paperclip,
+  Link2, Loader2, FileText, Truck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
 import { signedUrls } from '../../lib/storageUrl';
 import { comunasDeRegion } from '../../constants/comunasChile';
+import { fetchNvPanel } from '../../services/panelPtm';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
@@ -116,6 +118,7 @@ function TabTickets({ canManage, canSupervise }) {
         name: 'Tickets',
         rows: tickets.map((t) => ({
           Número: t.numero, 'ID Tipo': t.folio_tipo || '', Fecha: fechaCL(t.fecha_apertura), Cliente: t.cliente, Región: t.region, Comuna: t.comuna || '',
+          'N.V.': t.nv || '', Vendedor: t.vendedor || '',
           Equipo: t.equipo_modelo, 'N° Serie': t.numero_serie || '', Tipo: t.tipo_solicitud,
           Prioridad: t.prioridad, Técnico: t.tecnico_asignado, Estado: t.estado,
           Cotizar: t.cotizar, Cierre: fechaCL(t.fecha_cierre), Resultado: t.resultado || '',
@@ -409,6 +412,7 @@ const FORM_VACIO = {
   tipo_solicitud: '', prioridad: 'Media', tecnico_asignado: 'Sin Asignar',
   estado: 'Abierto', cotizar: 'No', descripcion: '', observaciones: '',
   fecha_programada: '', hora_programada: '',
+  nv: '', vendedor: '', nv_info: null,
 };
 
 function TabNuevo({ onCreated }) {
@@ -417,6 +421,30 @@ function TabNuevo({ onCreated }) {
   const { data: familias = [] } = useFamiliasStock();
   const [f, setF] = useState(FORM_VACIO);
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const [buscandoNv, setBuscandoNv] = useState(false);
+
+  // Asociar una N.V. del Panel PTM (opcional): trae cliente, vendedor y la
+  // trazabilidad del proceso (estado, factura, guía, transportista, fechas).
+  const buscarNv = async () => {
+    const num = String(f.nv || '').replace(/[^0-9]/g, '');
+    if (!num) return toast.error('Escribe el número de N.V.');
+    setBuscandoNv(true);
+    try {
+      const info = await fetchNvPanel(num);
+      if (!info) { toast.info(`La N.V. ${num} no está en el Panel PTM`); setF((p) => ({ ...p, nv_info: null })); return; }
+      setF((p) => ({
+        ...p,
+        nv: info.nv || num,
+        cliente: info.cliente || p.cliente,
+        vendedor: info.vendedor || '',
+        nv_info: info,
+      }));
+      toast.success(`N.V. ${info.nv} asociada — ${info.cliente || 'sin cliente'}`);
+    } catch (e) {
+      toast.error(`No se pudo consultar el Panel: ${e.message}`);
+    } finally { setBuscandoNv(false); }
+  };
+  const quitarNv = () => setF((p) => ({ ...p, nv: '', vendedor: '', nv_info: null }));
 
   // Solo cliente + descripción son obligatorios; el resto se autocompleta al guardar
   // (igual que los tickets que entran por correo, con "Por Definir"/"Otro"/"Media").
@@ -443,6 +471,51 @@ function TabNuevo({ onCreated }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5 max-w-4xl">
       <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><Plus size={18} className="text-orange-600" /> Nuevo ticket de servicio</h2>
+
+      {/* Asociar a una N.V. del Panel PTM (opcional) */}
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
+        <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5"><Link2 size={13} /> Asociar a Nota de Venta (opcional)</label>
+        <div className="flex gap-2 mt-1.5">
+          <input
+            value={f.nv}
+            onChange={(e) => set('nv', e.target.value.replace(/[^0-9]/g, ''))}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), buscarNv())}
+            placeholder="N° de N.V. (solo si aplica)"
+            inputMode="numeric"
+            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-400"
+          />
+          <button type="button" onClick={buscarNv} disabled={buscandoNv || !f.nv}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-black hover:bg-indigo-700 disabled:opacity-40 inline-flex items-center gap-2">
+            {buscandoNv ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Traer
+          </button>
+          {f.nv_info && (
+            <button type="button" onClick={quitarNv} title="Quitar asociación"
+              className="px-3 py-2 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300"><X size={15} /></button>
+          )}
+        </div>
+        {f.nv_info && (
+          <div className="mt-3 rounded-lg bg-white border border-indigo-100 p-3 text-xs space-y-2 anim-fade-up">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="font-black text-slate-800">N.V. {f.nv_info.nv}</span>
+              {f.nv_info.estado && <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-black text-[10px] uppercase tracking-wide">{f.nv_info.estado}</span>}
+              {f.nv_info.urgente && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-black text-[10px] uppercase">Urgente</span>}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-slate-600">
+              <Dato k="Cliente" v={f.nv_info.cliente} />
+              <Dato k="Vendedor" v={f.nv_info.vendedor} />
+              <Dato k="Factura" v={f.nv_info.factura} icon={FileText} />
+              <Dato k="Guía" v={f.nv_info.guia} />
+              <Dato k="Transportista" v={f.nv_info.transportista} icon={Truck} />
+              <Dato k="Bultos" v={f.nv_info.bultos} />
+              <Dato k="Tipo despacho" v={f.nv_info.tipoDespacho} />
+              <Dato k="F. compromiso" v={f.nv_info.fechaCompromiso} />
+              <Dato k="F. despacho" v={f.nv_info.fechaDespacho} />
+            </div>
+            <p className="text-[10px] text-slate-400 pt-1">Trazabilidad tomada del Panel PTM al crear el ticket; queda guardada en el ticket.</p>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Cliente / Hospital" req value={f.cliente} onChange={(v) => set('cliente', v)} />
         <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} />
@@ -620,6 +693,24 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-4">
+          {ticket.nv && (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 px-4 py-3 text-sm">
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <span className="font-black text-indigo-800 flex items-center gap-1.5"><Link2 size={14} /> N.V. {ticket.nv}{ticket.vendedor ? ` · Vendedor: ${ticket.vendedor}` : ''}</span>
+                {ticket.nv_info?.estado && <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-black text-[10px] uppercase tracking-wide">{ticket.nv_info.estado}</span>}
+              </div>
+              {ticket.nv_info && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-slate-600 mt-2">
+                  <Dato k="Cliente" v={ticket.nv_info.cliente} />
+                  <Dato k="Factura" v={ticket.nv_info.factura} icon={FileText} />
+                  <Dato k="Guía" v={ticket.nv_info.guia} />
+                  <Dato k="Transportista" v={ticket.nv_info.transportista} icon={Truck} />
+                  <Dato k="Bultos" v={ticket.nv_info.bultos} />
+                  <Dato k="F. despacho" v={ticket.nv_info.fechaDespacho} />
+                </div>
+              )}
+            </div>
+          )}
           {(ticket.accion_folio || ticket.informe_numero) && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -934,6 +1025,16 @@ function TabTecnicos() {
 }
 
 // ─── Átomos ──────────────────────────────────────────────────────────────────
+// Par clave/valor compacto para la tarjeta de trazabilidad de la N.V.
+function Dato({ k, v, icon: Icon }) {
+  if (!v) return null;
+  return (
+    <div className="min-w-0">
+      <span className="block text-[9px] font-black text-slate-400 uppercase tracking-wider">{k}</span>
+      <span className="flex items-center gap-1 font-bold text-slate-700 truncate">{Icon && <Icon size={11} className="text-slate-400 shrink-0" />}{v}</span>
+    </div>
+  );
+}
 function Campo({ label, value, onChange, req, disabled, type = 'text' }) {
   return (
     <div>
