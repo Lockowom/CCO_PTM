@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import {
   ClipboardList, Package, ArrowLeft, Loader2, Check, X, Minus,
   ShieldCheck, AlertTriangle, FileWarning, Calendar, Truck, FileDown, FileText, PenLine, BadgeCheck, RefreshCw,
-  Layers, Stamp, Info, Trash2,
+  Layers, Stamp, Info, Trash2, Camera, ImagePlus,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -12,7 +12,10 @@ import {
   useEliminarTareaCalidad,
   CLASIFICACION_INGRESO, EMBALAJE_INGRESO, DISPOSICION_INMEDIATA_INGRESO,
   EVIDENCIA_OPCIONES, riesgoIngreso, indicadoresIso,
+  EVIDENCIAS_INGRESO_TIPOS, uploadEvidenciaIngreso, deleteEvidenciaSalida, EVIDENCIAS_BUCKET,
 } from '../../services/calidadService';
+import { compressImage } from '../../lib/imageCompress';
+import { signedUrls, signedUrl } from '../../lib/storageUrl';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
 // Convierte una familia (RPC) en un "nivel" de checklist con sus criterios propios.
@@ -55,7 +58,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const setNota = (pid, nota) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], nota } }));
   const setEvid = (pid, evidencia) => setAnswers(prev => ({ ...prev, [pid]: { ...prev[pid], evidencia } }));
   const setEx = (k, v) => setExtras(prev => ({ ...prev, [k]: v }));
-  const checklistCompleto = () => ({ ...answers, _extras: extras });
+  const checklistCompleto = (ex = extras) => ({ ...answers, _extras: ex });
 
   const toggleClasif = (id) => setExtras(prev => {
     const cur = new Set(prev.clasificacion || []);
@@ -100,8 +103,25 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const descargar = async (fmt) => {
     try {
       const opts = { categorias, soloNoSanitario };
-      if (fmt === 'pdf') await exportChecklistPDF(tarea, niveles, opts);
-      else await exportChecklistWord(tarea, niveles, opts);
+      if (fmt === 'pdf') {
+        // Incrustar la evidencia fotográfica en el PDF (URLs firmadas → dataURL).
+        const evs = extras.evidencias || [];
+        const imgs = [];
+        for (const ev of evs) {
+          try {
+            const u = await signedUrl(EVIDENCIAS_BUCKET, ev.path);
+            if (!u) continue;
+            const blob = await fetch(u).then(r => (r.ok ? r.blob() : null));
+            if (!blob || !/image\/(jpeg|png)/.test(blob.type)) continue;
+            const dataUrl = await new Promise((res, rej) => {
+              const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob);
+            });
+            imgs.push({ tipo: ev.tipo, dataUrl });
+          } catch { /* foto no disponible: continúa sin ella */ }
+        }
+        opts.evidenciasImg = imgs;
+        await exportChecklistPDF(tarea, niveles, opts);
+      } else await exportChecklistWord(tarea, niveles, opts);
     } catch (e) { toast.error(`No se pudo generar el documento: ${e.message}`); }
   };
 
@@ -153,6 +173,59 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const ind = useMemo(() => indicadoresIso({ ...tarea, checklist: { ...answers, _extras: extras } }), [answers, extras, tarea]);
   const minutosRecepcion = ind.minutos ?? (tarea.created_at ? Math.max(0, Math.round((Date.now() - new Date(tarea.created_at).getTime()) / 60000)) : null);
   const embalaje = extras.embalaje || {};
+
+  // ── Evidencia fotográfica (cámara directa + galería) ──
+  const fotoRef = React.useRef(null);
+  const fotoCamRef = React.useRef(null);
+  const puedeCamara = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+  const [tipoFoto, setTipoFoto] = useState(null);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [fotoUrls, setFotoUrls] = useState({});
+  const evidencias = extras.evidencias || [];
+  useEffect(() => {
+    let on = true;
+    signedUrls(EVIDENCIAS_BUCKET, evidencias.map(ev => ev.path)).then(m => { if (on) setFotoUrls(m); });
+    return () => { on = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(evidencias.map(ev => ev.path))]);
+
+  const pedirFoto = (tipo, modo = 'galeria') => {
+    setTipoFoto(tipo);
+    (modo === 'camara' ? fotoCamRef : fotoRef).current?.click();
+  };
+  const onFotos = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length || !tipoFoto) return;
+    setSubiendoFoto(true);
+    try {
+      const nuevas = [];
+      for (const f of files) {
+        if (!f.type.startsWith('image/')) continue;
+        const blob = await compressImage(f);
+        const path = await uploadEvidenciaIngreso({ tareaId: tarea.id, tipo: tipoFoto, blob });
+        nuevas.push({ tipo: tipoFoto, path, subido_en: new Date().toISOString() });
+      }
+      if (nuevas.length) {
+        const nx = { ...extras, evidencias: [...evidencias, ...nuevas] };
+        setExtras(nx);
+        await guardar.mutateAsync({ tareaId: tarea.id, checklist: checklistCompleto(nx), observaciones: obs, disposicion: disp, finalizar: false });
+        toast.success(nuevas.length > 1 ? 'Fotos agregadas' : 'Foto agregada');
+      }
+    } catch (err) {
+      toast.error(err?.message?.includes('row-level security') ? 'No tienes permiso para subir fotos' : `Error al subir: ${err.message}`);
+    } finally { setSubiendoFoto(false); setTipoFoto(null); }
+  };
+  const borrarFoto = async (ev) => {
+    if (!confirm('¿Eliminar esta foto?')) return;
+    try {
+      await deleteEvidenciaSalida(ev.path);
+      const nx = { ...extras, evidencias: evidencias.filter(x => x.path !== ev.path) };
+      setExtras(nx);
+      await guardar.mutateAsync({ tareaId: tarea.id, checklist: checklistCompleto(nx), observaciones: obs, disposicion: disp, finalizar: false });
+      toast.success('Foto eliminada');
+    } catch { toast.error('No se pudo eliminar la foto'); }
+  };
 
   return (
     <div>
@@ -401,6 +474,57 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
           <textarea value={obs} disabled={readOnly} onChange={e => setObs(e.target.value)} rows={2}
             placeholder="Notas del checklist…"
             className="mt-1.5 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400 resize-none" />
+        </div>
+
+        {/* Evidencia fotográfica (cámara directa + galería) */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <h3 className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2"><Camera size={16} className="text-slate-400" /> Evidencia fotográfica</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {EVIDENCIAS_INGRESO_TIPOS.map(t => {
+              const fotos = evidencias.filter(ev => ev.tipo === t.id);
+              return (
+                <div key={t.id} className="rounded-xl border border-slate-100 p-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">📷 {t.label} ({fotos.length})</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {fotos.map(ev => (
+                      <div key={ev.path} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+                        <a href={fotoUrls[ev.path] || '#'} target="_blank" rel="noreferrer">
+                          <img src={fotoUrls[ev.path] || ''} alt={t.label} className="w-full h-full object-cover" />
+                        </a>
+                        {!readOnly && (
+                          <button onClick={() => borrarFoto(ev)} title="Eliminar foto"
+                            className="absolute top-0.5 right-0.5 p-1 rounded-md bg-white/90 text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {!readOnly && puedeCamara && (
+                      <button type="button" onClick={() => pedirFoto(t.id, 'camara')} disabled={subiendoFoto}
+                        title="Tomar foto con la cámara"
+                        className="w-16 h-16 shrink-0 rounded-lg border-2 border-dashed border-emerald-300 text-emerald-500 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-40">
+                        {subiendoFoto && tipoFoto === t.id ? <RefreshCw size={16} className="animate-spin" /> : <Camera size={16} />}
+                        <span className="text-[8px] font-black uppercase">Cámara</span>
+                      </button>
+                    )}
+                    {!readOnly && (
+                      <button type="button" onClick={() => pedirFoto(t.id, 'galeria')} disabled={subiendoFoto}
+                        title="Subir foto desde archivos/galería"
+                        className="w-16 h-16 shrink-0 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-400 hover:text-emerald-500 disabled:opacity-40">
+                        {subiendoFoto && tipoFoto === t.id ? <RefreshCw size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                        <span className="text-[8px] font-black uppercase">{puedeCamara ? 'Galería' : 'Foto'}</span>
+                      </button>
+                    )}
+                    {fotos.length === 0 && readOnly && <span className="text-xs text-slate-300">Sin fotos</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Galería/archivos: sin capture → elegir y varias. Cámara: capture directo. */}
+          <input ref={fotoRef} type="file" accept="image/*" multiple onChange={onFotos} className="hidden" />
+          <input ref={fotoCamRef} type="file" accept="image/*" capture="environment" onChange={onFotos} className="hidden" />
+          <p className="text-[10px] text-slate-400 mt-2">Las fotos quedan asociadas al checklist (bucket privado).</p>
         </div>
 
         {/* Indicadores ISO (alimentan dashboards) */}

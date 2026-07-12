@@ -12,7 +12,10 @@ export { DOC_CONTROL };
 // Extras del certificado de salida (pesos, bultos, riesgos, evidencias) que
 // viven dentro del jsonb checklist bajo la clave reservada `_extras`.
 const extrasDe = (tarea) => (tarea.checklist && tarea.checklist._extras) || {};
-const EV_LABEL = { PALLET: 'Foto del pallet', EMBALAJE: 'Foto del embalaje', CAMION: 'Foto dentro del camión' };
+const EV_LABEL = {
+  PALLET: 'Foto del pallet', EMBALAJE: 'Foto del embalaje', CAMION: 'Foto dentro del camión',
+  PRODUCTO: 'Foto del producto', DOCUMENTO: 'Documentación', GENERAL: 'Foto general',
+};
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -238,6 +241,20 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
         if (nFotos) children.push(new Paragraph(`📷 ${EV_LABEL[t]}: ${nFotos} foto(s) asociada(s) al certificado.`));
       });
       children.push(new Paragraph({ children: [new TextRun({ text: 'Las imágenes quedan almacenadas junto al certificado en el sistema CCO (se incluyen en la versión PDF).', size: 16, color: '64748B' })] }));
+      children.push(new Paragraph(''));
+    }
+  }
+
+  // Evidencia fotográfica del checklist de INGRESO (misma que se ve en pantalla).
+  if (!salida) {
+    const exIn = extrasDe(tarea);
+    if (Array.isArray(exIn.evidencias) && exIn.evidencias.length) {
+      children.push(new Paragraph({ text: 'Evidencia fotográfica', heading: HeadingLevel.HEADING_2 }));
+      [...new Set(exIn.evidencias.map(e2 => e2.tipo))].forEach(t => {
+        const n = exIn.evidencias.filter(e2 => e2.tipo === t).length;
+        if (n) children.push(new Paragraph(`📷 ${EV_LABEL[t] || t}: ${n} foto(s) asociada(s) al checklist.`));
+      });
+      children.push(new Paragraph({ children: [new TextRun({ text: 'Las imágenes quedan almacenadas junto al checklist en el sistema CCO (se incluyen en la versión PDF).', size: 16, color: '64748B' })] }));
       children.push(new Paragraph(''));
     }
   }
@@ -470,6 +487,31 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
         }
       } else {
         content.push({ text: `${(ex.evidencias || []).length} foto(s) asociada(s) al certificado en el sistema CCO.`, fontSize: 9, color: '#64748b', margin: [0, 0, 0, 12] });
+      }
+    }
+  }
+
+  // Evidencia fotográfica del checklist de INGRESO (incrusta las imágenes en el PDF).
+  if (!salida) {
+    const exIn = extrasDe(tarea);
+    const imgsIn = Array.isArray(opts.evidenciasImg) ? opts.evidenciasImg : [];
+    if (imgsIn.length || (Array.isArray(exIn.evidencias) && exIn.evidencias.length)) {
+      content.push({ text: 'Evidencia fotográfica', style: 'h2' });
+      if (imgsIn.length) {
+        for (let i = 0; i < imgsIn.length; i += 2) {
+          content.push({
+            columns: imgsIn.slice(i, i + 2).map(im => ({
+              width: '50%',
+              stack: [
+                { image: im.dataUrl, fit: [230, 160] },
+                { text: EV_LABEL[im.tipo] || im.tipo, fontSize: 8, color: '#64748b', margin: [0, 2, 0, 0] },
+              ],
+            })),
+            columnGap: 12, margin: [0, 0, 0, 8],
+          });
+        }
+      } else {
+        content.push({ text: `${(exIn.evidencias || []).length} foto(s) asociada(s) al checklist en el sistema CCO.`, fontSize: 9, color: '#64748b', margin: [0, 0, 0, 12] });
       }
     }
   }

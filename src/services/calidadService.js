@@ -794,6 +794,25 @@ export async function deleteEvidenciaSalida(path) {
   if (error) throw error;
 }
 
+// Evidencia fotográfica del checklist de INGRESO (mismo bucket privado).
+export const EVIDENCIAS_INGRESO_TIPOS = [
+  { id: 'PRODUCTO',   label: 'Producto' },
+  { id: 'EMBALAJE',   label: 'Embalaje / Pallet' },
+  { id: 'DOCUMENTO',  label: 'Documentación' },
+  { id: 'GENERAL',    label: 'General' },
+];
+export async function uploadEvidenciaIngreso({ tareaId, tipo, blob }) {
+  const MAX_BYTES = 7.5 * 1024 * 1024;
+  if (blob?.size > MAX_BYTES) throw new Error('La foto pesa demasiado y no se pudo comprimir. Prueba con otra (JPG/PNG).');
+  const mime = blob?.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/gif': 'gif' }[mime] || 'jpg';
+  const path = `ingreso/${tareaId}/${String(tipo).toLowerCase()}-${uid()}.${ext}`;
+  const { error } = await supabase.storage.from(EVIDENCIAS_BUCKET)
+    .upload(path, blob, { contentType: mime, upsert: false });
+  if (error) throw error;
+  return path;
+}
+
 // Cola de certificaciones de salida (tipo CERTIFICADO_SALIDA).
 export function useTareasSalida() {
   return useQuery({
