@@ -213,6 +213,7 @@ export const APP_PERMISSIONS = [
       { id: 'manage_tickets', label: 'Gestionar Tickets' },
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
       { id: 'admin_monitor', label: 'Monitor Tiempo Real' },
+      { id: 'deploy_ota', label: 'Desplegar OTA a producción (móvil)' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' }
     ]
   }

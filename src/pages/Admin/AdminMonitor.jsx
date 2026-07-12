@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import CanalOTA from '../../components/CanalOTA';
+import DespliegueOTA from '../../components/DespliegueOTA';
 
 const AdminMonitor = () => {
   const containerRef = useRef(null);
@@ -123,6 +124,9 @@ const AdminMonitor = () => {
 
       {/* Canal OTA de este dispositivo (solo visible en la app Android) */}
       <CanalOTA />
+
+      {/* Despliegue OTA a producción (solo admin / permiso deploy_ota) */}
+      <DespliegueOTA />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">

@@ -137,6 +137,15 @@ cambio, actualizar SIEMPRE:
 - `dist/` — **build commiteado a propósito**: Render lo sirve con `server.js` (express static).
   Regenerar con `npm run build` y commitearlo al desplegar.
 
+## Despliegue OTA desde la app (admin)
+- **Promover a producción sin GitHub/Capgo**: panel en **Admin → Monitor** (`src/components/DespliegueOTA.jsx`,
+  montado tras `CanalOTA`): lista bundles de Capgo, muestra la versión de cada canal y promueve una versión
+  elegida a `production` con confirmación. La API key de Capgo vive SOLO en la Edge Function
+  `supabase/functions/capgo-deploy` (secret `CAPGO_API_KEY`, rol `all`), nunca en el cliente; se autoriza con
+  la RPC `puede_desplegar_ota()` (admin o permiso `deploy_ota`) y audita en `tms_ota_despliegues`
+  (`registrar_despliegue_ota`). Migración `068`. Servicio `src/services/otaDeployService.js`. API pública de
+  Capgo: `GET/POST https://api.capgo.app/{bundle,channel}` con header `x-api-key`.
+
 ## Despliegue
 - **Web**: push a `main` → Render. La web sirve el `dist/` del repo (commitearlo tras `npm run build`).
   - **Env var** `ANTHROPIC_API_KEY` (Render → Environment): habilita el asistente "Mejorar con IA" del
