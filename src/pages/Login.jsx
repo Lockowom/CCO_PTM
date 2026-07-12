@@ -3,6 +3,10 @@ import { User, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Cpu, Refresh
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Versión real de la app (inyectada por Vite desde package.json). Se muestra en el
+// login para que cualquier PDA sepa qué build corre sin abrir el menú.
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -229,6 +233,14 @@ const Login = () => {
               </button>
             </div>
           </form>
+
+          {/* Versión de la app: visible para todos al abrir, útil para soporte. */}
+          <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] font-mono">
+              CCO WMS · v{APP_VERSION}
+            </span>
+          </div>
 
         </div>
       </div>
