@@ -110,22 +110,9 @@ const Login = () => {
 
           {/* Encabezado */}
           <div className="animate-form-item flex flex-col items-center text-center mb-8">
-            <div className="relative mb-5">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 ring-1 ring-orange-100">
-                <img
-                  src="https://i.imgur.com/YJh67CY.png"
-                  alt="Logo CCO"
-                  className="w-9 h-9 object-contain"
-                  style={{ filter: 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1352%) hue-rotate(346deg) brightness(101%) contrast(94%)' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://cdn-icons-png.flaticon.com/512/2271/2271062.png";
-                  }}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">CCO</h3>
+            <img src="/logo-ptm.png" alt="PTM Health Care" className="h-14 w-auto object-contain mb-5" />
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">CCO</h3>
               <span className="px-2.5 py-1 bg-orange-500 text-white text-[10px] font-black rounded-md tracking-[0.15em] uppercase">System</span>
             </div>
             <p className="text-xs font-semibold text-slate-400 tracking-wide">Warehouse Management System</p>

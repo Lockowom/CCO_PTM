@@ -23,9 +23,9 @@ const FORMATOS = [
 
 // Tamaños tipográficos por formato (herederos de los del Excel: 36/44 doble, 30/28 cuádruple).
 const SIZES = {
-  1: { label: '22pt', code: '58pt', desc: '34pt', barH: 120, pad: '18mm' },
-  2: { label: '15pt', code: '38pt', desc: '25pt', barH: 90, pad: '10mm' },
-  4: { label: '11pt', code: '25pt', desc: '16pt', barH: 64, pad: '6mm' },
+  1: { label: '22pt', code: '58pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm' },
+  2: { label: '15pt', code: '38pt', desc: '25pt', barH: 90, pad: '10mm', logo: '14mm' },
+  4: { label: '11pt', code: '25pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm' },
 };
 
 export default function Carteles() {
@@ -94,6 +94,8 @@ export default function Carteles() {
         @media print {
           body * { visibility: hidden !important; }
           #carteles-print, #carteles-print * { visibility: visible !important; }
+          /* Imprimir el logo/colores tal cual (no descartar fondos/tintas). */
+          #carteles-print, #carteles-print * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           #carteles-print { position: absolute; left: 0; top: 0; width: 100%; }
           .cartel-page { page-break-after: always; height: 273mm; border: none !important; box-shadow: none !important; }
           .cartel-cell { border: 1.2pt dashed #94a3b8 !important; }
@@ -208,6 +210,7 @@ function Cartel({ item, formato }) {
   return (
     <div className="cartel-cell flex flex-col items-center justify-center text-center border border-dashed border-slate-300 rounded-lg overflow-hidden"
       style={{ padding: s.pad, breakInside: 'avoid' }}>
+      <img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-2" style={{ height: s.logo, width: 'auto' }} />
       <div className="font-black tracking-[0.25em] text-slate-500 uppercase" style={{ fontSize: s.label }}>Código Producto</div>
       <div className="font-mono font-black text-black leading-tight" style={{ fontSize: s.code, wordBreak: 'break-all' }}>{item.codigo}</div>
       <div className="font-black text-black leading-tight mt-1" style={{ fontSize: s.desc }}>

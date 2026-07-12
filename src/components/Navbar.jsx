@@ -235,22 +235,11 @@ const Navbar = () => {
         
         {/* Left: Logo & Brand */}
         <Link to={landingPage || "/dashboard"} className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-300" />
-            <div className="relative w-8 h-8 sm:w-11 sm:h-11 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center shadow-2xl border border-white/10 group-hover:scale-105 transition-all duration-500 overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.15)_0%,transparent_70%)]" />
-              <img
-                src="https://i.imgur.com/YJh67CY.png"
-                alt="CCO"
-                className="w-5 h-5 sm:w-7 sm:h-7 object-contain relative z-10 transition-all duration-500 group-hover:rotate-[10deg] group-hover:scale-110"
-                style={{ filter: 'brightness(0) invert(1) drop-shadow(0 0 8px rgba(249,115,22,0.5))' }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://cdn-icons-png.flaticon.com/512/2271/2271062.png";
-                }}
-              />
-            </div>
-          </div>
+          <img
+            src="/logo-ptm.png"
+            alt="PTM Health Care"
+            className="h-7 sm:h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+          />
           <div className="flex flex-col leading-none">
             <div className="flex items-center gap-1 sm:gap-1.5">
               <span className="text-lg sm:text-2xl font-black text-slate-900 tracking-tighter">CCO</span>
