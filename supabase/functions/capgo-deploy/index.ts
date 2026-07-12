@@ -70,13 +70,15 @@ serve(async (req) => {
 
     // ── Autenticación + autorización con el JWT del usuario ──
     const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ ok: false, error: "No autenticado" }, 401);
+    // Pasar el token EXPLÍCITO a getUser (sin arg no valida el header de forma fiable).
+    const { data: { user }, error: userErr } = await userClient.auth.getUser(token);
+    if (userErr || !user) return json({ ok: false, error: "No autenticado: " + (userErr?.message || "sin usuario") }, 401);
 
     const { data: puede, error: permErr } = await userClient.rpc("puede_desplegar_ota");
     if (permErr) return json({ ok: false, error: "Error verificando permiso: " + permErr.message }, 500);
