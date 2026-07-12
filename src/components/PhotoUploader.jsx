@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ImagePlus, RefreshCw, Trash2, ImageOff, X } from 'lucide-react';
+import { ImagePlus, RefreshCw, Trash2, ImageOff, X, Camera } from 'lucide-react';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../lib/imageCompress';
 import { signedUrls } from '../lib/storageUrl';
@@ -20,8 +21,13 @@ import { uploadEvidencia, deleteEvidencia, EVIDENCIAS_BUCKET } from '../services
  */
 const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManage = true, compact = false }) => {
   const { user } = useAuth();
-  const fileRef = useRef(null);
+  const galleryRef = useRef(null);
+  const cameraRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  // Mostrar el botón de cámara solo donde tiene sentido (móvil/tablet/app):
+  // en un PC de escritorio `capture` abriría igual el diálogo de archivos.
+  const puedeCamara = Capacitor.isNativePlatform()
+    || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0);
   const [lightbox, setLightbox] = useState(null);
   // El bucket es PRIVADO (mig 065): las miniaturas usan URLs firmadas.
   const [urls, setUrls] = useState({});
@@ -94,16 +100,29 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
           </div>
         ))}
 
+        {canManage && puedeCamara && (
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            disabled={!puedeSubir || busy}
+            title={!itemId ? 'Guarda el borrador para adjuntar fotos' : 'Tomar foto con la cámara'}
+            className={`${thumb} shrink-0 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-500 flex flex-col items-center justify-center gap-1 hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            {busy ? <RefreshCw size={18} className="animate-spin" /> : <Camera size={18} />}
+            <span className="text-[8px] font-black uppercase tracking-wider">Cámara</span>
+          </button>
+        )}
+
         {canManage && (
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => galleryRef.current?.click()}
             disabled={!puedeSubir || busy}
-            title={!itemId ? 'Guarda el borrador para adjuntar fotos' : 'Agregar / tomar foto'}
+            title={!itemId ? 'Guarda el borrador para adjuntar fotos' : 'Subir foto desde archivos/galería'}
             className={`${thumb} shrink-0 rounded-xl border-2 border-dashed border-slate-300 text-slate-400 flex flex-col items-center justify-center gap-1 hover:border-emerald-400 hover:text-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {busy ? <RefreshCw size={18} className="animate-spin" /> : <ImagePlus size={18} />}
-            <span className="text-[8px] font-black uppercase tracking-wider">Foto</span>
+            <span className="text-[8px] font-black uppercase tracking-wider">{puedeCamara ? 'Galería' : 'Foto'}</span>
           </button>
         )}
 
@@ -116,12 +135,21 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
         <p className="text-[10px] text-amber-600 mt-1">Guarda el borrador para poder adjuntar fotos a este hallazgo.</p>
       )}
 
+      {/* Galería / archivos: sin `capture` → permite elegir y varias fotos. */}
       <input
-        ref={fileRef}
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFiles}
+        className="hidden"
+      />
+      {/* Cámara: `capture="environment"` abre la cámara trasera directo (1 foto). */}
+      <input
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="environment"
-        multiple
         onChange={handleFiles}
         className="hidden"
       />

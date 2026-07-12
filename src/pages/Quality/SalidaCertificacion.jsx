@@ -324,6 +324,10 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
   // Evidencias fotográficas: suben al bucket privado y se auto-guardan en la
   // tarea (así no quedan fotos huérfanas si el usuario no aprieta Guardar).
   const fotoRef = useRef(null);
+  const fotoCamRef = useRef(null);
+  // Botón de cámara solo en equipos táctiles (móvil/tablet/app); en PC `capture`
+  // abriría igual el diálogo de archivos.
+  const puedeCamara = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
   const [tipoFoto, setTipoFoto] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [fotoUrls, setFotoUrls] = useState({});
@@ -335,7 +339,10 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(evidencias.map(ev => ev.path))]);
 
-  const pedirFoto = (tipo) => { setTipoFoto(tipo); fotoRef.current?.click(); };
+  const pedirFoto = (tipo, modo = 'galeria') => {
+    setTipoFoto(tipo);
+    (modo === 'camara' ? fotoCamRef : fotoRef).current?.click();
+  };
   const onFotos = async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -646,11 +653,20 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
                         )}
                       </div>
                     ))}
+                    {!readOnly && puedeCamara && (
+                      <button type="button" onClick={() => pedirFoto(t.id, 'camara')} disabled={subiendoFoto}
+                        title="Tomar foto con la cámara"
+                        className="w-16 h-16 shrink-0 rounded-lg border-2 border-dashed border-emerald-300 text-emerald-500 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-40">
+                        {subiendoFoto && tipoFoto === t.id ? <RefreshCw size={16} className="animate-spin" /> : <Camera size={16} />}
+                        <span className="text-[8px] font-black uppercase">Cámara</span>
+                      </button>
+                    )}
                     {!readOnly && (
-                      <button type="button" onClick={() => pedirFoto(t.id)} disabled={subiendoFoto}
+                      <button type="button" onClick={() => pedirFoto(t.id, 'galeria')} disabled={subiendoFoto}
+                        title="Subir foto desde archivos/galería"
                         className="w-16 h-16 shrink-0 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-400 hover:text-emerald-500 disabled:opacity-40">
                         {subiendoFoto && tipoFoto === t.id ? <RefreshCw size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-                        <span className="text-[8px] font-black uppercase">Foto</span>
+                        <span className="text-[8px] font-black uppercase">{puedeCamara ? 'Galería' : 'Foto'}</span>
                       </button>
                     )}
                     {fotos.length === 0 && readOnly && <span className="text-xs text-slate-300">Sin fotos</span>}
@@ -659,7 +675,9 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
               );
             })}
           </div>
-          <input ref={fotoRef} type="file" accept="image/*" capture="environment" multiple onChange={onFotos} className="hidden" />
+          {/* Galería/archivos: sin capture → elegir y varias. Cámara: capture directo. */}
+          <input ref={fotoRef} type="file" accept="image/*" multiple onChange={onFotos} className="hidden" />
+          <input ref={fotoCamRef} type="file" accept="image/*" capture="environment" onChange={onFotos} className="hidden" />
           <p className="text-[10px] text-slate-400 mt-2">Las fotos quedan asociadas al certificado (bucket privado) y se incrustan en el PDF.</p>
         </div>
 
