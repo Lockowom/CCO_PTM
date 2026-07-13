@@ -76,7 +76,7 @@ const Reception = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_recepciones')
-        .select('id, fecha_recepcion, proveedor, oc, cant_bultos, pallets_usados, tipo_contenedor, estado, notas, items_count, usuario_nombre, created_at')
+        .select('id, fecha_recepcion, proveedor, oc, cant_bultos, pallets_usados, tipo_contenedor, estado, notas, items_count, usuario_nombre, created_at, calidad_estado, calidad_folio, calidad_disposicion')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -680,14 +680,15 @@ const Reception = () => {
                     <th className="px-4 py-2.5 text-right font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Pallets</th>
                     <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tipo</th>
                     <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
+                    <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Calidad</th>
                     <th className="px-4 py-2.5 text-center font-semibold text-slate-500 uppercase tracking-wider w-16"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-300"><Loader2 size={20} className="animate-spin mx-auto mb-2" />Cargando...</td></tr>
+                    <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-300"><Loader2 size={20} className="animate-spin mx-auto mb-2" />Cargando...</td></tr>
                   ) : filteredRecepciones.length === 0 ? (
-                    <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-300">Sin resultados</td></tr>
+                    <tr><td colSpan={9} className="px-4 py-12 text-center text-slate-300">Sin resultados</td></tr>
                   ) : (
                     filteredRecepciones.map((r, idx) => {
                       const estado = ESTADOS[r.estado] || ESTADOS.PENDIENTE;
@@ -707,6 +708,15 @@ const Reception = () => {
                               r.estado === 'EN_REVISION' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                               'bg-slate-100 text-slate-500 border border-slate-200'
                             }`}>{estado.label}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                            {r.calidad_estado === 'CONFORME' ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200" title={r.calidad_folio || ''}>✓ Conforme</span>
+                            ) : r.calidad_estado === 'NO_CONFORME' ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200" title={r.calidad_disposicion || r.calidad_folio || ''}>✕ No conforme</span>
+                            ) : (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">Pendiente</span>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-center">
                             <div className="flex items-center justify-center gap-0.5">
