@@ -249,6 +249,8 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
               <span className="flex items-center gap-1"><Truck size={12} /> OC {tarea.oc || '—'}</span>
               <span className="flex items-center gap-1"><Calendar size={12} /> {tarea.fecha_recepcion || '—'}</span>
               {tarea.bultos != null && <span>· {tarea.bultos} bultos</span>}
+              {tarea.contexto?.pallets != null && <span>· {tarea.contexto.pallets} pallets</span>}
+              {tarea.contexto?.tipo_contenedor && <span>· {tarea.contexto.tipo_contenedor}</span>}
             </p>
           </div>
         </div>
@@ -671,7 +673,13 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
               {t.folio && <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-600 border-emerald-200 font-mono">{t.folio}</span>}
             </div>
             <p className="text-sm text-slate-500 font-medium">OC {t.oc || '—'} · {t.fecha_recepcion || '—'}</p>
-            {t.bultos != null && <p className="text-xs text-slate-400 mt-1">{t.bultos} bultos</p>}
+            {(t.bultos != null || t.contexto?.pallets != null) && (
+              <p className="text-xs text-slate-400 mt-1">
+                {t.bultos != null ? `${t.bultos} bultos` : ''}
+                {t.contexto?.pallets != null ? ` · ${t.contexto.pallets} pallets` : ''}
+                {t.contexto?.tipo_contenedor ? ` · ${t.contexto.tipo_contenedor}` : ''}
+              </p>
+            )}
           </div>
             );
           })}
