@@ -40,13 +40,15 @@ export const ROUTE_PERMISSIONS = {
   // dando acceso (aditivo) para no romper roles existentes.
   '/inventory/traspasos': ['view_traspasos', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
-  '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
+  '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory',
+    'conteo_tab_contar', 'conteo_tab_sesiones', 'conteo_tab_conciliacion', 'conteo_tab_ajuste', 'conteo_tab_bloques', 'conteo_tab_proyeccion'],
   // Detalle de bloque (destino del QR impreso). Ruta con parámetro: el guard
   // la resuelve con matchPath (ver ProtectedRoute en App.jsx).
   '/inventory/bloque/:codigo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
   // Análisis de Códigos (port del Excel de actualización P/S). Mismos permisos
   // de bodega/stock; la RPC re-verifica server-side (mig 067).
-  '/inventory/analisis': ['view_analisis', 'manage_inventory', 'view_stock', 'view_batches', 'manage_data_import'],
+  '/inventory/analisis': ['view_analisis', 'manage_inventory', 'view_stock', 'view_batches', 'manage_data_import',
+    'analisis_tab_resumen', 'analisis_tab_antiguos', 'analisis_tab_antiguos_disp', 'analisis_tab_no_activos', 'analisis_tab_duplicados', 'analisis_tab_anomalias', 'analisis_tab_detalle'],
   // Carteles de bodega (impresión único/doble/cuádruple con CODE128).
   '/inventory/carteles': ['view_carteles', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
 
@@ -59,7 +61,8 @@ export const ROUTE_PERMISSIONS = {
   '/quality/bandeja': ['view_acciones_calidad', 'manage_quality', 'manage_monitoreo'],
 
   // Post-Venta / Servicio Técnico — visible para quien ve/gestiona/supervisa post-venta.
-  '/postventa/tickets': ['view_postventa', 'manage_postventa', 'supervise_postventa'],
+  '/postventa/tickets': ['view_postventa', 'manage_postventa', 'supervise_postventa',
+    'pv_tab_tickets', 'pv_tab_bandeja', 'pv_tab_calendario', 'pv_tab_nuevo', 'pv_tab_dashboard', 'pv_tab_tecnicos'],
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
@@ -72,6 +75,42 @@ export const ROUTE_PERMISSIONS = {
   '/admin/upload-history': ['admin_upload_history'],
   '/admin/monitor': ['admin_monitor'],
 };
+
+// ── Permisos por PESTAÑA (?tab=) ────────────────────────────────────────────
+// Los módulos con pestañas comparten una sola ruta; el guard de ruta ignora el
+// ?tab. Este mapa permite control fino POR PESTAÑA: cada tab tiene su permiso
+// propio. Regla RETROCOMPATIBLE: si el rol tiene un permiso "amplio" del módulo
+// (`_amplios`) ve TODAS las pestañas (los roles actuales no cambian); si NO tiene
+// un amplio pero sí el permiso de una pestaña, ve solo esa. Un tab sin permiso
+// declarado es visible por defecto.
+export const TAB_PERMISSIONS = {
+  '/inventory/conteo': {
+    _amplios: ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'], _default: 'contar',
+    contar: 'conteo_tab_contar', sesiones: 'conteo_tab_sesiones', conciliacion: 'conteo_tab_conciliacion',
+    ajuste: 'conteo_tab_ajuste', bloques: 'conteo_tab_bloques', proyeccion: 'conteo_tab_proyeccion',
+  },
+  '/inventory/analisis': {
+    _amplios: ['view_analisis', 'manage_inventory'], _default: 'resumen',
+    resumen: 'analisis_tab_resumen', antiguos: 'analisis_tab_antiguos', antiguos_disp: 'analisis_tab_antiguos_disp',
+    no_activos_stock: 'analisis_tab_no_activos', duplicados: 'analisis_tab_duplicados',
+    anomalias: 'analisis_tab_anomalias', detalle: 'analisis_tab_detalle',
+  },
+  '/postventa/tickets': {
+    _amplios: ['view_postventa', 'manage_postventa', 'supervise_postventa'], _default: 'tickets',
+    tickets: 'pv_tab_tickets', bandeja: 'pv_tab_bandeja', calendario: 'pv_tab_calendario',
+    nuevo: 'pv_tab_nuevo', dashboard: 'pv_tab_dashboard', tecnicos: 'pv_tab_tecnicos',
+  },
+};
+
+// ¿Puede ver una pestaña? `has` = fn(permId)->bool (hasPermission). true si tiene
+// un permiso amplio del módulo o el propio del tab. Módulos sin config → true.
+export function puedeVerTab(has, base, tab) {
+  const cfg = TAB_PERMISSIONS[String(base || '').split('?')[0]];
+  if (!cfg) return true;
+  if ((cfg._amplios || []).some((p) => has(p))) return true;
+  const propio = cfg[tab];
+  return propio ? !!has(propio) : true;
+}
 
 // La visibilidad de secciones/módulos en el Navbar se DERIVA de ROUTE_PERMISSIONS
 // (una sección se muestra si el usuario puede acceder a ≥1 de sus rutas). No mantener

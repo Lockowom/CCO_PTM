@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { ROUTE_PERMISSIONS } from '../constants/permissions';
+import { ROUTE_PERMISSIONS, puedeVerTab, TAB_PERMISSIONS } from '../constants/permissions';
 
 // Versión instalada (inyectada por Vite desde package.json).
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -64,11 +64,17 @@ const Navbar = () => {
   const canAccessRoute = (path, sectionId) => {
     if (esAdmin) return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
-    const perms = ROUTE_PERMISSIONS[String(path).split('?')[0]]; // ignora ?query (deep-links de tabs)
+    const [base, query] = String(path).split('?');
+    const perms = ROUTE_PERMISSIONS[base];
     // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
     if (!perms || perms.length === 0) return false;
     const permList = Array.isArray(perms) ? perms : [perms];
-    return permList.some(perm => hasPermission(perm));
+    if (!permList.some(perm => hasPermission(perm))) return false;
+    // Control fino por pestaña: si el item es un deep-link ?tab=… exige el permiso
+    // de esa pestaña; el item base (sin ?tab) equivale a la pestaña por defecto.
+    const tab = (query && new URLSearchParams(query).get('tab')) || null;
+    if (TAB_PERMISSIONS[base]) return puedeVerTab(hasPermission, base, tab || TAB_PERMISSIONS[base]._default);
+    return true;
   };
 
   // ¿El item del menú corresponde a la pantalla actual? Los items con deep-link

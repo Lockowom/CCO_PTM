@@ -129,13 +129,27 @@ export const APP_PERMISSIONS = [
     permissions: [
       // Pantallas propias del módulo Inventario (casilla 1:1 con el menú):
       { id: 'view_traspasos', label: 'Traspasos y Ajustes' },
-      { id: 'view_analisis', label: 'Análisis de Códigos' },
       { id: 'view_carteles', label: 'Carteles de Bodega' },
-      // Conteo Cíclico (todas sus pestañas comparten estos):
-      { id: 'view_conteo', label: 'Ver Conteo Cíclico (todas las pestañas)' },
-      { id: 'manage_conteo', label: 'Contar (Conteo Cíclico)' },
-      { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' },
-      { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS (y Bodegas Softland)' }
+      { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS (y Bodegas Softland)' },
+      // Análisis de Códigos — TODO o por pestaña:
+      { id: 'view_analisis', label: 'Análisis · TODAS las pestañas' },
+      { id: 'analisis_tab_resumen', label: 'Análisis · Resumen' },
+      { id: 'analisis_tab_antiguos', label: 'Análisis · Antiguos' },
+      { id: 'analisis_tab_antiguos_disp', label: 'Análisis · Antiguos c/ Disponible' },
+      { id: 'analisis_tab_no_activos', label: 'Análisis · No Activos c/ Stock' },
+      { id: 'analisis_tab_duplicados', label: 'Análisis · Duplicados' },
+      { id: 'analisis_tab_anomalias', label: 'Análisis · Anomalías' },
+      { id: 'analisis_tab_detalle', label: 'Análisis · Detalle completo' },
+      // Conteo Cíclico — nivel de acción (ver/contar/supervisar) o por pestaña:
+      { id: 'view_conteo', label: 'Conteo · Ver (todas las pestañas)' },
+      { id: 'manage_conteo', label: 'Conteo · Contar (acción)' },
+      { id: 'supervise_conteo', label: 'Conteo · Supervisar (cerrar/ajustes)' },
+      { id: 'conteo_tab_contar', label: 'Conteo · pestaña Contar' },
+      { id: 'conteo_tab_sesiones', label: 'Conteo · pestaña Sesiones' },
+      { id: 'conteo_tab_conciliacion', label: 'Conteo · pestaña Conciliación' },
+      { id: 'conteo_tab_ajuste', label: 'Conteo · pestaña Ajuste ERP' },
+      { id: 'conteo_tab_bloques', label: 'Conteo · pestaña Bloques / QR' },
+      { id: 'conteo_tab_proyeccion', label: 'Conteo · pestaña Proyección' }
       // Nota: Mapa de Calor usa view_locations (grupo Consultas → Ubicaciones).
     ]
   },
@@ -197,9 +211,16 @@ export const APP_PERMISSIONS = [
     id: 'postventa',
     label: 'Post-Venta (Servicio Técnico)',
     permissions: [
-      { id: 'view_postventa', label: 'Ver Post-Venta' },
+      { id: 'view_postventa', label: 'Ver Post-Venta (todas las pestañas)' },
       { id: 'manage_postventa', label: 'Gestionar tickets Post-Venta' },
-      { id: 'supervise_postventa', label: 'Supervisar Post-Venta (cerrar/eliminar/técnicos)' }
+      { id: 'supervise_postventa', label: 'Supervisar Post-Venta (cerrar/eliminar/técnicos)' },
+      // Control por pestaña (visibilidad):
+      { id: 'pv_tab_tickets', label: 'Post-Venta · pestaña Tickets' },
+      { id: 'pv_tab_bandeja', label: 'Post-Venta · pestaña Bandeja Correos' },
+      { id: 'pv_tab_calendario', label: 'Post-Venta · pestaña Calendario' },
+      { id: 'pv_tab_nuevo', label: 'Post-Venta · pestaña Nuevo Ticket' },
+      { id: 'pv_tab_dashboard', label: 'Post-Venta · pestaña Dashboard' },
+      { id: 'pv_tab_tecnicos', label: 'Post-Venta · pestaña Técnicos' }
     ]
   },
   {

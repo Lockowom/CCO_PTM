@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { puedeVerTab } from '../../constants/permissions';
 import { exportToExcel } from '../../lib/exportExcel';
 import {
   useAnalisisResumen, useAnalisisCodigos, useCargarActivo, parseActivoFile,
@@ -62,7 +63,8 @@ export default function AnalisisCodigos() {
     else if (!t && tab !== 'resumen') setTab('resumen');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-  const activeTab = TABS.includes(tab) ? tab : 'resumen';
+  const puedeTab = (id) => puedeVerTab(hasPermission, '/inventory/analisis', id);
+  const activeTab = (TABS.includes(tab) && puedeTab(tab)) ? tab : (TABS.find((t) => puedeTab(t)) || 'resumen');
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">

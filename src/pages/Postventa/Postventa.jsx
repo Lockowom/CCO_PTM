@@ -12,6 +12,7 @@ import { exportToExcel } from '../../lib/exportExcel';
 import { signedUrls } from '../../lib/storageUrl';
 import { comunasDeRegion } from '../../constants/comunasChile';
 import { fetchNvPanel } from '../../services/panelPtm';
+import { puedeVerTab } from '../../constants/permissions';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
@@ -69,13 +70,15 @@ export default function Postventa() {
   const canManage = isAdmin || hasPermission('manage_postventa') || hasPermission('supervise_postventa');
   const canSupervise = isAdmin || hasPermission('supervise_postventa');
 
+  const puedeTab = (id) => puedeVerTab(hasPermission, '/postventa/tickets', id);
   const visibleTabs = TABS.filter((t) => {
-    if (t.id === 'nuevo') return canManage;
-    if (t.id === 'tecnicos') return canSupervise;
+    if (!puedeTab(t.id)) return false;                 // control fino por pestaña (Roles)
+    if (t.id === 'nuevo') return canManage;            // crear requiere gestión
+    if (t.id === 'tecnicos') return canSupervise;      // técnicos requiere supervisión
     return true;
   });
-  // Si el deep-link apunta a una pestaña no autorizada, cae a Tickets.
-  const activeTab = visibleTabs.some((t) => t.id === tab) ? tab : 'tickets';
+  // Si el deep-link apunta a una pestaña no autorizada, cae a la primera visible.
+  const activeTab = visibleTabs.some((t) => t.id === tab) ? tab : (visibleTabs[0]?.id || 'tickets');
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { puedeVerTab } from '../../constants/permissions';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import { exportToExcel } from '../../lib/exportExcel';
 import {
@@ -43,7 +44,8 @@ const TABS = [
 ];
 
 export default function ConteoCiclico() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+  const puedeTab = (id) => puedeVerTab(hasPermission, '/inventory/conteo', id);
   // La sección activa la decide el MENÚ (Inventario → Conteo · …) vía ?tab=,
   // igual que los demás módulos; la página no muestra fila de pestañas.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -65,7 +67,11 @@ export default function ConteoCiclico() {
     setTab(id);
     setSearchParams(id === 'contar' ? {} : { tab: id }, { replace: true });
   };
-  const activeTab = TABS.some((t) => t.id === tab) ? tab : 'contar';
+  // Pestaña activa clampada a las permitidas (por si entran por URL directa a un
+  // tab sin permiso): si no puede la pedida, cae a la primera que sí pueda.
+  const activeTab = (TABS.some((t) => t.id === tab) && puedeTab(tab))
+    ? tab
+    : (TABS.find((t) => puedeTab(t.id))?.id || 'contar');
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
