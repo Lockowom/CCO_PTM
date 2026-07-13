@@ -156,6 +156,8 @@ export const APP_PERMISSIONS = [
     permissions: [
       { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
       { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
+      { id: 'manage_orders', label: 'Acciones masivas de N.V. (pasar a picking/despachar)' },
+      { id: 'delete_sales_orders', label: 'Eliminar Notas de Venta' },
       { id: 'view_picking', label: 'Ver Picking' },
       { id: 'process_picking', label: 'Procesar Picking' },
       { id: 'view_packing', label: 'Ver Packing' },
