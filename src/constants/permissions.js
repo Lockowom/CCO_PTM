@@ -36,7 +36,9 @@ export const ROUTE_PERMISSIONS = {
   '/queries/datasheet': ['view_fichas'],
 
   // Inventario — Traspasos/Ajustes (módulo integrado). Visible para bodega/inventario.
-  '/inventory/traspasos': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  // `view_traspasos` es el permiso PROPIO (casilla en Roles); los de bodega siguen
+  // dando acceso (aditivo) para no romper roles existentes.
+  '/inventory/traspasos': ['view_traspasos', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
   '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
   // Detalle de bloque (destino del QR impreso). Ruta con parámetro: el guard
@@ -44,9 +46,9 @@ export const ROUTE_PERMISSIONS = {
   '/inventory/bloque/:codigo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
   // Análisis de Códigos (port del Excel de actualización P/S). Mismos permisos
   // de bodega/stock; la RPC re-verifica server-side (mig 067).
-  '/inventory/analisis': ['manage_inventory', 'view_stock', 'view_batches', 'manage_data_import'],
+  '/inventory/analisis': ['view_analisis', 'manage_inventory', 'view_stock', 'view_batches', 'manage_data_import'],
   // Carteles de bodega (impresión único/doble/cuádruple con CODE128).
-  '/inventory/carteles': ['manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  '/inventory/carteles': ['view_carteles', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

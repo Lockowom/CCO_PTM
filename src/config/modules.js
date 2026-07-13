@@ -127,16 +127,16 @@ export const APP_PERMISSIONS = [
     id: 'inventario',
     label: 'Inventario (Traspasos + Conteo Cíclico)',
     permissions: [
-      // Traspasos/Ajustes se abre con permisos de bodega ya existentes:
-      // manage_inventory, view_stock, view_batches o view_reception.
-      { id: 'view_conteo', label: 'Ver Conteo Cíclico' },
+      // Pantallas propias del módulo Inventario (casilla 1:1 con el menú):
+      { id: 'view_traspasos', label: 'Traspasos y Ajustes' },
+      { id: 'view_analisis', label: 'Análisis de Códigos' },
+      { id: 'view_carteles', label: 'Carteles de Bodega' },
+      // Conteo Cíclico (todas sus pestañas comparten estos):
+      { id: 'view_conteo', label: 'Ver Conteo Cíclico (todas las pestañas)' },
       { id: 'manage_conteo', label: 'Contar (Conteo Cíclico)' },
       { id: 'supervise_conteo', label: 'Supervisar Conteo (cerrar/ajustes)' },
-      // Reubicado desde Administración (2026-07-10): la gestión de ubicaciones
-      // y el mapa de calor son operación de bodega. El Mapa de Calor se abre
-      // con view_locations (permiso del grupo Consultas, compartido con
-      // Consultas → Ubicaciones).
       { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS (y Bodegas Softland)' }
+      // Nota: Mapa de Calor usa view_locations (grupo Consultas → Ubicaciones).
     ]
   },
   {
