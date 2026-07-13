@@ -28,6 +28,13 @@ export const PV_ESTADOS = [
 // Estados que cuentan como "activos" (ticket abierto/en curso).
 export const PV_ESTADOS_ACTIVOS = ['Abierto', 'En Proceso', 'En Evaluación', 'Programada', 'Pendiente Cliente'];
 
+// Flujo canónico para el botón "Siguiente". Cancelado queda fuera (terminal aparte).
+export const PV_FLUJO = ['Abierto', 'En Proceso', 'En Evaluación', 'Programada', 'Pendiente Cliente', 'Cerrado'];
+export const pvSiguienteEstado = (estado) => {
+  const i = PV_FLUJO.indexOf(estado);
+  return i >= 0 && i < PV_FLUJO.length - 1 ? PV_FLUJO[i + 1] : null;
+};
+
 export const PV_EQUIPOS = [
   'ADE', 'GIVAS', 'SAIKANG', 'CARDIOMAX', 'FH', 'YUWELL', 'WELCH "BAXTER"', 'BCF',
 ];
@@ -240,6 +247,51 @@ export function useReasociarCorreo() {
       qc.invalidateQueries({ queryKey: ['pv_correos'] });
       qc.invalidateQueries({ queryKey: ['pv_tickets'] });
       qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+    },
+  });
+}
+
+// ── Flujo de estados + trazabilidad ─────────────────────────────────────────
+export function useAvanzarTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ numero, nota }) => {
+      const { data, error } = await supabase.rpc('avanzar_pv_ticket', { p_numero: numero, p_nota: nota || null });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+      qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+      qc.invalidateQueries({ queryKey: ['pv_historial', vars?.numero] });
+    },
+  });
+}
+export function useCerrarTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ numero, resultado, nota }) => {
+      const { data, error } = await supabase.rpc('cerrar_pv_ticket', {
+        p_numero: numero, p_resultado: resultado || 'Resuelto', p_nota: nota || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+      qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+      qc.invalidateQueries({ queryKey: ['pv_historial', vars?.numero] });
+    },
+  });
+}
+export function usePvHistorial(numero) {
+  return useQuery({
+    queryKey: ['pv_historial', numero],
+    enabled: !!numero,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('pv_historial', { p_numero: numero });
+      if (error) throw error;
+      return data || [];
     },
   });
 }

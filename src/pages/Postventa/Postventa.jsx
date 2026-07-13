@@ -15,10 +15,11 @@ import { fetchNvPanel } from '../../services/panelPtm';
 import { puedeVerTab } from '../../constants/permissions';
 import {
   PV_REGIONES, PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_ESTADOS, PV_EQUIPOS,
-  PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
+  PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, PV_FLUJO, pvSiguienteEstado, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
   useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo, useReasociarCorreo,
+  useAvanzarTicket, useCerrarTicket, usePvHistorial,
   useInformeCalidadTicket,
 } from '../../services/postventaService';
 
@@ -703,12 +704,32 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
   const readOnly = !canManage;
   const [verInforme, setVerInforme] = useState(false);
 
+  // Flujo de estados + trazabilidad
+  const avanzar = useAvanzarTicket();
+  const cerrar = useCerrarTicket();
+  const { data: historial = [] } = usePvHistorial(ticket.numero);
+  const [verHist, setVerHist] = useState(false);
+  const siguiente = pvSiguienteEstado(ticket.estado);
+  const esTerminal = ticket.estado === 'Cerrado' || ticket.estado === 'Cancelado';
+
   const guardar = async () => {
     try {
       await actualizar.mutateAsync({ numero: ticket.numero, campos: f });
       toast.success(`Ticket ${ticket.numero} actualizado`);
       onClose();
     } catch (e) { toast.error(e.message || 'Error al actualizar'); }
+  };
+  const avanzarEstado = async () => {
+    if (!siguiente) return;
+    const nota = window.prompt(`Avanzar de "${ticket.estado}" → "${siguiente}".\nNota de la gestión (opcional):`) ?? '';
+    try { await avanzar.mutateAsync({ numero: ticket.numero, nota }); toast.success(`Avanzado a ${siguiente}`); onClose(); }
+    catch (e) { toast.error(e.message || 'No se pudo avanzar'); }
+  };
+  const terminar = async () => {
+    if (!confirm(`¿Dar por TERMINADO el ticket ${ticket.numero}?\nResultado: ${f.resultado || 'Resuelto'} (cámbialo arriba antes si corresponde).`)) return;
+    const nota = window.prompt('Nota de cierre (opcional):') ?? '';
+    try { await cerrar.mutateAsync({ numero: ticket.numero, resultado: f.resultado || 'Resuelto', nota }); toast.success('Ticket cerrado'); onClose(); }
+    catch (e) { toast.error(e.message || 'No se pudo cerrar'); }
   };
 
   return (
@@ -730,6 +751,59 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-4">
+          {/* Flujo de estados + acciones + trazabilidad */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center gap-1 flex-wrap mb-2">
+              {PV_FLUJO.map((e, i) => {
+                const idxAct = PV_FLUJO.indexOf(ticket.estado);
+                const actual = ticket.estado === e;
+                const done = idxAct >= 0 && idxAct >= i;
+                return (
+                  <React.Fragment key={e}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${actual ? 'bg-orange-500 text-white border-orange-500' : done ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'}`}>{e}</span>
+                    {i < PV_FLUJO.length - 1 && <ChevronRight size={11} className="text-slate-300" />}
+                  </React.Fragment>
+                );
+              })}
+              {ticket.estado === 'Cancelado' && <span className="px-2 py-0.5 rounded-full text-[10px] font-black border bg-rose-100 text-rose-700 border-rose-200">Cancelado</span>}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {canManage && !esTerminal && siguiente && (
+                <button onClick={avanzarEstado} disabled={avanzar.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-black inline-flex items-center gap-1.5 hover:bg-slate-900 disabled:opacity-50">
+                  Siguiente: {siguiente} <ChevronRight size={13} />
+                </button>
+              )}
+              {canManage && !esTerminal && (
+                <button onClick={terminar} disabled={cerrar.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-black inline-flex items-center gap-1.5 hover:bg-emerald-700 disabled:opacity-50">
+                  <CheckCircle2 size={13} /> Dar por terminado
+                </button>
+              )}
+              {esTerminal && (
+                <span className="text-xs font-bold text-emerald-700 inline-flex items-center gap-1.5"><CheckCircle2 size={14} /> {ticket.estado}{ticket.resultado ? ` · ${ticket.resultado}` : ''}</span>
+              )}
+              <button type="button" onClick={() => setVerHist((v) => !v)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-black inline-flex items-center gap-1.5 hover:border-slate-300">
+                <Clock size={13} /> {verHist ? 'Ocultar' : 'Ver'} trazabilidad ({historial.length})
+              </button>
+            </div>
+            {verHist && (
+              <div className="mt-3 border-t border-slate-200 pt-3 space-y-2 max-h-56 overflow-y-auto">
+                {historial.length === 0 && <p className="text-xs text-slate-400">Sin movimientos registrados aún.</p>}
+                {historial.map((h) => (
+                  <div key={h.id} className="flex items-start gap-2 text-xs">
+                    <div className="w-2 h-2 rounded-full bg-orange-400 mt-1 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-700">{h.estado_anterior ? `${h.estado_anterior} → ` : ''}{h.estado_nuevo}{h.resultado ? ` · ${h.resultado}` : ''}</div>
+                      <div className="text-slate-400">{fechaHoraCL(h.created_at)}{h.usuario_nombre ? ` · ${h.usuario_nombre}` : ''}{h.nota ? ` · "${h.nota}"` : ''}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {ticket.nv && (
             <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 px-4 py-3 text-sm">
               <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
