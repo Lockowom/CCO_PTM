@@ -10,7 +10,7 @@ import {
   CHECKLIST_INGRESO_NIVELES, ESTADO_TAREA_META, CATEGORIA_META,
   useTareasChecklist, useGuardarChecklist, useFirmarCertificado, useCategoriasTarea,
   useEliminarTareaCalidad,
-  CLASIFICACION_INGRESO, EMBALAJE_INGRESO, DISPOSICION_INMEDIATA_INGRESO,
+  CLASIFICACION_INGRESO, EMBALAJE_INGRESO, EMBALAJE_NA, EMBALAJE_PRESETS, DISPOSICION_INMEDIATA_INGRESO,
   EVIDENCIA_OPCIONES, riesgoIngreso, indicadoresIso,
   EVIDENCIAS_INGRESO_TIPOS, uploadEvidenciaIngreso, deleteEvidenciaSalida, EVIDENCIAS_BUCKET,
 } from '../../services/calidadService';
@@ -358,6 +358,24 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
             {riesgo.emoji} {riesgo.label}
           </span>
         </div>
+        {/* Aplicar a todos (misma evaluación para todo el envío) */}
+        {!readOnly && (
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aplicar a todos:</span>
+            <button type="button" onClick={() => setEx('embalaje', { ...embalaje, ...EMBALAJE_PRESETS.conforme })}
+              className="px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-black hover:bg-emerald-100 inline-flex items-center gap-1.5">
+              <Check size={13} /> Todo conforme
+            </button>
+            <button type="button" onClick={() => setEx('embalaje', { ...embalaje, ...EMBALAJE_PRESETS.sinPallet })}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-xs font-black hover:bg-slate-100 inline-flex items-center gap-1.5">
+              <Minus size={13} /> Sin pallet / film (N/A)
+            </button>
+            <button type="button" onClick={() => setEx('embalaje', {})}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 text-xs font-bold hover:text-slate-600">
+              Limpiar
+            </button>
+          </div>
+        )}
         <div className="space-y-2.5">
           {EMBALAJE_INGRESO.map(f => (
             <div key={f.id} className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-50 last:border-0 flex-wrap">
@@ -366,11 +384,12 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
                 {f.opciones.map(op => {
                   const on = embalaje[f.id] === op;
                   const esMala = ['Malo', 'Incorrecto', 'Sí'].includes(op) || (f.id === 'pallet' && op === 'Regular');
+                  const esNA = op === EMBALAJE_NA;
                   return (
                     <button key={op} type="button" disabled={readOnly}
                       onClick={() => setEx('embalaje', { ...embalaje, [f.id]: on ? undefined : op })}
                       className={`px-3 py-1.5 rounded-lg border text-xs font-black transition-colors ${on
-                        ? (esMala ? 'bg-rose-500 border-rose-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white')
+                        ? (esNA ? 'bg-slate-400 border-slate-400 text-white' : esMala ? 'bg-rose-500 border-rose-500 text-white' : 'bg-emerald-500 border-emerald-500 text-white')
                         : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                       {op}
                     </button>

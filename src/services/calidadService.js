@@ -681,13 +681,21 @@ export const CLASIFICACION_INGRESO = [
   { id: 'REPUESTO',       label: 'Repuesto' },
 ];
 // Evaluación del embalaje: bloque exclusivo (no solo "embalaje íntegro").
+// 'No aplica' = el envío no trae ese elemento (p. ej. viene sin pallet o sin film).
+// Es NEUTRO: no suma riesgo (ver riesgoIngreso) y se muestra en gris.
+export const EMBALAJE_NA = 'No aplica';
 export const EMBALAJE_INGRESO = [
-  { id: 'pallet',    label: 'Estado del pallet', opciones: ['Excelente', 'Bueno', 'Regular', 'Malo'] },
-  { id: 'film',      label: 'Film stretch',      opciones: ['Correcto', 'Incorrecto'] },
+  { id: 'pallet',    label: 'Estado del pallet', opciones: ['Excelente', 'Bueno', 'Regular', 'Malo', EMBALAJE_NA] },
+  { id: 'film',      label: 'Film stretch',      opciones: ['Correcto', 'Incorrecto', EMBALAJE_NA] },
   { id: 'golpes',    label: 'Golpes visibles',   opciones: ['No', 'Sí'] },
   { id: 'deformada', label: 'Caja deformada',    opciones: ['No', 'Sí'] },
   { id: 'humedad',   label: 'Humedad',           opciones: ['No', 'Sí'] },
 ];
+// Presets rápidos para "aplicar a todos" el mismo criterio.
+export const EMBALAJE_PRESETS = {
+  conforme:  { pallet: 'Bueno',       film: 'Correcto', golpes: 'No', deformada: 'No', humedad: 'No' },
+  sinPallet: { pallet: EMBALAJE_NA,   film: EMBALAJE_NA, golpes: 'No', deformada: 'No', humedad: 'No' },
+};
 // Disposición inmediata de la recepción (no depende del informe posterior).
 export const DISPOSICION_INMEDIATA_INGRESO = [
   'Recepción aceptada', 'Recepción parcial', 'Cuarentena',
