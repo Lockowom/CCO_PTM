@@ -114,6 +114,30 @@ function TabTickets({ canManage, canSupervise }) {
   const { data: tecnicos = [] } = useTecnicos();
   const [editar, setEditar] = useState(null);
 
+  // Eliminación (solo supervisión/admin): de a uno o masivo por selección.
+  const eliminar = useEliminarTicket();
+  const [sel, setSel] = useState(() => new Set());
+  const [borrando, setBorrando] = useState(false);
+  const toggleSel = (numero) => setSel((s) => { const n = new Set(s); n.has(numero) ? n.delete(numero) : n.add(numero); return n; });
+  const allSel = tickets.length > 0 && tickets.every((t) => sel.has(t.numero));
+  const toggleAll = () => setSel(allSel ? new Set() : new Set(tickets.map((t) => t.numero)));
+  const nSel = tickets.filter((t) => sel.has(t.numero)).length;
+  const borrarUno = async (t) => {
+    if (!confirm(`¿Eliminar el ticket ${t.numero}? No se puede deshacer.`)) return;
+    try { await eliminar.mutateAsync({ numero: t.numero }); toast.success(`${t.numero} eliminado`); setSel((s) => { const n = new Set(s); n.delete(t.numero); return n; }); }
+    catch (e) { toast.error(e.message || 'No se pudo eliminar'); }
+  };
+  const borrarMasivo = async () => {
+    const objetivo = tickets.filter((t) => sel.has(t.numero));
+    if (!objetivo.length) return;
+    if (!confirm(`¿Eliminar ${objetivo.length} ticket(s) seleccionado(s)? No se puede deshacer.`)) return;
+    setBorrando(true);
+    let ok = 0;
+    for (const t of objetivo) { try { await eliminar.mutateAsync({ numero: t.numero }); ok++; } catch { /* continúa */ } }
+    setBorrando(false); setSel(new Set());
+    toast.success(`Eliminados ${ok}/${objetivo.length}`);
+  };
+
   const exportar = () => {
     if (!tickets.length) return toast.info('No hay tickets para exportar');
     exportToExcel({
@@ -154,6 +178,12 @@ function TabTickets({ canManage, canSupervise }) {
         <button onClick={exportar} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
           <Download size={15} /> Excel
         </button>
+        {canSupervise && nSel > 0 && (
+          <button onClick={borrarMasivo} disabled={borrando}
+            className="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-black hover:bg-rose-700 disabled:opacity-50 flex items-center gap-1.5">
+            {borrando ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} Eliminar ({nSel})
+          </button>
+        )}
       </div>
 
       {/* Tabla */}
@@ -162,6 +192,9 @@ function TabTickets({ canManage, canSupervise }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
+                {canSupervise && (
+                  <th className="px-3 py-3 w-8"><input type="checkbox" checked={allSel} onChange={toggleAll} className="accent-rose-600 w-4 h-4" title="Seleccionar todos" /></th>
+                )}
                 <th className="text-left font-bold px-4 py-3">Ticket</th>
                 <th className="text-left font-bold px-4 py-3">Cliente / Equipo</th>
                 <th className="text-left font-bold px-4 py-3">Tipo</th>
@@ -172,10 +205,13 @@ function TabTickets({ canManage, canSupervise }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {isLoading && <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Cargando…</td></tr>}
-              {!isLoading && !tickets.length && <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Sin tickets</td></tr>}
+              {isLoading && <tr><td colSpan={canSupervise ? 8 : 7} className="px-4 py-10 text-center text-slate-400">Cargando…</td></tr>}
+              {!isLoading && !tickets.length && <tr><td colSpan={canSupervise ? 8 : 7} className="px-4 py-10 text-center text-slate-400">Sin tickets</td></tr>}
               {tickets.map((t) => (
-                <tr key={t.id} className="hover:bg-orange-50/40">
+                <tr key={t.id} className={`hover:bg-orange-50/40 ${sel.has(t.numero) ? 'bg-rose-50/50' : ''}`}>
+                  {canSupervise && (
+                    <td className="px-3 py-3 align-top"><input type="checkbox" checked={sel.has(t.numero)} onChange={() => toggleSel(t.numero)} className="accent-rose-600 w-4 h-4 mt-0.5" /></td>
+                  )}
                   <td className="px-4 py-3 align-top">
                     <div className="font-black text-slate-800 flex items-center gap-1.5">
                       {t.numero}
@@ -202,9 +238,17 @@ function TabTickets({ canManage, canSupervise }) {
                   <td className="px-4 py-3 align-top"><span className={`inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border ${pvPrioridadCls(t.prioridad)}`}>{t.prioridad}</span></td>
                   <td className="px-4 py-3 align-top"><span className={`inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold border ${pvEstadoCls(t.estado)}`}>{t.estado}</span></td>
                   <td className="px-4 py-3 align-top text-right">
-                    <button onClick={() => setEditar(t)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 inline-flex items-center gap-1 text-xs font-bold">
-                      <Pencil size={13} /> {canManage ? 'Editar' : 'Ver'}
-                    </button>
+                    <div className="inline-flex items-center gap-1.5">
+                      <button onClick={() => setEditar(t)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 inline-flex items-center gap-1 text-xs font-bold">
+                        <Pencil size={13} /> {canManage ? 'Editar' : 'Ver'}
+                      </button>
+                      {canSupervise && (
+                        <button onClick={() => borrarUno(t)} title="Eliminar ticket"
+                          className="px-2 py-1.5 rounded-lg border border-rose-200 text-rose-500 hover:bg-rose-50 inline-flex items-center text-xs font-bold">
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
