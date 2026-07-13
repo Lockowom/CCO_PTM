@@ -18,7 +18,7 @@ import {
   PV_COTIZAR, PV_RESULTADOS, PV_CAMPOS_OBLIGATORIOS, pvEstadoCls, pvPrioridadCls, pvTipoCls, pvFolioCls,
   useTecnicos, useGuardarTecnico, useEliminarTecnico,
   useTickets, useCrearTicket, useActualizarTicket, usePvDashboard, useFamiliasStock,
-  useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo,
+  useCorreosTicket, esCorreoInterno, useEliminarTicket, useEliminarCorreo, useReasociarCorreo,
   useInformeCalidadTicket,
 } from '../../services/postventaService';
 
@@ -240,6 +240,19 @@ function TabBandeja({ canManage, canSupervise }) {
   const nPend = correos.filter(porGestionar).length;
   const nAsignar = correos.filter(porAsignar).length;
 
+  const [vaciando, setVaciando] = useState(false);
+  const vaciarBandeja = async () => {
+    if (!lista.length) return toast.info('La bandeja ya está en 0');
+    if (!confirm(`¿Descartar los ${lista.length} caso(s) de correo que se muestran? Quedarán descartados y NO volverán a cargarse (deja la bandeja en 0). Tip: reasocia primero los correos correctos a su ticket.`)) return;
+    setVaciando(true);
+    let ok = 0;
+    for (const t of lista) {
+      try { await eliminar.mutateAsync({ numero: t.numero }); ok++; } catch { /* continúa con el resto */ }
+    }
+    setVaciando(false);
+    toast.success(`Bandeja limpiada: ${ok}/${lista.length} descartado(s)`);
+  };
+
   const asignar = async (t, tecnico) => {
     try {
       await derivar.mutateAsync({ numero: t.numero, campos: { tecnico_asignado: tecnico, estado: t.estado === 'Abierto' ? 'En Proceso' : t.estado } });
@@ -277,6 +290,13 @@ function TabBandeja({ canManage, canSupervise }) {
           className={`px-3 py-2 rounded-xl text-xs font-black border ${soloPend ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200'}`}>
           {soloPend ? 'Por gestionar' : 'Todos los correos'}
         </button>
+        {canSupervise && (
+          <button onClick={vaciarBandeja} disabled={vaciando || !lista.length}
+            title="Descartar los casos mostrados (deja la bandeja en 0)"
+            className="px-3 py-2 rounded-xl text-xs font-black border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-40 inline-flex items-center gap-1.5">
+            {vaciando ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Dejar en 0
+          </button>
+        )}
       </div>
 
       {/* Lista de casos */}
@@ -336,11 +356,22 @@ function TabBandeja({ canManage, canSupervise }) {
 function ThreadReader({ ticket, canSupervise, onClose, onGestionar }) {
   const { data: correos = [], isLoading } = useCorreosTicket(ticket.numero);
   const elimCorreo = useEliminarCorreo();
+  const reasociar = useReasociarCorreo();
   const asuntoHilo = correos[0]?.asunto || ticket.descripcion || ticket.numero;
   const borrarCorreo = async (c) => {
     if (!confirm('¿Eliminar este correo del caso? Quedará descartado y no volverá a cargarse.')) return;
     try { await elimCorreo.mutateAsync({ idCorreo: c.id_correo }); toast.success('Correo eliminado'); }
     catch (e) { toast.error(e.message || 'Error al eliminar'); }
+  };
+  const reasociarCorreo = async (c) => {
+    const destino = (window.prompt(`Reasociar este correo al ticket N° (ej. ${ticket.numero}).\nEscribe el número del ticket CORRECTO:`) || '').trim();
+    if (!destino) return;
+    if (destino === ticket.numero) return toast.info('El correo ya está en este caso');
+    try {
+      const t = await reasociar.mutateAsync({ idCorreo: c.id_correo, numeroDestino: destino });
+      toast.success(`Correo reasociado a ${t?.numero || destino}`);
+      onClose();
+    } catch (e) { toast.error(e.message || 'No se pudo reasociar (¿existe el ticket?)'); }
   };
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto" onClick={onClose}>
@@ -370,6 +401,9 @@ function ThreadReader({ ticket, canSupervise, onClose, onGestionar }) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-slate-400">{fechaHoraCL(c.recibido)}</span>
+                    {canSupervise && (
+                      <button onClick={() => reasociarCorreo(c)} title="Reasociar este correo al ticket correcto" className="p-1 rounded text-indigo-500 hover:bg-indigo-50"><Link2 size={13} /></button>
+                    )}
                     {canSupervise && (
                       <button onClick={() => borrarCorreo(c)} title="Eliminar correo del caso" className="p-1 rounded text-rose-400 hover:bg-rose-50"><Trash2 size={13} /></button>
                     )}

@@ -225,6 +225,25 @@ export function useEliminarCorreo() {
   });
 }
 
+// Reasociar un correo al ticket CORRECTO (mueve ticket_id/conversation_id).
+export function useReasociarCorreo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ idCorreo, numeroDestino }) => {
+      const { data, error } = await supabase.rpc('reasociar_pv_correo', {
+        p_id_correo: idCorreo, p_numero_destino: numeroDestino,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pv_correos'] });
+      qc.invalidateQueries({ queryKey: ['pv_tickets'] });
+      qc.invalidateQueries({ queryKey: ['pv_dashboard'] });
+    },
+  });
+}
+
 // ============================================================================
 // Correos (hilo de conversación de un ticket) + interno/externo
 // ============================================================================
