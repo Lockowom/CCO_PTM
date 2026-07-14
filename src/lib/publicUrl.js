@@ -9,7 +9,10 @@
 //      Úsalo para fijar el dominio propio (ej. https://soporte.ptm.cl).
 //   2) window.location.origin — SOLO si es una web real (http/https y no
 //      localhost / IP / .local / capacitor). En la web pública ya es correcto solo.
-//   3) '' — sin base conocida (app nativa/dev sin env): el UI cae a la ruta relativa.
+//   3) DOMINIO_DEFAULT — dominio público actual de la app en Render (fallback
+//      para la app nativa/dev, donde el origin es localhost).
+const DOMINIO_DEFAULT = 'https://cco-ptm-b05m.onrender.com';
+
 export function publicBaseUrl() {
   const env = import.meta.env?.VITE_PUBLIC_URL;
   if (env && String(env).trim()) return String(env).trim().replace(/\/+$/, '');
@@ -22,7 +25,7 @@ export function publicBaseUrl() {
       /\.local(?::\d+)?$/i.test(o);
     if (/^https?:/i.test(o) && !esLocalOApp) return o.replace(/\/+$/, '');
   }
-  return '';
+  return DOMINIO_DEFAULT;
 }
 
 // Enlace absoluto (o relativo si no hay base) a una ruta pública.
