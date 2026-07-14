@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { exportToExcel } from '../../lib/exportExcel';
 import { signedUrls } from '../../lib/storageUrl';
 import { comunasDeRegion } from '../../constants/comunasChile';
+import { publicUrl, publicBaseUrl } from '../../lib/publicUrl';
 import { fetchNvPanel } from '../../services/panelPtm';
 import { puedeVerTab } from '../../constants/permissions';
 import {
@@ -497,6 +498,39 @@ const FORM_VACIO = {
   nv: '', vendedor: '', nv_info: null,
 };
 
+// Banner para compartir el formulario público /soporte. Usa la URL pública real
+// (publicUrl) para que el enlace NO salga como localhost en la app nativa/dev.
+function SoportePublicoBanner() {
+  const base = publicBaseUrl();
+  const link = publicUrl('/soporte');
+  const absoluto = /^https?:/i.test(link); // false = no hay dominio público configurado
+  return (
+    <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 flex flex-col sm:flex-row sm:items-center gap-2">
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Formulario público de servicio</p>
+        <p className="text-xs text-slate-600 mt-0.5">Comparte este enlace con clientes o vendedores para que creen su solicitud sin necesidad de cuenta.</p>
+        <code className="text-[11px] text-slate-500 break-all">{link}</code>
+        {!absoluto && (
+          <p className="text-[11px] text-orange-600/90 mt-1">
+            Ábrelo desde la web (no desde la app) para ver el dominio real, o configura <code>VITE_PUBLIC_URL</code> con tu dominio público.
+          </p>
+        )}
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => { navigator.clipboard?.writeText(link); toast.success('Enlace copiado'); }}
+          className="px-3 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold"
+        >Copiar enlace</button>
+        <a
+          href={link} target="_blank" rel="noopener noreferrer"
+          className="px-3 py-2 rounded-lg border border-orange-300 text-orange-700 text-xs font-bold hover:bg-orange-100"
+        >Abrir</a>
+      </div>
+    </div>
+  );
+}
+
 function TabNuevo({ onCreated }) {
   const crear = useCrearTicket();
   const { data: tecnicos = [] } = useTecnicos(true);
@@ -555,24 +589,7 @@ function TabNuevo({ onCreated }) {
       <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><Plus size={18} className="text-orange-600" /> Nuevo ticket de servicio</h2>
 
       {/* Formulario público — compartir el link para que clientes/vendedores creen el ticket sin cuenta */}
-      <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Formulario público de servicio</p>
-          <p className="text-xs text-slate-600 mt-0.5">Comparte este enlace con clientes o vendedores para que creen su solicitud sin necesidad de cuenta.</p>
-          <code className="text-[11px] text-slate-500 break-all">{typeof window !== 'undefined' ? `${window.location.origin}/soporte` : '/soporte'}</code>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/soporte`); toast.success('Enlace copiado'); }}
-            className="px-3 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold"
-          >Copiar enlace</button>
-          <a
-            href="/soporte" target="_blank" rel="noopener noreferrer"
-            className="px-3 py-2 rounded-lg border border-orange-300 text-orange-700 text-xs font-bold hover:bg-orange-100"
-          >Abrir</a>
-        </div>
-      </div>
+      <SoportePublicoBanner />
 
       {/* Asociar a una N.V. del Panel PTM (opcional) */}
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
