@@ -14,8 +14,9 @@ import { comunasDeRegion } from '../../constants/comunasChile';
 const FORM_INICIAL = {
   cliente: '', contacto: '', equipo_modelo: '', numero_serie: '',
   tipo_solicitud: '', prioridad: 'Media', region: '', comuna: '',
-  cotizar: 'No', fecha_programada: '', hora_programada: '',
+  cotizar: 'No',
   descripcion: '', observaciones: '',
+  // La fecha/hora de visita las agenda el técnico, no el solicitante.
   // estado NO es editable: el ticket público entra SIEMPRE como "Abierto" (flujo de entrada).
   website: '', // honeypot (oculto) — un bot lo llena y se descarta en el server
 };
@@ -172,15 +173,6 @@ export default function SolicitudPublica() {
                 disabled={!form.region} placeholder={form.region ? 'Comuna' : 'Opcional'} maxLength={120}
               />
               <datalist id="dl-comunas">{comunas.map((c) => <option key={c} value={c} />)}</datalist>
-            </Campo>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Campo label="Fecha de visita deseada" hint="Opcional.">
-              <input type="date" className={inputCls} value={form.fecha_programada} onChange={set('fecha_programada')} />
-            </Campo>
-            <Campo label="Hora de visita deseada" hint="Opcional.">
-              <input type="time" className={inputCls} value={form.hora_programada} onChange={set('hora_programada')} />
             </Campo>
           </div>
 
