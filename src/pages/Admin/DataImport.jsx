@@ -367,6 +367,8 @@ const DataImport = () => {
     const [rawText, setRawText] = useState('');
     const [parsedRows, setParsedRows] = useState([]);
     const [rowStatuses, setRowStatuses] = useState([]);
+    // Filas descartadas al parsear por faltar campos obligatorios (se informan).
+    const [skippedInvalid, setSkippedInvalid] = useState(0);
     const [isParsing, setIsParsing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [loadResult, setLoadResult] = useState(null);
@@ -417,7 +419,7 @@ const DataImport = () => {
         );
         const dataLines = isHeader ? lines.slice(1) : lines;
 
-        const rows = dataLines.map(line => {
+        const rowsAll = dataLines.map(line => {
             const cells = line.split(separator).map(c => c.trim());
             const row = {};
             let cellIdx = 0;
@@ -472,9 +474,17 @@ const DataImport = () => {
                 });
             }
             return row;
-        }).filter(row =>
-            currentTab.columns.filter(c => c.required).some(c => row[c.key] && row[c.key] !== '' && row[c.key] !== 0)
-        );
+        });
+
+        // Solo se conservan las filas que traen TODOS los campos obligatorios.
+        // (Antes era .some(): bastaba UN obligatorio no vacío, así que una fila con
+        // código pero SIN "producto" pasaba y luego reventaba el lote entero en el
+        // servidor por el not-null constraint — 1 fila mala tumbaba 1.000. El 0
+        // numérico es válido, por eso se compara contra vacío, no contra falsy.)
+        const hasVal = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+        const requiredCols = currentTab.columns.filter(c => c.required);
+        const rows = rowsAll.filter(row => requiredCols.every(c => hasVal(row[c.key])));
+        setSkippedInvalid(rowsAll.length - rows.length);
 
         setParsedRows(rows);
 
@@ -783,6 +793,7 @@ const DataImport = () => {
 
     const handleReset = () => {
         setRawText(''); setParsedRows([]); setRowStatuses([]); setLoadResult(null);
+        setSkippedInvalid(0);
         setStep('paste'); setSkipFirstColumn(false); setSyncDeleted(false);
         setScannedItems([]); setScanError(''); setManualScanValue(''); setInputMode('paste');
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -1116,6 +1127,16 @@ const DataImport = () => {
                 {/* STEP 2: PREVIEW */}
                 {step === 'preview' && parsedRows.length > 0 && (
                     <div className="flex flex-col gap-4">
+                        {skippedInvalid > 0 && (
+                            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                <span>
+                                    <b>{skippedInvalid.toLocaleString()}</b> fila(s) se ignoraron por faltar campos obligatorios
+                                    ({currentTab.columns.filter(c => c.required).map(c => c.label).join(', ')}).
+                                    Se cargarán solo las {parsedRows.length.toLocaleString()} filas válidas. Corrige esas filas en el archivo si necesitas incluirlas.
+                                </span>
+                            </div>
+                        )}
                         {/* Stats + action bar */}
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white p-2 sm:p-3 rounded-xl border border-slate-200">
                             <StatPill icon={Database} label="Total" value={stats.total} color="slate" />
