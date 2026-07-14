@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../lib/imageCompress';
 import { signedUrls } from '../lib/storageUrl';
+import CameraCapture from './CameraCapture';
 import { uploadEvidencia, deleteEvidencia, EVIDENCIAS_BUCKET } from '../services/calidadService';
 
 /**
@@ -22,7 +23,7 @@ import { uploadEvidencia, deleteEvidencia, EVIDENCIAS_BUCKET } from '../services
 const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManage = true, compact = false }) => {
   const { user } = useAuth();
   const galleryRef = useRef(null);
-  const cameraRef = useRef(null);
+  const [camOpen, setCamOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   // Mostrar el botón de cámara solo donde tiene sentido (móvil/tablet/app):
   // en un PC de escritorio `capture` abriría igual el diálogo de archivos.
@@ -103,7 +104,7 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
         {canManage && puedeCamara && (
           <button
             type="button"
-            onClick={() => cameraRef.current?.click()}
+            onClick={() => setCamOpen(true)}
             disabled={!puedeSubir || busy}
             title={!itemId ? 'Guarda el borrador para adjuntar fotos' : 'Tomar foto con la cámara'}
             className={`${thumb} shrink-0 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-500 flex flex-col items-center justify-center gap-1 hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed`}
@@ -144,15 +145,13 @@ const PhotoUploader = ({ informeId, itemId, evidencias = [], onChanged, canManag
         onChange={handleFiles}
         className="hidden"
       />
-      {/* Cámara: `capture="environment"` abre la cámara trasera directo (1 foto). */}
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFiles}
-        className="hidden"
-      />
+      {/* Cámara in-app a pantalla completa (getUserMedia). */}
+      {camOpen && (
+        <CameraCapture
+          onCapture={(file) => handleFiles({ target: { files: [file], value: '' } })}
+          onClose={() => setCamOpen(false)}
+        />
+      )}
 
       {lightbox && (
         <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>

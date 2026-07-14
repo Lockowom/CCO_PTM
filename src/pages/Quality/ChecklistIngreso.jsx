@@ -16,6 +16,7 @@ import {
 } from '../../services/calidadService';
 import { compressImage } from '../../lib/imageCompress';
 import { signedUrls, signedUrl } from '../../lib/storageUrl';
+import CameraCapture from '../../components/CameraCapture';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
 // Convierte una familia (RPC) en un "nivel" de checklist con sus criterios propios.
@@ -176,7 +177,7 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   // ── Evidencia fotográfica (cámara directa + galería) ──
   const fotoRef = React.useRef(null);
-  const fotoCamRef = React.useRef(null);
+  const [camOpen, setCamOpen] = useState(false);
   const puedeCamara = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
   const [tipoFoto, setTipoFoto] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
@@ -191,7 +192,8 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const pedirFoto = (tipo, modo = 'galeria') => {
     setTipoFoto(tipo);
-    (modo === 'camara' ? fotoCamRef : fotoRef).current?.click();
+    if (modo === 'camara') setCamOpen(true);
+    else fotoRef.current?.click();
   };
   const onFotos = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -542,9 +544,14 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
               );
             })}
           </div>
-          {/* Galería/archivos: sin capture → elegir y varias. Cámara: capture directo. */}
+          {/* Galería/archivos: sin capture → elegir y varias. */}
           <input ref={fotoRef} type="file" accept="image/*" multiple onChange={onFotos} className="hidden" />
-          <input ref={fotoCamRef} type="file" accept="image/*" capture="environment" onChange={onFotos} className="hidden" />
+          {camOpen && (
+            <CameraCapture
+              onCapture={(file) => onFotos({ target: { files: [file], value: '' } })}
+              onClose={() => setCamOpen(false)}
+            />
+          )}
           <p className="text-[10px] text-slate-400 mt-2">Las fotos quedan asociadas al checklist (bucket privado).</p>
         </div>
 
