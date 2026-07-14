@@ -77,6 +77,12 @@
   `origen='Correo'` con `crear_pv_ticket` (idempotente por `id_correo`). Acepta objeto o array de
   correos, alias tolerantes de campos, y autentica por **token compartido** (`?token=`, header
   `x-pv-token` o body) contra el secret `PV_INGEST_TOKEN`. `verify_jwt` off (auth propia por token).
+- `functions/postventa-publico/` — Edge Function (Deno) del **formulario público** de servicio
+  (ruta abierta `/soporte`, sin login). Recibe por POST los datos de la solicitud, aplica anti-spam
+  (honeypot, tiempo mínimo de llenado `t_ms`, **Turnstile opcional** por secret `PV_TURNSTILE_SECRET`)
+  y crea el ticket con el `service_role` vía la RPC `crear_pv_ticket_publico` (borrador, `origen='Web'`;
+  rate-limit por IP y global sobre `tms_postventa_publico_log`). `verify_jwt` **off** (endpoint público).
+  Migración `078`. Sin secrets obligatorios (Turnstile opcional).
 - `legacy_sql/` — scripts SQL **históricos/obsoletos** movidos desde la raíz del repo.
   Conservados solo como referencia. **No ejecutar**: pueden revertir el estado actual.
 

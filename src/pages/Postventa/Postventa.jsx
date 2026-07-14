@@ -554,6 +554,26 @@ function TabNuevo({ onCreated }) {
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5 max-w-4xl">
       <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><Plus size={18} className="text-orange-600" /> Nuevo ticket de servicio</h2>
 
+      {/* Formulario público — compartir el link para que clientes/vendedores creen el ticket sin cuenta */}
+      <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Formulario público de servicio</p>
+          <p className="text-xs text-slate-600 mt-0.5">Comparte este enlace con clientes o vendedores para que creen su solicitud sin necesidad de cuenta.</p>
+          <code className="text-[11px] text-slate-500 break-all">{typeof window !== 'undefined' ? `${window.location.origin}/soporte` : '/soporte'}</code>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/soporte`); toast.success('Enlace copiado'); }}
+            className="px-3 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold"
+          >Copiar enlace</button>
+          <a
+            href="/soporte" target="_blank" rel="noopener noreferrer"
+            className="px-3 py-2 rounded-lg border border-orange-300 text-orange-700 text-xs font-bold hover:bg-orange-100"
+          >Abrir</a>
+        </div>
+      </div>
+
       {/* Asociar a una N.V. del Panel PTM (opcional) */}
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
         <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5"><Link2 size={13} /> Asociar a Nota de Venta (opcional)</label>

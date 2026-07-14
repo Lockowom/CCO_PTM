@@ -17,6 +17,7 @@ import { toast, Toaster } from 'sonner';
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
 const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertificado'));
+const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // TMS Modules
@@ -345,6 +346,8 @@ function AppContent() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/verificar" element={<VerificarCertificado />} />
+        {/* Formulario público de solicitud de servicio (sin login) */}
+        <Route path="/soporte" element={<ErrorBoundary><SolicitudPublica /></ErrorBoundary>} />
 
         {/* Protected Routes (Wrapped in ProtectedRoute) */}
         <Route path="/" element={<ProtectedRoute />}>
