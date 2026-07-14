@@ -92,6 +92,10 @@ serve(async (req) => {
       p_comuna: pick(body, ["comuna"]) || null,
       p_numero_serie: pick(body, ["numero_serie", "serie"]) || null,
       p_ip: clientIp(req) || null,
+      p_observaciones: pick(body, ["observaciones"]) || null,
+      p_cotizar: pick(body, ["cotizar"]) || "No",
+      p_fecha_programada: pick(body, ["fecha_programada"]) || null,
+      p_hora_programada: pick(body, ["hora_programada"]) || null,
     });
     if (error) {
       // Los mensajes de la RPC (rate-limit / validación) son aptos para mostrar.

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { supabase } from '../../supabase';
 import { CheckCircle2, Send, LifeBuoy, AlertCircle } from 'lucide-react';
-import { PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_REGIONES } from '../../services/postventaService';
+import { PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_REGIONES, PV_COTIZAR } from '../../services/postventaService';
+import { comunasDeRegion } from '../../constants/comunasChile';
 
 // ============================================================================
 // Formulario PÚBLICO de solicitud de servicio (sin login).
@@ -12,7 +13,10 @@ import { PV_TIPOS_SOLICITUD, PV_PRIORIDADES, PV_REGIONES } from '../../services/
 // ============================================================================
 const FORM_INICIAL = {
   cliente: '', contacto: '', equipo_modelo: '', numero_serie: '',
-  tipo_solicitud: '', prioridad: 'Media', region: '', comuna: '', descripcion: '',
+  tipo_solicitud: '', prioridad: 'Media', region: '', comuna: '',
+  cotizar: 'No', fecha_programada: '', hora_programada: '',
+  descripcion: '', observaciones: '',
+  // estado NO es editable: el ticket público entra SIEMPRE como "Abierto" (flujo de entrada).
   website: '', // honeypot (oculto) — un bot lo llena y se descarta en el server
 };
 
@@ -39,6 +43,9 @@ export default function SolicitudPublica() {
   const cargadoEn = useRef(Date.now());
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }));
+  // Al cambiar región se limpia la comuna (dependen en cascada, igual que el ticket interno).
+  const setRegion = (e) => setForm((f) => ({ ...f, region: e.target.value, comuna: '' }));
+  const comunas = useMemo(() => comunasDeRegion(form.region) || [], [form.region]);
   const puedeEnviar = useMemo(
     () => ['cliente', 'contacto', 'equipo_modelo', 'descripcion'].every((k) => String(form[k]).trim()),
     [form]
@@ -145,22 +152,50 @@ export default function SolicitudPublica() {
                 {PV_PRIORIDADES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </Campo>
-            <Campo label="Región">
-              <select className={inputCls} value={form.region} onChange={set('region')}>
-                <option value="">Selecciona…</option>
-                {PV_REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+            <Campo label="¿Cotizar?">
+              <select className={inputCls} value={form.cotizar} onChange={set('cotizar')}>
+                {PV_COTIZAR.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Campo>
           </div>
 
-          <Campo label="Comuna">
-            <input className={inputCls} value={form.comuna} onChange={set('comuna')} placeholder="Opcional" maxLength={120} />
-          </Campo>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Campo label="Región">
+              <select className={inputCls} value={form.region} onChange={setRegion}>
+                <option value="">Selecciona…</option>
+                {PV_REGIONES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </Campo>
+            <Campo label="Comuna" hint={form.region ? 'Escribe o elige de la lista.' : 'Selecciona primero la región.'}>
+              <input
+                className={inputCls} list="dl-comunas" value={form.comuna} onChange={set('comuna')}
+                disabled={!form.region} placeholder={form.region ? 'Comuna' : 'Opcional'} maxLength={120}
+              />
+              <datalist id="dl-comunas">{comunas.map((c) => <option key={c} value={c} />)}</datalist>
+            </Campo>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Campo label="Fecha de visita deseada" hint="Opcional.">
+              <input type="date" className={inputCls} value={form.fecha_programada} onChange={set('fecha_programada')} />
+            </Campo>
+            <Campo label="Hora de visita deseada" hint="Opcional.">
+              <input type="time" className={inputCls} value={form.hora_programada} onChange={set('hora_programada')} />
+            </Campo>
+          </div>
 
           <Campo label="Descripción del problema o solicitud" req>
             <textarea
               className={`${inputCls} min-h-[120px] resize-y`} value={form.descripcion} onChange={set('descripcion')}
               placeholder="Describe la falla, el servicio requerido o el motivo de la solicitud con el mayor detalle posible."
+              maxLength={5000}
+            />
+          </Campo>
+
+          <Campo label="Observaciones" hint="Opcional — cualquier dato adicional que quieras agregar.">
+            <textarea
+              className={`${inputCls} min-h-[80px] resize-y`} value={form.observaciones} onChange={set('observaciones')}
+              placeholder="Información complementaria (horarios de atención, referencias, etc.)"
               maxLength={5000}
             />
           </Campo>
