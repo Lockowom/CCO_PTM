@@ -58,7 +58,7 @@ const Reception = () => {
 
   // Form state - Items
   const [items, setItems] = useState([]);
-  const [currentItem, setCurrentItem] = useState({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+  const [currentItem, setCurrentItem] = useState({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
 
   // Animación inicial
   useGSAP(() => {
@@ -231,6 +231,7 @@ const Reception = () => {
         serie: item.serie || null,
         lote: item.lote || null,
         box: item.box || null,
+        fecha_vencimiento: item.fecha_vencimiento || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -298,7 +299,7 @@ const Reception = () => {
       um: 'UNI',
       _id
     }]);
-    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
 
     // Enriquecer la descripción en segundo plano (no bloquea el alta).
     lookupDescription(reff)
@@ -342,7 +343,7 @@ const Reception = () => {
     try {
       const { data, error } = await supabase
         .from('tms_recepcion_items')
-        .select('id, reff, descripcion, um, cantidad, serie, lote, box')
+        .select('id, reff, descripcion, um, cantidad, serie, lote, box, fecha_vencimiento')
         .eq('recepcion_id', recepcion.id)
         .order('id', { ascending: true });
       if (error) throw error;
@@ -356,7 +357,7 @@ const Reception = () => {
     try {
       const { data, error } = await supabase
         .from('tms_recepcion_items')
-        .select('id, reff, descripcion, um, cantidad, serie, lote, box')
+        .select('id, reff, descripcion, um, cantidad, serie, lote, box, fecha_vencimiento')
         .eq('recepcion_id', recepcion.id)
         .order('id', { ascending: true });
       if (error) throw error;
@@ -389,7 +390,8 @@ const Reception = () => {
       'U.M': item.um || 'UNI',
       'CANTIDAD': item.cantidad,
       'SERIE': item.serie || '',
-      'PARTIDA': item.lote || ''
+      'PARTIDA': item.lote || '',
+      'VENCIMIENTO': item.fecha_vencimiento || ''
     }));
 
     const wb = XLSX.utils.book_new();
@@ -468,7 +470,7 @@ const Reception = () => {
       tipo_contenedor: '3-4', notas: ''
     });
     setItems([]);
-    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '' });
+    setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
     setEditingId(null);
   };
 
@@ -913,6 +915,19 @@ const Reception = () => {
                 </div>
               </div>
 
+              {/* ===== FILA 5: FECHA DE VENCIMIENTO ===== */}
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">
+                  Fecha de Vencimiento
+                </label>
+                <input
+                  type="date"
+                  value={currentItem.fecha_vencimiento}
+                  onChange={e => setCurrentItem(p => ({ ...p, fecha_vencimiento: e.target.value }))}
+                  className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-bold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+
               {/* ===== BOTÓN AGREGAR ===== */}
               <button
                 type="button"
@@ -953,6 +968,7 @@ const Reception = () => {
                         <th className="px-2 sm:px-3 py-2 text-center">Cant</th>
                         <th className="px-2 sm:px-3 py-2 text-left">Serie</th>
                         <th className="px-2 sm:px-3 py-2 text-left">Lote</th>
+                        <th className="px-2 sm:px-3 py-2 text-left">Vence</th>
                         <th className="px-2 sm:px-3 py-2 text-left">Box</th>
                         <th className="px-2 sm:px-3 py-2 text-center">-</th>
                       </tr>
@@ -965,6 +981,7 @@ const Reception = () => {
                           <td className="px-3 py-2 text-center font-bold text-emerald-700">{item.cantidad}</td>
                           <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.serie || '-'}</td>
                           <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.lote || '-'}</td>
+                          <td className="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">{item.fecha_vencimiento || '-'}</td>
                           <td className="px-3 py-2 text-xs text-slate-600">{item.box || '-'}</td>
                           <td className="px-3 py-2 text-center">
                             <button onClick={() => removeItem(idx)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
@@ -1050,6 +1067,7 @@ const Reception = () => {
                     <th className="px-2 sm:px-4 py-3 text-center font-bold">CANTIDAD</th>
                     <th className="px-2 sm:px-4 py-3 text-left font-bold">SERIE</th>
                     <th className="px-2 sm:px-4 py-3 text-left font-bold">PARTIDA</th>
+                    <th className="px-2 sm:px-4 py-3 text-left font-bold">VENCE</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1061,6 +1079,7 @@ const Reception = () => {
                       <td className="px-2 sm:px-4 py-2.5 text-center font-bold text-slate-900">{item.cantidad}</td>
                       <td className="px-2 sm:px-4 py-2.5 font-mono text-xs text-slate-600">{item.serie || ''}</td>
                       <td className="px-2 sm:px-4 py-2.5 font-mono text-xs text-slate-600">{item.lote || ''}</td>
+                      <td className="px-2 sm:px-4 py-2.5 text-xs text-slate-600 whitespace-nowrap">{item.fecha_vencimiento || ''}</td>
                     </tr>
                   ))}
                 </tbody>
