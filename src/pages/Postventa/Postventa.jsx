@@ -603,7 +603,7 @@ function TabNuevo({ onCreated }) {
         <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} />
         <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={!f.region} allowFree />
         <Campo label="Contacto" value={f.contacto} onChange={(v) => set('contacto', v)} />
-        <Sel label="Equipo / Modelo (familia del stock)" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} allowFree />
+        <SelLibre label="Equipo / Modelo" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} placeholder="Escribe el modelo o elige familia…" />
         <Campo label="N° de Serie" value={f.numero_serie} onChange={(v) => set('numero_serie', v)} />
         <Sel label="Tipo de Solicitud" value={f.tipo_solicitud} onChange={(v) => set('tipo_solicitud', v)} options={PV_TIPOS_SOLICITUD} />
         <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} />
@@ -893,7 +893,7 @@ function ModalEditar({ ticket, canManage, canSupervise, onClose }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Sel label="Región" value={f.region} onChange={(v) => { set('region', v); set('comuna', ''); }} options={PV_REGIONES} disabled={readOnly} allowFree />
             <Sel label="Comuna" value={f.comuna} onChange={(v) => set('comuna', v)} options={comunasDeRegion(f.region)} disabled={readOnly || !f.region} allowFree />
-            <Sel label="Equipo / Modelo (familia)" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} disabled={readOnly} allowFree />
+            <SelLibre label="Equipo / Modelo" value={f.equipo_modelo} onChange={(v) => set('equipo_modelo', v)} options={equipoOpciones(familias)} disabled={readOnly} placeholder="Escribe el modelo o elige familia…" />
             <Sel label="Estado" value={f.estado} onChange={(v) => set('estado', v)} options={PV_ESTADOS} disabled={readOnly} />
             <Sel label="Técnico" value={f.tecnico_asignado} onChange={(v) => set('tecnico_asignado', v)} options={tecnicos.map((t) => t.nombre)} disabled={readOnly} />
             <Sel label="Prioridad" value={f.prioridad} onChange={(v) => set('prioridad', v)} options={PV_PRIORIDADES} disabled={readOnly} />
@@ -1216,6 +1216,29 @@ function Sel({ label, value, onChange, options, req, disabled, allowFree }) {
             creía que el campo estaba vacío aunque el ticket conserva el valor. */}
         {!known && <option value="__free__">{value}{allowFree ? ' (otro)' : ' (no vigente)'}</option>}
       </select>
+    </div>
+  );
+}
+// Campo LIBRE con sugerencias (input + datalist): permite ESCRIBIR el valor a
+// mano (p. ej. el modelo del equipo si el cliente no sabe la familia) y a la vez
+// sugiere las opciones del catálogo. Se usa para Equipo/Modelo.
+function SelLibre({ label, value, onChange, options, req, disabled, placeholder }) {
+  const opts = (options || []).map((o) => (typeof o === 'string' ? o : o.value)).filter(Boolean);
+  const listId = React.useMemo(() => `dl-${String(label).replace(/\W/g, '')}-${Math.round(opts.length)}`, [label, opts.length]);
+  return (
+    <div>
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{label}{req && <span className="text-orange-500"> *</span>}</label>
+      <input
+        list={listId}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder={placeholder || 'Escribe o elige…'}
+        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400"
+      />
+      <datalist id={listId}>
+        {opts.map((o) => <option key={o} value={o} />)}
+      </datalist>
     </div>
   );
 }
