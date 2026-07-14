@@ -198,19 +198,39 @@ const Batches = () => {
   const TABLE_CONFIG = {
     partidas: [
       { header: 'Estado Crítico', accessor: 'disponible', render: r => {
-        const isAvailable = (r.disponible || 0) > 0;
+        const disp = Number(r.disponible) || 0;
+        const total = Number(r.stock_total) || 0;
+        const transito = Number(r.transitoria) || 0;
+        const isAvailable = disp > 0;
+        // Un lote con disponible 0 pero con stock en tránsito/reserva NO está
+        // "sin stock": está EN TRÁNSITO. Solo es rojo si el total también es 0.
+        const enTransito = !isAvailable && total > 0;
         const hasExpiry = r.fecha_vencimiento;
         const isExpired = hasExpiry && new Date(r.fecha_vencimiento) < new Date();
-        
+        const estilo = isAvailable
+          ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+          : enTransito
+            ? 'bg-amber-50 border-amber-400 text-amber-700'
+            : 'bg-rose-50 border-rose-200 text-rose-400';
+        // Chip de lote, visible en móvil (donde la columna Partida/Lote se corta):
+        // diferencia las filas del mismo SKU y evita que parezcan duplicados.
+        const lote = String(r.partida || '').trim();
         return (
           <div className="flex flex-col gap-2 min-w-[160px]">
-            <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-400'}`}>
-              {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${estilo}`}>
+              {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : enTransito ? <Clock size={20} /> : <X size={20} />}
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'Sin Stock'}</span>
-                <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : enTransito ? 'En Tránsito' : 'Sin Stock'}</span>
+                <span className="text-2xl font-black tracking-tighter leading-none">{isAvailable ? disp : enTransito ? total : 0}</span>
               </div>
             </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lote</span>
+              <span className="font-mono text-[10px] font-black bg-slate-900 text-white px-2 py-1 rounded-lg uppercase tracking-tight inline-block w-fit break-all">{lote || 'Sin lote'}</span>
+            </div>
+            {enTransito && transito > 0 && (
+              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">↳ {transito} en tránsito</span>
+            )}
             {hasExpiry && (
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${isExpired ? 'bg-red-600 text-white border-red-700 animate-bounce' : 'bg-slate-900 text-white border-slate-800'}`}>
                 <Clock size={12} />
@@ -256,13 +276,21 @@ const Batches = () => {
     ],
     series: [
       { header: 'Estado Crítico', accessor: 'disponible', render: r => {
-        const isAvailable = (r.disponible || 0) > 0;
+        const disp = Number(r.disponible) || 0;
+        const total = Number(r.stock_total) || 0;
+        const isAvailable = disp > 0;
+        const enTransito = !isAvailable && total > 0;
+        const estilo = isAvailable
+          ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+          : enTransito
+            ? 'bg-amber-50 border-amber-400 text-amber-700'
+            : 'bg-rose-50 border-rose-200 text-rose-400';
         return (
-          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-400'}`}>
-            {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : <X size={20} />}
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${estilo}`}>
+            {isAvailable ? <ShieldCheck size={20} className="animate-pulse" /> : enTransito ? <Clock size={20} /> : <X size={20} />}
             <div className="flex flex-col">
-              <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : 'No Disponible'}</span>
-              <span className="text-2xl font-black tracking-tighter leading-none">{r.disponible || 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">{isAvailable ? 'Disponible' : enTransito ? 'En Tránsito' : 'No Disponible'}</span>
+              <span className="text-2xl font-black tracking-tighter leading-none">{isAvailable ? disp : enTransito ? total : 0}</span>
             </div>
           </div>
         );
