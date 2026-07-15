@@ -1,8 +1,9 @@
 import React from 'react';
-import { Info, Tv, Blocks, ShieldCheck, Settings } from 'lucide-react';
+import { Tv, Blocks, ShieldCheck, Settings } from 'lucide-react';
 
-// Ingresar N.V. ya está portada de forma nativa (screens/PanelIngresar).
+// Pantallas ya portadas de forma nativa.
 export { default as PanelIngresar } from './screens/PanelIngresar';
+export { default as PanelInfo } from './screens/PanelInfo';
 
 // Placeholders de las pantallas del Panel (Fase de estructura). Cada una describe
 // lo que portará su fase. Se irán reemplazando por el port nativo real.
@@ -32,10 +33,6 @@ function Scaffold({ icon: Icon, titulo, resumen, puntos }) {
   );
 }
 
-export function PanelInfo() {
-  return <Scaffold icon={Info} titulo="Información de N.V." resumen="Búsqueda y detalle de notas de venta (port de /info)"
-    puntos={['Buscador de N.V.', 'Detalle completo con trazabilidad', 'Estados e incidencias', 'Alertas de riesgo']} />;
-}
 export function PanelTV() {
   return <Scaffold icon={Tv} titulo="Modo TV" resumen="Vista de indicadores para pantalla grande (port de /tv)"
     puntos={['KPIs a pantalla completa', 'Auto-rotación de secciones', 'Actualización en tiempo real', 'Diseño de alto contraste']} />;
