@@ -1,5 +1,8 @@
 import React from 'react';
-import { PlusCircle, Info, Tv, Blocks, ShieldCheck, Settings } from 'lucide-react';
+import { Info, Tv, Blocks, ShieldCheck, Settings } from 'lucide-react';
+
+// Ingresar N.V. ya está portada de forma nativa (screens/PanelIngresar).
+export { default as PanelIngresar } from './screens/PanelIngresar';
 
 // Placeholders de las pantallas del Panel (Fase de estructura). Cada una describe
 // lo que portará su fase. Se irán reemplazando por el port nativo real.
@@ -29,10 +32,6 @@ function Scaffold({ icon: Icon, titulo, resumen, puntos }) {
   );
 }
 
-export function PanelIngresar() {
-  return <Scaffold icon={PlusCircle} titulo="Ingresar Nota de Venta" resumen="Formulario de alta de N.V. (port de /ingresar)"
-    puntos={['Formulario N.V. multi-paso con validación', 'Consolidados y catálogo maestro', 'Envío vía proxy (Google Apps Script)', 'Login de operador y auditoría']} />;
-}
 export function PanelInfo() {
   return <Scaffold icon={Info} titulo="Información de N.V." resumen="Búsqueda y detalle de notas de venta (port de /info)"
     puntos={['Buscador de N.V.', 'Detalle completo con trazabilidad', 'Estados e incidencias', 'Alertas de riesgo']} />;

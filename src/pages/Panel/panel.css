@@ -77,6 +77,34 @@
 }
 .panel-root .anim-fade-up { animation: panelFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* Campos de formulario (Ingresar N.V.) — foco naranja CCO. */
+.panel-root .field-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.panel-root .field-input::placeholder { color: #94a3b8; }
+.panel-root .field-input:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+  background: #fffdfa;
+}
+.panel-root .field-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+}
+
 /* Animación del modal (se renderiza con portal fuera de .panel-root, por eso
    los keyframes son globales y se aplican por estilo inline). */
 @keyframes panelModalIn {
