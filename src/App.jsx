@@ -11,6 +11,7 @@ import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
 import UpdateOverlay from './components/ui/UpdateOverlay';
+import NovedadesModal from './components/NovedadesModal';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
 
@@ -341,6 +342,8 @@ function AppContent() {
         updateInfo={pendingUpdate}
         onApplyNow={(bundleId) => applyPendingUpdate(bundleId)}
       />
+      {/* Novedades / notas del parche: aparece solo tras actualizar la versión */}
+      <NovedadesModal />
       <CommandPalette />
       <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}

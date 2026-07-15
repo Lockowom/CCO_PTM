@@ -12,11 +12,12 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench
+  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench, Sparkles
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ROUTE_PERMISSIONS, puedeVerTab, TAB_PERMISSIONS } from '../constants/permissions';
+import { mostrarNovedades } from './NovedadesModal';
 
 // Versión instalada (inyectada por Vite desde package.json).
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -484,9 +485,11 @@ const Navbar = () => {
               );
             })}
           </div>
-          {/* Versión instalada (visible en el menú móvil) */}
+          {/* Versión instalada (visible en el menú móvil) — toca para ver las Novedades */}
           <div className="shrink-0 border-t border-slate-100 px-4 py-3 text-center bg-white">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">CCO WMS · v{APP_VERSION}</span>
+            <button onClick={mostrarNovedades} className="text-[10px] font-black text-slate-400 hover:text-orange-500 uppercase tracking-widest font-mono inline-flex items-center gap-1">
+              <Sparkles size={11} /> CCO WMS · v{APP_VERSION} · Novedades
+            </button>
           </div>
         </div>
       </div>
