@@ -8,7 +8,7 @@ import PanelModal from './PanelModal';
 import {
   MOCK_KPIS, MOCK_ESTADO_TABLE, MOCK_RESUMEN, MOCK_WEEKLY, MOCK_LEADTIME,
   MOCK_RANK_TRANSP, MOCK_RANK_VEND, MOCK_DIVISIONS, MOCK_ALERTAS_OP,
-  MOCK_TENDENCIA, MOCK_CALIDAD, MOCK_TIEMPOS, MOCK_DETALLE,
+  MOCK_TENDENCIA, MOCK_CALIDAD, MOCK_TIEMPOS, buildDetalle,
 } from './mock';
 
 const clp = (n) => '$' + Number(n || 0).toLocaleString('es-CL');
@@ -68,25 +68,36 @@ function DateFilter({ onFilter }) {
 }
 
 // ── Modal de detalle por estado (port de EstadoDetalleModal, con mock) ───────
-function DetalleModal({ titulo, onClose }) {
+function DetalleModal({ sel, onClose }) {
+  const { total, mostrados, rows } = buildDetalle(sel.titulo, sel.count);
+  const suma = rows.reduce((a, r) => a + r.monto, 0);
   return (
-    <PanelModal titulo={`Detalle · ${titulo}`} onClose={onClose}>
+    <PanelModal titulo={`Detalle · ${sel.titulo}`} onClose={onClose}>
+      <div className="px-5 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+        <span className="font-black text-slate-600">{total.toLocaleString('es-CL')} registro{total !== 1 ? 's' : ''}</span>
+        <span className="text-slate-400">Monto listado: <b className="text-slate-600">{clp(suma)}</b></span>
+      </div>
       <div className="p-4">
         <table className="w-full text-sm">
           <thead><tr className="text-left text-slate-400 text-xs uppercase">
-            <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Fecha</th><th className="text-right">Monto</th>
+            <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Estado</th><th>Fecha</th><th className="text-right">Monto</th>
           </tr></thead>
           <tbody>
-            {MOCK_DETALLE.map((r) => (
+            {rows.map((r) => (
               <tr key={r.nv} className="border-t border-slate-100">
                 <td className="py-2 font-mono font-bold text-slate-700">{r.nv}</td>
-                <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-slate-500">{r.fecha}</td>
+                <td>{r.cliente}</td><td>{r.vendedor}</td>
+                <td className="text-slate-500">{r.estado}</td>
+                <td className="text-slate-500">{r.fecha}</td>
                 <td className="text-right font-bold">{clp(r.monto)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="text-center text-[11px] text-slate-400 mt-3">Datos de ejemplo</p>
+        {total > mostrados && (
+          <p className="text-center text-xs text-slate-400 mt-3">… y {(total - mostrados).toLocaleString('es-CL')} registros más</p>
+        )}
+        <p className="text-center text-[11px] text-slate-400 mt-2">Datos de ejemplo</p>
       </div>
     </PanelModal>
   );
@@ -134,7 +145,7 @@ export default function PanelHome() {
             { label: 'N.V Farmapack', value: k.nvFarmapack, color: '#1f2937' },
             { label: 'Varios', value: k.nvVarios, color: '#1f2937' },
           ].map((c) => (
-            <button key={c.label} onClick={() => setDetalle(c.label)} className="text-left hover:opacity-70 transition-opacity">
+            <button key={c.label} onClick={() => setDetalle({ titulo: c.label, count: c.value })} className="text-left hover:opacity-70 transition-opacity">
               <div className="text-xs text-slate-400">{c.label}</div>
               <div className="text-2xl font-black" style={{ color: c.color }}>{c.value.toLocaleString('es-CL')}</div>
             </button>
@@ -144,14 +155,14 @@ export default function PanelHome() {
 
       {/* KPIs operacionales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard title="NVs Activas" value={k.activas} color="#2563eb" icon="📦" onClick={() => setDetalle('NVs Activas')} />
-        <KPICard title="Tardanza Prom." value={`${k.leadTimeTardanza} días`} subtitle="Solo entregas tardías" color="#e11d48" icon="🕐" onClick={() => setDetalle('Entregas tardías')} />
-        <KPICard title="A Tiempo" value={`${k.pctAtiempo}%`} subtitle="Entregado ≤ compromiso" color="#10b981" icon="✅" onClick={() => setDetalle('A tiempo')} />
-        <KPICard title="Fill Rate" value={`${k.fillRateShipping.pct}%`} subtitle={`${k.fillRateShipping.evaluables} evaluables`} color="#f97316" icon="📋" onClick={() => setDetalle('Fill rate')} />
+        <KPICard title="NVs Activas" value={k.activas} color="#2563eb" icon="📦" onClick={() => setDetalle({ titulo: 'NVs Activas', count: k.activas })} />
+        <KPICard title="Tardanza Prom." value={`${k.leadTimeTardanza} días`} subtitle="Solo entregas tardías" color="#e11d48" icon="🕐" onClick={() => setDetalle({ titulo: 'Entregas tardías', count: 26 })} />
+        <KPICard title="A Tiempo" value={`${k.pctAtiempo}%`} subtitle="Entregado ≤ compromiso" color="#10b981" icon="✅" onClick={() => setDetalle({ titulo: 'A tiempo', count: k.entregadas })} />
+        <KPICard title="Fill Rate" value={`${k.fillRateShipping.pct}%`} subtitle={`${k.fillRateShipping.evaluables} evaluables`} color="#f97316" icon="📋" onClick={() => setDetalle({ titulo: 'Fill rate', count: k.fillRateShipping.evaluables })} />
       </div>
 
       {/* Banner calidad de datos (clickable) */}
-      <button onClick={() => setDetalle('Calidad de datos')}
+      <button onClick={() => setDetalle({ titulo: 'Calidad de datos', count: MOCK_CALIDAD.total })}
         className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-center justify-between hover:bg-amber-100 transition-colors">
         <div className="flex items-center gap-3">
           <span className="text-xl">🔍</span>
@@ -171,7 +182,7 @@ export default function PanelHome() {
               <thead><tr><th className="text-left">Estado</th><th>Cantidad</th></tr></thead>
               <tbody>
                 {MOCK_ESTADO_TABLE.map((r) => (
-                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle(r.estado)}>
+                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle({ titulo: r.estado, count: r.count })}>
                     <td className="text-left"><span className={`badge badge-${r.badge}`}>{r.estado}</span></td>
                     <td className="font-bold">{r.count}</td>
                   </tr>
@@ -184,7 +195,7 @@ export default function PanelHome() {
               <thead><tr><th className="text-left">Estado activo</th><th>Cantidad</th></tr></thead>
               <tbody>
                 {MOCK_RESUMEN.map((r) => (
-                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle(r.estado)}>
+                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle({ titulo: r.estado, count: r.count })}>
                     <td className="text-left font-medium">{r.estado}</td><td className="font-bold">{r.count}</td>
                   </tr>
                 ))}
@@ -270,7 +281,7 @@ export default function PanelHome() {
             </tr></thead>
             <tbody>
               {MOCK_ALERTAS_OP.map((a) => (
-                <tr key={a.nv} className="border-t border-slate-100 cursor-pointer hover:bg-orange-50" onClick={() => setDetalle(a.nv)}>
+                <tr key={a.nv} className="border-t border-slate-100 cursor-pointer hover:bg-orange-50" onClick={() => setDetalle({ titulo: a.nv, count: 1 })}>
                   <td className="py-2 font-mono font-bold text-slate-700">{a.nv}</td>
                   <td>{a.cliente}</td><td>{a.estado}</td><td className="font-bold">{a.dias}</td>
                   <td><span className={`badge ${RIESGO_CLS[a.riesgo]}`}>{a.riesgo}</span></td>
@@ -336,7 +347,7 @@ export default function PanelHome() {
 
       <p className="text-center text-xs text-slate-400 py-2">Datos de ejemplo · pendiente conectar a datos reales</p>
 
-      {detalle && <DetalleModal titulo={detalle} onClose={() => setDetalle(null)} />}
+      {detalle && <DetalleModal sel={detalle} onClose={() => setDetalle(null)} />}
     </div>
   );
 }

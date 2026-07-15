@@ -17,9 +17,10 @@ export default function PanelModal({ titulo, onClose, children, maxWidth = 'max-
 
   return createPortal(
     <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-      onClick={onClose}>
+      onClick={onClose} style={{ animation: 'panelBackdropIn 0.2s ease both' }}>
       <div className={`bg-white w-full ${maxWidth} sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[88vh] overflow-hidden flex flex-col`}
-        onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        onClick={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', animation: 'panelModalIn 0.28s cubic-bezier(0.16,1,0.3,1) both' }}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 shrink-0">
           <h3 className="font-black text-slate-800">{titulo}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>

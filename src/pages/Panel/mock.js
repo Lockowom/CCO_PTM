@@ -38,13 +38,31 @@ export const MOCK_TIEMPOS = {
   cuelloBotella: { nombre: 'Picking → Packing', dias: 1.2 },
 };
 
-// Filas de ejemplo para el modal de detalle por estado
-export const MOCK_DETALLE = [
-  { nv: 'NV-20451', cliente: 'Clínica Los Andes', vendedor: 'M. González', estado: 'En Proceso', fecha: '2026-07-10', monto: 2_450_000 },
-  { nv: 'NV-20463', cliente: 'Hospital Regional', vendedor: 'P. Rojas', estado: 'En Proceso', fecha: '2026-07-11', monto: 1_180_000 },
-  { nv: 'NV-20477', cliente: 'Lab. BioTest', vendedor: 'C. Díaz', estado: 'En Proceso', fecha: '2026-07-12', monto: 3_920_000 },
-  { nv: 'NV-20489', cliente: 'Dental Sur', vendedor: 'A. Muñoz', estado: 'En Proceso', fecha: '2026-07-12', monto: 640_000 },
-];
+// Genera filas de detalle COHERENTES con el contexto clicado (estado + cantidad).
+// Determinista (misma selección → mismas filas) para que el detalle sea preciso.
+const CLIENTES = ['Clínica Los Andes', 'Hospital Regional', 'Lab. BioTest', 'Dental Sur',
+  'Comercial El Roble', 'Farmacia Vida', 'Clínica Norte', 'Centro Médico Sur', 'Hospital Del Valle', 'Policlínico Oriente'];
+const VENDEDORES = ['M. González', 'P. Rojas', 'C. Díaz', 'A. Muñoz', 'L. Torres', 'R. Silva'];
+
+export function buildDetalle(titulo, count) {
+  const total = Math.max(1, count || 4);
+  const mostrar = Math.min(total, 8); // se listan hasta 8; el resto va en "y N más"
+  let seed = String(titulo).length * 97 + total;
+  const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  const rows = [];
+  for (let i = 0; i < mostrar; i++) {
+    const r = rand();
+    rows.push({
+      nv: `NV-${20400 + Math.floor(r * 300)}`,
+      cliente: CLIENTES[(i + Math.floor(r * 10)) % CLIENTES.length],
+      vendedor: VENDEDORES[(i + Math.floor(r * 6)) % VENDEDORES.length],
+      estado: titulo,
+      fecha: `2026-07-${String(8 + (i % 20)).padStart(2, '0')}`,
+      monto: Math.round((300000 + r * 4000000) / 1000) * 1000,
+    });
+  }
+  return { total, mostrados: mostrar, rows };
+}
 
 export const MOCK_ESTADO_TABLE = [
   { estado: 'Entregado', count: 942, badge: 'entregado' },
