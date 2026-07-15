@@ -22,10 +22,13 @@ const FORMATOS = [
 ];
 
 // Tamaños tipográficos por formato (herederos de los del Excel: 36/44 doble, 30/28 cuádruple).
+// Tamaños por formato. Pensados para LLENAR la hoja: el contenido se reparte
+// arriba (logo/código/descripción) y abajo (código de barras), y los elementos
+// grandes crecen para no dejar media hoja en blanco en el formato Único.
 const SIZES = {
-  1: { label: '22pt', code: '58pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm', codeMax: '40mm' },
-  2: { label: '15pt', code: '38pt', desc: '25pt', barH: 90, pad: '10mm', logo: '14mm', codeMax: '26mm' },
-  4: { label: '11pt', code: '25pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm', codeMax: '16mm' },
+  1: { label: '24pt', desc: '42pt', barH: 200, pad: '14mm', logo: '26mm', codeMax: '62mm' },
+  2: { label: '15pt', desc: '27pt', barH: 130, pad: '9mm', logo: '15mm', codeMax: '34mm' },
+  4: { label: '11pt', desc: '16pt', barH: 70, pad: '6mm', logo: '9mm', codeMax: '17mm' },
 };
 
 // Código en UNA sola línea, siempre. En vez de un font-size fijo (que parte los
@@ -224,19 +227,25 @@ function Cartel({ item, formato }) {
   const s = SIZES[formato];
   const svg = code128Svg(item.codigo, { height: s.barH });
   return (
-    <div className="cartel-cell flex flex-col items-center justify-center text-center border border-dashed border-slate-300 rounded-lg overflow-hidden"
+    <div className="cartel-cell flex flex-col items-center justify-between text-center border border-dashed border-slate-300 rounded-lg overflow-hidden h-full"
       style={{ padding: s.pad, breakInside: 'avoid' }}>
-      <img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-2" style={{ height: s.logo, width: 'auto' }} />
-      <div className="font-black tracking-[0.25em] text-slate-500 uppercase" style={{ fontSize: s.label }}>Código Producto</div>
-      <div className="w-full px-1"><CodigoFit text={item.codigo} maxHeight={s.codeMax} /></div>
-      <div className="font-black text-black leading-tight mt-1" style={{ fontSize: s.desc }}>
-        {item.producto || 'SI TE APARECE ESTO ES PORQUE NO ESTÁ EN LA TABLA DE CÓDIGOS'}
+      {/* Bloque superior: logo + código + descripción */}
+      <div className="flex flex-col items-center w-full">
+        <img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-2" style={{ height: s.logo, width: 'auto' }} />
+        <div className="font-black tracking-[0.25em] text-slate-500 uppercase" style={{ fontSize: s.label }}>Código Producto</div>
+        <div className="w-full px-1"><CodigoFit text={item.codigo} maxHeight={s.codeMax} /></div>
+        <div className="font-black text-black leading-tight mt-2" style={{ fontSize: s.desc }}>
+          {item.producto || 'SI TE APARECE ESTO ES PORQUE NO ESTÁ EN LA TABLA DE CÓDIGOS'}
+        </div>
       </div>
-      <div className="font-black tracking-[0.25em] text-slate-500 uppercase mt-2" style={{ fontSize: s.label }}>Código Barra</div>
-      {svg
-        ? <div className="w-full mt-1 px-1" dangerouslySetInnerHTML={{ __html: svg }} />
-        : <div className="text-rose-500 text-xs font-bold mt-1">Código no representable en CODE128</div>}
-      <div className="font-mono font-bold text-black mt-0.5" style={{ fontSize: s.label }}>{item.codigo}</div>
+      {/* Bloque inferior: código de barras (anclado abajo → llena la hoja) */}
+      <div className="flex flex-col items-center w-full">
+        <div className="font-black tracking-[0.25em] text-slate-500 uppercase mb-1" style={{ fontSize: s.label }}>Código Barra</div>
+        {svg
+          ? <div className="w-full px-1" dangerouslySetInnerHTML={{ __html: svg }} />
+          : <div className="text-rose-500 text-xs font-bold">Código no representable en CODE128</div>}
+        <div className="font-mono font-bold text-black mt-0.5" style={{ fontSize: s.label }}>{item.codigo}</div>
+      </div>
     </div>
   );
 }
