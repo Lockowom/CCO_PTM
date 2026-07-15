@@ -18,34 +18,38 @@ const NAV = [
 
 export default function PanelLayout() {
   return (
-    <div className="panel-root min-h-[calc(100vh-64px)]">
-      {/* Cabecera del Panel */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-[1400px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-              style={{ background: 'linear-gradient(135deg, #f57c00, #e65100)' }}>PTM</div>
-            <div>
-              <h1 className="text-lg font-black text-gray-800 leading-none">PANEL DASHBOARD</h1>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wide">Resumen Operacional · datos de ejemplo</p>
+    <div className="panel-root min-h-[calc(100vh-64px)] bg-slate-50 p-3 sm:p-6 space-y-4">
+      {/* Cabecera estilo módulo CCO (franja degradada + ícono naranja) */}
+      <div className="anim-fade-up relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center text-orange-600 shrink-0">
+              <LayoutDashboard size={22} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">
+                Panel <span className="text-orange-600">PTM</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 truncate">Resumen operacional · datos de ejemplo</p>
             </div>
           </div>
-          {/* Pill nav */}
-          <nav className="flex flex-wrap items-center gap-1 bg-gray-100 rounded-full p-1">
+          {/* Pill nav (naranja CCO) */}
+          <nav className="flex flex-wrap items-center gap-1 bg-slate-100 rounded-2xl p-1">
             {NAV.map(({ to, end, label, icon: Icon }) => (
               <NavLink key={to} to={to} end={end}
                 className={({ isActive }) =>
-                  `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                    isActive ? 'bg-orange-500 text-white shadow' : 'text-gray-500 hover:text-orange-600 hover:bg-white'
+                  `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+                    isActive ? 'bg-orange-500 text-white shadow' : 'text-slate-500 hover:text-orange-600 hover:bg-white'
                   }`}>
-                <Icon size={14} /> <span className="hidden sm:inline">{label}</span>
+                <Icon size={14} /> <span className="hidden md:inline">{label}</span>
               </NavLink>
             ))}
           </nav>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 py-6">
+      <main className="anim-fade-up">
         <Outlet />
       </main>
     </div>

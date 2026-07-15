@@ -2,43 +2,47 @@
    Solo clases framework-agnósticas (no dependen de Tailwind 4). Se importan
    desde las pantallas del Panel. Ámbito acotado con el prefijo .panel-root. */
 
+/* Identidad CCO: naranja #f97316, superficies blancas con borde slate y
+   esquinas 1rem (rounded-2xl), como el resto de los módulos de CCO. */
 .panel-root {
-  --ptm-orange: #f57c00;
-  --ptm-dark: #1a1a2e;
-  --ptm-green: #2e7d32;
-  --ptm-blue: #1565c0;
-  --ptm-red: #c62828;
-  --ptm-gray: #616161;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #f5f5f5;
+  --ptm-orange: #f97316;
+  --ptm-dark: #0f172a;
+  --ptm-green: #10b981;
+  --ptm-blue: #2563eb;
+  --ptm-red: #e11d48;
+  --ptm-gray: #64748b;
+  background: #f8fafc;
 }
 
 .panel-root .kpi-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 .panel-root .kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.12);
+  border-color: #fed7aa;
 }
 
 .panel-root .table-container {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   overflow: hidden;
 }
 .panel-root .table-container table { width: 100%; border-collapse: collapse; }
 .panel-root .table-container th {
-  background: #f57c00;
+  background: #f97316;
   color: #fff;
   padding: 0.625rem 0.75rem;
   text-align: center;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

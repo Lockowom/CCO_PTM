@@ -18,20 +18,20 @@ function KPICard({ title, value, subtitle, color, icon, onClick }) {
   return (
     <button onClick={onClick} className="kpi-card text-left w-full" style={{ borderTop: `3px solid ${color}` }}>
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{title}</p>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{title}</p>
         <span className="text-lg">{icon}</span>
       </div>
       <p className="text-2xl font-black mt-1" style={{ color }}>{value}</p>
-      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{subtitle}</p>}
+      {subtitle && <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">{subtitle}</p>}
     </button>
   );
 }
 
 function Card({ title, children, right }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-black text-gray-700">{title}</h3>
+        <h3 className="text-sm font-black text-slate-700">{title}</h3>
         {right}
       </div>
       {children}
@@ -50,16 +50,16 @@ function DateFilter({ onFilter }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-        className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-orange-400" />
-      <span className="text-gray-400 text-xs">a</span>
+        className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-orange-400" />
+      <span className="text-slate-400 text-xs">a</span>
       <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-        className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-orange-400" />
+        className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-orange-400" />
       <button onClick={() => onFilter?.(from, to)}
         className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600">Filtrar</button>
       <div className="flex gap-1">
         {presets.map((p) => (
           <button key={p.days} onClick={() => onFilter?.(p.label)}
-            className="px-2.5 py-1 text-[11px] rounded-full border border-gray-200 text-gray-600 hover:bg-orange-50 hover:border-orange-300">{p.label}</button>
+            className="px-2.5 py-1 text-[11px] rounded-full border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-300">{p.label}</button>
         ))}
       </div>
     </div>
@@ -71,26 +71,26 @@ function DetalleModal({ titulo, onClose }) {
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h3 className="font-black text-gray-800">Detalle · {titulo}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+          <h3 className="font-black text-slate-800">Detalle · {titulo}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
         </div>
         <div className="overflow-y-auto p-4">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-gray-400 text-xs uppercase">
+            <thead><tr className="text-left text-slate-400 text-xs uppercase">
               <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Fecha</th><th className="text-right">Monto</th>
             </tr></thead>
             <tbody>
               {MOCK_DETALLE.map((r) => (
-                <tr key={r.nv} className="border-t border-gray-100">
-                  <td className="py-2 font-mono font-bold text-gray-700">{r.nv}</td>
-                  <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-gray-500">{r.fecha}</td>
+                <tr key={r.nv} className="border-t border-slate-100">
+                  <td className="py-2 font-mono font-bold text-slate-700">{r.nv}</td>
+                  <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-slate-500">{r.fecha}</td>
                   <td className="text-right font-bold">{clp(r.monto)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="text-center text-[11px] text-gray-400 mt-3">Datos de ejemplo</p>
+          <p className="text-center text-[11px] text-slate-400 mt-3">Datos de ejemplo</p>
         </div>
       </div>
     </div>
@@ -123,24 +123,24 @@ export default function PanelHome() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <DateFilter onFilter={refrescar} />
         <button onClick={refrescar} disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 disabled:opacity-50">
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-orange-100 text-slate-600 hover:text-orange-700 disabled:opacity-50">
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
           {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
         </button>
       </div>
 
       {/* Notas de Venta por canal (hero) */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border-l-4" style={{ borderLeftColor: '#f57c00' }}>
-        <h2 className="text-sm font-black text-gray-500 uppercase tracking-wide mb-3">Notas de Venta</h2>
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm border-l-4" style={{ borderLeftColor: '#f97316' }}>
+        <h2 className="text-sm font-black text-slate-500 uppercase tracking-wide mb-3">Notas de Venta</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { label: 'N° NV PTM', value: k.countNvPtm, color: '#f57c00' },
+            { label: 'N° NV PTM', value: k.countNvPtm, color: '#f97316' },
             { label: 'N.V Orange', value: k.nvOrange, color: '#1f2937' },
             { label: 'N.V Farmapack', value: k.nvFarmapack, color: '#1f2937' },
             { label: 'Varios', value: k.nvVarios, color: '#1f2937' },
           ].map((c) => (
             <button key={c.label} onClick={() => setDetalle(c.label)} className="text-left hover:opacity-70 transition-opacity">
-              <div className="text-xs text-gray-400">{c.label}</div>
+              <div className="text-xs text-slate-400">{c.label}</div>
               <div className="text-2xl font-black" style={{ color: c.color }}>{c.value.toLocaleString('es-CL')}</div>
             </button>
           ))}
@@ -149,10 +149,10 @@ export default function PanelHome() {
 
       {/* KPIs operacionales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard title="NVs Activas" value={k.activas} color="#1565c0" icon="📦" onClick={() => setDetalle('NVs Activas')} />
-        <KPICard title="Tardanza Prom." value={`${k.leadTimeTardanza} días`} subtitle="Solo entregas tardías" color="#c62828" icon="🕐" onClick={() => setDetalle('Entregas tardías')} />
-        <KPICard title="A Tiempo" value={`${k.pctAtiempo}%`} subtitle="Entregado ≤ compromiso" color="#2e7d32" icon="✅" onClick={() => setDetalle('A tiempo')} />
-        <KPICard title="Fill Rate" value={`${k.fillRateShipping.pct}%`} subtitle={`${k.fillRateShipping.evaluables} evaluables`} color="#f57c00" icon="📋" onClick={() => setDetalle('Fill rate')} />
+        <KPICard title="NVs Activas" value={k.activas} color="#2563eb" icon="📦" onClick={() => setDetalle('NVs Activas')} />
+        <KPICard title="Tardanza Prom." value={`${k.leadTimeTardanza} días`} subtitle="Solo entregas tardías" color="#e11d48" icon="🕐" onClick={() => setDetalle('Entregas tardías')} />
+        <KPICard title="A Tiempo" value={`${k.pctAtiempo}%`} subtitle="Entregado ≤ compromiso" color="#10b981" icon="✅" onClick={() => setDetalle('A tiempo')} />
+        <KPICard title="Fill Rate" value={`${k.fillRateShipping.pct}%`} subtitle={`${k.fillRateShipping.evaluables} evaluables`} color="#f97316" icon="📋" onClick={() => setDetalle('Fill rate')} />
       </div>
 
       {/* Banner calidad de datos (clickable) */}
@@ -207,8 +207,8 @@ export default function PanelHome() {
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="creadas" fill="#f57c00" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="entregadas" fill="#2e7d32" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="creadas" fill="#f97316" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="entregadas" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -219,7 +219,7 @@ export default function PanelHome() {
                 <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="dias" stroke="#1565c0" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="dias" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -229,20 +229,20 @@ export default function PanelHome() {
       {/* Tiempos de ciclo (etapas + cuello de botella + barras) */}
       <div className="table-container p-4">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-black text-gray-800">Tiempos de ciclo</h3>
-          <span className="text-[11px] text-gray-400">Días promedio · calculado desde fechas por estado.</span>
+          <h3 className="font-black text-slate-800">Tiempos de ciclo</h3>
+          <span className="text-[11px] text-slate-400">Días promedio · calculado desde fechas por estado.</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          <div className="rounded-xl border border-gray-200 p-3.5">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Lead time total</p>
-            <p className="mt-1 text-2xl font-black" style={{ color: '#f57c00' }}>{MOCK_TIEMPOS.leadTimeTotal} d</p>
-            <p className="text-[10px] text-gray-400">Aprobación → entrega · n={MOCK_TIEMPOS.leadTimeTotalN}</p>
+          <div className="rounded-xl border border-slate-200 p-3.5">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lead time total</p>
+            <p className="mt-1 text-2xl font-black" style={{ color: '#f97316' }}>{MOCK_TIEMPOS.leadTimeTotal} d</p>
+            <p className="text-[10px] text-slate-400">Aprobación → entrega · n={MOCK_TIEMPOS.leadTimeTotalN}</p>
           </div>
           {MOCK_TIEMPOS.etapas.map((e) => (
-            <div key={e.nombre} className="rounded-xl border border-gray-200 p-3.5">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider truncate">{e.nombre}</p>
-              <p className="mt-1 text-2xl font-black text-gray-800">{e.dias} d</p>
-              <p className="text-[10px] text-gray-400">n={e.n}</p>
+            <div key={e.nombre} className="rounded-xl border border-slate-200 p-3.5">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{e.nombre}</p>
+              <p className="mt-1 text-2xl font-black text-slate-800">{e.dias} d</p>
+              <p className="text-[10px] text-slate-400">n={e.n}</p>
             </div>
           ))}
         </div>
@@ -254,10 +254,10 @@ export default function PanelHome() {
         <div className="space-y-2.5">
           {MOCK_TIEMPOS.etapas.map((e) => (
             <div key={e.nombre} className="flex items-center gap-3">
-              <span className="w-40 shrink-0 text-[12px] text-gray-600 text-right">{e.nombre}</span>
-              <div className="flex-1 h-6 bg-gray-100 rounded-md overflow-hidden">
+              <span className="w-40 shrink-0 text-[12px] text-slate-600 text-right">{e.nombre}</span>
+              <div className="flex-1 h-6 bg-slate-100 rounded-md overflow-hidden">
                 <div className="h-full rounded-md flex items-center justify-end pr-2 text-[11px] font-bold text-white"
-                  style={{ width: `${Math.max(6, (e.dias / maxEtapa) * 100)}%`, background: MOCK_TIEMPOS.cuelloBotella?.nombre === e.nombre ? '#dc2626' : '#f57c00' }}>
+                  style={{ width: `${Math.max(6, (e.dias / maxEtapa) * 100)}%`, background: MOCK_TIEMPOS.cuelloBotella?.nombre === e.nombre ? '#e11d48' : '#f97316' }}>
                   {e.dias} d
                 </div>
               </div>
@@ -270,13 +270,13 @@ export default function PanelHome() {
       <Card title="Alertas operacionales (N.V. estancadas)">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-gray-400 text-xs uppercase">
+            <thead><tr className="text-left text-slate-400 text-xs uppercase">
               <th className="py-1">N.V.</th><th>Cliente</th><th>Estado</th><th>Días</th><th>Riesgo</th>
             </tr></thead>
             <tbody>
               {MOCK_ALERTAS_OP.map((a) => (
-                <tr key={a.nv} className="border-t border-gray-100 cursor-pointer hover:bg-orange-50" onClick={() => setDetalle(a.nv)}>
-                  <td className="py-2 font-mono font-bold text-gray-700">{a.nv}</td>
+                <tr key={a.nv} className="border-t border-slate-100 cursor-pointer hover:bg-orange-50" onClick={() => setDetalle(a.nv)}>
+                  <td className="py-2 font-mono font-bold text-slate-700">{a.nv}</td>
                   <td>{a.cliente}</td><td>{a.estado}</td><td className="font-bold">{a.dias}</td>
                   <td><span className={`badge ${RIESGO_CLS[a.riesgo]}`}>{a.riesgo}</span></td>
                 </tr>
@@ -292,8 +292,8 @@ export default function PanelHome() {
           <ul className="space-y-2">
             {MOCK_RANK_TRANSP.map((t, i) => (
               <li key={t.nombre} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2"><b className="text-gray-300">{i + 1}</b> {t.nombre}</span>
-                <span className="text-gray-500">{t.entregas} entregas · <b className="text-emerald-600">{t.atiempoPct}%</b></span>
+                <span className="flex items-center gap-2"><b className="text-slate-300">{i + 1}</b> {t.nombre}</span>
+                <span className="text-slate-500">{t.entregas} entregas · <b className="text-emerald-600">{t.atiempoPct}%</b></span>
               </li>
             ))}
           </ul>
@@ -302,8 +302,8 @@ export default function PanelHome() {
           <ul className="space-y-2">
             {MOCK_RANK_VEND.map((v, i) => (
               <li key={v.nombre} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2"><b className="text-gray-300">{i + 1}</b> {v.nombre}</span>
-                <span className="text-gray-500">{v.nv} N.V. · <b className="text-gray-700">{clp(v.monto)}</b></span>
+                <span className="flex items-center gap-2"><b className="text-slate-300">{i + 1}</b> {v.nombre}</span>
+                <span className="text-slate-500">{v.nv} N.V. · <b className="text-slate-700">{clp(v.monto)}</b></span>
               </li>
             ))}
           </ul>
@@ -314,9 +314,9 @@ export default function PanelHome() {
       <Card title="Divisiones">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {MOCK_DIVISIONS.map((d) => (
-            <div key={d.division} className="rounded-lg border border-gray-100 p-3 text-center">
-              <p className="text-xs font-bold text-gray-400 uppercase">{d.division}</p>
-              <p className="text-xl font-black text-gray-800 mt-1">{d.nv}</p>
+            <div key={d.division} className="rounded-lg border border-slate-100 p-3 text-center">
+              <p className="text-xs font-bold text-slate-400 uppercase">{d.division}</p>
+              <p className="text-xl font-black text-slate-800 mt-1">{d.nv}</p>
               <p className="text-[11px] text-emerald-600">{d.entregadas} entregadas</p>
             </div>
           ))}
@@ -333,13 +333,13 @@ export default function PanelHome() {
             <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11 }} domain={[80, 100]} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Line yAxisId="l" type="monotone" dataKey="entregadas" stroke="#f57c00" strokeWidth={2} />
-            <Line yAxisId="r" type="monotone" dataKey="otif" stroke="#2e7d32" strokeWidth={2} />
+            <Line yAxisId="l" type="monotone" dataKey="entregadas" stroke="#f97316" strokeWidth={2} />
+            <Line yAxisId="r" type="monotone" dataKey="otif" stroke="#10b981" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </Card>
 
-      <p className="text-center text-xs text-gray-400 py-2">Datos de ejemplo · pendiente conectar a datos reales</p>
+      <p className="text-center text-xs text-slate-400 py-2">Datos de ejemplo · pendiente conectar a datos reales</p>
 
       {detalle && <DetalleModal titulo={detalle} onClose={() => setDetalle(null)} />}
     </div>
