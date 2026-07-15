@@ -23,10 +23,13 @@ const FORMATOS = [
 
 // Tamaños tipográficos por formato (herederos de los del Excel: 36/44 doble, 30/28 cuádruple).
 // Tamaños tipográficos por formato (herederos de los del Excel).
+// barMaxH limita el ALTO del código de barras: al llenar el 100% del ancho, en
+// las celdas anchas (Doble/Único) el barcode salía altísimo y empujaba el logo
+// fuera de la celda. El tope lo mantiene proporcionado.
 const SIZES = {
-  1: { label: '22pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm', codeMax: '40mm' },
-  2: { label: '15pt', desc: '25pt', barH: 90, pad: '10mm', logo: '14mm', codeMax: '26mm' },
-  4: { label: '11pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm', codeMax: '16mm' },
+  1: { label: '22pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm', codeMax: '40mm', barMaxH: '32mm' },
+  2: { label: '15pt', desc: '24pt', barH: 90, pad: '9mm', logo: '13mm', codeMax: '24mm', barMaxH: '22mm' },
+  4: { label: '11pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm', codeMax: '16mm', barMaxH: '18mm' },
 };
 
 // Código en UNA sola línea, siempre. En vez de un font-size fijo (que parte los
@@ -223,9 +226,12 @@ export default function Carteles() {
 
 function Cartel({ item, formato }) {
   const s = SIZES[formato];
-  const svg = code128Svg(item.codigo, { height: s.barH });
+  const svg = code128Svg(item.codigo, { height: s.barH, cssHeight: s.barMaxH });
+  // Único (1 por hoja): centrado (se ve bien). Doble/Cuádruple: contenido anclado
+  // ARRIBA para que el logo nunca se recorte si el contenido roza el alto de la celda.
+  const alinear = formato === 1 ? 'justify-center' : 'justify-start';
   return (
-    <div className="cartel-cell flex flex-col items-center justify-center text-center border border-dashed border-slate-300 rounded-lg overflow-hidden"
+    <div className={`cartel-cell flex flex-col items-center ${alinear} text-center border border-dashed border-slate-300 rounded-lg overflow-hidden`}
       style={{ padding: s.pad, breakInside: 'avoid' }}>
       <img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-2" style={{ height: s.logo, width: 'auto' }} />
       <div className="font-black tracking-[0.25em] text-slate-500 uppercase" style={{ fontSize: s.label }}>Código Producto</div>

@@ -38,7 +38,7 @@ function encode128B(text) {
  * SVG de un CODE128-B. `height` en unidades SVG; el ancho se calcula por módulos.
  * Devuelve '' si el texto no es codificable.
  */
-export function code128Svg(text, { height = 60, moduleWidth = 2, className = '' } = {}) {
+export function code128Svg(text, { height = 60, moduleWidth = 2, className = '', cssHeight = '' } = {}) {
   // Se recorta el texto: un espacio al inicio/fin se codificaría como carácter
   // real (valor 0 en el set B) y el lector devolvería un código distinto al impreso.
   const widths = encode128B(String(text ?? '').trim());
@@ -52,8 +52,14 @@ export function code128Svg(text, { height = 60, moduleWidth = 2, className = '' 
     x += w;
   }
   const total = x + quiet;
-  // width=100% + height auto: el barcode llena el ancho del contenedor y conserva
-  // proporción (X-dimension uniforme) al imprimir. Sin width explícito, el SVG
-  // caía a un tamaño por defecto (≈300px) y los módulos quedaban muy finos/borrosos.
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${height}" class="${className}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto" shape-rendering="crispEdges" fill="#000">${bars}</svg>`;
+  // Dimensionado explícito (evita que el SVG caiga a ~300px con módulos borrosos):
+  //  - cssHeight fijo → el barcode se dibuja a esa altura y su ancho sale de la
+  //    proporción, centrado y sin superar el ancho del contenedor (max-width:100%).
+  //    Así en celdas anchas (Doble/Único) no queda gigante ni empuja al logo.
+  //  - sin cssHeight → llena el ancho (width:100%) conservando proporción.
+  const sizeStyle = cssHeight
+    ? `display:block;height:${cssHeight};width:auto;max-width:100%;margin:0 auto`
+    : `display:block;width:100%;height:auto`;
+  const sizeAttr = cssHeight ? '' : ' width="100%"';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${height}" class="${className}"${sizeAttr} preserveAspectRatio="xMidYMid meet" style="${sizeStyle}" shape-rendering="crispEdges" fill="#000">${bars}</svg>`;
 }
