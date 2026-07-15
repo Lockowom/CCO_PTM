@@ -1,6 +1,24 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Save, Search, Loader2 } from 'lucide-react';
+import { Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus } from 'lucide-react';
+
+// Encabezado de sección con chip numerado (look guiado, estilo CCO).
+function SectionHead({ n, icon: Icon, title, accent = 'orange' }) {
+  const tint = accent === 'orange'
+    ? 'bg-orange-50 border-orange-100 text-orange-600'
+    : 'bg-slate-100 border-slate-200 text-slate-500';
+  return (
+    <div className="flex items-center gap-2.5 mb-4">
+      <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${tint}`}>
+        <Icon size={15} />
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-[10px] font-black text-slate-300">{n}</span>
+        <h2 className="text-[12px] font-black text-slate-600 uppercase tracking-wider">{title}</h2>
+      </div>
+    </div>
+  );
+}
 
 // Ingresar N.V. (port de /ingresar del repo panel-). Estructura fiel: Canal →
 // N° NV → lookup → Logística → datos adicionales, con estilo CCO. Lookup y
@@ -96,7 +114,7 @@ export default function PanelIngresar() {
     <div className="anim-fade-up space-y-4 max-w-3xl mx-auto pb-24">
       {/* Identificación */}
       <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-4">Identificación</h2>
+        <SectionHead n="01" icon={Hash} title="Identificación" />
         <label className="field-label">Canal</label>
         <div className="mb-4 flex flex-wrap items-center gap-1 bg-slate-100 rounded-2xl p-1 w-fit">
           {CANALES.map((c) => (
@@ -136,10 +154,23 @@ export default function PanelIngresar() {
         )}
       </section>
 
+      {/* Estado inicial: guía al operador antes de buscar */}
+      {f.mode === 'idle' && (
+        <div className="anim-fade-up bg-gradient-to-br from-orange-50 to-amber-50/50 border border-orange-100 rounded-2xl px-6 py-8 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white border border-orange-100 flex items-center justify-center text-orange-500 mx-auto mb-3 shadow-sm">
+            <Sparkles size={26} />
+          </div>
+          <p className="text-sm font-black text-slate-700">Busca una N.V. para comenzar</p>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            Escribe el número y presiona <b>Buscar</b>: si existe, la actualizas; si no, se crea. Luego completas la logística.
+          </p>
+        </div>
+      )}
+
       {/* Varios — datos manuales */}
       {f.canal === 'varios' && f.mode === 'create' && (
         <section className="bg-white rounded-2xl border border-orange-200 p-5 shadow-sm anim-fade-up">
-          <h2 className="text-[11px] font-black text-orange-500 uppercase tracking-wider mb-4">{f.variosTipo || 'Varios'} — Datos manuales</h2>
+          <SectionHead n="02" icon={PackagePlus} title={`${f.variosTipo || 'Varios'} — Datos manuales`} />
           <label className="field-label">Tipo *</label>
           <div className="flex flex-wrap gap-2 mb-4">
             {VARIOS_TIPOS.map((t) => (
@@ -161,7 +192,7 @@ export default function PanelIngresar() {
       {f.mode !== 'idle' && (
         <>
           <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-4">Logística</h2>
+            <SectionHead n={f.canal === 'varios' ? '03' : '02'} icon={Truck} title="Logística" />
             <label className="field-label">Estado *</label>
             <div className="relative mb-5" ref={estadoRef}>
               <button type="button" onClick={() => { setEstadoOpen((v) => !v); setEstadoQuery(''); }}
@@ -230,8 +261,11 @@ export default function PanelIngresar() {
           </section>
 
           <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
-              <h2 className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Datos adicionales</h2>
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none hover:bg-slate-50/60">
+              <span className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center"><ClipboardList size={15} /></span>
+                <h2 className="text-[12px] font-black text-slate-600 uppercase tracking-wider">Datos adicionales <span className="text-slate-300 normal-case font-bold">· opcional</span></h2>
+              </span>
               <span className="text-slate-300 text-xs transition-transform group-open:rotate-180">▼</span>
             </summary>
             <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
