@@ -9,6 +9,15 @@
 
 export const RELEASE_NOTES = [
   {
+    version: '1.35.0',
+    fecha: '2026-07-15',
+    titulo: 'Panel PTM integrado',
+    emoji: '📊',
+    cambios: [
+      { tipo: 'nuevo', texto: 'El Panel PTM (dashboard de indicadores) ahora está dentro de CCO, en Inteligencia → Panel PTM.' },
+    ],
+  },
+  {
     version: '1.34.1',
     fecha: '2026-07-15',
     titulo: 'Novedades de cada versión',

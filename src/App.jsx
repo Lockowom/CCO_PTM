@@ -61,6 +61,7 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
+const PanelPTM = React.lazy(() => import('./pages/Tools/PanelPTM'));
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const AnalisisCodigos = React.lazy(() => import('./pages/Inventory/AnalisisCodigos'));
 const Carteles = React.lazy(() => import('./pages/Inventory/Carteles'));
@@ -402,6 +403,7 @@ function AppContent() {
 
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
+          <Route path="tools/panel" element={<ErrorBoundary><PanelPTM /></ErrorBoundary>} />
           <Route path="inventory/conteo" element={<ErrorBoundary><ConteoCiclico /></ErrorBoundary>} />
           <Route path="inventory/analisis" element={<ErrorBoundary><AnalisisCodigos /></ErrorBoundary>} />
           <Route path="inventory/carteles" element={<ErrorBoundary><Carteles /></ErrorBoundary>} />

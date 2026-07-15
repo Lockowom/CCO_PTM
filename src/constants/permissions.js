@@ -39,6 +39,8 @@ export const ROUTE_PERMISSIONS = {
   // `view_traspasos` es el permiso PROPIO (casilla en Roles); los de bodega siguen
   // dando acceso (aditivo) para no romper roles existentes.
   '/inventory/traspasos': ['view_traspasos', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  // Panel PTM — dashboard externo (Next.js/Vercel) embebido en iframe. Permiso propio.
+  '/tools/panel': ['view_panel'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
   '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory',
     'conteo_tab_contar', 'conteo_tab_sesiones', 'conteo_tab_conciliacion', 'conteo_tab_ajuste', 'conteo_tab_bloques', 'conteo_tab_proyeccion'],

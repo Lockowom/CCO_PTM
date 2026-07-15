@@ -11,6 +11,7 @@ export const APP_MODULES = [
   { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
+  { id: 'panel', label: 'Panel PTM (Dashboard)', section: 'intelligence' },
   { id: 'postventa', label: 'Post-Venta (Servicio Técnico)', section: 'postventa' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
@@ -51,6 +52,9 @@ export const APP_ROUTES = [
   { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.', module: 'queries' },
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
+
+  // Panel PTM (dashboard externo embebido)
+  { value: '/tools/panel', label: 'Panel PTM (Dashboard)', module: 'panel' },
 
   // Inventario
   { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
@@ -205,6 +209,13 @@ export const APP_PERMISSIONS = [
       { id: 'manage_monitoreo', label: 'Crear/Editar Informes de Monitoreo' },
       { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' },
       { id: 'view_acciones_calidad', label: 'Ver Acciones de Calidad (tablero por área)' }
+    ]
+  },
+  {
+    id: 'panel',
+    label: 'Panel PTM (Dashboard)',
+    permissions: [
+      { id: 'view_panel', label: 'Ver Panel PTM (dashboard embebido)' }
     ]
   },
   {

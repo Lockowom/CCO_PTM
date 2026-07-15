@@ -180,7 +180,8 @@ const Navbar = () => {
             { label: 'Mi Bandeja', path: '/quality/bandeja', icon: <Package size={16} /> },
             { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
           ]
-        }
+        },
+        { id: 'panel', label: 'Panel PTM', icon: <LayoutDashboard size={18} />, isLink: true, path: '/tools/panel' }
       ]
     },
     {
