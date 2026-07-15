@@ -17,9 +17,11 @@ where not exists (
   where t.recepcion_id = rn.id and t.origen = 'NACIONAL' and t.tipo = 'CHECKLIST_INGRESO'
 );
 
--- Importaciones (tms_recepciones): mismo patrón. Descomentar/ejecutar cuando se
--- confirme que se quieren generar sus tareas pendientes (son ~64 recepciones
--- antiguas y aparecerían todas como PENDIENTE en Calidad).
+-- Importaciones (tms_recepciones): DECISIÓN (2026-07-15) — NO se hace backfill.
+-- Son ~64 recepciones muy antiguas (desde feb-2026) que no tiene sentido inspeccionar
+-- retroactivamente; se dejan como están. Las importaciones NUEVAS ya generan su tarea
+-- automáticamente vía el trigger de la mig 075, así que el problema no se repite.
+-- Bloque conservado solo como referencia (no ejecutar):
 -- insert into public.tms_calidad_tareas
 --   (recepcion_id, origen, proveedor, oc, fecha_recepcion, bultos, estado, contexto, tipo)
 -- select r.id, 'IMPORTACION', r.proveedor, r.oc, r.fecha_recepcion, r.cant_bultos, 'PENDIENTE',
