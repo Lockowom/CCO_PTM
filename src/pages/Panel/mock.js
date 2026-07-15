@@ -13,7 +13,38 @@ export const MOCK_KPIS = {
   atiempoPct: 91.4,
   otifPct: 88.2,
   leadTimeProm: 3.6,
+  // Notas de Venta por canal (hero)
+  countNvPtm: 862,
+  nvOrange: 248,
+  nvFarmapack: 121,
+  nvVarios: 53,
+  // KPIs operacionales
+  activas: 342,
+  leadTimeTardanza: 2.1,
+  pctAtiempo: 91.4,
+  fillRateShipping: { pct: 87, evaluables: 214 },
 };
+
+// Tiempos de ciclo (lead time total + etapas + cuello de botella)
+export const MOCK_TIEMPOS = {
+  leadTimeTotal: 3.6,
+  leadTimeTotalN: 942,
+  etapas: [
+    { nombre: 'Aprobación → Picking', dias: 0.8, n: 910 },
+    { nombre: 'Picking → Packing', dias: 1.2, n: 880 },
+    { nombre: 'Packing → Despacho', dias: 0.9, n: 845 },
+    { nombre: 'Despacho → Entrega', dias: 0.7, n: 812 },
+  ],
+  cuelloBotella: { nombre: 'Picking → Packing', dias: 1.2 },
+};
+
+// Filas de ejemplo para el modal de detalle por estado
+export const MOCK_DETALLE = [
+  { nv: 'NV-20451', cliente: 'Clínica Los Andes', vendedor: 'M. González', estado: 'En Proceso', fecha: '2026-07-10', monto: 2_450_000 },
+  { nv: 'NV-20463', cliente: 'Hospital Regional', vendedor: 'P. Rojas', estado: 'En Proceso', fecha: '2026-07-11', monto: 1_180_000 },
+  { nv: 'NV-20477', cliente: 'Lab. BioTest', vendedor: 'C. Díaz', estado: 'En Proceso', fecha: '2026-07-12', monto: 3_920_000 },
+  { nv: 'NV-20489', cliente: 'Dental Sur', vendedor: 'A. Muñoz', estado: 'En Proceso', fecha: '2026-07-12', monto: 640_000 },
+];
 
 export const MOCK_ESTADO_TABLE = [
   { estado: 'Entregado', count: 942, badge: 'entregado' },
@@ -88,4 +119,9 @@ export const MOCK_TENDENCIA = [
 export const MOCK_CALIDAD = {
   total: 37,
   porTipo: { 'Sin RUT': 12, 'Dirección incompleta': 9, 'Sin transportista': 16 },
+  detalle: [
+    { nv: 'NV-20455', problema: 'Sin RUT', cliente: 'Comercial El Roble' },
+    { nv: 'NV-20460', problema: 'Dirección incompleta', cliente: 'Farmacia Vida' },
+    { nv: 'NV-20472', problema: 'Sin transportista', cliente: 'Clínica Norte' },
+  ],
 };

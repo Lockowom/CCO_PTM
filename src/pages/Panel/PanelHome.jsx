@@ -1,25 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   CartesianGrid, Legend,
 } from 'recharts';
-import { AlertTriangle } from 'lucide-react';
+import { RefreshCw, X } from 'lucide-react';
 import {
   MOCK_KPIS, MOCK_ESTADO_TABLE, MOCK_RESUMEN, MOCK_WEEKLY, MOCK_LEADTIME,
   MOCK_RANK_TRANSP, MOCK_RANK_VEND, MOCK_DIVISIONS, MOCK_ALERTAS_OP,
-  MOCK_TENDENCIA, MOCK_CALIDAD,
+  MOCK_TENDENCIA, MOCK_CALIDAD, MOCK_TIEMPOS, MOCK_DETALLE,
 } from './mock';
 
 const clp = (n) => '$' + Number(n || 0).toLocaleString('es-CL');
 const RIESGO_CLS = { alto: 'bg-red-100 text-red-700', medio: 'bg-amber-100 text-amber-700', bajo: 'bg-emerald-100 text-emerald-700' };
 
-function Kpi({ label, value, sub, accent = 'text-gray-800' }) {
+// ── Tarjeta KPI (port de KPICard) ───────────────────────────────────────────
+function KPICard({ title, value, subtitle, color, icon, onClick }) {
   return (
-    <div className="kpi-card">
-      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className={`text-2xl font-black mt-1 ${accent}`}>{value}</p>
-      {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
-    </div>
+    <button onClick={onClick} className="kpi-card text-left w-full" style={{ borderTop: `3px solid ${color}` }}>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{title}</p>
+        <span className="text-lg">{icon}</span>
+      </div>
+      <p className="text-2xl font-black mt-1" style={{ color }}>{value}</p>
+      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{subtitle}</p>}
+    </button>
   );
 }
 
@@ -35,28 +39,134 @@ function Card({ title, children, right }) {
   );
 }
 
-export default function PanelHome() {
-  const k = MOCK_KPIS;
+// ── Filtro de fecha (port de DateFilter) ────────────────────────────────────
+function DateFilter({ onFilter }) {
+  const [from, setFrom] = useState('2026-01-01');
+  const [to, setTo] = useState('2026-07-15');
+  const presets = [
+    { label: 'Última semana', days: 7 }, { label: 'Último mes', days: 30 },
+    { label: '3 meses', days: 90 }, { label: 'Año', days: 365 },
+  ];
   return (
-    <div className="space-y-6 anim-fade-up">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Kpi label="Total N.V." value={k.totalNV.toLocaleString('es-CL')} />
-        <Kpi label="Entregadas" value={k.entregadas.toLocaleString('es-CL')} accent="text-emerald-600" />
-        <Kpi label="En Proceso" value={k.enProceso} accent="text-orange-600" />
-        <Kpi label="En Ruta" value={k.enRuta} accent="text-blue-600" />
-        <Kpi label="% A Tiempo" value={`${k.atiempoPct}%`} accent="text-emerald-600" />
-        <Kpi label="OTIF" value={`${k.otifPct}%`} sub={`Lead time ${k.leadTimeProm} días`} accent="text-indigo-600" />
+    <div className="flex flex-wrap items-center gap-2">
+      <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+        className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-orange-400" />
+      <span className="text-gray-400 text-xs">a</span>
+      <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
+        className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-orange-400" />
+      <button onClick={() => onFilter?.(from, to)}
+        className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600">Filtrar</button>
+      <div className="flex gap-1">
+        {presets.map((p) => (
+          <button key={p.days} onClick={() => onFilter?.(p.label)}
+            className="px-2.5 py-1 text-[11px] rounded-full border border-gray-200 text-gray-600 hover:bg-orange-50 hover:border-orange-300">{p.label}</button>
+        ))}
       </div>
+    </div>
+  );
+}
 
-      {/* Banner calidad de datos */}
-      <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 flex items-center gap-3">
-        <AlertTriangle className="text-amber-500 shrink-0" size={20} />
-        <div className="text-sm text-amber-800">
-          <b>{MOCK_CALIDAD.total}</b> notas de venta con datos incompletos ·{' '}
-          {Object.entries(MOCK_CALIDAD.porTipo).map(([t, n]) => `${t}: ${n}`).join(' · ')}
+// ── Modal de detalle por estado (port de EstadoDetalleModal, con mock) ───────
+function DetalleModal({ titulo, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <h3 className="font-black text-gray-800">Detalle · {titulo}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+        </div>
+        <div className="overflow-y-auto p-4">
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-gray-400 text-xs uppercase">
+              <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Fecha</th><th className="text-right">Monto</th>
+            </tr></thead>
+            <tbody>
+              {MOCK_DETALLE.map((r) => (
+                <tr key={r.nv} className="border-t border-gray-100">
+                  <td className="py-2 font-mono font-bold text-gray-700">{r.nv}</td>
+                  <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-gray-500">{r.fecha}</td>
+                  <td className="text-right font-bold">{clp(r.monto)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-center text-[11px] text-gray-400 mt-3">Datos de ejemplo</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function PanelHome() {
+  const k = MOCK_KPIS;
+  const [detalle, setDetalle] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(120);
+  const cdRef = useRef(120);
+
+  // Cuenta regresiva de auto-refresh (visual)
+  useEffect(() => {
+    const t = setInterval(() => {
+      cdRef.current = cdRef.current <= 1 ? 120 : cdRef.current - 1;
+      setCountdown(cdRef.current);
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const refrescar = () => { setLoading(true); cdRef.current = 120; setCountdown(120); setTimeout(() => setLoading(false), 500); };
+
+  const maxEtapa = Math.max(1, ...MOCK_TIEMPOS.etapas.map((e) => e.dias || 0));
+
+  return (
+    <div className="space-y-6 anim-fade-up">
+      {/* Barra de filtro + refresh */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <DateFilter onFilter={refrescar} />
+        <button onClick={refrescar} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 disabled:opacity-50">
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
+        </button>
+      </div>
+
+      {/* Notas de Venta por canal (hero) */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border-l-4" style={{ borderLeftColor: '#f57c00' }}>
+        <h2 className="text-sm font-black text-gray-500 uppercase tracking-wide mb-3">Notas de Venta</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { label: 'N° NV PTM', value: k.countNvPtm, color: '#f57c00' },
+            { label: 'N.V Orange', value: k.nvOrange, color: '#1f2937' },
+            { label: 'N.V Farmapack', value: k.nvFarmapack, color: '#1f2937' },
+            { label: 'Varios', value: k.nvVarios, color: '#1f2937' },
+          ].map((c) => (
+            <button key={c.label} onClick={() => setDetalle(c.label)} className="text-left hover:opacity-70 transition-opacity">
+              <div className="text-xs text-gray-400">{c.label}</div>
+              <div className="text-2xl font-black" style={{ color: c.color }}>{c.value.toLocaleString('es-CL')}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPIs operacionales */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KPICard title="NVs Activas" value={k.activas} color="#1565c0" icon="📦" onClick={() => setDetalle('NVs Activas')} />
+        <KPICard title="Tardanza Prom." value={`${k.leadTimeTardanza} días`} subtitle="Solo entregas tardías" color="#c62828" icon="🕐" onClick={() => setDetalle('Entregas tardías')} />
+        <KPICard title="A Tiempo" value={`${k.pctAtiempo}%`} subtitle="Entregado ≤ compromiso" color="#2e7d32" icon="✅" onClick={() => setDetalle('A tiempo')} />
+        <KPICard title="Fill Rate" value={`${k.fillRateShipping.pct}%`} subtitle={`${k.fillRateShipping.evaluables} evaluables`} color="#f57c00" icon="📋" onClick={() => setDetalle('Fill rate')} />
+      </div>
+
+      {/* Banner calidad de datos (clickable) */}
+      <button onClick={() => setDetalle('Calidad de datos')}
+        className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-center justify-between hover:bg-amber-100 transition-colors">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🔍</span>
+          <div>
+            <div className="text-sm font-bold text-amber-800">{MOCK_CALIDAD.total} registros con datos incompletos o incoherentes</div>
+            <div className="text-xs text-amber-600">{Object.entries(MOCK_CALIDAD.porTipo).map(([t, n]) => `${t}: ${n}`).join(' · ')}</div>
+          </div>
+        </div>
+        <span className="text-amber-400 text-lg">→</span>
+      </button>
 
       {/* Grid principal: estado + gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -66,7 +176,7 @@ export default function PanelHome() {
               <thead><tr><th className="text-left">Estado</th><th>Cantidad</th></tr></thead>
               <tbody>
                 {MOCK_ESTADO_TABLE.map((r) => (
-                  <tr key={r.estado} className="cursor-pointer">
+                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle(r.estado)}>
                     <td className="text-left"><span className={`badge badge-${r.badge}`}>{r.estado}</span></td>
                     <td className="font-bold">{r.count}</td>
                   </tr>
@@ -79,7 +189,9 @@ export default function PanelHome() {
               <thead><tr><th className="text-left">Estado activo</th><th>Cantidad</th></tr></thead>
               <tbody>
                 {MOCK_RESUMEN.map((r) => (
-                  <tr key={r.estado}><td className="text-left font-medium">{r.estado}</td><td className="font-bold">{r.count}</td></tr>
+                  <tr key={r.estado} className="cursor-pointer" onClick={() => setDetalle(r.estado)}>
+                    <td className="text-left font-medium">{r.estado}</td><td className="font-bold">{r.count}</td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -114,6 +226,46 @@ export default function PanelHome() {
         </div>
       </div>
 
+      {/* Tiempos de ciclo (etapas + cuello de botella + barras) */}
+      <div className="table-container p-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h3 className="font-black text-gray-800">Tiempos de ciclo</h3>
+          <span className="text-[11px] text-gray-400">Días promedio · calculado desde fechas por estado.</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <div className="rounded-xl border border-gray-200 p-3.5">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Lead time total</p>
+            <p className="mt-1 text-2xl font-black" style={{ color: '#f57c00' }}>{MOCK_TIEMPOS.leadTimeTotal} d</p>
+            <p className="text-[10px] text-gray-400">Aprobación → entrega · n={MOCK_TIEMPOS.leadTimeTotalN}</p>
+          </div>
+          {MOCK_TIEMPOS.etapas.map((e) => (
+            <div key={e.nombre} className="rounded-xl border border-gray-200 p-3.5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider truncate">{e.nombre}</p>
+              <p className="mt-1 text-2xl font-black text-gray-800">{e.dias} d</p>
+              <p className="text-[10px] text-gray-400">n={e.n}</p>
+            </div>
+          ))}
+        </div>
+        {MOCK_TIEMPOS.cuelloBotella && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-1.5 text-[12px] text-red-700">
+            🚨 Cuello de botella: <strong>{MOCK_TIEMPOS.cuelloBotella.nombre}</strong> ({MOCK_TIEMPOS.cuelloBotella.dias} d)
+          </div>
+        )}
+        <div className="space-y-2.5">
+          {MOCK_TIEMPOS.etapas.map((e) => (
+            <div key={e.nombre} className="flex items-center gap-3">
+              <span className="w-40 shrink-0 text-[12px] text-gray-600 text-right">{e.nombre}</span>
+              <div className="flex-1 h-6 bg-gray-100 rounded-md overflow-hidden">
+                <div className="h-full rounded-md flex items-center justify-end pr-2 text-[11px] font-bold text-white"
+                  style={{ width: `${Math.max(6, (e.dias / maxEtapa) * 100)}%`, background: MOCK_TIEMPOS.cuelloBotella?.nombre === e.nombre ? '#dc2626' : '#f57c00' }}>
+                  {e.dias} d
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Alertas operacionales */}
       <Card title="Alertas operacionales (N.V. estancadas)">
         <div className="overflow-x-auto">
@@ -123,7 +275,7 @@ export default function PanelHome() {
             </tr></thead>
             <tbody>
               {MOCK_ALERTAS_OP.map((a) => (
-                <tr key={a.nv} className="border-t border-gray-100">
+                <tr key={a.nv} className="border-t border-gray-100 cursor-pointer hover:bg-orange-50" onClick={() => setDetalle(a.nv)}>
                   <td className="py-2 font-mono font-bold text-gray-700">{a.nv}</td>
                   <td>{a.cliente}</td><td>{a.estado}</td><td className="font-bold">{a.dias}</td>
                   <td><span className={`badge ${RIESGO_CLS[a.riesgo]}`}>{a.riesgo}</span></td>
@@ -188,6 +340,8 @@ export default function PanelHome() {
       </Card>
 
       <p className="text-center text-xs text-gray-400 py-2">Datos de ejemplo · pendiente conectar a datos reales</p>
+
+      {detalle && <DetalleModal titulo={detalle} onClose={() => setDetalle(null)} />}
     </div>
   );
 }
