@@ -181,7 +181,17 @@ const Navbar = () => {
             { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
           ]
         },
-        { id: 'panel', label: 'Panel PTM', icon: <LayoutDashboard size={18} />, isLink: true, path: '/tools/panel' }
+        { id: 'panel', label: 'Panel PTM', icon: <LayoutDashboard size={18} />, modules: [
+            { label: 'Dashboard', path: '/panel', icon: <LayoutDashboard size={16} /> },
+            { label: 'Ingresar N.V.', path: '/panel/ingresar', icon: <FileText size={16} /> },
+            { label: 'Info N.V.', path: '/panel/info', icon: <FileSearch size={16} /> },
+            { label: 'Modo TV', path: '/panel/tv', icon: <Monitor size={16} /> },
+            { label: 'Builder', path: '/panel/builder', icon: <Layers size={16} /> },
+            { label: 'Auditoría', path: '/panel/auditoria', icon: <Shield size={16} /> },
+            { label: 'Configuración', path: '/panel/configuracion', icon: <Settings size={16} /> },
+            { label: 'Panel (Vercel)', path: '/tools/panel', icon: <Globe size={16} /> }
+          ]
+        }
       ]
     },
     {

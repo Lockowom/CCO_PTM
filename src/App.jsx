@@ -14,6 +14,7 @@ import UpdateOverlay from './components/ui/UpdateOverlay';
 import NovedadesModal from './components/NovedadesModal';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
+import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelAuditoria, PanelConfig } from './pages/Panel/PanelScreens';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
@@ -61,7 +62,10 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
-const PanelPTM = React.lazy(() => import('./pages/Tools/PanelPTM'));
+const PanelPTM = React.lazy(() => import('./pages/Tools/PanelPTM')); // iframe a Vercel (referencia)
+// Panel PTM nativo (port de lockowom/panel-) — estructura con datos de ejemplo
+const PanelLayout = React.lazy(() => import('./pages/Panel/PanelLayout'));
+const PanelHome = React.lazy(() => import('./pages/Panel/PanelHome'));
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const AnalisisCodigos = React.lazy(() => import('./pages/Inventory/AnalisisCodigos'));
 const Carteles = React.lazy(() => import('./pages/Inventory/Carteles'));
@@ -404,6 +408,16 @@ function AppContent() {
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
           <Route path="tools/panel" element={<ErrorBoundary><PanelPTM /></ErrorBoundary>} />
+          {/* Panel PTM nativo (estructura con datos de ejemplo) */}
+          <Route path="panel" element={<ErrorBoundary><PanelLayout /></ErrorBoundary>}>
+            <Route index element={<PanelHome />} />
+            <Route path="ingresar" element={<PanelIngresar />} />
+            <Route path="info" element={<PanelInfo />} />
+            <Route path="tv" element={<PanelTV />} />
+            <Route path="builder" element={<PanelBuilder />} />
+            <Route path="auditoria" element={<PanelAuditoria />} />
+            <Route path="configuracion" element={<PanelConfig />} />
+          </Route>
           <Route path="inventory/conteo" element={<ErrorBoundary><ConteoCiclico /></ErrorBoundary>} />
           <Route path="inventory/analisis" element={<ErrorBoundary><AnalisisCodigos /></ErrorBoundary>} />
           <Route path="inventory/carteles" element={<ErrorBoundary><Carteles /></ErrorBoundary>} />

@@ -9,6 +9,16 @@
 
 export const RELEASE_NOTES = [
   {
+    version: '1.36.0',
+    fecha: '2026-07-15',
+    titulo: 'Panel PTM nativo (estructura)',
+    emoji: '🧩',
+    cambios: [
+      { tipo: 'nuevo', texto: 'El Panel PTM ahora vive dentro de CCO con sus pantallas propias: Dashboard, Ingresar, Info, TV, Builder, Auditoría y Configuración.' },
+      { tipo: 'mejora', texto: 'El Dashboard ya muestra la estructura con datos de ejemplo (aún no datos reales) para irla puliendo al detalle.' },
+    ],
+  },
+  {
     version: '1.35.0',
     fecha: '2026-07-15',
     titulo: 'Panel PTM integrado',
