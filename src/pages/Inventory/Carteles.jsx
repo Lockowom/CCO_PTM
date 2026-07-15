@@ -23,10 +23,26 @@ const FORMATOS = [
 
 // Tamaños tipográficos por formato (herederos de los del Excel: 36/44 doble, 30/28 cuádruple).
 const SIZES = {
-  1: { label: '22pt', code: '58pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm' },
-  2: { label: '15pt', code: '38pt', desc: '25pt', barH: 90, pad: '10mm', logo: '14mm' },
-  4: { label: '11pt', code: '25pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm' },
+  1: { label: '22pt', code: '58pt', desc: '34pt', barH: 120, pad: '18mm', logo: '20mm', codeMax: '40mm' },
+  2: { label: '15pt', code: '38pt', desc: '25pt', barH: 90, pad: '10mm', logo: '14mm', codeMax: '26mm' },
+  4: { label: '11pt', code: '25pt', desc: '16pt', barH: 64, pad: '6mm', logo: '9mm', codeMax: '16mm' },
 };
+
+// Código en UNA sola línea, siempre. En vez de un font-size fijo (que parte los
+// códigos largos en dos líneas), se dibuja como texto SVG que se escala al ancho
+// del contenedor: `textLength` fuerza a que ocupe todo el ancho sin cortar, y el
+// alto se limita con `maxHeight` para que los códigos cortos no queden gigantes.
+function CodigoFit({ text, maxHeight }) {
+  const t = String(text ?? '').trim();
+  const w = Math.max(1, t.length) * 0.62; // ancho de viewBox ≈ avance por carácter (monoespaciado)
+  return (
+    <svg viewBox={`0 0 ${w} 1`} width="100%" preserveAspectRatio="xMidYMid meet"
+      style={{ display: 'block', width: '100%', height: 'auto', maxHeight }}>
+      <text x={w / 2} y="0.74" textAnchor="middle" textLength={w * 0.98} lengthAdjust="spacingAndGlyphs"
+        fontFamily="'Courier New', ui-monospace, monospace" fontWeight="900" fontSize="0.86" fill="#000">{t}</text>
+    </svg>
+  );
+}
 
 export default function Carteles() {
   const [q, setQ] = useState('');
@@ -60,7 +76,7 @@ export default function Carteles() {
         toast.info(`${r.codigo_producto} ya está en la cola`);
         return c;
       }
-      return [...c, { codigo: r.codigo_producto, producto: r.producto || '', um: r.unidad_medida || '', copias: 1 }];
+      return [...c, { codigo: String(r.codigo_producto || '').trim(), producto: r.producto || '', um: r.unidad_medida || '', copias: 1 }];
     });
   };
   const agregarManual = () => {
@@ -212,13 +228,13 @@ function Cartel({ item, formato }) {
       style={{ padding: s.pad, breakInside: 'avoid' }}>
       <img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-2" style={{ height: s.logo, width: 'auto' }} />
       <div className="font-black tracking-[0.25em] text-slate-500 uppercase" style={{ fontSize: s.label }}>Código Producto</div>
-      <div className="font-mono font-black text-black leading-tight" style={{ fontSize: s.code, wordBreak: 'break-all' }}>{item.codigo}</div>
+      <div className="w-full px-1"><CodigoFit text={item.codigo} maxHeight={s.codeMax} /></div>
       <div className="font-black text-black leading-tight mt-1" style={{ fontSize: s.desc }}>
         {item.producto || 'SI TE APARECE ESTO ES PORQUE NO ESTÁ EN LA TABLA DE CÓDIGOS'}
       </div>
       <div className="font-black tracking-[0.25em] text-slate-500 uppercase mt-2" style={{ fontSize: s.label }}>Código Barra</div>
       {svg
-        ? <div className="w-full max-w-[80%] mt-1" dangerouslySetInnerHTML={{ __html: svg }} />
+        ? <div className="w-full mt-1 px-1" dangerouslySetInnerHTML={{ __html: svg }} />
         : <div className="text-rose-500 text-xs font-bold mt-1">Código no representable en CODE128</div>}
       <div className="font-mono font-bold text-black mt-0.5" style={{ fontSize: s.label }}>{item.codigo}</div>
     </div>

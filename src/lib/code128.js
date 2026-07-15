@@ -39,9 +39,11 @@ function encode128B(text) {
  * Devuelve '' si el texto no es codificable.
  */
 export function code128Svg(text, { height = 60, moduleWidth = 2, className = '' } = {}) {
-  const widths = encode128B(text);
+  // Se recorta el texto: un espacio al inicio/fin se codificaría como carácter
+  // real (valor 0 en el set B) y el lector devolvería un código distinto al impreso.
+  const widths = encode128B(String(text ?? '').trim());
   if (!widths) return '';
-  const quiet = 10 * moduleWidth; // zona muda estándar
+  const quiet = 12 * moduleWidth; // zona muda (≥10 módulos); 12 = margen extra para lectores exigentes
   let x = quiet;
   let bars = '';
   for (let i = 0; i < widths.length; i++) {
@@ -50,5 +52,8 @@ export function code128Svg(text, { height = 60, moduleWidth = 2, className = '' 
     x += w;
   }
   const total = x + quiet;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${height}" class="${className}" preserveAspectRatio="xMidYMid meet" fill="#000">${bars}</svg>`;
+  // width=100% + height auto: el barcode llena el ancho del contenedor y conserva
+  // proporción (X-dimension uniforme) al imprimir. Sin width explícito, el SVG
+  // caía a un tamaño por defecto (≈300px) y los módulos quedaban muy finos/borrosos.
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${height}" class="${className}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto" shape-rendering="crispEdges" fill="#000">${bars}</svg>`;
 }
