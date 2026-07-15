@@ -3,7 +3,8 @@ import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   CartesianGrid, Legend,
 } from 'recharts';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import PanelModal from './PanelModal';
 import {
   MOCK_KPIS, MOCK_ESTADO_TABLE, MOCK_RESUMEN, MOCK_WEEKLY, MOCK_LEADTIME,
   MOCK_RANK_TRANSP, MOCK_RANK_VEND, MOCK_DIVISIONS, MOCK_ALERTAS_OP,
@@ -69,31 +70,25 @@ function DateFilter({ onFilter }) {
 // ── Modal de detalle por estado (port de EstadoDetalleModal, con mock) ───────
 function DetalleModal({ titulo, onClose }) {
   return (
-    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-          <h3 className="font-black text-slate-800">Detalle · {titulo}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><X size={18} /></button>
-        </div>
-        <div className="overflow-y-auto p-4">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-slate-400 text-xs uppercase">
-              <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Fecha</th><th className="text-right">Monto</th>
-            </tr></thead>
-            <tbody>
-              {MOCK_DETALLE.map((r) => (
-                <tr key={r.nv} className="border-t border-slate-100">
-                  <td className="py-2 font-mono font-bold text-slate-700">{r.nv}</td>
-                  <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-slate-500">{r.fecha}</td>
-                  <td className="text-right font-bold">{clp(r.monto)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="text-center text-[11px] text-slate-400 mt-3">Datos de ejemplo</p>
-        </div>
+    <PanelModal titulo={`Detalle · ${titulo}`} onClose={onClose}>
+      <div className="p-4">
+        <table className="w-full text-sm">
+          <thead><tr className="text-left text-slate-400 text-xs uppercase">
+            <th className="py-1">N.V.</th><th>Cliente</th><th>Vendedor</th><th>Fecha</th><th className="text-right">Monto</th>
+          </tr></thead>
+          <tbody>
+            {MOCK_DETALLE.map((r) => (
+              <tr key={r.nv} className="border-t border-slate-100">
+                <td className="py-2 font-mono font-bold text-slate-700">{r.nv}</td>
+                <td>{r.cliente}</td><td>{r.vendedor}</td><td className="text-slate-500">{r.fecha}</td>
+                <td className="text-right font-bold">{clp(r.monto)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="text-center text-[11px] text-slate-400 mt-3">Datos de ejemplo</p>
       </div>
-    </div>
+    </PanelModal>
   );
 }
 

@@ -11,7 +11,8 @@
   --ptm-blue: #2563eb;
   --ptm-red: #e11d48;
   --ptm-gray: #64748b;
-  background: #f8fafc;
+  /* Sin fondo propio: hereda el del contenedor de CCO para no verse como una
+     caja anidada dentro del módulo. */
 }
 
 .panel-root .kpi-card {

@@ -18,7 +18,7 @@ const NAV = [
 
 export default function PanelLayout() {
   return (
-    <div className="panel-root min-h-[calc(100vh-64px)] bg-slate-50 p-3 sm:p-6 space-y-4">
+    <div className="panel-root space-y-4">
       {/* Cabecera estilo módulo CCO (franja degradada + ícono naranja) */}
       <div className="anim-fade-up relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
