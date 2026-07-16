@@ -12,6 +12,11 @@ import {
   listaActivas, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
 } from '../ingresar/ingresarService';
+import FormNV from '../ingresar/components/FormNV';
+import Toast from '../ingresar/components/Toast';
+import Consolidados from '../ingresar/components/Consolidados';
+import { useFormNVStore } from '../ingresar/store/useFormNVStore';
+import '../ingresar/components/PillNavCanal.css';
 
 const hoy = () => new Date().toLocaleDateString('en-CA');
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
@@ -362,253 +367,76 @@ function TabBuscar({ puedeEscribir }) {
   );
 }
 
-// ── Pestaña Ingresar (formulario alta/edición) ──────────────────────────────
-const FORM0 = {
-  canal: 'ptm', nv: '', mode: 'idle', lookup: null,
-  variosTipo: '', variosCliente: '', variosVendedor: '', variosDivision: '', variosCcosto: '',
-  estado: '', urgente: false, tipoDespacho: '', transportista: '',
-  fechaCompromiso: '', fechaAprobacion: '', fechaAprobacionReal: '', fechaFacturacion: '', fechaDespacho: '',
-  factura: '', guia: '', bultos: '', valorFactura: '', numeroEnvio: '',
-};
+// ── Pestaña Ingresar (FormNV + store, port fiel del original) ────────────────
 function TabIngresar() {
-  const [f, setF] = useState(FORM0);
-  const set = (patch) => setF((p) => ({ ...p, ...patch }));
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [estadoOpen, setEstadoOpen] = useState(false);
-  const [estadoQuery, setEstadoQuery] = useState('');
-  const estadoRef = useRef(null);
-
+  const s = useFormNVStore();
+  const [opts, setOpts] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null);
+  useEffect(() => { opciones().then(setOpts).catch(() => {}); }, []);
   useEffect(() => {
-    const onClick = (e) => { if (estadoRef.current && !estadoRef.current.contains(e.target)) setEstadoOpen(false); };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
-  const estadoFiltered = useMemo(() => ESTADOS_SELECCIONABLES.filter((e) => e.toLowerCase().includes(estadoQuery.toLowerCase())), [estadoQuery]);
+    if (!toastMsg) return undefined;
+    const t = setTimeout(() => setToastMsg(null), 3000);
+    return () => clearTimeout(t);
+  }, [toastMsg]);
 
-  const buscar = () => {
-    const nv = f.nv.trim(); if (!nv) return;
-    setLookupLoading(true);
-    lookup(f.canal, nv).then((r) => {
-      if (r.found) set({ mode: 'update', lookup: { found: true, row: r.row, data: r.data }, estado: r.data.estado || '', transportista: r.data.transportista || '', tipoDespacho: r.data.tipo_despacho || '', fechaCompromiso: r.data.fecha_compromiso || '', fechaAprobacion: r.data.fecha_aprobacion ? String(r.data.fecha_aprobacion).slice(0, 10) : '', factura: r.data.factura || '', guia: r.data.guia || '', bultos: r.data.bultos ?? '', numeroEnvio: r.data.numero_envio || '', urgente: r.data.urgente === true });
-      else set({ mode: 'create', lookup: { found: false, autoFill: r.autoFill }, fechaAprobacion: hoy() });
-      setLookupLoading(false);
-    });
-  };
-  const onGuardar = () => {
-    if (f.mode === 'idle') return toast.error('Busca una N.V. primero');
-    if (!f.estado) return toast.error('Falta el Estado');
-    setSaving(true);
-    guardar({ ...f }).then((res) => {
-      setSaving(false);
-      if (res.ok) { toast.success(`N.V. ${f.nv} ${f.mode === 'update' ? 'actualizada' : 'creada'}`); setF(FORM0); }
-      else toast.error(res.error || 'No se pudo guardar');
-    });
+  const handleLookup = async () => {
+    const nv = String(s.nv || '').trim(); if (!nv) return;
+    s.patch({ lookupLoading: true, submitResult: null, errors: [] });
+    const r = await lookup(s.canal, nv);
+    if (r.found) { s.patch({ lookupResult: { found: true, row: r.row } }); s.applyFound(r.data); }
+    else { s.patch({ lookupResult: { found: false } }); s.applyNew(r.autoFill || {}); }
+    s.patch({ lookupLoading: false });
   };
 
-  const af = f.lookup?.found ? f.lookup.data : f.lookup?.autoFill;
-  const cells = af ? [{ l: 'Cliente', v: af.cliente }, { l: 'Vendedor', v: af.vendedor }, { l: 'C. Costo', v: af.ccosto }, { l: 'División', v: af.division }].filter((x) => x.v) : [];
+  const handleSubmit = async () => {
+    const st = useFormNVStore.getState();
+    if (st.mode === 'idle') return;
+    if (!st.estado) { st.patch({ submitResult: { success: false, message: 'Falta el Estado' } }); return; }
+    st.patch({ submitting: true, submitResult: null });
+    const payload = {
+      id: st.mode === 'update' ? st.lookupResult?.row : null, mode: st.mode, canal: st.canal, nv: st.nv,
+      estado: st.estado, urgente: st.urgente, tipoDespacho: st.tipoDespacho, transportista: st.transportista,
+      fechaCompromiso: st.fechaCompromiso, fechaAprobacion: st.fechaAprobacion, fechaAprobacionReal: st.fechaAprobacionReal,
+      fechaFacturacion: st.fechaFacturacion, fechaDespacho: st.fechaDespacho, factura: st.factura, guia: st.guia,
+      bultos: st.bultos, valorFactura: st.valorFactura, numeroEnvio: st.numeroEnvio,
+      variosTipo: st.variosTipo, variosCliente: st.variosCliente, variosVendedor: st.variosVendedor,
+      variosDivision: st.variosDivision, variosCcosto: st.variosCcosto,
+    };
+    const res = await guardar(payload);
+    useFormNVStore.getState().patch({ submitting: false });
+    if (res.ok) {
+      setToastMsg({ type: 'success', message: `NV ${payload.nv} ${payload.mode === 'update' ? 'actualizada' : 'creada'}` });
+      useFormNVStore.getState().reset();
+    } else {
+      useFormNVStore.getState().patch({ submitResult: { success: false, message: res.error || 'No se pudo guardar' } });
+      setToastMsg({ type: 'error', message: res.error || 'No se pudo guardar' });
+    }
+  };
 
   return (
-    <div className="space-y-4 max-w-3xl mx-auto pb-24">
-      <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <SectionHead n="01" icon={Hash} title="Identificación" />
-        <label className="field-label">Canal</label>
-        <div className="mb-4 flex flex-wrap items-center gap-1 bg-slate-100 rounded-2xl p-1 w-fit">
-          {CANALES.map((c) => (
-            <button key={c.value} type="button" onClick={() => set({ canal: c.value, lookup: null, mode: 'idle' })}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-colors ${f.canal === c.value ? 'bg-orange-500 text-white shadow' : 'text-slate-500 hover:text-orange-600 hover:bg-white'}`}>{c.label}</button>
-          ))}
-        </div>
-        <label className="field-label">N° Nota de Venta</label>
-        <div className="flex gap-2">
-          <input type="text" value={f.nv} placeholder="Ej: 97125" className="field-input"
-            onChange={(e) => { const v = e.target.value; set(!v.trim() ? { nv: v, mode: 'idle', lookup: null } : { nv: v }); }}
-            onKeyDown={(e) => e.key === 'Enter' && buscar()} />
-          <button onClick={buscar} disabled={lookupLoading || !f.nv.trim()} className="px-5 rounded-xl bg-slate-900 text-white text-sm font-black active:scale-95 disabled:opacity-40 flex items-center gap-1.5">
-            {lookupLoading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Buscar
-          </button>
-        </div>
-        {f.lookup && (
-          <div className="mt-4">
-            <div className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13px] font-bold ${f.lookup.found ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}>
-              <span>{f.lookup.found ? '✎' : '✨'}</span>
-              {f.lookup.found ? <span>NV encontrada · <b>actualizar</b></span> : <span>NV nueva · <b>crear</b></span>}
-            </div>
-            {cells.length > 0 && (
-              <div className="mt-2.5 grid grid-cols-2 gap-2">
-                {cells.map((x) => (<div key={x.l} className="bg-slate-50 rounded-lg px-3 py-2"><div className="text-[10px] uppercase tracking-wide text-slate-400 font-black">{x.l}</div><div className="text-[13px] text-slate-700 font-bold truncate">{x.v}</div></div>))}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {f.mode === 'idle' && (
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50/50 border border-orange-100 rounded-2xl px-6 py-8 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-orange-100 flex items-center justify-center text-orange-500 mx-auto mb-3 shadow-sm"><Sparkles size={26} /></div>
-          <p className="text-sm font-black text-slate-700">Busca una N.V. para comenzar</p>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Escribe el número y presiona <b>Buscar</b>: si existe, la actualizas; si no, se crea.</p>
-        </div>
-      )}
-
-      {f.canal === 'varios' && f.mode === 'create' && (
-        <section className="bg-white rounded-2xl border border-orange-200 p-5 shadow-sm">
-          <SectionHead n="02" icon={PackagePlus} title={`${f.variosTipo || 'Varios'} — Datos manuales`} />
-          <label className="field-label">Tipo *</label>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {VARIOS_TIPOS.map((t) => (<button key={t} type="button" onClick={() => set({ variosTipo: t })} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${f.variosTipo === t ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200 hover:border-orange-300'}`}>{t}</button>))}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2"><label className="field-label">Cliente *</label><input className="field-input" value={f.variosCliente} onChange={(e) => set({ variosCliente: e.target.value })} /></div>
-            <div><label className="field-label">Vendedor *</label><input className="field-input" value={f.variosVendedor} onChange={(e) => set({ variosVendedor: e.target.value })} /></div>
-            <div><label className="field-label">División</label><input className="field-input" value={f.variosDivision} onChange={(e) => set({ variosDivision: e.target.value })} /></div>
-            <div><label className="field-label">Centro Costo</label><input className="field-input" value={f.variosCcosto} onChange={(e) => set({ variosCcosto: e.target.value })} /></div>
-          </div>
-        </section>
-      )}
-
-      {f.mode !== 'idle' && (
-        <>
-          <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <SectionHead n={f.canal === 'varios' ? '03' : '02'} icon={Truck} title="Logística" />
-            <label className="field-label">Estado *</label>
-            <div className="relative mb-5" ref={estadoRef}>
-              <button type="button" onClick={() => { setEstadoOpen((v) => !v); setEstadoQuery(''); }} className="field-input flex items-center justify-between text-left">
-                <span className="inline-flex items-center gap-2.5 min-w-0"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(f.estado) }} /><span className="text-slate-800 font-bold truncate">{f.estado || 'Seleccionar estado'}</span></span>
-                <span className={`text-slate-300 text-xs transition-transform ${estadoOpen ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-              {estadoOpen && (
-                <div className="absolute z-30 mt-2 w-full bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden">
-                  <div className="p-2 border-b border-slate-100"><input autoFocus value={estadoQuery} onChange={(e) => setEstadoQuery(e.target.value)} placeholder="Buscar estado…" className="field-input py-2 text-sm" /></div>
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {estadoFiltered.map((c) => (<button key={c} type="button" onClick={() => { set({ estado: c }); setEstadoOpen(false); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm ${f.estado === c ? 'bg-orange-50' : 'hover:bg-slate-50'}`}><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(c) }} /><span className={f.estado === c ? 'font-black text-slate-900' : 'text-slate-700'}>{c}</span></button>))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <button type="button" onClick={() => set({ urgente: !f.urgente })} className={`w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3.5 mb-3.5 border-2 ${f.urgente ? 'bg-red-50 border-red-400' : 'bg-slate-50 border-slate-200'}`}>
-              <span className="flex items-center gap-2.5"><span className={`text-xl ${f.urgente ? 'scale-110' : 'opacity-40 grayscale'}`}>🚨</span><span className="flex flex-col items-start"><span className={`text-sm font-black ${f.urgente ? 'text-red-600' : 'text-slate-700'}`}>NV Urgente</span><span className="text-[11px] text-slate-400">Se destaca en el panel TV</span></span></span>
-              <span className={`relative w-12 h-6 rounded-full shrink-0 ${f.urgente ? 'bg-red-500' : 'bg-slate-300'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${f.urgente ? 'translate-x-6' : ''}`} /></span>
-            </button>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div><label className="field-label">Tipo Despacho</label><select value={f.tipoDespacho} onChange={(e) => set({ tipoDespacho: e.target.value })} className="field-input"><option value="">— Seleccionar —</option>{TIPOS_DESPACHO.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
-              <div><label className="field-label">Transportista</label><input className="field-input" value={f.transportista} onChange={(e) => set({ transportista: e.target.value })} /></div>
-              <div><label className="field-label">Fecha Aprobación Real</label><input type="date" value={f.fechaAprobacionReal} onChange={(e) => set({ fechaAprobacionReal: e.target.value })} className="field-input" /></div>
-              <div><label className="field-label">Fecha Facturación</label><input type="date" value={f.fechaFacturacion} onChange={(e) => set({ fechaFacturacion: e.target.value })} className="field-input" /></div>
-              <div><label className="field-label">Fecha Despacho</label><input type="date" value={f.fechaDespacho} onChange={(e) => set({ fechaDespacho: e.target.value })} className="field-input" /></div>
-            </div>
-          </section>
-          <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none hover:bg-slate-50/60"><span className="flex items-center gap-2.5"><span className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center"><ClipboardList size={15} /></span><h2 className="text-[12px] font-black text-slate-600 uppercase tracking-wider">Datos adicionales <span className="text-slate-300 normal-case font-bold">· opcional</span></h2></span><span className="text-slate-300 text-xs transition-transform group-open:rotate-180">▼</span></summary>
-            <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div><label className="field-label">Facturas</label><input className="field-input" value={f.factura} onChange={(e) => set({ factura: e.target.value })} /></div>
-              <div><label className="field-label">Guía</label><input className="field-input" value={f.guia} onChange={(e) => set({ guia: e.target.value })} /></div>
-              <div><label className="field-label">Bultos</label><input type="number" className="field-input" value={f.bultos} onChange={(e) => set({ bultos: e.target.value })} /></div>
-              <div><label className="field-label">Valor Factura</label><input inputMode="numeric" className="field-input" value={f.valorFactura} onChange={(e) => set({ valorFactura: e.target.value.replace(/[^0-9.]/g, '') })} /></div>
-              <div><label className="field-label">N° de Envío</label><input className="field-input" value={f.numeroEnvio} onChange={(e) => set({ numeroEnvio: e.target.value })} /></div>
-            </div>
-          </details>
-        </>
-      )}
-
-      {f.mode !== 'idle' && (
+    <div className="pb-24">
+      <FormNV options={opts} transportistasOpts={opts?.transportistas || []} vendedoresMaestro={[]} onLookup={handleLookup} />
+      {s.mode !== 'idle' && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
-            <span className="text-xs text-slate-400">Canal <b className="text-slate-600 uppercase">{f.canal}</b> · N° <b className="text-slate-600">{f.nv || '—'}</b></span>
-            <button onClick={onGuardar} disabled={saving} className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{f.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}</button>
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <span className="text-xs text-slate-400">Canal <b className="text-slate-600 uppercase">{s.canal}</b> · N° <b className="text-slate-600">{s.nv || '—'}</b></span>
+            <button onClick={handleSubmit} disabled={s.submitting}
+              className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2">
+              {s.submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {s.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}
+            </button>
           </div>
         </div>
       )}
+      <Toast toast={toastMsg} />
     </div>
   );
 }
 
-// ── Pestaña Consolidados ────────────────────────────────────────────────────
+// ── Pestaña Consolidados (componente portado) ───────────────────────────────
 function TabConsolidados() {
-  const [lista, setLista] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [nueva, setNueva] = useState({ fecha_comprometida: '', observacion: '', nvs: [] });
-  const [nvInput, setNvInput] = useState('');
-  const [addLoading, setAddLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const { user } = useAuth();
-
-  const cargar = useCallback(() => { setLoading(true); listarConsolidados().then((r) => { setLista(r); setLoading(false); }).catch(() => setLoading(false)); }, []);
-  useEffect(() => { cargar(); }, [cargar]);
-
-  const agregarNv = async () => {
-    const t = nvInput.trim(); if (!t) return;
-    setAddLoading(true);
-    const r = await buscarNvBasico(t);
-    setAddLoading(false);
-    if (!r) return toast.error(`N.V. ${t} no encontrada`);
-    if (nueva.nvs.some((x) => x.nv === r.nv && x.canal === r.canal)) return toast.error('Ya está en la lista');
-    setNueva((p) => ({ ...p, nvs: [...p.nvs, r] }));
-    setNvInput('');
-  };
-  const guardarCons = async () => {
-    if (nueva.nvs.length === 0) return toast.error('Agrega al menos una N.V.');
-    setSaving(true);
-    const res = await guardarConsolidado({ ...nueva, created_by: user?.nombre || null });
-    setSaving(false);
-    if (res.ok) { toast.success(`Consolidado ${res.ticket} creado`); setNueva({ fecha_comprometida: '', observacion: '', nvs: [] }); cargar(); }
-    else toast.error(res.error || 'No se pudo guardar');
-  };
-  const borrar = async (c) => {
-    if (!window.confirm(`¿Eliminar el consolidado ${c.ticket}?`)) return;
-    const res = await eliminarConsolidado(c.id);
-    if (res.ok) { toast.success('Consolidado eliminado'); cargar(); } else toast.error(res.error || 'Error');
-  };
-
-  return (
-    <div className="space-y-4 max-w-3xl mx-auto">
-      <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <SectionHead n="01" icon={Layers} title="Nuevo consolidado" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3">
-          <div><label className="field-label">Fecha comprometida</label><input type="date" className="field-input" value={nueva.fecha_comprometida} onChange={(e) => setNueva((p) => ({ ...p, fecha_comprometida: e.target.value }))} /></div>
-          <div><label className="field-label">Observación</label><input className="field-input" value={nueva.observacion} onChange={(e) => setNueva((p) => ({ ...p, observacion: e.target.value }))} /></div>
-        </div>
-        <label className="field-label">Agregar N.V.</label>
-        <div className="flex gap-2">
-          <input value={nvInput} onChange={(e) => setNvInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && agregarNv()} placeholder="N° de N.V." className="field-input" />
-          <button onClick={agregarNv} disabled={addLoading} className="px-4 rounded-xl bg-slate-900 text-white text-sm font-black flex items-center gap-1.5 disabled:opacity-40">{addLoading ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}</button>
-        </div>
-        {nueva.nvs.length > 0 && (
-          <div className="mt-3 space-y-1.5">
-            {nueva.nvs.map((n) => (
-              <div key={`${n.canal}:${n.nv}`} className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-1.5 text-sm">
-                <span className="font-bold text-slate-700">{n.nv}</span><span className="text-[11px] uppercase text-slate-400">{n.canal}</span>
-                <span className="text-slate-500 truncate flex-1">{n.cliente || '—'}</span>
-                <button onClick={() => setNueva((p) => ({ ...p, nvs: p.nvs.filter((x) => !(x.nv === n.nv && x.canal === n.canal)) }))} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
-              </div>
-            ))}
-          </div>
-        )}
-        <button onClick={guardarCons} disabled={saving} className="mt-4 w-full px-5 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center gap-2">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Crear consolidado</button>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-black text-slate-600 mb-2">Consolidados ({lista.length})</h3>
-        {loading ? <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={24} /></div>
-          : lista.length === 0 ? <p className="text-sm text-slate-400 text-center py-8">Sin consolidados.</p>
-          : (
-            <div className="space-y-2">
-              {lista.map((c) => (
-                <div key={c.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2"><span className="font-black text-slate-800">{c.ticket}</span><span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold">{c.estado}</span>{c.fecha_comprometida && <span className="text-xs text-slate-400">📅 {c.fecha_comprometida}</span>}</div>
-                    <button onClick={() => borrar(c)} className="text-slate-300 hover:text-red-500"><Trash2 size={15} /></button>
-                  </div>
-                  {c.observacion && <p className="text-xs text-slate-500 mt-1">{c.observacion}</p>}
-                  <div className="mt-2 flex flex-wrap gap-1.5">{c.nvs.map((n) => <span key={n.id} className="text-[11px] font-bold bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-600">{n.nv}</span>)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-      </section>
-    </div>
-  );
+  return <Consolidados operador={user?.nombre || ''} />;
 }
 
 // ── Módulo ───────────────────────────────────────────────────────────────────
