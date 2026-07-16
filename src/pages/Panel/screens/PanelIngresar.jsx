@@ -30,17 +30,19 @@ const CANALES = [
   { value: 'farmapack', label: 'Farmapack' }, { value: 'varios', label: 'Varios' },
 ];
 const VARIOS_TIPOS = ['Reposición', 'Garantía', 'Muestra', 'Comodato', 'Traslado'];
+// Estados canónicos (mismos que la BD / flujo real del Panel).
 const ESTADOS = [
-  { nombre: 'Aprobada', color: '#64748b' },
-  { nombre: 'En Proceso', color: '#f97316' },
-  { nombre: 'Picking', color: '#2563eb' },
-  { nombre: 'Packing', color: '#7c3aed' },
-  { nombre: 'Shipping', color: '#0891b2' },
-  { nombre: 'En Ruta', color: '#2563eb' },
-  { nombre: 'Entregado', color: '#10b981' },
-  { nombre: 'Con Vendedor', color: '#e11d48' },
-  { nombre: 'Retiro en Bodega', color: '#6a1b9a' },
-  { nombre: 'Anulada', color: '#94a3b8' },
+  { nombre: 'En Proceso', color: '#f59e0b' },
+  { nombre: 'P / VENDEDOR', color: '#d97706' },
+  { nombre: 'P / STOCK', color: '#b45309' },
+  { nombre: 'P / RETIRO', color: '#92400e' },
+  { nombre: 'Shipping', color: '#8b5cf6' },
+  { nombre: 'Currier', color: '#7c3aed' },
+  { nombre: 'En Ruta', color: '#06b6d4' },
+  { nombre: 'Entregado', color: '#22c55e' },
+  { nombre: 'NULA', color: '#94a3b8' },
+  { nombre: 'REFACTURADO', color: '#94a3b8' },
+  { nombre: 'RECHAZADO', color: '#94a3b8' },
 ];
 const colorFor = (n) => ESTADOS.find((e) => e.nombre === n)?.color || '#94a3b8';
 const hoy = () => new Date().toLocaleDateString('en-CA');
@@ -91,8 +93,8 @@ export default function PanelIngresar() {
     setSaving(true);
     guardarNV({ ...f }).then((res) => {
       setSaving(false);
-      if (res.ok) { toast.success(`N.V. ${f.nv} ${f.mode === 'update' ? 'actualizada' : 'creada'} (ejemplo)`); setF(FORM0); }
-      else toast.error('No se pudo guardar');
+      if (res.ok) { toast.success(`N.V. ${f.nv} ${f.mode === 'update' ? 'actualizada' : 'creada'}`); setF(FORM0); }
+      else toast.error(res.error || 'No se pudo guardar');
     });
   };
 

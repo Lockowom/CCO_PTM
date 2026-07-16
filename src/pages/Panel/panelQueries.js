@@ -77,6 +77,9 @@ const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapac
 // ── Carga cruda (paginada) con micro-caché de 30 s ──────────────────────────
 const COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,factura,guia,numero_envio,vendedor,cliente,centro_costo,division,transportista,empresa_transporte,tipo_despacho,estado,urgente,fecha_aprobacion,fecha_aprobacion_real,fecha_facturacion,fecha_despacho,fecha_compromiso,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,valor_factura,costo_flete,valor_nv,bultos,dias_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,fillrate';
 let _cache = { at: 0, rows: null };
+// Invalida el micro-caché (se llama tras una escritura para que la próxima
+// lectura traiga los datos frescos de inmediato).
+export function invalidarCache() { _cache = { at: 0, rows: null }; }
 export async function cargarRows(force = false) {
   if (!force && _cache.rows && Date.now() - _cache.at < 30000) return _cache.rows;
   const all = []; let from = 0; const page = 1000;

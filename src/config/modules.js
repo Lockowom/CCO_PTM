@@ -221,7 +221,8 @@ export const APP_PERMISSIONS = [
     id: 'panel',
     label: 'Panel PTM (Dashboard)',
     permissions: [
-      { id: 'view_panel', label: 'Ver Panel PTM (dashboard embebido)' }
+      { id: 'view_panel', label: 'Ver Panel PTM (dashboard embebido)' },
+      { id: 'manage_panel', label: 'Gestionar Panel PTM (crear/editar N.V. y estados)' }
     ]
   },
   {

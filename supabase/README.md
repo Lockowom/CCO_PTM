@@ -54,6 +54,12 @@
     DEFINER, `grant execute` a `anon`) para la página abierta `/consulta`. Devuelve estado + logística
     (sin montos ni datos internos: oculta valor_factura/valor_nv/costo_flete, vendedor, centro_costo,
     división, aprob. real, observaciones). Anti-abuso: mín. 3 caracteres, tope 25.
+  - `085_operaciones_escrituras_cutover.sql` — **CUTOVER Panel**: apaga el auto-sync
+    (`cron.unschedule` + `panel_sync_config.enabled=false`) → CCO fuente de verdad. RPCs de escritura
+    `guardar_nv(jsonb)` y `cambiar_estado_nv(id,estado,urgente)` (SECURITY DEFINER, gate
+    `_panel_puede_escribir()` = admin o permiso `manage_panel`). El trigger `tms_operaciones_before_write`
+    estampa `fecha_estado` + fechas de etapa (proceso/shipping/ruta/entregado) en cambios nativos CCO.
+    Bitácora `tms_operaciones_log`. Permiso nuevo `manage_panel`.
   - `065_storage_privado.sql` — **Bloque A seguridad**: buckets `fichas-productos` y `monitoreo-evidencias` pasan a **privados** (las fotos se sirven con URLs firmadas desde el frontend, `src/lib/storageUrl.js`); políticas SELECT para `authenticated` en `storage.objects`; `pv_informe_calidad` agrega `storage_path` a las evidencias para que el visor del ticket firme.
   - `064_supresion_completa_usuario.sql` — **derecho de supresión (Ley 21.719)**: RPC `eliminar_usuario_completo(id)` (gate admin) — borra la cuenta `auth.users`, el log de accesos, la presencia y la auditoría del registro; **anonimiza** mediciones de tiempos, errores de picking y tickets TI; deja una marca `SUPRESION_COMPLETA` anónima. Conserva (documentado) las firmas/`creado_por_nombre` de registros de calidad por trazabilidad del rubro.
   - `063_rls_datos_personales.sql` — **RLS de datos personales**: `tms_usuarios` legible solo la fila propia (+admin; match por email para el primer login), `tms_conductores` (RUT/teléfono) solo con permisos TMS/consultas o la fila propia (escrituras: manage_drivers/auto-registro), correos/tickets/técnicos/descartados de Post-Venta solo con permisos del módulo (+gate en la RPC `pv_correos_ticket`), `tms_accesos` y `tms_errores_picking` solo lectura admin, `tms_mediciones_tiempos` solo outbound. Helper `usuario_tiene_algun_permiso(text[])` (SECURITY DEFINER, evita recursión).

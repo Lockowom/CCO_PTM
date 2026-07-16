@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, ChevronDown, Clock, Package } from 'lucide-react';
-import { buscarNV, ESTADO_COLOR } from '../panelService';
+import { toast } from 'sonner';
+import { Search, X, ChevronDown, Clock, Package, Loader2 } from 'lucide-react';
+import { buscarNV, cambiarEstado, ESTADO_COLOR } from '../panelService';
+
+// Estados canónicos seleccionables para el cambio rápido.
+const ESTADOS_CAMBIO = ['En Proceso', 'P / VENDEDOR', 'P / STOCK', 'P / RETIRO', 'Shipping', 'Currier', 'En Ruta', 'Entregado', 'NULA', 'REFACTURADO', 'RECHAZADO'];
 
 // Info N.V. (port de /info): buscador universal + tarjetas expandibles con el
 // detalle completo. Datos de ejemplo (MOCK_NVS); al conectar, se reemplaza la
@@ -61,6 +65,22 @@ export default function PanelInfo() {
     const t = setTimeout(() => { buscarNV(q).then((rows) => { setResultados(rows); setBuscando(false); }); }, 250);
     return () => clearTimeout(t);
   }, [q]);
+
+  const [cambiando, setCambiando] = useState(null);
+  const onCambiarEstado = async (r, nuevo) => {
+    if (!nuevo || nuevo === r.estado) return;
+    const prev = r.estado;
+    setCambiando(r.id);
+    setResultados((rs) => rs.map((x) => (x.id === r.id ? { ...x, estado: nuevo } : x)));
+    const res = await cambiarEstado(r.id, nuevo);
+    setCambiando(null);
+    if (!res.ok) {
+      setResultados((rs) => rs.map((x) => (x.id === r.id ? { ...x, estado: prev } : x)));
+      toast.error(res.error || 'No se pudo cambiar el estado');
+    } else {
+      toast.success(`${r.nv} → ${nuevo}`);
+    }
+  };
 
   const searched = q.length > 0;
   const conteoEstados = useMemo(() => {
@@ -178,6 +198,18 @@ export default function PanelInfo() {
                       </InfoSection>
                       <InfoSection titulo="Estado">
                         <Row label="Estado" value={est} color={color} />
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-slate-400 text-xs w-28 shrink-0">Cambiar a</span>
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              value={r.estado || ''} disabled={cambiando === r.id}
+                              onChange={(e) => onCambiarEstado(r, e.target.value)}
+                              className="text-xs font-bold rounded-lg border border-slate-200 px-2 py-1 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none disabled:opacity-50">
+                              {ESTADOS_CAMBIO.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            {cambiando === r.id && <Loader2 size={14} className="animate-spin text-orange-500" />}
+                          </div>
+                        </div>
                         <Row label="Urgente" value={r.urgente ? 'Sí' : 'No'} />
                         <Row label="Incidencia" value={r.incidencia} /><Row label="Estado Incid." value={r.estado_incidencia} />
                         <Row label="Obs. Incid." value={r.observaciones_incidencia} /><Row label="Días Incid." value={r.dias_incidencia} />
