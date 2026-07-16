@@ -75,7 +75,7 @@ function DetalleModal({ sel, onClose }) {
               </tbody>
             </table>
             {d.total > d.mostrados && <p className="text-center text-xs text-slate-400 mt-3">… y {(d.total - d.mostrados).toLocaleString('es-CL')} registros más</p>}
-            <p className="text-center text-[11px] text-slate-400 mt-2">Datos de ejemplo</p>
+            <p className="text-center text-[11px] text-slate-400 mt-2">Datos reales · tms_operaciones</p>
           </div>
         </>
       )}
@@ -239,7 +239,7 @@ export default function PanelHome() {
         </ResponsiveContainer>
       </Card>
 
-      <p className="text-center text-xs text-slate-400 py-2">Datos de ejemplo · vía panelService (punto único de conexión)</p>
+      <p className="text-center text-xs text-slate-400 py-2">Datos reales · tms_operaciones (vía panelService)</p>
       {detalle && <DetalleModal sel={detalle} onClose={() => setDetalle(null)} />}
     </div>
   );

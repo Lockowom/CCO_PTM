@@ -110,7 +110,7 @@ export default function PanelTV() {
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center font-black text-lg">PTM</div>
           <div>
             <h1 className="text-xl font-black tracking-tight leading-tight">Centro de Control Logístico</h1>
-            <p className="text-gray-500 text-[11px]">Seguimiento en tiempo real · datos de ejemplo</p>
+            <p className="text-gray-500 text-[11px]">Seguimiento en tiempo real · datos reales</p>
           </div>
         </div>
         <div className="flex items-center gap-5">
