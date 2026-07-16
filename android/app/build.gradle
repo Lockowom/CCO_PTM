@@ -20,7 +20,7 @@ android {
         // La versión nativa se alinea con la serie OTA (package.json). Subir el
         // versionCode en CADA build nativa nueva (Android exige que aumente).
         versionCode 49
-        versionName "1.55.0"
+        versionName "1.55.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

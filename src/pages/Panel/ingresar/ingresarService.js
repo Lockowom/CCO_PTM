@@ -26,6 +26,12 @@ export const colorFor = (v) => ESTADO_COLOR[v] || '#9ca3af';
 export const ACCENT = '#ea580c';
 
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
+// Normaliza la N.V. igual que la BD (trigger): quita espacios y sufijo ".0" →
+// el match es SIEMPRE exacto (evita el bug del Sheet de datos cruzados).
+const normNV = (v) => {
+  const t = String(v ?? '').trim();
+  return /^\d+\.0+$/.test(t) ? t.split('.')[0] : t;
+};
 const colDe = (canal) => (canal === 'ptm' ? 'nv_ptm' : canal === 'orange' ? 'nv_orange' : canal === 'farmapack' ? 'nv_farmapack' : 'varios');
 const canalDe = (r) => (r.nv_ptm ? 'ptm' : r.nv_orange ? 'orange' : r.nv_farmapack ? 'farmapack' : 'varios');
 const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || ''));
@@ -70,23 +76,24 @@ export async function opciones() {
 const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente';
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
-  const t = String(nv).trim(); if (!t) return null;
+  const t = normNV(nv); if (!t) return null;
   const { data } = await supabase.from('tms_nv_catalogo')
     .select('cliente, vendedor, fecha_aprobacion, centro_costo, division')
-    .eq('canal', canal).eq('nv', t).limit(1);
+    .eq('canal', String(canal).toLowerCase()).eq('nv', t).limit(1);
   return (data && data[0]) || null;
 }
 
 // Cascada CENTRO COSTOS: vendedor → centro de costo + división.
+// Cruce tolerante a mayúsculas/espacios (ilike sobre el nombre ya recortado).
 export async function costoDeVendedor(vendedor) {
   const v = String(vendedor || '').trim(); if (!v) return null;
   const { data } = await supabase.from('tms_panel_vendedores')
-    .select('centro_costo, division').eq('nombre', v).limit(1);
+    .select('centro_costo, division').ilike('nombre', v).limit(1);
   return (data && data[0]) || null;
 }
 
 export async function lookup(canal, nv) {
-  const col = colDe(canal); const t = String(nv).trim();
+  const col = colDe(canal); const t = normNV(nv);
   let q = supabase.from('tms_operaciones').select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
   q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
   const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
