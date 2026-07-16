@@ -1,17 +1,37 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchNvPanel, mapNvPanel } from '../services/panelPtm';
+import { describe, it, expect, vi } from 'vitest';
 
-const FILA = {
-  nv_ptm: 97369, cliente: 'BLUE PANDA SPA', vendedor: 'Sebastian Fraiman',
-  factura: null, guia: 'G-123', transportista: null, empresa_transporte: 'STARKEN',
-  bultos: 4, estado: 'Shipping', tipo_despacho: 'Normal', urgente: true,
-  numero_envio: 'ENV-9', fecha_compromiso: '2026-07-14', fecha_despacho: null,
-  centro_costo: 'CC1', division: 'MED',
-};
+// Fila de prueba (hoisted para poder usarla dentro del mock del cliente supabase).
+const { FILA } = vi.hoisted(() => ({
+  FILA: {
+    nv_ptm: 97369, cliente: 'BLUE PANDA SPA', vendedor: 'Sebastian Fraiman',
+    factura: null, guia: 'G-123', transportista: null, empresa_transporte: 'STARKEN',
+    bultos: 4, estado: 'Shipping', tipo_despacho: 'Normal', urgente: true,
+    numero_envio: 'ENV-9', fecha_compromiso: '2026-07-14', fecha_despacho: null,
+    centro_costo: 'CC1', division: 'MED',
+  },
+}));
 
-describe('Panel Dashboard PTM — info de la N.V para Calidad · Salida', () => {
-  afterEach(() => vi.unstubAllGlobals());
+// El servicio ahora lee tms_operaciones EN EL PROYECTO CCO (cliente autenticado),
+// no un proyecto externo. Mockeamos el cliente supabase con un builder encadenable
+// que devuelve FILA solo cuando se consulta por nv_ptm = 97369.
+vi.mock('../supabase', () => ({
+  supabase: {
+    from: () => {
+      let nvArg = null;
+      const b = {
+        select: () => b,
+        eq: (_col, v) => { nvArg = v; return b; },
+        order: () => b,
+        limit: () => Promise.resolve({ data: nvArg === 97369 ? [FILA] : [], error: null }),
+      };
+      return b;
+    },
+  },
+}));
 
+const { fetchNvPanel, mapNvPanel } = await import('../services/panelPtm');
+
+describe('Info de la N.V para Calidad · Salida (tms_operaciones CCO)', () => {
   it('mapNvPanel normaliza la fila (transportista cae a empresa_transporte)', () => {
     const i = mapNvPanel(FILA);
     expect(i.nv).toBe('97369');
@@ -23,13 +43,8 @@ describe('Panel Dashboard PTM — info de la N.V para Calidad · Salida', () => 
   });
 
   it('fetchNvPanel consulta por número exacto y devuelve null si no existe', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [FILA] });
-    vi.stubGlobal('fetch', fetchMock);
     const i = await fetchNvPanel(' 97369 ');
-    expect(fetchMock.mock.calls[0][0]).toContain('nv_ptm=eq.97369');
     expect(i.cliente).toBe('BLUE PANDA SPA');
-
-    fetchMock.mockResolvedValue({ ok: true, json: async () => [] });
     expect(await fetchNvPanel('1')).toBeNull();
     expect(await fetchNvPanel('')).toBeNull();
   });

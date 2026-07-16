@@ -65,7 +65,8 @@ const ControlTower = () => {
       const { data, error } = await supabase.from('tms_conductores').select('*').order('nombre');
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 60_000,
   });
 
   const { data: rutas = [], isLoading: loadingRutas } = useQuery({
@@ -78,7 +79,8 @@ const ControlTower = () => {
         .limit(50);
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 30_000,
   });
 
   const { data: entregas = [], isLoading: loadingEntregas } = useQuery({
@@ -87,10 +89,12 @@ const ControlTower = () => {
       const { data, error } = await supabase
         .from('tms_entregas')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 15_000,
   });
 
   const loading = loadingConductores || loadingRutas || loadingEntregas;

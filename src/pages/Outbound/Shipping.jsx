@@ -35,10 +35,12 @@ const Shipping = () => {
       const { data, error } = await supabase
         .from('tms_entregas')
         .select('*')
-        .order('fecha_creacion', { ascending: false });
+        .order('fecha_creacion', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 15_000,
   });
 
   const saveMutation = useMutation({

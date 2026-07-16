@@ -81,6 +81,12 @@
   - `092_nv_catalogo_normalizacion.sql` — **N.V. normalizada** (evita el bug del BUSCARV del Sheet):
     `normalizar_nv()` + trigger en `tms_nv_catalogo` (al subir/editar deja `canal` en minúscula y `nv` sin
     espacios ni sufijo `.0`) → el match del autocompletado es siempre exacto y preciso.
+  - `095_motor_seguridad_advisors.sql` — **Motor + seguridad (advisors)**: RLS `initplan` — envuelve
+    `auth.uid()/auth.role()/auth.jwt()/is_admin()` en `(select …)` en las 44 policies afectadas (se evalúan
+    1 vez por consulta, no por fila); 7 índices de FKs sin cubrir; revoca `EXECUTE` por `PUBLIC` en
+    `guardar_usuario`/`usuarios_bulk` + helpers (`_panel_puede_escribir`, `pv_log_historial(_alta)`,
+    `sync_calidad_a_recepcion`); fija `search_path` en `normalizar_nv`, `tms_nv_catalogo_norm`,
+    `tms_operaciones_norm_estado`, `tms_operaciones_before_write`.
   - `094_usuarios_roles_upgrade.sql` — **Upgrade Usuarios y Roles**: `guardar_usuario(p jsonb)` (alta/edición
     ATÓMICA y gateada a admin: crea cuenta auth + fila en una transacción) y `usuarios_bulk(ids, accion, valor)`
     (activar/desactivar/cambiar rol/eliminar en lote, admin-only). Ambas con `anon` sin EXECUTE. La escalada de

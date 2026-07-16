@@ -146,6 +146,7 @@ async function fetchAll(columns, dateFrom, dateTo) {
     let query = supabase
       .from('tms_operaciones')
       .select(columns)
+      .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (dateFrom && dateTo) {
       query = query.or(
@@ -217,6 +218,7 @@ async function fetchActivas(columns) {
       .from('tms_operaciones')
       .select(columns)
       .in("estado", ESTADOS_DB_ACTIVOS)
+      .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
@@ -247,6 +249,7 @@ export async function fetchActivasLista() {
       .from('tms_operaciones')
       .select(cols)
       .in("estado", ESTADOS_DB_LISTA)
+      .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
@@ -924,6 +927,7 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
     let q = supabase.from('tms_operaciones').select(cols)
       .not("incidencia", "is", null)
       .neq("estado_incidencia", "RESUELTA")
+      .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (dateFrom) q = q.or(`fecha_aprobacion_real.gte.${dateFrom},and(fecha_aprobacion_real.is.null,fecha_aprobacion.gte.${dateFrom})`);
     if (dateTo) q = q.or(`fecha_aprobacion_real.lte.${dateTo},and(fecha_aprobacion_real.is.null,fecha_aprobacion.lte.${dateTo})`);

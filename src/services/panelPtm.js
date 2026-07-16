@@ -1,20 +1,19 @@
-// ── Conexión de SOLO LECTURA al "Panel Dashboard PTM" (Supabase externo) ────
-// El panel (panel-dashboard-ptm.vercel.app) vive en otro proyecto Supabase y
-// mantiene la tabla `operaciones` con el ciclo de vida de cada Nota de Venta
-// (cliente, vendedor, factura, guía, transportista, bultos, estado, fechas).
-// Su tabla tiene lectura pública por RLS y esta es su anon key (pública por
-// diseño, la misma que expone el propio panel en su frontend), así que basta
-// el REST de PostgREST — sin credenciales secretas ni segundo cliente supabase.
-const PANEL_URL = 'https://yynlmcxmkrlmhqqoxskb.supabase.co';
-const PANEL_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5bmxtY3hta3JsbWhxcW94c2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTQzMzgsImV4cCI6MjA5NjY5MDMzOH0.zO8D87FBytEvSRuhiAhtBI733qHqCLhViJVkHdU-D6k';
+// ── Info de la N.V. para Calidad · Salida y Post-Venta ──────────────────────
+// Tras el cutover del Panel a CCO, la FUENTE DE VERDAD de las Notas de Venta es
+// `tms_operaciones` EN EL MISMO proyecto Supabase de CCO. Antes esto leía un
+// proyecto Supabase EXTERNO (el Panel en Vercel) con su anon key embebida en el
+// bundle → se eliminó: (1) ya no se expone la llave de otro proyecto ni se envía
+// PII cross-project, y (2) se leen datos EN VIVO (el externo quedó obsoleto tras
+// el cutover). Usa el cliente CCO autenticado (sesión del usuario + RLS).
+import { supabase } from '../supabase';
 
 const CAMPOS = [
   'nv_ptm', 'cliente', 'vendedor', 'factura', 'guia', 'transportista',
   'empresa_transporte', 'bultos', 'estado', 'tipo_despacho', 'urgente',
   'numero_envio', 'fecha_compromiso', 'fecha_despacho', 'centro_costo', 'division',
-].join(',');
+].join(', ');
 
-// Normaliza la fila del panel a los campos que usa Calidad · Salida.
+// Normaliza la fila de operaciones a los campos que usa Calidad · Salida / Post-Venta.
 export const mapNvPanel = (row) => (row ? {
   nv: String(row.nv_ptm ?? ''),
   cliente: row.cliente || '',
@@ -33,15 +32,16 @@ export const mapNvPanel = (row) => (row ? {
   division: row.division || '',
 } : null);
 
-// Busca una N.V por número exacto. Devuelve null si no existe en el panel.
+// Busca una N.V (canal PTM) por número exacto en la operación viva. null si no existe.
 export async function fetchNvPanel(nv) {
   const num = String(nv || '').replace(/[^0-9]/g, '');
   if (!num) return null;
-  const url = `${PANEL_URL}/rest/v1/operaciones?nv_ptm=eq.${num}&select=${CAMPOS}&limit=1`;
-  const res = await fetch(url, {
-    headers: { apikey: PANEL_ANON, Authorization: `Bearer ${PANEL_ANON}` },
-  });
-  if (!res.ok) throw new Error(`Panel PTM respondió HTTP ${res.status}`);
-  const rows = await res.json();
-  return mapNvPanel(rows?.[0]);
+  const { data, error } = await supabase
+    .from('tms_operaciones')
+    .select(CAMPOS)
+    .eq('nv_ptm', Number(num))
+    .order('fecha_estado', { ascending: false })
+    .limit(1);
+  if (error) throw new Error(error.message);
+  return mapNvPanel((data && data[0]) || null);
 }
