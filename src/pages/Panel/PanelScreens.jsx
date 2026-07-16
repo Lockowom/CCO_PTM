@@ -1,10 +1,11 @@
 import React from 'react';
-import { Blocks, ShieldCheck, Settings } from 'lucide-react';
+import { ShieldCheck, Settings } from 'lucide-react';
 
 // Pantallas ya portadas de forma nativa.
 export { default as PanelIngresar } from './screens/PanelIngresar';
 export { default as PanelInfo } from './screens/PanelInfo';
 export { default as PanelTV } from './screens/PanelTV';
+export { default as PanelBuilder } from './screens/PanelBuilder';
 
 // Placeholders de las pantallas del Panel (Fase de estructura). Cada una describe
 // lo que portará su fase. Se irán reemplazando por el port nativo real.
@@ -34,10 +35,6 @@ function Scaffold({ icon: Icon, titulo, resumen, puntos }) {
   );
 }
 
-export function PanelBuilder() {
-  return <Scaffold icon={Blocks} titulo="Builder de Dashboard" resumen="Constructor de widgets drag-drop (port de /builder)"
-    puntos={['Catálogo de widgets + grid arrastrable', 'Motor de fórmulas y campos calculados', 'Panel de configuración por widget', 'Guardar/gestionar layouts']} />;
-}
 export function PanelAuditoria() {
   return <Scaffold icon={ShieldCheck} titulo="Auditoría" resumen="Registro de cambios y actividad (port de /auditoria)"
     puntos={['Bitácora de creaciones/ediciones', 'KPIs por operador', 'Detección de conflictos', 'Filtros por fecha y usuario']} />;
