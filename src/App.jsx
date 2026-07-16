@@ -21,6 +21,7 @@ const Login = React.lazy(() => import('./pages/Login'));
 const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertificado'));
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
+import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // TMS Modules
@@ -352,6 +353,7 @@ function AppContent() {
       {/* Novedades / notas del parche: aparece solo tras actualizar la versión */}
       <NovedadesModal />
       <CommandPalette />
+      <VersionGuard />
       <Suspense fallback={<SuspenseLoader />}><Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />

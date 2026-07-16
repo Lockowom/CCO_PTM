@@ -1,9 +1,18 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Versión desplegada (package.json de este build). El cliente la consulta en
+// /api/version y, si difiere de su __APP_VERSION__, cierra sesión y recarga →
+// "al actualizar, obliga a re-loguear" (igual que el Panel).
+const APP_VERSION = (() => {
+  try { return JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version || null; }
+  catch { return null; }
+})();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -188,6 +197,12 @@ app.get('/api/route', async (req, res) => {
   } catch (e) {
     res.status(502).json({ error: { message: 'Servicio de rutas no disponible.' } });
   }
+});
+
+// Versión desplegada — el cliente la compara con su build para forzar re-login.
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ version: APP_VERSION });
 });
 
 // Cualquier otra ruta /api inexistente responde 404 en vez de caer al
