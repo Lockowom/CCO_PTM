@@ -81,6 +81,10 @@
   - `092_nv_catalogo_normalizacion.sql` — **N.V. normalizada** (evita el bug del BUSCARV del Sheet):
     `normalizar_nv()` + trigger en `tms_nv_catalogo` (al subir/editar deja `canal` en minúscula y `nv` sin
     espacios ni sufijo `.0`) → el match del autocompletado es siempre exacto y preciso.
+  - `094_usuarios_roles_upgrade.sql` — **Upgrade Usuarios y Roles**: `guardar_usuario(p jsonb)` (alta/edición
+    ATÓMICA y gateada a admin: crea cuenta auth + fila en una transacción) y `usuarios_bulk(ids, accion, valor)`
+    (activar/desactivar/cambiar rol/eliminar en lote, admin-only). Ambas con `anon` sin EXECUTE. La escalada de
+    privilegios ya la bloquea el trigger existente `tms_usuarios_freeze_privileged` (no se tocó).
   - `093_consulta_publica_blindaje.sql` — **Blindaje de la consulta pública `/consulta`** (uso público sin
     abrir el sistema). `buscar_nv_publico` pasa a **coincidencia EXACTA** del número de documento (sin
     substring, sin buscar por nombre de cliente → sin enumeración/cosecha de cartera), devuelve un conjunto
