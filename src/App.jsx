@@ -14,7 +14,7 @@ import UpdateOverlay from './components/ui/UpdateOverlay';
 import NovedadesModal from './components/NovedadesModal';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
-import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelAuditoria, PanelConfig } from './pages/Panel/PanelScreens';
+import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelConfig } from './pages/Panel/PanelScreens';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
@@ -415,7 +415,6 @@ function AppContent() {
             <Route path="info" element={<PanelInfo />} />
             <Route path="tv" element={<PanelTV />} />
             <Route path="builder" element={<PanelBuilder />} />
-            <Route path="auditoria" element={<PanelAuditoria />} />
             <Route path="configuracion" element={<PanelConfig />} />
           </Route>
           <Route path="inventory/conteo" element={<ErrorBoundary><ConteoCiclico /></ErrorBoundary>} />

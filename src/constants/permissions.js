@@ -47,8 +47,10 @@ export const ROUTE_PERMISSIONS = {
   '/panel/info': ['view_panel'],
   '/panel/tv': ['view_panel'],
   '/panel/builder': ['view_panel'],
-  '/panel/auditoria': ['view_panel'],
-  '/panel/configuracion': ['view_panel'],
+  // Configuración (incluye Auditoría): SOLO admin. Se exige un permiso de nivel
+  // admin (manage_roles); ADMIN/es_admin_delegado pasan siempre. Los usuarios con
+  // solo view_panel NO ven ni acceden esta pantalla.
+  '/panel/configuracion': ['manage_roles'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
   '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory',
     'conteo_tab_contar', 'conteo_tab_sesiones', 'conteo_tab_conciliacion', 'conteo_tab_ajuste', 'conteo_tab_bloques', 'conteo_tab_proyeccion'],

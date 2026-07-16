@@ -60,8 +60,7 @@ export const APP_ROUTES = [
   { value: '/panel/info', label: 'Panel PTM - Info N.V.', module: 'panel' },
   { value: '/panel/tv', label: 'Panel PTM - Modo TV', module: 'panel' },
   { value: '/panel/builder', label: 'Panel PTM - Builder', module: 'panel' },
-  { value: '/panel/auditoria', label: 'Panel PTM - Auditoría', module: 'panel' },
-  { value: '/panel/configuracion', label: 'Panel PTM - Configuración', module: 'panel' },
+  { value: '/panel/configuracion', label: 'Panel PTM - Configuración (admin)', module: 'panel' },
 
   // Inventario
   { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
