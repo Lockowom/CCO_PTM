@@ -45,6 +45,11 @@
     Recibido*→Entregado) y refresca `updated_at`; índices de lectura; RLS SELECT a `authenticated`. Sin clave
     única de negocio (parcializaciones legítimas). Import histórico server-side con la extensión `http`
     (DB→CCO), reconciliado al 100% (1.970 filas). Escrituras nativas desde CCO: fase siguiente (RPC).
+  - `083_operaciones_sync_dual.sql` — **auto-refresco doble corrida**: `pg_cron` (`panel-sync-operaciones`,
+    cada 10 min) llama `public.panel_sync_operaciones()` (SECURITY DEFINER, EXECUTE revocado a public) que
+    lee la PostgREST del Panel (`http`, config en `private.panel_sync_config`) y reemplaza el set `origen='sheet'`
+    en una transacción atómica, preservando filas `origen='cco'`. Estado en `tms_operaciones_sync`. Se apaga en
+    el cutover con `cron.unschedule('panel-sync-operaciones')`.
   - `065_storage_privado.sql` — **Bloque A seguridad**: buckets `fichas-productos` y `monitoreo-evidencias` pasan a **privados** (las fotos se sirven con URLs firmadas desde el frontend, `src/lib/storageUrl.js`); políticas SELECT para `authenticated` en `storage.objects`; `pv_informe_calidad` agrega `storage_path` a las evidencias para que el visor del ticket firme.
   - `064_supresion_completa_usuario.sql` — **derecho de supresión (Ley 21.719)**: RPC `eliminar_usuario_completo(id)` (gate admin) — borra la cuenta `auth.users`, el log de accesos, la presencia y la auditoría del registro; **anonimiza** mediciones de tiempos, errores de picking y tickets TI; deja una marca `SUPRESION_COMPLETA` anónima. Conserva (documentado) las firmas/`creado_por_nombre` de registros de calidad por trazabilidad del rubro.
   - `063_rls_datos_personales.sql` — **RLS de datos personales**: `tms_usuarios` legible solo la fila propia (+admin; match por email para el primer login), `tms_conductores` (RUT/teléfono) solo con permisos TMS/consultas o la fila propia (escrituras: manage_drivers/auto-registro), correos/tickets/técnicos/descartados de Post-Venta solo con permisos del módulo (+gate en la RPC `pv_correos_ticket`), `tms_accesos` y `tms_errores_picking` solo lectura admin, `tms_mediciones_tiempos` solo outbound. Helper `usuario_tiene_algun_permiso(text[])` (SECURITY DEFINER, evita recursión).
