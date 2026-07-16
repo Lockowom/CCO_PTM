@@ -123,6 +123,52 @@ export async function lookup(canal, nv) {
   return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
 }
 
+// ── Export a Excel de TODA la tabla de operaciones (maestro de N.V.) ─────────
+// Todas las columnas y todos los datos, con encabezados legibles (paridad con
+// la "hoja principal"). Orden estable por id; pagina para traerlo completo.
+const EXPORT_COLS = [
+  ['id', 'ID'],
+  ['nv_ptm', 'N.V PTM'], ['nv_orange', 'N.V ORANGE'], ['nv_farmapack', 'N.V FARMAPACK'], ['varios', 'VARIOS'],
+  ['cliente', 'CLIENTE'], ['vendedor', 'VENDEDOR'], ['centro_costo', 'CENTRO COSTO'], ['division', 'DIVISIÓN'],
+  ['estado', 'ESTADO'], ['urgente', 'URGENTE'], ['tipo_despacho', 'TIPO DESPACHO'],
+  ['transportista', 'TRANSPORTISTA'], ['empresa_transporte', 'EMPRESA TRANSPORTE'],
+  ['factura', 'FACTURA'], ['guia', 'GUÍA'], ['numero_envio', 'N° ENVÍO'], ['bultos', 'BULTOS'],
+  ['valor_nv', 'VALOR N.V'], ['valor_factura', 'VALOR FACTURA'], ['costo_flete', 'COSTO FLETE'],
+  ['fecha_registro_nv', 'F. REGISTRO N.V'], ['fecha_aprobacion', 'F. APROBACIÓN'],
+  ['fecha_aprobacion_real', 'F. APROBACIÓN REAL'], ['fecha_facturacion', 'F. FACTURACIÓN'],
+  ['fecha_compromiso', 'F. COMPROMISO'], ['fecha_en_proceso', 'F. EN PROCESO'], ['fecha_shipping', 'F. SHIPPING'],
+  ['fecha_despacho', 'F. DESPACHO'], ['fecha_en_ruta', 'F. EN RUTA'], ['fecha_entregado', 'F. ENTREGADO'],
+  ['fecha_estado', 'F. ÚLTIMO ESTADO'], ['dias_en_proceso', 'DÍAS EN PROCESO'],
+  ['incidencia', 'INCIDENCIA'], ['estado_incidencia', 'ESTADO INCIDENCIA'],
+  ['observaciones_incidencia', 'OBS. INCIDENCIA'], ['dias_incidencia', 'DÍAS INCIDENCIA'], ['fillrate', 'FILLRATE'],
+  ['origen', 'ORIGEN'], ['created_at', 'CREADO'], ['updated_at', 'ACTUALIZADO'],
+];
+const TS_COLS = new Set(['fecha_estado', 'fecha_registro_nv', 'created_at', 'updated_at']);
+
+export async function exportarOperaciones() {
+  const cols = EXPORT_COLS.map((c) => c[0]).join(',');
+  const all = []; let from = 0; const page = 1000;
+  for (;;) {
+    const { data, error } = await supabase.from('tms_operaciones').select(cols).order('id', { ascending: true }).range(from, from + page - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < page) break;
+    from += page;
+  }
+  return all.map((r) => {
+    const o = {};
+    EXPORT_COLS.forEach(([k, h]) => {
+      let v = r[k];
+      if (k === 'urgente') v = v === true ? 'SÍ' : 'NO';
+      else if (v == null) v = '';
+      else if (TS_COLS.has(k)) v = String(v).slice(0, 19).replace('T', ' ');
+      o[h] = v;
+    });
+    return o;
+  });
+}
+
 // ── Escrituras (RPCs) ────────────────────────────────────────────────────────
 export async function guardar(payload) {
   const p = { ...payload, id: payload?.id ?? (payload?.mode === 'update' ? payload?.lookup?.row : null) };

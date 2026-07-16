@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus,
-  Trash2, X, Plus, Layers, AlertTriangle, UploadCloud,
+  Trash2, X, Plus, Layers, AlertTriangle, UploadCloud, FileSpreadsheet,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
@@ -12,8 +12,10 @@ import {
   CANALES, VARIOS_TIPOS, ESTADOS_SELECCIONABLES, ESTADOS_ACTIVOS, TIPOS_DESPACHO, ACCENT, colorFor,
   listaActivas, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
+  exportarOperaciones,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
+import { exportToExcel } from '../../../lib/exportExcel';
 import FormNV from '../ingresar/components/FormNV';
 import Toast from '../ingresar/components/Toast';
 import Consolidados from '../ingresar/components/Consolidados';
@@ -316,12 +318,28 @@ function TabBuscar({ puedeEscribir }) {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(null);
   const [opts, setOpts] = useState(null);
+  const [exportando, setExportando] = useState(false);
 
   const cargar = useCallback(() => {
     setLoading(true);
     listaActivas().then((rows) => { setLista(rows); setLoading(false); }).catch(() => { setLista([]); setLoading(false); });
   }, []);
   useEffect(() => { cargar(); opciones().then(setOpts).catch(() => {}); }, [cargar]);
+
+  // Descarga TODA la tabla de operaciones (todas las columnas y datos) a Excel.
+  const onExportar = useCallback(async () => {
+    setExportando(true);
+    try {
+      const rows = await exportarOperaciones();
+      if (!rows.length) { toast.warning('No hay operaciones para exportar.'); return; }
+      exportToExcel({ filename: 'Operaciones_NV', sheets: [{ name: 'Notas de Venta', rows }] });
+      toast.success(`Exportadas ${rows.length} N.V. a Excel`);
+    } catch (e) {
+      toast.error('No se pudo exportar: ' + (e?.message || 'error'));
+    } finally {
+      setExportando(false);
+    }
+  }, []);
 
   const filtrada = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -344,9 +362,17 @@ function TabBuscar({ puedeEscribir }) {
           </button>
         ))}
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="text-[12px] text-gray-400">{filtrada.length} resultados de {lista.length} activas</span>
-        <button onClick={cargar} className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-orange-600 font-medium">↻ Recargar</button>
+        <div className="flex items-center gap-3">
+          <button onClick={onExportar} disabled={exportando}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
+            title="Descargar TODAS las N.V. (todas las columnas) a Excel">
+            {exportando ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
+            {exportando ? 'Exportando…' : 'Exportar Excel'}
+          </button>
+          <button onClick={cargar} className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-orange-600 font-medium">↻ Recargar</button>
+        </div>
       </div>
 
       {loading ? (
