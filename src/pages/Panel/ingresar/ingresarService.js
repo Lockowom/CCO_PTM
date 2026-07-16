@@ -77,34 +77,43 @@ export async function buscarNvCatalogo(canal, nv) {
   return (data && data[0]) || null;
 }
 
+// Cascada CENTRO COSTOS: vendedor → centro de costo + división.
+export async function costoDeVendedor(vendedor) {
+  const v = String(vendedor || '').trim(); if (!v) return null;
+  const { data } = await supabase.from('tms_panel_vendedores')
+    .select('centro_costo, division').eq('nombre', v).limit(1);
+  return (data && data[0]) || null;
+}
+
 export async function lookup(canal, nv) {
   const col = colDe(canal); const t = String(nv).trim();
   let q = supabase.from('tms_operaciones').select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
   q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
   const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
-  if (data && data.length) {
-    const r = data[0];
+  const r = data && data.length ? data[0] : null;
+
+  // Cliente/Vendedor: prioriza la operación; si falta, el catálogo NV.
+  const cliente = r?.cliente || cat?.cliente || '';
+  const vendedor = r?.vendedor || cat?.vendedor || '';
+  let ccosto = r?.centro_costo || cat?.centro_costo || '';
+  let division = r?.division || cat?.division || '';
+  // Cascada: si falta centro de costo/división, se derivan del vendedor.
+  if (vendedor && (!ccosto || !division)) {
+    const vc = await costoDeVendedor(vendedor);
+    if (vc) { ccosto = ccosto || vc.centro_costo || ''; division = division || vc.division || ''; }
+  }
+
+  if (r) {
     return {
       found: true, row: r.id,
       data: {
-        ...r, canal, nv: nvDe(r), estado: r.estado,
-        // Cliente/Vendedor: prioriza lo que ya tiene la operación; si falta, el catálogo.
-        cliente: r.cliente || cat?.cliente || '',
-        vendedor: r.vendedor || cat?.vendedor || '',
-        ccosto: r.centro_costo || cat?.centro_costo || '',
-        division: r.division || cat?.division || '',
+        ...r, canal, nv: nvDe(r), estado: r.estado, cliente, vendedor, ccosto, division,
         fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
       },
     };
   }
-  // N.V. nueva → autocompleta cliente/vendedor desde el catálogo (fuente precisa).
-  return {
-    found: false,
-    autoFill: {
-      cliente: cat?.cliente || '', vendedor: cat?.vendedor || '',
-      ccosto: cat?.centro_costo || '', division: cat?.division || '',
-    },
-  };
+  // N.V. nueva → autocompleta cliente/vendedor/ccosto/división (fuente precisa).
+  return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
 }
 
 // ── Escrituras (RPCs) ────────────────────────────────────────────────────────
