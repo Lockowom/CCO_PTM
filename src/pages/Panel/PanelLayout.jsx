@@ -25,7 +25,7 @@ export default function PanelLayout() {
             <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">
               Panel <span className="text-orange-600">PTM</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 truncate">Resumen operacional · datos de ejemplo</p>
+            <p className="text-xs sm:text-sm text-slate-500 truncate">Resumen operacional · datos reales</p>
           </div>
         </div>
       </div>
