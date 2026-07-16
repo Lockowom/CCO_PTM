@@ -221,8 +221,13 @@ export const APP_PERMISSIONS = [
     id: 'panel',
     label: 'Panel PTM (Dashboard)',
     permissions: [
-      { id: 'view_panel', label: 'Ver Panel PTM (dashboard embebido)' },
-      { id: 'manage_panel', label: 'Gestionar Panel PTM (crear/editar N.V. y estados)' }
+      { id: 'view_panel', label: 'Ver Panel PTM (Dashboard + acceso base a todo el módulo)' },
+      { id: 'manage_panel', label: 'Gestionar Panel PTM (crear/editar N.V. y estados)' },
+      // Control por pantalla (además del umbral view_panel, que da acceso a todo):
+      { id: 'panel_ingresar', label: 'Panel · pantalla Ingresar N.V.' },
+      { id: 'panel_info', label: 'Panel · pantalla Info N.V. (consulta)' },
+      { id: 'panel_tv', label: 'Panel · Modo TV' },
+      { id: 'panel_builder', label: 'Panel · Builder de dashboards' }
     ]
   },
   {

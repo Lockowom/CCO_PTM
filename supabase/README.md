@@ -81,6 +81,9 @@
   - `092_nv_catalogo_normalizacion.sql` — **N.V. normalizada** (evita el bug del BUSCARV del Sheet):
     `normalizar_nv()` + trigger en `tms_nv_catalogo` (al subir/editar deja `canal` en minúscula y `nv` sin
     espacios ni sufijo `.0`) → el match del autocompletado es siempre exacto y preciso.
+  - `096_panel_permisos_por_pantalla.sql` — **Panel por pantalla**: +4 permisos en `tms_permisos`
+    (`panel_ingresar`, `panel_info`, `panel_tv`, `panel_builder`, módulo *Panel PTM*) para controlar cada
+    pantalla del Panel desde Roles. Aditivo: `view_panel` sigue siendo el umbral que da acceso a todo.
   - `095_motor_seguridad_advisors.sql` — **Motor + seguridad (advisors)**: RLS `initplan` — envuelve
     `auth.uid()/auth.role()/auth.jwt()/is_admin()` en `(select …)` en las 44 policies afectadas (se evalúan
     1 vez por consulta, no por fila); 7 índices de FKs sin cubrir; revoca `EXECUTE` por `PUBLIC` en
