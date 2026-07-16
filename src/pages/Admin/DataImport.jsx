@@ -71,6 +71,23 @@ const IMPORT_TABS = [
         helpText: 'Pega TODAS las N.V. El sistema detecta cuáles son nuevas. Las eliminadas manualmente no se recargan.',
         smartDedup: true, allowUpdate: true,
     },
+    // Catálogo maestro NV → Cliente/Vendedor por canal (equivalente a las hojas
+    // CARGA PTM/ORANGE/FARMAPACK). Alimenta el autocompletado de Ingresar.
+    ...['ptm', 'orange', 'farmapack'].map((canal) => ({
+        id: `nvcat_${canal}`,
+        label: canal === 'ptm' ? 'N.V PTM' : canal === 'orange' ? 'N.V ORANGE' : 'N.V FARMAPACK',
+        category: 'ventas', icon: FileText, table: 'tms_nv_catalogo',
+        uniqueKey: 'canal,nv', defaultValues: { canal },
+        columns: [
+            { key: 'fecha_aprobacion', label: 'Fecha', required: false, type: 'date', optional: true },
+            { key: 'nv', label: 'N.Venta', required: true, type: 'text' },
+            { key: 'cliente', label: 'Nombre Cliente', required: false, type: 'text' },
+            { key: 'vendedor', label: 'Nombre Vendedor', required: false, type: 'text' },
+            { key: 'monto_neto', label: 'Monto Neto', required: false, type: 'number' },
+        ],
+        helpText: `Catálogo NV → Cliente/Vendedor del canal ${canal.toUpperCase()}. Columnas: Fecha, N.Venta, Nombre Cliente, Nombre Vendedor, Monto Neto. Se actualiza por N.V. (no borra las anteriores).`,
+        smartDedup: false, allowUpdate: true,
+    })),
     {
         id: 'control_despacho', label: 'Control Despacho', category: 'ventas',
         icon: Truck, table: 'tms_control_despacho',

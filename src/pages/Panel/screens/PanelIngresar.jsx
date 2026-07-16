@@ -383,8 +383,8 @@ function TabIngresar() {
     const nv = String(s.nv || '').trim(); if (!nv) return;
     s.patch({ lookupLoading: true, submitResult: null, errors: [] });
     const r = await lookup(s.canal, nv);
-    if (r.found) { s.patch({ lookupResult: { found: true, row: r.row } }); s.applyFound(r.data); }
-    else { s.patch({ lookupResult: { found: false } }); s.applyNew(r.autoFill || {}); }
+    if (r.found) { s.patch({ lookupResult: { found: true, row: r.row, data: r.data } }); s.applyFound(r.data); }
+    else { s.patch({ lookupResult: { found: false, autoFill: r.autoFill } }); s.applyNew(r.autoFill || {}); }
     s.patch({ lookupLoading: false });
   };
 
@@ -393,8 +393,11 @@ function TabIngresar() {
     if (st.mode === 'idle') return;
     if (!st.estado) { st.patch({ submitResult: { success: false, message: 'Falta el Estado' } }); return; }
     st.patch({ submitting: true, submitResult: null });
+    // Datos comerciales precisos (del catálogo NV o de la operación encontrada).
+    const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
     const payload = {
       id: st.mode === 'update' ? st.lookupResult?.row : null, mode: st.mode, canal: st.canal, nv: st.nv,
+      cliente: af?.cliente || '', vendedor: af?.vendedor || '', division: af?.division || '', centro_costo: af?.ccosto || af?.centro_costo || '',
       estado: st.estado, urgente: st.urgente, tipoDespacho: st.tipoDespacho, transportista: st.transportista,
       fechaCompromiso: st.fechaCompromiso, fechaAprobacion: st.fechaAprobacion, fechaAprobacionReal: st.fechaAprobacionReal,
       fechaFacturacion: st.fechaFacturacion, fechaDespacho: st.fechaDespacho, factura: st.factura, guia: st.guia,

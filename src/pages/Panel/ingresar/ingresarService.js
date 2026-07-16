@@ -68,18 +68,41 @@ export async function opciones() {
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
 const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente';
+// Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
+export async function buscarNvCatalogo(canal, nv) {
+  const t = String(nv).trim(); if (!t) return null;
+  const { data } = await supabase.from('tms_nv_catalogo')
+    .select('cliente, vendedor, fecha_aprobacion, centro_costo, division')
+    .eq('canal', canal).eq('nv', t).limit(1);
+  return (data && data[0]) || null;
+}
+
 export async function lookup(canal, nv) {
   const col = colDe(canal); const t = String(nv).trim();
   let q = supabase.from('tms_operaciones').select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
   q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
-  const { data } = await q;
-  if (!data || data.length === 0) return { found: false, autoFill: { cliente: '', vendedor: '', ccosto: '', division: '' } };
-  const r = data[0];
+  const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
+  if (data && data.length) {
+    const r = data[0];
+    return {
+      found: true, row: r.id,
+      data: {
+        ...r, canal, nv: nvDe(r), estado: r.estado,
+        // Cliente/Vendedor: prioriza lo que ya tiene la operación; si falta, el catálogo.
+        cliente: r.cliente || cat?.cliente || '',
+        vendedor: r.vendedor || cat?.vendedor || '',
+        ccosto: r.centro_costo || cat?.centro_costo || '',
+        division: r.division || cat?.division || '',
+        fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
+      },
+    };
+  }
+  // N.V. nueva → autocompleta cliente/vendedor desde el catálogo (fuente precisa).
   return {
-    found: true, row: r.id,
-    data: {
-      ...r, canal, nv: nvDe(r), ccosto: r.centro_costo, estado: r.estado,
-      fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
+    found: false,
+    autoFill: {
+      cliente: cat?.cliente || '', vendedor: cat?.vendedor || '',
+      ccosto: cat?.centro_costo || '', division: cat?.division || '',
     },
   };
 }
