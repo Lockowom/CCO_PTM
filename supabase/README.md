@@ -81,6 +81,16 @@
   - `092_nv_catalogo_normalizacion.sql` — **N.V. normalizada** (evita el bug del BUSCARV del Sheet):
     `normalizar_nv()` + trigger en `tms_nv_catalogo` (al subir/editar deja `canal` en minúscula y `nv` sin
     espacios ni sufijo `.0`) → el match del autocompletado es siempre exacto y preciso.
+  - `093_consulta_publica_blindaje.sql` — **Blindaje de la consulta pública `/consulta`** (uso público sin
+    abrir el sistema). `buscar_nv_publico` pasa a **coincidencia EXACTA** del número de documento (sin
+    substring, sin buscar por nombre de cliente → sin enumeración/cosecha de cartera), devuelve un conjunto
+    **mínimo no sensible** (sin montos/vendedor/centro de costo/incidencias/fillrate/empresa) y aplica
+    **rate-limit por IP en la BD** (30/min, tabla `tms_consulta_rate` con RLS y sin grants directos). Además
+    se **revoca `EXECUTE` a `anon`** en las RPC de escritura/borrado del Panel (`guardar_*`, `eliminar_*`,
+    `cambiar_estado_nv`, `toggle_panel_catalogo`, `panel_sync_operaciones`, `batch_update_nv_estado`) — solo
+    quedan para `authenticated`. Superficies anónimas restantes: `buscar_nv_publico`, `verificar_certificado`,
+    `crear_pv_ticket`. (Base ya verificada: RLS `{authenticated}` ⇒ anon no lee tablas; `_panel_puede_escribir()`
+    = FALSE para anon.)
   - `065_storage_privado.sql` — **Bloque A seguridad**: buckets `fichas-productos` y `monitoreo-evidencias` pasan a **privados** (las fotos se sirven con URLs firmadas desde el frontend, `src/lib/storageUrl.js`); políticas SELECT para `authenticated` en `storage.objects`; `pv_informe_calidad` agrega `storage_path` a las evidencias para que el visor del ticket firme.
   - `064_supresion_completa_usuario.sql` — **derecho de supresión (Ley 21.719)**: RPC `eliminar_usuario_completo(id)` (gate admin) — borra la cuenta `auth.users`, el log de accesos, la presencia y la auditoría del registro; **anonimiza** mediciones de tiempos, errores de picking y tickets TI; deja una marca `SUPRESION_COMPLETA` anónima. Conserva (documentado) las firmas/`creado_por_nombre` de registros de calidad por trazabilidad del rubro.
   - `063_rls_datos_personales.sql` — **RLS de datos personales**: `tms_usuarios` legible solo la fila propia (+admin; match por email para el primer login), `tms_conductores` (RUT/teléfono) solo con permisos TMS/consultas o la fila propia (escrituras: manage_drivers/auto-registro), correos/tickets/técnicos/descartados de Post-Venta solo con permisos del módulo (+gate en la RPC `pv_correos_ticket`), `tms_accesos` y `tms_errores_picking` solo lectura admin, `tms_mediciones_tiempos` solo outbound. Helper `usuario_tiene_algun_permiso(text[])` (SECURITY DEFINER, evita recursión).

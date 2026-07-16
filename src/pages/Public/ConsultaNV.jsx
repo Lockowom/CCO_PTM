@@ -49,8 +49,13 @@ export default function ConsultaNV() {
     setBuscando(true); setError('');
     const t = setTimeout(async () => {
       const { data, error: e } = await supabase.rpc('buscar_nv_publico', { p_q: q });
-      if (e) { setError('No se pudo consultar. Intenta nuevamente.'); setResultados([]); }
-      else setResultados(data || []);
+      if (e) {
+        const limitado = /rate.?limit/i.test(e.message || '') || e.code === 'P0001';
+        setError(limitado
+          ? 'Demasiadas consultas seguidas. Espera un momento e intenta de nuevo.'
+          : 'No se pudo consultar. Intenta nuevamente.');
+        setResultados([]);
+      } else setResultados(data || []);
       setBuscando(false);
     }, 300);
     return () => clearTimeout(t);
@@ -84,7 +89,7 @@ export default function ConsultaNV() {
             <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={query} onChange={(e) => setQuery(e.target.value)} autoFocus
-              placeholder="N° de NV, Factura, Guía, N° de envío o Cliente…"
+              placeholder="N° de NV, Factura, Guía o N° de envío…"
               className="w-full pl-11 pr-10 py-3 rounded-xl border border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm outline-none transition"
             />
             {query && (
@@ -92,7 +97,7 @@ export default function ConsultaNV() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={16} /></button>
             )}
           </div>
-          <p className="mt-2 text-xs text-slate-400">Escribe al menos 3 caracteres. Puedes buscar por número de NV, factura, guía, N° de envío o nombre del cliente.</p>
+          <p className="mt-2 text-xs text-slate-400">Ingresa el <b>número exacto</b> de tu nota de venta, factura, guía o N° de envío.</p>
         </div>
 
         {/* Resumen */}
@@ -167,10 +172,7 @@ export default function ConsultaNV() {
                           <Row label="Estado" value={est} color={color} />
                           <Row label="Tipo Despacho" value={r.tipo_despacho} />
                           <Row label="Transportista" value={r.transportista} />
-                          <Row label="Emp. Transporte" value={r.empresa_transporte} />
                           <Row label="Bultos" value={r.bultos} />
-                          <Row label="Incidencia" value={r.incidencia} />
-                          <Row label="Estado Incid." value={r.estado_incidencia} />
                         </InfoSection>
                         <InfoSection titulo="Fechas Clave">
                           <Row label="Registro NV" value={fecha(r.fecha_registro_nv)} />
