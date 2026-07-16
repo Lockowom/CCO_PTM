@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus,
-  Trash2, X, Plus, Layers,
+  Trash2, X, Plus, Layers, AlertTriangle, UploadCloud,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
@@ -12,6 +13,7 @@ import {
   listaActivas, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
 } from '../ingresar/ingresarService';
+import { fetchVendedores } from '../config/configService';
 import FormNV from '../ingresar/components/FormNV';
 import Toast from '../ingresar/components/Toast';
 import Consolidados from '../ingresar/components/Consolidados';
@@ -367,12 +369,57 @@ function TabBuscar({ puedeEscribir }) {
   );
 }
 
+// ── Aviso emergente: N.V. sin cliente en el catálogo (canales reales) ────────
+// El supervisor NO puede crear a ciegas: si la N.V. no está en el catálogo, se
+// le pide actualizar la carga (Carga Masiva N.V PTM / ORANGE / FARMAPACK) para
+// que los datos de cliente/vendedor/centro de costo sean los correctos.
+function ClienteNoEncontradoModal({ canal, nv, onClose }) {
+  const navigate = useNavigate();
+  const canalLabel = (CANALES.find((c) => c.value === canal)?.label || canal || '').toUpperCase();
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden anim-fade-up">
+        <div className="px-6 pt-6 pb-5 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 text-amber-500 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={26} />
+          </div>
+          <h3 className="text-[16px] font-black text-gray-900">Cliente no encontrado</h3>
+          <p className="mt-2 text-[13px] text-gray-500 leading-relaxed">
+            La N.V. <strong className="text-gray-700">{nv}</strong> del canal <strong className="text-gray-700">{canalLabel}</strong> no
+            está en el catálogo, por lo que no se pueden traer sus datos de cliente/vendedor/centro de costo.
+          </p>
+          <p className="mt-3 text-[13px] font-semibold text-gray-700 leading-relaxed">
+            Realiza la actualización de la carga de N.V. para poder continuar.
+          </p>
+        </div>
+        <div className="px-5 pb-5 flex flex-col gap-2">
+          <button onClick={() => navigate('/inbound/data-import')}
+            className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            style={{ background: ACCENT }}>
+            <UploadCloud size={16} /> Ir a Carga Masiva
+          </button>
+          <button onClick={onClose} className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 // ── Pestaña Ingresar (FormNV + store, port fiel del original) ────────────────
 function TabIngresar() {
   const s = useFormNVStore();
   const [opts, setOpts] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
+  const [vendedores, setVendedores] = useState([]);
+  const [aviso, setAviso] = useState(null);   // { canal, nv } → modal "cliente no encontrado"
   useEffect(() => { opciones().then(setOpts).catch(() => {}); }, []);
+  // Catálogo de vendedores (CENTRO COSTOS) para la lista emergente de Varios:
+  // al elegir un vendedor se auto-rellenan división + centro de costo.
+  useEffect(() => { fetchVendedores().then(setVendedores).catch(() => setVendedores([])); }, []);
   useEffect(() => {
     if (!toastMsg) return undefined;
     const t = setTimeout(() => setToastMsg(null), 3000);
@@ -383,8 +430,19 @@ function TabIngresar() {
     const nv = String(s.nv || '').trim(); if (!nv) return;
     s.patch({ lookupLoading: true, submitResult: null, errors: [] });
     const r = await lookup(s.canal, nv);
-    if (r.found) { s.patch({ lookupResult: { found: true, row: r.row, data: r.data } }); s.applyFound(r.data); }
-    else { s.patch({ lookupResult: { found: false, autoFill: r.autoFill } }); s.applyNew(r.autoFill || {}); }
+    if (r.found) {
+      s.patch({ lookupResult: { found: true, row: r.row, data: r.data } });
+      s.applyFound(r.data);
+    } else if (s.canal !== 'varios' && !r.autoFill?.cliente) {
+      // Canal real sin cliente en el catálogo → NO se crea a ciegas: avisar y
+      // pedir actualizar la carga de N.V. (queda en idle hasta que se cargue).
+      s.patch({ lookupLoading: false, lookupResult: null, mode: 'idle' });
+      setAviso({ canal: s.canal, nv });
+      return;
+    } else {
+      s.patch({ lookupResult: { found: false, autoFill: r.autoFill } });
+      s.applyNew(r.autoFill || {});
+    }
     s.patch({ lookupLoading: false });
   };
 
@@ -418,7 +476,8 @@ function TabIngresar() {
 
   return (
     <div className="pb-24">
-      <FormNV options={opts} transportistasOpts={opts?.transportistas || []} vendedoresMaestro={[]} onLookup={handleLookup} />
+      <FormNV options={opts} transportistasOpts={opts?.transportistas || []} vendedoresMaestro={vendedores} onLookup={handleLookup} />
+      {aviso && <ClienteNoEncontradoModal canal={aviso.canal} nv={aviso.nv} onClose={() => setAviso(null)} />}
       {s.mode !== 'idle' && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
