@@ -1,9 +1,10 @@
 import React from 'react';
-import { Tv, Blocks, ShieldCheck, Settings } from 'lucide-react';
+import { Blocks, ShieldCheck, Settings } from 'lucide-react';
 
 // Pantallas ya portadas de forma nativa.
 export { default as PanelIngresar } from './screens/PanelIngresar';
 export { default as PanelInfo } from './screens/PanelInfo';
+export { default as PanelTV } from './screens/PanelTV';
 
 // Placeholders de las pantallas del Panel (Fase de estructura). Cada una describe
 // lo que portará su fase. Se irán reemplazando por el port nativo real.
@@ -33,10 +34,6 @@ function Scaffold({ icon: Icon, titulo, resumen, puntos }) {
   );
 }
 
-export function PanelTV() {
-  return <Scaffold icon={Tv} titulo="Modo TV" resumen="Vista de indicadores para pantalla grande (port de /tv)"
-    puntos={['KPIs a pantalla completa', 'Auto-rotación de secciones', 'Actualización en tiempo real', 'Diseño de alto contraste']} />;
-}
 export function PanelBuilder() {
   return <Scaffold icon={Blocks} titulo="Builder de Dashboard" resumen="Constructor de widgets drag-drop (port de /builder)"
     puntos={['Catálogo de widgets + grid arrastrable', 'Motor de fórmulas y campos calculados', 'Panel de configuración por widget', 'Guardar/gestionar layouts']} />;
