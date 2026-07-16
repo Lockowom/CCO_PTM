@@ -12,8 +12,10 @@ export const CANALES = [
   { value: 'farmapack', label: 'Farmapack' }, { value: 'varios', label: 'Varios' },
 ];
 export const VARIOS_TIPOS = ['N.V ANTICIPADA', 'DEMO', 'REGALO', 'BOLETA', 'GUÍA SALIDA'];
-export const ESTADOS_SELECCIONABLES = ['En Proceso', 'P / VENDEDOR', 'P / STOCK', 'P / RETIRO', 'Shipping', 'Currier', 'En Ruta', 'Entregado', 'NULA', 'REFACTURADO', 'RECHAZADO'];
-export const ESTADOS_ACTIVOS = ['En Proceso', 'P / VENDEDOR', 'P / STOCK', 'P / RETIRO', 'Shipping', 'Currier', 'En Ruta'];
+// Solo los estados que PTM usa hoy (se quitaron P / VENDEDOR, P / STOCK,
+// P / RETIRO, Currier y REFACTURADO — en desuso, siempre en 0).
+export const ESTADOS_SELECCIONABLES = ['En Proceso', 'Shipping', 'En Ruta', 'Entregado', 'NULA', 'RECHAZADO'];
+export const ESTADOS_ACTIVOS = ['En Proceso', 'Shipping', 'En Ruta'];
 export const TIPOS_DESPACHO = ['Courier - Inyección', 'Directo', 'Courier (Retiro / Pick-up)'];
 export const ESTADO_COLOR = {
   'En Proceso': '#f59e0b', 'P / VENDEDOR': '#e11d48', 'P / STOCK': '#78716c', 'P / RETIRO': '#9333ea',

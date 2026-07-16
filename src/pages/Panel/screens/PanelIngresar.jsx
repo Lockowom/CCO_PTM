@@ -335,7 +335,7 @@ function TabBuscar({ puedeEscribir }) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por NV, guía o factura…" className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm outline-none bg-white" />
       </div>
       <div className="flex flex-wrap gap-2">
-        {ESTADOS_ACTIVOS.filter((e) => (conteo[e] || 0) >= 0).map((e) => (
+        {ESTADOS_ACTIVOS.filter((e) => (conteo[e] || 0) > 0).map((e) => (
           <button key={e} onClick={() => setFiltro(filtro === e ? 'Todos' : e)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold border transition-all ${filtro === e ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'}`}>
             {e} <span className={`text-[11px] ${filtro === e ? 'text-gray-300' : 'text-gray-400'}`}>{conteo[e] || 0}</span>
