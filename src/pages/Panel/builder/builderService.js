@@ -5,7 +5,10 @@
 //  reutilizadas de dash/dashData. Firmas iguales a las de queries.ts.
 // ============================================================================
 import { supabase } from '../../../supabase';
-export { fetchOperacionesRows, fetchOperacionesSample } from '../dash/dashData';
+export {
+  fetchOperacionesRows, fetchOperacionesSample,
+  fetchDashboardData, fetchAuditStats, fetchTendenciaHistorica,
+} from '../dash/dashData';
 
 // ── Dashboards ───────────────────────────────────────────────────────────────
 export async function fetchDashboards() {

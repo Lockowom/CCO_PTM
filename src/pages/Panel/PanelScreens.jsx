@@ -3,5 +3,5 @@
 export { default as PanelIngresar } from './screens/PanelIngresar';
 export { default as PanelInfo } from './info/PanelInfoReal';
 export { default as PanelTV } from './tv/PanelTVReal';
-export { default as PanelBuilder } from './screens/PanelBuilder';
+export { default as PanelBuilder } from './builder/PanelBuilderReal';
 export { default as PanelConfig } from './screens/PanelConfig';
