@@ -20,6 +20,7 @@ import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelConfig } from './
 const Login = React.lazy(() => import('./pages/Login'));
 const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertificado'));
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
+const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // TMS Modules
@@ -357,6 +358,8 @@ function AppContent() {
         <Route path="/verificar" element={<VerificarCertificado />} />
         {/* Formulario público de solicitud de servicio (sin login) */}
         <Route path="/soporte" element={<ErrorBoundary><SolicitudPublica /></ErrorBoundary>} />
+        {/* Consulta pública de Nota de Venta (Info N.V. sin login) */}
+        <Route path="/consulta" element={<ErrorBoundary><ConsultaNV /></ErrorBoundary>} />
 
         {/* Protected Routes (Wrapped in ProtectedRoute) */}
         <Route path="/" element={<ProtectedRoute />}>
