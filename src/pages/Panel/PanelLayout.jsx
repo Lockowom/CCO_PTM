@@ -1,12 +1,17 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard } from 'lucide-react';
 import './panel.css';
 
 // Shell del Panel PTM nativo (port de la estructura de app/ del repo panel-).
 // La navegación entre pantallas vive en el menú de CCO (Inteligencia → Panel
 // PTM), así que aquí NO se repite un nav interno. Contenido vía <Outlet/>.
+// El índice (/panel) es el Dashboard fiel (copia del original), que trae su
+// PROPIA cabecera de pantalla completa → en esa ruta se omite la cabecera CCO.
 export default function PanelLayout() {
+  const { pathname } = useLocation();
+  const esDashboard = pathname === '/panel' || pathname === '/panel/';
+  if (esDashboard) return <div className="panel-dash-wrap"><Outlet /></div>;
   return (
     <div className="panel-root space-y-4">
       {/* Cabecera estilo módulo CCO (franja degradada + ícono naranja) */}
