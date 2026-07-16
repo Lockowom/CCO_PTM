@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 import { Plus, Trash2, Settings2, Save, X, Blocks, Calculator, LayoutGrid } from 'lucide-react';
 import PanelModal from '../PanelModal';
-import { MOCK_WEEKLY, MOCK_LEADTIME, MOCK_ESTADO_TABLE, MOCK_RANK_TRANSP, ESTADO_COLOR } from '../mock';
+import { MOCK_WEEKLY, MOCK_LEADTIME, MOCK_ESTADO_TABLE, MOCK_RANK_TRANSP, ESTADO_COLOR, MOCK_NVS } from '../mock';
+import { evaluateFormula, validarFormula, extractFields, FUNCIONES_DISPONIBLES } from '../formulaEngine';
+
+// Fila de ejemplo (una N.V.) + métricas agregadas, sobre la que se evalúan los
+// campos calculados en vivo. Al conectar datos reales, se evalúa sobre cada fila.
+const SAMPLE_ROW = { ...MOCK_NVS[0], total: 1284, entregadas: 942, evaluables: 214, despachadas: 187 };
+const fmtVal = (v) => (v == null ? '—' : v instanceof Date ? v.toISOString().slice(0, 10) : typeof v === 'number' ? (Math.round(v * 100) / 100).toLocaleString('es-CL') : String(v));
 
 // Builder (port de /builder): constructor de widgets. Catálogo (tipo → fuente),
 // lienzo con los widgets renderizados de verdad, panel de configuración por
@@ -164,7 +170,16 @@ export default function PanelBuilder() {
   };
   const removeWidget = (id) => { setWidgets((ws) => ws.filter((w) => w.id !== id)); if (selId === id) setSelId(null); };
   const guardar = () => { try { localStorage.setItem(LS_KEY, JSON.stringify({ widgets, calculados })); } catch { /* ignore */ } toast.success('Layout guardado (ejemplo)'); };
-  const addCampo = () => { if (!nuevoCampo.nombre.trim() || !nuevoCampo.formula.trim()) return; setCalculados((c) => [...c, nuevoCampo]); setNuevoCampo({ nombre: '', formula: '' }); };
+  // Vista previa en vivo de la fórmula que se escribe (motor real).
+  const prev = useMemo(() => (nuevoCampo.formula.trim() ? evaluateFormula(nuevoCampo.formula, SAMPLE_ROW) : { ok: false }), [nuevoCampo.formula]);
+  const refs = useMemo(() => (nuevoCampo.formula.trim() ? extractFields(nuevoCampo.formula) : []), [nuevoCampo.formula]);
+  const addCampo = () => {
+    if (!nuevoCampo.nombre.trim()) return;
+    const v = validarFormula(nuevoCampo.formula);
+    if (!v.ok) return toast.error(`Fórmula inválida: ${v.error}`);
+    setCalculados((c) => [...c, nuevoCampo]);
+    setNuevoCampo({ nombre: '', formula: '' });
+  };
 
   return (
     <div className="anim-fade-up">
@@ -260,23 +275,54 @@ export default function PanelBuilder() {
           </div>
         </div>
       ) : (
-        /* Campos calculados */
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 max-w-2xl">
+        /* Campos calculados — MOTOR REAL de fórmulas (formulaEngine) */
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 max-w-3xl">
           <h3 className="text-sm font-black text-slate-700 mb-1 flex items-center gap-1.5"><Calculator size={15} className="text-orange-500" /> Campos calculados</h3>
-          <p className="text-xs text-slate-400 mb-4">Crea métricas derivadas con una fórmula (ej. <code className="bg-slate-100 px-1 rounded">entregadas / total * 100</code>).</p>
+          <p className="text-xs text-slate-400 mb-1">Métricas derivadas con fórmulas tipo Excel — se evalúan de verdad contra una N.V. de ejemplo (<b className="text-slate-500">{SAMPLE_ROW.nv}</b>).</p>
+          <p className="text-[11px] text-slate-400 mb-4">Campos: <code className="bg-slate-100 px-1 rounded">total, entregadas, evaluables, despachadas, estado, fecha_compromiso, fecha_entregado…</code></p>
+
           <div className="space-y-2 mb-4">
-            {calculados.map((c, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                <div className="flex-1 min-w-0"><div className="text-sm font-black text-slate-700">{c.nombre}</div><code className="text-[11px] text-slate-500">{c.formula}</code></div>
-                <button onClick={() => setCalculados((cs) => cs.filter((_, j) => j !== i))} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50"><Trash2 size={14} /></button>
-              </div>
-            ))}
+            {calculados.map((c, i) => {
+              const res = evaluateFormula(c.formula, SAMPLE_ROW);
+              return (
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-black text-slate-700">{c.nombre}</div>
+                    <code className="text-[11px] text-slate-500 break-all">{c.formula}</code>
+                  </div>
+                  <span className={`shrink-0 text-xs font-black px-2.5 py-1 rounded-lg ${res.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                    {res.ok ? `= ${fmtVal(res.value)}` : '⚠ error'}
+                  </span>
+                  <button onClick={() => setCalculados((cs) => cs.filter((_, j) => j !== i))} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50"><Trash2 size={14} /></button>
+                </div>
+              );
+            })}
             {calculados.length === 0 && <p className="text-xs text-slate-400">Aún no hay campos calculados.</p>}
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto] gap-2 items-end">
             <div><label className="field-label">Nombre</label><input className="field-input" value={nuevoCampo.nombre} onChange={(e) => setNuevoCampo((n) => ({ ...n, nombre: e.target.value }))} placeholder="Ej: Fill rate" /></div>
-            <div><label className="field-label">Fórmula</label><input className="field-input" value={nuevoCampo.formula} onChange={(e) => setNuevoCampo((n) => ({ ...n, formula: e.target.value }))} placeholder="ej: despachadas / evaluables * 100" /></div>
-            <button onClick={addCampo} className="px-4 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black hover:bg-orange-600 inline-flex items-center gap-1.5"><Plus size={14} /> Añadir</button>
+            <div><label className="field-label">Fórmula</label><input className="field-input" value={nuevoCampo.formula} onChange={(e) => setNuevoCampo((n) => ({ ...n, formula: e.target.value }))} placeholder="ej: ROUND(despachadas / evaluables * 100, 1)" /></div>
+            <button onClick={addCampo} disabled={!prev.ok || !nuevoCampo.nombre.trim()} className="px-4 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black hover:bg-orange-600 disabled:opacity-40 inline-flex items-center gap-1.5"><Plus size={14} /> Añadir</button>
+          </div>
+          {/* Vista previa en vivo de la fórmula que se está escribiendo */}
+          {nuevoCampo.formula.trim() && (
+            <div className={`mt-2 text-xs rounded-lg px-3 py-2 ${prev.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+              {prev.ok
+                ? <>Resultado con {SAMPLE_ROW.nv}: <b>{fmtVal(prev.value)}</b>{refs.length > 0 && <span className="text-emerald-600/70"> · usa: {refs.join(', ')}</span>}</>
+                : <>⚠ {prev.error}</>}
+            </div>
+          )}
+
+          {/* Funciones disponibles */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Funciones disponibles</p>
+            <div className="flex flex-wrap gap-1.5">
+              {FUNCIONES_DISPONIBLES.map((fn) => (
+                <button key={fn} type="button" onClick={() => setNuevoCampo((n) => ({ ...n, formula: (n.formula || '') + fn + '(' }))}
+                  className="text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-orange-100 hover:text-orange-700">{fn}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}
