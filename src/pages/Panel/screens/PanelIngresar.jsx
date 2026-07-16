@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus } from 'lucide-react';
+import { lookupNV, guardarNV } from '../panelService';
 
 // Encabezado de sección con chip numerado (look guiado, estilo CCO).
 function SectionHead({ n, icon: Icon, title, accent = 'orange' }) {
@@ -72,36 +73,27 @@ export default function PanelIngresar() {
     [estadoQuery]
   );
 
-  // Lookup SIMULADO: NV terminada en dígito par → "encontrada" (actualizar);
-  // impar → "nueva" (crear). Rellena datos de ejemplo.
+  // Lookup vía servicio (panelService.lookupNV).
   const buscar = () => {
     const nv = f.nv.trim();
     if (!nv) return;
     setLookupLoading(true);
-    setTimeout(() => {
-      const par = Number(nv.slice(-1)) % 2 === 0;
-      if (par) {
-        set({
-          mode: 'update', lookup: { found: true, row: 100 + (Number(nv.slice(-2)) || 0),
-            data: { cliente: 'Clínica Los Andes', vendedor: 'M. González', ccosto: '1-06', division: 'DIV. HOSPITALARIA' } },
-          fechaAprobacion: '2026-07-08', fechaCompromiso: '2026-07-10', estado: 'En Proceso',
-        });
-      } else {
-        set({ mode: 'create', lookup: { found: false, autoFill: { cliente: '', vendedor: '' } }, fechaAprobacion: hoy() });
-      }
+    lookupNV(nv, f.canal).then((r) => {
+      if (r.found) set({ mode: 'update', lookup: { found: true, row: r.row, data: r.data }, fechaAprobacion: r.fechaAprobacion, fechaCompromiso: r.fechaCompromiso, estado: r.estado });
+      else set({ mode: 'create', lookup: { found: false, autoFill: r.autoFill }, fechaAprobacion: r.fechaAprobacion });
       setLookupLoading(false);
-    }, 600);
+    });
   };
 
   const guardar = () => {
     if (f.mode === 'idle') return toast.error('Busca una N.V. primero');
     if (!f.estado) return toast.error('Falta el Estado');
     setSaving(true);
-    setTimeout(() => {
+    guardarNV({ ...f }).then((res) => {
       setSaving(false);
-      toast.success(`N.V. ${f.nv} ${f.mode === 'update' ? 'actualizada' : 'creada'} (ejemplo)`);
-      setF(FORM0);
-    }, 700);
+      if (res.ok) { toast.success(`N.V. ${f.nv} ${f.mode === 'update' ? 'actualizada' : 'creada'} (ejemplo)`); setF(FORM0); }
+      else toast.error('No se pudo guardar');
+    });
   };
 
   const af = f.lookup?.found ? f.lookup.data : f.lookup?.autoFill;

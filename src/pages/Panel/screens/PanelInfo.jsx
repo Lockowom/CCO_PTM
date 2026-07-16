@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, X, ChevronDown, Clock, Package } from 'lucide-react';
-import { MOCK_NVS, ESTADO_COLOR } from '../mock';
+import { buscarNV, ESTADO_COLOR } from '../panelService';
 
 // Info N.V. (port de /info): buscador universal + tarjetas expandibles con el
 // detalle completo. Datos de ejemplo (MOCK_NVS); al conectar, se reemplaza la
@@ -51,13 +51,15 @@ export default function PanelInfo() {
     });
   };
 
-  const q = query.trim().toLowerCase();
-  const resultados = useMemo(() => {
-    if (!q) return [];
-    return MOCK_NVS.filter((r) =>
-      [r.nv, r.nv_ptm, r.nv_orange, r.nv_farmapack, r.varios, r.factura, r.guia, r.numero_envio, r.cliente, r.vendedor, r.transportista, r.estado]
-        .filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
-    );
+  const q = query.trim();
+  const [resultados, setResultados] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  // Búsqueda con debounce a través del servicio (panelService.buscarNV).
+  useEffect(() => {
+    if (!q) { setResultados([]); return; }
+    setBuscando(true);
+    const t = setTimeout(() => { buscarNV(q).then((rows) => { setResultados(rows); setBuscando(false); }); }, 250);
+    return () => clearTimeout(t);
   }, [q]);
 
   const searched = q.length > 0;
@@ -120,7 +122,7 @@ export default function PanelInfo() {
       )}
 
       {/* Sin resultados */}
-      {searched && resultados.length === 0 && (
+      {searched && !buscando && resultados.length === 0 && (
         <div className="text-center py-16">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto mb-4"><Package size={30} /></div>
           <p className="text-slate-500 text-sm font-bold">No se encontraron resultados</p>

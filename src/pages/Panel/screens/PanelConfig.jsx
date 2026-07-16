@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Truck, Users, ShieldCheck, Plus, Trash2, Lock, Search } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { getCatalogo } from '../panelService';
 
 // Configuración (port de /configuracion + /auditoria fusionados). SOLO admin.
 // Pestañas: Transportistas y Vendedores (catálogos maestros) + Auditoría
@@ -119,6 +120,13 @@ export default function PanelConfig() {
   const [tab, setTab] = useState('transportistas');
   const [transp, setTransp] = useState(SEED_TRANSP);
   const [vend, setVend] = useState(SEED_VEND);
+
+  // Catálogos desde el servicio (punto único de conexión).
+  useEffect(() => {
+    if (!isAdmin) return;
+    getCatalogo('transportistas').then((x) => x?.length && setTransp(x));
+    getCatalogo('vendedores').then((x) => x?.length && setVend(x));
+  }, [isAdmin]);
 
   if (!isAdmin) {
     return (

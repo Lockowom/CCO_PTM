@@ -1,32 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { getTV } from '../panelService';
 
 // Modo TV (port de /tv): tablero kiosco oscuro con barras por estado + panel de
-// detalle, auto-rotación y contadores "en vivo". Datos de ejemplo. Botón de
-// pantalla completa (Fullscreen API) para usarlo en un televisor.
+// detalle, auto-rotación y contadores "en vivo". Datos vía panelService.getTV.
+// Botón de pantalla completa (Fullscreen API) para usarlo en un televisor.
 const ROTATE_MS = 8000;
 const PAUSE_MS = 15000;
-
-const EST = [
-  { estado: 'En Proceso', color: '#f59e0b', icon: '⚙' },
-  { estado: 'P / Vendedor', color: '#d97706', icon: '👤' },
-  { estado: 'Shipping', color: '#8b5cf6', icon: '📋' },
-  { estado: 'Courier', color: '#7c3aed', icon: '🚛' },
-  { estado: 'En Ruta', color: '#06b6d4', icon: '🛣' },
-  { estado: 'Entregado', color: '#22c55e', icon: '✓' },
-];
-const nv = (n, canal, cliente, vendedor, transportista, urgente, dias) => ({ nv: n, canal, cliente, vendedor, transportista, urgente, dias });
-const DATA = {
-  'En Proceso': [nv('97125', 'PTM', 'Clínica Los Andes', 'M. González', '—', true, 3), nv('55012', 'Farmapack', 'Lab. BioTest', 'C. Díaz', '—', false, 2), nv('97140', 'PTM', 'Hospital del Valle', 'L. Torres', '—', false, 1)],
-  'P / Vendedor': [nv('V-3021', 'Varios', 'Dental Sur', 'A. Muñoz', '—', false, 4)],
-  'Shipping': [nv('97108', 'PTM', 'Centro Médico Sur', 'L. Torres', 'LogiSur', false, 2), nv('88450', 'Orange', 'Farmacia Vida', 'P. Rojas', 'RápidoExpress', false, 1)],
-  'Courier': [nv('88431', 'Orange', 'Hospital Regional', 'P. Rojas', 'RápidoExpress', false, 1)],
-  'En Ruta': [nv('97125', 'PTM', 'Clínica Los Andes', 'M. González', 'Transportes Andes', true, 1), nv('55070', 'Farmapack', 'Clínica Norte', 'C. Díaz', 'CargoNorte', false, 2)],
-  'Entregado': [nv('88431', 'Orange', 'Hospital Regional', 'P. Rojas', 'RápidoExpress', false, 0), nv('97090', 'PTM', 'Policlínico Oriente', 'M. González', 'LogiSur', false, 0)],
-};
-const ESTADOS = EST.map((e) => ({ ...e, nvs: DATA[e.estado] || [], cantidad: (DATA[e.estado] || []).length + [8, 3, 6, 2, 5, 22][EST.indexOf(e)] }));
-const TOTAL = ESTADOS.reduce((a, e) => a + e.cantidad, 0);
-const URGENTES = Object.values(DATA).flat().filter((n) => n.urgente);
 
 // Contador animado simple.
 function CountUp({ end, className }) {
@@ -61,6 +41,7 @@ function NvRow({ n, color }) {
 }
 
 export default function PanelTV() {
+  const [data, setData] = useState(null); // { estados, total, urgentes }
   const [sel, setSel] = useState('En Proceso');
   const [autoRotate, setAutoRotate] = useState(true);
   const [reloj, setReloj] = useState('');
@@ -69,7 +50,12 @@ export default function PanelTV() {
   const pauseUntil = useRef(0);
   const idx = useRef(0);
 
-  const maxCant = useMemo(() => Math.max(...ESTADOS.map((e) => e.cantidad), 1), []);
+  useEffect(() => { getTV().then(setData); }, []);
+
+  const ESTADOS = data?.estados || [];
+  const TOTAL = data?.total || 0;
+  const URGENTES = data?.urgentes || [];
+  const maxCant = useMemo(() => Math.max(...ESTADOS.map((e) => e.cantidad), 1), [ESTADOS]);
 
   const selManual = useCallback((estado) => {
     setSel((s) => {
@@ -86,6 +72,7 @@ export default function PanelTV() {
 
   // Auto-rotación
   useEffect(() => {
+    if (!ESTADOS.length) return undefined;
     const t = setInterval(() => {
       if (!autoRotate && Date.now() < pauseUntil.current) return;
       if (!autoRotate) setAutoRotate(true);
@@ -93,7 +80,7 @@ export default function PanelTV() {
       setSel(ESTADOS[idx.current].estado);
     }, ROTATE_MS);
     return () => clearInterval(t);
-  }, [autoRotate]);
+  }, [autoRotate, ESTADOS]);
 
   const toggleFs = () => {
     const el = rootRef.current;
@@ -109,6 +96,10 @@ export default function PanelTV() {
   const selData = sel === 'URGENTES' ? URGENTES : sel ? (ESTADOS.find((e) => e.estado === sel)?.nvs || []) : [];
   const selColor = sel === 'URGENTES' ? '#ef4444' : ESTADOS.find((e) => e.estado === sel)?.color || '#6b7280';
   const selIcon = ESTADOS.find((e) => e.estado === sel)?.icon || '';
+
+  if (!data) {
+    return <div className="bg-[#0a0a0f] rounded-2xl min-h-[70vh] flex flex-col items-center justify-center gap-3"><Loader2 className="animate-spin text-orange-400" size={34} /><p className="text-gray-400 text-sm">Cargando…</p></div>;
+  }
 
   return (
     <div ref={rootRef} className="anim-fade-up bg-[#0a0a0f] text-white rounded-2xl overflow-hidden border border-gray-800/60 p-5 flex flex-col min-h-[70vh]"
