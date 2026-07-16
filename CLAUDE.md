@@ -46,14 +46,13 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
     superficies claras/oscuras, verde `#10b981`) y oculta el fondo 3D para una estética minimalista.
     No edita `styles.css`.
 
-## Módulo externo: Panel PTM (iframe)
-- **Panel PTM** (`lockowom/panel-`, app **Next.js** desplegada en Vercel): dashboard de indicadores
-  embebido vía **iframe** en `/tools/panel` (`src/pages/Tools/PanelPTM.jsx`, menú *Inteligencia → Panel
-  PTM*). NO se vendoriza como estático (es SSR con API routes); se embebe su URL de Vercel
-  `https://panel-dashboard-ptm.vercel.app` (mantiene su propia sesión/login). Permiso propio
-  `view_panel`. Migración `081` (permiso + fila en `tms_modules_config`). CSP de `server.js` lleva el
-  dominio de Vercel en `frame-src`. Si Vercel activa "Deployment Protection", el iframe se bloquea:
-  desactivarla o añadir `frame-ancestors` en el `next.config` del Panel.
+## Módulo nativo: Panel PTM (migrado de `lockowom/panel-`)
+- **Panel PTM**: dashboard de indicadores + Ingresar/Info N.V. + Modo TV + Builder, **nativo en CCO**
+  (rutas `/panel/*`, `src/pages/Panel/**`), leyendo `tms_operaciones` real. El antiguo iframe a la app
+  Next.js de Vercel (`/tools/panel`, `PanelPTM.jsx`, dominio `panel-dashboard-ptm.vercel.app`) **se retiró
+  tras completar la migración** (ruta, menú, `frame-src` de Vercel en el CSP y el archivo, todo eliminado).
+  Permisos: `view_panel` (umbral) + `manage_panel` + por pantalla `panel_ingresar`/`panel_info`/`panel_tv`/
+  `panel_builder` (migración `096`). El módulo `panel` sigue en `tms_modules_config` (Vistas).
 
 ## Módulo nativo: Conteo Cíclico
 - **Conteo Cíclico de Inventario** (port nativo del proyecto `lockowom/t-o-inventario`, NO iframe):

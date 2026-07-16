@@ -40,7 +40,6 @@ export const ROUTE_PERMISSIONS = {
   // dando acceso (aditivo) para no romper roles existentes.
   '/inventory/traspasos': ['view_traspasos', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
   // Panel PTM — dashboard externo (Next.js/Vercel) embebido en iframe. Permiso propio.
-  '/tools/panel': ['view_panel'],
   // Panel PTM nativo (estructura portada). Control POR PANTALLA: cada pantalla
   // tiene su permiso propio (casilla en Roles) Y acepta `view_panel` como umbral
   // (quien tiene view_panel ve todo el módulo → no se rompe ningún rol existente).

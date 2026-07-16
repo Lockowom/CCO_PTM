@@ -53,8 +53,7 @@ export const APP_ROUTES = [
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
 
-  // Panel PTM (dashboard externo embebido + estructura nativa)
-  { value: '/tools/panel', label: 'Panel PTM (Vercel/iframe)', module: 'panel' },
+  // Panel PTM (nativo en CCO; el iframe de Vercel se retiró tras la migración)
   { value: '/panel', label: 'Panel PTM - Dashboard', module: 'panel' },
   { value: '/panel/ingresar', label: 'Panel PTM - Ingresar N.V.', module: 'panel' },
   { value: '/panel/info', label: 'Panel PTM - Info N.V.', module: 'panel' },

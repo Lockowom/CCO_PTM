@@ -57,9 +57,9 @@ app.use((req, res, next) => {
     // a Anthropic desde el navegador (proxy /api/traspasos-ai) y el geocoding
     // ya no sale del origen (proxy /api/geocode | /api/route) → connect-src
     // sin nominatim/osrm.
-    // frame-src: 'self' (iframe propio de Traspasos en /traspasos/) + el Panel PTM
-    // (Next.js en Vercel) embebido en /tools/panel.
-    "default-src 'self'; script-src 'self' 'sha256-FS5pu9F1XSI0eqDWQs2P/lSOYdkqq1PG0kBMjc4+SfE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; font-src 'self'; frame-src 'self' https://panel-dashboard-ptm.vercel.app;"
+    // frame-src: 'self' (iframe propio de Traspasos en /traspasos/). El Panel PTM
+    // ahora es NATIVO en CCO — el iframe externo (Vercel) se retiró tras la migración.
+    "default-src 'self'; script-src 'self' 'sha256-FS5pu9F1XSI0eqDWQs2P/lSOYdkqq1PG0kBMjc4+SfE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; font-src 'self'; frame-src 'self';"
   );
   next();
 });

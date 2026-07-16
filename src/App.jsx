@@ -64,7 +64,6 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
-const PanelPTM = React.lazy(() => import('./pages/Tools/PanelPTM')); // iframe a Vercel (referencia)
 // Panel PTM nativo (port de lockowom/panel-) — estructura con datos de ejemplo
 const PanelLayout = React.lazy(() => import('./pages/Panel/PanelLayout'));
 const PanelHome = React.lazy(() => import('./pages/Panel/PanelHome'));
@@ -413,7 +412,6 @@ function AppContent() {
 
           {/* Inventario */}
           <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
-          <Route path="tools/panel" element={<ErrorBoundary><PanelPTM /></ErrorBoundary>} />
           {/* Panel PTM nativo (estructura con datos de ejemplo) */}
           <Route path="panel" element={<ErrorBoundary><PanelLayout /></ErrorBoundary>}>
             <Route index element={<DashboardReal />} />
