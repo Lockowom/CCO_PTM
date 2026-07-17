@@ -7,7 +7,7 @@ function LayoutManager({ layouts, activeId, rol, onSelect, onCreate, onDelete, o
   const esAdmin = rol === "admin";
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/40 flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] bg-slate-900/20 backdrop-blur-sm flex items-center justify-center" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-[420px] max-w-[95vw] max-h-[70vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white border-b px-5 py-3 flex items-center justify-between">
           <h2 className="font-bold text-gray-800">Mis Dashboards</h2>
@@ -18,7 +18,7 @@ function LayoutManager({ layouts, activeId, rol, onSelect, onCreate, onDelete, o
           {layouts.map((l) => {
             const editableByMe = puedeEditar(rol, l.minRoleEdit || "supervisor");
             return (
-            <div key={l.id} className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${l.id === activeId ? "border-[#f57c00] bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
+            <div key={l.id} className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${l.id === activeId ? "border-[#ea580c] bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
               {editing === l.id ? (
                 <input
                   autoFocus
@@ -71,7 +71,7 @@ function LayoutManager({ layouts, activeId, rol, onSelect, onCreate, onDelete, o
           })}
           <button
             onClick={onCreate}
-            className="w-full p-3 rounded-xl border border-dashed border-gray-300 text-gray-400 hover:border-[#f57c00] hover:text-[#f57c00] transition-colors text-sm font-medium"
+            className="w-full p-3 rounded-xl border border-dashed border-gray-300 text-gray-400 hover:border-[#ea580c] hover:text-[#ea580c] transition-colors text-sm font-medium"
           >
             + Nuevo Dashboard
           </button>

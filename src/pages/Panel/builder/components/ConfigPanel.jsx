@@ -73,13 +73,13 @@ function ConfigPanel({ widget, onSave, onCancel, calcFields = [] }) {
   const isDecorative = isText || isImage || isDivider;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/40 flex items-start justify-end" onClick={onCancel}>
-      <div className="w-[400px] max-w-full h-full bg-white shadow-xl overflow-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[200] bg-slate-900/20 backdrop-blur-sm flex items-start justify-end" onClick={onCancel}>
+      <div className="w-[420px] max-w-full h-full bg-white shadow-2xl rounded-l-2xl border-l border-slate-200 overflow-auto" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between z-10">
           <h2 className="font-bold text-gray-800">Configurar Widget</h2>
           <div className="flex gap-2">
             <button onClick={onCancel} className="px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 rounded-lg">Cancelar</button>
-            <button onClick={() => onSave(cfg)} className="px-3 py-1.5 text-sm bg-[#f57c00] text-white rounded-lg hover:bg-[#e65100] font-medium">Guardar</button>
+            <button onClick={() => onSave(cfg)} className="px-3 py-1.5 text-sm bg-[#ea580c] text-white rounded-lg hover:bg-[#c2410c] font-medium">Guardar</button>
           </div>
         </div>
 
@@ -523,8 +523,8 @@ function ConfigPanel({ widget, onSave, onCancel, calcFields = [] }) {
           <div>
             <label className="field-label">Color principal</label>
             <div className="flex items-center gap-2">
-              <input type="color" className="w-10 h-9 rounded cursor-pointer" value={cfg.config.color || "#f57c00"} onChange={(e) => updateCfg({ color: e.target.value })} />
-              <span className="text-[12px] text-gray-400">{cfg.config.color || "#f57c00"}</span>
+              <input type="color" className="w-10 h-9 rounded cursor-pointer" value={cfg.config.color || "#ea580c"} onChange={(e) => updateCfg({ color: e.target.value })} />
+              <span className="text-[12px] text-gray-400">{cfg.config.color || "#ea580c"}</span>
             </div>
           </div>
 
