@@ -392,6 +392,9 @@ const DataImport = () => {
     const [step, setStep] = useState('paste');
     const [skipFirstColumn, setSkipFirstColumn] = useState(false);
     const [syncDeleted, setSyncDeleted] = useState(false);
+    // Blindaje del catálogo de N.V.: chequeo de cruce de canal + modo reemplazar.
+    const [nvCross, setNvCross] = useState(null);   // { count, canalOtro, actual, ejemplos:[] }
+    const [replaceCanal, setReplaceCanal] = useState(false);
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
     const [inputMode, setInputMode] = useState('paste'); // 'paste' | 'scan'
@@ -411,6 +414,49 @@ const DataImport = () => {
     }, [accessibleTabs]);
 
     const currentTab = IMPORT_TABS.find(t => t.id === activeTab);
+
+    // ── Blindaje catálogo N.V.: canal destino + chequeo de cruce ────────────────
+    const esNvCat = !!currentTab?.id?.startsWith('nvcat_');
+    const canalNv = currentTab?.defaultValues?.canal || '';
+    const normNvVal = (v) => { const t = String(v ?? '').trim(); return /^\d+\.0+$/.test(t) ? t.split('.')[0] : t; };
+    // Trae el set de N.V. de uno o varios canales del catálogo (paginado).
+    const fetchNvsDeCanales = useCallback(async (canales) => {
+        const set = new Set();
+        for (const c of canales) {
+            let from = 0; const page = 1000;
+            for (;;) {
+                const { data, error } = await supabase.from('tms_nv_catalogo').select('nv').eq('canal', c).range(from, from + page - 1);
+                if (error || !data || data.length === 0) break;
+                data.forEach((r) => set.add(normNvVal(r.nv)));
+                if (data.length < page) break; from += page;
+            }
+        }
+        return set;
+    }, []);
+
+    // Al entrar a la previsualización de una tarjeta N.V., detecta N.V. del
+    // archivo que ya existen en OTRO canal (PTM no comparte numeración con
+    // Orange/Farmapack → un cruce con PTM casi siempre = archivo equivocado).
+    useEffect(() => {
+        if (!esNvCat || step !== 'preview' || parsedRows.length === 0) { setNvCross(null); return; }
+        let vivo = true;
+        (async () => {
+            const otros = canalNv === 'ptm' ? ['orange', 'farmapack'] : ['ptm'];
+            const [setOtro, actualSet] = await Promise.all([
+                fetchNvsDeCanales(otros),
+                fetchNvsDeCanales([canalNv]),
+            ]);
+            if (!vivo) return;
+            const ej = []; let count = 0;
+            for (const r of parsedRows) {
+                const nv = normNvVal(r.nv);
+                if (nv && setOtro.has(nv)) { count++; if (ej.length < 6) ej.push(nv); }
+            }
+            setNvCross({ count, canalOtro: otros.join('/').toUpperCase(), actual: actualSet.size, ejemplos: ej });
+        })().catch(() => { if (vivo) setNvCross(null); });
+        return () => { vivo = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [esNvCat, step, parsedRows, canalNv]);
 
     const categoryTabs = useMemo(() =>
         accessibleTabs.filter(t => t.category === activeCategory),
@@ -669,11 +715,29 @@ const DataImport = () => {
 
     const handleUpload = async () => {
         if (parsedRows.length === 0) return;
+
+        // Modo "Reemplazar canal" (solo tarjetas N.V.): borra el canal antes de
+        // cargar, para que quede EXACTAMENTE igual al archivo (sin residuos ni
+        // mezclas). Requiere confirmación explícita.
+        if (esNvCat && replaceCanal) {
+            const ok = window.confirm(
+                `REEMPLAZAR canal ${canalNv.toUpperCase()}:\n\n` +
+                `Se borrarán las ${nvCross?.actual ?? '—'} N.V. actuales de ${canalNv.toUpperCase()} y quedarán solo las ${parsedRows.length} de este archivo.\n\n` +
+                `¿Continuar?`
+            );
+            if (!ok) return;
+        }
+
         setIsLoading(true);
         setLoadResult(null);
         setUploadProgress({ current: 0, total: 0 });
 
         try {
+            if (esNvCat && replaceCanal) {
+                const { error: purgeErr } = await supabase.rpc('nv_catalogo_purgar_canal', { p_canal: canalNv });
+                if (purgeErr) throw new Error(`No se pudo reemplazar el canal: ${purgeErr.message}`);
+            }
+
             let newRows = parsedRows.filter((_, idx) => rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update');
 
             if (newRows.length === 0) {
@@ -812,6 +876,7 @@ const DataImport = () => {
         setRawText(''); setParsedRows([]); setRowStatuses([]); setLoadResult(null);
         setSkippedInvalid(0);
         setStep('paste'); setSkipFirstColumn(false); setSyncDeleted(false);
+        setNvCross(null); setReplaceCanal(false);
         setScannedItems([]); setScanError(''); setManualScanValue(''); setInputMode('paste');
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -1154,6 +1219,40 @@ const DataImport = () => {
                                 </span>
                             </div>
                         )}
+                        {/* Blindaje catálogo N.V.: destino + aviso de cruce + reemplazar canal */}
+                        {esNvCat && (
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+                                    <FileText size={18} className="text-orange-600 shrink-0" />
+                                    <span className="text-sm text-orange-900">
+                                        Destino: catálogo del canal <b className="uppercase">{canalNv}</b>
+                                        {nvCross ? <> · actualmente hay <b>{nvCross.actual.toLocaleString()}</b> N.V. en {canalNv.toUpperCase()}.</> : ' · verificando…'}
+                                    </span>
+                                </div>
+
+                                {nvCross && nvCross.count > 0 && (
+                                    <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800">
+                                        <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-500" />
+                                        <span>
+                                            <b>{nvCross.count.toLocaleString()}</b> N.V. de este archivo ya existen en el canal <b>{nvCross.canalOtro}</b>
+                                            {canalNv !== 'ptm' && <> — y PTM no comparte numeración con Orange/Farmapack, así que esto suele indicar que el archivo es de <b>otro canal</b></>}.
+                                            {' '}Ej: {nvCross.ejemplos.join(', ')}. <b>Revisá que el archivo corresponda a {canalNv.toUpperCase()}</b> antes de confirmar.
+                                        </span>
+                                    </div>
+                                )}
+
+                                <label className="flex items-start gap-2.5 bg-white border border-slate-200 rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" checked={replaceCanal} onChange={(e) => setReplaceCanal(e.target.checked)} className="mt-0.5 w-4 h-4 accent-emerald-600" />
+                                    <span className="text-sm text-slate-700">
+                                        <b>Reemplazar todo el canal {canalNv.toUpperCase()}</b> con este archivo
+                                        <span className="block text-xs text-slate-400 mt-0.5">
+                                            Borra las {nvCross ? nvCross.actual.toLocaleString() : '—'} N.V. actuales de {canalNv.toUpperCase()} y deja EXACTAMENTE las de este archivo. Úsalo para corregir cargas mezcladas o dejar el canal limpio (sin residuos ni duplicados).
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        )}
+
                         {/* Stats + action bar */}
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white p-2 sm:p-3 rounded-xl border border-slate-200">
                             <StatPill icon={Database} label="Total" value={stats.total} color="slate" />
@@ -1172,7 +1271,7 @@ const DataImport = () => {
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                                 {isLoading
                                     ? (uploadProgress.total > 0 ? `Lote ${uploadProgress.current}/${uploadProgress.total}...` : 'Preparando...')
-                                    : `Confirmar (${stats.new + stats.update})`}
+                                    : (esNvCat && replaceCanal ? `Reemplazar ${canalNv.toUpperCase()} (${stats.new + stats.update})` : `Confirmar (${stats.new + stats.update})`)}
                             </button>
                         </div>
 

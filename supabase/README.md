@@ -81,6 +81,9 @@
   - `092_nv_catalogo_normalizacion.sql` — **N.V. normalizada** (evita el bug del BUSCARV del Sheet):
     `normalizar_nv()` + trigger en `tms_nv_catalogo` (al subir/editar deja `canal` en minúscula y `nv` sin
     espacios ni sufijo `.0`) → el match del autocompletado es siempre exacto y preciso.
+  - `097_nv_catalogo_purga_canal.sql` — **Reemplazar canal** en el catálogo de N.V.:
+    `nv_catalogo_purgar_canal(p_canal)` (admin/`manage_data_import`, `anon` sin EXECUTE) borra las filas de un
+    canal para que la Carga Masiva lo deje EXACTAMENTE igual al archivo (corrige cargas mezcladas / residuos).
   - `096_panel_permisos_por_pantalla.sql` — **Panel por pantalla**: +4 permisos en `tms_permisos`
     (`panel_ingresar`, `panel_info`, `panel_tv`, `panel_builder`, módulo *Panel PTM*) para controlar cada
     pantalla del Panel desde Roles. Aditivo: `view_panel` sigue siendo el umbral que da acceso a todo.
