@@ -222,16 +222,27 @@ function SolicitudModal({ items, solicitante, onClose }) {
   const [dest, setDest] = useState(() => localStorage.getItem(LS_DEST) || '');
   const [pedir, setPedir] = useState(() => Object.fromEntries(items.map((i) => [i.id, ''])));
   const conPedir = items.map((i) => ({ ...i, pedir: pedir[i.id] }));
-  const { asunto, cuerpo } = armarCorreoSolicitud(conPedir, { solicitante });
+  const { asunto, cuerpo, cuerpoHtml } = armarCorreoSolicitud(conPedir, { solicitante });
 
   const abrirCorreo = () => {
     localStorage.setItem(LS_DEST, dest.trim());
     const url = `mailto:${encodeURIComponent(dest.trim())}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     window.location.href = url;
   };
+  // Copia la tabla en HTML (al pegar en Outlook/Gmail se ve con formato) con
+  // respaldo en texto plano si el navegador no soporta ClipboardItem.
   const copiar = async () => {
-    try { await navigator.clipboard.writeText(`${asunto}\n\n${cuerpo}`); toast.success('Copiado al portapapeles'); }
-    catch { toast.error('No se pudo copiar'); }
+    try {
+      if (window.ClipboardItem && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new window.ClipboardItem({
+          'text/html': new Blob([cuerpoHtml], { type: 'text/html' }),
+          'text/plain': new Blob([`${asunto}\n\n${cuerpo}`], { type: 'text/plain' }),
+        })]);
+      } else {
+        await navigator.clipboard.writeText(`${asunto}\n\n${cuerpo}`);
+      }
+      toast.success('Copiado (pégalo en tu correo y se verá la tabla)');
+    } catch { toast.error('No se pudo copiar'); }
   };
 
   return (
@@ -264,12 +275,12 @@ function SolicitudModal({ items, solicitante, onClose }) {
             </div>
           </div>
           <div>
-            <span className="text-[12px] font-bold text-slate-500">Vista previa</span>
-            <pre className="mt-1 whitespace-pre-wrap text-[12px] text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3 max-h-40 overflow-y-auto">{cuerpo}</pre>
+            <span className="text-[12px] font-bold text-slate-500">Vista previa (así se verá al pegar en el correo)</span>
+            <div className="mt-1 text-[12px] bg-white border border-slate-200 rounded-xl p-3 max-h-56 overflow-auto" dangerouslySetInnerHTML={{ __html: cuerpoHtml }} />
           </div>
         </div>
         <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between gap-2">
-          <button onClick={copiar} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50"><Copy size={15} /> Copiar</button>
+          <button onClick={copiar} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50" title="Copia la tabla con formato para pegar en Outlook/Gmail"><Copy size={15} /> Copiar tabla</button>
           <button onClick={abrirCorreo} disabled={!dest.trim()} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-bold hover:bg-orange-600 disabled:opacity-50"><Send size={15} /> Abrir en correo</button>
         </div>
       </div>
