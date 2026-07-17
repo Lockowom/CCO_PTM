@@ -143,10 +143,27 @@ const EXPORT_COLS = [
   ['observaciones_incidencia', 'OBS. INCIDENCIA'], ['dias_incidencia', 'DÍAS INCIDENCIA'], ['fillrate', 'FILLRATE'],
   ['origen', 'ORIGEN'], ['created_at', 'CREADO'], ['updated_at', 'ACTUALIZADO'],
 ];
+// Columnas de fecha (date) y de timestamp: se exportan SIEMPRE en formato chileno
+// dd/mm/aaaa (y dd/mm/aaaa hh:mm) para que la descarga sea consistente y no
+// dependa del locale de Excel. `fecha_facturacion` es texto libre → se deja igual.
+const DATE_COLS = new Set([
+  'fecha_aprobacion', 'fecha_aprobacion_real', 'fecha_despacho', 'fecha_compromiso',
+  'fecha_en_proceso', 'fecha_shipping', 'fecha_en_ruta', 'fecha_entregado',
+]);
 const TS_COLS = new Set(['fecha_estado', 'fecha_registro_nv', 'created_at', 'updated_at']);
+const fmtFecha = (v) => {
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(v);
+};
+const fmtTs = (v) => {
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : fmtFecha(v);
+};
 
 export async function exportarOperaciones() {
   const cols = EXPORT_COLS.map((c) => c[0]).join(',');
+  // Orden estable por id (orden de ingreso). La descarga es SOLO LECTURA: no
+  // toca ni bloquea la tabla, así el llenado desde Ingresar sigue normal.
   const all = []; let from = 0; const page = 1000;
   for (;;) {
     const { data, error } = await supabase.from('tms_operaciones').select(cols).order('id', { ascending: true }).range(from, from + page - 1);
@@ -161,9 +178,10 @@ export async function exportarOperaciones() {
     EXPORT_COLS.forEach(([k, h]) => {
       let v = r[k];
       if (k === 'urgente') v = v === true ? 'SÍ' : 'NO';
-      else if (v == null) v = '';
-      else if (TS_COLS.has(k)) v = String(v).slice(0, 19).replace('T', ' ');
-      o[h] = v;
+      else if (v == null || v === '') v = '';
+      else if (DATE_COLS.has(k)) v = fmtFecha(v);       // dd/mm/aaaa
+      else if (TS_COLS.has(k)) v = fmtTs(v);            // dd/mm/aaaa hh:mm
+      o[h] = v;                                          // números ($ , bultos, días) quedan numéricos
     });
     return o;
   });
