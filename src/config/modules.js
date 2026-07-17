@@ -5,9 +5,7 @@
 
 export const APP_MODULES = [
   { id: 'dashboard', label: 'Dashboard General', section: 'core' },
-  { id: 'tms', label: 'TMS Logistics', section: 'core' },
   { id: 'inbound', label: 'Inbound', section: 'wms' },
-  { id: 'outbound', label: 'Outbound', section: 'wms' },
   { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
@@ -20,15 +18,8 @@ export const APP_ROUTES = [
   // Core
   { value: '/dashboard', label: 'Dashboard General', module: 'dashboard' },
   
-  // TMS
-  { value: '/tms/dashboard', label: 'TMS - Dashboard', module: 'tms' },
-  { value: '/tms/planning', label: 'TMS - Planificación', module: 'tms' },
-  { value: '/tms/control-tower', label: 'TMS - Torre de Control', module: 'tms' },
-  { value: '/tms/yard', label: 'TMS - Gestión de Patio', module: 'tms' },
-  { value: '/tms/drivers', label: 'TMS - Conductores', module: 'tms' },
-  { value: '/tms/costos', label: 'TMS - Costos Transporte', module: 'tms' },
-  { value: '/tms/mobile', label: 'TMS - App Móvil', module: 'tms' },
-  { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'tms' },
+  // PDA Operativa de Bodega (herramienta de bodega, ahora bajo Inventario)
+  { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'inventario' },
 
   // Inbound
   { value: '/inbound/reception', label: 'Inbound - Recepción', module: 'inbound' },
@@ -36,13 +27,6 @@ export const APP_ROUTES = [
   { value: '/inbound/entry', label: 'Inbound - Putaway', module: 'inbound' },
   { value: '/inbound/cubing', label: 'Inbound - Cubicaje', module: 'inbound' },
   { value: '/inbound/data-import', label: 'Inbound - Carga Masiva', module: 'inbound' },
-  
-  // Outbound
-  { value: '/outbound/sales-orders', label: 'Outbound - Notas de Venta', module: 'outbound' },
-  { value: '/outbound/picking', label: 'Outbound - Picking', module: 'outbound' },
-  { value: '/outbound/packing', label: 'Outbound - Packing', module: 'outbound' },
-  { value: '/outbound/packing-tv', label: 'Outbound - Monitor Packing', module: 'outbound' },
-  { value: '/outbound/shipping', label: 'Outbound - Despachos', module: 'outbound' },
   
   // Intelligence
   { value: '/queries/batches', label: 'Consultas - Lotes/Series', module: 'queries' },
@@ -116,27 +100,12 @@ export const APP_PERMISSIONS = [
     ]
   },
   {
-    id: 'tms',
-    label: 'TMS (Transporte)',
-    permissions: [
-      { id: 'view_tms_dashboard', label: 'Ver Dashboard TMS' },
-      { id: 'view_routes', label: 'Ver Rutas' },
-      { id: 'create_routes', label: 'Planificar Rutas' },
-      { id: 'view_control_tower', label: 'Ver Torre de Control' },
-      { id: 'manage_control_tower', label: 'Gestionar Torre de Control' },
-      { id: 'view_drivers', label: 'Ver Conductores' },
-      { id: 'manage_drivers', label: 'Gestionar Conductores' },
-      { id: 'view_transport_costs', label: 'Ver Costos de Transporte' },
-      { id: 'view_mobile_app', label: 'Acceder App Móvil' },
-      { id: 'use_mobile_app', label: 'Usar App Móvil (Entregas)' },
-      { id: 'view_stock', label: 'Ver Stock (PDA)' },
-      { id: 'manage_inventory', label: 'Gestionar Inventario (PDA)' }
-    ]
-  },
-  {
     id: 'inventario',
     label: 'Inventario (Traspasos + Conteo Cíclico)',
     permissions: [
+      // PDA Operativa de Bodega (reubicada aquí tras retirar el módulo TMS):
+      { id: 'view_stock', label: 'PDA · Ver Stock' },
+      { id: 'manage_inventory', label: 'PDA · Gestionar Inventario' },
       // Pantallas propias del módulo Inventario (casilla 1:1 con el menú):
       { id: 'view_traspasos', label: 'Traspasos y Ajustes' },
       { id: 'view_carteles', label: 'Carteles de Bodega' },
@@ -174,25 +143,6 @@ export const APP_PERMISSIONS = [
       { id: 'view_reception', label: 'Ver Recepción/Cubicaje' },
       { id: 'process_reception', label: 'Gestionar Recepción' },
       { id: 'manage_data_import', label: 'Carga Masiva de Datos' }
-    ]
-  },
-  {
-    id: 'outbound',
-    label: 'Outbound (Salida)',
-    permissions: [
-      { id: 'view_sales_orders', label: 'Ver Notas de Venta' },
-      { id: 'manage_sales_orders', label: 'Gestionar N.V.' },
-      { id: 'manage_orders', label: 'Acciones masivas de N.V. (pasar a picking/despachar)' },
-      { id: 'delete_sales_orders', label: 'Eliminar Notas de Venta' },
-      { id: 'view_picking', label: 'Ver Picking' },
-      { id: 'process_picking', label: 'Procesar Picking' },
-      { id: 'view_packing', label: 'Ver Packing' },
-      { id: 'process_packing', label: 'Procesar Packing' },
-      { id: 'view_packing_tv', label: 'Ver Monitor Packing TV' },
-      { id: 'view_shipping', label: 'Ver Despachos' },
-      { id: 'process_shipping', label: 'Gestionar Despachos' },
-      { id: 'view_deliveries', label: 'Ver Entregas' },
-      { id: 'manage_deliveries', label: 'Gestionar Entregas' }
     ]
   },
   {

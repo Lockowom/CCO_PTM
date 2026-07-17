@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Package, Truck, User, FileText, MapPin } from 'lucide-react';
+import { Search, X, Package, Truck, User, FileText, MapPin, Scan } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
 import { withTimeout } from '../../lib/supabaseQuery';
@@ -95,9 +95,8 @@ const CommandPalette = () => {
 
         // Acciones globales
         const globalActions = [
-          { title: 'Dashboard TMS', path: '/tms/dashboard', icon: <Truck size={16} className="text-blue-400"/> },
           { title: 'Lotes / Series', path: '/queries/batches', icon: <Package size={16} className="text-emerald-400"/> },
-          { title: 'Picking', path: '/outbound/picking', icon: <FileText size={16} className="text-amber-400"/> },
+          { title: 'PDA Operativa (Bodega)', path: '/mobile/pda', icon: <Scan size={16} className="text-amber-400"/> },
         ].filter(a => a.title.toLowerCase().includes(query.toLowerCase()));
 
         globalActions.forEach(a => {

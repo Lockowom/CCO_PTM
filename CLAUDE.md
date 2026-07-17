@@ -153,7 +153,8 @@ cambio, actualizar SIEMPRE:
 6. Docs: `DOCUMENTACION_PROYECTO.md` (+changelog), `supabase/README.md` y `supabase/DIAGRAMA_BD.md` si cambia la BD.
 
 ## Estructura
-- `src/pages/` — módulos (Inbound, Outbound, TMS, Queries, Quality, Admin, Mobile)
+- `src/pages/` — módulos (Inbound, Inventory, Queries, Quality, Panel, Postventa, Admin, Mobile).
+  Los módulos **TMS (Transporte)** y **Outbound** se retiraron (migración `102`); se reconstruirán desde 0.
 - `src/components/`, `src/hooks/`, `src/services/`, `src/lib/`, `src/constants/`, `src/context/`
 - `src/stores/` — stores Zustand unificadas (`warehouseStore`, `pickingStore`)
 - `supabase/migrations/` — migraciones versionadas (`001`…`061`); aplicar nuevas vía MCP/CLI

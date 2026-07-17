@@ -1,14 +1,7 @@
 export const ROUTE_PERMISSIONS = {
   '/dashboard': ['view_dashboard'],
 
-  // TMS
-  '/tms/dashboard': ['view_tms_dashboard'],
-  '/tms/planning': ['view_routes', 'create_routes'],
-  '/tms/control-tower': ['view_control_tower', 'manage_control_tower'],
-  '/tms/drivers': ['view_drivers', 'manage_drivers'],
-  '/tms/mobile': ['view_mobile_app', 'use_mobile_app'],
-  '/tms/yard': ['view_control_tower'],
-  '/tms/costos': ['view_transport_costs'],
+  // PDA Operativa de Bodega (tool de bodega, permisos de stock/inventario)
   '/mobile/pda': ['view_stock', 'manage_inventory'],
 
   // Inbound
@@ -17,13 +10,6 @@ export const ROUTE_PERMISSIONS = {
   '/inbound/entry': ['view_entry', 'process_entry'],
   '/inbound/cubing': ['view_reception', 'process_reception'],
   '/inbound/data-import': ['manage_data_import'],
-
-  // Outbound
-  '/outbound/sales-orders': ['view_sales_orders', 'manage_sales_orders'],
-  '/outbound/picking': ['view_picking', 'process_picking'],
-  '/outbound/packing': ['view_packing', 'process_packing'],
-  '/outbound/packing-tv': ['view_packing_tv'],
-  '/outbound/shipping': ['view_shipping', 'process_shipping'],
 
   // Queries
   '/queries/batches': ['view_batches'],

@@ -24,28 +24,14 @@ const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Con
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
-// TMS Modules
-const RoutePlanning = React.lazy(() => import('./pages/TMS/RoutePlanning'));
-const DashboardTMS = React.lazy(() => import('./pages/TMS/Dashboard'));
-const Drivers = React.lazy(() => import('./pages/TMS/Drivers'));
-const ControlTower = React.lazy(() => import('./pages/TMS/ControlTower'));
-const MobileApp = React.lazy(() => import('./pages/TMS/MobileApp'));
-const YardManagement = React.lazy(() => import('./pages/TMS/YardManagement')); // NUEVO
-const CostosTransporte = React.lazy(() => import('./pages/TMS/CostosTransporte')); // NUEVO
-const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA')); // NUEVO
+// Mobile — PDA Operativa de Bodega
+const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
 
 // Inbound Modules
 const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
 const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry'));
 const Reception = React.lazy(() => import('./pages/Inbound/Reception'));
 const ReceptionNacional = React.lazy(() => import('./pages/Inbound/ReceptionNacional')); // NUEVO
-
-// Outbound Modules
-const SalesOrders = React.lazy(() => import('./pages/Outbound/SalesOrders'));
-const Picking = React.lazy(() => import('./pages/Outbound/Picking'));
-const Packing = React.lazy(() => import('./pages/Outbound/Packing'));
-const PackingTV = React.lazy(() => import('./pages/Outbound/PackingTV')); // NUEVO
-const Shipping = React.lazy(() => import('./pages/Outbound/Shipping'));
 
 // Intelligence Modules
 const Batches = React.lazy(() => import('./pages/Queries/Batches'));
@@ -93,10 +79,6 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 // Orden de prioridad para la primera ruta disponible
 const ROUTE_PRIORITY = [
   '/dashboard',
-  '/outbound/sales-orders',
-  '/outbound/picking',
-  '/outbound/packing',
-  '/outbound/shipping',
   '/inbound/entry',
   '/queries/batches',
   '/queries/sales-status',
@@ -104,11 +86,6 @@ const ROUTE_PRIORITY = [
   '/queries/dispatch-control',
   '/queries/addresses',
   '/queries/locations',
-  '/tms/dashboard',
-  '/tms/planning',
-  '/tms/control-tower',
-  '/tms/drivers',
-  '/tms/mobile',
   '/admin/users',
   '/admin/roles',
   '/admin/views',
@@ -369,14 +346,7 @@ function AppContent() {
           <Route index element={<SmartRedirect />} />
           <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
 
-          {/* TMS Modules */}
-          <Route path="tms/dashboard" element={<ErrorBoundary><DashboardTMS /></ErrorBoundary>} />
-          <Route path="tms/planning" element={<ErrorBoundary><RoutePlanning /></ErrorBoundary>} />
-          <Route path="tms/control-tower" element={<ErrorBoundary><ControlTower /></ErrorBoundary>} />
-          <Route path="tms/drivers" element={<ErrorBoundary><Drivers /></ErrorBoundary>} />
-          <Route path="tms/mobile" element={<ErrorBoundary><MobileApp /></ErrorBoundary>} />
-          <Route path="tms/yard" element={<ErrorBoundary><YardManagement /></ErrorBoundary>} />
-          <Route path="tms/costos" element={<ErrorBoundary><CostosTransporte /></ErrorBoundary>} />
+          {/* PDA Operativa de Bodega */}
           <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
 
           {/* Inbound Modules */}
@@ -385,13 +355,6 @@ function AppContent() {
           <Route path="inbound/entry" element={<ErrorBoundary><Entry /></ErrorBoundary>} />
           <Route path="inbound/cubing" element={<ErrorBoundary><CubingRegistry /></ErrorBoundary>} />
           <Route path="inbound/data-import" element={<ErrorBoundary><DataImport /></ErrorBoundary>} />
-
-          {/* Outbound Modules */}
-          <Route path="outbound/sales-orders" element={<ErrorBoundary><SalesOrders /></ErrorBoundary>} />
-          <Route path="outbound/picking" element={<ErrorBoundary><Picking /></ErrorBoundary>} />
-          <Route path="outbound/packing" element={<ErrorBoundary><Packing /></ErrorBoundary>} />
-          <Route path="outbound/packing-tv" element={<ErrorBoundary><PackingTV /></ErrorBoundary>} />
-          <Route path="outbound/shipping" element={<ErrorBoundary><Shipping /></ErrorBoundary>} />
 
           {/* Queries Modules */}
           <Route path="queries/batches" element={<ErrorBoundary><Batches /></ErrorBoundary>} />

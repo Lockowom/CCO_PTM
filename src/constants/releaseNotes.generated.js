@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.33",
+    "fecha": "2026-07-17",
+    "titulo": "Se retiran los módulos TMS (Transporte) y Outbound",
+    "cambios": [
+      {
+        "texto": "(se reconstruirán desde 0). Frontend: se eliminan las 7 páginas TMS (src/pages/TMS/*) y las 5 de Outbound (src/pages/Outbound/*), sus rutas en App.jsx, el ROUTE_PRIORITY, ROUTE_PERMISSIONS, los grupos de permisos y las entradas de APP_MODULES/APP_ROUTES en modules.js, las categorías del Navbar, y las referencias en…"
+      }
+    ]
+  },
+  {
     "version": "1.55.32",
     "fecha": "2026-07-17",
     "titulo": "Menú de Inventario usable sin reducir el zoom",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El drawer de detalle vuelve al diseño 1:1 del port original: secciones planas sin tarjetas anidadas ni bordes naranja de acento (Información/Progreso/Estado y Logística/Fechas/Documentos con títulos discretos uppercase gris), chips de solo lectura bg-gray-50 filtrando los campos vacíos, fondo del panel blanco. Se…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.10",
-    "fecha": "2026-07-16",
-    "titulo": "Carga Masiva N.V. blindada contra mezcla de canales",
-    "cambios": [
-      {
-        "texto": "En las tarjetas N.V PTM/ORANGE/FARMAPACK, al previsualizar: (1) destino visible (canal + cuántas N.V. hay hoy en ese canal); (2) aviso de cruce — cuenta las N.V. del archivo que ya existen en OTRO canal (PTM no comparte numeración con Orange/Farmapack → un cruce con PTM casi siempre = archivo equivocado), con…"
       }
     ]
   }

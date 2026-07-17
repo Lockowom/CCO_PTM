@@ -107,17 +107,6 @@ const Navbar = () => {
       title: "Core",
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <Activity size={18} />, isLink: true, path: '/dashboard' },
-        { id: 'tms', label: 'TMS Logistics', icon: <Map size={18} />, modules: [
-            { label: 'Dashboard TMS', path: '/tms/dashboard', icon: <LayoutDashboard size={16} /> },
-            { label: 'Planificar Rutas', path: '/tms/planning', icon: <MapPinned size={16} /> },
-            { label: 'Torre de Control', path: '/tms/control-tower', icon: <Satellite size={16} /> },
-            { label: 'Gestión Patios', path: '/tms/yard', icon: <Anchor size={16} /> },
-            { label: 'Conductores', path: '/tms/drivers', icon: <Users size={16} /> },
-            { label: 'Costos Transporte', path: '/tms/costos', icon: <Truck size={16} /> },
-            { label: 'App Móvil', path: '/tms/mobile', icon: <Smartphone size={16} /> },
-            { label: 'PDA Operativa', path: '/mobile/pda', icon: <Scan size={16} /> }
-          ]
-        },
       ]
     },
     {
@@ -132,15 +121,8 @@ const Navbar = () => {
             { label: 'Carga Masiva', path: '/inbound/data-import', icon: <Upload size={16} /> }
           ]
         },
-        { id: 'outbound', label: 'Outbound', icon: <ArrowUpFromLine size={18} />, modules: [
-            { label: 'Notas de Venta', path: '/outbound/sales-orders', icon: <FileText size={16} /> },
-            { label: 'Picking', path: '/outbound/picking', icon: <Hand size={16} /> },
-            { label: 'Packing', path: '/outbound/packing', icon: <Package size={16} /> },
-            { label: 'Monitor TV', path: '/outbound/packing-tv', icon: <Monitor size={16} /> },
-            { label: 'Despachos', path: '/outbound/shipping', icon: <Ship size={16} /> }
-          ]
-        },
         { id: 'inventario', label: 'Inventario', icon: <Warehouse size={18} />, modules: [
+            { label: 'PDA Operativa (Bodega)', path: '/mobile/pda', icon: <Scan size={16} /> },
             { label: 'Traspasos y Ajustes', path: '/inventory/traspasos', icon: <ArrowLeftRight size={16} /> },
             { label: 'Mapa de Calor', path: '/queries/heatmap', icon: <Activity size={16} /> },
             { label: 'Gestión de Ubicaciones', path: '/admin/locations', icon: <MapPin size={16} /> },
