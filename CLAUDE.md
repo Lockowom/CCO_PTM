@@ -2,6 +2,11 @@
 
 ## Regla permanente: sincronizar documentación
 **Toda modificación de código o de base de datos DEBE reflejarse en la documentación.**
+- El **cuadro de Novedades** (modal `NovedadesModal`) se genera **AUTOMÁTICAMENTE** en cada build
+  desde el Changelog (§15) por `scripts/gen_release_notes.js` (prebuild) → `releaseNotes.generated.js`.
+  NO se edita a mano: basta mantener el changelog al día (que ya es obligatorio). El título de cada
+  nota sale del **primer texto en negrita** de la fila del changelog; procura que empiece con un
+  resumen claro en negrita.
 - Fuente canónica de documentación técnica: **`DOCUMENTACION_PROYECTO.md`**.
 - Al cambiar versión, dependencias, rutas, tablas, RPCs, módulos o flujos → actualizar la
   sección correspondiente de `DOCUMENTACION_PROYECTO.md` **y** añadir una entrada en su

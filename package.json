@@ -1,10 +1,12 @@
 {
   "name": "cco-ptm",
   "private": true,
-  "version": "1.55.29",
+  "version": "1.55.31",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/gen_release_notes.js",
+    "gen:notes": "node scripts/gen_release_notes.js",
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server.js",
