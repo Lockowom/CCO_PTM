@@ -224,7 +224,7 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
                   <section>
                     <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Fechas</h3>
                     <div className="grid grid-cols-2 gap-3">
-                      <div><label className="field-label">F. Aprobación Real</label><input type="date" value={detailVal('fecha_aprobacion_real')} onChange={(e) => setDetailField('fecha_aprobacion_real', e.target.value)} className="field-input" /></div>
+                      <div><label className="field-label">F. Aprobación Real <span className="normal-case font-semibold text-gray-400">(no editable)</span></label><input type="date" value={detailVal('fecha_aprobacion_real')} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
                       <div><label className="field-label">F. Compromiso <span className="normal-case font-semibold" style={{ color: detailVal('fecha_compromiso') ? ACCENT : '#9ca3af' }}>(auto)</span></label><input type="date" value={detailVal('fecha_compromiso')} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
                       <div><label className="field-label">F. Facturación</label><input type="date" value={detailVal('fecha_facturacion')} onChange={(e) => setDetailField('fecha_facturacion', e.target.value)} className="field-input" /></div>
                       <div><label className="field-label">F. Despacho</label><input type="date" value={detailVal('fecha_despacho')} onChange={(e) => setDetailField('fecha_despacho', e.target.value)} className="field-input" /></div>
