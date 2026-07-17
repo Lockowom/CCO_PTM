@@ -116,23 +116,33 @@ function TabBtn({ active, onClick, children }) {
   );
 }
 
+const ACCION_META = {
+  create: { label: "Creó", cls: "bg-emerald-100 text-emerald-700" },
+  update: { label: "Editó", cls: "bg-blue-100 text-blue-700" },
+  estado: { label: "Cambió estado", cls: "bg-amber-100 text-amber-700" },
+  delete: { label: "Eliminó", cls: "bg-rose-100 text-rose-700" },
+};
+const ACCION_FILTROS = [
+  ["", "Todas"], ["create", "Creación"], ["update", "Edición"],
+  ["estado", "Estado"], ["delete", "Eliminación"],
+];
+
 function Auditoria() {
   const [rows, setRows] = useState([]);
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [accion, setAccion] = useState("");
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      const [r, s] = await Promise.all([fetchAuditoria({}), fetchAuditStatsPanel()]);
-      if (!alive) return;
-      setRows(r);
-      setStats(s);
-      setLoading(false);
-    })();
-    return () => { alive = false; };
-  }, []);
+  const cargar = useCallback(async () => {
+    setLoading(true);
+    const [r, s] = await Promise.all([fetchAuditoria({ accion }), fetchAuditStatsPanel()]);
+    setRows(r);
+    setStats(s);
+    setLoading(false);
+  }, [accion]);
+
+  useEffect(() => { let alive = true; (async () => { if (alive) await cargar(); })(); return () => { alive = false; }; }, [cargar]);
 
   const fmt = (ts) => {
     if (!ts) return "—";
@@ -140,6 +150,11 @@ function Auditoria() {
     if (isNaN(d)) return String(ts);
     return d.toLocaleString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
+
+  const ql = q.trim().toLowerCase();
+  const filtradas = ql
+    ? rows.filter((r) => [r.actor, r.nv, r.accion].some((v) => String(v || "").toLowerCase().includes(ql)))
+    : rows;
 
   return (
     <>
@@ -155,12 +170,35 @@ function Auditoria() {
         </div>
       )}
 
+      {/* Controles: filtro por acción + búsqueda + refrescar */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+          {ACCION_FILTROS.map(([val, lbl]) => (
+            <button key={val || "all"} onClick={() => setAccion(val)}
+              className={`px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${accion === val ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+              style={accion === val ? { color: ACCENT } : undefined}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar operador o N.V.…"
+          className="flex-1 min-w-[160px] max-w-xs px-3 py-1.5 rounded-lg border border-gray-200 text-[13px] outline-none focus:border-orange-400" />
+        <button onClick={cargar} className="px-3 py-1.5 rounded-lg border border-gray-200 text-[12px] font-medium text-gray-600 hover:bg-gray-50">
+          Actualizar
+        </button>
+      </div>
+
       {/* Lista */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-400 text-[13px]">Cargando…</div>
-        ) : rows.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-[13px]">Sin movimientos registrados.</div>
+        ) : filtradas.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-[13px] font-medium text-gray-600">Aún no hay movimientos registrados</p>
+            <p className="text-[12px] text-gray-400 mt-1 max-w-sm mx-auto">
+              La bitácora se llena automáticamente cada vez que se crea, edita, cambia de estado o elimina una N.V. desde el Panel (Ingresar).
+            </p>
+          </div>
         ) : (
           <table className="w-full text-[13px]">
             <thead>
@@ -172,22 +210,28 @@ function Auditoria() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-b border-gray-50 last:border-0">
-                  <td className="px-4 py-2.5 text-gray-500">{fmt(r.ts)}</td>
-                  <td className="px-4 py-2.5 font-medium">{r.actor || "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                      {r.accion || "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-gray-500">{r.nv || "—"}</td>
-                </tr>
-              ))}
+              {filtradas.map((r) => {
+                const meta = ACCION_META[r.accion] || { label: r.accion || "—", cls: "bg-gray-100 text-gray-600" };
+                return (
+                  <tr key={r.id} className="border-b border-gray-50 last:border-0">
+                    <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{fmt(r.ts)}</td>
+                    <td className="px-4 py-2.5 font-medium">{r.actor || "—"}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${meta.cls}`}>
+                        {meta.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-500 font-mono">{r.nv || "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
       </div>
+      {!loading && filtradas.length > 0 && (
+        <p className="text-[11px] text-gray-400 mt-2">{filtradas.length} movimiento{filtradas.length !== 1 ? "s" : ""} · últimos 150</p>
+      )}
     </>
   );
 }
