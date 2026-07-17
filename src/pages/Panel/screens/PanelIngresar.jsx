@@ -170,7 +170,7 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
   const esUrgente = String(detailVal('urgente')) === 'true';
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex justify-end" onClick={onClose}>
+    <div className="panel-portal fixed inset-0 z-[120] flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-slate-50 h-full flex flex-col shadow-2xl anim-fade-up">
         {/* Header */}

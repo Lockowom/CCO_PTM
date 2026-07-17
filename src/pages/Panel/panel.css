@@ -77,9 +77,14 @@
 }
 .panel-root .anim-fade-up { animation: panelFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-/* Campos de formulario (Ingresar N.V.) — foco naranja CCO. */
-.panel-root .field-input {
+/* Campos de formulario (Ingresar N.V.) — foco naranja CCO.
+   Se aplican tanto en .panel-root (formulario de creación) como en
+   .panel-portal (el drawer de detalle, que se renderiza por portal FUERA de
+   .panel-root → sin este scope los inputs quedaban sin estilo y se cruzaban). */
+.panel-root .field-input,
+.panel-portal .field-input {
   width: 100%;
+  box-sizing: border-box;
   padding: 0.6rem 0.8rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 0.75rem;
@@ -88,14 +93,17 @@
   background: #fff;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.panel-root .field-input::placeholder { color: #94a3b8; }
-.panel-root .field-input:focus {
+.panel-root .field-input::placeholder,
+.panel-portal .field-input::placeholder { color: #94a3b8; }
+.panel-root .field-input:focus,
+.panel-portal .field-input:focus {
   outline: none;
   border-color: #f97316;
   box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
   background: #fffdfa;
 }
-.panel-root .field-label {
+.panel-root .field-label,
+.panel-portal .field-label {
   display: block;
   font-size: 0.7rem;
   font-weight: 800;
