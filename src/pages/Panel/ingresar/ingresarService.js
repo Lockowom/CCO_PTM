@@ -37,11 +37,24 @@ const canalDe = (r) => (r.nv_ptm ? 'ptm' : r.nv_orange ? 'orange' : r.nv_farmapa
 const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || ''));
 
 // ── Lista de N.V. activas (pestaña Buscar) ──────────────────────────────────
+const LISTA_COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado';
+
+// Mapea una fila de tms_operaciones al item que consume la lista/drawer de Buscar.
+function mapOperacionRow(r) {
+  const canal = canalDe(r); const nv = nvDe(r);
+  return {
+    id: r.id, key: `${canal}:${nv}`, canal, nv, cliente: r.cliente || '', vendedor: r.vendedor || '',
+    estado: r.estado || '', transportista: r.transportista || '', fechaCompromiso: soloFecha(r.fecha_compromiso),
+    guia: r.guia || '', factura: r.factura || '', fechaAprobacion: soloFecha(r.fecha_aprobacion),
+    fechaAprobacionReal: soloFecha(r.fecha_aprobacion_real), urgente: r.urgente === true, _estado: r.estado,
+  };
+}
+
 export async function listaActivas() {
-  const cols = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado';
   const all = []; let from = 0; const page = 1000;
   for (;;) {
-    const { data, error } = await supabase.from('tms_operaciones').select(cols).in('estado', ESTADOS_ACTIVOS).range(from, from + page - 1);
+    const { data, error } = await supabase.from('tms_operaciones').select(LISTA_COLS)
+      .in('estado', ESTADOS_ACTIVOS).order('id', { ascending: true }).range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
     all.push(...data);
@@ -54,13 +67,38 @@ export async function listaActivas() {
     const key = `${canal}:${nv}`;
     const prev = dedup.get(key);
     if (!prev || ESTADOS_ACTIVOS.indexOf(r.estado) > ESTADOS_ACTIVOS.indexOf(prev._estado)) {
-      dedup.set(key, {
-        id: r.id, key, canal, nv, cliente: r.cliente || '', vendedor: r.vendedor || '',
-        estado: r.estado || '', transportista: r.transportista || '', fechaCompromiso: soloFecha(r.fecha_compromiso),
-        guia: r.guia || '', factura: r.factura || '', fechaAprobacion: soloFecha(r.fecha_aprobacion),
-        fechaAprobacionReal: soloFecha(r.fecha_aprobacion_real), urgente: r.urgente === true, _estado: r.estado,
-      });
+      dedup.set(key, mapOperacionRow(r));
     }
+  });
+  return Array.from(dedup.values());
+}
+
+// Búsqueda en TODA la tabla (cualquier estado: incluye Entregado/NULA/etc.) por
+// nº de N.V., cliente, vendedor, guía, factura o transportista. Sirve para que
+// en Buscar se pueda encontrar y abrir una N.V. ya entregada o cerrada, que la
+// lista de "activas" no muestra. Devuelve el mismo shape que listaActivas.
+export async function buscarOperaciones(term, { limit = 300 } = {}) {
+  const t = String(term || '').trim();
+  if (t.length < 2) return [];
+  // PostgREST .or() usa comas/paréntesis como separadores → se neutralizan.
+  const safe = t.replace(/[(),*]/g, ' ').trim();
+  if (!safe) return [];
+  const like = `*${safe}*`;
+  const ors = [];
+  if (/^\d+$/.test(safe)) ors.push(`nv_ptm.eq.${Number(safe)}`);
+  ors.push(
+    `nv_orange.ilike.${like}`, `nv_farmapack.ilike.${like}`, `varios.ilike.${like}`,
+    `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
+    `factura.ilike.${like}`, `transportista.ilike.${like}`,
+  );
+  const { data, error } = await supabase.from('tms_operaciones').select(LISTA_COLS)
+    .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit);
+  if (error) throw error;
+  const dedup = new Map();
+  (data || []).forEach((r) => {
+    const nv = nvDe(r); if (!nv) return;
+    const key = `${canalDe(r)}:${nv}`;
+    if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
   });
   return Array.from(dedup.values());
 }

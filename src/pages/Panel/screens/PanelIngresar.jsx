@@ -10,7 +10,7 @@ import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
 import {
   CANALES, VARIOS_TIPOS, ESTADOS_SELECCIONABLES, ESTADOS_ACTIVOS, TIPOS_DESPACHO, ACCENT, colorFor,
-  listaActivas, opciones, lookup, guardar, eliminar,
+  listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
   exportarOperaciones,
 } from '../ingresar/ingresarService';
@@ -301,6 +301,8 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('Todos');
   const [q, setQ] = useState('');
+  const [remoto, setRemoto] = useState(null);   // resultados de búsqueda en TODA la tabla
+  const [buscando, setBuscando] = useState(false);
   const [sel, setSel] = useState(null);
   const [opts, setOpts] = useState(null);
   const [exportando, setExportando] = useState(false);
@@ -310,6 +312,19 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
     listaActivas().then((rows) => { setLista(rows); setLoading(false); }).catch(() => { setLista([]); setLoading(false); });
   }, []);
   useEffect(() => { cargar(); opciones().then(setOpts).catch(() => {}); }, [cargar]);
+
+  // Búsqueda contra TODA la tabla (incluye Entregado/NULA/etc.): la lista base
+  // solo trae activas, así que sin esto una N.V. entregada no se puede encontrar.
+  const enBusqueda = q.trim().length >= 2;
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setRemoto(null); setBuscando(false); return; }
+    setBuscando(true);
+    const h = setTimeout(() => {
+      buscarOperaciones(term).then((rows) => setRemoto(rows)).catch(() => setRemoto([])).finally(() => setBuscando(false));
+    }, 350);
+    return () => clearTimeout(h);
+  }, [q]);
 
   // Descarga TODA la tabla de operaciones (todas las columnas y datos) a Excel.
   const onExportar = useCallback(async () => {
@@ -326,20 +341,23 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
     }
   }, []);
 
+  // En búsqueda: se muestran los resultados de TODA la tabla (cualquier estado),
+  // sin aplicar el filtro de pills (que es solo de estados activos). Sin término:
+  // la lista de activas con su filtro por estado.
   const filtrada = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return lista.filter((r) => (filtro === 'Todos' || r.estado === filtro)
-      && (!term || [r.nv, r.cliente, r.vendedor, r.guia, r.factura, r.transportista].filter(Boolean).some((v) => String(v).toLowerCase().includes(term))));
-  }, [lista, filtro, q]);
+    if (enBusqueda) return remoto || [];
+    return lista.filter((r) => filtro === 'Todos' || r.estado === filtro);
+  }, [enBusqueda, remoto, lista, filtro]);
   const conteo = useMemo(() => { const m = {}; lista.forEach((r) => { m[r.estado] = (m[r.estado] || 0) + 1; }); return m; }, [lista]);
 
   return (
     <div className="space-y-4">
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por NV, guía o factura…" className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm outline-none bg-white" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por NV, cliente, guía o factura (cualquier estado)…" className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-sm outline-none bg-white" />
+        {buscando && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 animate-spin" />}
       </div>
-      {(() => {
+      {!enBusqueda && (() => {
         const items = ESTADOS_ACTIVOS.filter((e) => (conteo[e] || 0) > 0)
           .map((e) => ({ value: e, label: e, color: colorFor(e), count: conteo[e] || 0 }));
         if (items.length === 0) return null;
@@ -353,7 +371,11 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
         );
       })()}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <span className="text-[12px] text-gray-400">{filtrada.length} resultados de {lista.length} activas</span>
+        <span className="text-[12px] text-gray-400">
+          {enBusqueda
+            ? `${filtrada.length} resultado${filtrada.length !== 1 ? 's' : ''} · búsqueda en todos los estados`
+            : `${filtrada.length} resultados de ${lista.length} activas`}
+        </span>
         <div className="flex items-center gap-3">
           <button onClick={onExportar} disabled={exportando}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
@@ -365,10 +387,10 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
         </div>
       </div>
 
-      {loading ? (
+      {(loading && !enBusqueda) || (buscando && !remoto) ? (
         <div className="py-16 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={30} /></div>
       ) : filtrada.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 text-sm">Sin N.V. activas para este filtro.</div>
+        <div className="text-center py-16 text-gray-400 text-sm">{enBusqueda ? 'Sin N.V. que coincidan con la búsqueda.' : 'Sin N.V. activas para este filtro.'}</div>
       ) : (
         <div className="space-y-2">
           {filtrada.map((r) => <NvRow key={r.key} i={r} onOpen={setSel} />)}
@@ -378,8 +400,8 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
       {sel && (
         <DetalleDrawer item={sel} puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} opts={opts}
           onClose={() => setSel(null)}
-          onSaved={(upd) => setLista((ls) => ls.map((x) => (x.key === upd.key ? { ...x, ...upd } : x)))}
-          onDeleted={(del) => setLista((ls) => ls.filter((x) => x.key !== del.key))} />
+          onSaved={(upd) => { setLista((ls) => ls.map((x) => (x.key === upd.key ? { ...x, ...upd } : x))); setRemoto((rs) => rs && rs.map((x) => (x.key === upd.key ? { ...x, ...upd } : x))); }}
+          onDeleted={(del) => { setLista((ls) => ls.filter((x) => x.key !== del.key)); setRemoto((rs) => rs && rs.filter((x) => x.key !== del.key)); }} />
       )}
     </div>
   );
