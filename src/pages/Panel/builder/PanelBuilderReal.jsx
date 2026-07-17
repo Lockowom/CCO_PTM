@@ -278,7 +278,7 @@ export default function PanelBuilderReal() {
     const ds = DATA_SOURCES.find((d) => d.key === dataSource);
     const id = genWidgetId();
 
-    const defaultCfg = { color: "#f57c00" };
+    const defaultCfg = { color: "#ea580c" };
     if (type === "kpi" && ds.type === "array") {
       // KPI sobre filas (operaciones) → por defecto cuenta filas.
       defaultCfg.agg = "count";
@@ -639,11 +639,11 @@ export default function PanelBuilderReal() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: "linear-gradient(135deg, #f57c00, #e65100)" }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: "linear-gradient(135deg, #ea580c, #c2410c)" }}>
               PTM
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-800">DASHBOARD BUILDER</h1>
+              <h1 className="text-base font-black text-slate-800 tracking-tight">Dashboard <span className="text-orange-600">Builder</span></h1>
               <p className="text-[10px] text-gray-400 uppercase tracking-wide">
                 {active?.name || "—"} · {activePage?.name || ""} · {activePage?.widgets.length || 0} widgets
               </p>
@@ -694,7 +694,7 @@ export default function PanelBuilderReal() {
             {editMode && canEdit && (
               <button
                 onClick={handlePlantillaGraficos}
-                className="px-3 py-1.5 text-[12px] rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                className="px-3 py-1.5 text-[12px] rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 font-medium transition-colors"
                 title="Crea una hoja con 6 gráficos: Cumplimiento, Fill Rate, Lead Time, Tardanza, NV en Riesgo"
               >
                 Gráficos
@@ -703,7 +703,7 @@ export default function PanelBuilderReal() {
             {editMode && canEdit && (
               <button
                 onClick={() => setCalcOpen(true)}
-                className="px-3 py-1.5 text-[12px] rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50 font-medium"
+                className="px-3 py-1.5 text-[12px] rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 font-medium transition-colors"
                 title="Define métricas con fórmulas (HORAS_RESTANTES, PRIORIDAD, RIESGO_OTIF…)"
               >
                 ƒ Campos calc.
@@ -712,7 +712,7 @@ export default function PanelBuilderReal() {
             {editMode && canEdit && (
               <button
                 onClick={() => setCatalogOpen(true)}
-                className="px-3 py-1.5 text-[12px] rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium"
+                className="px-3 py-1.5 text-[12px] rounded-lg bg-orange-600 text-white hover:bg-orange-700 font-medium shadow-sm"
               >
                 + Agregar Widget
               </button>
@@ -722,7 +722,7 @@ export default function PanelBuilderReal() {
                 onClick={() => setEditMode(!editMode)}
                 className={`px-4 py-1.5 text-[12px] rounded-lg font-semibold transition-all ${
                   editMode
-                    ? "bg-[#f57c00] text-white hover:bg-[#e65100]"
+                    ? "bg-[#ea580c] text-white hover:bg-[#c2410c]"
                     : "bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-700"
                 }`}
               >
@@ -744,7 +744,7 @@ export default function PanelBuilderReal() {
           <div className="flex gap-1 flex-wrap">
             {DATE_PRESETS.map(p => (
               <button key={p.key} onClick={() => setDatePreset(p.key)}
-                className={`px-2.5 py-1 text-[11px] rounded-md font-medium transition-colors ${datePreset === p.key ? "bg-[#f57c00] text-white" : "bg-white text-gray-600 hover:bg-orange-50 border border-gray-200"}`}>
+                className={`px-2.5 py-1 text-[11px] rounded-md font-medium transition-colors ${datePreset === p.key ? "bg-[#ea580c] text-white" : "bg-white text-gray-600 hover:bg-orange-50 border border-gray-200"}`}>
                 {p.label}
               </button>
             ))}
@@ -757,7 +757,7 @@ export default function PanelBuilderReal() {
             </div>
           )}
           <span className="text-[10px] text-gray-400 ml-auto shrink-0">{dateRange.from} — {dateRange.to}</span>
-          <button onClick={loadData} className="px-2 py-1 text-[11px] text-gray-500 hover:text-[#f57c00] border border-gray-200 rounded-md hover:border-orange-200" title="Refrescar datos">↻</button>
+          <button onClick={loadData} className="px-2 py-1 text-[11px] text-gray-500 hover:text-[#ea580c] border border-gray-200 rounded-md hover:border-orange-200" title="Refrescar datos">↻</button>
         </div>
       </div>
 
@@ -782,7 +782,7 @@ export default function PanelBuilderReal() {
                       onClick={() => setActivePageId(p.id)}
                       onDoubleClick={() => { if (editMode && canEdit) setRenamingPage(p.id); }}
                       className={`px-3 py-2.5 text-[12px] font-medium border-b-2 transition-colors whitespace-nowrap ${
-                        isActive ? "border-[#f57c00] text-[#f57c00]" : "border-transparent text-gray-500 hover:text-gray-800"
+                        isActive ? "border-[#ea580c] text-[#ea580c]" : "border-transparent text-gray-500 hover:text-gray-800"
                       }`}
                       title={editMode && canEdit ? "Doble clic para renombrar" : undefined}
                     >
@@ -797,7 +797,7 @@ export default function PanelBuilderReal() {
               );
             })}
             {editMode && canEdit && (
-              <button onClick={handleAddPage} className="px-2.5 py-2 text-[12px] text-gray-400 hover:text-[#f57c00] font-medium shrink-0" title="Nueva hoja">
+              <button onClick={handleAddPage} className="px-2.5 py-2 text-[12px] text-gray-400 hover:text-[#ea580c] font-medium shrink-0" title="Nueva hoja">
                 + Hoja
               </button>
             )}
@@ -815,7 +815,7 @@ export default function PanelBuilderReal() {
                 <p className="text-sm mb-4">Agrega widgets para empezar a construir esta hoja</p>
                 <button
                   onClick={() => { setEditMode(true); setCatalogOpen(true); }}
-                  className="px-5 py-2 bg-[#f57c00] text-white rounded-xl font-semibold hover:bg-[#e65100] transition-colors"
+                  className="px-5 py-2 bg-[#ea580c] text-white rounded-xl font-semibold hover:bg-[#c2410c] transition-colors"
                 >
                   + Agregar primer widget
                 </button>
@@ -893,13 +893,13 @@ export default function PanelBuilderReal() {
 
       <style>{`
         .react-grid-item.react-grid-placeholder {
-          background: #f57c00 !important;
+          background: #ea580c !important;
           opacity: 0.15 !important;
           border-radius: 12px !important;
         }
         .react-grid-item > .react-resizable-handle::after {
-          border-right-color: #f57c00 !important;
-          border-bottom-color: #f57c00 !important;
+          border-right-color: #ea580c !important;
+          border-bottom-color: #ea580c !important;
         }
       `}</style>
     </div>
