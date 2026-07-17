@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { fetchTVEstados } from "../dash/dashData";
 import { ESTADOS } from "../dash/dashHelpers";
+import { supabase } from "../../../supabase";
 import CountUp from "./ui/CountUp";
 
 const REFRESH_MS = 30_000;
@@ -100,6 +103,7 @@ function NvCard({ n, estado }) {
 }
 
 export default function TVDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState("");
@@ -136,6 +140,18 @@ export default function TVDashboard() {
     loadData();
     const interval = setInterval(loadData, REFRESH_MS);
     return () => clearInterval(interval);
+  }, [loadData]);
+
+  // Realtime SIEMPRE: recarga en vivo ante cualquier cambio en operaciones
+  // (además del poll de respaldo). Debounce para no recargar en ráfaga.
+  useEffect(() => {
+    let t;
+    const ch = supabase.channel('panel_tv_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones' }, () => {
+        clearTimeout(t); t = setTimeout(loadData, 1200);
+      })
+      .subscribe();
+    return () => { clearTimeout(t); supabase.removeChannel(ch); };
   }, [loadData]);
 
   useEffect(() => {
@@ -177,27 +193,35 @@ export default function TVDashboard() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
+  // Botón para salir del modo kiosco (el TV cubre toda la pantalla).
+  const SalirBtn = (
+    <button onClick={() => navigate('/panel')}
+      className="absolute top-4 right-4 z-[71] px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-bold border border-white/15">
+      ✕ Salir
+    </button>
+  );
+
   if (loading && !data) {
-    return (
-      <div className="h-screen bg-[#0a0a0f] flex items-center justify-center">
+    return createPortal(
+      <div className="fixed inset-0 z-[70] bg-[#0a0a0f] flex items-center justify-center">
+        {SalirBtn}
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
           <p className="text-gray-400 text-2xl">Cargando…</p>
         </div>
-      </div>
-    );
+      </div>, document.body);
   }
 
   if (!data) {
-    return (
-      <div className="h-screen bg-[#0a0a0f] flex items-center justify-center p-8">
+    return createPortal(
+      <div className="fixed inset-0 z-[70] bg-[#0a0a0f] flex items-center justify-center p-8">
+        {SalirBtn}
         <div className="text-center max-w-lg">
           <p className="text-red-400 text-2xl font-semibold mb-2">No se pudo cargar</p>
           {error && <p className="text-gray-500 text-sm font-mono break-words">{error}</p>}
           <p className="text-gray-600 text-sm mt-4">Reintentando cada {REFRESH_MS / 1000}s…</p>
         </div>
-      </div>
-    );
+      </div>, document.body);
   }
 
   const { estados, total, urgentes } = data;
@@ -205,8 +229,9 @@ export default function TVDashboard() {
   const detalleColor = sel === "URGENTES" ? "#ef4444" : sel ? (COLORES[sel] || "#6b7280") : "#6b7280";
   const detalleEstado = sel === "URGENTES" ? "URGENTES" : sel || "";
 
-  return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+  return createPortal(
+    <div className="fixed inset-0 z-[70] overflow-hidden bg-black">
+    {SalirBtn}
     <div
       className="overflow-hidden bg-[#0a0a0f] text-white flex flex-col p-5"
       style={{
@@ -329,6 +354,7 @@ export default function TVDashboard() {
         )}
       </div>
     </div>
-    </div>
+    </div>,
+    document.body
   );
 }
