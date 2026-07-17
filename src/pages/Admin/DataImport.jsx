@@ -77,7 +77,11 @@ const IMPORT_TABS = [
         id: `nvcat_${canal}`,
         label: canal === 'ptm' ? 'N.V PTM' : canal === 'orange' ? 'N.V ORANGE' : 'N.V FARMAPACK',
         category: 'ventas', icon: FileText, table: 'tms_nv_catalogo',
-        uniqueKey: 'canal,nv', defaultValues: { canal },
+        // 'nv' primero (alta cardinalidad) para que la detección de duplicados
+        // funcione. smartDedup + allowUpdate=false: las N.V. que YA existen en el
+        // canal se detectan y se OMITEN; solo entran las nuevas → subir el mismo
+        // archivo varias veces no re-carga ni multiplica nada.
+        uniqueKey: 'nv,canal', defaultValues: { canal },
         columns: [
             { key: 'fecha_aprobacion', label: 'Fecha', required: false, type: 'date', optional: true },
             { key: 'nv', label: 'N.Venta', required: true, type: 'text' },
@@ -85,8 +89,8 @@ const IMPORT_TABS = [
             { key: 'vendedor', label: 'Nombre Vendedor', required: false, type: 'text' },
             { key: 'monto_neto', label: 'Monto Neto', required: false, type: 'number' },
         ],
-        helpText: `Catálogo NV → Cliente/Vendedor del canal ${canal.toUpperCase()}. Columnas: Fecha, N.Venta, Nombre Cliente, Nombre Vendedor, Monto Neto. Se actualiza por N.V. (no borra las anteriores).`,
-        smartDedup: false, allowUpdate: true,
+        helpText: `Catálogo NV → Cliente/Vendedor del canal ${canal.toUpperCase()}. Columnas: Fecha, N.Venta, Nombre Cliente, Nombre Vendedor, Monto Neto. Solo entran las N.V. NUEVAS; las que ya existen se detectan y se OMITEN (no se duplican al re-subir). Para corregir/actualizar datos existentes, marcá "Reemplazar canal".`,
+        smartDedup: true, allowUpdate: false,
     })),
     {
         id: 'control_despacho', label: 'Control Despacho', category: 'ventas',
@@ -738,7 +742,11 @@ const DataImport = () => {
                 if (purgeErr) throw new Error(`No se pudo reemplazar el canal: ${purgeErr.message}`);
             }
 
-            let newRows = parsedRows.filter((_, idx) => rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update');
+            // En modo "Reemplazar canal" se purgó el canal → hay que cargar TODAS
+            // las filas del archivo (ignorar el estado new/existing del dedup).
+            let newRows = (esNvCat && replaceCanal)
+                ? parsedRows.slice()
+                : parsedRows.filter((_, idx) => rowStatuses[idx] === 'new' || rowStatuses[idx] === 'update');
 
             if (newRows.length === 0) {
                 setLoadResult({ success: true, total: parsedRows.length, inserted: 0, skipped: parsedRows.length, errors: 0, deduplicated: 0, message: 'No hay registros nuevos. Todos ya existen.' });
@@ -1265,7 +1273,7 @@ const DataImport = () => {
                             <div className="flex-1" />
                             <button
                                 onClick={handleUpload}
-                                disabled={isLoading || (stats.new === 0 && stats.update === 0)}
+                                disabled={isLoading || ((stats.new === 0 && stats.update === 0) && !(esNvCat && replaceCanal))}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors disabled:cursor-not-allowed"
                             >
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
