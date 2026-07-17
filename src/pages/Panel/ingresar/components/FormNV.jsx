@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useFormNVStore } from "../store/useFormNVStore";
 import { ESTADOS, ESTADOS_SELECCIONABLES, estampaDespacho } from "../estados";
 import PillNavCanal from "./PillNavCanal";
+import PillNavEstado from "./PillNavEstado";
 import { CANALES, VARIOS_TIPOS, colorFor, ACCENT } from "../ingresarService";
 
 /**
@@ -17,11 +18,9 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     fechaAprobacionReal, fechaFacturacion, fechaDespacho,
     factura, guia, bultos, valorFactura, numeroEnvio, urgente,
     variosTipo, variosCliente, variosVendedor, variosDivision, variosCcosto,
-    errors, submitResult, autoFilledDates, estadoOpen, estadoQuery,
+    errors, submitResult, autoFilledDates,
     patch, markAutoFilled, clearAutoFilled, recalcCompromiso,
   } = s;
-
-  const estadoRef = useRef(null);
 
   // Auto-rellenar fechas según el estado elegido. Shipping estampa facturación;
   // los estados de despacho estampan despacho + facturación. La pertenencia se
@@ -45,23 +44,6 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     recalcCompromiso();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fechaAprobacionReal, mode]);
-
-  // Cerrar dropdown estado con click afuera / Escape.
-  useEffect(() => {
-    if (!estadoOpen) return;
-    const onClick = (e) => {
-      if (estadoRef.current && !estadoRef.current.contains(e.target)) patch({ estadoOpen: false });
-    };
-    const onKey = (e) => { if (e.key === "Escape") patch({ estadoOpen: false }); };
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onClick); document.removeEventListener("keydown", onKey); };
-  }, [estadoOpen, patch]);
-
-  const estadoFiltered = useMemo(
-    () => ESTADOS_SELECCIONABLES.filter((c) => c.toLowerCase().includes(estadoQuery.toLowerCase())),
-    [estadoQuery]
-  );
 
   // Mapa nombre→vendedor (case-insensitive) para auto-rellenar ccosto/división.
   const vendedorPorNombre = useMemo(() => {
@@ -212,37 +194,12 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
           <section className="bg-white rounded-2xl border border-gray-200 p-5">
             <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-4">Logística</h2>
             <label className="field-label">Estado *</label>
-            <div className="relative mb-5" ref={estadoRef}>
-              <button type="button" onClick={() => patch({ estadoOpen: !estadoOpen, estadoQuery: "" })}
-                className="field-input flex items-center justify-between text-left"
-                style={estadoOpen ? { borderColor: ACCENT, boxShadow: `0 0 0 4px ${ACCENT}1f` } : undefined}>
-                <span className="inline-flex items-center gap-2.5 min-w-0">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(estado) }} />
-                  <span className="text-gray-800 font-medium truncate">{estado || "Seleccionar estado"}</span>
-                </span>
-                <span className={`text-gray-300 text-xs transition-transform shrink-0 ${estadoOpen ? "rotate-180" : ""}`}>▼</span>
-              </button>
-              {estadoOpen && (
-                <div className="absolute z-30 mt-2 w-full bg-white rounded-xl shadow-xl shadow-black/10 border border-gray-100 overflow-hidden anim-fade-up">
-                  <div className="p-2 border-b border-gray-100">
-                    <input autoFocus value={estadoQuery} onChange={e => patch({ estadoQuery: e.target.value })} placeholder="Buscar estado…" className="field-input py-2 text-sm" />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {estadoFiltered.length === 0 && <div className="px-4 py-3 text-sm text-gray-400 text-center">Sin resultados</div>}
-                    {estadoFiltered.map(c => {
-                      const sel = estado === c;
-                      return (
-                        <button key={c} type="button" onClick={() => patch({ estado: c, estadoOpen: false, estadoQuery: "" })}
-                          className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm transition-colors ${sel ? "bg-orange-50" : "hover:bg-gray-50"}`}>
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(c) }} />
-                          <span className={sel ? "font-semibold text-gray-900" : "text-gray-700"}>{c}</span>
-                          {sel && <span className="ml-auto font-bold" style={{ color: ACCENT }}>✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            <div className="mb-5">
+              <PillNavEstado
+                items={ESTADOS_SELECCIONABLES.map((e) => ({ value: e, label: e, color: colorFor(e) }))}
+                active={estado}
+                onSelect={(value) => patch({ estado: value })}
+              />
             </div>
 
             {/* Campo URGENTE destacado */}

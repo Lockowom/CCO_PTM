@@ -76,3 +76,34 @@
   white-space: nowrap;
   will-change: transform, opacity;
 }
+
+/* Variante ESTADO: track claro (para no competir con el pill de Canal, que va
+   sobre track oscuro) y pills algo más compactos porque son hasta 5. Cada pill
+   se rellena con su propio color de estado (no un acento único). */
+.pc-track.pc-estado {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  gap: 3px;
+  height: 42px;
+}
+.pc-track.pc-estado .pc-pill {
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  padding: 0 6px;
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04);
+}
+.pc-track.pc-estado .pc-pill.pc-active {
+  color: #fff;
+}
+.pc-track.pc-estado .pc-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  margin-right: 5px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.pc-track.pc-estado .pc-pill.pc-active .pc-dot {
+  background: rgba(255, 255, 255, 0.9) !important;
+}

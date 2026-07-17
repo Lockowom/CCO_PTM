@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import {
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
 import FormNV from '../ingresar/components/FormNV';
+import PillNavEstado from '../ingresar/components/PillNavEstado';
 import Toast from '../ingresar/components/Toast';
 import Consolidados from '../ingresar/components/Consolidados';
 import { useFormNVStore } from '../ingresar/store/useFormNVStore';
@@ -112,21 +113,13 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [delConfirm, setDelConfirm] = useState(false);
-  const [estadoOpen, setEstadoOpen] = useState(false);
-  const [estadoQuery, setEstadoQuery] = useState('');
   const [result, setResult] = useState(null);
-  const estadoRef = useRef(null);
 
   useEffect(() => {
     let on = true; setLoading(true);
     lookup(item.canal, item.nv).then((r) => { if (!on) return; setData(r.found ? r.data : null); setLoading(false); });
     return () => { on = false; };
   }, [item]);
-  useEffect(() => {
-    const onClick = (e) => { if (estadoRef.current && !estadoRef.current.contains(e.target)) setEstadoOpen(false); };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
 
   const detailVal = (field) => (field in edit ? edit[field] : (data?.[field] ?? '') ?? '');
   const setDetailField = (field, value) => {
@@ -211,22 +204,12 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
                   <section>
                     <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado y Logística</h3>
                     <label className="field-label">Estado</label>
-                    <div className="relative mb-3" ref={estadoRef}>
-                      <button type="button" onClick={() => { setEstadoOpen((o) => !o); setEstadoQuery(''); }} className="field-input flex items-center justify-between text-left" style={estadoOpen ? { borderColor: ACCENT, boxShadow: `0 0 0 4px ${ACCENT}1f` } : undefined}>
-                        <span className="inline-flex items-center gap-2.5 min-w-0"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(detailVal('estado')) }} /><span className="text-gray-800 font-medium truncate">{detailVal('estado') || 'Seleccionar'}</span></span>
-                        <span className={`text-gray-300 text-xs transition-transform shrink-0 ${estadoOpen ? 'rotate-180' : ''}`}>▼</span>
-                      </button>
-                      {estadoOpen && (
-                        <div className="absolute z-30 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-                          <div className="p-2 border-b border-gray-100"><input autoFocus value={estadoQuery} onChange={(e) => setEstadoQuery(e.target.value)} placeholder="Buscar estado…" className="field-input py-2 text-sm" /></div>
-                          <div className="max-h-60 overflow-y-auto py-1">
-                            {ESTADOS_SELECCIONABLES.filter((c) => c.toLowerCase().includes(estadoQuery.toLowerCase())).map((c) => {
-                              const s = detailVal('estado') === c;
-                              return (<button key={c} type="button" onClick={() => { setDetailField('estado', c); setEstadoOpen(false); setEstadoQuery(''); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm ${s ? 'bg-orange-50' : 'hover:bg-gray-50'}`}><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorFor(c) }} /><span className={s ? 'font-semibold text-gray-900' : 'text-gray-700'}>{c}</span>{s && <span className="ml-auto font-bold" style={{ color: ACCENT }}>✓</span>}</button>);
-                            })}
-                          </div>
-                        </div>
-                      )}
+                    <div className="mb-3">
+                      <PillNavEstado
+                        items={ESTADOS_SELECCIONABLES.map((c) => ({ value: c, label: c, color: colorFor(c) }))}
+                        active={detailVal('estado')}
+                        onSelect={(c) => setDetailField('estado', c)}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div><label className="field-label">Tipo Despacho</label><select value={detailVal('tipo_despacho')} onChange={(e) => setDetailField('tipo_despacho', e.target.value)} className="field-input"><option value="">—</option>{(opts?.tiposDespacho || TIPOS_DESPACHO).map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
