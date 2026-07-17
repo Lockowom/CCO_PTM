@@ -203,7 +203,7 @@ export default function TVDashboard() {
 
   if (loading && !data) {
     return createPortal(
-      <div className="fixed inset-0 z-[70] bg-[#0a0a0f] flex items-center justify-center">
+      <div className="fixed inset-0 z-[110] bg-[#0a0a0f] flex items-center justify-center">
         {SalirBtn}
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
@@ -214,7 +214,7 @@ export default function TVDashboard() {
 
   if (!data) {
     return createPortal(
-      <div className="fixed inset-0 z-[70] bg-[#0a0a0f] flex items-center justify-center p-8">
+      <div className="fixed inset-0 z-[110] bg-[#0a0a0f] flex items-center justify-center p-8">
         {SalirBtn}
         <div className="text-center max-w-lg">
           <p className="text-red-400 text-2xl font-semibold mb-2">No se pudo cargar</p>
@@ -230,7 +230,7 @@ export default function TVDashboard() {
   const detalleEstado = sel === "URGENTES" ? "URGENTES" : sel || "";
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] overflow-hidden bg-black">
+    <div className="fixed inset-0 z-[110] overflow-hidden bg-black">
     {SalirBtn}
     <div
       className="overflow-hidden bg-[#0a0a0f] text-white flex flex-col p-5"
