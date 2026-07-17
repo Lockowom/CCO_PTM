@@ -230,7 +230,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
                 {transportistasOpts.length > 0 ? (
                   <select value={transportista} onChange={e => patch({ transportista: e.target.value })} className="field-input">
                     <option value="">— Seleccionar —</option>
-                    {transportistasOpts.map(t => <option key={t} value={t}>{t}</option>)}
+                    {(transportista && !transportistasOpts.includes(transportista) ? [transportista, ...transportistasOpts] : transportistasOpts).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 ) : (
                   <input type="text" value={transportista} onChange={e => patch({ transportista: e.target.value })} placeholder="Nombre transportista" className="field-input" />

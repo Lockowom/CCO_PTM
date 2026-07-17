@@ -105,8 +105,25 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
 
 // ── Opciones del formulario ─────────────────────────────────────────────────
 export async function opciones() {
-  const { data } = await supabase.from('tms_operaciones').select('transportista').not('transportista', 'is', null).limit(5000);
-  const transportistas = [...new Set((data || []).map((r) => (r.transportista || '').trim()).filter(Boolean))].sort();
+  const set = new Set();
+  // 1) Catálogo maestro (Configuración → Transportistas): fuente mantenida.
+  const { data: cat } = await supabase.from('tms_panel_transportistas')
+    .select('nombre').eq('activo', true).order('nombre', { ascending: true });
+  (cat || []).forEach((r) => { const t = (r.nombre || '').trim(); if (t) set.add(t); });
+  // 2) Además, TODO transportista ya usado en N.V. — paginado con .order/.range
+  //    para NO depender del tope de 1.000 filas de PostgREST (que dejaba fuera
+  //    a los que solo aparecían más allá de la primera página, p.ej. Transfarma).
+  let from = 0; const page = 1000;
+  for (;;) {
+    const { data, error } = await supabase.from('tms_operaciones')
+      .select('transportista').not('transportista', 'is', null)
+      .order('id', { ascending: true }).range(from, from + page - 1);
+    if (error || !data || data.length === 0) break;
+    data.forEach((r) => { const t = (r.transportista || '').trim(); if (t) set.add(t); });
+    if (data.length < page) break;
+    from += page;
+  }
+  const transportistas = [...set].sort((a, b) => a.localeCompare(b, 'es'));
   return { estados: ESTADOS_SELECCIONABLES, transportistas, tiposDespacho: TIPOS_DESPACHO };
 }
 
