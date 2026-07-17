@@ -125,6 +125,16 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   manual), cola con copias por producto y vista previa fiel. Sin migración (sin tablas ni permisos
   nuevos; usa permisos de bodega). Frontend `src/pages/Inventory/Carteles.jsx`.
 
+## Módulo nativo: Panel de Insumos (Inventario)
+- **Panel de Insumos** (`/inventory/insumos`, `src/pages/Inventory/Insumos.jsx` + `src/services/insumosService.js`):
+  panel didáctico del stock de insumos de embalaje/despacho con **semáforo** (🟢 OK / 🟡 por acabarse /
+  🔴 crítico) según `umbral_bajo`/`umbral_critico` por ítem. Migración `100`: tabla `tms_insumos`
+  (categoría CAJAS/PALLETS/OTROS + cantidad + umbrales), RLS solo-lectura para `authenticated`, escrituras
+  por RPC gateada (`_insumos_puede_gestionar`): `insumos_guardar`/`insumos_set_cantidad`/`insumos_eliminar`.
+  Edición inline de cantidad/umbrales (permiso `manage_insumos`). **Solicitud por correo**: se seleccionan
+  los insumos por reponer y se arma un `mailto:` (destinatario recordado en localStorage) pidiendo la
+  reposición. Permisos `view_insumos`/`manage_insumos` (módulo Inventario).
+
 ## Regla permanente: checklist al agregar un MÓDULO nuevo
 Cada módulo/pantalla nueva DEBE quedar administrable en **Roles** y **Vistas**. En el mismo
 cambio, actualizar SIEMPRE:

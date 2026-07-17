@@ -156,7 +156,8 @@ const Navbar = () => {
             { label: 'Análisis · Duplicados', path: '/inventory/analisis?tab=duplicados', icon: <Layers size={16} /> },
             { label: 'Análisis · Anomalías', path: '/inventory/analisis?tab=anomalias', icon: <FileSearch size={16} /> },
             { label: 'Análisis · Detalle completo', path: '/inventory/analisis?tab=detalle', icon: <FileText size={16} /> },
-            { label: 'Carteles de Bodega', path: '/inventory/carteles', icon: <Monitor size={16} /> }
+            { label: 'Carteles de Bodega', path: '/inventory/carteles', icon: <Monitor size={16} /> },
+            { label: 'Panel de Insumos', path: '/inventory/insumos', icon: <Package size={16} /> }
           ]
         }
       ]

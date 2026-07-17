@@ -80,6 +80,7 @@ export const APP_ROUTES = [
   { value: '/inventory/analisis?tab=anomalias', label: 'Inventario - Análisis · Anomalías', module: 'inventario' },
   { value: '/inventory/analisis?tab=detalle', label: 'Inventario - Análisis · Detalle', module: 'inventario' },
   { value: '/inventory/carteles', label: 'Inventario - Carteles de Bodega', module: 'inventario' },
+  { value: '/inventory/insumos', label: 'Inventario - Panel de Insumos', module: 'inventario' },
 
   // Calidad
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
@@ -139,6 +140,8 @@ export const APP_PERMISSIONS = [
       // Pantallas propias del módulo Inventario (casilla 1:1 con el menú):
       { id: 'view_traspasos', label: 'Traspasos y Ajustes' },
       { id: 'view_carteles', label: 'Carteles de Bodega' },
+      { id: 'view_insumos', label: 'Panel de Insumos · Ver' },
+      { id: 'manage_insumos', label: 'Panel de Insumos · Editar stock/umbrales' },
       { id: 'manage_locations', label: 'Gestionar Ubicaciones WMS (y Bodegas Softland)' },
       // Análisis de Códigos — TODO o por pestaña:
       { id: 'view_analisis', label: 'Análisis · TODAS las pestañas' },

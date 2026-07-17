@@ -64,6 +64,9 @@ export const ROUTE_PERMISSIONS = {
     'analisis_tab_resumen', 'analisis_tab_antiguos', 'analisis_tab_antiguos_disp', 'analisis_tab_no_activos', 'analisis_tab_duplicados', 'analisis_tab_anomalias', 'analisis_tab_detalle'],
   // Carteles de bodega (impresión único/doble/cuádruple con CODE128).
   '/inventory/carteles': ['view_carteles', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  // Panel de Insumos — permiso propio `view_insumos`; los de bodega/stock siguen
+  // dando acceso (aditivo) para no romper roles existentes.
+  '/inventory/insumos': ['view_insumos', 'manage_insumos', 'manage_inventory', 'view_stock'],
 
   // Calidad — Inventario también entra (hito 2: asigna SKUs a revisión; crear
   // informes/dictámenes sigue gateado en la UI por manage_monitoreo/quality).

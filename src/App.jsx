@@ -71,6 +71,7 @@ const DashboardReal = React.lazy(() => import('./pages/Panel/dash/DashboardReal'
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const AnalisisCodigos = React.lazy(() => import('./pages/Inventory/AnalisisCodigos'));
 const Carteles = React.lazy(() => import('./pages/Inventory/Carteles'));
+const Insumos = React.lazy(() => import('./pages/Inventory/Insumos'));
 const BloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle'));
 const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
@@ -424,6 +425,7 @@ function AppContent() {
           <Route path="inventory/conteo" element={<ErrorBoundary><ConteoCiclico /></ErrorBoundary>} />
           <Route path="inventory/analisis" element={<ErrorBoundary><AnalisisCodigos /></ErrorBoundary>} />
           <Route path="inventory/carteles" element={<ErrorBoundary><Carteles /></ErrorBoundary>} />
+          <Route path="inventory/insumos" element={<ErrorBoundary><Insumos /></ErrorBoundary>} />
           <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><BloqueDetalle /></ErrorBoundary>} />
 
           {/* Admin Modules */}
