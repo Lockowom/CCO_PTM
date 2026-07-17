@@ -9,6 +9,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import CanalOTA from '../../components/CanalOTA';
 import DespliegueOTA from '../../components/DespliegueOTA';
+import TraficoConsulta from '../../components/TraficoConsulta';
 
 const AdminMonitor = () => {
   const containerRef = useRef(null);
@@ -127,6 +128,9 @@ const AdminMonitor = () => {
 
       {/* Despliegue OTA a producción (solo admin / permiso deploy_ota) */}
       <DespliegueOTA />
+
+      {/* Tráfico de la Consulta pública (/consulta) */}
+      <TraficoConsulta />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
