@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.32",
+    "fecha": "2026-07-17",
+    "titulo": "Menú de Inventario usable sin reducir el zoom",
+    "cambios": [
+      {
+        "texto": "El desplegable de Inventario tenía ~17 accesos (Traspasos, Mapa de Calor, Ubicaciones, 6 de Conteo, 6 de Análisis, Carteles, Insumos) que se salían de la pantalla y obligaban a hacer *zoom out*. Ahora el menú tiene alto máximo con scroll (max-h-[78vh] overflow-y-auto) y, cuando una categoría tiene más de 8 accesos, se…"
+      }
+    ]
+  },
+  {
     "version": "1.55.31",
     "fecha": "2026-07-17",
     "titulo": "Cuadro de Novedades ahora AUTOMÁTICO (adiós al mantenimiento manual)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "En las tarjetas N.V PTM/ORANGE/FARMAPACK, al previsualizar: (1) destino visible (canal + cuántas N.V. hay hoy en ese canal); (2) aviso de cruce — cuenta las N.V. del archivo que ya existen en OTRO canal (PTM no comparte numeración con Orange/Farmapack → un cruce con PTM casi siempre = archivo equivocado), con…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.9",
-    "fecha": "2026-07-16",
-    "titulo": "Export de Ingresar con formato de fecha chileno y orden estable",
-    "cambios": [
-      {
-        "texto": "La descarga a Excel (exportarOperaciones) ahora saca todas las fechas en dd/mm/aaaa y los timestamps en dd/mm/aaaa hh:mm (consistente, sin depender del locale de Excel); los valores $/bultos/días quedan numéricos. Orden estable por id (orden de ingreso). La descarga es solo lectura → no bloquea ni altera la tabla: el…"
       }
     ]
   }

@@ -314,38 +314,39 @@ const Navbar = () => {
                           {isActive && !isOpen && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-orange-500 rounded-full" />}
                         </button>
 
-                        {/* Dropdown Menu - Con área de puente para evitar cierres accidentales */}
-                        {isOpen && (
-                          <div className={`absolute top-full left-0 pt-2 w-72 z-50 dropdown-${item.id}`}>
-                            <div className="bg-white rounded-[2rem] shadow-[0_30px_100px_rgba(0,0,0,0.15)] border border-slate-100 p-3 overflow-hidden">
-                              <div className="grid grid-cols-1 gap-1.5">
-                                {item.modules.filter(m => canAccessRoute(m.path, item.id)).map((module) => (
+                        {/* Dropdown Menu - Con área de puente para evitar cierres accidentales.
+                            Con scroll (alto máx.) y 2 columnas cuando hay muchos accesos, para
+                            que quepan sin tener que reducir el zoom del navegador. */}
+                        {isOpen && (() => {
+                          const mods = item.modules.filter(m => canAccessRoute(m.path, item.id));
+                          const many = mods.length > 8;
+                          return (
+                          <div className={`absolute top-full left-0 pt-2 z-50 dropdown-${item.id} ${many ? 'w-[34rem]' : 'w-72'}`}>
+                            <div className="bg-white rounded-3xl shadow-[0_30px_100px_rgba(0,0,0,0.15)] border border-slate-100 p-2.5 max-h-[78vh] overflow-y-auto">
+                              <div className={`grid gap-1 ${many ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                {mods.map((module) => (
                                   <Link
                                     key={module.path}
                                     to={module.path}
-                                    className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all group/item
-                                      ${esRutaActiva(module.path) 
-                                        ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-xl shadow-orange-200' 
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all group/item
+                                      ${esRutaActiva(module.path)
+                                        ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-200'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
                                   >
-                                    <div className={`p-2 rounded-lg transition-colors
-                                      ${esRutaActiva(module.path) 
-                                        ? 'bg-white/20 text-white' 
+                                    <div className={`p-1.5 rounded-lg shrink-0 transition-colors
+                                      ${esRutaActiva(module.path)
+                                        ? 'bg-white/20 text-white'
                                         : 'bg-orange-50 text-orange-500 group-hover/item:bg-orange-100'}`}>
                                       {module.icon}
                                     </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-black tracking-tight">{module.label}</span>
-                                      {!esRutaActiva(module.path) && (
-                                        <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-slate-500 transition-colors uppercase tracking-widest">Acceso Directo</span>
-                                      )}
-                                    </div>
+                                    <span className="text-[13px] font-bold tracking-tight leading-tight">{module.label}</span>
                                   </Link>
                                 ))}
                               </div>
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
                       </>
                     )}
                   </div>
