@@ -170,9 +170,9 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
   const esUrgente = String(detailVal('urgente')) === 'true';
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-white h-full flex flex-col shadow-2xl anim-fade-up">
+    <div className="fixed inset-0 z-[60] flex justify-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md bg-slate-50 h-full flex flex-col shadow-2xl anim-fade-up">
         {/* Header */}
         <div className="shrink-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between">
           <div>
@@ -188,27 +188,38 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
           ) : !data ? (
             <div className="py-20 text-center text-sm text-gray-400">No se pudieron cargar los datos de esta NV.</div>
           ) : (
-            <div className="p-5 space-y-5">
-              <section>
-                <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Información</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[{ l: 'Cliente', v: data.cliente }, { l: 'Vendedor', v: data.vendedor }, { l: 'C. Costo', v: data.ccosto || data.centro_costo }, { l: 'División', v: data.division }].filter((x) => x.v).map((x) => (
-                    <div key={x.l} className="bg-gray-50 rounded-lg px-3 py-2"><div className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">{x.l}</div><div className="text-[13px] text-gray-700 font-medium truncate">{x.v}</div></div>
+            <div className="p-4 space-y-4">
+              {/* ── SOLO LECTURA: datos comerciales de la N.V. ── */}
+              <section className="bg-white rounded-2xl border border-slate-200 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Información</span>
+                  <span className="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5 uppercase tracking-wide">Solo lectura</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[{ l: 'Cliente', v: data.cliente }, { l: 'Vendedor', v: data.vendedor }, { l: 'C. Costo', v: data.ccosto || data.centro_costo }, { l: 'División', v: data.division }].map((x) => (
+                    <div key={x.l} className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-100"><div className="text-[9px] uppercase tracking-wide text-slate-400 font-bold mb-0.5">{x.l}</div><div className="text-[13px] text-slate-800 font-semibold truncate" title={x.v || ''}>{x.v || '—'}</div></div>
                   ))}
                 </div>
               </section>
 
-              <section>
-                <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Progreso</h3>
-                <div className="bg-gray-50 rounded-xl p-3"><Stepper data={data} /></div>
+              <section className="bg-white rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">Progreso</h3>
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100"><Stepper data={data} /></div>
               </section>
 
               {!puedeEscribir ? (
-                <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">Solo lectura · necesitas el permiso <b>manage_panel</b> para editar.</div>
+                <div className="text-xs text-slate-400 bg-white border border-slate-200 rounded-xl px-4 py-3">Solo lectura · necesitas el permiso <b>manage_panel</b> para editar.</div>
               ) : (
                 <>
-                  <section>
-                    <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado y Logística</h3>
+                  {/* ── EDITABLE: separador claro de lo que se completa ── */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="h-px flex-1 bg-orange-200" />
+                    <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest px-1">Datos a completar / editar</span>
+                    <span className="h-px flex-1 bg-orange-200" />
+                  </div>
+
+                  <section className="bg-white rounded-2xl border-l-4 border-l-orange-400 border border-slate-200 p-4">
+                    <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">Estado y Logística</h3>
                     <label className="field-label">Estado</label>
                     <div className="relative mb-3" ref={estadoRef}>
                       <button type="button" onClick={() => { setEstadoOpen((o) => !o); setEstadoQuery(''); }} className="field-input flex items-center justify-between text-left" style={estadoOpen ? { borderColor: ACCENT, boxShadow: `0 0 0 4px ${ACCENT}1f` } : undefined}>
@@ -237,18 +248,20 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
                     </div>
                   </section>
 
-                  <section>
-                    <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Fechas</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><label className="field-label">F. Aprobación Real</label><input type="date" value={detailVal('fecha_aprobacion_real')} onChange={(e) => setDetailField('fecha_aprobacion_real', e.target.value)} className="field-input" /><p className="mt-0.5 text-[9px] text-gray-400">Recalcula F. Compromiso (+2 días hábiles)</p></div>
-                      <div><label className="field-label">F. Compromiso <span className="normal-case" style={{ color: detailVal('fecha_compromiso') ? ACCENT : '#9ca3af' }}>(auto)</span></label><input type="date" value={detailVal('fecha_compromiso')} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
-                      <div><label className="field-label">F. Facturación</label><input type="date" value={detailVal('fecha_facturacion')} onChange={(e) => setDetailField('fecha_facturacion', e.target.value)} className="field-input" /></div>
-                      <div><label className="field-label">F. Despacho</label><input type="date" value={detailVal('fecha_despacho')} onChange={(e) => setDetailField('fecha_despacho', e.target.value)} className="field-input" /></div>
+                  <section className="bg-white rounded-2xl border-l-4 border-l-orange-400 border border-slate-200 p-4">
+                    <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">Fechas</h3>
+                    <div className="grid grid-cols-1 gap-3.5">
+                      <div><label className="field-label">F. Aprobación Real</label><input type="date" value={detailVal('fecha_aprobacion_real')} onChange={(e) => setDetailField('fecha_aprobacion_real', e.target.value)} className="field-input" /><p className="mt-1 text-[10px] text-slate-400">Recalcula F. Compromiso (+2 días hábiles).</p></div>
+                      <div><label className="field-label">F. Compromiso <span className="normal-case font-bold" style={{ color: detailVal('fecha_compromiso') ? ACCENT : '#9ca3af' }}>(automática)</span></label><input type="date" value={detailVal('fecha_compromiso')} readOnly className="field-input bg-slate-100 text-slate-500 cursor-not-allowed" /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className="field-label">F. Facturación</label><input type="date" value={detailVal('fecha_facturacion')} onChange={(e) => setDetailField('fecha_facturacion', e.target.value)} className="field-input" /></div>
+                        <div><label className="field-label">F. Despacho</label><input type="date" value={detailVal('fecha_despacho')} onChange={(e) => setDetailField('fecha_despacho', e.target.value)} className="field-input" /></div>
+                      </div>
                     </div>
                   </section>
 
-                  <section>
-                    <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Documentos</h3>
+                  <section className="bg-white rounded-2xl border-l-4 border-l-orange-400 border border-slate-200 p-4">
+                    <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-3">Documentos</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div><label className="field-label">Factura</label><input type="text" value={detailVal('factura')} onChange={(e) => setDetailField('factura', e.target.value)} className="field-input" /></div>
                       <div><label className="field-label">Guía</label><input type="text" value={detailVal('guia')} onChange={(e) => setDetailField('guia', e.target.value)} className="field-input" /></div>
