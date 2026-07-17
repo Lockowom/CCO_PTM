@@ -106,7 +106,7 @@ function Stepper({ data }) {
 }
 
 // ── Modal de detalle (panel lateral, port fiel del ModalDetalle) ────────────
-function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted }) {
+function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSaved, onDeleted }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState({});          // valores editados
@@ -249,14 +249,15 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
           )}
         </div>
 
-        {data && puedeEscribir && (
+        {data && (puedeEscribir || puedeEliminar) && (
           <div className="shrink-0 bg-white border-t border-gray-200 p-4 space-y-2">
-            {Object.keys(dirty).length > 0 && (
+            {puedeEscribir && Object.keys(dirty).length > 0 && (
               <button onClick={onGuardar} disabled={saving} className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60" style={{ background: ACCENT }}>
                 {saving ? <span className="inline-flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</span> : `Guardar ${Object.keys(dirty).length} cambio${Object.keys(dirty).length !== 1 ? 's' : ''}`}
               </button>
             )}
-            {!delConfirm ? (
+            {/* Eliminar N.V. — solo administradores y personal habilitado (Angélica). */}
+            {puedeEliminar && (!delConfirm ? (
               <button onClick={() => setDelConfirm(true)} className="w-full py-2.5 rounded-xl border-2 border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors">Eliminar NV</button>
             ) : (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
@@ -267,7 +268,7 @@ function DetalleDrawer({ item, puedeEscribir, opts, onClose, onSaved, onDeleted 
                   <button onClick={onEliminar} disabled={deleting} className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60">{deleting ? 'Eliminando…' : 'Sí, eliminar'}</button>
                 </div>
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -295,7 +296,7 @@ function NvRow({ i, onOpen }) {
 }
 
 // ── Pestaña Buscar (lista de N.V. activas) ──────────────────────────────────
-function TabBuscar({ puedeEscribir }) {
+function TabBuscar({ puedeEscribir, puedeEliminar }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('Todos');
@@ -375,7 +376,7 @@ function TabBuscar({ puedeEscribir }) {
       )}
 
       {sel && (
-        <DetalleDrawer item={sel} puedeEscribir={puedeEscribir} opts={opts}
+        <DetalleDrawer item={sel} puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} opts={opts}
           onClose={() => setSel(null)}
           onSaved={(upd) => setLista((ls) => ls.map((x) => (x.key === upd.key ? { ...x, ...upd } : x)))}
           onDeleted={(del) => setLista((ls) => ls.filter((x) => x.key !== del.key))} />
@@ -517,9 +518,20 @@ function TabConsolidados() {
 }
 
 // ── Módulo ───────────────────────────────────────────────────────────────────
+// Solo administradores y personal explícitamente habilitado pueden ELIMINAR
+// N.V. (borrado destructivo). El resto de escrituras usa manage_panel. Debe
+// coincidir con el gate de BD `_panel_puede_eliminar_nv()` (migración 099).
+const EMAILS_ELIMINAR_NV = ['angelica@ptm.cl'];
+function puedeEliminarNV(user) {
+  if (!user) return false;
+  return user.rol === 'ADMIN' || user.es_admin_delegado === true
+    || EMAILS_ELIMINAR_NV.includes((user.email || '').trim().toLowerCase());
+}
+
 export default function PanelIngresar() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const puedeEscribir = hasPermission('manage_panel');
+  const puedeEliminar = puedeEliminarNV(user);
   const [tab, setTab] = useState('buscar');
   const TABS = [
     { v: 'buscar', label: 'Buscar' },
@@ -535,7 +547,7 @@ export default function PanelIngresar() {
             className={`px-4 py-1.5 rounded-xl text-sm font-black transition-colors ${tab === t.v ? 'bg-white text-orange-600 shadow' : 'text-slate-500 hover:text-orange-600'}`}>{t.label}</button>
         ))}
       </div>
-      {tab === 'buscar' && <TabBuscar puedeEscribir={puedeEscribir} />}
+      {tab === 'buscar' && <TabBuscar puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} />}
       {tab === 'ingresar' && <TabIngresar />}
       {tab === 'consolidados' && puedeEscribir && <TabConsolidados />}
     </div>
