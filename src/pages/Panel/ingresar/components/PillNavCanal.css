@@ -107,3 +107,33 @@
 .pc-track.pc-estado .pc-pill.pc-active .pc-dot {
   background: rgba(255, 255, 255, 0.9) !important;
 }
+
+/* Contador (badge) al lado del label, para el filtro de la lista. */
+.pc-track.pc-estado .pc-count {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  line-height: 1;
+}
+.pc-track.pc-estado .pc-count-on,
+.pc-track.pc-estado .pc-pill.pc-active .pc-count {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Variante inline (filtro de la lista): pills al tamaño de su contenido,
+   no estirados a lo ancho. El track deja de ser una barra full-width. */
+.pc-track.pc-estado.pc-inline {
+  width: auto;
+  display: inline-flex;
+  height: auto;
+  padding: 4px;
+  gap: 4px;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.pc-track.pc-estado.pc-inline .pc-pill {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+}

@@ -10,7 +10,7 @@ import "./PillNavCanal.css";
  *
  * items: [{ value, label, color }]
  */
-const PillNavEstado = ({ items, active, onSelect, ease = "power3.easeOut" }) => {
+const PillNavEstado = ({ items, active, onSelect, inline = false, ease = "power3.easeOut" }) => {
   const circleRefs = useRef([]);
   const tlRefs = useRef([]);
   const activeTweenRefs = useRef([]);
@@ -74,7 +74,7 @@ const PillNavEstado = ({ items, active, onSelect, ease = "power3.easeOut" }) => 
   };
 
   return (
-    <div className="pc-track pc-estado">
+    <div className={`pc-track pc-estado${inline ? " pc-inline" : ""}`}>
       {items.map((item, i) => {
         const isActive = active === item.value;
         return (
@@ -98,10 +98,12 @@ const PillNavEstado = ({ items, active, onSelect, ease = "power3.easeOut" }) => 
               <span className="pc-label">
                 <span className="pc-dot" style={{ background: item.color }} />
                 {item.label}
+                {item.count != null && <span className="pc-count">{item.count}</span>}
               </span>
               <span className="pc-label-hover" aria-hidden="true">
                 <span className="pc-dot" style={{ background: "rgba(255,255,255,0.9)" }} />
                 {item.label}
+                {item.count != null && <span className="pc-count pc-count-on">{item.count}</span>}
               </span>
             </span>
           </button>
