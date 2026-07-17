@@ -21,7 +21,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState([]);
-  const [landingPage, setLandingPage] = useState('/dashboard');
+  const [landingPage, setLandingPage] = useState('/');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,8 +36,8 @@ export const AuthProvider = ({ children }) => {
   const loadRoleConfig = useCallback(async (rolId) => {
     if (!rolId) {
       setPermissions([]);
-      setLandingPage('/dashboard');
-      return { permissions: [], landingPage: '/dashboard' };
+      setLandingPage('/');
+      return { permissions: [], landingPage: '/' };
     }
 
     try {
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       const perms = data?.permisos_json || [];
-      const landing = data?.landing_page || '/dashboard';
+      const landing = data?.landing_page || '/';
 
       setPermissions(perms);
       setLandingPage(landing);
@@ -59,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 
     } catch (err) {
       setPermissions([]);
-      setLandingPage('/dashboard');
-      return { permissions: [], landingPage: '/dashboard' };
+      setLandingPage('/');
+      return { permissions: [], landingPage: '/' };
     }
   }, []);
 
@@ -213,7 +213,7 @@ export const AuthProvider = ({ children }) => {
           loadedEmailRef.current = null;
           setUser(null);
           setPermissions([]);
-          setLandingPage('/dashboard');
+          setLandingPage('/');
         } else if (event === 'SIGNED_IN' && session?.user?.email) {
           // Deduplicar: si login() ya cargó este perfil, no re-cargar.
           if (loadedEmailRef.current === session.user.email.toLowerCase()) return;

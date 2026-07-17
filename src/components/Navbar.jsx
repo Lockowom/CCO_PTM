@@ -103,13 +103,6 @@ const Navbar = () => {
 
   const menuCategories = [
     {
-      id: 'core',
-      title: "Core",
-      items: [
-        { id: 'dashboard', label: 'Dashboard', icon: <Activity size={18} />, isLink: true, path: '/dashboard' },
-      ]
-    },
-    {
       id: 'wms',
       title: "Operaciones WMS",
       items: [
@@ -233,7 +226,7 @@ const Navbar = () => {
           : 'bg-white/80 backdrop-blur-md border-white/20 shadow-sm'}`}>
         
         {/* Left: Logo & Brand */}
-        <Link to={landingPage || "/dashboard"} className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
+        <Link to={landingPage || "/"} className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
           <img
             src="/logo-ptm.png"
             alt="PTM Health Care"

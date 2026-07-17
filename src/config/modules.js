@@ -4,7 +4,6 @@
  */
 
 export const APP_MODULES = [
-  { id: 'dashboard', label: 'Dashboard General', section: 'core' },
   { id: 'inbound', label: 'Inbound', section: 'wms' },
   { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
@@ -15,9 +14,6 @@ export const APP_MODULES = [
 ];
 
 export const APP_ROUTES = [
-  // Core
-  { value: '/dashboard', label: 'Dashboard General', module: 'dashboard' },
-  
   // PDA Operativa de Bodega (herramienta de bodega, ahora bajo Inventario)
   { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'inventario' },
 
@@ -91,14 +87,6 @@ export const APP_ROUTES = [
 ];
 
 export const APP_PERMISSIONS = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    permissions: [
-      { id: 'view_dashboard', label: 'Ver Dashboard Principal' },
-      { id: 'view_kpis', label: 'Ver KPIs y Estadísticas' }
-    ]
-  },
   {
     id: 'inventario',
     label: 'Inventario (Traspasos + Conteo Cíclico)',

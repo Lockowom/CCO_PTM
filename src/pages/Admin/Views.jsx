@@ -277,7 +277,7 @@ const ViewsPage = () => {
                     <div className="relative group/select">
                       <select
                         className="w-full pl-4 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none appearance-none cursor-pointer hover:border-orange-300 transition-all shadow-sm"
-                        value={role.landing_page || '/dashboard'}
+                        value={role.landing_page || '/panel'}
                         onChange={(e) => handleUpdateLandingPage(role.id, e.target.value)}
                       >
                         {availableRoutes.map(route => (

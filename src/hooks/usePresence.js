@@ -56,7 +56,6 @@ export const usePresence = (roomName) => {
 
 // ─── Path → Module Name Mapping ─────────────────────
 const PATH_TO_MODULE = {
-  '/dashboard': 'Dashboard',
   '/mobile/pda': 'PDA Operativa',
   '/inbound/reception': 'Recepción Importaciones',
   '/inbound/entry': 'Putaway',

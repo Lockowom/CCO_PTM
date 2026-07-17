@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.34",
+    "fecha": "2026-07-17",
+    "titulo": "Se retira el módulo Dashboard General",
+    "cambios": [
+      {
+        "texto": "(/dashboard). Se elimina la página src/pages/Dashboard.jsx, su ruta, permiso (ROUTE_PERMISSIONS), grupo de permisos (view_dashboard/view_kpis) y entradas de APP_MODULES/APP_ROUTES, la sección *Core* del Navbar y su etiqueta en usePresence. Inicio repunteado: como /dashboard era el landing por defecto, ahora lo…"
+      }
+    ]
+  },
+  {
     "version": "1.55.33",
     "fecha": "2026-07-17",
     "titulo": "Se retiran los módulos TMS (Transporte) y Outbound",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El dropdown de Estado se reemplaza por un PillNav animado (estilo React Bits, la misma animación \"pill\" del selector de Canal): componente PillNavEstado.jsx (GSAP) con track claro y donde cada pill se rellena con su propio color de estado (círculo que sube al hover + fondo activo con el color) y un punto de color a la…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.19",
-    "fecha": "2026-07-17",
-    "titulo": "Detalle N.V. (Ingresar) — rediseño limpio \"como el original\"",
-    "cambios": [
-      {
-        "texto": "El drawer de detalle vuelve al diseño 1:1 del port original: secciones planas sin tarjetas anidadas ni bordes naranja de acento (Información/Progreso/Estado y Logística/Fechas/Documentos con títulos discretos uppercase gris), chips de solo lectura bg-gray-50 filtrando los campos vacíos, fondo del panel blanco. Se…"
       }
     ]
   }

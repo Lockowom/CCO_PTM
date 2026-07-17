@@ -1,6 +1,4 @@
 export const ROUTE_PERMISSIONS = {
-  '/dashboard': ['view_dashboard'],
-
   // PDA Operativa de Bodega (tool de bodega, permisos de stock/inventario)
   '/mobile/pda': ['view_stock', 'manage_inventory'],
 

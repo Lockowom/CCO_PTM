@@ -22,7 +22,6 @@ const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertifica
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
 // Mobile — PDA Operativa de Bodega
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
@@ -78,7 +77,7 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Orden de prioridad para la primera ruta disponible
 const ROUTE_PRIORITY = [
-  '/dashboard',
+  '/panel',
   '/inbound/entry',
   '/queries/batches',
   '/queries/sales-status',
@@ -155,9 +154,9 @@ const SmartRedirect = () => {
     }
   }
 
-  // 2. ADMIN tiene acceso a todo → ir al dashboard si no tiene landing_page específica
+  // 2. ADMIN tiene acceso a todo → ir al Panel PTM si no tiene landing_page específica
   if (user?.rol === 'ADMIN' || user?.es_admin_delegado) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/panel" replace />;
   }
 
   // 3. FALLBACK: buscar la primera ruta a la que tienen acceso según ROUTE_PRIORITY
@@ -172,8 +171,8 @@ const SmartRedirect = () => {
     }
   }
 
-  // Si no tiene acceso a nada, ir al dashboard (mostrará acceso denegado)
-  return <Navigate to="/dashboard" replace />;
+  // Si no tiene acceso a nada, ir al Panel (mostrará acceso denegado)
+  return <Navigate to="/panel" replace />;
 };
 
 // Ruta Protegida con validación de permisos + tracking de presencia
@@ -344,7 +343,6 @@ function AppContent() {
         <Route path="/" element={<ProtectedRoute />}>
           {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
           <Route index element={<SmartRedirect />} />
-          <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
 
           {/* PDA Operativa de Bodega */}
           <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
