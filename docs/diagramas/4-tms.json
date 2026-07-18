@@ -1,0 +1,102 @@
+{
+  "_meta": {
+    "titulo": "TMS",
+    "descripcion": "Transporte propio: orden, vehículos, choferes, rutas, GPS y prueba de entrega (POD). Sub-diagrama derivado del plano maestro (docs/flujo-maestro-cco.json). Importable en el Modelador con ⬆ Importar.",
+    "version": "1.0",
+    "fecha": "2026-07-18"
+  },
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "inicio",
+      "label": "Orden Transporte",
+      "x": -520,
+      "y": 60,
+      "w": 128,
+      "h": 46
+    },
+    {
+      "id": "n2",
+      "type": "tarea",
+      "label": "Vehículos",
+      "x": -260,
+      "y": -60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n3",
+      "type": "tarea",
+      "label": "Choferes",
+      "x": -260,
+      "y": 60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n4",
+      "type": "tarea",
+      "label": "Rutas",
+      "x": -40,
+      "y": 60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n5",
+      "type": "tarea",
+      "label": "GPS",
+      "x": 180,
+      "y": 60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n6",
+      "type": "fin",
+      "label": "POD",
+      "x": 400,
+      "y": 60,
+      "w": 128,
+      "h": 46
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": ""
+    },
+    {
+      "id": "e2",
+      "from": "n1",
+      "to": "n3",
+      "label": ""
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4",
+      "label": ""
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "label": ""
+    },
+    {
+      "id": "e5",
+      "from": "n5",
+      "to": "n6",
+      "label": ""
+    },
+    {
+      "id": "e6",
+      "from": "n2",
+      "to": "n4",
+      "label": "asignar"
+    }
+  ]
+}

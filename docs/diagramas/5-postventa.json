@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "titulo": "POSTVENTA",
+    "descripcion": "Servicio técnico: ticket, agenda, técnico, informe, cliente, cierre. Sub-diagrama derivado del plano maestro (docs/flujo-maestro-cco.json). Importable en el Modelador con ⬆ Importar.",
+    "version": "1.0",
+    "fecha": "2026-07-18"
+  },
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "inicio",
+      "label": "Solicitud Cliente",
+      "x": -560,
+      "y": 0,
+      "w": 128,
+      "h": 46
+    },
+    {
+      "id": "n1",
+      "type": "tarea",
+      "label": "Ticket",
+      "x": -360,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n2",
+      "type": "tarea",
+      "label": "Agenda",
+      "x": -150,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n3",
+      "type": "tarea",
+      "label": "Técnico",
+      "x": 60,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n4",
+      "type": "tarea",
+      "label": "Informe",
+      "x": 270,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n5",
+      "type": "tarea",
+      "label": "Cliente",
+      "x": 480,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n6",
+      "type": "fin",
+      "label": "Cierre",
+      "x": 690,
+      "y": 0,
+      "w": 128,
+      "h": 46
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": ""
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": ""
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "label": ""
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4",
+      "label": ""
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "label": ""
+    },
+    {
+      "id": "e5",
+      "from": "n5",
+      "to": "n6",
+      "label": ""
+    }
+  ]
+}
