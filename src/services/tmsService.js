@@ -114,10 +114,15 @@ export async function urlEvidencia(path, seg = 3600) {
   return data?.signedUrl || null;
 }
 // Id del conductor ligado al usuario actual (para "Mi Ruta"); null si no aplica.
+// tms_conductores.user_id referencia tms_usuarios.id (no el auth_uid), así que
+// se resuelve el puente auth.uid() → tms_usuarios.id → conductor.
 export async function miConductorId() {
   const { data: u } = await supabase.auth.getUser();
   const uid = u?.user?.id;
   if (!uid) return null;
-  const { data } = await supabase.from('tms_conductores').select('id').eq('user_id', uid).limit(1);
+  const { data: usr } = await supabase.from('tms_usuarios').select('id').eq('auth_uid', uid).limit(1);
+  const usuarioId = usr && usr.length ? usr[0].id : null;
+  if (!usuarioId) return null;
+  const { data } = await supabase.from('tms_conductores').select('id').eq('user_id', usuarioId).limit(1);
   return data && data.length ? data[0].id : null;
 }

@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.38",
+    "fecha": "2026-07-17",
+    "titulo": "TMS — fix de tipos chofer/ruta + puente usuario↔conductor",
+    "cambios": [
+      {
+        "texto": "Migración 107: tms_conductores.id y tms_rutas.id son uuid, pero tms_transporte_ordenes.conductor_id/ruta_id se habían creado como bigint (Fase 1); con la tabla vacía se cambian a uuid y se ajusta el cast de tms_orden_asignar (sin esto, asignar chofer/ruta fallaba y el filtro \"Mis órdenes\" nunca calzaba). Frontend:…"
+      }
+    ]
+  },
+  {
     "version": "1.55.37",
     "fecha": "2026-07-17",
     "titulo": "TMS (Transporte) — Fase 3: app del chofer con foto y firma (POD)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "En el drawer de detalle, la F. Aprobación Real pasa a solo lectura (gris, readOnly, etiqueta \"(no editable)\"), igual que la F. Compromiso (que ya era automática). Ambas fechas quedan protegidas contra edición manual desde el detalle; siguen siendo editables solo las fechas operativas (Facturación / Despacho). Sin…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.23",
-    "fecha": "2026-07-17",
-    "titulo": "Eliminar N.V. (Ingresar) restringido a admin + Angélica",
-    "cambios": [
-      {
-        "texto": "El borrado destructivo de N.V. ya no lo puede hacer cualquier usuario con manage_panel: queda limitado a administradores (o delegados) y a María Angélica (angelica@ptm.cl). Migración 099: gate _panel_puede_eliminar_nv() (SECURITY DEFINER, anon sin EXECUTE) = is_admin o usuario activo con email en la allowlist;…"
       }
     ]
   }
