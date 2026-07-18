@@ -576,12 +576,12 @@ Tablas: `tms_postventa_tickets`, `tms_postventa_correos`, `tms_postventa_tecnico
 | # | Deuda | Impacto | Fix |
 |---|---|---|---|
 | P1 | 3 FKs blandas en TMS (`conductor_id`, `ruta_id`, `oper_id`) | órdenes huérfanas; modelo no auto-descriptivo | migración: `ADD CONSTRAINT ... FK` |
-| P2 | N.V. sin máquina enforced (`cambiar_estado_nv` acepta cualquier estado) | estados inválidos posibles; orden solo por convención UI | catálogo en `tms_operaciones_estado_cat` con `orden/siguiente` + validación en RPC |
+| P2 | N.V. sin máquina enforced (`cambiar_estado_nv` acepta cualquier estado) | estados inválidos posibles; orden solo por convención UI | **Mitigado (mig 111):** N.V. cableada al Workflow Engine con validación *suave* (registra + marca `off-model`, no bloquea, para respetar NULA/RECHAZADO/saltos). Enforce duro opcional a futuro |
 | P3 | `actualizar_pv_ticket` deja editar `estado` fuera de la máquina | se salta `avanzar_pv_ticket` | quitar `estado` del update libre o encaminarlo |
 | P4 | Puente N.V.→TMS 100% manual | fricción operativa; olvidos | evento/bandeja de candidatas (decisión pendiente: qué `tipo_despacho`=propio) |
 | P5 | Eventos dispersos (log/notif/poll/realtime) | sin trazabilidad unificada ni suscripción | **Motor de Eventos** §7.2: `dominio_eventos` + despachador |
 | P6 | Hallazgos RLS históricos (`USING(true)`, `SECURITY DEFINER` a `authenticated`) | seguridad | revisar `get_advisors` antes de tocar BD (ya en CLAUDE.md) |
-| P7 | Estados en código, no en datos | no se puede crear un proceso sin programar | **Workflow Engine** §7.3: tablas `workflow_*` + `wf_transicionar` |
+| P7 | Estados en código, no en datos | no se puede crear un proceso sin programar | **Hecho (migs 108-111):** Workflow Engine §7.3 (`workflow_*` + Admin → Workflows) con OT, TICKET_PV y NV cableados al libro mayor (`workflow_history`) |
 | P8 | Notificaciones cableadas por canal | difícil sumar WhatsApp/SMS; sin reintentos | **Centro de Notificaciones** §7.4: cola `notificacion` + despachadores por canal |
 | P9 | RPCs de escritura sin contrato de API versionado | Android/Portal/ERP reimplementan reglas | **API de Operaciones** §8: módulo `*Api` + endpoints documentados |
 | P10 | Auditoría de negocio fragmentada (log/historial por dominio) | trazabilidad parcial | **Auditoría** §7.5: fuente canónica (`dominio_eventos`+`workflow_history`) + vista única |

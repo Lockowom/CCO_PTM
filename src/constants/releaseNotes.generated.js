@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.44",
+    "fecha": "2026-07-18",
+    "titulo": "Workflow Engine — Fase 2: N.V. cableada al motor (mitiga deuda P2)",
+    "cambios": [
+      {
+        "texto": "Migración 111: la Nota de Venta era el único proceso central sin máquina; ahora cambiar_estado_nv y guardar_nv registran cada cambio de estado en workflow_history (proceso NV) vía el helper _nv_wf_log. Decisiones de seguridad: (1) se instrumentan SOLO los caminos de usuario (RPCs), NO un trigger sobre tms_operaciones,…"
+      }
+    ]
+  },
+  {
     "version": "1.55.43",
     "fecha": "2026-07-18",
     "titulo": "Workflow Engine — Fase 2: Post-Venta cableado al motor",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El modal de Novedades (NovedadesModal ← src/constants/releaseNotes.js) muestra las notas cuya versión sea mayor a la última vista; como la última nota era 1.36.0 y la app iba en 1.55.x, había \"dejado de actualizarse\" (no es bug: el archivo se llena a mano y quedó rezagado). Se agregaron entradas en lenguaje de usuario…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.29",
-    "fecha": "2026-07-17",
-    "titulo": "Tráfico de la Consulta pública (Admin → Monitor), sin datos personales",
-    "cambios": [
-      {
-        "texto": "Antes no había forma de ver cuánta gente usa /consulta. Migración 101: tabla tms_consulta_metricas (contador diario: total, con_resultado, sin_resultado; no guarda IP ni el número consultado) y buscar_nv_publico la incrementa por día (zona Chile) tras pasar el rate-limit → solo cuentan consultas válidas. RLS: lectura…"
       }
     ]
   }
