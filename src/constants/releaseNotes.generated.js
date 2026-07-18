@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.47",
+    "fecha": "2026-07-18",
+    "titulo": "Mapa de Procesos (Flujo Maestro) — visible dentro de la app",
+    "cambios": [
+      {
+        "texto": "Nueva pantalla de solo lectura src/pages/Tools/FlujoMaestro.jsx (ruta /admin/flujo-maestro, menú *Configuración → Mapa de Procesos*) que renderiza el plano maestro (src/data/flujoMaestro.json, copia de docs/flujo-maestro-cco.json: 83 nodos, 108 conexiones) en un lienzo pan/zoom: nodos posicionados por sus coordenadas…"
+      }
+    ]
+  },
+  {
     "version": "1.55.46",
     "fecha": "2026-07-18",
     "titulo": "Workflows — rediseño visual: diagrama de la máquina de estados",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "(se reconstruirán desde 0). Frontend: se eliminan las 7 páginas TMS (src/pages/TMS/*) y las 5 de Outbound (src/pages/Outbound/*), sus rutas en App.jsx, el ROUTE_PRIORITY, ROUTE_PERMISSIONS, los grupos de permisos y las entradas de APP_MODULES/APP_ROUTES en modules.js, las categorías del Navbar, y las referencias en…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.32",
-    "fecha": "2026-07-17",
-    "titulo": "Menú de Inventario usable sin reducir el zoom",
-    "cambios": [
-      {
-        "texto": "El desplegable de Inventario tenía ~17 accesos (Traspasos, Mapa de Calor, Ubicaciones, 6 de Conteo, 6 de Análisis, Carteles, Insumos) que se salían de la pantalla y obligaban a hacer *zoom out*. Ahora el menú tiene alto máximo con scroll (max-h-[78vh] overflow-y-auto) y, cuando una categoría tiene más de 8 accesos, se…"
       }
     ]
   }

@@ -79,6 +79,7 @@ export const ROUTE_PERMISSIONS = {
   '/admin/upload-history': ['admin_upload_history'],
   '/admin/monitor': ['admin_monitor'],
   '/admin/workflows': ['view_workflows', 'manage_workflows'],
+  '/admin/flujo-maestro': ['view_workflows', 'manage_workflows'],
 };
 
 // ── Permisos por PESTAÑA (?tab=) ────────────────────────────────────────────
