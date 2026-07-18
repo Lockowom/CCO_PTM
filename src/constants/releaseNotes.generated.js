@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.35",
+    "fecha": "2026-07-17",
+    "titulo": "TMS (Transporte) — Fase 1: cimiento de datos (reconstrucción desde 0)",
+    "cambios": [
+      {
+        "texto": "A partir del flujo modelado por el usuario, migración 104 crea el esquema limpio del transporte propio (sin tocar tms_control_despacho, que tiene 4.066 filas de Consultas): tablas nuevas tms_vehiculos, tms_transporte_ordenes (máquina de estados pendiente_asignacion → programado → en_carga → despachado → en_ruta →…"
+      }
+    ]
+  },
+  {
     "version": "1.55.34",
     "fecha": "2026-07-17",
     "titulo": "Se retira el módulo Dashboard General",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "La bitácora ya estaba conectada a tms_operaciones_log, pero (1) la columna actor guardaba el UUID crudo de auth.uid() → la pantalla habría mostrado un identificador ilegible en \"Operador\". Migración 098: helper _panel_actor() (SECURITY DEFINER, anon sin EXECUTE) que resuelve nombre → email → uid desde tms_usuarios, y…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.20",
-    "fecha": "2026-07-17",
-    "titulo": "PillNav para el selector de Estado en Ingresar (alta + detalle)",
-    "cambios": [
-      {
-        "texto": "El dropdown de Estado se reemplaza por un PillNav animado (estilo React Bits, la misma animación \"pill\" del selector de Canal): componente PillNavEstado.jsx (GSAP) con track claro y donde cada pill se rellena con su propio color de estado (círculo que sube al hover + fondo activo con el color) y un punto de color a la…"
       }
     ]
   }
