@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.40",
+    "fecha": "2026-07-18",
+    "titulo": "TMS · Torre de Control — detalle en panel lateral (no overlay) en escritorio",
+    "cambios": [
+      {
+        "texto": "El detalle de la orden dejaba a oscuras toda la pantalla y tapaba los botones *Nueva orden*/*Actualizar*. Ahora en escritorio (lg+) se abre como columna lateral en línea junto a la lista (sticky, sin fondo oscuro, aprovechando el ancho): la fila seleccionada se resalta y el panel hace scroll interno con max-h. En…"
+      }
+    ]
+  },
+  {
     "version": "1.55.39",
     "fecha": "2026-07-18",
     "titulo": "TMS · Torre de Control — rediseño visual",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "opciones() armaba la lista de transportistas con select ... .limit(5000) sobre tms_operaciones, pero PostgREST corta en 1.000 filas: tomaba solo la primera página (sin orden) y los transportistas que solo aparecían más allá quedaban fuera (Transfarma tiene 28 N.V. pero no salía). Ahora la lista se arma con la unión…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.25",
-    "fecha": "2026-07-17",
-    "titulo": "Ingresar/Buscar: ahora se pueden encontrar N.V. de CUALQUIER estado (no solo activas)",
-    "cambios": [
-      {
-        "texto": "La lista de *Buscar* solo carga las ~50 N.V. activas (En Proceso/Shipping/Currier/En Ruta), así que las Entregado/NULA/Rechazado (1.905) no aparecían ni buscándolas por número — el buscador solo filtraba en memoria la lista activa. Ahora, al escribir ≥2 caracteres, se dispara una búsqueda contra toda la tabla…"
       }
     ]
   }
