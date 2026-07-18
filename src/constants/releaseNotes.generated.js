@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.42",
+    "fecha": "2026-07-18",
+    "titulo": "Workflow Engine — Fase 2: TMS cableado al motor (libro mayor real)",
+    "cambios": [
+      {
+        "texto": "Migración 109: helper interno _wf_registrar(workflow,entidad,desde,hasta,accion,nota) (inserta en workflow_history con el actor) y recreación de las 5 RPCs de TMS (tms_orden_crear_desde_nv, tms_orden_asignar, tms_orden_transicion, tms_orden_pod, tms_incidencia_resolver) para que cada cambio de estado de una Orden de…"
+      }
+    ]
+  },
+  {
     "version": "1.55.41",
     "fecha": "2026-07-18",
     "titulo": "Workflow Engine — procesos como datos (Admin → Workflows)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "armarCorreoSolicitud genera ahora (1) texto plano con una tabla ASCII alineada (columnas #, Insumo, Medida/Código, Quedan, Estado, Solicitar) + saludo/cierre formales, para el mailto:; y (2) cuerpo HTML con una tabla real (encabezados naranja, filas alternadas, badge de estado con color) que se copia al portapapeles.…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.27",
-    "fecha": "2026-07-17",
-    "titulo": "Nuevo módulo: Panel de Insumos (Inventario)",
-    "cambios": [
-      {
-        "texto": "Panel didáctico (/inventory/insumos) para ver el stock de insumos de embalaje/despacho con semáforo (🟢 OK · 🟡 por acabarse · 🔴 crítico) según dos umbrales por ítem. Migración 100: tabla tms_insumos (categoría CAJAS/PALLETS/OTROS, nombre, medida, código PTM, unidad, cantidad, umbral_bajo/umbral_critico, orden), RLS…"
       }
     ]
   }
