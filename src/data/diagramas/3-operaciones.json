@@ -1,0 +1,96 @@
+{
+  "_meta": {
+    "titulo": "OPERACIONES",
+    "descripcion": "Ciclo de la Nota de Venta: NV, proceso, picking, packing, shipping. Sub-diagrama derivado del plano maestro (docs/flujo-maestro-cco.json). Importable en el Modelador con ⬆ Importar.",
+    "version": "1.0",
+    "fecha": "2026-07-18"
+  },
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "inicio",
+      "label": "Registro N.V.",
+      "x": -560,
+      "y": 0,
+      "w": 128,
+      "h": 46
+    },
+    {
+      "id": "n1",
+      "type": "tarea",
+      "label": "NV",
+      "x": -360,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n2",
+      "type": "tarea",
+      "label": "Proceso",
+      "x": -150,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n3",
+      "type": "tarea",
+      "label": "Picking",
+      "x": 60,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n4",
+      "type": "tarea",
+      "label": "Packing",
+      "x": 270,
+      "y": 0,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n5",
+      "type": "fin",
+      "label": "Shipping",
+      "x": 480,
+      "y": 0,
+      "w": 128,
+      "h": 46
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "from": "n0",
+      "to": "n1",
+      "label": ""
+    },
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": ""
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "label": ""
+    },
+    {
+      "id": "e3",
+      "from": "n3",
+      "to": "n4",
+      "label": ""
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "label": ""
+    }
+  ]
+}

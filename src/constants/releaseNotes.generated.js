@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.49",
+    "fecha": "2026-07-18",
+    "titulo": "Mapa de Procesos — propiedades, export/import y los 5 sub-diagramas",
+    "cambios": [
+      {
+        "texto": "Sobre el editor: (1) panel de propiedades al seleccionar un nodo (editar etiqueta, cambiar tipo Tarea/Decisión/Inicio/Fin con re-dimensionado, y color propio con reset) o una conexión (editar etiqueta); (2) Exportar (descarga JSON {_meta,nodes,edges}) e Importar (carga un JSON y lo pinta, valida forma); (3) selector…"
+      }
+    ]
+  },
+  {
     "version": "1.55.48",
     "fecha": "2026-07-18",
     "titulo": "Mapa de Procesos — ahora EDITABLE dentro de la app + salto al módulo",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "A partir del flujo modelado por el usuario, migración 104 crea el esquema limpio del transporte propio (sin tocar tms_control_despacho, que tiene 4.066 filas de Consultas): tablas nuevas tms_vehiculos, tms_transporte_ordenes (máquina de estados pendiente_asignacion → programado → en_carga → despachado → en_ruta →…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.34",
-    "fecha": "2026-07-17",
-    "titulo": "Se retira el módulo Dashboard General",
-    "cambios": [
-      {
-        "texto": "(/dashboard). Se elimina la página src/pages/Dashboard.jsx, su ruta, permiso (ROUTE_PERMISSIONS), grupo de permisos (view_dashboard/view_kpis) y entradas de APP_MODULES/APP_ROUTES, la sección *Core* del Navbar y su etiqueta en usePresence. Inicio repunteado: como /dashboard era el landing por defecto, ahora lo…"
       }
     ]
   }

@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "titulo": "MASTER DATA",
+    "descripcion": "Datos maestros del sistema (productos, clientes, direcciones, series, lotes, catálogos). Sub-diagrama derivado del plano maestro (docs/flujo-maestro-cco.json). Importable en el Modelador con ⬆ Importar.",
+    "version": "1.0",
+    "fecha": "2026-07-18"
+  },
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "inicio",
+      "label": "Datos Maestros",
+      "x": -360,
+      "y": 60,
+      "w": 128,
+      "h": 46
+    },
+    {
+      "id": "n2",
+      "type": "tarea",
+      "label": "Productos",
+      "x": -40,
+      "y": -40,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n3",
+      "type": "tarea",
+      "label": "Clientes",
+      "x": 190,
+      "y": -40,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n4",
+      "type": "tarea",
+      "label": "Direcciones",
+      "x": -40,
+      "y": 60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n5",
+      "type": "tarea",
+      "label": "Series",
+      "x": 190,
+      "y": 60,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n6",
+      "type": "tarea",
+      "label": "Lotes",
+      "x": -40,
+      "y": 160,
+      "w": 152,
+      "h": 54
+    },
+    {
+      "id": "n7",
+      "type": "tarea",
+      "label": "Catálogos",
+      "x": 190,
+      "y": 160,
+      "w": 152,
+      "h": 54
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "label": ""
+    },
+    {
+      "id": "e2",
+      "from": "n1",
+      "to": "n3",
+      "label": ""
+    },
+    {
+      "id": "e3",
+      "from": "n1",
+      "to": "n4",
+      "label": ""
+    },
+    {
+      "id": "e4",
+      "from": "n1",
+      "to": "n5",
+      "label": ""
+    },
+    {
+      "id": "e5",
+      "from": "n1",
+      "to": "n6",
+      "label": ""
+    },
+    {
+      "id": "e6",
+      "from": "n1",
+      "to": "n7",
+      "label": ""
+    }
+  ]
+}
