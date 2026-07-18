@@ -2,6 +2,9 @@ export const ROUTE_PERMISSIONS = {
   // PDA Operativa de Bodega (tool de bodega, permisos de stock/inventario)
   '/mobile/pda': ['view_stock', 'manage_inventory'],
 
+  // TMS (Transporte) — reconstruido desde 0
+  '/tms/control': ['view_tms', 'manage_tms', 'supervise_tms', 'manage_panel'],
+
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
   '/inbound/reception-nacional': ['view_reception', 'process_reception'],

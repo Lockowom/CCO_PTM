@@ -106,6 +106,10 @@ const Navbar = () => {
       id: 'wms',
       title: "Operaciones WMS",
       items: [
+        { id: 'tms', label: 'TMS', icon: <Truck size={18} />, modules: [
+            { label: 'Torre de Control', path: '/tms/control', icon: <Truck size={16} /> }
+          ]
+        },
         { id: 'inbound', label: 'Inbound', icon: <ArrowDownToLine size={18} />, modules: [
             { label: 'Recepción Importaciones', path: '/inbound/reception', icon: <ClipboardCheck size={16} /> },
             { label: 'Recepción Nacionales', path: '/inbound/reception-nacional', icon: <Package size={16} /> },

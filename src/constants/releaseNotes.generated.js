@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.36",
+    "fecha": "2026-07-17",
+    "titulo": "TMS (Transporte) — Fase 2: módulo funcional (Torre de Control)",
+    "cambios": [
+      {
+        "texto": "Frontend nativo del transporte propio sobre el cimiento de la Fase 1. Ruta /tms/control, sección TMS en el menú (Operaciones WMS). Página src/pages/TMS/Transporte.jsx + src/services/tmsService.js: Torre de Control con KPIs por estado (Pendiente/Programado/En Carga/Despachado/En Ruta/Entregado) que filtran, buscador y…"
+      }
+    ]
+  },
+  {
     "version": "1.55.35",
     "fecha": "2026-07-17",
     "titulo": "TMS (Transporte) — Fase 1: cimiento de datos (reconstrucción desde 0)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Los chips de filtro por estado de la pestaña *Buscar* (con su contador, ej. \"En Proceso 8 · Shipping 23 · En Ruta 20\") pasan al mismo PillNav animado de estados. PillNavEstado gana: (1) badge de contador (item.count) junto al label, con color claro en el pill activo/hover; (2) variante inline (pills al tamaño de su…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.21",
-    "fecha": "2026-07-17",
-    "titulo": "Auditoría del Panel completada e integrada (registro real por operador)",
-    "cambios": [
-      {
-        "texto": "La bitácora ya estaba conectada a tms_operaciones_log, pero (1) la columna actor guardaba el UUID crudo de auth.uid() → la pantalla habría mostrado un identificador ilegible en \"Operador\". Migración 098: helper _panel_actor() (SECURITY DEFINER, anon sin EXECUTE) que resuelve nombre → email → uid desde tms_usuarios, y…"
       }
     ]
   }

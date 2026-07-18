@@ -26,6 +26,9 @@ import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nu
 // Mobile — PDA Operativa de Bodega
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
 
+// TMS (Transporte) — reconstruido desde 0
+const TmsTransporte = React.lazy(() => import('./pages/TMS/Transporte'));
+
 // Inbound Modules
 const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
 const CubingRegistry = React.lazy(() => import('./pages/Inbound/CubingRegistry'));
@@ -346,6 +349,9 @@ function AppContent() {
 
           {/* PDA Operativa de Bodega */}
           <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
+
+          {/* TMS (Transporte) */}
+          <Route path="tms/control" element={<ErrorBoundary><TmsTransporte /></ErrorBoundary>} />
 
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<ErrorBoundary><Reception /></ErrorBoundary>} />
