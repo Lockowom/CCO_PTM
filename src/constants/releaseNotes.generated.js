@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.45",
+    "fecha": "2026-07-18",
+    "titulo": "Workflow Engine — Fase 2 completa: Calidad y Conteo cableados (los 5 procesos)",
+    "cambios": [
+      {
+        "texto": "Migración 112: se sacan de esqueleto CALIDAD (flag de producto tms_calidad_flags.estado_calidad: EN_AUDITORIA → CUARENTENA/LIBERADO/MALO, 4 estados/7 transiciones) y CONTEO (sesión tms_conteo_sesiones.estado: abierta ⇄ cerrada, 2/3) — con sus definiciones sembradas y triggers que espejan alta + cambio de estado en…"
+      }
+    ]
+  },
+  {
     "version": "1.55.44",
     "fecha": "2026-07-18",
     "titulo": "Workflow Engine — Fase 2: N.V. cableada al motor (mitiga deuda P2)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Para que nunca vuelva a quedarse atrás, src/constants/releaseNotes.js deja de escribirse a mano: un prebuild (scripts/gen_release_notes.js, enganchado en package.json → corre antes de vite build) parsea el Changelog (§15) de este documento y genera releaseNotes.generated.js con las 15 versiones más recientes (título =…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.30",
-    "fecha": "2026-07-17",
-    "titulo": "Cuadro de Novedades al día",
-    "cambios": [
-      {
-        "texto": "El modal de Novedades (NovedadesModal ← src/constants/releaseNotes.js) muestra las notas cuya versión sea mayor a la última vista; como la última nota era 1.36.0 y la app iba en 1.55.x, había \"dejado de actualizarse\" (no es bug: el archivo se llena a mano y quedó rezagado). Se agregaron entradas en lenguaje de usuario…"
       }
     ]
   }
