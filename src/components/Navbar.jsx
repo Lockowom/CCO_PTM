@@ -12,7 +12,7 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench, Sparkles
+  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench, Sparkles, GitBranch
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -199,6 +199,7 @@ const Navbar = () => {
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
             { label: 'Bodegas Softland', path: '/admin/bodegas-softland', icon: <Package size={16} /> },
             { label: 'Monitor', path: '/admin/monitor', icon: <Activity size={16} /> },
+            { label: 'Workflows', path: '/admin/workflows', icon: <GitBranch size={16} /> },
             { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
           ]
         }

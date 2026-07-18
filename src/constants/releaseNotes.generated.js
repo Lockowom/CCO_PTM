@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.41",
+    "fecha": "2026-07-18",
+    "titulo": "Workflow Engine — procesos como datos (Admin → Workflows)",
+    "cambios": [
+      {
+        "texto": "Primer motor de plataforma del blueprint (docs/ARQUITECTURA_CCO.md §7.3): las máquinas de estado dejan de estar solo en código y viven en tablas. Migración 108: workflow_definition / workflow_state (inicial/final, orden, color) / workflow_transition (desde→hasta por acción + permiso_id → 1 transición = 1 permiso) /…"
+      }
+    ]
+  },
+  {
     "version": "1.55.40",
     "fecha": "2026-07-18",
     "titulo": "TMS · Torre de Control — detalle en panel lateral (no overlay) en escritorio",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Panel didáctico (/inventory/insumos) para ver el stock de insumos de embalaje/despacho con semáforo (🟢 OK · 🟡 por acabarse · 🔴 crítico) según dos umbrales por ítem. Migración 100: tabla tms_insumos (categoría CAJAS/PALLETS/OTROS, nombre, medida, código PTM, unidad, cantidad, umbral_bajo/umbral_critico, orden), RLS…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.26",
-    "fecha": "2026-07-17",
-    "titulo": "Ingresar: faltaban transportistas en el selector (p.ej. Transfarma)",
-    "cambios": [
-      {
-        "texto": "opciones() armaba la lista de transportistas con select ... .limit(5000) sobre tms_operaciones, pero PostgREST corta en 1.000 filas: tomaba solo la primera página (sin orden) y los transportistas que solo aparecían más allá quedaban fuera (Transfarma tiene 28 N.V. pero no salía). Ahora la lista se arma con la unión…"
       }
     ]
   }

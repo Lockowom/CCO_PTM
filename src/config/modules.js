@@ -87,7 +87,8 @@ export const APP_ROUTES = [
   { value: '/admin/tickets', label: 'Admin - Tickets TI', module: 'admin' },
   { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' },
   { value: '/admin/bodegas-softland', label: 'Admin - Bodegas Softland', module: 'admin' },
-  { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' }
+  { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' },
+  { value: '/admin/workflows', label: 'Admin - Workflows (procesos)', module: 'admin' }
 ];
 
 export const APP_PERMISSIONS = [
@@ -213,6 +214,8 @@ export const APP_PERMISSIONS = [
       { id: 'admin_upload_history', label: 'Historial de Cargas' },
       { id: 'admin_monitor', label: 'Monitor Tiempo Real' },
       { id: 'deploy_ota', label: 'Desplegar OTA a producción (móvil)' },
+      { id: 'view_workflows', label: 'Workflows · Ver procesos y transiciones' },
+      { id: 'manage_workflows', label: 'Workflows · Editar procesos/estados/transiciones' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' }
     ]
   }

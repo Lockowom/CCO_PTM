@@ -74,6 +74,7 @@ const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 const LocationManager = React.lazy(() => import('./pages/Admin/LocationManager')); // Gestión Ubicaciones
 const AdminMonitor = React.lazy(() => import('./pages/Admin/AdminMonitor')); // Monitor Tiempo Real
+const Workflows = React.lazy(() => import('./pages/Admin/Workflows')); // Workflow Engine (procesos como datos)
 
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -407,6 +408,7 @@ function AppContent() {
           <Route path="admin/locations" element={<ErrorBoundary><LocationManager /></ErrorBoundary>} />
           <Route path="admin/bodegas-softland" element={<ErrorBoundary><BodegasSoftland /></ErrorBoundary>} />
           <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
+          <Route path="admin/workflows" element={<ErrorBoundary><Workflows /></ErrorBoundary>} />
         </Route>
 
         {/* Fallback 404 en lugar de Navigate al login */}
