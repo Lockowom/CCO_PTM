@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.39",
+    "fecha": "2026-07-18",
+    "titulo": "TMS · Torre de Control — rediseño visual",
+    "cambios": [
+      {
+        "texto": "Se rehízo la presentación de src/pages/TMS/Transporte.jsx (sin cambios de lógica ni de BD): encabezado con badge naranja, tarjeta Todos + KPIs de estado con mejor contraste (número grande, punto de color, gris tenue cuando el conteo es 0 y borde/anillo del color del estado al estar activo), la lista de órdenes vive…"
+      }
+    ]
+  },
+  {
     "version": "1.55.38",
     "fecha": "2026-07-17",
     "titulo": "TMS — fix de tipos chofer/ruta + puente usuario↔conductor",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "La lista de *Buscar* solo carga las ~50 N.V. activas (En Proceso/Shipping/Currier/En Ruta), así que las Entregado/NULA/Rechazado (1.905) no aparecían ni buscándolas por número — el buscador solo filtraba en memoria la lista activa. Ahora, al escribir ≥2 caracteres, se dispara una búsqueda contra toda la tabla…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.24",
-    "fecha": "2026-07-17",
-    "titulo": "Detalle N.V. (Ingresar): F. Aprobación Real y F. Compromiso no editables",
-    "cambios": [
-      {
-        "texto": "En el drawer de detalle, la F. Aprobación Real pasa a solo lectura (gris, readOnly, etiqueta \"(no editable)\"), igual que la F. Compromiso (que ya era automática). Ambas fechas quedan protegidas contra edición manual desde el detalle; siguen siendo editables solo las fechas operativas (Facturación / Despacho). Sin…"
       }
     ]
   }
