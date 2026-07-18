@@ -96,3 +96,28 @@ export async function resolverIncidencia(id, resolucion) {
   if (error) return { ok: false, error: error.message };
   return data || { ok: true };
 }
+
+// ── Fase 3: evidencia POD en Storage privado (bucket tms-pod) ────────────────
+const POD_BUCKET = 'tms-pod';
+// Sube un File/Blob y devuelve su path (para guardar en la orden).
+export async function subirEvidencia(ordenId, tipo, fileOrBlob, ext) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const path = `ordenes/${ordenId}/${tipo}-${stamp}.${ext || 'jpg'}`;
+  const { error } = await supabase.storage.from(POD_BUCKET).upload(path, fileOrBlob, { upsert: true, contentType: fileOrBlob.type || 'image/jpeg' });
+  if (error) throw error;
+  return path;
+}
+// URL firmada temporal para mostrar una evidencia.
+export async function urlEvidencia(path, seg = 3600) {
+  if (!path) return null;
+  const { data } = await supabase.storage.from(POD_BUCKET).createSignedUrl(path, seg);
+  return data?.signedUrl || null;
+}
+// Id del conductor ligado al usuario actual (para "Mi Ruta"); null si no aplica.
+export async function miConductorId() {
+  const { data: u } = await supabase.auth.getUser();
+  const uid = u?.user?.id;
+  if (!uid) return null;
+  const { data } = await supabase.from('tms_conductores').select('id').eq('user_id', uid).limit(1);
+  return data && data.length ? data[0].id : null;
+}

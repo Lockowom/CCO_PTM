@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.37",
+    "fecha": "2026-07-17",
+    "titulo": "TMS (Transporte) — Fase 3: app del chofer con foto y firma (POD)",
+    "cambios": [
+      {
+        "texto": "Migración 106: bucket privado tms-pod (evidencia servida con URL firmada). Componente reutilizable src/pages/TMS/PodCapture.jsx: captura foto (cámara), firma en canvas, GPS (geolocalización) y \"recibido por\"; sube la evidencia a Storage y llama tms_orden_pod (que marca la N.V. Entregado). Se usa tanto en el drawer de…"
+      }
+    ]
+  },
+  {
     "version": "1.55.36",
     "fecha": "2026-07-17",
     "titulo": "TMS (Transporte) — Fase 2: módulo funcional (Torre de Control)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El borrado destructivo de N.V. ya no lo puede hacer cualquier usuario con manage_panel: queda limitado a administradores (o delegados) y a María Angélica (angelica@ptm.cl). Migración 099: gate _panel_puede_eliminar_nv() (SECURITY DEFINER, anon sin EXECUTE) = is_admin o usuario activo con email en la allowlist;…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.22",
-    "fecha": "2026-07-17",
-    "titulo": "PillNav también en el filtro de estados de la lista (Buscar)",
-    "cambios": [
-      {
-        "texto": "Los chips de filtro por estado de la pestaña *Buscar* (con su contador, ej. \"En Proceso 8 · Shipping 23 · En Ruta 20\") pasan al mismo PillNav animado de estados. PillNavEstado gana: (1) badge de contador (item.count) junto al label, con color claro en el pill activo/hover; (2) variante inline (pills al tamaño de su…"
       }
     ]
   }

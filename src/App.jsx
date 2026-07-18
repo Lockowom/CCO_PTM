@@ -28,6 +28,7 @@ const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
 
 // TMS (Transporte) — reconstruido desde 0
 const TmsTransporte = React.lazy(() => import('./pages/TMS/Transporte'));
+const TmsMiRuta = React.lazy(() => import('./pages/TMS/MiRuta'));
 
 // Inbound Modules
 const Entry = React.lazy(() => import('./pages/Inbound/Entry'));
@@ -352,6 +353,7 @@ function AppContent() {
 
           {/* TMS (Transporte) */}
           <Route path="tms/control" element={<ErrorBoundary><TmsTransporte /></ErrorBoundary>} />
+          <Route path="tms/pda" element={<ErrorBoundary><TmsMiRuta /></ErrorBoundary>} />
 
           {/* Inbound Modules */}
           <Route path="inbound/reception" element={<ErrorBoundary><Reception /></ErrorBoundary>} />

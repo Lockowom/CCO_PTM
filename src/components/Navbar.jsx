@@ -107,7 +107,8 @@ const Navbar = () => {
       title: "Operaciones WMS",
       items: [
         { id: 'tms', label: 'TMS', icon: <Truck size={18} />, modules: [
-            { label: 'Torre de Control', path: '/tms/control', icon: <Truck size={16} /> }
+            { label: 'Torre de Control', path: '/tms/control', icon: <Truck size={16} /> },
+            { label: 'Mi Ruta (Chofer)', path: '/tms/pda', icon: <Scan size={16} /> }
           ]
         },
         { id: 'inbound', label: 'Inbound', icon: <ArrowDownToLine size={18} />, modules: [

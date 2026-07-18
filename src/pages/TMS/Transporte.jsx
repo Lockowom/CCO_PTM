@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import {
   ESTADOS, ESTADO_META, SIGUIENTE, TIPOS_INCIDENCIA,
   listarOrdenes, listarVehiculos, listarConductores, listarIncidencias,
-  crearOrdenDesdeNV, asignarOrden, transicionOrden, registrarPOD, crearIncidencia, resolverIncidencia,
+  crearOrdenDesdeNV, asignarOrden, transicionOrden, crearIncidencia, resolverIncidencia,
 } from '../../services/tmsService';
+import PodCapture from './PodCapture';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
 
@@ -118,7 +119,6 @@ function OrdenDrawer({ orden, puede, vehiculos, conductores, onClose, onUpd }) {
   const [o, setO] = useState(orden);
   const [incidencias, setIncidencias] = useState([]);
   const [asig, setAsig] = useState({ vehiculo_id: orden.vehiculo_id || '', conductor_id: orden.conductor_id || '', fecha_programada: orden.fecha_programada || '', hora_programada: orden.hora_programada || '' });
-  const [pod, setPod] = useState({ recibido_por: '', gps: '' });
   const [inc, setInc] = useState({ tipo: TIPOS_INCIDENCIA[0], detalle: '' });
   const [busy, setBusy] = useState(false);
 
@@ -130,10 +130,8 @@ function OrdenDrawer({ orden, puede, vehiculos, conductores, onClose, onUpd }) {
 
   const onAsignar = async () => { const r = await run(() => asignarOrden(o.id, asig), 'Asignado'); if (r) refrescar(r.estado); };
   const onAvanzar = async (to) => { const r = await run(() => transicionOrden(o.id, to), 'Estado actualizado'); if (r) refrescar(r.estado); };
-  const onPOD = async () => { const r = await run(() => registrarPOD(o.id, pod), 'Entrega registrada'); if (r) refrescar('entregado'); };
   const onIncidencia = async () => { const r = await run(() => crearIncidencia(o.id, inc.tipo, inc.detalle), 'Incidencia registrada'); if (r) { setInc({ tipo: TIPOS_INCIDENCIA[0], detalle: '' }); recargarInc(); } };
   const onResolver = async (id, resol) => { const r = await run(() => resolverIncidencia(id, resol), 'Incidencia resuelta'); if (r) { recargarInc(); if (resol.startsWith('Reprog')) refrescar('programado'); } };
-  const usarGPS = () => { if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition((p) => setPod((s) => ({ ...s, gps: `${p.coords.latitude.toFixed(5)},${p.coords.longitude.toFixed(5)}` }))); };
 
   const sig = SIGUIENTE[o.estado];
   const vehLabel = vehiculos.find((v) => v.id === Number(asig.vehiculo_id));
@@ -182,13 +180,11 @@ function OrdenDrawer({ orden, puede, vehiculos, conductores, onClose, onUpd }) {
                 <button onClick={() => onAvanzar(sig.to)} disabled={busy} className="w-full py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 disabled:opacity-50 inline-flex items-center justify-center gap-2"><Truck size={16} /> {sig.label}</button>
               )}
 
-              {/* POD (en ruta) */}
+              {/* POD (en ruta) — foto + firma + GPS */}
               {o.estado === 'en_ruta' && (
                 <section className="bg-white rounded-2xl border-l-4 border-l-emerald-400 border border-slate-200 p-4">
                   <h3 className="text-[11px] font-black text-slate-500 uppercase mb-3 flex items-center gap-1.5"><PackageCheck size={14} className="text-emerald-500" /> Prueba de entrega (POD)</h3>
-                  <input value={pod.recibido_por} onChange={(e) => setPod({ ...pod, recibido_por: e.target.value })} placeholder="Recibido por (nombre)" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-2" />
-                  <div className="flex gap-2 mb-2"><input value={pod.gps} onChange={(e) => setPod({ ...pod, gps: e.target.value })} placeholder="GPS (lat,lon)" className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" /><button onClick={usarGPS} className="px-3 rounded-lg border border-slate-200 text-slate-600 text-sm inline-flex items-center gap-1"><MapPin size={14} /> Ubicar</button></div>
-                  <button onClick={onPOD} disabled={busy} className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 disabled:opacity-50">Registrar entrega</button>
+                  <PodCapture ordenId={o.id} onDone={() => refrescar('entregado')} />
                 </section>
               )}
 

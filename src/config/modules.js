@@ -17,6 +17,7 @@ export const APP_MODULES = [
 export const APP_ROUTES = [
   // TMS (Transporte) — reconstruido desde 0
   { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
+  { value: '/tms/pda', label: 'TMS - Mi Ruta (Chofer)', module: 'tms' },
   // PDA Operativa de Bodega (herramienta de bodega, ahora bajo Inventario)
   { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'inventario' },
 

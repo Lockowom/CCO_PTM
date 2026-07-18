@@ -4,6 +4,7 @@ export const ROUTE_PERMISSIONS = {
 
   // TMS (Transporte) — reconstruido desde 0
   '/tms/control': ['view_tms', 'manage_tms', 'supervise_tms', 'manage_panel'],
+  '/tms/pda': ['view_tms', 'manage_tms', 'manage_panel'],   // app del chofer
 
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
