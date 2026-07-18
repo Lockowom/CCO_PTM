@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Workflow as WorkflowIcon, ZoomIn, ZoomOut, Maximize2, Search, X, Save, Pencil, Trash2, Link2, Square, Diamond, Circle, CircleDot, ExternalLink, RotateCcw, Download, Upload, SlidersHorizontal } from 'lucide-react';
+import { Workflow as WorkflowIcon, ZoomIn, ZoomOut, Maximize2, Search, X, Save, Pencil, Trash2, Link2, Square, Diamond, Circle, CircleDot, ExternalLink, RotateCcw, Download, Upload, SlidersHorizontal, Scissors } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import seedMaestro from '../../data/flujoMaestro.json';
 import d1 from '../../data/diagramas/1-master-data.json';
@@ -36,6 +36,15 @@ const LINKS = [
   [/ubicaciones|layaout|mapa calor/i, '/queries/heatmap'], [/calidad|dictamen|monitoreo/i, '/quality/monitoreo'],
 ];
 const linkFor = (label) => (LINKS.find(([re]) => re.test(label || '')) || [])[1] || null;
+
+// Filtro por dominio para recortar cada sub-diagrama desde el maestro (heurístico; se revisa).
+const DOMAIN = {
+  'master-data':   /producto|cliente|direccion|serie|lote|cat[aá]logo|codigos maestros|ficha t[eé]cnica|cubicaje|trazabilidad de producto/i,
+  'warehouse-wms': /recepci[oó]n|ubicaci|conteo|calidad|ajuste|inventario|almacenaje|traspaso|dictamen|vencido|da[ñn]ad|empaque|faltante|sobrante|mapa calor|layaout|analisis|estancia/i,
+  'operaciones':   /\bn\.?v\b|en proceso|shipping|picking|packing|currier|entregado|registro n|panel ptm|modo tv|dashboard|consulta n|carga masiva|subida n|certificado de salida/i,
+  'tms':           /tms|transporte|veh[ií]culo|chofer|ruta|\bpod\b|orden transporte|incidencia|despachado|en carga|programado|asignar|reprogramar|retraso|accidente|cliente ausente|direcci[oó]n incorrecta|resolver|pendiente asignaci|tipo despacho|en ruta/i,
+  'postventa':     /ticket|servicio tecnico|post ?venta|informe del tecnico|t[eé]cnico|agendamiento|cliente se contacta|trazabilidad del caso|producto operativo|donante|se cierra el caso|se genera informe|link publico/i,
+};
 
 export default function FlujoMaestro() {
   const nav = useNavigate();
@@ -141,6 +150,22 @@ export default function FlujoMaestro() {
     rd.readAsText(f); e.target.value = '';
   };
 
+  const recortarDelMaestro = async () => {
+    if (codigo === 'maestro') return;
+    const re = DOMAIN[codigo]; if (!re) { toast.error('Este diagrama no tiene filtro de dominio'); return; }
+    if (dirty && !window.confirm('Se reemplazará el contenido actual con el recorte del maestro. ¿Continuar?')) return;
+    let m = null;
+    try { const row = await obtenerFlujo('maestro'); if (row?.modelo?.nodes) m = row.modelo; } catch { /* seed */ }
+    if (!m) m = { nodes: seedMaestro.nodes, edges: seedMaestro.edges };
+    const nodes = m.nodes.filter((n) => re.test(n.label || ''));
+    if (!nodes.length) { toast.error('El maestro no tiene nodos de este dominio'); return; }
+    const ids = new Set(nodes.map((n) => n.id));
+    const edges = m.edges.filter((e) => ids.has(e.from) && ids.has(e.to));
+    setModel({ nodes: nodes.map((n) => ({ ...n })), edges: edges.map((e) => ({ ...e })) });
+    seedSeq({ nodes, edges }); mark(); requestAnimationFrame(() => fitNodes(nodes));
+    toast.success(`Recortado: ${nodes.length} nodos · ${edges.length} conexiones (revisa y Guarda)`);
+  };
+
   const border = (n, tx, ty) => { const cx = n.x + n.w / 2, cy = n.y + n.h / 2, dx = tx - cx, dy = ty - cy; if (!dx && !dy) return { x: cx, y: cy }; const hw = n.w / 2, hh = n.h / 2; const t = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity); return { x: cx + dx * t, y: cy + dy * t }; };
   const term = q.trim().toLowerCase();
   const jump = info && linkFor(info.label);
@@ -188,6 +213,7 @@ export default function FlujoMaestro() {
           <button onClick={exportar} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-bold text-slate-500 hover:bg-slate-100"><Download size={13} /> Exportar</button>
           <button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-bold text-slate-500 hover:bg-slate-100"><Upload size={13} /> Importar</button>
           <input ref={fileRef} type="file" accept="application/json,.json" onChange={importar} className="hidden" />
+          {codigo !== 'maestro' && <button onClick={recortarDelMaestro} title="Extrae del Flujo Maestro los nodos de este dominio" className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-bold text-orange-600 hover:bg-orange-50"><Scissors size={13} /> Recortar del maestro</button>}
           <button onClick={() => cargar(codigo)} className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-bold text-slate-500 hover:bg-slate-100"><RotateCcw size={13} /> Recargar</button>
           <button onClick={guardar} disabled={!dirty} className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40"><Save size={14} /> Guardar</button>
         </div>
