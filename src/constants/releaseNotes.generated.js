@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.46",
+    "fecha": "2026-07-18",
+    "titulo": "Workflows — rediseño visual: diagrama de la máquina de estados",
+    "cambios": [
+      {
+        "texto": "La pantalla src/pages/Admin/Workflows.jsx desperdiciaba el ancho (listas sueltas). Ahora el protagonista es un diagrama SVG de la máquina: los estados se dibujan como nodos (color propio, badges INICIAL/FINAL) posicionados por orden, con flechas de transición etiquetadas con su acción — avance (recta), salto (arco…"
+      }
+    ]
+  },
+  {
     "version": "1.55.45",
     "fecha": "2026-07-18",
     "titulo": "Workflow Engine — Fase 2 completa: Calidad y Conteo cableados (los 5 procesos)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El desplegable de Inventario tenía ~17 accesos (Traspasos, Mapa de Calor, Ubicaciones, 6 de Conteo, 6 de Análisis, Carteles, Insumos) que se salían de la pantalla y obligaban a hacer *zoom out*. Ahora el menú tiene alto máximo con scroll (max-h-[78vh] overflow-y-auto) y, cuando una categoría tiene más de 8 accesos, se…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.31",
-    "fecha": "2026-07-17",
-    "titulo": "Cuadro de Novedades ahora AUTOMÁTICO (adiós al mantenimiento manual)",
-    "cambios": [
-      {
-        "texto": "Para que nunca vuelva a quedarse atrás, src/constants/releaseNotes.js deja de escribirse a mano: un prebuild (scripts/gen_release_notes.js, enganchado en package.json → corre antes de vite build) parsea el Changelog (§15) de este documento y genera releaseNotes.generated.js con las 15 versiones más recientes (título =…"
       }
     ]
   }
