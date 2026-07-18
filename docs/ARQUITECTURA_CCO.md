@@ -23,8 +23,11 @@ explícito.
 4. [Pilar 3 — Eventos de dominio](#pilar-3--eventos-de-dominio)
 5. [Pilar 4 — Permisos por rol y por transición](#pilar-4--permisos-por-rol-y-por-transición)
 6. [Pilar 5 — APIs y servicios (contratos, sin acoplar)](#pilar-5--apis-y-servicios)
-7. [Deuda arquitectónica priorizada](#deuda-arquitectónica-priorizada)
-8. [Hoja de ruta sugerida](#hoja-de-ruta-sugerida)
+7. [Servicios de plataforma (motores transversales)](#7-servicios-de-plataforma-motores-transversales)
+8. [Decisión de capas — API de Operaciones](#8-decisión-de-capas--api-de-operaciones)
+9. [Descomposición en 5 sub-diagramas](#9-descomposición-en-5-sub-diagramas)
+10. [Deuda arquitectónica priorizada](#deuda-arquitectónica-priorizada)
+11. [Hoja de ruta sugerida](#hoja-de-ruta-sugerida)
 
 ---
 
@@ -352,6 +355,222 @@ solo por su servicio/RPC pública, nunca por su tabla.**
 
 ---
 
+## 7. Servicios de plataforma (motores transversales)
+
+Además de los dominios de negocio, un ERP maduro necesita **motores** que no son
+un proceso sino **infraestructura compartida**: identidad, eventos, workflow,
+notificaciones y auditoría. En CCO **ya existen en forma embrionaria** (dispersa);
+aquí se elevan a módulos de primera clase con su contrato.
+
+### 7.1 Identidad y Accesos (IAM)
+Dominio independiente. Toda acción queda asociada a un usuario.
+
+```
+Usuarios → Roles → Permisos → Auditoría → Historial
+```
+
+- **Hoy:** `tms_usuarios` → `tms_roles` → `tms_roles_permisos` → `tms_permisos`
+  (RBAC real, FKs ✅). Cada RPC resuelve al actor con `_panel_actor()` /
+  `auth.uid()`; `tms_auditoria` audita usuarios y roles. Sesión y roles se
+  refrescan por Realtime (`AuthContext.jsx`).
+- **Deuda:** el "quién hizo qué" está completo en RBAC pero la **auditoría de
+  negocio** (no solo de usuarios/roles) vive dispersa (§7.5). Unificar.
+- **Objetivo:** IAM como servicio único que exporte `actor()`, `puede(permiso)` y
+  `historial(entidad,id)` — mismo contrato para web, Android y API pública.
+
+### 7.2 Motor de Eventos
+Un **motor invisible**: un hecho de negocio se publica **una vez** y varios
+reaccionan. Elimina el código repetido (hoy cada RPC llama a mano log + notif +
+sello + …).
+
+```
+Registro NV → EVENTO(NV_CREADA) → [Dashboard] [Correo] [Auditoría] [KPI] [Historial]
+```
+
+- **Hoy:** no hay bus; los efectos están **inline** en cada RPC (`guardar_nv`
+  escribe log; los flujos de Calidad insertan `tms_notificaciones`; `tms_orden_pod`
+  sella la N.V.). Funciona pero acopla y se repite.
+- **Objetivo (mínimo, sobre Postgres — no hace falta Kafka):**
+
+  ```sql
+  -- Tabla append-only: la bitácora de hechos del sistema
+  create table dominio_eventos (
+    id           bigint generated always as identity primary key,
+    nombre       text not null,          -- 'NV_CREADA', 'POD_REGISTRADO', ...
+    agregado     text not null,          -- 'operacion','orden_transporte',...
+    agregado_id  text not null,
+    actor        text,                   -- _panel_actor()
+    payload      jsonb not null default '{}',
+    creado_en    timestamptz not null default now()
+  );
+  ```
+  Publicar = `insert into dominio_eventos(...)` (una línea en cada RPC, o un
+  trigger). Consumir = suscriptores (trigger `pg_net`/Edge/Realtime) que leen el
+  evento y ejecutan su reacción. El **catálogo de nombres** ya está en el Pilar 3.
+- **Beneficio:** los cruces manuales (N.V.→TMS, Calidad→PV, POD→NV) pasan a ser
+  **suscripciones**, no llamadas incrustadas.
+
+### 7.3 Workflow Engine (procesos como datos, no como código)
+Hoy los estados están "dibujados" (en JS/RPC). El objetivo es **moverlos a
+tablas**, para crear un proceso nuevo **sin programar** (y para que Admin muestre y
+edite las transiciones).
+
+```
+workflow_definition · workflow_state · workflow_transition · workflow_history · workflow_permission
+```
+
+```sql
+create table workflow_definition (             -- un proceso
+  codigo text primary key,                     -- 'NV','OT','TICKET_PV','CALIDAD'
+  nombre text not null, activo boolean default true);
+
+create table workflow_state (                  -- estados de un proceso
+  workflow text references workflow_definition(codigo),
+  codigo text, etiqueta text, es_inicial boolean, es_final boolean,
+  orden int, color text, primary key (workflow, codigo));
+
+create table workflow_transition (             -- aristas válidas
+  id bigint generated always as identity primary key,
+  workflow text references workflow_definition(codigo),
+  desde text, hasta text, accion text,         -- 'asignar','despachar',...
+  permiso_id text references tms_permisos(id)); -- ← Pilar 4: 1 transición = 1 permiso
+
+create table workflow_history (                -- quién movió qué y cuándo
+  id bigint generated always as identity primary key,
+  workflow text, entidad_id text, desde text, hasta text,
+  actor text, nota text, creado_en timestamptz default now());
+```
+- **Migración de lo existente:** TMS y Post-Venta (ya enforced) se **describen**
+  como filas de `workflow_transition`; N.V. (hoy sin enforce, deuda P2) **nace**
+  data-driven; una sola RPC genérica `wf_transicionar(workflow, id, accion)` valida
+  contra `workflow_transition` + `workflow_permission` y escribe `workflow_history`.
+- **Resultado:** mañana agregas "Devoluciones" o "Compras" creando filas, no código.
+
+### 7.4 Centro de Notificaciones
+Canal-agnóstico, **suscrito al motor de eventos**. Un evento decide a quién y por
+qué canal avisar; el centro entrega.
+
+```
+EVENTO → Centro de Notificaciones → [Correo] [WhatsApp] [Push] [SMS] [In-app]
+```
+
+- **Hoy:** `tms_notificaciones` (in-app, gate `can_manage_calidad`) + push FCM
+  (Edge `notify-inventario`) + correos salientes de Post-Venta. Cada uno cableado
+  aparte.
+- **Objetivo:** una tabla de salida `notificacion(canal, destinatario, plantilla,
+  payload, estado, intentos)` + despachadores por canal (Edge Functions:
+  `notify-email`, `notify-wa`, `notify-push`, `notify-sms`). El **evento** define el
+  mensaje; el centro elige canal por preferencia del destinatario y reintenta.
+  WhatsApp/SMS son Edge nuevos; Correo y Push ya existen y se re-enchufan.
+
+### 7.5 Auditoría (módulo explícito)
+Debe existir como módulo, no implícito.
+
+```
+Auditoría → Usuario · Acción · Fecha · Antes · Después
+```
+
+- **Hoy:** `tms_auditoria` (before/after JSON de usuarios/roles) **+** bitácoras de
+  negocio separadas: `tms_operaciones_log` (NV), `tms_postventa_historial` (PV),
+  `tms_conteo_auditorias` (conteo QR). Está, pero **fragmentada**.
+- **Objetivo:** una vista/servicio único `auditoria(entidad, id)` que una todas las
+  fuentes (o que `dominio_eventos` + `workflow_history` sean la fuente canónica y el
+  resto queden como proyecciones). "Vale oro" para trazabilidad, disputas y
+  compliance.
+
+> Los cinco motores comparten una idea: **publicar el hecho una vez** (evento) y
+> que identidad, workflow, notificaciones y auditoría **reaccionen**. Eso es lo que
+> convierte "pantallas conectadas" en "plataforma".
+
+---
+
+## 8. Decisión de capas — API de Operaciones
+
+**Regla:** el Panel (y cualquier cliente) **no** modifica la operación
+directamente; **consume un servicio**.
+
+```
+Panel PTM ─┐
+App Android ─┤→  API de Operaciones  →  tms_operaciones
+Portal Cliente ─┤     (guardar_nv, cambiar_estado_nv, eliminar_nv, consultar)
+API pública / ERP ─┘
+```
+
+- **Hoy (parcial ✅):** desde el cutover (migración `085`) el Panel **ya escribe por
+  RPC** (`guardar_nv` / `cambiar_estado_nv` / `eliminar_nv`), no por `UPDATE`
+  directo. La capa de servicio **ya existe** a nivel de base de datos.
+- **Lo que falta:** promover esas RPCs a un **contrato de API estable y versionado**
+  — un módulo de servicio nombrado (`operacionesApi`) + endpoints Edge/REST
+  documentados (entradas, salidas, errores, permisos) — para que **Android, Portal
+  Cliente, API pública e integraciones ERP** consuman lo mismo que la web, sin
+  reimplementar reglas.
+- **Beneficio directo:** un solo lugar valida estados, permisos y sellos de fecha;
+  agregar un canal nuevo (portal del cliente, ERP) es "consumir la API", no "tocar
+  la tabla".
+
+Este mismo patrón aplica a cada dominio: `operacionesApi`, `tmsApi`, `postventaApi`,
+`calidadApi`, `inventarioApi` — cada uno la cara pública de su dominio.
+
+---
+
+## 9. Descomposición en 5 sub-diagramas
+
+El plano maestro (`docs/flujo-maestro-cco.json`) queda como **mapa maestro / vista
+ejecutiva**. Para trabajar el detalle sin que el diagrama sea inmanejable, se
+separa **físicamente** (no funcionalmente) en 5 sub-mapas. Cada uno es un recorte
+del maestro por dominio.
+
+### 9.1 MASTER DATA (datos maestros)
+```mermaid
+flowchart LR
+  P[Productos] --- C[Clientes] --- D[Direcciones]
+  S[Series] --- L[Lotes] --- CAT[Catálogos]
+```
+Tablas: `tms_matriz_codigos`, `tms_productos_activo`, `tms_nv_catalogo`,
+`tms_direcciones`, `tms_series`, `tms_partidas`, `tms_panel_transportistas/vendedores`.
+
+### 9.2 WAREHOUSE (WMS)
+```mermaid
+flowchart LR
+  R[Recepción] --> U[Ubicación] --> CT[Conteo]
+  CT --> Q[Calidad] --> AJ[Ajustes] --> INV[Inventario]
+```
+Tablas: `tms_recepciones(_nacionales)`, `wms_ubicaciones`/`wms_layout`,
+`tms_conteo_*`, `tms_monitoreo_*`/`tms_calidad_*`, `tms_emil_sync` (ajustes),
+`tms_inventario_general`.
+
+### 9.3 OPERACIONES
+```mermaid
+flowchart LR
+  NV[NV] --> PR[Proceso] --> PK[Picking] --> PC[Packing] --> SH[Shipping]
+```
+Tabla raíz: `tms_operaciones` (+ `tms_operaciones_log`, estado_cat). Máquina de
+estado de la N.V. (Pilar 2.3).
+
+### 9.4 TMS
+```mermaid
+flowchart LR
+  OT[Orden Transporte] --> V[Vehículos]
+  OT --> CH[Choferes] --> RU[Rutas] --> GPS[GPS] --> POD[POD]
+```
+Tablas: `tms_transporte_ordenes`, `tms_vehiculos`, `tms_conductores`, `tms_rutas`,
+`tms_transporte_incidencias`, bucket `tms-pod`.
+
+### 9.5 POSTVENTA
+```mermaid
+flowchart LR
+  T[Ticket] --> AG[Agenda] --> TE[Técnico] --> IN[Informe] --> CL[Cliente] --> CI[Cierre]
+```
+Tablas: `tms_postventa_tickets`, `tms_postventa_correos`, `tms_postventa_tecnicos`,
+`tms_postventa_historial`.
+
+> Cada sub-mapa puede exportarse como su propio JSON importable al Modelador
+> (mismo formato que el maestro), manteniendo `flujo-maestro-cco.json` como el
+> índice que los une. Los 5 motores del §7 son **transversales**: aparecen como una
+> capa por debajo de los 5 sub-mapas, no como un sexto diagrama.
+
+---
+
 ## Deuda arquitectónica priorizada
 
 | # | Deuda | Impacto | Fix |
@@ -360,8 +579,12 @@ solo por su servicio/RPC pública, nunca por su tabla.**
 | P2 | N.V. sin máquina enforced (`cambiar_estado_nv` acepta cualquier estado) | estados inválidos posibles; orden solo por convención UI | catálogo en `tms_operaciones_estado_cat` con `orden/siguiente` + validación en RPC |
 | P3 | `actualizar_pv_ticket` deja editar `estado` fuera de la máquina | se salta `avanzar_pv_ticket` | quitar `estado` del update libre o encaminarlo |
 | P4 | Puente N.V.→TMS 100% manual | fricción operativa; olvidos | evento/bandeja de candidatas (decisión pendiente: qué `tipo_despacho`=propio) |
-| P5 | Eventos dispersos (log/notif/poll/realtime) | sin trazabilidad unificada ni suscripción | tabla `dominio_eventos` + despachador |
+| P5 | Eventos dispersos (log/notif/poll/realtime) | sin trazabilidad unificada ni suscripción | **Motor de Eventos** §7.2: `dominio_eventos` + despachador |
 | P6 | Hallazgos RLS históricos (`USING(true)`, `SECURITY DEFINER` a `authenticated`) | seguridad | revisar `get_advisors` antes de tocar BD (ya en CLAUDE.md) |
+| P7 | Estados en código, no en datos | no se puede crear un proceso sin programar | **Workflow Engine** §7.3: tablas `workflow_*` + `wf_transicionar` |
+| P8 | Notificaciones cableadas por canal | difícil sumar WhatsApp/SMS; sin reintentos | **Centro de Notificaciones** §7.4: cola `notificacion` + despachadores por canal |
+| P9 | RPCs de escritura sin contrato de API versionado | Android/Portal/ERP reimplementan reglas | **API de Operaciones** §8: módulo `*Api` + endpoints documentados |
+| P10 | Auditoría de negocio fragmentada (log/historial por dominio) | trazabilidad parcial | **Auditoría** §7.5: fuente canónica (`dominio_eventos`+`workflow_history`) + vista única |
 
 ---
 
@@ -373,14 +596,21 @@ solo por su servicio/RPC pública, nunca por su tabla.**
 3. **Puente N.V.→TMS (P4)** — decisión de negocio pendiente (`tipo_despacho`
    "propio") + bandeja de candidatas (opción A recomendada). Primer cruce
    desacoplado real.
-4. **Event store mínimo (P5)** — `dominio_eventos` + despachador; migrar los
+4. **Workflow Engine (P7)** — mover estados a `workflow_*` y una RPC genérica
+   `wf_transicionar`. Absorbe P2/P3 de la máquina N.V. y deja la matriz
+   transición→permiso explícita para Admin→Roles.
+5. **Event store mínimo (P5)** — `dominio_eventos` + despachador; migrar los
    cruces directos (Calidad→PV, POD→NV) a suscripciones.
-5. **Matriz transición→permiso explícita** — que Admin→Roles muestre qué
-   transición habilita cada permiso.
+6. **Centro de Notificaciones (P8)** — cola `notificacion` sobre el motor de
+   eventos; re-enchufar Correo/Push existentes y sumar WhatsApp/SMS como Edge.
+7. **API de Operaciones (P9)** — contrato versionado sobre las RPCs actuales;
+   habilita Android / Portal Cliente / API pública / ERP con las mismas reglas.
 
 > Con P1–P3 hechos, CCO ya es "plataforma modular": entidades íntegras, procesos
-> con máquinas enforced y autorización por transición. P4–P5 la vuelven
-> **event-driven** y verdaderamente desacoplada.
+> con máquinas enforced y autorización por transición. P4–P5 y los motores del §7
+> (Workflow, Eventos, Notificaciones, API, Auditoría) la vuelven **event-driven**,
+> **configurable sin código** y verdaderamente desacoplada — lista para Android,
+> Portal Cliente e integraciones ERP.
 
 ---
 *Fuente de verdad viva: este documento + `DOCUMENTACION_PROYECTO.md` (técnico) +
