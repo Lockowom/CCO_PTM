@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.43",
+    "fecha": "2026-07-18",
+    "titulo": "Workflow Engine — Fase 2: Post-Venta cableado al motor",
+    "cambios": [
+      {
+        "texto": "Migración 110: como los tickets tienen múltiples caminos de escritura (avanzar_pv_ticket, cerrar_pv_ticket, actualizar_pv_ticket free-form, ingesta de correo), en vez de instrumentar cada RPC se usa un trigger paralelo al de tms_postventa_historial: _pv_wf_alta (INSERT → crear) y _pv_wf_cambio (UPDATE con estado…"
+      }
+    ]
+  },
+  {
     "version": "1.55.42",
     "fecha": "2026-07-18",
     "titulo": "Workflow Engine — Fase 2: TMS cableado al motor (libro mayor real)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Antes no había forma de ver cuánta gente usa /consulta. Migración 101: tabla tms_consulta_metricas (contador diario: total, con_resultado, sin_resultado; no guarda IP ni el número consultado) y buscar_nv_publico la incrementa por día (zona Chile) tras pasar el rate-limit → solo cuentan consultas válidas. RLS: lectura…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.28",
-    "fecha": "2026-07-17",
-    "titulo": "Panel de Insumos: correo de solicitud más profesional (con tabla)",
-    "cambios": [
-      {
-        "texto": "armarCorreoSolicitud genera ahora (1) texto plano con una tabla ASCII alineada (columnas #, Insumo, Medida/Código, Quedan, Estado, Solicitar) + saludo/cierre formales, para el mailto:; y (2) cuerpo HTML con una tabla real (encabezados naranja, filas alternadas, badge de estado con color) que se copia al portapapeles.…"
       }
     ]
   }
