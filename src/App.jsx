@@ -76,6 +76,7 @@ const LocationManager = React.lazy(() => import('./pages/Admin/LocationManager')
 const AdminMonitor = React.lazy(() => import('./pages/Admin/AdminMonitor')); // Monitor Tiempo Real
 const Workflows = React.lazy(() => import('./pages/Admin/Workflows')); // Workflow Engine (procesos como datos)
 const FlujoMaestro = React.lazy(() => import('./pages/Tools/FlujoMaestro')); // Mapa de Procesos (vista ejecutiva, solo lectura)
+const Eventos = React.lazy(() => import('./pages/Admin/Eventos')); // Motor de Eventos + Centro de Notificaciones
 
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -411,6 +412,7 @@ function AppContent() {
           <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
           <Route path="admin/workflows" element={<ErrorBoundary><Workflows /></ErrorBoundary>} />
           <Route path="admin/flujo-maestro" element={<ErrorBoundary><FlujoMaestro /></ErrorBoundary>} />
+          <Route path="admin/eventos" element={<ErrorBoundary><Eventos /></ErrorBoundary>} />
         </Route>
 
         {/* Fallback 404 en lugar de Navigate al login */}

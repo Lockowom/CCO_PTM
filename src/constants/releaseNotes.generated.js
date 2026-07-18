@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.51",
+    "fecha": "2026-07-18",
+    "titulo": "Motores de plataforma — Motor de Eventos + Centro de Notificaciones",
+    "cambios": [
+      {
+        "texto": "(blueprint §7.2/§7.4). Migración 114: dominio_eventos (append-only) se alimenta SOLO desde workflow_history por trigger → un hecho de negocio = un evento WORKFLOW.accion (OT.registrar_pod, TICKET_PV.crear, NV.avanzar…); reusa todo el cableado de la Fase 2. Centro de Notificaciones: notificacion_regla…"
+      }
+    ]
+  },
+  {
     "version": "1.55.50",
     "fecha": "2026-07-18",
     "titulo": "Mapa de Procesos — “Recortar del maestro” (sub-diagramas automáticos por dominio)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 106: bucket privado tms-pod (evidencia servida con URL firmada). Componente reutilizable src/pages/TMS/PodCapture.jsx: captura foto (cámara), firma en canvas, GPS (geolocalización) y \"recibido por\"; sube la evidencia a Storage y llama tms_orden_pod (que marca la N.V. Entregado). Se usa tanto en el drawer de…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.36",
-    "fecha": "2026-07-17",
-    "titulo": "TMS (Transporte) — Fase 2: módulo funcional (Torre de Control)",
-    "cambios": [
-      {
-        "texto": "Frontend nativo del transporte propio sobre el cimiento de la Fase 1. Ruta /tms/control, sección TMS en el menú (Operaciones WMS). Página src/pages/TMS/Transporte.jsx + src/services/tmsService.js: Torre de Control con KPIs por estado (Pendiente/Programado/En Carga/Despachado/En Ruta/Entregado) que filtran, buscador y…"
       }
     ]
   }

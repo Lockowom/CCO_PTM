@@ -89,7 +89,8 @@ export const APP_ROUTES = [
   { value: '/admin/bodegas-softland', label: 'Admin - Bodegas Softland', module: 'admin' },
   { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' },
   { value: '/admin/workflows', label: 'Admin - Workflows (procesos)', module: 'admin' },
-  { value: '/admin/flujo-maestro', label: 'Admin - Mapa de Procesos', module: 'admin' }
+  { value: '/admin/flujo-maestro', label: 'Admin - Mapa de Procesos', module: 'admin' },
+  { value: '/admin/eventos', label: 'Admin - Eventos y Notificaciones', module: 'admin' }
 ];
 
 export const APP_PERMISSIONS = [
@@ -217,6 +218,8 @@ export const APP_PERMISSIONS = [
       { id: 'deploy_ota', label: 'Desplegar OTA a producción (móvil)' },
       { id: 'view_workflows', label: 'Workflows · Ver procesos y transiciones' },
       { id: 'manage_workflows', label: 'Workflows · Editar procesos/estados/transiciones' },
+      { id: 'view_eventos', label: 'Eventos/Notificaciones · Ver stream y bandeja' },
+      { id: 'manage_eventos', label: 'Eventos/Notificaciones · Editar reglas y despachar' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' }
     ]
   }
