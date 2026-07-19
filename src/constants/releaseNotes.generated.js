@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.62",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 4 (Scopes / ABAC: \"sobre qué datos\")",
+    "cambios": [
+      {
+        "texto": "Migraciones 124 (enum centro_costo) + 125. La realidad de PTM: el único eje de ámbito multivaluado real es centro_costo (tms_operaciones, 9 valores); bodega está consolidada — así que el scope se modela sobre centro_costo sin inventar jerarquía de sucursales. iam.assignments gana scope_code (ámbito por código de…"
+      }
+    ]
+  },
+  {
     "version": "1.55.61",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 3 (Workflow Permissions: capa de decisión de transiciones)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "La pantalla src/pages/Tools/FlujoMaestro.jsx pasa de solo lectura a editor completo (modo *Editar*, solo con manage_workflows/admin): arrastrar nodos, agregar (Tarea/Decisión/Inicio/Fin), conectar (toca origen→destino), renombrar (doble clic), borrar (Supr o botón) y Guardar. Persistencia en BD (migración 113: tabla…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.47",
-    "fecha": "2026-07-18",
-    "titulo": "Mapa de Procesos (Flujo Maestro) — visible dentro de la app",
-    "cambios": [
-      {
-        "texto": "Nueva pantalla de solo lectura src/pages/Tools/FlujoMaestro.jsx (ruta /admin/flujo-maestro, menú *Configuración → Mapa de Procesos*) que renderiza el plano maestro (src/data/flujoMaestro.json, copia de docs/flujo-maestro-cco.json: 83 nodos, 108 conexiones) en un lienzo pan/zoom: nodos posicionados por sus coordenadas…"
       }
     ]
   }

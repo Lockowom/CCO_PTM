@@ -645,9 +645,17 @@ ya existía (`Admin → Workflows`, `TransModal` con selector de permiso); Fase 
 un **Simulador de permisos** (`wf_acciones_disponibles`) que evalúa en vivo qué acciones
 puede ejecutar el usuario en sesión desde cada estado.
 
-**Fase 4 — Scopes (ABAC).**
-18. Poblar `scope_id` en asignaciones. 19. Añadir `sucursal_id/cd_id` (dueño de scope)
-a tablas de dominio + policies con `scope_ok`. 20. UI de asignación con scope.
+**Fase 4 — Scopes (ABAC).** ✅ HECHA (v1.55.62, migraciones `124`+`125`).
+Realidad PTM: el único eje multivaluado real es **`centro_costo`** (`tms_operaciones`);
+`bodega` está consolidada → el scope se modela sobre `centro_costo`, sin inventar
+sucursales. 18. `iam.assignments.scope_code` (ámbito por código de texto) + índice
+único + vista con `scope_code`; asignaciones acotadas vía RPC ✅. 19. **`authz.can_on_scope`**
++ **`authz.scopes_for`** (decisión y descubrimiento por dato) ✅ — listas para que los
+módulos filtren; **NO** se aplica RLS sobre tablas de dominio (riesgo de bloqueo; el
+enforcement por tabla es opt-in con estos helpers, fase de consolidación). 20. **UI de
+asignación con scope** ✅ — pestaña *Ámbitos* en `Admin → Usuarios y Roles`
+(`?vista=scopes`). El gate central sigue ciego al ámbito a propósito (visibilidad de
+módulo vs. filtrado de datos).
 
 **Fase 5 — Sesiones + Auditoría.**
 21. `iam.sessions`, `access_history`; hooks de login (trigger + app). 22. Pantalla de

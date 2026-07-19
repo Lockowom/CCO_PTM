@@ -1,21 +1,27 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, Shield, KeyRound } from 'lucide-react';
+import { Users as UsersIcon, Shield, KeyRound, Target } from 'lucide-react';
 import UsersPage from './Users';
 import RolesPage from './Roles';
+import ScopesPage from './Scopes';
 
-// Control de Accesos UNIFICADO: Usuarios y Roles en una sola sección con
-// pestañas. /admin/users y /admin/roles renderizan esta misma página (cada
-// ruta abre su pestaña y conserva su permiso de ROUTE_PERMISSIONS).
+// Control de Accesos UNIFICADO: Usuarios, Roles y Ámbitos en una sola sección
+// con pestañas. /admin/users y /admin/roles renderizan esta misma página (cada
+// ruta abre su pestaña y conserva su permiso de ROUTE_PERMISSIONS). La pestaña
+// Ámbitos (Scopes, Fase 4 IAM) vive bajo /admin/roles?vista=scopes → hereda el
+// permiso manage_roles/view_roles sin ruta nueva.
 const TABS = [
   { id: 'usuarios', label: 'Usuarios', icon: UsersIcon, path: '/admin/users' },
   { id: 'roles', label: 'Roles y Permisos', icon: Shield, path: '/admin/roles' },
+  { id: 'scopes', label: 'Ámbitos', icon: Target, path: '/admin/roles?vista=scopes' },
 ];
 
 export default function AccessControl() {
   const location = useLocation();
   const navigate = useNavigate();
-  const tab = location.pathname.includes('/roles') ? 'roles' : 'usuarios';
+  const enRoles = location.pathname.includes('/roles');
+  const vista = new URLSearchParams(location.search).get('vista');
+  const tab = enRoles ? (vista === 'scopes' ? 'scopes' : 'roles') : 'usuarios';
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
@@ -43,7 +49,9 @@ export default function AccessControl() {
         ))}
       </div>
 
-      {tab === 'usuarios' ? <UsersPage embedded /> : <RolesPage embedded />}
+      {tab === 'usuarios' && <UsersPage embedded />}
+      {tab === 'roles' && <RolesPage embedded />}
+      {tab === 'scopes' && <ScopesPage />}
     </div>
   );
 }
