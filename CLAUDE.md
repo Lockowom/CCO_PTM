@@ -140,6 +140,21 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   los insumos por reponer y se arma un `mailto:` (destinatario recordado en localStorage) pidiendo la
   reposición. Permisos `view_insumos`/`manage_insumos` (módulo Inventario).
 
+## Módulo nativo: Asistente IA (chat sobre datos, solo lectura)
+- **Asistente CCO** (`src/components/AsistenteIA.jsx`, burbuja flotante montada en `App.jsx`):
+  chat conversacional que responde sobre datos REALES (operaciones/N.V., stock, tickets Post-Venta)
+  usando **tool use** de Anthropic. **v1 = SOLO LECTURA** (no crea/edita/elimina). La clave vive solo
+  en el servidor: proxy `POST /api/asistente` en `server.js` (valida sesión Supabase, rate-limit,
+  loop de tool use hasta 6 pasos, modelo `IA_MODEL` env, def. `claude-opus-4-8`). Las herramientas
+  se traducen a RPCs seguras y se ejecutan **con el token del usuario**, así la BD aplica sus permisos
+  y su ámbito `centro_costo`; el servidor nunca usa la service-role para leer. Servicio cliente
+  `src/services/asistenteService.js`. Migración `137` (RPCs `ia_kpis`/`ia_buscar_operaciones`
+  [respeta ámbito como el Panel]/`ia_buscar_stock`/`ia_tickets`, todas SECURITY DEFINER **gateadas por
+  permiso** del llamante; permiso nuevo `view_asistente`; fila de módulo `asistente`) + `138`
+  (revoke a `anon`). Se muestra solo a autenticados con `view_asistente` (ADMIN siempre). Sin ruta
+  ni item de menú (es widget global); registrado en `APP_MODULES`/`APP_PERMISSIONS` (Roles/Vistas).
+  Requiere `ANTHROPIC_API_KEY` en el servidor (misma env que "Mejorar con IA" de Traspasos).
+
 ## Regla permanente: checklist al agregar un MÓDULO nuevo
 Cada módulo/pantalla nueva DEBE quedar administrable en **Roles** y **Vistas**. En el mismo
 cambio, actualizar SIEMPRE:

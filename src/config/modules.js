@@ -11,6 +11,7 @@ export const APP_MODULES = [
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
   { id: 'panel', label: 'Panel PTM (Dashboard)', section: 'intelligence' },
+  { id: 'asistente', label: 'Asistente IA', section: 'intelligence' },
   { id: 'postventa', label: 'Post-Venta (Servicio Técnico)', section: 'postventa' },
   { id: 'admin', label: 'Configuración', section: 'system' }
 ];
@@ -187,6 +188,13 @@ export const APP_PERMISSIONS = [
       { id: 'panel_info', label: 'Panel · pantalla Info N.V. (consulta)' },
       { id: 'panel_tv', label: 'Panel · Modo TV' },
       { id: 'panel_builder', label: 'Panel · Builder de dashboards' }
+    ]
+  },
+  {
+    id: 'asistente',
+    label: 'Asistente IA',
+    permissions: [
+      { id: 'view_asistente', label: 'Usar el Asistente IA (chat sobre datos, solo lectura)' }
     ]
   },
   {

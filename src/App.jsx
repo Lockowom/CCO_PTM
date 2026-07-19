@@ -12,6 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
 import UpdateOverlay from './components/ui/UpdateOverlay';
 import NovedadesModal from './components/NovedadesModal';
+import AsistenteIA from './components/AsistenteIA';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
 import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelConfig } from './pages/Panel/PanelScreens';
@@ -336,6 +337,8 @@ function AppContent() {
       />
       {/* Novedades / notas del parche: aparece solo tras actualizar la versión */}
       <NovedadesModal />
+      {/* Asistente IA flotante (solo autenticados con permiso view_asistente) */}
+      <AsistenteIA />
       <CommandPalette />
       <VersionGuard />
       <Suspense fallback={<SuspenseLoader />}><Routes>

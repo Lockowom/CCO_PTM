@@ -190,3 +190,14 @@
 > `119`), Panel PTM nativo → `tms_operaciones` (`082`+), TMS fase 1–3 (`104`–`107`, hoy oculto
 > mig `120`), API-v1 M2M (`116`–`118`), OTA/Capgo (`068`, `118`). Ver el Changelog §15 de
 > `DOCUMENTACION_PROYECTO.md` para el detalle por versión.
+
+### Asistente IA — herramientas de solo lectura (migs 136–138)
+- **`iam_historial_acceso` / `iam_historial_acceso_resumen` (mig 136)**: historial de ingresos
+  exitosos (`tms_accesos`) para la pestaña *Accesos* de Identidad y Seguridad. Solo admin
+  (`authz._es_admin_app()`).
+- **Asistente CCO (migs 137–138)**: RPCs que el chat IA invoca como *tools* (vía proxy
+  `/api/asistente`, clave solo en servidor): `ia_kpis()`, `ia_buscar_operaciones()`,
+  `ia_buscar_stock()`, `ia_tickets()`. Todas `SECURITY DEFINER` pero **gateadas por permiso**
+  del llamante (`usuario_tiene_algun_permiso`), acotadas por `LIMIT`, y operaciones respeta el
+  ámbito `centro_costo` (como el Panel). Se ejecutan con el token del usuario. Permiso nuevo
+  `view_asistente`; `revoke ... from anon` (mig 138). **Solo lectura** (no mutan datos).

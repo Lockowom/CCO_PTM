@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.75",
+    "fecha": "2026-07-19",
+    "titulo": "Asistente IA (chat sobre datos reales, solo lectura)",
+    "cambios": [
+      {
+        "texto": "Nueva burbuja flotante Asistente CCO (src/components/AsistenteIA.jsx, montada en App.jsx) disponible en toda la app para quienes tengan el permiso view_asistente (ADMIN siempre). Conversa y responde sobre datos reales — operaciones/N.V., stock e inventario, y tickets de Post-Venta — usando tool use de Anthropic.…"
+      }
+    ]
+  },
+  {
     "version": "1.55.74",
     "fecha": "2026-07-19",
     "titulo": "Identidad y Seguridad — Historial de accesos + consistencia de estados",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 123. El Workflow Engine (mig 108) ya tenía la matriz transición×permiso (workflow_transition.permiso_id) y el editor visual; Fase 3 añade la función de decisión reutilizable que faltaba y la conecta al IAM: authz.can_transition(workflow, desde, accion) → boolean sin efectos (sin permiso_id → cualquier…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.60",
-    "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 2 (cliente consume el IAM + primitivas de guarda)",
-    "cambios": [
-      {
-        "texto": "El cliente pasa a leer los permisos efectivos del IAM vía la RPC iam_me() (Fase 1): src/context/AuthContext.jsx (loadRoleConfig) llama iam_me y usa sus permisos en UNIÓN con el permisos_json legado como red de seguridad — idéntico al gate del servidor (IAM ∨ legado) → el cliente nunca muestra menos permisos que antes,…"
       }
     ]
   }

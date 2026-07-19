@@ -139,6 +139,129 @@ app.post('/api/traspasos-ai', express.json({ limit: '1mb' }), async (req, res) =
 });
 
 // ============================================================
+// Asistente IA conversacional (v1, SOLO LECTURA). Igual que el proxy de
+// Traspasos la clave de Anthropic vive solo en el servidor; además el modelo
+// puede invocar un CONJUNTO CERRADO de herramientas (tool use) que se traducen
+// a RPCs seguras de Supabase. Las RPC se ejecutan con el TOKEN DEL USUARIO, de
+// modo que la BD aplica exactamente los permisos y el ámbito (centro_costo) de
+// esa persona; el servidor nunca usa la service-role para leer datos. Ninguna
+// herramienta escribe: es solo consulta. El modelo es configurable por env
+// (IA_MODEL) y por defecto reutiliza el mismo que ya opera en Traspasos.
+// ============================================================
+const IA_MODEL = process.env.IA_MODEL || 'claude-opus-4-8';
+// name → { def (esquema para Anthropic), rpc, map(input)→args }
+const IA_TOOLS = [
+  {
+    def: { name: 'kpis', description: 'Indicadores/resumen general del sistema (operaciones/N.V. por estado, urgentes e incidencias; tickets de Post-Venta; stock). Úsalo para preguntas de panorama ("cómo vamos", "cuántas NV pendientes", "resumen").', input_schema: { type: 'object', properties: {} } },
+    rpc: 'ia_kpis', map: () => ({}),
+  },
+  {
+    def: { name: 'buscar_operaciones', description: 'Busca notas de venta / operaciones de despacho por texto (NV, cliente, vendedor, factura) y/o estado. Devuelve filas con cliente, estado, fechas, transportista, urgente, valor.', input_schema: { type: 'object', properties: { q: { type: 'string', description: 'Texto a buscar (NV, cliente, vendedor, factura). Opcional.' }, estado: { type: 'string', description: 'Filtrar por estado exacto (p.ej. "En Proceso", "Entregado"). Opcional.' }, limit: { type: 'integer', description: 'Máx filas (1-50, def 20).' } } } },
+    rpc: 'ia_buscar_operaciones', map: (i) => ({ p_q: i.q || null, p_estado: i.estado || null, p_limit: i.limit || 20 }),
+  },
+  {
+    def: { name: 'buscar_stock', description: 'Busca stock/inventario consolidado por código de producto (SKU) o descripción. Devuelve disponible, reserva, stock total y bodega.', input_schema: { type: 'object', properties: { q: { type: 'string', description: 'SKU o descripción del producto. Opcional.' }, limit: { type: 'integer', description: 'Máx filas (1-50, def 20).' } } } },
+    rpc: 'ia_buscar_stock', map: (i) => ({ p_q: i.q || null, p_limit: i.limit || 20 }),
+  },
+  {
+    def: { name: 'buscar_tickets', description: 'Busca tickets de Post-Venta / servicio técnico por texto (número, cliente, técnico, equipo, serie) y/o estado. Devuelve estado, prioridad, técnico, equipo, región y fechas.', input_schema: { type: 'object', properties: { q: { type: 'string', description: 'Texto a buscar. Opcional.' }, estado: { type: 'string', description: 'Filtrar por estado (p.ej. "Abierto"). Opcional.' }, limit: { type: 'integer', description: 'Máx filas (1-50, def 20).' } } } },
+    rpc: 'ia_tickets', map: (i) => ({ p_q: i.q || null, p_estado: i.estado || null, p_limit: i.limit || 20 }),
+  },
+];
+const IA_SYSTEM = [
+  'Eres el Asistente CCO, integrado en el sistema WMS/TMS de PTM (logística de equipos médicos en Chile).',
+  'Ayudas al equipo a consultar y entender sus datos operativos: notas de venta (N.V.)/despachos, stock de bodega y tickets de Post-Venta.',
+  'Reglas:',
+  '- Para CUALQUIER dato concreto usa SIEMPRE las herramientas; nunca inventes cifras, estados, clientes ni fechas.',
+  '- Si una herramienta devuelve un error de permisos, dilo con naturalidad ("no tienes acceso a ese módulo") y no reintentes.',
+  '- Responde en español de Chile, claro y breve. Usa listas o tablas simples cuando ayuden. Da cifras exactas de las herramientas.',
+  '- Solo puedes CONSULTAR (lectura). No puedes crear, editar ni eliminar nada; si te lo piden, explica que por ahora solo consultas.',
+  '- Si la pregunta no es sobre los datos del sistema, puedes ayudar igual (redactar, explicar), sin usar herramientas.',
+].join('\n');
+
+const iaSafeParse = (t) => { try { return JSON.parse(t); } catch { return t; } };
+
+app.post('/api/asistente', express.json({ limit: '1mb' }), async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(503).json({ error: { message: 'IA no configurada: falta ANTHROPIC_API_KEY en el servidor.' } });
+  const authz = req.headers['authorization'] || '';
+  const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
+  if (!token) return res.status(401).json({ error: { message: 'Falta sesión CCO.' } });
+  if (!rateLimitOk(`asist:${token.slice(-24) || req.ip}`, 30, 5 * 60 * 1000)) {
+    return res.status(429).json({ error: { message: 'Demasiadas consultas al asistente. Espera unos minutos.' } });
+  }
+  try {
+    const u = await fetch(`${SUPA_URL}/auth/v1/user`, { headers: { apikey: SUPA_ANON, Authorization: `Bearer ${token}` } });
+    if (!u.ok) return res.status(401).json({ error: { message: 'Sesión CCO inválida.' } });
+  } catch (e) {
+    return res.status(502).json({ error: { message: 'No se pudo validar la sesión.' } });
+  }
+
+  // Saneo del historial: solo user/assistant, contenido acotado, últimas 20 vueltas.
+  const raw = Array.isArray(req.body?.messages) ? req.body.messages : null;
+  if (!raw || raw.length === 0) return res.status(400).json({ error: { message: 'Falta messages.' } });
+  let convo = raw
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant'))
+    .slice(-20)
+    .map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content.slice(0, 8000) : m.content }));
+  if (convo.length === 0) return res.status(400).json({ error: { message: 'Historial vacío.' } });
+
+  const anthropicTools = IA_TOOLS.map((t) => t.def);
+  const callAnthropic = (messages) => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: IA_MODEL, max_tokens: 1500, system: IA_SYSTEM, tools: anthropicTools, messages }),
+    signal: AbortSignal.timeout(60000),
+  });
+
+  try {
+    for (let step = 0; step < 6; step++) {
+      const r = await callAnthropic(convo);
+      if (!r.ok) {
+        const errTxt = await r.text();
+        return res.status(r.status).type('application/json').send(errTxt);
+      }
+      const data = await r.json();
+      if (data.stop_reason === 'tool_use') {
+        convo.push({ role: 'assistant', content: data.content });
+        const results = [];
+        for (const block of data.content || []) {
+          if (block.type !== 'tool_use') continue;
+          const tool = IA_TOOLS.find((t) => t.def.name === block.name);
+          let result;
+          if (!tool) {
+            result = { error: 'herramienta desconocida' };
+          } else {
+            try {
+              const args = tool.map(block.input || {});
+              const rr = await fetch(`${SUPA_URL}/rest/v1/rpc/${tool.rpc}`, {
+                method: 'POST',
+                headers: { apikey: SUPA_ANON, Authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+                body: JSON.stringify(args),
+                signal: AbortSignal.timeout(15000),
+              });
+              const txt = await rr.text();
+              result = rr.ok ? iaSafeParse(txt) : { error: 'Sin acceso o error de datos', detalle: txt.slice(0, 200) };
+            } catch (e) {
+              result = { error: 'No se pudo consultar', detalle: String(e).slice(0, 200) };
+            }
+          }
+          results.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result).slice(0, 12000) });
+        }
+        convo.push({ role: 'user', content: results });
+        continue;
+      }
+      const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      return res.json({ text, stop_reason: data.stop_reason, usage: data.usage });
+    }
+    return res.json({ text: 'No pude completar la consulta (demasiados pasos). Reformula, por favor.', stop_reason: 'max_steps' });
+  } catch (e) {
+    const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+    return res.status(timedOut ? 504 : 502).json({ error: { message: timedOut ? 'La IA tardó demasiado en responder.' : 'Error al contactar la IA: ' + String(e) } });
+  }
+});
+
+// ============================================================
 // Proxies de geocoding (privacidad, Ley 21.719): las direcciones de clientes
 // ya no salen del navegador hacia los servicios públicos de OSM. El servidor
 // consulta Nominatim/OSRM con caché en memoria, User-Agent identificado
