@@ -36,7 +36,7 @@ export async function verificarTOTP(factorId, code) {
   if (chErr) throw chErr;
   const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: ch.id, code });
   if (error) throw error;
-  await supabase.rpc('iam_mfa_sync').catch(() => {});
+  try { await supabase.rpc('iam_mfa_sync'); } catch { /* espejo best-effort */ }
   return true;
 }
 
@@ -44,7 +44,7 @@ export async function verificarTOTP(factorId, code) {
 export async function quitarFactor(factorId) {
   const { error } = await supabase.auth.mfa.unenroll({ factorId });
   if (error) throw error;
-  await supabase.rpc('iam_mfa_sync').catch(() => {});
+  try { await supabase.rpc('iam_mfa_sync'); } catch { /* espejo best-effort */ }
   return true;
 }
 

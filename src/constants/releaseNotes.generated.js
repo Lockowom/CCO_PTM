@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.70",
+    "fecha": "2026-07-19",
+    "titulo": "Fix MFA — .catch inválido sobre supabase.rpc tras verificar",
+    "cambios": [
+      {
+        "texto": "El query builder de supabase-js es *thenable* pero NO tiene .catch; await supabase.rpc('iam_mfa_sync').catch(...) lanzaba *\"r.rpc(…).catch is not a function\"* justo después de verificar el TOTP (el factor quedaba verified pero la UI mostraba error y el espejo mfa_enabled no se actualizaba).…"
+      }
+    ]
+  },
+  {
     "version": "1.55.69",
     "fecha": "2026-07-19",
     "titulo": "Fix MFA — enrolamiento auto-limpia factores pendientes",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El módulo TMS no está operativo (no hay entrada real de órdenes; ver deuda P4 puente N.V.→TMS), así que se oculta de la UI sin borrar nada para poder reactivarlo: comentado en src/config/modules.js (fuera de APP_MODULES/APP_ROUTES/APP_PERMISSIONS) y en el menú (src/components/Navbar.jsx); migración 120 deshabilita su…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.55",
-    "fecha": "2026-07-18",
-    "titulo": "Campana de notificaciones + Métricas de proceso (SLA)",
-    "cambios": [
-      {
-        "texto": "(2) NotificationBell en el Navbar (todos los usuarios): campana con contador de no leídas que abre un panel con mis_notificaciones() (in-app del Centro de Notificaciones), marcar leída/todas y \"Ver todas →\". Poll cada 45 s. Hace visible el Centro de Notificaciones que ya operaba por debajo. (3) Métricas / SLA:…"
       }
     ]
   }
