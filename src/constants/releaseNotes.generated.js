@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.76",
+    "fecha": "2026-07-19",
+    "titulo": "Asistente IA — interruptor para ocultarlo (Admin → Vistas)",
+    "cambios": [
+      {
+        "texto": "La burbuja del Asistente CCO ahora respeta el toggle del módulo asistente en Admin → Vistas: apagarlo oculta la IA para todos al instante (realtime, sin desplegar) y encenderlo la reactiva — pensado para poder desactivarla mientras se pule y volver a activarla con un clic. AsistenteIA.jsx usa…"
+      }
+    ]
+  },
+  {
     "version": "1.55.75",
     "fecha": "2026-07-19",
     "titulo": "Asistente IA (chat sobre datos reales, solo lectura)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migraciones 124 (enum centro_costo) + 125. La realidad de PTM: el único eje de ámbito multivaluado real es centro_costo (tms_operaciones, 9 valores); bodega está consolidada — así que el scope se modela sobre centro_costo sin inventar jerarquía de sucursales. iam.assignments gana scope_code (ámbito por código de…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.61",
-    "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 3 (Workflow Permissions: capa de decisión de transiciones)",
-    "cambios": [
-      {
-        "texto": "Migración 123. El Workflow Engine (mig 108) ya tenía la matriz transición×permiso (workflow_transition.permiso_id) y el editor visual; Fase 3 añade la función de decisión reutilizable que faltaba y la conecta al IAM: authz.can_transition(workflow, desde, accion) → boolean sin efectos (sin permiso_id → cualquier…"
       }
     ]
   }

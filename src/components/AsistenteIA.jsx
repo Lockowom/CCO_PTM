@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Sparkles, X, Send, Loader2, Bot, User as UserIcon, AlertTriangle, Eraser } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import { preguntarAsistente } from '../services/asistenteService';
 
 // Asistente CCO — burbuja flotante conversacional (v1, SOLO LECTURA). Consulta
@@ -31,6 +32,7 @@ function Texto({ children }) {
 
 export default function AsistenteIA() {
   const { isAuthenticated, hasPermission, user } = useAuth();
+  const { isModuleEnabled } = useConfig() || {};
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([]); // [{role, content}]
   const [input, setInput] = useState('');
@@ -63,7 +65,12 @@ export default function AsistenteIA() {
     }
   }, [input, msgs, loading]);
 
-  if (!isAuthenticated || !hasPermission('view_asistente')) return null;
+  // Se OCULTA con el interruptor global de Admin → Vistas (módulo "asistente"),
+  // que apaga la burbuja para todos en vivo (realtime). Además requiere sesión y
+  // el permiso view_asistente (ADMIN siempre lo tiene). Así puede desactivarse
+  // por completo mientras se pule, y reactivarse con un clic sin desplegar.
+  const moduloActivo = isModuleEnabled ? isModuleEnabled('asistente') : true;
+  if (!isAuthenticated || !moduloActivo || !hasPermission('view_asistente')) return null;
 
   return (
     <>
