@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.53",
+    "fecha": "2026-07-18",
+    "titulo": "API de Operaciones v1 — último motor del blueprint (§8)",
+    "cambios": [
+      {
+        "texto": "Contrato público consumible por Portal Cliente/ERP/integraciones con las mismas reglas que la app. Migración 116: API-keys hasheadas (SHA-256, pgcrypto) con scopes (operaciones:read/write, tms:read/write) en tms_api_keys; RPCs api_key_crear (devuelve la clave en claro una vez), api_key_revocar, api_keys_listar,…"
+      }
+    ]
+  },
+  {
     "version": "1.55.52",
     "fecha": "2026-07-18",
     "titulo": "Capgo/OTA — mejoras (dispositivo + panel + gobernanza)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Se rehízo la presentación de src/pages/TMS/Transporte.jsx (sin cambios de lógica ni de BD): encabezado con badge naranja, tarjeta Todos + KPIs de estado con mejor contraste (número grande, punto de color, gris tenue cuando el conteo es 0 y borde/anillo del color del estado al estar activo), la lista de órdenes vive…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.38",
-    "fecha": "2026-07-17",
-    "titulo": "TMS — fix de tipos chofer/ruta + puente usuario↔conductor",
-    "cambios": [
-      {
-        "texto": "Migración 107: tms_conductores.id y tms_rutas.id son uuid, pero tms_transporte_ordenes.conductor_id/ruta_id se habían creado como bigint (Fase 1); con la tabla vacía se cambian a uuid y se ajusta el cast de tms_orden_asignar (sin esto, asignar chofer/ruta fallaba y el filtro \"Mis órdenes\" nunca calzaba). Frontend:…"
       }
     ]
   }
