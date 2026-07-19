@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.58",
+    "fecha": "2026-07-18",
+    "titulo": "Identity & Security — Fase 0 (cimiento IAM, NO destructivo)",
+    "cambios": [
+      {
+        "texto": "Primera fase del rediseño enterprise (docs/IAM_ARQUITECTURA.md). Migración 121: esquemas iam (datos) y authz (decisión); enums scope_type/principal_type; org units (iam.empresas con seed PTM, departamentos/sucursales/centros_distribucion/bodegas/teams); iam.users (1:1 con auth.users), iam.roles, iam.permissions…"
+      }
+    ]
+  },
+  {
     "version": "1.55.57",
     "fecha": "2026-07-18",
     "titulo": "Capgo/OTA — experiencia de actualización más fluida",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 111: la Nota de Venta era el único proceso central sin máquina; ahora cambiar_estado_nv y guardar_nv registran cada cambio de estado en workflow_history (proceso NV) vía el helper _nv_wf_log. Decisiones de seguridad: (1) se instrumentan SOLO los caminos de usuario (RPCs), NO un trigger sobre tms_operaciones,…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.43",
-    "fecha": "2026-07-18",
-    "titulo": "Workflow Engine — Fase 2: Post-Venta cableado al motor",
-    "cambios": [
-      {
-        "texto": "Migración 110: como los tickets tienen múltiples caminos de escritura (avanzar_pv_ticket, cerrar_pv_ticket, actualizar_pv_ticket free-form, ingesta de correo), en vez de instrumentar cada RPC se usa un trigger paralelo al de tms_postventa_historial: _pv_wf_alta (INSERT → crear) y _pv_wf_cambio (UPDATE con estado…"
       }
     ]
   }
