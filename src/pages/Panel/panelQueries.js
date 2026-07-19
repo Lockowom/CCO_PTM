@@ -76,22 +76,47 @@ const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapac
 
 // ── Carga cruda (paginada) con micro-caché de 30 s ──────────────────────────
 const COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,factura,guia,numero_envio,vendedor,cliente,centro_costo,division,transportista,empresa_transporte,tipo_despacho,estado,urgente,fecha_aprobacion,fecha_aprobacion_real,fecha_facturacion,fecha_despacho,fecha_compromiso,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,valor_factura,costo_flete,valor_nv,bultos,dias_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,fillrate';
-let _cache = { at: 0, rows: null };
+let _cache = { at: 0, rows: null, sig: null };
 // Invalida el micro-caché (se llama tras una escritura para que la próxima
 // lectura traiga los datos frescos de inmediato).
-export function invalidarCache() { _cache = { at: 0, rows: null }; }
+export function invalidarCache() { _cache = { at: 0, rows: null, sig: null }; }
+
+// ── Ámbito del usuario (Identity & Security · Fase 4/8) ─────────────────────
+// Un usuario acotado a centro(s) de costo solo ve/consulta las N.V. de esos
+// centros. Admin y usuarios GLOBALES ven todo (all=true). FAIL-OPEN: si la RPC
+// falla, se asume acceso total (nunca ocultamos datos por un error). Como hoy
+// nadie tiene ámbitos asignados, esto es no-op hasta que se asigne un rol
+// acotado desde Admin → Ámbitos.
+let _scope = { at: 0, val: null };
+async function centrosPermitidos() {
+  if (_scope.val && Date.now() - _scope.at < 300000) return _scope.val;
+  let val = { all: true, codes: [] };
+  try {
+    const { data } = await supabase.rpc('iam_mis_scopes', { p_code: 'view_panel', p_scope_type: 'centro_costo' });
+    if (data) val = { all: data.all !== false, codes: Array.isArray(data.codes) ? data.codes : [] };
+  } catch { /* fail-open: acceso total */ }
+  _scope = { at: Date.now(), val };
+  return val;
+}
+
 export async function cargarRows(force = false) {
-  if (!force && _cache.rows && Date.now() - _cache.at < 30000) return _cache.rows;
+  const scope = await centrosPermitidos();
+  const codes = (!scope.all && scope.codes.length) ? scope.codes : null;   // null = sin filtro
+  const sig = codes ? codes.slice().sort().join('|') : '*';
+  if (!force && _cache.rows && _cache.sig === sig && Date.now() - _cache.at < 30000) return _cache.rows;
+
   const all = []; let from = 0; const page = 1000;
   for (;;) {
-    const { data, error } = await supabase.from('tms_operaciones').select(COLS).range(from, from + page - 1);
+    let q = supabase.from('tms_operaciones').select(COLS).range(from, from + page - 1);
+    if (codes) q = q.in('centro_costo', codes);           // enforcement de ámbito
+    const { data, error } = await q;
     if (error) throw error;
     if (!data || data.length === 0) break;
     all.push(...data);
     if (data.length < page) break;
     from += page;
   }
-  _cache = { at: Date.now(), rows: all };
+  _cache = { at: Date.now(), rows: all, sig };
   return all;
 }
 

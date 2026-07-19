@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.68",
+    "fecha": "2026-07-19",
+    "titulo": "IAM — Primer enforcement REAL de ámbitos (Panel/N.V. por centro de costo)",
+    "cambios": [
+      {
+        "texto": "Se aplica de verdad el scope de Fase 4/8 en el Panel: src/pages/Panel/panelQueries.js (cargarRows, el único punto por el que pasan Dashboard, Detalle, TV y búsqueda) consulta iam_mis_scopes('view_panel','centro_costo') y, si el usuario está acotado a centros de costo (all=false), filtra tms_operaciones con…"
+      }
+    ]
+  },
+  {
     "version": "1.55.67",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 9 (Delegación / sustituciones: cobertura por vacaciones)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "(src/components/DespliegueOTA.jsx). (1) Adopción: barra con % de equipos que ya corren la versión de producción (desde ota_dispositivos_resumen). (2) Avisar por push al promover: checkbox en el modal de confirmación que, tras promover, envía un push \"Nueva versión disponible\" vía la Edge notify-inventario (Capgo/FCM).…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.53",
-    "fecha": "2026-07-18",
-    "titulo": "API de Operaciones v1 — último motor del blueprint (§8)",
-    "cambios": [
-      {
-        "texto": "Contrato público consumible por Portal Cliente/ERP/integraciones con las mismas reglas que la app. Migración 116: API-keys hasheadas (SHA-256, pgcrypto) con scopes (operaciones:read/write, tms:read/write) en tms_api_keys; RPCs api_key_crear (devuelve la clave en claro una vez), api_key_revocar, api_keys_listar,…"
       }
     ]
   }
