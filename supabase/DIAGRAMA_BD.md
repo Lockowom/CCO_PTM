@@ -214,3 +214,51 @@ fijo, gate interno por `_*_assert*` (usuario activo + permisos jsonb del rol) y
   `wms_move_stock` (cola offline del PDA), `get_dashboard_kpis`+`mv_dashboard_kpis` (Dashboard),
   `fuzzy_search` (Estado N.V.), `batch_update_nv_estado` (N.V.), `tms_inventario_general`
   (DataImport). El esquema queda en **61 tablas**, todas vivas y conectadas.
+
+---
+
+## 7. Esquemas `iam` + `authz` — Identity & Security (migraciones 121–134)
+
+Módulo enterprise RBAC + ABAC + Workflow, **aditivo** sobre `tms_*` (espejo vivo por
+triggers). Datos en `iam`, funciones de decisión en `authz`. Diseño: `docs/IAM_ARQUITECTURA.md`.
+
+### 7.1 Tablas `iam`
+| Tabla | Rol |
+|---|---|
+| `empresas` · `departamentos` · `sucursales` · `centros_distribucion` · `bodegas` | Org units (jerarquía de scope) |
+| `teams` · `team_members` | Equipos (agrupación transversal de personas) |
+| `users` | Perfil de usuario (PK = FK a `auth.users`) |
+| `roles` · `permissions` · `role_permissions` | RBAC (matriz rol↔permiso) |
+| `assignments` | Rol asignado a un **principal** (user/team/dept/group) con **scope** (`scope_type`/`scope_id`/`scope_code`) y `expires_at` |
+| `policies` | **ABAC condicional** (efecto allow/deny + condición DSL JSON) |
+| `delegations` | Delegación/sustitución temporal (ventana `[desde,hasta]`) |
+| `user_effective_permissions` (vista) · `mv_user_permissions` (MV) | Permisos efectivos (base + delegación); MV para reporte a escala |
+
+### 7.2 ER (núcleo IAM)
+```mermaid
+erDiagram
+  AUTH_USERS ||--|| IAM_USERS : "1:1"
+  IAM_USERS ||--o{ IAM_ASSIGNMENTS : "principal=user"
+  IAM_ROLES ||--o{ IAM_ASSIGNMENTS : usa
+  IAM_ROLES ||--o{ IAM_ROLE_PERMISSIONS : agrupa
+  IAM_PERMISSIONS ||--o{ IAM_ROLE_PERMISSIONS : incluida
+  IAM_PERMISSIONS ||--o{ IAM_POLICIES : condiciona
+  IAM_USERS ||--o{ IAM_DELEGATIONS : "de/para"
+  IAM_EMPRESAS ||--o{ IAM_SUCURSALES : tiene
+  IAM_SUCURSALES ||--o{ IAM_CD : tiene
+  IAM_CD ||--o{ IAM_BODEGAS : tiene
+  IAM_ASSIGNMENTS }o--|| IAM_SCOPE : "scope_type + (scope_id|scope_code)"
+```
+
+### 7.3 Funciones `authz` (decisión, sin datos)
+`has_permission` · `can_transition` · `can_on_scope` · `scopes_for` · `user_context` ·
+`eval_condition` · `policy_check` · `refresh_permissions` · triggers de espejo
+`rebuild_role`/`sync_permiso`/`sync_user_profile`. El gate central sigue siendo
+`public.usuario_tiene_algun_permiso(text[])` (lee del IAM con respaldo `permisos_json`).
+
+### 7.4 Notas
+- `tms_*` (usuarios/roles/permisos) permanece como **maestro**; el IAM es su espejo.
+- **RLS de dominio**: el enforcement por ámbito/ABAC es **opt-in** (helpers listos); hoy
+  aplicado en el Panel (`centro_costo`). El gate central es ciego al ámbito a propósito
+  (visibilidad de módulo vs. filtrado de dato).
+- **Hardening (mig 134)**: `user_effective_permissions` sin `SELECT` para `authenticated`.

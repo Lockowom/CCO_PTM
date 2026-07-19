@@ -237,7 +237,14 @@ Seleccionar módulo → Cambiar a modo "Escanear QR / Código"
 
 ---
 
-### 4.3 Outbound (Salida)
+### 4.3 Outbound (Salida) — ⛔ RETIRADO (migración `102`)
+
+> **NOTA (2026-07):** El módulo **Outbound** (SalesOrders · Picking · Packing ·
+> Packing TV · Shipping) y el **Dashboard General** (mig `103`) fueron **retirados**.
+> Sus rutas `/outbound/*` y los archivos `src/pages/Outbound/*` ya **no existen**.
+> El contenido de abajo se conserva como **referencia histórica** para una eventual
+> reconstrucción; NO refleja el estado actual. El flujo de N.V. vive hoy en el
+> **Panel PTM** (`tms_operaciones`) y el módulo **TMS** está oculto (mig `120`).
 
 #### 4.3.1 Notas de Venta (`/outbound/sales-orders`)
 **Archivo:** `src/pages/Outbound/SalesOrders.jsx`

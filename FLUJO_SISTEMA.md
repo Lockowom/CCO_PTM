@@ -123,10 +123,10 @@ Página (src/pages/…)  ──usa──▶  Hook (src/services/…Service.js)
 - **Inbound**: Recepción (import/nacional) → `tms_recepciones(_items)`;
   checklist de Calidad de ingreso se crea solo (trigger → `tms_calidad_tareas`).
   Putaway (`Entry`) escribe `wms_ubicaciones` (con cola offline).
-- **Outbound**: `SalesOrders` → `Picking` → `Packing` (tiempos en
-  `tms_mediciones_tiempos`, errores en `tms_errores_picking`) → `Shipping`
-  (escribe `tms_entregas` + `tms_control_despacho`) → TMS (rutas, entregas,
-  app del conductor sobre `tms_entregas`/`tms_conductores`).
+- **Outbound**: ⛔ **RETIRADO** (mig `102`). El flujo `SalesOrders → Picking →
+  Packing → Shipping` ya no existe; el estado de las N.V. se gestiona hoy en el
+  **Panel PTM** (`tms_operaciones`). El módulo **TMS** (rutas/entregas/app del
+  conductor) está **oculto** (mig `120`), pendiente de reconstrucción.
 - **PDA** (`/mobile/pda`): Putaway + Conteo Cíclico + consulta de stock
   (el modo "picking guiado" se eliminó en v1.18.3: usaba una tabla inexistente).
 

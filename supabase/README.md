@@ -160,3 +160,33 @@
   `functions_snapshot.sql` y en la documentación (`DOCUMENTACION_PROYECTO.md`, regla en
   `CLAUDE.md`).
 - La autorización de admin usa **`private.is_admin()`** (por `auth_uid`). No usar helpers por email.
+
+## Módulo Identity & Security — esquemas `iam` + `authz` (migraciones 121–134)
+
+> Rediseño enterprise de Usuarios/Roles/Permisos (RBAC + ABAC + Workflow), **aditivo y
+> no destructivo** sobre `tms_*` (que sigue siendo el maestro; el IAM lo espeja en vivo).
+> Diseño completo en `docs/IAM_ARQUITECTURA.md`. Fases 0–9 implementadas.
+
+- **`iam` (datos)**: `empresas`/`departamentos`/`sucursales`/`centros_distribucion`/`bodegas`/
+  `teams`/`team_members` (org units); `users` (perfil 1:1 con `auth.users`); `roles`,
+  `permissions`, `role_permissions`; **`assignments`** (principal user/team/dept/group → rol
+  con `scope_type`/`scope_id`/`scope_code`); **`policies`** (ABAC condicional, DSL JSON);
+  **`delegations`** (cobertura/vacaciones); vista **`user_effective_permissions`** y MV
+  **`mv_user_permissions`** (refresh por `authz.refresh_permissions()` + pg_cron 5 min).
+- **`authz` (decisión, sin datos)**: `has_permission`, `can_transition`, `can_on_scope`,
+  `scopes_for`, `user_context`, `eval_condition`, `policy_check`, triggers de espejo
+  `tms_* → iam.*` (`rebuild_role`/`sync_permiso`/`sync_user_profile`).
+- **Gate central**: `public.usuario_tiene_algun_permiso(text[])` lee del IAM (con respaldo
+  legado `permisos_json`). RPCs de cliente: `iam_me`, `iam_mis_scopes`, `iam_sesiones`,
+  `iam_forzar_logout`, `iam_auditoria`, `iam_delegar`, `iam_bulk_usuarios`, `iam_policies`, …
+- **MFA/Sesiones/Auditoría**: MFA TOTP nativo (`auth.mfa`, espejo `mfa_enabled`); sesiones
+  reales (`auth.sessions`) + forzar cierre; auditoría genérica en `tms_auditoria` (incluye
+  cambios de ámbito/delegación). Hook de claims JWT `iam.custom_access_token_hook` (activable
+  en Dashboard).
+- **Hardening (mig 134)**: `iam.user_effective_permissions` NO tiene `SELECT` para
+  `authenticated` (las RPC que la usan son `SECURITY DEFINER`).
+
+> **Otras migraciones no cubiertas arriba (098–120)**: Workflow/Event Engine (`108`, `114`,
+> `119`), Panel PTM nativo → `tms_operaciones` (`082`+), TMS fase 1–3 (`104`–`107`, hoy oculto
+> mig `120`), API-v1 M2M (`116`–`118`), OTA/Capgo (`068`, `118`). Ver el Changelog §15 de
+> `DOCUMENTACION_PROYECTO.md` para el detalle por versión.

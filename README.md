@@ -4,7 +4,7 @@ Plataforma integral **WMS + TMS + Calidad + Post-Venta** para la operación log�
 (insumos y equipos médicos): recepción, bodega, picking/packing, despacho, transporte,
 inventario, calidad ISO 13485 y servicio técnico — en una sola SPA.
 
-> **Versión vigente:** la de `package.json` (fuente de verdad; hoy serie **1.2x**).
+> **Versión vigente:** la de `package.json` (fuente de verdad; hoy serie **1.55.x**).
 > Documentación técnica canónica: [`DOCUMENTACION_PROYECTO.md`](DOCUMENTACION_PROYECTO.md)
 > (incluye el changelog completo).
 
