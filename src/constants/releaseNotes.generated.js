@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.63",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 5 (Sesiones + Auditoría)",
+    "cambios": [
+      {
+        "texto": "Migración 126. Reutiliza lo existente sin duplicar: la auditoría genérica (tms_audit_row() → tms_auditoria, ya cubría tms_roles/tms_usuarios) y las sesiones reales de Supabase Auth (auth.sessions) + presencia (tms_usuarios_activos) + bitácora (tms_accesos). Sesiones: RPC iam_sesiones() (lista admin:…"
+      }
+    ]
+  },
+  {
     "version": "1.55.62",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 4 (Scopes / ABAC: \"sobre qué datos\")",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Sobre el editor: (1) panel de propiedades al seleccionar un nodo (editar etiqueta, cambiar tipo Tarea/Decisión/Inicio/Fin con re-dimensionado, y color propio con reset) o una conexión (editar etiqueta); (2) Exportar (descarga JSON {_meta,nodes,edges}) e Importar (carga un JSON y lo pinta, valida forma); (3) selector…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.48",
-    "fecha": "2026-07-18",
-    "titulo": "Mapa de Procesos — ahora EDITABLE dentro de la app + salto al módulo",
-    "cambios": [
-      {
-        "texto": "La pantalla src/pages/Tools/FlujoMaestro.jsx pasa de solo lectura a editor completo (modo *Editar*, solo con manage_workflows/admin): arrastrar nodos, agregar (Tarea/Decisión/Inicio/Fin), conectar (toca origen→destino), renombrar (doble clic), borrar (Supr o botón) y Guardar. Persistencia en BD (migración 113: tabla…"
       }
     ]
   }

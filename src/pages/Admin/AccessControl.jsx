@@ -1,27 +1,35 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, Shield, KeyRound, Target } from 'lucide-react';
+import { Users as UsersIcon, Shield, KeyRound, Target, Monitor, ScrollText } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import UsersPage from './Users';
 import RolesPage from './Roles';
 import ScopesPage from './Scopes';
+import SesionesPage from './Sesiones';
+import AuditoriaPage from './Auditoria';
 
-// Control de Accesos UNIFICADO: Usuarios, Roles y Ámbitos en una sola sección
-// con pestañas. /admin/users y /admin/roles renderizan esta misma página (cada
-// ruta abre su pestaña y conserva su permiso de ROUTE_PERMISSIONS). La pestaña
-// Ámbitos (Scopes, Fase 4 IAM) vive bajo /admin/roles?vista=scopes → hereda el
-// permiso manage_roles/view_roles sin ruta nueva.
+// Control de Accesos UNIFICADO (Identity & Security): Usuarios, Roles, Ámbitos,
+// Sesiones y Auditoría en una sola sección con pestañas. /admin/users y
+// /admin/roles renderizan esta misma página; las sub-vistas IAM viven bajo
+// /admin/roles?vista=… y heredan el permiso de ROUTE_PERMISSIONS. Sesiones y
+// Auditoría son SOLO admin (además el servidor gatea sus RPC).
 const TABS = [
   { id: 'usuarios', label: 'Usuarios', icon: UsersIcon, path: '/admin/users' },
   { id: 'roles', label: 'Roles y Permisos', icon: Shield, path: '/admin/roles' },
   { id: 'scopes', label: 'Ámbitos', icon: Target, path: '/admin/roles?vista=scopes' },
+  { id: 'sesiones', label: 'Sesiones', icon: Monitor, path: '/admin/roles?vista=sesiones', soloAdmin: true },
+  { id: 'auditoria', label: 'Auditoría', icon: ScrollText, path: '/admin/roles?vista=auditoria', soloAdmin: true },
 ];
 
 export default function AccessControl() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const enRoles = location.pathname.includes('/roles');
   const vista = new URLSearchParams(location.search).get('vista');
-  const tab = enRoles ? (vista === 'scopes' ? 'scopes' : 'roles') : 'usuarios';
+  const vistasValidas = ['scopes', 'sesiones', 'auditoria'];
+  const tab = enRoles ? (vistasValidas.includes(vista) ? vista : 'roles') : 'usuarios';
 
   return (
     <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
@@ -41,7 +49,7 @@ export default function AccessControl() {
 
       {/* Pestañas */}
       <div className="flex gap-2 flex-wrap">
-        {TABS.map(({ id, label, icon: Icon, path }) => (
+        {TABS.filter((t) => !t.soloAdmin || esAdmin).map(({ id, label, icon: Icon, path }) => (
           <button key={id} onClick={() => navigate(path)}
             className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black border flex items-center gap-1.5 transition-colors ${tab === id ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
             <Icon size={15} /> {label}
@@ -52,6 +60,8 @@ export default function AccessControl() {
       {tab === 'usuarios' && <UsersPage embedded />}
       {tab === 'roles' && <RolesPage embedded />}
       {tab === 'scopes' && <ScopesPage />}
+      {tab === 'sesiones' && (esAdmin ? <SesionesPage /> : <RolesPage embedded />)}
+      {tab === 'auditoria' && (esAdmin ? <AuditoriaPage /> : <RolesPage embedded />)}
     </div>
   );
 }

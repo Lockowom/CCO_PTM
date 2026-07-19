@@ -27,6 +27,9 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState('');
 
   const initDoneRef = useRef(false);
+  // Momento en que se estableció esta sesión — para distinguir un force_logout
+  // POSTERIOR (admin forzó el cierre) de valores viejos de la columna.
+  const sessionStartRef = useRef(0);
   // Email del perfil ya cargado, para deduplicar la carga: login() llama a
   // setUserState y además dispara SIGNED_IN, que volvería a cargar el mismo
   // perfil (doble carga de rol + doble init push). Con esto SIGNED_IN se salta
@@ -161,6 +164,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadedEmailRef.current = (userData.email || '').toLowerCase();
+    sessionStartRef.current = Date.now();
     setUser(userData);
     setUserForTracking(userData);
     await loadRoleConfig(userData.rol);
@@ -479,7 +483,12 @@ export const AuthProvider = ({ children }) => {
           } else if (payload.eventType === 'UPDATE') {
             const newUser = payload.new;
 
-            if (newUser.activo === false) {
+            // Cierre forzado por un administrador (revoca sesión sin desactivar).
+            const flAt = newUser.force_logout_at ? new Date(newUser.force_logout_at).getTime() : 0;
+            if (flAt && flAt > (sessionStartRef.current || 0)) {
+              alert('Tu sesión ha sido cerrada por un administrador.');
+              logout();
+            } else if (newUser.activo === false) {
               alert('Tu sesión ha sido cerrada por un administrador.');
               logout();
             } else {

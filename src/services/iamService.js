@@ -42,3 +42,28 @@ export async function misScopes(code, scopeType = 'centro_costo') {
   if (error) throw error;
   return data || { all: false, codes: [] };
 }
+
+// ── Fase 5: Sesiones + Auditoría (admin) ────────────────────────────────────
+export async function sesiones() {
+  const { data, error } = await supabase.rpc('iam_sesiones');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const forzarLogout = (authUid) => rpc('iam_forzar_logout', { p_auth: authUid });
+
+export async function auditoria(filtros = {}) {
+  const { data, error } = await supabase.rpc('iam_auditoria', {
+    p_tabla: filtros.tabla || null, p_accion: filtros.accion || null,
+    p_desde: filtros.desde || null, p_hasta: filtros.hasta || null,
+    p_limit: filtros.limit || 200,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export async function auditoriaMeta() {
+  const { data, error } = await supabase.rpc('iam_auditoria_meta');
+  if (error) throw error;
+  return data || { tablas: [], acciones: [], total: 0 };
+}

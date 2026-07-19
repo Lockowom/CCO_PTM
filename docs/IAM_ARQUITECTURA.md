@@ -657,10 +657,16 @@ asignación con scope** ✅ — pestaña *Ámbitos* en `Admin → Usuarios y Rol
 (`?vista=scopes`). El gate central sigue ciego al ámbito a propósito (visibilidad de
 módulo vs. filtrado de datos).
 
-**Fase 5 — Sesiones + Auditoría.**
-21. `iam.sessions`, `access_history`; hooks de login (trigger + app). 22. Pantalla de
-sesiones (cerrar/forzar). 23. `audit_log` particionada + trigger genérico
-`authz.audit()` en tablas sensibles. 24. Visor de auditoría con diff.
+**Fase 5 — Sesiones + Auditoría.** ✅ HECHA (v1.55.63, migración `126`).
+Reutiliza lo existente en vez de duplicar: 21. Sesiones = `auth.sessions` (reales)
++ `tms_usuarios_activos` (presencia) + `tms_accesos` (bitácora de login, ya poblada).
+22. **Pantalla de Sesiones** (`iam_sesiones` + **forzar cierre** `iam_forzar_logout`,
+que revoca `auth.sessions` y avisa al Session Guard vía `tms_usuarios.force_logout_at`)
+✅. 23. Auditoría genérica = `tms_audit_row()` → `tms_auditoria` (ya cubre roles y
+usuarios); Fase 5 **audita también los ámbitos** (`iam.assignments` desde las RPC de
+Fase 4). La partición del `audit_log` queda como optimización de escala (Fase 7).
+24. **Visor de auditoría con diff** (`iam_auditoria` + `iam_auditoria_meta`,
+pestaña Auditoría) ✅.
 
 **Fase 6 — Seguridad avanzada.**
 25. MFA (TOTP) vía Supabase + espejo `mfa_enabled`. 26. OAuth Google/Microsoft.
