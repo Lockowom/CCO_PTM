@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, Shield, KeyRound, Target, Monitor, ScrollText, Gauge, FlaskConical, UserCheck } from 'lucide-react';
+import { Users as UsersIcon, Shield, KeyRound, Target, Monitor, ScrollText, Gauge, FlaskConical, UserCheck, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import UsersPage from './Users';
 import RolesPage from './Roles';
@@ -10,6 +10,7 @@ import AuditoriaPage from './Auditoria';
 import EscalaPage from './Escala';
 import PoliticasPage from './Politicas';
 import DelegacionesPage from './Delegaciones';
+import HistorialAccesoPage from './HistorialAcceso';
 
 // Control de Accesos UNIFICADO (Identity & Security): Usuarios, Roles, Ámbitos,
 // Sesiones y Auditoría en una sola sección con pestañas. /admin/users y
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'roles', label: 'Roles y Permisos', icon: Shield, path: '/admin/roles' },
   { id: 'scopes', label: 'Ámbitos', icon: Target, path: '/admin/roles?vista=scopes' },
   { id: 'sesiones', label: 'Sesiones', icon: Monitor, path: '/admin/roles?vista=sesiones', soloAdmin: true },
+  { id: 'accesos', label: 'Accesos', icon: LogIn, path: '/admin/roles?vista=accesos', soloAdmin: true },
   { id: 'auditoria', label: 'Auditoría', icon: ScrollText, path: '/admin/roles?vista=auditoria', soloAdmin: true },
   { id: 'escala', label: 'Escala', icon: Gauge, path: '/admin/roles?vista=escala', soloAdmin: true },
   { id: 'politicas', label: 'Políticas', icon: FlaskConical, path: '/admin/roles?vista=politicas', soloAdmin: true },
@@ -34,7 +36,7 @@ export default function AccessControl() {
   const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const enRoles = location.pathname.includes('/roles');
   const vista = new URLSearchParams(location.search).get('vista');
-  const vistasValidas = ['scopes', 'sesiones', 'auditoria', 'escala', 'politicas', 'delegaciones'];
+  const vistasValidas = ['scopes', 'sesiones', 'accesos', 'auditoria', 'escala', 'politicas', 'delegaciones'];
   const tab = enRoles ? (vistasValidas.includes(vista) ? vista : 'roles') : 'usuarios';
 
   return (
@@ -67,6 +69,7 @@ export default function AccessControl() {
       {tab === 'roles' && <RolesPage embedded />}
       {tab === 'scopes' && <ScopesPage />}
       {tab === 'sesiones' && (esAdmin ? <SesionesPage /> : <RolesPage embedded />)}
+      {tab === 'accesos' && (esAdmin ? <HistorialAccesoPage /> : <RolesPage embedded />)}
       {tab === 'auditoria' && (esAdmin ? <AuditoriaPage /> : <RolesPage embedded />)}
       {tab === 'escala' && (esAdmin ? <EscalaPage /> : <RolesPage embedded />)}
       {tab === 'politicas' && (esAdmin ? <PoliticasPage /> : <RolesPage embedded />)}

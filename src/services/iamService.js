@@ -125,3 +125,19 @@ export async function usuariosLite() {
   if (error) throw error;
   return Array.isArray(data) ? data : [];
 }
+
+// ── Historial de accesos (ingresos) ─────────────────────────────────────────
+export async function historialAcceso(filtros = {}) {
+  const { data, error } = await supabase.rpc('iam_historial_acceso', {
+    p_desde: filtros.desde || null, p_hasta: filtros.hasta || null,
+    p_q: filtros.q || null, p_limit: filtros.limit || 300,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export async function historialAccesoResumen() {
+  const { data, error } = await supabase.rpc('iam_historial_acceso_resumen');
+  if (error) throw error;
+  return data || { total: 0, usuarios: 0, hoy: 0, semana: 0, ultimo: null };
+}

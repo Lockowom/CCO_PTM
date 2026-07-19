@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.74",
+    "fecha": "2026-07-19",
+    "titulo": "Identidad y Seguridad — Historial de accesos + consistencia de estados",
+    "cambios": [
+      {
+        "texto": "Nueva pestaña Accesos en la consola *Identidad y Seguridad* (src/pages/Admin/HistorialAcceso.jsx, solo admin): tarjetas de resumen (ingresos totales, usuarios, hoy, últimos 7 días, último ingreso relativo), filtros por rango de fechas y búsqueda (nombre/email/rol) y lista de los ingresos exitosos más recientes con…"
+      }
+    ]
+  },
+  {
     "version": "1.55.73",
     "fecha": "2026-07-19",
     "titulo": "Auditoría — bugs LOW + rendimiento BD",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El cliente pasa a leer los permisos efectivos del IAM vía la RPC iam_me() (Fase 1): src/context/AuthContext.jsx (loadRoleConfig) llama iam_me y usa sus permisos en UNIÓN con el permisos_json legado como red de seguridad — idéntico al gate del servidor (IAM ∨ legado) → el cliente nunca muestra menos permisos que antes,…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.59",
-    "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 1 (Authorization Service: IAM como espejo vivo)",
-    "cambios": [
-      {
-        "texto": "Migración 122. Reconciliación crítica: el runtime autoriza leyendo tms_roles.permisos_json (array jsonb, ?|), pero la Fase 0 pobló iam.role_permissions desde la tabla puente tms_roles_permisos, que estaba desactualizada (ADMIN 60 vs 12, CONTROL_CALIDAD 13 vs 0, GERENCIA 27 vs 3). Se reconstruye iam.role_permissions…"
       }
     ]
   }

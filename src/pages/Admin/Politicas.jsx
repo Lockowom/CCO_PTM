@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { ScrollText, Plus, Power, PowerOff, Pencil, X, FlaskConical, Check, Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import { listarPolicies, guardarPolicy, togglePolicy, probarEditarNV, catalogoScope } from '../../services/iamService';
+import { ListaSkeleton, ListaError, ListaVacia } from '../../components/ui/EstadoLista';
 
 const inp = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400 bg-white';
 const lbl = 'text-[11px] font-bold text-slate-500 uppercase tracking-wide';
@@ -82,6 +83,7 @@ function PolicyRow({ p, onToggle, onEdit }) {
 export default function Politicas() {
   const [pols, setPols] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modal, setModal] = useState(null);
   // Probador
   const [nvId, setNvId] = useState('');
@@ -91,8 +93,8 @@ export default function Politicas() {
   const [probando, setProbando] = useState(false);
 
   const cargar = useCallback(async () => {
-    setLoading(true);
-    try { setPols(await listarPolicies()); } catch (e) { toast.error(e.message || 'No autorizado'); }
+    setLoading(true); setError(null);
+    try { setPols(await listarPolicies()); } catch (e) { setError(e.message || 'No autorizado'); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { cargar(); catalogoScope().then((c) => setUsuarios(c.usuarios || [])).catch(() => {}); }, [cargar]);
@@ -126,8 +128,9 @@ export default function Politicas() {
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1.5"><ScrollText size={12} /> Políticas condicionales ({pols.length})</span>
           <button onClick={() => setModal({})} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[12px] font-bold hover:bg-orange-600"><Plus size={14} /> Nueva</button>
         </div>
-        {loading ? <div className="py-12 text-center text-slate-400 text-sm">Cargando…</div>
-          : pols.length === 0 ? <div className="py-12 text-center text-slate-400 text-sm">Sin políticas.</div>
+        {loading ? <ListaSkeleton />
+          : error ? <ListaError mensaje={error} onRetry={cargar} />
+          : pols.length === 0 ? <ListaVacia>Sin políticas.</ListaVacia>
           : <div className="divide-y divide-slate-100">{pols.map((p) => <PolicyRow key={p.id} p={p} onToggle={toggle} onEdit={(x) => setModal(x)} />)}</div>}
       </div>
 
