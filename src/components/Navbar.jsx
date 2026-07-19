@@ -18,6 +18,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ROUTE_PERMISSIONS, puedeVerTab, TAB_PERMISSIONS } from '../constants/permissions';
 import { mostrarNovedades } from './NovedadesModal';
+import NotificationBell from './NotificationBell';
 
 // Versión instalada (inyectada por Vite desde package.json).
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -347,6 +348,9 @@ const Navbar = () => {
               <RefreshCw size={18} className="animate-spin" />
             </div>
           )}
+
+          {/* Campana de notificaciones (Centro de Notificaciones) */}
+          <NotificationBell />
 
           {/* User Profile Dropdown (Simplified) */}
           <div className="relative group">

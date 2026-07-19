@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Zap, Bell, SlidersHorizontal, Inbox, RefreshCw, Plus, X, Pencil, Trash2, Send, Check, CheckCheck, Radio } from 'lucide-react';
+import { Zap, Bell, SlidersHorizontal, Inbox, RefreshCw, Plus, X, Pencil, Trash2, Send, Check, CheckCheck, Radio, Gauge, Timer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { listarEventos, listarReglas, guardarRegla, eliminarRegla, listarBandeja, misNotificaciones, marcarLeida, marcarTodasLeidas, despacharPush } from '../../services/eventosService';
+import { listarEventos, listarReglas, guardarRegla, eliminarRegla, listarBandeja, misNotificaciones, marcarLeida, marcarTodasLeidas, despacharPush, metricasProceso } from '../../services/eventosService';
+
+const PROCS = ['OT', 'TICKET_PV', 'NV', 'CALIDAD', 'CONTEO'];
+const horas = (h) => h == null ? '—' : h < 1 ? `${Math.round(h * 60)} min` : h < 48 ? `${Number(h).toFixed(1)} h` : `${(h / 24).toFixed(1)} d`;
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
 const AGG = { OT: '#06b6d4', TICKET_PV: '#7c3aed', NV: '#f59e0b', CALIDAD: '#ef4444', CONTEO: '#10b981' };
@@ -38,7 +41,13 @@ export default function Eventos() {
   const enviarPush = async () => { setBusy(true); const r = await despacharPush(); setBusy(false); if (r.ok) { toast.success(`Push enviados: ${r.enviados}/${r.total || 0}`); cargar(); } else toast.error('No se pudo despachar'); };
 
   const pendientesPush = useMemo(() => bandeja.filter((n) => n.canal === 'push' && n.estado === 'pendiente').length, [bandeja]);
-  const TABS = [['mis', `Mis notificaciones${mias.length ? ` (${mias.length})` : ''}`, Bell], ['stream', 'Stream de eventos', Radio], ['reglas', `Reglas (${reglas.length})`, SlidersHorizontal], ['bandeja', 'Bandeja de salida', Inbox]];
+  const TABS = [['mis', `Mis notificaciones${mias.length ? ` (${mias.length})` : ''}`, Bell], ['stream', 'Stream de eventos', Radio], ['metricas', 'Métricas / SLA', Gauge], ['reglas', `Reglas (${reglas.length})`, SlidersHorizontal], ['bandeja', 'Bandeja de salida', Inbox]];
+
+  const [proc, setProc] = useState('OT');
+  const [met, setMet] = useState(null);
+  const [loadingMet, setLoadingMet] = useState(false);
+  useEffect(() => { if (tab !== 'metricas') return; setLoadingMet(true); metricasProceso(proc).then((m) => { setMet(m); setLoadingMet(false); }).catch(() => setLoadingMet(false)); }, [tab, proc]);
+  const maxDwell = useMemo(() => Math.max(1, ...((met?.por_estado || []).map((e) => Number(e.dwell_prom_horas) || 0))), [met]);
 
   return (
     <div className="anim-fade-up space-y-4 max-w-[1200px] mx-auto pb-16">
@@ -98,6 +107,49 @@ export default function Eventos() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* MÉTRICAS / SLA */}
+      {tab === 'metricas' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-black text-slate-400 uppercase mr-1">Proceso</span>
+            {PROCS.map((p) => <button key={p} onClick={() => setProc(p)} className={`text-[12px] font-bold px-2.5 py-1.5 rounded-lg ${proc === p ? 'bg-orange-100 text-orange-700' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}`}>{p}</button>)}
+          </div>
+          {loadingMet ? <div className="py-12 text-center text-slate-400 text-sm">Calculando…</div> : !met || met.transiciones === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
+              <p className="text-slate-500 text-sm font-semibold">Aún no hay datos de {proc}</p>
+              <p className="text-slate-400 text-[12px] mt-0.5">Las métricas se calculan del historial del motor; se llenan al operar el proceso.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[['Entidades', met.entidades], ['Transiciones', met.transiciones], ['Lead prom.', horas(met.lead_prom_horas)], ['Lead mediana', horas(met.lead_p50_horas)]].map(([l, v]) => (
+                  <div key={l} className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">{l}</div>
+                    <div className="text-xl font-black text-slate-800 mt-0.5">{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase flex items-center gap-1.5"><Timer size={12} /> Permanencia por estado (cuellos de botella)</div>
+                {(met.por_estado || []).length === 0 ? <div className="py-8 text-center text-slate-400 text-sm">Sin transiciones completas todavía.</div> : (
+                  <div className="divide-y divide-slate-100">
+                    {met.por_estado.map((e, i) => (
+                      <div key={e.estado} className="px-4 py-2.5">
+                        <div className="flex items-center justify-between text-[12px] mb-1">
+                          <span className="font-bold text-slate-700 inline-flex items-center gap-1.5">{i === 0 && <span className="text-[9px] font-black text-red-600 bg-red-50 rounded px-1.5 py-0.5">TOPE</span>}{e.estado}</span>
+                          <span className="text-slate-500">prom <b className="text-slate-800">{horas(e.dwell_prom_horas)}</b> · med {horas(e.dwell_p50_horas)} · máx {horas(e.dwell_max_horas)} · {e.transiciones}×</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round((Number(e.dwell_prom_horas) || 0) / maxDwell * 100)}%`, background: i === 0 ? '#ef4444' : '#f97316' }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}

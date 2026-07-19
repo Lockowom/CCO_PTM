@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.55",
+    "fecha": "2026-07-18",
+    "titulo": "Campana de notificaciones + Métricas de proceso (SLA)",
+    "cambios": [
+      {
+        "texto": "(2) NotificationBell en el Navbar (todos los usuarios): campana con contador de no leídas que abre un panel con mis_notificaciones() (in-app del Centro de Notificaciones), marcar leída/todas y \"Ver todas →\". Poll cada 45 s. Hace visible el Centro de Notificaciones que ya operaba por debajo. (3) Métricas / SLA:…"
+      }
+    ]
+  },
+  {
     "version": "1.55.54",
     "fecha": "2026-07-18",
     "titulo": "Capgo/OTA v2 — más mejoras al panel de despliegue",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Primer motor de plataforma del blueprint (docs/ARQUITECTURA_CCO.md §7.3): las máquinas de estado dejan de estar solo en código y viven en tablas. Migración 108: workflow_definition / workflow_state (inicial/final, orden, color) / workflow_transition (desde→hasta por acción + permiso_id → 1 transición = 1 permiso) /…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.40",
-    "fecha": "2026-07-18",
-    "titulo": "TMS · Torre de Control — detalle en panel lateral (no overlay) en escritorio",
-    "cambios": [
-      {
-        "texto": "El detalle de la orden dejaba a oscuras toda la pantalla y tapaba los botones *Nueva orden*/*Actualizar*. Ahora en escritorio (lg+) se abre como columna lateral en línea junto a la lista (sticky, sin fondo oscuro, aprovechando el ancho): la fila seleccionada se resalta y el panel hace scroll interno con max-h. En…"
       }
     ]
   }

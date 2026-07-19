@@ -28,6 +28,11 @@ export async function listarBandeja({ canal, estado, limit = 150 } = {}) {
   const { data } = await q; return data || [];
 }
 
+export async function metricasProceso(workflow) {
+  const { data } = await supabase.rpc('proceso_metricas', { p_workflow: workflow });
+  return data || null;
+}
+
 export async function misNotificaciones() { const { data } = await supabase.rpc('mis_notificaciones'); return data || []; }
 export const marcarLeida = (id) => rpc('marcar_notificacion_leida', { p_id: id });
 export const marcarTodasLeidas = () => rpc('marcar_todas_leidas');
