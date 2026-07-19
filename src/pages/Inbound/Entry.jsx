@@ -193,6 +193,9 @@ const Entry = () => {
 
     return () => {
       if (descTimerRef.current) clearTimeout(descTimerRef.current);
+      // Abortar también el request en vuelo al desmontar/cambiar de código
+      // (evita setState tras unmount → warning de React).
+      if (descAbortRef.current) descAbortRef.current.abort();
     };
   }, [form.codigo]);
 

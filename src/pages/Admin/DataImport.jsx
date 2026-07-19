@@ -771,15 +771,19 @@ const DataImport = () => {
             let deduplicated = 0;
             if (currentTab.uniqueKey) {
                 const keys = currentTab.uniqueKey.split(',').map(k => k.trim());
-                const uniqueMap = new Map();
+                const uniqueMap = new Map();   // filas con clave → dedup (last wins)
+                const sinClave = [];           // filas SIN clave (todas las columnas vacías) → se conservan
                 newRows.forEach(row => {
-                    const key = keys.map(k => (row[k] || '').toString().trim()).join('|');
-                    if (key && key !== '|' && key !== '') {
-                        uniqueMap.set(key, row); // last wins
+                    const parts = keys.map(k => (row[k] || '').toString().trim());
+                    // Requiere ≥1 columna clave con valor (funciona para 1, 2, 3+ columnas).
+                    if (parts.some(p => p !== '')) {
+                        uniqueMap.set(parts.join('|'), row);
+                    } else {
+                        sinClave.push(row);    // sin identidad → no se puede deduplicar, no se descarta
                     }
                 });
                 const beforeCount = newRows.length;
-                newRows = Array.from(uniqueMap.values());
+                newRows = [...uniqueMap.values(), ...sinClave];
                 deduplicated = beforeCount - newRows.length;
                 if (deduplicated > 0) {
                     errorDetails.push(`${deduplicated} filas duplicadas consolidadas (misma clave: ${currentTab.uniqueKey})`);

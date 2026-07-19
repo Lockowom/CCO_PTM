@@ -96,7 +96,8 @@ const SalesStatus = () => {
         },
         enabled: !!debouncedTerm,
         select: (data) => {
-            if (data.length === 1 && data[0].nv.toLowerCase() === debouncedTerm.toLowerCase()) {
+            // Guarda: nv puede venir null en alguna fila → evitar el crash en toLowerCase().
+            if (data.length === 1 && data[0]?.nv && data[0].nv.toLowerCase() === debouncedTerm.toLowerCase()) {
                 setTimeout(() => setSelectedNVId(data[0].nv), 0);
             }
             return data;

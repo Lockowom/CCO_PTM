@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.73",
+    "fecha": "2026-07-19",
+    "titulo": "Auditoría — bugs LOW + rendimiento BD",
+    "cambios": [
+      {
+        "texto": "SalesStatus.jsx: guarda data[0]?.nv antes de .toLowerCase() (una fila con nv null crasheaba el render de resultados). DataImport.jsx: el dedup por clave única ahora funciona para 1, 2 y 3+ columnas (antes el guard solo cubría 2 columnas: con 3+ una clave vacía '||' colapsaba filas y las de clave vacía se descartaban…"
+      }
+    ]
+  },
+  {
     "version": "1.55.72",
     "fecha": "2026-07-19",
     "titulo": "Auditoría — bloque de UI (móvil + consistencia + estados)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 122. Reconciliación crítica: el runtime autoriza leyendo tms_roles.permisos_json (array jsonb, ?|), pero la Fase 0 pobló iam.role_permissions desde la tabla puente tms_roles_permisos, que estaba desactualizada (ADMIN 60 vs 12, CONTROL_CALIDAD 13 vs 0, GERENCIA 27 vs 3). Se reconstruye iam.role_permissions…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.58",
-    "fecha": "2026-07-18",
-    "titulo": "Identity & Security — Fase 0 (cimiento IAM, NO destructivo)",
-    "cambios": [
-      {
-        "texto": "Primera fase del rediseño enterprise (docs/IAM_ARQUITECTURA.md). Migración 121: esquemas iam (datos) y authz (decisión); enums scope_type/principal_type; org units (iam.empresas con seed PTM, departamentos/sucursales/centros_distribucion/bodegas/teams); iam.users (1:1 con auth.users), iam.roles, iam.permissions…"
       }
     ]
   }
