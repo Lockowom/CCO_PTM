@@ -67,3 +67,19 @@ export async function auditoriaMeta() {
   if (error) throw error;
   return data || { tablas: [], acciones: [], total: 0 };
 }
+
+// ── Fase 7: Escala (MV de permisos + carga masiva) ──────────────────────────
+export async function permisosStats() {
+  const { data, error } = await supabase.rpc('iam_permisos_stats');
+  if (error) throw error;
+  return data || {};
+}
+
+export const refrescarPermisos = () => rpc('iam_refrescar_permisos');
+
+// rows: [{ nombre, email, rol, password? }] → { creados, actualizados, errores[], detalle[] }
+export async function bulkUsuarios(rows) {
+  const { data, error } = await supabase.rpc('iam_bulk_usuarios', { p_rows: rows });
+  if (error) return { ok: false, error: error.message };
+  return data || { ok: true };
+}

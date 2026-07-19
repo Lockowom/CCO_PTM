@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.65",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 7 (Escala)",
+    "cambios": [
+      {
+        "texto": "Migraciones 128+129. (29) Vista materializada iam.mv_user_permissions (permisos efectivos) con índice único por clave natural (assignment_id, permission_id) → REFRESH … CONCURRENTLY vía authz.refresh_permissions(), programada cada 5 min (pg_cron refresh-iam-permissions) y a demanda (RPC iam_refrescar_permisos);…"
+      }
+    ]
+  },
+  {
     "version": "1.55.64",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 6 (Seguridad avanzada: MFA/2FA + claims JWT)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "(blueprint §7.2/§7.4). Migración 114: dominio_eventos (append-only) se alimenta SOLO desde workflow_history por trigger → un hecho de negocio = un evento WORKFLOW.accion (OT.registrar_pod, TICKET_PV.crear, NV.avanzar…); reusa todo el cableado de la Fase 2. Centro de Notificaciones: notificacion_regla…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.50",
-    "fecha": "2026-07-18",
-    "titulo": "Mapa de Procesos — “Recortar del maestro” (sub-diagramas automáticos por dominio)",
-    "cambios": [
-      {
-        "texto": "En el editor, con un sub-diagrama seleccionado, el botón Recortar del maestro extrae del Flujo Maestro los nodos de ese dominio (filtro heurístico por etiqueta: Master Data 14 · WMS 22 · Operaciones 12 · TMS 20 · Postventa 14), conserva sus conexiones internas y su posición real, y lo carga en el editor para revisar y…"
       }
     ]
   }

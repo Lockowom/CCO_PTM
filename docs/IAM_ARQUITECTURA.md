@@ -678,9 +678,14 @@ y SSO/SAML** — requieren secretos de proveedor + config en el Supabase Dashboa
 fijables desde el repo); quedan documentados como paso de configuración. Endurecer el
 desafío MFA a *fail-closed* (diferir la sesión hasta AAL2) queda para consolidación.
 
-**Fase 7 — Escala.**
-29. `mv_user_permissions` + refresh incremental. 30. Retención/particiones de auditoría.
-31. Carga masiva de usuarios/roles.
+**Fase 7 — Escala.** ✅ HECHA (v1.55.65, migraciones `128`+`129`).
+29. **`iam.mv_user_permissions`** (MV) + `authz.refresh_permissions()` (CONCURRENTLY,
+clave natural `assignment_id,permission_id`) + **pg_cron cada 5 min** + refresco a
+demanda ✅. El gate caliente sigue en la vista viva (sin retraso en revocaciones); la
+MV es para reporte a escala. 30. **Retención de auditoría YA existe** (cron
+`cleanup-auditoria-1y`); partición innecesaria al volumen actual ✅. 31. **Carga masiva
+de usuarios** `iam_bulk_usuarios` (identidad real + perfil, idempotente por email,
+contraseñas generadas) + UI pestaña **Escala** ✅.
 
 **Orden de construcción de componentes (front):**
 `useAuthz` → `<Can>` → `useNavigation`/Sidebar → Pantalla Roles (matriz) → Pantalla
