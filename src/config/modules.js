@@ -4,7 +4,8 @@
  */
 
 export const APP_MODULES = [
-  { id: 'tms', label: 'TMS (Transporte)', section: 'wms' },
+  // TMS (Transporte) OCULTO — módulo no operativo; se reactivará cuando esté listo.
+  // { id: 'tms', label: 'TMS (Transporte)', section: 'wms' },
   { id: 'inbound', label: 'Inbound', section: 'wms' },
   { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
@@ -15,9 +16,9 @@ export const APP_MODULES = [
 ];
 
 export const APP_ROUTES = [
-  // TMS (Transporte) — reconstruido desde 0
-  { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
-  { value: '/tms/pda', label: 'TMS - Mi Ruta (Chofer)', module: 'tms' },
+  // TMS (Transporte) OCULTO — módulo no operativo (rutas siguen existiendo en App.jsx).
+  // { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
+  // { value: '/tms/pda', label: 'TMS - Mi Ruta (Chofer)', module: 'tms' },
   // PDA Operativa de Bodega (herramienta de bodega, ahora bajo Inventario)
   { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'inventario' },
 
@@ -95,15 +96,16 @@ export const APP_ROUTES = [
 ];
 
 export const APP_PERMISSIONS = [
-  {
-    id: 'tms',
-    label: 'TMS (Transporte)',
-    permissions: [
-      { id: 'view_tms', label: 'Ver Torre de Control' },
-      { id: 'manage_tms', label: 'Gestionar (asignar, estados, POD)' },
-      { id: 'supervise_tms', label: 'Supervisar (cancelar, incidencias)' }
-    ]
-  },
+  // TMS (Transporte) OCULTO — módulo no operativo; se reactivará cuando esté listo.
+  // {
+  //   id: 'tms',
+  //   label: 'TMS (Transporte)',
+  //   permissions: [
+  //     { id: 'view_tms', label: 'Ver Torre de Control' },
+  //     { id: 'manage_tms', label: 'Gestionar (asignar, estados, POD)' },
+  //     { id: 'supervise_tms', label: 'Supervisar (cancelar, incidencias)' }
+  //   ]
+  // },
   {
     id: 'inventario',
     label: 'Inventario (Traspasos + Conteo Cíclico)',

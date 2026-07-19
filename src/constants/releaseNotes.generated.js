@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.56",
+    "fecha": "2026-07-18",
+    "titulo": "TMS (Transporte) OCULTO — módulo no operativo",
+    "cambios": [
+      {
+        "texto": "El módulo TMS no está operativo (no hay entrada real de órdenes; ver deuda P4 puente N.V.→TMS), así que se oculta de la UI sin borrar nada para poder reactivarlo: comentado en src/config/modules.js (fuera de APP_MODULES/APP_ROUTES/APP_PERMISSIONS) y en el menú (src/components/Navbar.jsx); migración 120 deshabilita su…"
+      }
+    ]
+  },
+  {
     "version": "1.55.55",
     "fecha": "2026-07-18",
     "titulo": "Campana de notificaciones + Métricas de proceso (SLA)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 109: helper interno _wf_registrar(workflow,entidad,desde,hasta,accion,nota) (inserta en workflow_history con el actor) y recreación de las 5 RPCs de TMS (tms_orden_crear_desde_nv, tms_orden_asignar, tms_orden_transicion, tms_orden_pod, tms_incidencia_resolver) para que cada cambio de estado de una Orden de…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.41",
-    "fecha": "2026-07-18",
-    "titulo": "Workflow Engine — procesos como datos (Admin → Workflows)",
-    "cambios": [
-      {
-        "texto": "Primer motor de plataforma del blueprint (docs/ARQUITECTURA_CCO.md §7.3): las máquinas de estado dejan de estar solo en código y viven en tablas. Migración 108: workflow_definition / workflow_state (inicial/final, orden, color) / workflow_transition (desde→hasta por acción + permiso_id → 1 transición = 1 permiso) /…"
       }
     ]
   }

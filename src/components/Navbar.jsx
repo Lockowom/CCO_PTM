@@ -107,11 +107,12 @@ const Navbar = () => {
       id: 'wms',
       title: "Operaciones WMS",
       items: [
-        { id: 'tms', label: 'TMS', icon: <Truck size={18} />, modules: [
-            { label: 'Torre de Control', path: '/tms/control', icon: <Truck size={16} /> },
-            { label: 'Mi Ruta (Chofer)', path: '/tms/pda', icon: <Scan size={16} /> }
-          ]
-        },
+        // TMS (Transporte) OCULTO — módulo no operativo; se reactivará cuando esté listo.
+        // { id: 'tms', label: 'TMS', icon: <Truck size={18} />, modules: [
+        //     { label: 'Torre de Control', path: '/tms/control', icon: <Truck size={16} /> },
+        //     { label: 'Mi Ruta (Chofer)', path: '/tms/pda', icon: <Scan size={16} /> }
+        //   ]
+        // },
         { id: 'inbound', label: 'Inbound', icon: <ArrowDownToLine size={18} />, modules: [
             { label: 'Recepción Importaciones', path: '/inbound/reception', icon: <ClipboardCheck size={16} /> },
             { label: 'Recepción Nacionales', path: '/inbound/reception-nacional', icon: <Package size={16} /> },
