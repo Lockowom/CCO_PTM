@@ -47,8 +47,8 @@ export default function AccessControl() {
             <KeyRound size={22} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Usuarios y <span className="text-orange-600">Roles</span></h1>
-            <p className="text-xs sm:text-sm text-slate-500">Control de accesos unificado · quién entra, con qué rol y qué permisos otorga cada rol</p>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Identidad y <span className="text-orange-600">Seguridad</span></h1>
+            <p className="text-xs sm:text-sm text-slate-500">Control de accesos: usuarios, roles, permisos, ámbitos, sesiones, auditoría, políticas y delegaciones</p>
           </div>
         </div>
       </div>

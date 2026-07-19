@@ -262,7 +262,7 @@ const UsersPage = ({ embedded = false }) => {
     <div ref={containerRef} className={embedded ? 'space-y-4 sm:space-y-8 text-slate-700 relative' : 'space-y-4 sm:space-y-8 bg-slate-50 min-h-[calc(100vh-80px)] p-3 sm:p-6 text-slate-700'}>
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center z-0">
-        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-indigo-500/10 blur-[100px] rounded-full"></div>
+        <div className="absolute top-[-10%] w-[800px] h-[400px] bg-orange-500/10 blur-[100px] rounded-full"></div>
       </div>
 
       {/* Header / acciones */}
@@ -270,8 +270,8 @@ const UsersPage = ({ embedded = false }) => {
         {!embedded && (
           <div>
             <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/30 shadow-sm"><Users className="text-indigo-400" size={28} /></div>
-              Control de <span className="text-indigo-400">Accesos</span>
+              <div className="bg-orange-500/10 p-2.5 rounded-xl border border-orange-500/30 shadow-sm"><Users className="text-orange-400" size={28} /></div>
+              Control de <span className="text-orange-400">Accesos</span>
             </h1>
             <p className="text-slate-500 text-sm mt-2 font-medium">Administración centralizada de usuarios y roles del sistema</p>
           </div>
@@ -279,10 +279,10 @@ const UsersPage = ({ embedded = false }) => {
         <div className="flex gap-3 md:ml-auto">
           <button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_users'] })}
             className="p-3 text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-600 rounded-xl transition-all shadow-sm" title="Actualizar lista">
-            <RefreshCw size={20} className={loadingUsers ? 'animate-spin text-indigo-400' : ''} />
+            <RefreshCw size={20} className={loadingUsers ? 'animate-spin text-orange-400' : ''} />
           </button>
           <button onClick={() => handleOpenModal()}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 shadow-md transition-all active:scale-95">
+            className="bg-orange-600 text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 shadow-md transition-all active:scale-95">
             <UserPlus size={20} /> Nuevo Usuario
           </button>
         </div>
@@ -290,7 +290,7 @@ const UsersPage = ({ embedded = false }) => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 relative z-10">
-        <StatCard icon={<Users size={24} />} label="Total Usuarios" value={stats.total} glowColor="indigo" />
+        <StatCard icon={<Users size={24} />} label="Total Usuarios" value={stats.total} glowColor="orange" />
         <StatCard icon={<UserCheck size={24} />} label="Activos" value={stats.active} glowColor="emerald" />
         <StatCard icon={<Crown size={24} />} label="Admins" value={stats.admins} glowColor="rose" />
         <StatCard icon={<Briefcase size={24} />} label="Supervisores" value={stats.supervisors} glowColor="amber" />
@@ -299,22 +299,22 @@ const UsersPage = ({ embedded = false }) => {
       {/* Filtros + orden + vista */}
       <div className="bg-white backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl flex flex-col lg:flex-row gap-3 items-stretch lg:items-center sticky top-4 z-30">
         <div className="flex-1 relative w-full group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-orange-400 transition-colors" size={20} />
           <input type="text" placeholder="Buscar por nombre o email..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all text-slate-900 placeholder-slate-500 font-medium"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 transition-all text-slate-900 placeholder-slate-500 font-medium"
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
-          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold text-slate-700 cursor-pointer text-sm" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-orange-500 font-bold text-slate-700 cursor-pointer text-sm" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
             <option value="">Todos los roles</option>
             {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </select>
-          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold text-slate-700 cursor-pointer text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-orange-500 font-bold text-slate-700 cursor-pointer text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">Todos los estados</option>
             <option value="active">Activos</option>
             <option value="inactive">Inactivos</option>
           </select>
-          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 font-bold text-slate-700 cursor-pointer text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)} title="Ordenar">
+          <select className="px-3 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-orange-500 font-bold text-slate-700 cursor-pointer text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)} title="Ordenar">
             <option value="recientes">Más recientes</option>
             <option value="nombre">Nombre (A-Z)</option>
             <option value="rol">Rol</option>
@@ -322,8 +322,8 @@ const UsersPage = ({ embedded = false }) => {
             <option value="estado">Estado</option>
           </select>
           <div className="flex bg-slate-50 border border-slate-200 rounded-xl p-1 shrink-0">
-            <button onClick={() => setViewMode('cards')} title="Tarjetas" className={`p-2 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-700'}`}><LayoutGrid size={18} /></button>
-            <button onClick={() => setViewMode('table')} title="Tabla" className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-700'}`}><List size={18} /></button>
+            <button onClick={() => setViewMode('cards')} title="Tarjetas" className={`p-2 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-slate-700'}`}><LayoutGrid size={18} /></button>
+            <button onClick={() => setViewMode('table')} title="Tabla" className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-orange-600 text-white' : 'text-slate-400 hover:text-slate-700'}`}><List size={18} /></button>
           </div>
         </div>
       </div>
@@ -351,7 +351,7 @@ const UsersPage = ({ embedded = false }) => {
       <div className="flex items-center justify-between text-xs font-bold text-slate-400 relative z-10 px-1">
         <span>{filteredUsers.length} de {users.length} usuarios</span>
         {filteredUsers.length > 0 && (
-          <button onClick={toggleSelectAll} className="inline-flex items-center gap-1.5 hover:text-indigo-500 transition-colors">
+          <button onClick={toggleSelectAll} className="inline-flex items-center gap-1.5 hover:text-orange-500 transition-colors">
             {allVisibleSelected ? <CheckSquare size={15} /> : <Square size={15} />} Seleccionar todos
           </button>
         )}
@@ -361,7 +361,7 @@ const UsersPage = ({ embedded = false }) => {
       <div className="relative z-10">
         {loadingUsers || loadingRoles ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <div className="w-16 h-16 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-slate-200 border-t-orange-500 rounded-full animate-spin"></div>
             <p className="text-slate-500 font-bold animate-pulse">Cargando directorio...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -377,7 +377,7 @@ const UsersPage = ({ embedded = false }) => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-400 font-black">
-                    <th className="p-3 w-10"><button onClick={toggleSelectAll}>{allVisibleSelected ? <CheckSquare size={16} className="text-indigo-600" /> : <Square size={16} className="text-slate-300" />}</button></th>
+                    <th className="p-3 w-10"><button onClick={toggleSelectAll}>{allVisibleSelected ? <CheckSquare size={16} className="text-orange-600" /> : <Square size={16} className="text-slate-300" />}</button></th>
                     <th className="p-3 text-left">Usuario</th>
                     <th className="p-3 text-left hidden sm:table-cell">Rol</th>
                     <th className="p-3 text-left">Estado</th>
@@ -389,8 +389,8 @@ const UsersPage = ({ embedded = false }) => {
                   {filteredUsers.map(user => {
                     const isSel = selected.has(user.id);
                     return (
-                      <tr key={user.id} className={`border-b border-slate-100 last:border-0 transition-colors ${isSel ? 'bg-indigo-50/60' : 'hover:bg-slate-50'}`}>
-                        <td className="p-3"><button onClick={(e) => toggleSelect(user.id, e)}>{isSel ? <CheckSquare size={16} className="text-indigo-600" /> : <Square size={16} className="text-slate-300" />}</button></td>
+                      <tr key={user.id} className={`border-b border-slate-100 last:border-0 transition-colors ${isSel ? 'bg-orange-50/60' : 'hover:bg-slate-50'}`}>
+                        <td className="p-3"><button onClick={(e) => toggleSelect(user.id, e)}>{isSel ? <CheckSquare size={16} className="text-orange-600" /> : <Square size={16} className="text-slate-300" />}</button></td>
                         <td className="p-3">
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${getRoleBadgeColor(user.rol)}`}>{user.nombre?.charAt(0).toUpperCase()}</div>
@@ -412,7 +412,7 @@ const UsersPage = ({ embedded = false }) => {
                         <td className="p-3 hidden md:table-cell text-xs text-slate-500 whitespace-nowrap"><span className="inline-flex items-center gap-1"><Clock size={12} className="text-slate-300" />{fmtUltimo(user.last_seen)}</span></td>
                         <td className="p-3">
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleOpenModal(user)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Editar"><Edit size={16} /></button>
+                            <button onClick={() => handleOpenModal(user)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Editar"><Edit size={16} /></button>
                             <button onClick={() => handleDelete(user.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Eliminar"><Trash2 size={16} /></button>
                           </div>
                         </td>
@@ -429,18 +429,18 @@ const UsersPage = ({ embedded = false }) => {
             {filteredUsers.map(user => {
               const isSel = selected.has(user.id);
               return (
-              <div key={user.id} className={`group bg-white backdrop-blur-md rounded-3xl border shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden relative ${isSel ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200 hover:border-slate-600'}`}>
-                <div className={`h-24 w-full absolute top-0 left-0 transition-colors ${user.activo ? 'bg-gradient-to-b from-indigo-500/10 to-transparent' : 'bg-slate-100'}`}></div>
+              <div key={user.id} className={`group bg-white backdrop-blur-md rounded-3xl border shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden relative ${isSel ? 'border-orange-400 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-600'}`}>
+                <div className={`h-24 w-full absolute top-0 left-0 transition-colors ${user.activo ? 'bg-gradient-to-b from-orange-500/10 to-transparent' : 'bg-slate-100'}`}></div>
 
                 {/* checkbox selección */}
                 <button onClick={(e) => toggleSelect(user.id, e)} className="absolute top-3 left-3 z-20 p-1 rounded-lg bg-white/80 backdrop-blur border border-slate-200 shadow-sm">
-                  {isSel ? <CheckSquare size={18} className="text-indigo-600" /> : <Square size={18} className="text-slate-300" />}
+                  {isSel ? <CheckSquare size={18} className="text-orange-600" /> : <Square size={18} className="text-slate-300" />}
                 </button>
 
                 <div className="p-4 sm:p-6 relative pt-6 sm:pt-8">
                   <div className="flex justify-between items-start mb-4">
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black border shadow-lg transform group-hover:scale-110 transition-transform duration-300
-                      ${user.rol === 'ADMIN' ? 'bg-rose-500/20 border-rose-500/30 text-rose-400' : user.rol === 'SUPERVISOR' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400'}`}>
+                      ${user.rol === 'ADMIN' ? 'bg-rose-500/20 border-rose-500/30 text-rose-400' : user.rol === 'SUPERVISOR' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
                       {user.nombre?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -484,7 +484,7 @@ const UsersPage = ({ embedded = false }) => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-50/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div ref={modalRef} className="bg-white border border-slate-200 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden relative max-h-[92vh] overflow-y-auto">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 to-purple-500"></div>
             <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 sticky top-0 z-10">
               <div>
                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">{editingUser ? 'Editar Perfil' : 'Nuevo Usuario'}</h2>
@@ -499,7 +499,7 @@ const UsersPage = ({ embedded = false }) => {
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nombre Completo</label>
                   <div className="relative">
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                    <input type="text" required className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
+                    <input type="text" required className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="Ej: Juan Pérez" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} />
                   </div>
                 </div>
@@ -508,7 +508,7 @@ const UsersPage = ({ embedded = false }) => {
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Email Corporativo</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black">@</div>
-                    <input type="email" required className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
+                    <input type="email" required className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       placeholder="usuario@empresa.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                   </div>
                 </div>
@@ -518,7 +518,7 @@ const UsersPage = ({ embedded = false }) => {
                   <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                     <input type={showPassword ? 'text' : 'password'} required={!editingUser} minLength={6}
-                      className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
+                      className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 transition-all font-bold text-slate-900 placeholder-slate-600"
                       value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} placeholder={editingUser ? '••••••••' : 'Mínimo 6 caracteres'} />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 transition-colors">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                   </div>
@@ -528,7 +528,7 @@ const UsersPage = ({ embedded = false }) => {
                   <div className="group">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Rol de Acceso</label>
                     <div className="relative">
-                      <select required className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all font-bold text-slate-900 appearance-none cursor-pointer"
+                      <select required className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 transition-all font-bold text-slate-900 appearance-none cursor-pointer"
                         value={formData.rol} onChange={e => setFormData({ ...formData, rol: e.target.value })}>
                         <option value="" disabled>Seleccionar...</option>
                         {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
@@ -557,15 +557,15 @@ const UsersPage = ({ embedded = false }) => {
                   const { modulos } = accesosConPermisos(permisos);
                   const landing = APP_ROUTES.find(r => r.value === rolSel.landing_page)?.label || rolSel.landing_page;
                   return (
-                    <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 text-xs space-y-2">
-                      <div className="font-black text-indigo-800">Este rol otorga {permisos.length} permiso(s) · verá {modulos.length} módulo(s){rolSel.descripcion ? <span className="font-medium text-indigo-500"> — {rolSel.descripcion}</span> : null}</div>
+                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-100 text-xs space-y-2">
+                      <div className="font-black text-orange-800">Este rol otorga {permisos.length} permiso(s) · verá {modulos.length} módulo(s){rolSel.descripcion ? <span className="font-medium text-orange-500"> — {rolSel.descripcion}</span> : null}</div>
                       <div className="flex flex-wrap gap-1.5">
                         {modulos.map(m => (
-                          <span key={m.id} title={m.rutas.map(r => r.label).join('\n')} className={`px-2 py-0.5 rounded-md border font-bold ${m.soloAdmin ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-white text-indigo-700 border-indigo-200'}`}>{m.label} · {m.rutas.length}</span>
+                          <span key={m.id} title={m.rutas.map(r => r.label).join('\n')} className={`px-2 py-0.5 rounded-md border font-bold ${m.soloAdmin ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-white text-orange-700 border-orange-200'}`}>{m.label} · {m.rutas.length}</span>
                         ))}
-                        {modulos.length === 0 && <span className="text-indigo-400 font-medium">Sin accesos — configura los permisos del rol en la pestaña Roles.</span>}
+                        {modulos.length === 0 && <span className="text-orange-400 font-medium">Sin accesos — configura los permisos del rol en la pestaña Roles.</span>}
                       </div>
-                      {landing && <div className="text-indigo-600">Página de inicio: <b>{landing}</b></div>}
+                      {landing && <div className="text-orange-600">Página de inicio: <b>{landing}</b></div>}
                       {modulos.some(m => m.soloAdmin) && <div className="text-orange-600 text-[11px]">Las rutas de Configuración además requieren rol ADMIN.</div>}
                     </div>
                   );
@@ -588,7 +588,7 @@ const UsersPage = ({ embedded = false }) => {
 
               <div className="pt-6 flex gap-4 border-t border-slate-200">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-bold transition-colors">Cancelar</button>
-                <button type="submit" disabled={saveMutation.isPending} className="flex-[2] py-4 bg-indigo-600 text-white rounded-xl font-black flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] disabled:opacity-70 disabled:scale-100">
+                <button type="submit" disabled={saveMutation.isPending} className="flex-[2] py-4 bg-orange-600 text-white rounded-xl font-black flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] disabled:opacity-70 disabled:scale-100">
                   {saveMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                   {saveMutation.isPending ? 'Guardando...' : 'Confirmar Cambios'}
                 </button>

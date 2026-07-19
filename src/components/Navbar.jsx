@@ -34,6 +34,7 @@ const Navbar = () => {
 
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);  // menú de perfil (tap en táctil)
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [scrolled, setScrolled] = useState(false);
 
@@ -195,7 +196,7 @@ const Navbar = () => {
       title: "Sistema",
       items: [
         { id: 'admin', label: 'Configuración', icon: <Settings size={18} />, modules: [
-            { label: 'Usuarios y Roles', path: '/admin/users', icon: <Users size={16} /> },
+            { label: 'Identidad y Seguridad', path: '/admin/users', icon: <Users size={16} /> },
             { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
@@ -353,9 +354,10 @@ const Navbar = () => {
           {/* Campana de notificaciones (Centro de Notificaciones) */}
           <NotificationBell />
 
-          {/* User Profile Dropdown (Simplified) */}
+          {/* User Profile Dropdown — abre por HOVER (desktop) o TAP (táctil) */}
           <div className="relative group">
-            <button className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200">
+            <button onClick={() => setUserMenuOpen((o) => !o)}
+              className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200">
               <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-xs">
                 {user?.nombre?.charAt(0).toUpperCase()}
               </div>
@@ -367,19 +369,21 @@ const Navbar = () => {
             </button>
 
             {/* User Dropdown Content */}
-            <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+            <div className={`absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 transition-all duration-200 transform z-50
+              ${userMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'}`}>
               <div className="px-4 py-3 border-b border-slate-50 mb-1">
                 <p className="text-sm font-black text-slate-900 truncate">{user?.nombre}</p>
                 <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{user?.email}</p>
               </div>
               <Link
                 to="/seguridad"
+                onClick={() => setUserMenuOpen(false)}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-all text-sm font-black mb-1"
               >
                 <Lock size={18} /> Seguridad (2FA)
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={() => { setUserMenuOpen(false); handleLogout(); }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all text-sm font-black"
               >
                 <LogOut size={18} /> Cerrar Sesión
@@ -490,6 +494,22 @@ const Navbar = () => {
                 </div>
               );
             })}
+          </div>
+          {/* Bloque de usuario (móvil): Seguridad + Cerrar sesión — antes no había
+              forma de salir ni activar 2FA en táctil (el menú de perfil es hover). */}
+          <div className="shrink-0 border-t border-slate-100 px-3 py-3 bg-white space-y-1">
+            <div className="px-2 pb-1">
+              <p className="text-sm font-black text-slate-900 truncate">{user?.nombre}</p>
+              <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{user?.rol}</p>
+            </div>
+            <Link to="/seguridad" onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-all text-sm font-black">
+              <Lock size={18} /> Seguridad (2FA)
+            </Link>
+            <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all text-sm font-black">
+              <LogOut size={18} /> Cerrar Sesión
+            </button>
           </div>
           {/* Versión instalada (visible en el menú móvil) — toca para ver las Novedades */}
           <div className="shrink-0 border-t border-slate-100 px-4 py-3 text-center bg-white">

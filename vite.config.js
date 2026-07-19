@@ -104,7 +104,6 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'supabase-vendor': ['@supabase/supabase-js'],
           'ui-vendor': ['lucide-react', 'sonner', 'recharts', 'gsap', '@gsap/react'],
-          'map-vendor': ['leaflet', 'react-leaflet'],
           'query-vendor': ['@tanstack/react-query']
         }
       }

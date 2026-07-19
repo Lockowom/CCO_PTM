@@ -55,7 +55,6 @@ const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 // Panel PTM nativo (port de lockowom/panel-) — estructura con datos de ejemplo
 const PanelLayout = React.lazy(() => import('./pages/Panel/PanelLayout'));
-const PanelHome = React.lazy(() => import('./pages/Panel/PanelHome'));
 const DashboardReal = React.lazy(() => import('./pages/Panel/dash/DashboardReal')); // dashboard fiel (copia del original)
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const AnalisisCodigos = React.lazy(() => import('./pages/Inventory/AnalisisCodigos'));

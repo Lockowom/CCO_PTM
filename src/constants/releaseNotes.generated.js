@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.71",
+    "fecha": "2026-07-19",
+    "titulo": "Auditoría — batch de limpieza y hardening (quick wins)",
+    "cambios": [
+      {
+        "texto": "Tras auditoría completa (4 barridos + advisors). Seguridad: migración 134 revoca SELECT de iam.user_effective_permissions a authenticated (la vista no filtra por auth.uid(); las RPC que la usan son SECURITY DEFINER) → cierra fuga potencial de la matriz de permisos. Repo↔BD: se reconstruyen los archivos de migración…"
+      }
+    ]
+  },
+  {
     "version": "1.55.70",
     "fecha": "2026-07-19",
     "titulo": "Fix MFA — .catch inválido sobre supabase.rpc tras verificar",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "src/services/mobileService.js engancha el evento download de Capgo (antes ignorado) para reportar progreso real (percent), y el overlay src/components/ui/UpdateOverlay.jsx ahora tiene tres fases fluidas: descargando → píldora inferior no intrusiva con barra + % en vivo (no bloquea la app); listo → tarjeta con…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.56",
-    "fecha": "2026-07-18",
-    "titulo": "TMS (Transporte) OCULTO — módulo no operativo",
-    "cambios": [
-      {
-        "texto": "El módulo TMS no está operativo (no hay entrada real de órdenes; ver deuda P4 puente N.V.→TMS), así que se oculta de la UI sin borrar nada para poder reactivarlo: comentado en src/config/modules.js (fuera de APP_MODULES/APP_ROUTES/APP_PERMISSIONS) y en el menú (src/components/Navbar.jsx); migración 120 deshabilita su…"
       }
     ]
   }
