@@ -941,8 +941,12 @@ A las fases de la Parte I se suman:
   despachada) — tabla de verdad verificada. Editor + **probador** en la pestaña
   Políticas. Enforcement **opt-in** (sin RLS de dominio todavía, como Fase 4); encajar
   en RLS de las tablas críticas queda para consolidación. *Diferenciador enterprise.*
-- **Fase 9 — Delegación & sustituciones.** `delegations` + rama en la vista efectiva +
-  auditoría "por delegación"; UI de vacaciones/cobertura.
+- **Fase 9 — Delegación & sustituciones.** ✅ HECHA (v1.55.67, migraciones `131`+`132`).
+  `iam.delegations` + **rama en `user_effective_permissions`** (la cobertura entra y
+  caduca sola) + auditoría de create/revoke. RPCs `iam_delegar`/`iam_revocar_delegacion`/
+  `iam_delegaciones`/`iam_mis_coberturas`. UI: pestaña **Delegaciones** (admin) +
+  **auto-servicio** de vacaciones en `/seguridad`. Verificado (hereda dentro de la
+  ventana, nada fuera).
 
 **Prioridad recomendada:** Parte I (Fase 0→3) primero — da la base RBAC + scopes +
 workflow que ya casa con el CCO actual. Luego **ABAC condicional (Fase 8)** porque es

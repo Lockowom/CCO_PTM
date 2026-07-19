@@ -100,3 +100,28 @@ export async function probarEditarNV(id, uid = null) {
   if (error) throw error;
   return data;
 }
+
+// ── Fase 9: Delegación / sustituciones ──────────────────────────────────────
+export async function delegaciones(soloActivas = false) {
+  const { data, error } = await supabase.rpc('iam_delegaciones', { p_solo_activas: soloActivas });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const delegar = ({ delegado, hasta, desde = null, role = null, motivo = null, delegador = null }) =>
+  rpc('iam_delegar', { p_delegado: delegado, p_hasta: hasta, p_desde: desde, p_role: role, p_motivo: motivo, p_delegador: delegador });
+
+export const revocarDelegacion = (id) => rpc('iam_revocar_delegacion', { p_id: id });
+
+export async function misCoberturas() {
+  const { data, error } = await supabase.rpc('iam_mis_coberturas');
+  if (error) throw error;
+  return data || { cubro: [], delego: [] };
+}
+
+// Lista ligera de usuarios (id+nombre) para selectores (cualquier autenticado).
+export async function usuariosLite() {
+  const { data, error } = await supabase.rpc('iam_usuarios_lite');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}

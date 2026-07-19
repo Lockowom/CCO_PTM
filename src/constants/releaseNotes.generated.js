@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.67",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 9 (Delegación / sustituciones: cobertura por vacaciones)",
+    "cambios": [
+      {
+        "texto": "Migraciones 131+132. Un delegador presta sus permisos a un delegado durante una ventana [desde, hasta]; se implementa como una rama en iam.user_effective_permissions (la vista que leen el gate, iam_me, scopes y ABAC) → la cobertura entra y CADUCA sola sin tocar nada más (verificado: el delegado hereda los permisos del…"
+      }
+    ]
+  },
+  {
     "version": "1.55.66",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 8 (ABAC condicional: políticas por atributo del dato)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Contrato público consumible por Portal Cliente/ERP/integraciones con las mismas reglas que la app. Migración 116: API-keys hasheadas (SHA-256, pgcrypto) con scopes (operaciones:read/write, tms:read/write) en tms_api_keys; RPCs api_key_crear (devuelve la clave en claro una vez), api_key_revocar, api_keys_listar,…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.52",
-    "fecha": "2026-07-18",
-    "titulo": "Capgo/OTA — mejoras (dispositivo + panel + gobernanza)",
-    "cambios": [
-      {
-        "texto": "A · Dispositivo: mobileService.buscarActualizacion() (busca e instala a demanda) y versionOTA() (versión/canal vigentes); en CanalOTA se muestra la versión OTA/nativa/canal y un botón Buscar actualización. Los auto-updates ahora se auditan (registrar_ota_aplicado → fila canal='aplicado'). B · Panel (DespliegueOTA):…"
       }
     ]
   }

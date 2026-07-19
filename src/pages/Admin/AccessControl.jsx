@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, Shield, KeyRound, Target, Monitor, ScrollText, Gauge, FlaskConical } from 'lucide-react';
+import { Users as UsersIcon, Shield, KeyRound, Target, Monitor, ScrollText, Gauge, FlaskConical, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import UsersPage from './Users';
 import RolesPage from './Roles';
@@ -9,6 +9,7 @@ import SesionesPage from './Sesiones';
 import AuditoriaPage from './Auditoria';
 import EscalaPage from './Escala';
 import PoliticasPage from './Politicas';
+import DelegacionesPage from './Delegaciones';
 
 // Control de Accesos UNIFICADO (Identity & Security): Usuarios, Roles, Ámbitos,
 // Sesiones y Auditoría en una sola sección con pestañas. /admin/users y
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'auditoria', label: 'Auditoría', icon: ScrollText, path: '/admin/roles?vista=auditoria', soloAdmin: true },
   { id: 'escala', label: 'Escala', icon: Gauge, path: '/admin/roles?vista=escala', soloAdmin: true },
   { id: 'politicas', label: 'Políticas', icon: FlaskConical, path: '/admin/roles?vista=politicas', soloAdmin: true },
+  { id: 'delegaciones', label: 'Delegaciones', icon: UserCheck, path: '/admin/roles?vista=delegaciones', soloAdmin: true },
 ];
 
 export default function AccessControl() {
@@ -32,7 +34,7 @@ export default function AccessControl() {
   const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const enRoles = location.pathname.includes('/roles');
   const vista = new URLSearchParams(location.search).get('vista');
-  const vistasValidas = ['scopes', 'sesiones', 'auditoria', 'escala', 'politicas'];
+  const vistasValidas = ['scopes', 'sesiones', 'auditoria', 'escala', 'politicas', 'delegaciones'];
   const tab = enRoles ? (vistasValidas.includes(vista) ? vista : 'roles') : 'usuarios';
 
   return (
@@ -68,6 +70,7 @@ export default function AccessControl() {
       {tab === 'auditoria' && (esAdmin ? <AuditoriaPage /> : <RolesPage embedded />)}
       {tab === 'escala' && (esAdmin ? <EscalaPage /> : <RolesPage embedded />)}
       {tab === 'politicas' && (esAdmin ? <PoliticasPage /> : <RolesPage embedded />)}
+      {tab === 'delegaciones' && (esAdmin ? <DelegacionesPage /> : <RolesPage embedded />)}
     </div>
   );
 }
