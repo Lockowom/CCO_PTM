@@ -13,7 +13,18 @@ export async function estadoMFA() {
 }
 
 // Inicia el enrolamiento TOTP → devuelve { factorId, qr, secret, uri }.
+// Antes de enrolar LIMPIA cualquier factor sin verificar (evita el error
+// "A factor with the friendly name … already exists" cuando se abandonó un
+// intento previo sin cancelar). Los factores YA verificados no se tocan.
 export async function enrolarTOTP(friendlyName = 'CCO Authenticator') {
+  try {
+    const { data: fs } = await supabase.auth.mfa.listFactors();
+    const pendientes = (fs?.all || fs?.totp || []).filter((f) => f.status !== 'verified');
+    for (const f of pendientes) {
+      await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => {});
+    }
+  } catch { /* si falla el listado, seguimos e intentamos enrolar igual */ }
+
   const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName });
   if (error) throw error;
   return { factorId: data.id, qr: data.totp?.qr_code, secret: data.totp?.secret, uri: data.totp?.uri };

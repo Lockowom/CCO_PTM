@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.69",
+    "fecha": "2026-07-19",
+    "titulo": "Fix MFA — enrolamiento auto-limpia factores pendientes",
+    "cambios": [
+      {
+        "texto": "Al reintentar activar 2FA tras abandonar un intento (sin \"Cancelar\"), quedaba un factor unverified y Supabase rechazaba el nuevo con *\"A factor with the friendly name … already exists\"*. src/services/securityService.js (enrolarTOTP) ahora lista y des-enrola los factores sin verificar antes de enrolar (los verificados…"
+      }
+    ]
+  },
+  {
     "version": "1.55.68",
     "fecha": "2026-07-19",
     "titulo": "IAM — Primer enforcement REAL de ámbitos (Panel/N.V. por centro de costo)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "(2) NotificationBell en el Navbar (todos los usuarios): campana con contador de no leídas que abre un panel con mis_notificaciones() (in-app del Centro de Notificaciones), marcar leída/todas y \"Ver todas →\". Poll cada 45 s. Hace visible el Centro de Notificaciones que ya operaba por debajo. (3) Métricas / SLA:…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.54",
-    "fecha": "2026-07-18",
-    "titulo": "Capgo/OTA v2 — más mejoras al panel de despliegue",
-    "cambios": [
-      {
-        "texto": "(src/components/DespliegueOTA.jsx). (1) Adopción: barra con % de equipos que ya corren la versión de producción (desde ota_dispositivos_resumen). (2) Avisar por push al promover: checkbox en el modal de confirmación que, tras promover, envía un push \"Nueva versión disponible\" vía la Edge notify-inventario (Capgo/FCM).…"
       }
     ]
   }
