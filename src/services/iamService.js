@@ -83,3 +83,20 @@ export async function bulkUsuarios(rows) {
   if (error) return { ok: false, error: error.message };
   return data || { ok: true };
 }
+
+// ── Fase 8: Políticas condicionales (ABAC) ──────────────────────────────────
+export async function listarPolicies() {
+  const { data, error } = await supabase.rpc('iam_policies');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const guardarPolicy = (p) => rpc('iam_policy_guardar', { p });
+export const togglePolicy = (id, activo) => rpc('iam_policy_toggle', { p_id: id, p_activo: activo });
+
+// Probador del ejemplo N.V.: ¿puede el usuario (o yo) editar la N.V. p_id?
+export async function probarEditarNV(id, uid = null) {
+  const { data, error } = await supabase.rpc('iam_puede_editar_nv', { p_id: id, p_uid: uid });
+  if (error) throw error;
+  return data;
+}

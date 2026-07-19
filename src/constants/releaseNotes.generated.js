@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.66",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 8 (ABAC condicional: políticas por atributo del dato)",
+    "cambios": [
+      {
+        "texto": "Migración 130. Motor de políticas con DSL en JSON evaluado en el servidor: tabla iam.policies (recurso, accion, condicion jsonb, activo); authz.user_context(uid) (rol, es_admin, sin_limite_centro, centros_costo), authz.eval_condition(cond, ctx, row) (combinadores all/any/not + hojas {attr, op, value} con ops…"
+      }
+    ]
+  },
+  {
     "version": "1.55.65",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 7 (Escala)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "A · Dispositivo: mobileService.buscarActualizacion() (busca e instala a demanda) y versionOTA() (versión/canal vigentes); en CanalOTA se muestra la versión OTA/nativa/canal y un botón Buscar actualización. Los auto-updates ahora se auditan (registrar_ota_aplicado → fila canal='aplicado'). B · Panel (DespliegueOTA):…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.51",
-    "fecha": "2026-07-18",
-    "titulo": "Motores de plataforma — Motor de Eventos + Centro de Notificaciones",
-    "cambios": [
-      {
-        "texto": "(blueprint §7.2/§7.4). Migración 114: dominio_eventos (append-only) se alimenta SOLO desde workflow_history por trigger → un hecho de negocio = un evento WORKFLOW.accion (OT.registrar_pod, TICKET_PV.crear, NV.avanzar…); reusa todo el cableado de la Fase 2. Centro de Notificaciones: notificacion_regla…"
       }
     ]
   }

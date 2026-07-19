@@ -934,9 +934,13 @@ A las fases de la Parte I se suman:
 - **Fase 4.5 — Org units & principals.** `departamentos/bodegas/teams`; generalizar
   `user_roles`→`assignments` (principal user/team/dept/group); UI de estructura.
 - **Fase 4.6 — Grupos dinámicos.** `groups` + motor de reglas + refresh; UI de reglas.
-- **Fase 8 — ABAC condicional.** `policies` + `eval_condition` + `user_context`;
-  editor de políticas; encajar en RLS de las tablas críticas (NV primero, con tu
-  ejemplo). *Este es el diferenciador enterprise.*
+- **Fase 8 — ABAC condicional.** ✅ HECHA (v1.55.66, migración `130`). `iam.policies`
+  (DSL JSON) + `authz.user_context` + `authz.eval_condition` (all/any/not + hojas con
+  ops y refs `ctx.*`/`row.*`) + `authz.policy_check`. Ejemplo NV sembrado
+  `nv_editar_ambito` + `iam_puede_editar_nv(id,uid)` (mismo centro **o** global ∧ no
+  despachada) — tabla de verdad verificada. Editor + **probador** en la pestaña
+  Políticas. Enforcement **opt-in** (sin RLS de dominio todavía, como Fase 4); encajar
+  en RLS de las tablas críticas queda para consolidación. *Diferenciador enterprise.*
 - **Fase 9 — Delegación & sustituciones.** `delegations` + rama en la vista efectiva +
   auditoría "por delegación"; UI de vacaciones/cobertura.
 
