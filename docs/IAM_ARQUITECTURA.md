@@ -1,10 +1,27 @@
-# CCO IAM — Arquitectura de Identidad y Accesos (Enterprise)
+# CCO — Módulo Identity & Security (Enterprise)
 
-> Blueprint de rediseño del sistema de **Usuarios · Roles · Permisos · Scopes ·
-> Workflow · Auditoría · Sesiones**. No es un CRUD: es un **IAM** modelo
-> RBAC + ABAC (scopes) + Workflow-permissions, sobre Supabase/PostgreSQL con RLS,
-> preparado para MFA/OAuth/SSO. Diseñado para escalar años (500+ usuarios, 100+
-> roles, 1000+ permisos, multi-empresa/sucursal/bodega/cliente) **sin rediseñar**.
+> CCO dejó de ser "una app con usuarios": es un **ERP vertical logístico** (15+
+> dominios). Por eso el módulo no se llama *Usuarios* sino **Identity & Security**,
+> con el nivel de SAP EWM / Manhattan WMS / Oracle WMS. Tres capas de control:
+> **RBAC** (qué puede hacer) + **ABAC** (sobre qué datos, con *condiciones* de
+> atributo, no solo scope) + **Workflow Engine** (si puede mover un proceso de un
+> estado a otro). Sobre Supabase/PostgreSQL + RLS; MFA/OAuth/SSO. Escala años
+> (500+ usuarios, 100+ roles, 1000+ permisos, multi-empresa/sucursal/bodega/cliente)
+> **sin rediseñar**.
+>
+> **Componentes del módulo:** Usuarios · Roles · Permisos · Equipos · Departamentos ·
+> Empresas · Sucursales · Centros de Distribución · Bodegas · Scopes · **Políticas
+> ABAC condicionales** · Workflow Permissions · Grupos dinámicos · Delegación
+> temporal · Sustituciones (vacaciones) · Sesiones · MFA · API Keys · OAuth/SSO ·
+> Historial de accesos · Auditoría/Bitácora · Menú dinámico.
+>
+> Estructura: la **Parte I** (§0–§17) define el núcleo RBAC + scopes + workflow +
+> auditoría. La **Parte II** (§18–§24) lo eleva a Identity & Security enterprise
+> (org units, grupos dinámicos, delegación/sustitución y **ABAC condicional**).
+>
+> **Regla firme (petición del owner):** el rediseño es **ADITIVO, no destructivo**.
+> Los usuarios, roles y permisos actuales **se conservan y se migran** (§17); lo
+> nuevo se agrega encima. Nadie pierde acceso.
 >
 > **Nota de stack.** El diseño de BD (Supabase/Postgres/RLS) es idéntico para
 > cualquier front. La capa de aplicación se especifica en TypeScript (Next 16 /
@@ -649,5 +666,240 @@ Auditoría. (Primero la **decisión** y la **guarda**; las pantallas de gestión
 > **formaliza, generaliza (scopes) y desacopla** para escala enterprise — no parte de cero.
 
 ---
-*Documento de arquitectura. Fuente de verdad junto a `ARQUITECTURA_CCO.md` (§4/§7).
-Actualizar al implementar cada fase.*
+
+# Parte II — Identity & Security enterprise
+
+## 18. Unidades organizacionales (org units)
+
+Jerarquía de scope + estructura de personas. El scope de un acceso puede apuntar a
+cualquiera de estos niveles.
+
+```
+Empresa
+ └─ Departamento           (Operaciones, Calidad, TMS, Post-Venta, TI…)
+ └─ Sucursal
+     └─ Centro de Distribución (CD)
+         └─ Bodega
+Equipo (Team)               (transversal: p.ej. "Choferes Zona Norte")
+```
+
+```sql
+create table iam.departamentos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references iam.empresas(id) on delete restrict,
+  codigo text not null, nombre text not null, activo boolean default true,
+  unique (empresa_id, codigo)
+);
+create table iam.bodegas (
+  id uuid primary key default gen_random_uuid(),
+  cd_id uuid not null references iam.centros_distribucion(id) on delete restrict,
+  codigo text not null, nombre text not null, activo boolean default true,
+  unique (cd_id, codigo)
+);
+-- Equipos (agrupación de personas, transversal a la jerarquía)
+create table iam.teams (
+  id uuid primary key default gen_random_uuid(),
+  codigo text unique not null, nombre text not null,
+  departamento_id uuid references iam.departamentos(id),
+  lider_id uuid references iam.users(id), activo boolean default true
+);
+create table iam.team_members (
+  team_id uuid references iam.teams(id) on delete cascade,
+  user_id uuid references iam.users(id) on delete cascade,
+  primary key (team_id, user_id)
+);
+```
+Se extiende el enum de scope: `iam.scope_type = (global, empresa, departamento,
+sucursal, cd, bodega, cliente, transportista)`. `authz.scope_matches` expande la
+jerarquía (empresa ⊇ depto/sucursal ⊇ cd ⊇ bodega).
+
+## 19. Principals: asignar roles a usuario, equipo, departamento o grupo
+
+El acceso no se asigna solo a usuarios: también a **equipos/departamentos/grupos**
+(un rol al equipo "Choferes" y todos sus miembros lo heredan). Se generaliza
+`user_roles` → **`assignments`**:
+
+```sql
+create type iam.principal_type as enum ('user','team','department','group');
+create table iam.assignments (
+  id uuid primary key default gen_random_uuid(),
+  principal_type iam.principal_type not null,
+  principal_id uuid not null,                 -- user/team/department/group
+  role_id uuid not null references iam.roles(id) on delete cascade,
+  scope_type iam.scope_type not null default 'global',
+  scope_id uuid,
+  granted_by uuid, granted_at timestamptz default now(), expires_at timestamptz,
+  unique (principal_type, principal_id, role_id, scope_type, scope_id),
+  check (scope_type='global' or scope_id is not null)
+);
+create index on iam.assignments (principal_type, principal_id);
+```
+La vista de permisos efectivos resuelve **todos los principals del usuario**
+(él mismo + sus equipos + su departamento + sus grupos + delegaciones activas):
+
+```sql
+create or replace view iam.user_effective_permissions as
+with principals as (
+  select u.id as user_id, 'user'::iam.principal_type pt, u.id pid from iam.users u
+  union all select tm.user_id, 'team', tm.team_id from iam.team_members tm
+  union all select u.id, 'department', d.id from iam.users u
+    join iam.sucursales s on s.id=u.sucursal_id  -- depto por estructura, o tabla puente
+    join iam.departamentos d on d.empresa_id=u.empresa_id
+  union all select gm.user_id, 'group', gm.group_id from iam.group_members gm
+)
+select pr.user_id, p.codigo as permission, a.scope_type, a.scope_id
+from principals pr
+join iam.assignments a on a.principal_type=pr.pt and a.principal_id=pr.pid
+join iam.role_permissions rp on rp.role_id=a.role_id
+join iam.permissions p on p.id=rp.permission_id
+where a.expires_at is null or a.expires_at>now();
+```
+
+## 20. Grupos dinámicos
+
+Grupos cuya membresía se **calcula por reglas de atributo** (no manual). Ej.:
+"todos los usuarios con cargo *Chofer* en Sucursal Norte".
+
+```sql
+create table iam.groups (
+  id uuid primary key default gen_random_uuid(),
+  codigo text unique not null, nombre text not null,
+  tipo text not null default 'static' check (tipo in ('static','dynamic')),
+  regla jsonb,                 -- predicado de atributos (solo dynamic)
+  activo boolean default true
+);
+create table iam.group_members (
+  group_id uuid references iam.groups(id) on delete cascade,
+  user_id  uuid references iam.users(id) on delete cascade,
+  dinamico boolean default false,   -- true = calculado
+  primary key (group_id, user_id)
+);
+```
+La membresía dinámica se **materializa** por trigger/cron: `iam.refresh_dynamic_group(g)`
+evalúa `regla` contra `iam.users` y sincroniza `group_members(dinamico=true)`. Regla
+ejemplo: `{"all":[{"attr":"cargo","op":"eq","value":"Chofer"},{"attr":"sucursal_id","op":"eq","value":"<uuid>"}]}`.
+
+## 21. Delegación temporal y sustituciones (vacaciones)
+
+- **Delegación**: un usuario cede *algunos* roles a otro por una ventana temporal.
+- **Sustitución**: cobertura por ausencia (vacaciones) — el sustituto hereda los
+  roles del titular durante el rango.
+
+```sql
+create table iam.delegations (
+  id uuid primary key default gen_random_uuid(),
+  tipo text not null check (tipo in ('delegacion','sustitucion')),
+  de_user   uuid not null references iam.users(id) on delete cascade,   -- titular
+  para_user uuid not null references iam.users(id) on delete cascade,   -- sustituto
+  roles uuid[],                       -- null = todos los del titular
+  scope_type iam.scope_type, scope_id uuid,  -- opcional: acotar la delegación
+  desde timestamptz not null, hasta timestamptz not null,
+  motivo text, activo boolean default true, creado_por uuid,
+  check (hasta > desde)
+);
+create index on iam.delegations (para_user) where activo;
+```
+La vista efectiva añade una rama: si existe delegación **activa y vigente** con
+`para_user = auth.uid()`, el sustituto obtiene los roles del titular (los indicados o
+todos) durante `[desde, hasta]`. Todo lo actuado bajo delegación se **audita como
+"por delegación de <titular>"** (campo en `audit_log`).
+
+## 22. ABAC condicional — el corazón enterprise (estilo SAP EWM)
+
+RBAC dice *qué acción*; el **scope** dice *en qué unidad*; las **políticas** dicen
+*bajo qué condiciones del propio dato*. Aquí vive tu ejemplo:
+
+> Editar una NV **solo si**: misma sucursal **y** aún no despachada **y** el cliente
+> pertenece a la cartera del usuario.
+
+```sql
+create table iam.policies (
+  id uuid primary key default gen_random_uuid(),
+  permission_id uuid not null references iam.permissions(id) on delete cascade,
+  efecto text not null default 'allow' check (efecto in ('allow','deny')),
+  prioridad int not null default 100,        -- deny gana; menor prioridad primero
+  condicion jsonb not null,                  -- DSL de predicados
+  descripcion text, activo boolean default true
+);
+create index on iam.policies (permission_id) where activo;
+```
+
+**DSL de condición** (JSON, evaluable en SQL y en TS):
+```json
+{ "all": [
+  { "attr": "sucursal_id", "op": "eq",     "from": "user.sucursal_id" },
+  { "attr": "estado",      "op": "not_in", "value": ["despachado","en_ruta","entregado","cerrado"] },
+  { "attr": "cliente_id",  "op": "in",     "from": "user.cartera_clientes" }
+]}
+```
+- `attr` = atributo del **recurso** (la fila). `from` = atributo del **contexto del
+  usuario** (sucursal, cartera…). `op` ∈ {eq, ne, in, not_in, gt, lt, contains, is_owner}.
+- Combinadores `all` (AND) / `any` (OR) / `not`, anidables.
+
+**Motor de evaluación** (una función, usada por RLS y RPC):
+```sql
+create or replace function authz.policy_check(
+  p_permission text, p_resource jsonb, p_user_ctx jsonb default null
+) returns boolean language plpgsql stable security definer as $$
+declare pol iam.policies; ctx jsonb := coalesce(p_user_ctx, authz.user_context());
+  hay_allow boolean := false;
+begin
+  for pol in
+    select * from iam.policies pl join iam.permissions p on p.id=pl.permission_id
+    where p.codigo=p_permission and pl.activo order by pl.prioridad
+  loop
+    if authz.eval_condition(pol.condicion, p_resource, ctx) then
+      if pol.efecto='deny' then return false; end if;   -- deny explícito corta
+      hay_allow := true;
+    end if;
+  end loop;
+  -- sin políticas para el permiso ⇒ solo RBAC+scope deciden (true).
+  return (not exists (select 1 from iam.policies pl join iam.permissions p on p.id=pl.permission_id
+                      where p.codigo=p_permission and pl.activo)) or hay_allow;
+end $$;
+```
+`authz.user_context()` arma `{ user_id, sucursal_id, cd_id, empresa_id,
+cartera_clientes: [...], ... }`. `authz.eval_condition` interpreta el DSL.
+
+**RLS combinada (RBAC + scope + ABAC)** — la policy real de la NV:
+```sql
+create policy nv_update on public.tms_operaciones for update to authenticated
+using ( authz.has_permission('nv.update', 'sucursal', sucursal_id)          -- RBAC + scope
+        and authz.policy_check('nv.update', to_jsonb(tms_operaciones.*)) );  -- ABAC condicional
+```
+La misma condición se refleja en la UI (`useAuthz().canOn('nv.update', nv)`) para
+deshabilitar el botón — pero **la BD es la que garantiza**.
+
+## 23. Decisión unificada (las 3 capas en una llamada)
+
+```
+authz.authorize(permission, resource?, scope?) =
+      has_permission(permission, scope)      -- RBAC + scope (ABAC de unidad)
+  AND policy_check(permission, resource)     -- ABAC condicional (atributos del dato)
+  AND (si es transición) can_transition(...)  -- Workflow
+```
+Un único punto (`authz.authorize`) usado por RLS, RPC, middleware y hooks. El front
+expone `can()` (permiso), `canOn(perm, recurso)` (permiso+condición) y
+`canTransition()`.
+
+## 24. Roadmap ampliado (Identity & Security)
+
+A las fases de la Parte I se suman:
+- **Fase 4.5 — Org units & principals.** `departamentos/bodegas/teams`; generalizar
+  `user_roles`→`assignments` (principal user/team/dept/group); UI de estructura.
+- **Fase 4.6 — Grupos dinámicos.** `groups` + motor de reglas + refresh; UI de reglas.
+- **Fase 8 — ABAC condicional.** `policies` + `eval_condition` + `user_context`;
+  editor de políticas; encajar en RLS de las tablas críticas (NV primero, con tu
+  ejemplo). *Este es el diferenciador enterprise.*
+- **Fase 9 — Delegación & sustituciones.** `delegations` + rama en la vista efectiva +
+  auditoría "por delegación"; UI de vacaciones/cobertura.
+
+**Prioridad recomendada:** Parte I (Fase 0→3) primero — da la base RBAC + scopes +
+workflow que ya casa con el CCO actual. Luego **ABAC condicional (Fase 8)** porque es
+lo que te falta para el nivel SAP/Manhattan (el ejemplo NV). Org units, grupos y
+delegación se intercalan según necesidad operativa.
+
+---
+*Documento de arquitectura (Identity & Security). Fuente de verdad junto a
+`ARQUITECTURA_CCO.md` (§4/§7). Aditivo y no destructivo. Actualizar al implementar
+cada fase.*
