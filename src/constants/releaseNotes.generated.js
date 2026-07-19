@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.60",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 2 (cliente consume el IAM + primitivas de guarda)",
+    "cambios": [
+      {
+        "texto": "El cliente pasa a leer los permisos efectivos del IAM vía la RPC iam_me() (Fase 1): src/context/AuthContext.jsx (loadRoleConfig) llama iam_me y usa sus permisos en UNIÓN con el permisos_json legado como red de seguridad — idéntico al gate del servidor (IAM ∨ legado) → el cliente nunca muestra menos permisos que antes,…"
+      }
+    ]
+  },
+  {
     "version": "1.55.59",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 1 (Authorization Service: IAM como espejo vivo)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "La pantalla src/pages/Admin/Workflows.jsx desperdiciaba el ancho (listas sueltas). Ahora el protagonista es un diagrama SVG de la máquina: los estados se dibujan como nodos (color propio, badges INICIAL/FINAL) posicionados por orden, con flechas de transición etiquetadas con su acción — avance (recta), salto (arco…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.45",
-    "fecha": "2026-07-18",
-    "titulo": "Workflow Engine — Fase 2 completa: Calidad y Conteo cableados (los 5 procesos)",
-    "cambios": [
-      {
-        "texto": "Migración 112: se sacan de esqueleto CALIDAD (flag de producto tms_calidad_flags.estado_calidad: EN_AUDITORIA → CUARENTENA/LIBERADO/MALO, 4 estados/7 transiciones) y CONTEO (sesión tms_conteo_sesiones.estado: abierta ⇄ cerrada, 2/3) — con sus definiciones sembradas y triggers que espejan alta + cambio de estado en…"
       }
     ]
   }

@@ -622,9 +622,15 @@ sobre `permisos_json` (canónico y espejado); se encaminan por `authz.has_permis
 en una fase posterior. 9. `iam_me()` RPC ✅. 10. **RLS por permiso** en tablas de
 dominio (empezando por las críticas), retirando `USING(true)` — pendiente (fase futura).
 
-**Fase 2 — Cliente / menú dinámico.**
-11. `authzClient` + `useAuthz` + `<Can>` + `<RequirePermission>`. 12. `useNavigation`
-(sidebar derivado de permisos) — retira el menú hardcodeado. 13. Middleware server.
+**Fase 2 — Cliente / menú dinámico.** ✅ HECHA (v1.55.60).
+11. `useAuthz` + `<Can>` + `<RequirePermission>` (`src/components/authz/index.jsx`),
+capa sobre `AuthContext` ✅. El cliente consume el IAM: `AuthContext.loadRoleConfig`
+llama `iam_me()` y usa sus permisos en **unión con `permisos_json` legado** (red de
+seguridad, igual que el gate del servidor) ✅. 12. El menú y el guard de rutas ya
+derivan de `hasPermission` (un solo origen) — el `menuCategories` de `Navbar.jsx` es
+estructura estática pero su **visibilidad es 100% permission-derived**; NO se hace un
+rewrite riesgoso a `useNavigation`, se conserva el patrón vigente. 13. Middleware
+server — N/A (SPA + RLS; la autorización real vive en el servidor vía RPCs/gates).
 
 **Fase 3 — Workflow Permissions.**
 14. `iam.workflows/states/transitions/history` (migrar desde `workflow_*` actual).

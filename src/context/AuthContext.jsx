@@ -21,6 +21,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [landingPage, setLandingPage] = useState('/');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,36 +33,55 @@ export const AuthProvider = ({ children }) => {
   // si el usuario ya está cargado.
   const loadedEmailRef = useRef(null);
 
-  // ── Cargar configuración de rol ──
+  // ── Cargar configuración de rol (permisos + landing) ──
+  // Fuente AUTORITATIVA de permisos: el IAM (`iam_me()` → permisos efectivos),
+  // que en el servidor es un espejo vivo de `tms_roles.permisos_json` (Fase 1,
+  // migración 122). Se combina en UNIÓN con el `permisos_json` legado como RED
+  // DE SEGURIDAD — igual que el gate `usuario_tiene_algun_permiso` (IAM ∨ legado)
+  // → el cliente NUNCA muestra menos permisos que hoy, cero bloqueos. El
+  // `landing_page` sigue viniendo de `tms_roles` (el IAM no lo maneja aún).
   const loadRoleConfig = useCallback(async (rolId) => {
     if (!rolId) {
       setPermissions([]);
+      setRoles([]);
       setLandingPage('/');
       return { permissions: [], landingPage: '/' };
     }
 
+    // 1) Legado + landing desde tms_roles (respaldo garantizado).
+    let legacyPerms = [];
+    let landing = '/';
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('tms_roles')
         .select('permisos_json, landing_page')
         .eq('id', rolId)
         .single();
+      legacyPerms = Array.isArray(data?.permisos_json) ? data.permisos_json : [];
+      landing = data?.landing_page || '/';
+    } catch { /* respaldo vacío; el IAM puede cubrir */ }
 
-      if (error) throw error;
+    // 2) IAM efectivo (autoritativo). Si falla, se usa solo el legado.
+    let iamPerms = null;
+    let iamRoles = null;
+    try {
+      const { data: me, error: meErr } = await supabase.rpc('iam_me');
+      if (!meErr && me && Array.isArray(me.permisos)) {
+        iamPerms = me.permisos;
+        if (Array.isArray(me.roles) && me.roles.length) iamRoles = me.roles;
+      }
+    } catch { /* usa respaldo legado */ }
 
-      const perms = data?.permisos_json || [];
-      const landing = data?.landing_page || '/';
+    // Unión IAM ∨ legado (idéntico al gate del servidor).
+    const perms = iamPerms
+      ? Array.from(new Set([...iamPerms, ...legacyPerms]))
+      : legacyPerms;
 
-      setPermissions(perms);
-      setLandingPage(landing);
+    setPermissions(perms);
+    setRoles(iamRoles ?? [rolId]);
+    setLandingPage(landing);
 
-      return { permissions: perms, landingPage: landing };
-
-    } catch (err) {
-      setPermissions([]);
-      setLandingPage('/');
-      return { permissions: [], landingPage: '/' };
-    }
+    return { permissions: perms, landingPage: landing };
   }, []);
 
   const refreshPermissions = useCallback(async () => {
@@ -213,6 +233,7 @@ export const AuthProvider = ({ children }) => {
           loadedEmailRef.current = null;
           setUser(null);
           setPermissions([]);
+          setRoles([]);
           setLandingPage('/');
         } else if (event === 'SIGNED_IN' && session?.user?.email) {
           // Deduplicar: si login() ya cargó este perfil, no re-cargar.
@@ -386,6 +407,7 @@ export const AuthProvider = ({ children }) => {
     loadedEmailRef.current = null;
     setUser(null);
     setPermissions([]);
+    setRoles([]);
     localStorage.removeItem('currentUser'); // Limpiar legacy
 
     // Limpieza que REQUIERE el token (debe correr ANTES de signOut, que lo destruye):
@@ -505,6 +527,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       permissions,
+      roles,
       landingPage,
       loading,
       error,
