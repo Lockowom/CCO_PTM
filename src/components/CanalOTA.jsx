@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Smartphone, RefreshCw, FlaskConical, ShieldCheck } from 'lucide-react';
+import { Smartphone, RefreshCw, FlaskConical, ShieldCheck, DownloadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-import { getOTAChannel, setOTAChannel } from '../services/mobileService';
+import { getOTAChannel, setOTAChannel, versionOTA, buscarActualizacion } from '../services/mobileService';
 
 /**
  * Selector de canal OTA de ESTE dispositivo (solo app Android).
@@ -13,13 +13,25 @@ import { getOTAChannel, setOTAChannel } from '../services/mobileService';
 const CanalOTA = () => {
   const [canal, setCanal] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [ver, setVer] = useState(null);
+  const [buscando, setBuscando] = useState(false);
 
   const nativo = Capacitor.isNativePlatform();
 
   useEffect(() => {
     if (!nativo) return;
     getOTAChannel().then(setCanal);
+    versionOTA().then(setVer);
   }, [nativo]);
+
+  const buscar = async () => {
+    setBuscando(true);
+    const r = await buscarActualizacion();
+    setBuscando(false);
+    if (r.estado === 'aplicando') toast.success(`Actualizando a ${r.version}…`);
+    else if (r.estado === 'al-dia') toast.success('Ya tienes la última versión.');
+    else if (r.estado === 'error') toast.error(`No se pudo buscar: ${r.detalle || ''}`);
+  };
 
   if (!nativo) return null; // en web no aplica
 
@@ -64,6 +76,19 @@ const CanalOTA = () => {
             {busy && !esBeta ? <RefreshCw size={13} className="animate-spin" /> : <FlaskConical size={13} />} Beta (pruebas)
           </button>
         </div>
+      </div>
+
+      {/* Versión vigente + buscar actualización */}
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-[11px] text-slate-500">
+          Versión OTA: <b className="text-slate-700 font-mono">{ver?.bundle || 'builtin'}</b>
+          {ver?.native && <span className="text-slate-400"> · nativa {ver.native}</span>}
+          {ver?.channel && <span className="text-slate-400"> · canal {ver.channel}</span>}
+        </p>
+        <button onClick={buscar} disabled={buscando}
+          className="px-3 py-1.5 rounded-lg text-xs font-black inline-flex items-center gap-1.5 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-60">
+          {buscando ? <RefreshCw size={13} className="animate-spin" /> : <DownloadCloud size={13} />} Buscar actualización
+        </button>
       </div>
     </div>
   );

@@ -62,6 +62,9 @@ export const initOTAUpdates = async () => {
         });
       }
 
+      // Auditar la versión que el dispositivo va a aplicar (inventario OTA).
+      try { await supabase.rpc('registrar_ota_aplicado', { p_version: bundleInfo?.version || '?', p_detalle: 'auto-update' }); } catch { /* no romper */ }
+
       // Aplicar automáticamente después de 4 segundos
       // El overlay ya está visible, el usuario sabe qué pasa
       setTimeout(async () => {
@@ -109,6 +112,34 @@ const applyUpdate = async (bundleId) => {
 };
 
 // ── Aplicar update manualmente (desde botón UI) ──
+// Versión/canal OTA vigente en ESTE dispositivo (para mostrar en la app).
+export const versionOTA = async () => {
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    const cur = await CapacitorUpdater.current();
+    let channel = null;
+    try { const c = await CapacitorUpdater.getChannel(); channel = c?.channel; } catch { /* sin canal */ }
+    return { bundle: cur?.bundle?.version || null, native: cur?.native || null, channel };
+  } catch { return null; }
+};
+
+// Busca e instala una actualización OTA a demanda (botón "Buscar actualización").
+export const buscarActualizacion = async () => {
+  if (!Capacitor.isNativePlatform()) return { estado: 'no-nativo' };
+  try {
+    const latest = await CapacitorUpdater.getLatest();
+    if (latest?.error) return { estado: 'error', detalle: latest.error };
+    if (!latest?.url) return { estado: 'al-dia', version: latest?.version };
+    const bundle = await CapacitorUpdater.download({ version: latest.version, url: latest.url });
+    if (updateCallback) updateCallback({ version: latest.version, bundleId: bundle?.id });
+    try { await supabase.rpc('registrar_ota_aplicado', { p_version: latest.version, p_detalle: 'manual' }); } catch { /* no romper */ }
+    await CapacitorUpdater.set({ id: bundle.id });
+    return { estado: 'aplicando', version: latest.version };
+  } catch (e) {
+    return { estado: 'error', detalle: String(e?.message || e) };
+  }
+};
+
 export const applyPendingUpdate = async (bundleId) => {
   await applyUpdate(bundleId);
 };

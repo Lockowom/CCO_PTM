@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.52",
+    "fecha": "2026-07-18",
+    "titulo": "Capgo/OTA — mejoras (dispositivo + panel + gobernanza)",
+    "cambios": [
+      {
+        "texto": "A · Dispositivo: mobileService.buscarActualizacion() (busca e instala a demanda) y versionOTA() (versión/canal vigentes); en CanalOTA se muestra la versión OTA/nativa/canal y un botón Buscar actualización. Los auto-updates ahora se auditan (registrar_ota_aplicado → fila canal='aplicado'). B · Panel (DespliegueOTA):…"
+      }
+    ]
+  },
+  {
     "version": "1.55.51",
     "fecha": "2026-07-18",
     "titulo": "Motores de plataforma — Motor de Eventos + Centro de Notificaciones",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 107: tms_conductores.id y tms_rutas.id son uuid, pero tms_transporte_ordenes.conductor_id/ruta_id se habían creado como bigint (Fase 1); con la tabla vacía se cambian a uuid y se ajusta el cast de tms_orden_asignar (sin esto, asignar chofer/ruta fallaba y el filtro \"Mis órdenes\" nunca calzaba). Frontend:…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.37",
-    "fecha": "2026-07-17",
-    "titulo": "TMS (Transporte) — Fase 3: app del chofer con foto y firma (POD)",
-    "cambios": [
-      {
-        "texto": "Migración 106: bucket privado tms-pod (evidencia servida con URL firmada). Componente reutilizable src/pages/TMS/PodCapture.jsx: captura foto (cámara), firma en canvas, GPS (geolocalización) y \"recibido por\"; sube la evidencia a Storage y llama tms_orden_pod (que marca la N.V. Entregado). Se usa tanto en el drawer de…"
       }
     ]
   }

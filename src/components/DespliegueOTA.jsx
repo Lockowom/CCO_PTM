@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Rocket, RefreshCw, FlaskConical, ShieldCheck, CheckCircle2, AlertTriangle, X, Package,
+  Rocket, RefreshCw, FlaskConical, ShieldCheck, CheckCircle2, AlertTriangle, X, Package, Trash2, Smartphone, Lock, Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
-import { listarDespliegueOTA, promoverOTA } from '../services/otaDeployService';
+import { listarDespliegueOTA, promoverOTA, eliminarBundleOTA, obtenerGobernanzaOTA, guardarGobernanzaOTA, resumenDispositivosOTA } from '../services/otaDeployService';
 
 /**
  * Despliegue OTA a producción DESDE la app (solo admin / permiso `deploy_ota`).
@@ -22,6 +22,10 @@ const DespliegueOTA = () => {
   const [sel, setSel] = useState('');
   const [confirmar, setConfirmar] = useState(false);
   const [promoviendo, setPromoviendo] = useState(false);
+  const [dispos, setDispos] = useState([]);
+  const [gob, setGob] = useState({ min_version: '', obligatorio: false, mensaje: '' });
+  const [savingGob, setSavingGob] = useState(false);
+  const [delVer, setDelVer] = useState(null);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -37,9 +41,24 @@ const DespliegueOTA = () => {
       toast.error(`No se pudo consultar Capgo: ${e.message}`);
       setData({ bundles: [], channels: [] });
     } finally { setLoading(false); }
+    try { setDispos(await resumenDispositivosOTA()); } catch { /* opcional */ }
+    try { const g = await obtenerGobernanzaOTA(); if (g) setGob({ min_version: g.min_version || '', obligatorio: !!g.obligatorio, mensaje: g.mensaje || '' }); } catch { /* opcional */ }
   }, []);
 
   useEffect(() => { if (puede) cargar(); }, [puede, cargar]);
+
+  const delBundle = async (version) => {
+    setDelVer(version);
+    try { await eliminarBundleOTA(version); toast.success(`Bundle ${version} eliminado de Capgo.`); await cargar(); }
+    catch (e) { toast.error(`No se pudo eliminar: ${e.message}`); }
+    finally { setDelVer(null); }
+  };
+  const guardarGob = async () => {
+    setSavingGob(true);
+    const r = await guardarGobernanzaOTA(gob);
+    setSavingGob(false);
+    if (r?.ok) toast.success('Gobernanza de versión guardada.'); else toast.error(r?.error || 'No se pudo guardar');
+  };
 
   if (!puede) return null; // solo admin / permiso
 
@@ -119,6 +138,14 @@ const DespliegueOTA = () => {
                   </div>
                   {b.created_at && <span className="text-[11px] text-slate-400">{new Date(b.created_at).toLocaleString('es-CL')}</span>}
                 </div>
+                {!esProd && !esBeta && (
+                  <button type="button" title="Eliminar bundle de Capgo"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (window.confirm(`¿Eliminar el bundle ${b.version} de Capgo? No afecta a los canales activos.`)) delBundle(b.version); }}
+                    disabled={delVer === b.version}
+                    className="shrink-0 w-8 h-8 rounded-lg grid place-items-center text-slate-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-40">
+                    {delVer === b.version ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  </button>
+                )}
               </label>
             );
           })}
@@ -130,10 +157,45 @@ const DespliegueOTA = () => {
         <p className="text-[11px] text-slate-500">
           {sel ? <>Vas a promover <b className="text-slate-800">{sel}</b> a producción.</> : 'Selecciona una versión de la lista.'}
         </p>
-        <button onClick={() => setConfirmar(true)} disabled={!sel || promoviendo}
-          className="px-4 py-2 rounded-lg text-sm font-black inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors">
-          <Rocket size={15} /> Promover a producción
-        </button>
+        <div className="flex items-center gap-2">
+          {sel && sel !== vProd && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 rounded px-1.5 py-1">{data?.bundles?.findIndex((b) => b.version === sel) > data?.bundles?.findIndex((b) => b.version === vProd) ? '↩ rollback' : '↑ avance'}</span>}
+          <button onClick={() => setConfirmar(true)} disabled={!sel || promoviendo}
+            className="px-4 py-2 rounded-lg text-sm font-black inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+            <Rocket size={15} /> Promover a producción
+          </button>
+        </div>
+      </div>
+      <p className="text-[10px] text-slate-400 mt-1">Para <b>rollback</b>, selecciona una versión anterior a la de producción y promuévela: el canal apunta al bundle previo (sin recompilar).</p>
+
+      {/* Gobernanza de versión (mínima / obligatoria) */}
+      <div className="mt-4 rounded-lg bg-white border border-slate-200 p-3">
+        <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Lock size={12} /> Versión mínima requerida</p>
+        <div className="flex items-end gap-2 flex-wrap">
+          <label className="text-[11px] font-bold text-slate-500">Versión mínima
+            <input value={gob.min_version} onChange={(e) => setGob({ ...gob, min_version: e.target.value })} placeholder="1.55.40" className="mt-1 block w-28 border border-slate-200 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-400" />
+          </label>
+          <label className="flex items-center gap-2 text-[12px] text-slate-600 pb-1.5"><input type="checkbox" checked={gob.obligatorio} onChange={(e) => setGob({ ...gob, obligatorio: e.target.checked })} /> Obligatoria (bloquea con banner)</label>
+          <input value={gob.mensaje} onChange={(e) => setGob({ ...gob, mensaje: e.target.value })} placeholder="Mensaje para el usuario (opcional)" className="flex-1 min-w-[160px] border border-slate-200 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-400" />
+          <button onClick={guardarGob} disabled={savingGob} className="px-3 py-1.5 rounded-lg text-xs font-black inline-flex items-center gap-1.5 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"><Save size={13} /> Guardar</button>
+        </div>
+        <p className="text-[10px] text-slate-400 mt-1.5">Los dispositivos con versión inferior verán un aviso para actualizar. Deja la versión vacía para desactivar.</p>
+      </div>
+
+      {/* Inventario: versiones aplicadas por dispositivo */}
+      <div className="mt-3 rounded-lg bg-white border border-slate-200 p-3">
+        <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Smartphone size={12} /> Versiones en dispositivos ({dispos.reduce((a, d) => a + Number(d.dispositivos || 0), 0)})</p>
+        {dispos.length === 0 ? <p className="text-[12px] text-slate-400">Aún sin registros. Se llena cuando los equipos apliquen una actualización.</p> : (
+          <div className="divide-y divide-slate-100">
+            {dispos.map((d) => (
+              <div key={d.version} className="flex items-center gap-3 py-1.5 text-[12px]">
+                <span className="font-black text-slate-800 w-20">{d.version}</span>
+                <span className="text-slate-500">{d.dispositivos} equipo{Number(d.dispositivos) === 1 ? '' : 's'}</span>
+                {d.version === vProd && <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">AL DÍA</span>}
+                <span className="ml-auto text-[10px] text-slate-400">{d.ultimo_email} · {d.ultima ? new Date(d.ultima).toLocaleDateString('es-CL') : ''}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal de confirmación */}

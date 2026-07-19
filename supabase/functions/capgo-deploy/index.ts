@@ -129,7 +129,27 @@ serve(async (req) => {
       return json({ ok: true, version, channel: canal });
     }
 
-    return json({ ok: false, error: "Acción no reconocida (usa 'list' o 'promote')." }, 400);
+    // ── ELIMINAR un bundle de Capgo (limpieza de versiones viejas) ──
+    if (action === "delete") {
+      const version = String(body?.version || "").trim();
+      if (!version) return json({ ok: false, error: "Falta la versión a eliminar." }, 400);
+      let ok = true, detalle = "";
+      try {
+        await capgo(`/bundle`, {
+          method: "DELETE",
+          body: JSON.stringify({ app_id: APP_ID, version }),
+        });
+      } catch (e) {
+        ok = false; detalle = String((e as Error)?.message || e);
+      }
+      await userClient.rpc("registrar_despliegue_ota", {
+        p_version: version, p_canal: "eliminado", p_ok: ok, p_detalle: detalle || "bundle eliminado",
+      }).catch(() => {});
+      if (!ok) return json({ ok: false, error: detalle || "No se pudo eliminar el bundle." }, 502);
+      return json({ ok: true, version, deleted: true });
+    }
+
+    return json({ ok: false, error: "Acción no reconocida (usa 'list', 'promote' o 'delete')." }, 400);
   } catch (e) {
     return json({ ok: false, error: String((e as Error)?.message || e) }, 500);
   }

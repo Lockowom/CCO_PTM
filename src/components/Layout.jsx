@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import Navbar from './Navbar';
 import ErrorReportWidget from './ErrorReportWidget';
+import OtaBanner from './OtaBanner';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useLocation } from 'react-router-dom';
@@ -118,7 +119,8 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
-      
+      <OtaBanner />
+
       {/* Background Decorator - Simplificado para Legibilidad */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="layout-orb absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-slate-200/20 blur-[120px] rounded-full"></div>

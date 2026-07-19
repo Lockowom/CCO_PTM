@@ -24,3 +24,30 @@ export async function promoverOTA(version, channel = 'production') {
   if (!data?.ok) throw new Error(data?.error || 'No se pudo promover');
   return data; // { version, channel }
 }
+
+// Elimina un bundle viejo de Capgo (limpieza). No toca canales activos.
+export async function eliminarBundleOTA(version) {
+  const { data, error } = await supabase.functions.invoke('capgo-deploy', {
+    body: { action: 'delete', version },
+  });
+  if (error) throw new Error(error.message || 'No se pudo eliminar');
+  if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar');
+  return data;
+}
+
+// ── Gobernanza de versión (versión mínima / obligatoria) ────────────────────
+export async function obtenerGobernanzaOTA() {
+  const { data } = await supabase.from('tms_ota_gobernanza').select('*').eq('id', 1).maybeSingle();
+  return data;
+}
+export async function guardarGobernanzaOTA(p) {
+  const { data, error } = await supabase.rpc('ota_gobernanza_set', { p });
+  if (error) return { ok: false, error: error.message };
+  return data || { ok: true };
+}
+
+// ── Inventario: qué versión aplicó cada dispositivo (desde nuestro log) ──────
+export async function resumenDispositivosOTA() {
+  const { data } = await supabase.rpc('ota_dispositivos_resumen');
+  return data || [];
+}
