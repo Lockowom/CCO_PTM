@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.61",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 3 (Workflow Permissions: capa de decisión de transiciones)",
+    "cambios": [
+      {
+        "texto": "Migración 123. El Workflow Engine (mig 108) ya tenía la matriz transición×permiso (workflow_transition.permiso_id) y el editor visual; Fase 3 añade la función de decisión reutilizable que faltaba y la conecta al IAM: authz.can_transition(workflow, desde, accion) → boolean sin efectos (sin permiso_id → cualquier…"
+      }
+    ]
+  },
+  {
     "version": "1.55.60",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 2 (cliente consume el IAM + primitivas de guarda)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Nueva pantalla de solo lectura src/pages/Tools/FlujoMaestro.jsx (ruta /admin/flujo-maestro, menú *Configuración → Mapa de Procesos*) que renderiza el plano maestro (src/data/flujoMaestro.json, copia de docs/flujo-maestro-cco.json: 83 nodos, 108 conexiones) en un lienzo pan/zoom: nodos posicionados por sus coordenadas…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.46",
-    "fecha": "2026-07-18",
-    "titulo": "Workflows — rediseño visual: diagrama de la máquina de estados",
-    "cambios": [
-      {
-        "texto": "La pantalla src/pages/Admin/Workflows.jsx desperdiciaba el ancho (listas sueltas). Ahora el protagonista es un diagrama SVG de la máquina: los estados se dibujan como nodos (color propio, badges INICIAL/FINAL) posicionados por orden, con flechas de transición etiquetadas con su acción — avance (recta), salto (arco…"
       }
     ]
   }

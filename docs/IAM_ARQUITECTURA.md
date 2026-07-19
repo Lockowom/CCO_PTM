@@ -632,10 +632,18 @@ estructura estática pero su **visibilidad es 100% permission-derived**; NO se h
 rewrite riesgoso a `useNavigation`, se conserva el patrón vigente. 13. Middleware
 server — N/A (SPA + RLS; la autorización real vive en el servidor vía RPCs/gates).
 
-**Fase 3 — Workflow Permissions.**
-14. `iam.workflows/states/transitions/history` (migrar desde `workflow_*` actual).
-15. `authz.can_transition`. 16. Encaminar las RPC de dominio (NV, transporte, calidad,
-ticket) por `can_transition`. 17. Editor visual de transiciones × permiso.
+**Fase 3 — Workflow Permissions.** ✅ HECHA (v1.55.61, migración `123`).
+14. Las tablas `workflow_*` (mig 108) siguen siendo la fuente canónica — NO se crea
+copia `iam.*` redundante (misma decisión que en Fase 1). 15. **`authz.can_transition`**
+(workflow, desde, accion) ✅ — decisión sin efectos que reusa el gate IAM
+(`usuario_tiene_algun_permiso`). 16. **`wf_transicionar` re-centrado** sobre
+`authz.can_transition` ✅ (regla única). Los procesos de dominio (OT/NV/CALIDAD/CONTEO/
+TICKET_PV) emiten a `workflow_history`; encaminar TODAS sus RPC por `can_transition`
+queda para una fase de consolidación (hoy conservan sus asserts de dominio, que ya
+leen el IAM vía `permisos_json` espejado). 17. **Editor visual de transiciones × permiso**
+ya existía (`Admin → Workflows`, `TransModal` con selector de permiso); Fase 3 le suma
+un **Simulador de permisos** (`wf_acciones_disponibles`) que evalúa en vivo qué acciones
+puede ejecutar el usuario en sesión desde cada estado.
 
 **Fase 4 — Scopes (ABAC).**
 18. Poblar `scope_id` en asignaciones. 19. Añadir `sucursal_id/cd_id` (dueño de scope)

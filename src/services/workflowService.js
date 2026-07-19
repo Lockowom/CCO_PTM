@@ -48,3 +48,14 @@ export const guardarTransicion  = (p)             => rpc('wf_guardar_transicion'
 export const eliminarTransicion = (id)            => rpc('wf_eliminar_transicion', { p_id: id });
 export const transicionar = (workflow, entidadId, desde, accion, nota) =>
   rpc('wf_transicionar', { p_workflow: workflow, p_entidad_id: entidadId, p_desde: desde || null, p_accion: accion, p_nota: nota || null });
+
+// Acciones disponibles desde un estado, con flag `permitida` para el usuario en
+// sesión (Fase 3 · Workflow Permissions → authz.can_transition). Devuelve
+// [{ id, accion, hasta, hasta_etiqueta, permiso_id, permitida }].
+export async function accionesDisponibles(workflow, desde) {
+  const { data, error } = await supabase.rpc('wf_acciones_disponibles', {
+    p_workflow: workflow, p_desde: desde || null,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}

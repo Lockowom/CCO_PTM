@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Workflow as WorkflowIcon, Plus, X, Trash2, Pencil, ArrowRight, Circle, Flag, History, GitBranch, ShieldCheck, Layers, Share2 } from 'lucide-react';
+import { Workflow as WorkflowIcon, Plus, X, Trash2, Pencil, ArrowRight, Circle, Flag, History, GitBranch, ShieldCheck, Layers, Share2, Lock, CheckCircle2, PlayCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   listarDefiniciones, listarEstados, listarTransiciones, listarHistorial, listarPermisos,
   guardarDefinicion, eliminarDefinicion, guardarEstado, eliminarEstado, guardarTransicion, eliminarTransicion,
+  accionesDisponibles,
 } from '../../services/workflowService';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }); };
@@ -133,6 +134,60 @@ function WorkflowDiagram({ estados, trans, onEditEstado, onEditTrans, puede }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── Simulador de permisos (Fase 3 · Workflow Permissions) ──────────────────
+// Desde un estado, muestra qué acciones puede ejecutar EL USUARIO EN SESIÓN,
+// evaluado en el servidor por authz.can_transition (mismo gate que wf_transicionar).
+function SimuladorPermisos({ workflow, estados }) {
+  const [desde, setDesde] = useState('');
+  const [acciones, setAcciones] = useState([]);
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => { setDesde(''); setAcciones([]); }, [workflow]);
+  useEffect(() => {
+    let vivo = true;
+    setCargando(true);
+    accionesDisponibles(workflow, desde || null)
+      .then((a) => { if (vivo) setAcciones(a); })
+      .catch(() => { if (vivo) setAcciones([]); })
+      .finally(() => { if (vivo) setCargando(false); });
+    return () => { vivo = false; };
+  }, [workflow, desde]);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+      <div className="flex items-center gap-2 mb-3">
+        <PlayCircle size={15} className="text-orange-500" />
+        <h3 className="text-[12px] font-black text-slate-600 uppercase tracking-wide">Simulador de permisos</h3>
+        <span className="text-[11px] text-slate-400 font-medium">— qué acciones puedes ejecutar tú</span>
+      </div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className={lbl}>Desde</span>
+        <select value={desde} onChange={(e) => setDesde(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-orange-400">
+          <option value="">● inicio (creación)</option>
+          {estados.map((e) => <option key={e.codigo} value={e.codigo}>{e.etiqueta}</option>)}
+        </select>
+      </div>
+      {cargando ? (
+        <p className="text-slate-400 text-[13px] py-3">Evaluando…</p>
+      ) : acciones.length === 0 ? (
+        <p className="text-slate-400 text-[13px] py-3">No hay acciones desde este estado.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {acciones.map((a) => (
+            <div key={a.id} className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[12px] ${a.permitida ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}>
+              {a.permitida ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : <Lock size={13} className="text-slate-400 shrink-0" />}
+              <span className={`font-mono font-bold ${a.permitida ? 'text-emerald-700' : 'text-slate-500'}`}>{a.accion}</span>
+              <ArrowRight size={11} className="text-slate-300" />
+              <span className="font-semibold text-slate-600">{a.hasta_etiqueta}</span>
+              {a.permiso_id && <span className={`inline-flex items-center gap-1 text-[10px] font-bold rounded px-1.5 py-0.5 ml-1 ${a.permitida ? 'text-emerald-600 bg-white' : 'text-slate-400 bg-white border border-slate-200'}`}><ShieldCheck size={9} />{a.permiso_id}</span>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -272,6 +327,9 @@ export default function Workflows() {
                   {puede && <span className="ml-auto italic">clic en un nodo o etiqueta para editar</span>}
                 </div>
               </div>
+
+              {/* Simulador de permisos (Workflow Permissions) */}
+              {estados.length > 0 && <SimuladorPermisos workflow={sel} estados={estados} />}
 
               {/* Listas editables */}
               <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
