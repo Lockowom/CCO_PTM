@@ -66,6 +66,7 @@ const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
 const AccessControl = React.lazy(() => import('./pages/Admin/AccessControl')); // Usuarios y Roles unificados
+const Seguridad = React.lazy(() => import('./pages/Seguridad')); // Seguridad de mi cuenta (MFA/2FA) — cualquier autenticado
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
 const DataImport = React.lazy(() => import('./pages/Admin/DataImport'));
@@ -400,6 +401,9 @@ function AppContent() {
           <Route path="inventory/carteles" element={<ErrorBoundary><Carteles /></ErrorBoundary>} />
           <Route path="inventory/insumos" element={<ErrorBoundary><Insumos /></ErrorBoundary>} />
           <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><BloqueDetalle /></ErrorBoundary>} />
+
+          {/* Seguridad de mi cuenta (MFA) — cualquier usuario autenticado */}
+          <Route path="seguridad" element={<ErrorBoundary><Seguridad /></ErrorBoundary>} />
 
           {/* Admin Modules */}
           <Route path="admin/users" element={<ErrorBoundary><AccessControl /></ErrorBoundary>} />

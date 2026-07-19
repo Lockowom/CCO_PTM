@@ -68,6 +68,10 @@ export const ROUTE_PERMISSIONS = {
   '/postventa/tickets': ['view_postventa', 'manage_postventa', 'supervise_postventa',
     'pv_tab_tickets', 'pv_tab_bandeja', 'pv_tab_calendario', 'pv_tab_nuevo', 'pv_tab_dashboard', 'pv_tab_tecnicos'],
 
+  // Seguridad de la cuenta propia (MFA): cualquier usuario autenticado.
+  // [] = sin permiso específico → el guard concede a todo usuario logueado.
+  '/seguridad': [],
+
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],

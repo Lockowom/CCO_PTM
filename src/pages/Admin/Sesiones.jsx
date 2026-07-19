@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Monitor, RefreshCw, LogOut, Smartphone, Globe, Circle, User as UserIcon } from 'lucide-react';
+import { Monitor, RefreshCw, LogOut, Smartphone, Globe, Circle, User as UserIcon, ShieldCheck } from 'lucide-react';
 import { sesiones as fetchSesiones, forzarLogout } from '../../services/iamService';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
@@ -67,6 +67,8 @@ export default function Sesiones() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-slate-800 truncate">{r.nombre}</span>
                     <span className="text-[10px] font-bold text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">{r.rol}</span>
+                    {r.mfa && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5"><ShieldCheck size={9} />2FA</span>}
+                    {r.aal === 'aal2' && <span className="text-[10px] font-bold text-sky-600 bg-sky-50 rounded px-1.5 py-0.5">AAL2</span>}
                     {r.modulo && <span className="text-[10px] text-slate-400">· {r.modulo}</span>}
                   </div>
                   <div className="text-[11px] text-slate-400 truncate">

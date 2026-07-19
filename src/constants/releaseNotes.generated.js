@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.64",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 6 (Seguridad avanzada: MFA/2FA + claims JWT)",
+    "cambios": [
+      {
+        "texto": "Migración 127. MFA (TOTP) de extremo a extremo con Supabase Auth (auth.mfa.*, sin config de proveedor): página Seguridad de mi cuenta (/seguridad, cualquier autenticado, src/pages/Seguridad.jsx + src/services/securityService.js) — activar 2FA con QR + clave manual, verificar código de 6 dígitos, listar/quitar…"
+      }
+    ]
+  },
+  {
     "version": "1.55.63",
     "fecha": "2026-07-19",
     "titulo": "Identity & Security — Fase 5 (Sesiones + Auditoría)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "En el editor, con un sub-diagrama seleccionado, el botón Recortar del maestro extrae del Flujo Maestro los nodos de ese dominio (filtro heurístico por etiqueta: Master Data 14 · WMS 22 · Operaciones 12 · TMS 20 · Postventa 14), conserva sus conexiones internas y su posición real, y lo carga en el editor para revisar y…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.49",
-    "fecha": "2026-07-18",
-    "titulo": "Mapa de Procesos — propiedades, export/import y los 5 sub-diagramas",
-    "cambios": [
-      {
-        "texto": "Sobre el editor: (1) panel de propiedades al seleccionar un nodo (editar etiqueta, cambiar tipo Tarea/Decisión/Inicio/Fin con re-dimensionado, y color propio con reset) o una conexión (editar etiqueta); (2) Exportar (descarga JSON {_meta,nodes,edges}) e Importar (carga un JSON y lo pinta, valida forma); (3) selector…"
       }
     ]
   }

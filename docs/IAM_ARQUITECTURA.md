@@ -668,9 +668,15 @@ Fase 4). La partición del `audit_log` queda como optimización de escala (Fase 
 24. **Visor de auditoría con diff** (`iam_auditoria` + `iam_auditoria_meta`,
 pestaña Auditoría) ✅.
 
-**Fase 6 — Seguridad avanzada.**
-25. MFA (TOTP) vía Supabase + espejo `mfa_enabled`. 26. OAuth Google/Microsoft.
-27. SSO/SAML (Supabase). 28. Custom access token hook (claims IAM en JWT).
+**Fase 6 — Seguridad avanzada.** ✅ HECHA parcialmente (v1.55.64, migración `127`).
+25. **MFA (TOTP)** ✅ — nativo de Supabase (`auth.mfa.*`, sin config): página
+`/seguridad` (enroll QR + verify + quitar), desafío en el login (opt-in, fail-open),
+espejo `mfa_enabled` (`iam_mfa_estado`/`iam_mfa_sync`) y AAL/MFA en Sesiones. 28.
+**Custom access token hook** `iam.custom_access_token_hook` ✅ escrito (claims IAM en
+el JWT) — **inerte hasta activarlo** en el Dashboard. 26/27. **OAuth Google/Microsoft
+y SSO/SAML** — requieren secretos de proveedor + config en el Supabase Dashboard (no
+fijables desde el repo); quedan documentados como paso de configuración. Endurecer el
+desafío MFA a *fail-closed* (diferir la sesión hasta AAL2) queda para consolidación.
 
 **Fase 7 — Escala.**
 29. `mv_user_permissions` + refresh incremental. 30. Retención/particiones de auditoría.

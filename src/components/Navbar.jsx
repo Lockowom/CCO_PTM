@@ -372,7 +372,13 @@ const Navbar = () => {
                 <p className="text-sm font-black text-slate-900 truncate">{user?.nombre}</p>
                 <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{user?.email}</p>
               </div>
-              <button 
+              <Link
+                to="/seguridad"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-all text-sm font-black mb-1"
+              >
+                <Lock size={18} /> Seguridad (2FA)
+              </Link>
+              <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all text-sm font-black"
               >

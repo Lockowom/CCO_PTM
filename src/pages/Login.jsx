@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, RefreshCw, KeyRound, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { nivelAAL, factoresVerificados, verificarTOTP } from '../services/securityService';
 
 // Versión real de la app (inyectada por Vite desde package.json). Se muestra en el
 // login para que cualquier PDA sepa qué build corre sin abrir el menú.
@@ -16,11 +17,18 @@ const Login = () => {
   const [focusedInput, setFocusedInput] = useState(null);
   const [loadingPhase, setLoadingPhase] = useState(0); // 0: IDLE, 1: AUTH, 2: SYNC, 3: REDIRECT
 
+  // MFA (2FA): desafío del segundo factor tras la contraseña (solo si el usuario
+  // lo activó). Aditivo: los usuarios sin MFA no ven nada de esto.
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaBusy, setMfaBusy] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef(null);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, logout } = useAuth();
 
   // Si el guard nos mandó aquí desde un deep-link (p.ej. el QR de un bloque de
   // conteo), volver a esa URL tras autenticarse en vez de a la landing del rol.
@@ -29,10 +37,37 @@ const Login = () => {
     : '/';
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // No redirigir mientras se exige el segundo factor (MFA).
+    if (isAuthenticated && !mfaRequired) {
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, navigate, from, mfaRequired]);
+
+  const finalizarIngreso = async () => {
+    setLoadingPhase(2);
+    await new Promise((r) => setTimeout(r, 1000));
+    setLoadingPhase(3);
+    await new Promise((r) => setTimeout(r, 500));
+    navigate(from, { replace: true });
+  };
+
+  const confirmarMfa = async () => {
+    if (mfaCode.length < 6) { setError('Ingresa el código de 6 dígitos'); return; }
+    setMfaBusy(true); setError(null);
+    try {
+      await verificarTOTP(mfaFactorId, mfaCode);
+      setMfaRequired(false);
+      await finalizarIngreso();
+    } catch (e) {
+      setError('Código incorrecto. Intenta de nuevo.');
+    } finally { setMfaBusy(false); }
+  };
+
+  const cancelarMfa = async () => {
+    setMfaRequired(false); setMfaCode(''); setMfaFactorId(null);
+    setLoading(false); setLoadingPhase(0);
+    try { await logout(); } catch { /* noop */ }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -46,13 +81,23 @@ const Login = () => {
       const success = await login(email, password);
 
       if (success) {
-        setLoadingPhase(2); // Fase: Sincronización de Núcleo
+        // MFA: si el usuario tiene 2FA activo, exigir el segundo factor antes de
+        // continuar. Fail-open: si la consulta de nivel falla, se ingresa normal.
+        try {
+          const aal = await nivelAAL();
+          if (aal?.nextLevel === 'aal2' && aal?.currentLevel === 'aal1') {
+            const fs = await factoresVerificados();
+            if (fs.length > 0) {
+              setMfaFactorId(fs[0].id);
+              setMfaRequired(true);
+              setLoading(false);
+              setLoadingPhase(0);
+              return;
+            }
+          }
+        } catch { /* fail-open: sin MFA o error → ingreso normal */ }
 
-        await new Promise(r => setTimeout(r, 1200));
-        setLoadingPhase(3); // Fase: Estableciendo Conexión
-
-        await new Promise(r => setTimeout(r, 600));
-        navigate(from, { replace: true });
+        await finalizarIngreso();
       } else {
         setLoadingPhase(0);
         setError("Acceso denegado. Verifica tus credenciales.");
@@ -79,6 +124,27 @@ const Login = () => {
       ref={containerRef}
       className="min-h-dvh w-full flex items-center justify-center bg-slate-50 font-sans selection:bg-orange-500 selection:text-white relative overflow-hidden px-5"
     >
+      {/* Desafío MFA (segundo factor) — sobre todo lo demás */}
+      {mfaRequired && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-5">
+          <div className="w-full max-w-sm bg-white rounded-[2rem] border border-slate-200 shadow-2xl p-7 text-center anim-scale-in">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 grid place-items-center text-orange-600 mb-4"><KeyRound size={26} /></div>
+            <h2 className="text-xl font-black text-slate-900">Verificación en dos pasos</h2>
+            <p className="text-[13px] text-slate-500 mt-1 mb-5">Ingresa el código de 6 dígitos de tu app autenticadora.</p>
+            <input autoFocus value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => e.key === 'Enter' && confirmarMfa()}
+              inputMode="numeric" placeholder="000000"
+              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-2xl font-mono tracking-[0.4em] text-center outline-none focus:border-orange-400" />
+            {error && <p className="text-[12px] text-red-500 font-semibold mt-2">{error}</p>}
+            <button onClick={confirmarMfa} disabled={mfaBusy || mfaCode.length < 6}
+              className="w-full mt-4 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 text-white text-sm font-black hover:bg-orange-600 disabled:opacity-50">
+              {mfaBusy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} Verificar
+            </button>
+            <button onClick={cancelarMfa} className="w-full mt-2 py-2 text-[13px] font-bold text-slate-400 hover:text-slate-600">Cancelar</button>
+          </div>
+        </div>
+      )}
+
       {/* Fondo claro con acentos naranja muy sutiles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-orange-200/40 rounded-full blur-3xl" />
