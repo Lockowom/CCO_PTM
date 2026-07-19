@@ -51,3 +51,29 @@ export async function resumenDispositivosOTA() {
   const { data } = await supabase.rpc('ota_dispositivos_resumen');
   return data || [];
 }
+
+// ── Historial de despliegues (promociones / aplicados / eliminados) ──────────
+export async function historialOTA() {
+  const { data } = await supabase.rpc('ota_historial');
+  return data || [];
+}
+
+// ── Aviso por push (Capgo/FCM) de una nueva versión ──────────────────────────
+export async function avisarNuevaVersionPush(version, rol = 'ADMIN') {
+  const { error } = await supabase.functions.invoke('notify-inventario', {
+    body: { titulo: '🚀 Nueva versión disponible', mensaje: `Versión ${version} publicada. Abre la app para actualizar.`, rol, payload: { tipo: 'ota', version } },
+  });
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
+// ── Limpieza: elimina bundles viejos dejando los últimos N (respeta canales) ─
+export async function limpiarBundlesViejos(bundles, canalVersiones, keep = 10) {
+  const protegidos = new Set(canalVersiones.filter(Boolean));
+  const aBorrar = bundles.slice(keep).filter((b) => !protegidos.has(b.version));
+  let borrados = 0;
+  for (const b of aBorrar) {
+    try { await eliminarBundleOTA(b.version); borrados++; } catch { /* sigue */ }
+  }
+  return { ok: true, borrados, total: aBorrar.length };
+}

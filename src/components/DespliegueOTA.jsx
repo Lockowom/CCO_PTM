@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Rocket, RefreshCw, FlaskConical, ShieldCheck, CheckCircle2, AlertTriangle, X, Package, Trash2, Smartphone, Lock, Save,
+  Rocket, RefreshCw, FlaskConical, ShieldCheck, CheckCircle2, AlertTriangle, X, Package, Trash2, Smartphone, Lock, Save, Bell, History, Sparkles, Eraser,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
-import { listarDespliegueOTA, promoverOTA, eliminarBundleOTA, obtenerGobernanzaOTA, guardarGobernanzaOTA, resumenDispositivosOTA } from '../services/otaDeployService';
+import { listarDespliegueOTA, promoverOTA, eliminarBundleOTA, obtenerGobernanzaOTA, guardarGobernanzaOTA, resumenDispositivosOTA, historialOTA, avisarNuevaVersionPush, limpiarBundlesViejos } from '../services/otaDeployService';
 
 /**
  * Despliegue OTA a producción DESDE la app (solo admin / permiso `deploy_ota`).
@@ -26,6 +26,9 @@ const DespliegueOTA = () => {
   const [gob, setGob] = useState({ min_version: '', obligatorio: false, mensaje: '' });
   const [savingGob, setSavingGob] = useState(false);
   const [delVer, setDelVer] = useState(null);
+  const [hist, setHist] = useState([]);
+  const [avisar, setAvisar] = useState(true);
+  const [limpiando, setLimpiando] = useState(false);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -42,6 +45,7 @@ const DespliegueOTA = () => {
       setData({ bundles: [], channels: [] });
     } finally { setLoading(false); }
     try { setDispos(await resumenDispositivosOTA()); } catch { /* opcional */ }
+    try { setHist(await historialOTA()); } catch { /* opcional */ }
     try { const g = await obtenerGobernanzaOTA(); if (g) setGob({ min_version: g.min_version || '', obligatorio: !!g.obligatorio, mensaje: g.mensaje || '' }); } catch { /* opcional */ }
   }, []);
 
@@ -74,6 +78,7 @@ const DespliegueOTA = () => {
     try {
       await promoverOTA(sel, 'production');
       toast.success(`Versión ${sel} promovida a PRODUCCIÓN. Toda la bodega la recibirá.`);
+      if (avisar) { try { await avisarNuevaVersionPush(sel); toast.success('Aviso push enviado.'); } catch (e) { toast.error(`Push no enviado: ${e.message}`); } }
       setConfirmar(false);
       setSel('');
       await cargar();
@@ -81,6 +86,21 @@ const DespliegueOTA = () => {
       toast.error(`No se pudo promover: ${e.message}`);
     } finally { setPromoviendo(false); }
   };
+
+  const limpiar = async () => {
+    const canalV = [vProd, vBeta];
+    if (!window.confirm('¿Eliminar bundles viejos dejando los últimos 10 (respeta producción y beta)?')) return;
+    setLimpiando(true);
+    const r = await limpiarBundlesViejos(data?.bundles || [], canalV, 10);
+    setLimpiando(false);
+    toast.success(`Limpieza: ${r.borrados}/${r.total} bundles eliminados.`);
+    await cargar();
+  };
+
+  // Adopción: % de dispositivos que ya corren la versión de producción.
+  const totalDisp = dispos.reduce((a, d) => a + Number(d.dispositivos || 0), 0);
+  const alDia = dispos.filter((d) => d.version === vProd).reduce((a, d) => a + Number(d.dispositivos || 0), 0);
+  const pct = totalDisp ? Math.round((alDia / totalDisp) * 100) : 0;
 
   return (
     <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 shadow-sm">
@@ -92,10 +112,16 @@ const DespliegueOTA = () => {
             <p className="text-xs text-slate-500">Elige una versión y promuévela a producción. Sin reinstalar nada.</p>
           </div>
         </div>
-        <button onClick={cargar} disabled={loading}
-          className="px-3 py-1.5 rounded-lg text-xs font-black inline-flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 disabled:opacity-60">
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Actualizar
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={limpiar} disabled={limpiando || loading} title="Eliminar bundles viejos (dejar últimos 10)"
+            className="px-3 py-1.5 rounded-lg text-xs font-black inline-flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 hover:border-red-300 disabled:opacity-60">
+            {limpiando ? <RefreshCw size={13} className="animate-spin" /> : <Eraser size={13} />} Limpiar
+          </button>
+          <button onClick={cargar} disabled={loading}
+            className="px-3 py-1.5 rounded-lg text-xs font-black inline-flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 hover:border-indigo-300 disabled:opacity-60">
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Estado de canales */}
@@ -109,6 +135,17 @@ const DespliegueOTA = () => {
           <p className="text-lg font-black text-slate-800">{vBeta || '—'}</p>
         </div>
       </div>
+
+      {/* Adopción */}
+      {totalDisp > 0 && (
+        <div className="rounded-lg bg-white border border-slate-200 p-2.5 mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><Sparkles size={12} /> Adopción (equipos al día)</p>
+            <p className="text-[12px] font-black text-slate-800">{alDia}/{totalDisp} · {pct}%</p>
+          </div>
+          <div className="h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} /></div>
+        </div>
+      )}
 
       {/* Lista de versiones para elegir */}
       {loading && !data ? (
@@ -198,6 +235,27 @@ const DespliegueOTA = () => {
         )}
       </div>
 
+      {/* Historial de despliegues */}
+      {hist.length > 0 && (
+        <div className="mt-3 rounded-lg bg-white border border-slate-200 p-3">
+          <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5 mb-2"><History size={12} /> Historial OTA</p>
+          <div className="divide-y divide-slate-100 max-h-52 overflow-y-auto">
+            {hist.map((h) => {
+              const badge = h.canal === 'production' ? 'text-emerald-700 bg-emerald-50' : h.canal === 'beta' ? 'text-amber-700 bg-amber-50' : h.canal === 'aplicado' ? 'text-blue-700 bg-blue-50' : h.canal === 'eliminado' ? 'text-red-700 bg-red-50' : 'text-slate-600 bg-slate-100';
+              return (
+                <div key={h.id} className="flex items-center gap-2 py-1.5 text-[12px]">
+                  <span className={`text-[9px] font-black rounded px-1.5 py-0.5 shrink-0 ${badge}`}>{h.canal}</span>
+                  <span className="font-black text-slate-800 w-16">{h.version}</span>
+                  {!h.ok && <AlertTriangle size={12} className="text-red-500 shrink-0" />}
+                  <span className="text-slate-400 truncate flex-1">{h.usuario_email || h.detalle || ''}</span>
+                  <span className="text-[10px] text-slate-400 shrink-0">{h.created_at ? new Date(h.created_at).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Modal de confirmación */}
       {confirmar && (
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onClick={() => !promoviendo && setConfirmar(false)}>
@@ -215,6 +273,10 @@ const DespliegueOTA = () => {
               </div>
               <button onClick={() => !promoviendo && setConfirmar(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
+            <label className="flex items-center gap-2 mt-3 text-[13px] text-slate-600 cursor-pointer">
+              <input type="checkbox" checked={avisar} onChange={(e) => setAvisar(e.target.checked)} />
+              <Bell size={14} className="text-indigo-500" /> Avisar por push (Capgo/FCM) que hay nueva versión
+            </label>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setConfirmar(false)} disabled={promoviendo}
                 className="flex-1 px-4 py-2.5 rounded-lg text-sm font-black border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-60">

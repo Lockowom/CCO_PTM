@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.54",
+    "fecha": "2026-07-18",
+    "titulo": "Capgo/OTA v2 — más mejoras al panel de despliegue",
+    "cambios": [
+      {
+        "texto": "(src/components/DespliegueOTA.jsx). (1) Adopción: barra con % de equipos que ya corren la versión de producción (desde ota_dispositivos_resumen). (2) Avisar por push al promover: checkbox en el modal de confirmación que, tras promover, envía un push \"Nueva versión disponible\" vía la Edge notify-inventario (Capgo/FCM).…"
+      }
+    ]
+  },
+  {
     "version": "1.55.53",
     "fecha": "2026-07-18",
     "titulo": "API de Operaciones v1 — último motor del blueprint (§8)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "El detalle de la orden dejaba a oscuras toda la pantalla y tapaba los botones *Nueva orden*/*Actualizar*. Ahora en escritorio (lg+) se abre como columna lateral en línea junto a la lista (sticky, sin fondo oscuro, aprovechando el ancho): la fila seleccionada se resalta y el panel hace scroll interno con max-h. En…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.39",
-    "fecha": "2026-07-18",
-    "titulo": "TMS · Torre de Control — rediseño visual",
-    "cambios": [
-      {
-        "texto": "Se rehízo la presentación de src/pages/TMS/Transporte.jsx (sin cambios de lógica ni de BD): encabezado con badge naranja, tarjeta Todos + KPIs de estado con mejor contraste (número grande, punto de color, gris tenue cuando el conteo es 0 y borde/anillo del color del estado al estar activo), la lista de órdenes vive…"
       }
     ]
   }
