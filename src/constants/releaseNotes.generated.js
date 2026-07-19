@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.57",
+    "fecha": "2026-07-18",
+    "titulo": "Capgo/OTA — experiencia de actualización más fluida",
+    "cambios": [
+      {
+        "texto": "src/services/mobileService.js engancha el evento download de Capgo (antes ignorado) para reportar progreso real (percent), y el overlay src/components/ui/UpdateOverlay.jsx ahora tiene tres fases fluidas: descargando → píldora inferior no intrusiva con barra + % en vivo (no bloquea la app); listo → tarjeta con…"
+      }
+    ]
+  },
+  {
     "version": "1.55.56",
     "fecha": "2026-07-18",
     "titulo": "TMS (Transporte) OCULTO — módulo no operativo",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 110: como los tickets tienen múltiples caminos de escritura (avanzar_pv_ticket, cerrar_pv_ticket, actualizar_pv_ticket free-form, ingesta de correo), en vez de instrumentar cada RPC se usa un trigger paralelo al de tms_postventa_historial: _pv_wf_alta (INSERT → crear) y _pv_wf_cambio (UPDATE con estado…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.42",
-    "fecha": "2026-07-18",
-    "titulo": "Workflow Engine — Fase 2: TMS cableado al motor (libro mayor real)",
-    "cambios": [
-      {
-        "texto": "Migración 109: helper interno _wf_registrar(workflow,entidad,desde,hasta,accion,nota) (inserta en workflow_history con el actor) y recreación de las 5 RPCs de TMS (tms_orden_crear_desde_nv, tms_orden_asignar, tms_orden_transicion, tms_orden_pod, tms_incidencia_resolver) para que cada cambio de estado de una Orden de…"
       }
     ]
   }

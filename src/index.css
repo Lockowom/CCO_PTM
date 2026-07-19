@@ -176,6 +176,8 @@ html.is-native body {
 @keyframes pda-shimmer   { 100% { transform: translateX(100%); } }
 
 @keyframes pda-slide-in { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+/* Barra de marca "en movimiento" (overlay de actualización OTA). */
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 .anim-fade-up  { animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .anim-scale-in { animation: pda-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }

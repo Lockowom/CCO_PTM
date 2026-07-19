@@ -43,6 +43,17 @@ export const initOTAUpdates = async () => {
   try {
     await CapacitorUpdater.notifyAppReady();
 
+    // Progreso de descarga en vivo (píldora fluida en la UI).
+    CapacitorUpdater.addListener('download', (event) => {
+      if (updateCallback) {
+        updateCallback({
+          phase: 'downloading',
+          version: event?.bundle?.version || event?.version || 'nueva',
+          percent: Math.max(0, Math.min(100, Math.round(event?.percent ?? 0))),
+        });
+      }
+    });
+
     CapacitorUpdater.addListener('downloadComplete', async (event) => {
       const bundleInfo = event?.bundle;
       const bundleId = bundleInfo?.id;
@@ -57,6 +68,7 @@ export const initOTAUpdates = async () => {
       // Notificar al componente UI para mostrar overlay de actualización
       if (updateCallback) {
         updateCallback({
+          phase: 'ready',
           version: bundleInfo?.version || 'nueva',
           bundleId,
         });
@@ -74,6 +86,7 @@ export const initOTAUpdates = async () => {
 
     CapacitorUpdater.addListener('downloadFailed', (event) => {
       console.error('OTA download failed:', event?.version);
+      if (updateCallback) updateCallback({ phase: 'error' }); // oculta la píldora
       toast.error('Error al descargar actualización', {
         description: 'Se reintentará automáticamente.',
         duration: 4000,
@@ -131,7 +144,7 @@ export const buscarActualizacion = async () => {
     if (latest?.error) return { estado: 'error', detalle: latest.error };
     if (!latest?.url) return { estado: 'al-dia', version: latest?.version };
     const bundle = await CapacitorUpdater.download({ version: latest.version, url: latest.url });
-    if (updateCallback) updateCallback({ version: latest.version, bundleId: bundle?.id });
+    if (updateCallback) updateCallback({ phase: 'ready', version: latest.version, bundleId: bundle?.id });
     try { await supabase.rpc('registrar_ota_aplicado', { p_version: latest.version, p_detalle: 'manual' }); } catch { /* no romper */ }
     await CapacitorUpdater.set({ id: bundle.id });
     return { estado: 'aplicando', version: latest.version };
