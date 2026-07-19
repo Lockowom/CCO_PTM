@@ -602,18 +602,25 @@ importa `useAuthz`, `<Can>` y las rutas. Nada de lógica de permisos fuera de `m
 
 > Cada fase es desplegable y no rompe la anterior. Migración desde `tms_*` incluida.
 
-**Fase 0 — Fundaciones (BD).**
+**Fase 0 — Fundaciones (BD).** ✅ HECHA — migración `121`.
 1. Esquemas `iam`, `authz`. 2. Tablas org (`empresas/sucursales/cd`). 3. `iam.users`
 (migrar desde `tms_usuarios`, FK a `auth.users`). 4. `roles`, `permissions`,
 `role_permissions`, `user_roles` (+ enum scope). 5. Seed del **catálogo de permisos**
 (`recurso.accion`) desde los `tms_permisos` actuales, mapeados. 6. Vista
 `user_effective_permissions`.
 
-**Fase 1 — Authorization Service.**
-7. `authz.has_permission`, `scope_matches`, `scope_ok`. 8. Reemplazar los gates
-actuales (`_panel_puede_escribir`, `_tms_puede_gestionar`, …) por `authz.has_permission`.
-9. `iam_me()` RPC. 10. **RLS por permiso** en tablas de dominio (empezando por las
-críticas), retirando `USING(true)`.
+**Fase 1 — Authorization Service.** ✅ HECHA — migración `122`.
+7. `authz.has_permission` (Fase 0) + reconciliación crítica: la fuente canónica del
+runtime es `tms_roles.permisos_json` (no la puente `tms_roles_permisos`, que estaba
+desactualizada); `iam.role_permissions` se **reconstruye desde `permisos_json`** →
+paridad exacta en los 8 roles. 8. **Espejo vivo** con triggers `tms_* → iam.*`
+(`authz.rebuild_role`/`sync_permiso`/`sync_user_profile`); el gate central
+`usuario_tiene_algun_permiso` se reescribe para leer del IAM **conservando la rama
+legada** `permisos_json` (superconjunto → cero bloqueos). Los asserts de dominio
+(`_pv_assert`, `can_manage_*`, `_conteo_es_super`, `puede_desplegar_ota`, …) siguen
+sobre `permisos_json` (canónico y espejado); se encaminan por `authz.has_permission`
+en una fase posterior. 9. `iam_me()` RPC ✅. 10. **RLS por permiso** en tablas de
+dominio (empezando por las críticas), retirando `USING(true)` — pendiente (fase futura).
 
 **Fase 2 — Cliente / menú dinámico.**
 11. `authzClient` + `useAuthz` + `<Can>` + `<RequirePermission>`. 12. `useNavigation`

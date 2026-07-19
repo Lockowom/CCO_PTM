@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.59",
+    "fecha": "2026-07-19",
+    "titulo": "Identity & Security — Fase 1 (Authorization Service: IAM como espejo vivo)",
+    "cambios": [
+      {
+        "texto": "Migración 122. Reconciliación crítica: el runtime autoriza leyendo tms_roles.permisos_json (array jsonb, ?|), pero la Fase 0 pobló iam.role_permissions desde la tabla puente tms_roles_permisos, que estaba desactualizada (ADMIN 60 vs 12, CONTROL_CALIDAD 13 vs 0, GERENCIA 27 vs 3). Se reconstruye iam.role_permissions…"
+      }
+    ]
+  },
+  {
     "version": "1.55.58",
     "fecha": "2026-07-18",
     "titulo": "Identity & Security — Fase 0 (cimiento IAM, NO destructivo)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Migración 112: se sacan de esqueleto CALIDAD (flag de producto tms_calidad_flags.estado_calidad: EN_AUDITORIA → CUARENTENA/LIBERADO/MALO, 4 estados/7 transiciones) y CONTEO (sesión tms_conteo_sesiones.estado: abierta ⇄ cerrada, 2/3) — con sus definiciones sembradas y triggers que espejan alta + cambio de estado en…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.44",
-    "fecha": "2026-07-18",
-    "titulo": "Workflow Engine — Fase 2: N.V. cableada al motor (mitiga deuda P2)",
-    "cambios": [
-      {
-        "texto": "Migración 111: la Nota de Venta era el único proceso central sin máquina; ahora cambiar_estado_nv y guardar_nv registran cada cambio de estado en workflow_history (proceso NV) vía el helper _nv_wf_log. Decisiones de seguridad: (1) se instrumentan SOLO los caminos de usuario (RPCs), NO un trigger sobre tms_operaciones,…"
       }
     ]
   }
