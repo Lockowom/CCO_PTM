@@ -63,7 +63,7 @@ function PolicyRow({ p, onToggle, onEdit }) {
   return (
     <div className="text-[13px]">
       <div className="flex items-center gap-2.5 px-4 py-2.5">
-        <button onClick={() => setOpen((o) => !o)} className="text-slate-400 shrink-0">{open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button>
+        <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Contraer condición' : 'Ver condición'} aria-expanded={open} className="text-slate-400 shrink-0">{open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button>
         <span className={`w-2 h-2 rounded-full shrink-0 ${p.activo ? 'bg-emerald-500' : 'bg-slate-300'}`} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2"><span className="font-black text-slate-800">{p.codigo}</span><span className="text-[10px] font-mono text-slate-400 bg-slate-100 rounded px-1.5 py-0.5">{p.recurso}·{p.accion}</span>{p.es_sistema && <span className="text-[9px] font-bold text-slate-400 bg-slate-100 rounded px-1 py-0.5">sistema</span>}</div>

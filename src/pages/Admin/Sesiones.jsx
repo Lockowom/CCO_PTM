@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Monitor, RefreshCw, LogOut, Smartphone, Globe, Circle, User as UserIcon, ShieldCheck } from 'lucide-react';
 import { sesiones as fetchSesiones, forzarLogout } from '../../services/iamService';
+import { ListaSkeleton, ListaError, ListaVacia } from '../../components/ui/EstadoLista';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
 const esMovil = (ua = '') => /Android|iPhone|iPad|Mobile|CCO|Capacitor/i.test(ua);
@@ -18,12 +19,13 @@ const navUA = (ua = '') => {
 export default function Sesiones() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [busy, setBusy] = useState(null);
 
   const cargar = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(null);
     try { setRows(await fetchSesiones()); }
-    catch (e) { toast.error(e.message || 'No autorizado'); }
+    catch (e) { setError(e.message || 'No autorizado'); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { cargar(); }, [cargar]);
@@ -50,9 +52,11 @@ export default function Sesiones() {
 
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         {loading ? (
-          <div className="py-12 text-center text-slate-400 text-sm">Cargando…</div>
+          <ListaSkeleton />
+        ) : error ? (
+          <ListaError mensaje={error} onRetry={cargar} />
         ) : rows.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm">No hay sesiones activas.</div>
+          <ListaVacia>No hay sesiones activas.</ListaVacia>
         ) : (
           <div className="divide-y divide-slate-100">
             {rows.map((r) => (

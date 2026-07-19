@@ -3,6 +3,16 @@
 // (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.72",
+    "fecha": "2026-07-19",
+    "titulo": "Auditoría — bloque de UI (móvil + consistencia + estados)",
+    "cambios": [
+      {
+        "texto": "H2 calendario Post-Venta en móvil: index.css excluye grid-cols-7 del colapso global !important (rompía la semana de 7 días; ahora scrollea). M3 clases Tailwind dinámicas: tailwind.config.js gana un safelist para los colores construidos en runtime (StatCard de Users por glowColor: orange/emerald/rose/amber; Heatmap por…"
+      }
+    ]
+  },
+  {
     "version": "1.55.71",
     "fecha": "2026-07-19",
     "titulo": "Auditoría — batch de limpieza y hardening (quick wins)",
@@ -139,16 +149,6 @@ export const RELEASE_NOTES = [
     "cambios": [
       {
         "texto": "Primera fase del rediseño enterprise (docs/IAM_ARQUITECTURA.md). Migración 121: esquemas iam (datos) y authz (decisión); enums scope_type/principal_type; org units (iam.empresas con seed PTM, departamentos/sucursales/centros_distribucion/bodegas/teams); iam.users (1:1 con auth.users), iam.roles, iam.permissions…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.57",
-    "fecha": "2026-07-18",
-    "titulo": "Capgo/OTA — experiencia de actualización más fluida",
-    "cambios": [
-      {
-        "texto": "src/services/mobileService.js engancha el evento download de Capgo (antes ignorado) para reportar progreso real (percent), y el overlay src/components/ui/UpdateOverlay.jsx ahora tiene tres fases fluidas: descargando → píldora inferior no intrusiva con barra + % en vivo (no bloquea la app); listo → tarjeta con…"
       }
     ]
   }

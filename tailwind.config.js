@@ -6,6 +6,15 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // Clases construidas dinámicamente (bg-${color}-…) que el purge no ve en el
+  // código y por eso no se generaban (StatCard de Users, Heatmap). Se preservan.
+  safelist: [
+    // StatCard (Users) — glow + icono por glowColor
+    { pattern: /(bg|text)-(orange|emerald|rose|amber)-(400|500)/, variants: ['group-hover'] },
+    { pattern: /bg-(orange|emerald|rose|amber)-500\/(10|20)/, variants: ['group-hover'] },
+    // Heatmap — estado de ubicación por color
+    { pattern: /(bg|text|border|ring)-(emerald|blue|red)-(100|200|300|700)/ },
+  ],
   theme: {
     extend: {
       screens: {

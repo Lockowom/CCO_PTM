@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Target, Plus, Trash2, ShieldCheck, User as UserIcon, Layers, Info, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { catalogoScope, listarAsignaciones, asignarScope, revocarAsignacion } from '../../services/iamService';
+import { ListaSkeleton, ListaError, ListaVacia } from '../../components/ui/EstadoLista';
 
 // Ejes de ámbito disponibles. La realidad operativa de PTM: centro_costo es el
 // único multivaluado real (tms_operaciones); bodega queda listo para el futuro.
@@ -22,16 +23,17 @@ export default function Scopes() {
   const [cat, setCat] = useState({ usuarios: [], roles: [], centros_costo: [] });
   const [asigs, setAsigs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [f, setF] = useState({ userId: '', role: '', scopeType: 'centro_costo', scopeCode: '', expires: '' });
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(null);
     try {
       const [c, a] = await Promise.all([catalogoScope(), listarAsignaciones()]);
       setCat(c); setAsigs(a);
     } catch (e) {
-      toast.error(e.message || 'No se pudo cargar');
+      setError(e.message || 'No se pudo cargar');
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { cargar(); }, [cargar]);
@@ -126,11 +128,11 @@ export default function Scopes() {
           <Layers size={12} /> Asignaciones con ámbito ({asigs.length})
         </div>
         {loading ? (
-          <div className="py-12 text-center text-slate-400 text-sm">Cargando…</div>
+          <ListaSkeleton />
+        ) : error ? (
+          <ListaError mensaje={error} onRetry={cargar} />
         ) : asigs.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm px-4">
-            Sin asignaciones acotadas. Todos operan con su rol global.
-          </div>
+          <ListaVacia>Sin asignaciones acotadas. Todos operan con su rol global.</ListaVacia>
         ) : (
           <div className="divide-y divide-slate-100">
             {asigs.map((a) => (
@@ -152,7 +154,7 @@ export default function Scopes() {
                   </span>
                 )}
                 {puede && (
-                  <button onClick={() => quitar(a.id)} className="ml-auto w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-red-400 shrink-0">
+                  <button onClick={() => quitar(a.id)} aria-label="Revocar asignación de ámbito" title="Revocar" className="ml-auto w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-red-400 shrink-0">
                     <Trash2 size={15} />
                   </button>
                 )}

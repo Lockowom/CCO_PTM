@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { toast } from 'sonner';
 import { ScrollText, RefreshCw, ChevronDown, ChevronRight, Plus, Minus, Pencil } from 'lucide-react';
 import { auditoria as fetchAuditoria, auditoriaMeta } from '../../services/iamService';
+import { ListaSkeleton, ListaError, ListaVacia } from '../../components/ui/EstadoLista';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
 const inp = 'border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-orange-400 bg-white';
@@ -34,7 +34,7 @@ function Fila({ r }) {
   const color = ACCION_COLOR[r.accion] || 'text-slate-600 bg-slate-50 border-slate-200';
   return (
     <div className="text-[13px]">
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 text-left">
+      <button onClick={() => setOpen((o) => !o)} aria-label={open ? 'Contraer detalle' : 'Ver detalle del evento'} aria-expanded={open} className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 text-left">
         {cambios.length > 0 ? (open ? <ChevronDown size={14} className="text-slate-400 shrink-0" /> : <ChevronRight size={14} className="text-slate-400 shrink-0" />) : <span className="w-3.5 shrink-0" />}
         <span className={`text-[10px] font-black rounded px-1.5 py-0.5 border shrink-0 ${color}`}>{r.accion}</span>
         <span className="font-mono text-[11px] text-slate-500 shrink-0">{r.tabla}</span>
@@ -67,11 +67,12 @@ export default function Auditoria() {
   const [meta, setMeta] = useState({ tablas: [], acciones: [], total: 0 });
   const [f, setF] = useState({ tabla: '', accion: '', desde: '', hasta: '' });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const cargar = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(null);
     try { setRows(await fetchAuditoria({ tabla: f.tabla, accion: f.accion, desde: f.desde, hasta: f.hasta, limit: 300 })); }
-    catch (e) { toast.error(e.message || 'No autorizado'); }
+    catch (e) { setError(e.message || 'No autorizado'); }
     finally { setLoading(false); }
   }, [f]);
   useEffect(() => { cargar(); }, [cargar]);
@@ -98,9 +99,11 @@ export default function Auditoria() {
 
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         {loading ? (
-          <div className="py-12 text-center text-slate-400 text-sm">Cargando…</div>
+          <ListaSkeleton />
+        ) : error ? (
+          <ListaError mensaje={error} onRetry={cargar} />
         ) : rows.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm">Sin registros para el filtro.</div>
+          <ListaVacia>Sin registros para el filtro.</ListaVacia>
         ) : (
           <div className="divide-y divide-slate-100">
             {rows.map((r) => <Fila key={r.id} r={r} />)}

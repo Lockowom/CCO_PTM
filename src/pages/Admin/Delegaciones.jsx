@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { UserCheck, Plus, X, Trash2, ArrowRight, CalendarClock, Circle } from 'lucide-react';
 import { delegaciones as fetchDelegaciones, delegar, revocarDelegacion, catalogoScope } from '../../services/iamService';
+import { ListaSkeleton, ListaError, ListaVacia } from '../../components/ui/EstadoLista';
 
 const fmt = (ts) => { if (!ts) return '—'; const d = new Date(ts); return isNaN(d) ? '—' : d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit' }); };
 const inp = 'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400 bg-white';
@@ -53,11 +54,12 @@ export default function Delegaciones() {
   const [rows, setRows] = useState([]);
   const [cat, setCat] = useState({ usuarios: [], roles: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modal, setModal] = useState(false);
 
   const cargar = useCallback(async () => {
-    setLoading(true);
-    try { setRows(await fetchDelegaciones(false)); } catch (e) { toast.error(e.message || 'No autorizado'); }
+    setLoading(true); setError(null);
+    try { setRows(await fetchDelegaciones(false)); } catch (e) { setError(e.message || 'No autorizado'); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { cargar(); catalogoScope().then(setCat).catch(() => {}); }, [cargar]);
@@ -81,8 +83,9 @@ export default function Delegaciones() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        {loading ? <div className="py-12 text-center text-slate-400 text-sm">Cargando…</div>
-          : rows.length === 0 ? <div className="py-12 text-center text-slate-400 text-sm">Sin delegaciones.</div>
+        {loading ? <ListaSkeleton />
+          : error ? <ListaError mensaje={error} onRetry={cargar} />
+          : rows.length === 0 ? <ListaVacia>Sin delegaciones.</ListaVacia>
           : <div className="divide-y divide-slate-100">
               {rows.map((d) => (
                 <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
@@ -100,7 +103,7 @@ export default function Delegaciones() {
                     : d.activo ? <span className="text-[10px] font-bold text-slate-400 bg-slate-100 rounded px-1.5 py-0.5 shrink-0">programada/vencida</span>
                     : <span className="text-[10px] font-bold text-red-400 bg-red-50 rounded px-1.5 py-0.5 shrink-0">revocada</span>}
                   {d.activo && (
-                    <button onClick={() => revocar(d.id)} className="w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-red-400 shrink-0"><Trash2 size={15} /></button>
+                    <button onClick={() => revocar(d.id)} aria-label="Revocar delegación" title="Revocar" className="w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-red-400 shrink-0"><Trash2 size={15} /></button>
                   )}
                 </div>
               ))}

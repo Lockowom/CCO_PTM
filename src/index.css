@@ -215,15 +215,19 @@ html.is-native body {
    menos columnas. Afecta SOLO a ≤640px (celular / ventana angosta); en escritorio
    nada cambia. No toca grid-cols-1/2/3 (ya caben bien).
    ============================================================================ */
+/* NOTA: grid-cols-7 se EXCLUYE del colapso — es la grilla de 7 días del
+   calendario (Post-Venta), envuelta en overflow-x-auto para scrollear en móvil.
+   Colapsarla a 2/3 destruía la semana. Los grids KPI densos usan sm:grid-cols-7
+   (base grid-cols-3), así que no dependen de esta regla en móvil. */
 @media (max-width: 640px) {
-  .grid-cols-4, .grid-cols-5, .grid-cols-6, .grid-cols-7, .grid-cols-8,
+  .grid-cols-4, .grid-cols-5, .grid-cols-6, .grid-cols-8,
   .grid-cols-9, .grid-cols-10, .grid-cols-11, .grid-cols-12 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 @media (min-width: 400px) and (max-width: 640px) {
   /* En teléfonos un poco más anchos, 3 columnas para grids muy densos (iconos, KPIs). */
-  .grid-cols-6, .grid-cols-7, .grid-cols-8, .grid-cols-9,
+  .grid-cols-6, .grid-cols-8, .grid-cols-9,
   .grid-cols-10, .grid-cols-11, .grid-cols-12 {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
