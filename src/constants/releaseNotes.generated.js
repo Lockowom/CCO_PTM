@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.86",
+    "fecha": "2026-07-20",
+    "titulo": "El \"Guardado\" ahora se ve también al editar",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "El aviso verde \"Guardado hh:mm:ss\" aparecía solo al crear una recepción nueva; ahora también se muestra cuando editas una existente y agregas ítems, y sale el mensaje \"Ítem agregado y guardado\" en cada alta."
+      }
+    ]
+  },
+  {
     "version": "1.55.85",
     "fecha": "2026-07-20",
     "titulo": "Serie duplicada: ahora pregunta",
@@ -196,22 +208,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "Colores y avisos de carga más claros en varias pantallas."
-      }
-    ]
-  },
-  {
-    "version": "1.55.71",
-    "fecha": "2026-07-19",
-    "titulo": "Limpieza y seguridad",
-    "emoji": "🛡️",
-    "cambios": [
-      {
-        "tipo": "seguridad",
-        "texto": "Reforzamos la protección de los datos de permisos tras una auditoría completa."
-      },
-      {
-        "tipo": "mejora",
-        "texto": "Ordenamos cosas internas para que el sistema quede más sano."
       }
     ]
   }
