@@ -201,7 +201,7 @@ export default function FlujoMaestro() {
   const TB = [['tarea', Square], ['decision', Diamond], ['inicio', Circle], ['fin', CircleDot]];
 
   return (
-    <div className="anim-fade-up w-screen relative left-1/2 -translate-x-1/2 px-3 sm:px-6 lg:px-8 pb-6">
+    <div className="anim-fade-up mx-[calc(50%-50vw)] px-3 sm:px-6 lg:px-8 pb-6">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white grid place-items-center shadow-lg shadow-orange-500/20"><WorkflowIcon size={22} /></div>

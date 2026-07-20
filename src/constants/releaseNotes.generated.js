@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.80",
+    "fecha": "2026-07-20",
+    "titulo": "Mapa de Procesos bien centrado",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "El Mapa de Procesos se corría a la derecha; ahora sí ocupa todo el ancho y queda centrado."
+      }
+    ]
+  },
+  {
     "version": "1.55.79",
     "fecha": "2026-07-20",
     "titulo": "Mapa de Procesos a pantalla completa",
@@ -200,22 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Se pueden crear reglas según la situación del dato, por ejemplo \"no editar una venta que ya se despachó\"."
-      }
-    ]
-  },
-  {
-    "version": "1.55.65",
-    "fecha": "2026-07-19",
-    "titulo": "Preparado para crecer",
-    "emoji": "⬆️",
-    "cambios": [
-      {
-        "tipo": "mejora",
-        "texto": "Los permisos se calculan más rápido."
-      },
-      {
-        "tipo": "nuevo",
-        "texto": "Se pueden crear muchos usuarios de una sola vez (carga masiva)."
       }
     ]
   }
