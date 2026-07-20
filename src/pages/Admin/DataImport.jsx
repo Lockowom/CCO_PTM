@@ -196,6 +196,19 @@ const IMPORT_TABS = [
         helpText: 'Maestro de códigos. Si el código ya existe, se actualiza la información.',
         smartDedup: false,
     },
+    {
+        id: 'sku_grupo', label: 'Grupos de SKU', category: 'maestros',
+        icon: Tag, table: 'tms_producto_grupo',
+        uniqueKey: 'codigo_producto',
+        columns: [
+            { key: 'grupo', label: 'Grupo', required: true, type: 'text' },
+            { key: 'codigo_producto', label: 'Cod. Producto', required: true, type: 'text' },
+            { key: 'producto', label: 'Producto', required: false, type: 'text' },
+            { key: 'unidad_medida', label: 'Cod. U. Medida', required: false, type: 'text' },
+        ],
+        helpText: 'Grupo comercial por código (SKU). Columnas: Grupo, Cod. Producto, Producto. Si el SKU ya existe se ACTUALIZA su grupo (no se duplica); los SKU nuevos se detectan y se agregan solos. Alimenta el buscador de grupos (Consultas → Grupo por SKU).',
+        smartDedup: false,
+    },
 ];
 
 const CATEGORIES = [

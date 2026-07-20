@@ -38,6 +38,7 @@ export const APP_ROUTES = [
   { value: '/queries/historial-nv', label: 'Consultas - Historial N.V.', module: 'queries' },
   { value: '/queries/dispatch-control', label: 'Consultas - Control Despacho', module: 'queries' },
   { value: '/queries/datasheet', label: 'Consultas - Ficha Técnica', module: 'queries' },
+  { value: '/queries/grupo', label: 'Consultas - Grupo por SKU', module: 'queries' },
 
   // Panel PTM (nativo en CCO; el iframe de Vercel se retiró tras la migración)
   { value: '/panel', label: 'Panel PTM - Dashboard', module: 'panel' },

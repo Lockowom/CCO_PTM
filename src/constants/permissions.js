@@ -22,6 +22,7 @@ export const ROUTE_PERMISSIONS = {
   '/queries/historial-nv': ['view_historial_nv'],
   '/queries/dispatch-control': ['view_dispatch_control'],
   '/queries/datasheet': ['view_fichas'],
+  '/queries/grupo': ['view_batches', 'view_fichas', 'view_stock', 'manage_inventory', 'view_sales_status'],
 
   // Inventario — Traspasos/Ajustes (módulo integrado). Visible para bodega/inventario.
   // `view_traspasos` es el permiso PROPIO (casilla en Roles); los de bodega siguen

@@ -4,6 +4,22 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.91",
+    "fecha": "2026-07-20",
+    "titulo": "Buscador de grupo por SKU + carga de grupos",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "Nueva consulta \"Grupo por SKU\" (Consultas): escribes el código del producto y te dice a qué grupo pertenece."
+      },
+      {
+        "tipo": "nuevo",
+        "texto": "En Carga Masiva hay una opción \"Grupos de SKU\" para subir el Excel del ERP: los SKU nuevos se detectan solos y los existentes se actualizan sin duplicar."
+      }
+    ]
+  },
+  {
     "version": "1.55.90",
     "fecha": "2026-07-20",
     "titulo": "El checklist ya muestra los 22 grupos",
@@ -180,18 +196,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Cada cambio se marca con su tipo para que se entienda de un vistazo."
-      }
-    ]
-  },
-  {
-    "version": "1.55.76",
-    "fecha": "2026-07-19",
-    "titulo": "El Asistente IA se puede ocultar",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Ahora puedes prender o apagar el Asistente IA cuando quieras desde Configuración → Vistas."
       }
     ]
   }

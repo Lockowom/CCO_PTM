@@ -152,6 +152,7 @@ const Navbar = () => {
         { id: 'queries', label: 'Consultas', icon: <Search size={18} />, modules: [
             { label: 'Lotes/Series', path: '/queries/batches', icon: <Barcode size={16} /> },
             { label: 'Ficha Técnica', path: '/queries/datasheet', icon: <ScanLine size={16} /> },
+            { label: 'Grupo por SKU', path: '/queries/grupo', icon: <Tags size={16} /> },
             { label: 'Ubicaciones', path: '/queries/locations', icon: <MapPin size={16} /> },
             { label: 'Historial N.V.', path: '/queries/historial-nv', icon: <FileSearch size={16} /> },
             { label: 'Estado N.V.', path: '/queries/sales-status', icon: <History size={16} /> },

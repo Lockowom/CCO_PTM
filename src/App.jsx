@@ -46,6 +46,7 @@ const HistorialNV = React.lazy(() => import('./pages/Queries/HistorialNV'));
 const Heatmap = React.lazy(() => import('./pages/Queries/Heatmap'));
 const DispatchControl = React.lazy(() => import('./pages/Queries/DispatchControl'));
 const ProductDatasheet = React.lazy(() => import('./pages/Queries/ProductDatasheet'));
+const ConsultaGrupo = React.lazy(() => import('./pages/Queries/ConsultaGrupo'));
 
 // Quality Modules
 const MonitoreoCalidad = React.lazy(() => import('./pages/Quality/Monitoreo'));
@@ -379,6 +380,7 @@ function AppContent() {
           <Route path="queries/historial-nv" element={<ErrorBoundary><HistorialNV /></ErrorBoundary>} />
           <Route path="queries/dispatch-control" element={<ErrorBoundary><DispatchControl /></ErrorBoundary>} />
           <Route path="queries/datasheet" element={<ErrorBoundary><ProductDatasheet /></ErrorBoundary>} />
+          <Route path="queries/grupo" element={<ErrorBoundary><ConsultaGrupo /></ErrorBoundary>} />
 
           {/* Quality Modules */}
           <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
