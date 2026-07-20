@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.83",
+    "fecha": "2026-07-20",
+    "titulo": "Ahora se ve cuándo se guarda",
+    "emoji": "⬆️",
+    "cambios": [
+      {
+        "tipo": "mejora",
+        "texto": "En Recepción (Importaciones y Nacionales) aparece un indicador verde \"Guardado hh:mm:ss\" que parpadea cada vez que se guarda, y un aviso al agregar cada ítem, para que veas que tu progreso queda a salvo."
+      }
+    ]
+  },
+  {
     "version": "1.55.82",
     "fecha": "2026-07-20",
     "titulo": "Recepción Nacionales tampoco pierde tu avance",
@@ -196,22 +208,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "fix",
         "texto": "Si dejabas a medias la activación del 2FA y reintentabas, ya no se queda pegado con un error: ahora vuelve a empezar solo."
-      }
-    ]
-  },
-  {
-    "version": "1.55.68",
-    "fecha": "2026-07-19",
-    "titulo": "Cada quien ve lo suyo",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "El Panel puede mostrarle a cada persona solo las ventas de su centro de costo, según lo que el administrador le asigne."
-      },
-      {
-        "tipo": "seguridad",
-        "texto": "Más control sobre quién ve qué."
       }
     ]
   }

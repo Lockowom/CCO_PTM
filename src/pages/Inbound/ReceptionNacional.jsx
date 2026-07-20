@@ -67,6 +67,7 @@ const ReceptionNacional = () => {
   const DRAFT_KEY = 'cco_recepcion_nacional_draft';
   const [draft, setDraft] = useState(null);
   const [autoguardado, setAutoguardado] = useState(false);
+  const [ultimoGuardado, setUltimoGuardado] = useState('');
 
   useEffect(() => {
     try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.items?.length || d.header)) setDraft(d); } }
@@ -78,8 +79,8 @@ const ReceptionNacional = () => {
     const h = header || {};
     const hasContent = (items?.length > 0) || h.proveedor || h.oc || h.cant_bultos || h.pallets_usados || (h.notas || '').trim();
     try {
-      if (hasContent) { const d = { header, items, ts: Date.now() }; localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); setDraft(d); setAutoguardado(true); }
-      else { localStorage.removeItem(DRAFT_KEY); setDraft(null); setAutoguardado(false); }
+      if (hasContent) { const d = { header, items, ts: Date.now() }; localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); setDraft(d); setAutoguardado(true); setUltimoGuardado(new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })); }
+      else { localStorage.removeItem(DRAFT_KEY); setDraft(null); setAutoguardado(false); setUltimoGuardado(''); }
     } catch { /* ignore */ }
   }, [header, items, view, editingId]);
 
@@ -333,6 +334,7 @@ const ReceptionNacional = () => {
       _id
     }]);
     setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
+    if (editingId === null) toast.success('Ítem agregado y guardado ✓', { duration: 1500 });
 
     // Enriquecer la descripción en segundo plano (no bloquea el alta).
     lookupDescription(reff)
@@ -540,9 +542,20 @@ const ReceptionNacional = () => {
             </>
           )}
           {view === 'form' && (
-            <button onClick={() => { resetForm(); setView('dashboard'); }} className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
-              <ArrowLeft size={14} /> Volver
-            </button>
+            <>
+              {editingId === null && (
+                <span
+                  key={ultimoGuardado}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ${autoguardado ? 'bg-emerald-50 border-emerald-200 text-emerald-700 anim-saved' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
+                  title="Tu progreso se guarda solo en este dispositivo; puedes recargar o cerrar sin perderlo."
+                >
+                  <CheckCircle size={14} /> {autoguardado ? `Guardado ${ultimoGuardado}` : 'Se guardará solo'}
+                </span>
+              )}
+              <button onClick={() => { resetForm(); setView('dashboard'); }} className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                <ArrowLeft size={14} /> Volver
+              </button>
+            </>
           )}
         </div>
       </div>

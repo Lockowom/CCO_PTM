@@ -232,3 +232,12 @@ html.is-native body {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
+
+/* Flash breve al auto-guardar el progreso (Recepción): el pill "Guardado hh:mm:ss"
+   se remonta por su key y reproduce esta animación en cada guardado. */
+@keyframes savedFlash {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(16,185,129,.45); }
+  30%  { transform: scale(1.06); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+}
+.anim-saved { animation: savedFlash .5s ease; }
