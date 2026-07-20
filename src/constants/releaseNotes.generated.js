@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.92",
+    "fecha": "2026-07-20",
+    "titulo": "Se arregló Carga Masiva (\"Tabla no permitida\")",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "Se corrigió un error que impedía subir catálogos en Carga Masiva (por ejemplo N.V. y productos activos): salía \"Tabla no permitida\" y no cargaba nada. Ya vuelve a funcionar."
+      }
+    ]
+  },
+  {
     "version": "1.55.91",
     "fecha": "2026-07-20",
     "titulo": "Buscador de grupo por SKU + carga de grupos",
@@ -180,22 +192,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "Nuevo botón sol/luna para cambiar entre claro y oscuro; recuerda tu elección."
-      }
-    ]
-  },
-  {
-    "version": "1.55.77",
-    "fecha": "2026-07-20",
-    "titulo": "Novedades más claras",
-    "emoji": "⬆️",
-    "cambios": [
-      {
-        "tipo": "mejora",
-        "texto": "Este cuadro de Novedades ahora habla en simple, con etiquetas de color (Nuevo, Mejora, Arreglo, Ajuste, Seguridad) como las notas de un parche de videojuego."
-      },
-      {
-        "tipo": "nuevo",
-        "texto": "Cada cambio se marca con su tipo para que se entienda de un vistazo."
       }
     ]
   }
