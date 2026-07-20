@@ -328,13 +328,12 @@ const Reception = () => {
       toast.error('La cantidad debe ser mayor a 0');
       return;
     }
-    // Bloquear series duplicadas: una misma serie no puede registrarse dos veces.
+    // Series duplicadas: avisar y pedir confirmación (se puede agregar igual).
     const serieNorm = normSerie(currentItem.serie);
     if (serieNorm) {
       const rep = items.findIndex((it) => normSerie(it.serie) === serieNorm);
       if (rep !== -1) {
-        toast.error(`⚠ La serie ${currentItem.serie.trim()} ya está registrada (fila ${rep + 1}). No se agregó.`, { duration: 3500 });
-        return;
+        if (!window.confirm(`⚠ La serie ${currentItem.serie.trim()} ya está registrada (fila ${rep + 1}).\n\n¿Agregarla de todos modos? Quedará marcada como duplicada.`)) return;
       }
     }
 

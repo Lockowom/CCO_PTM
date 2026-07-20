@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.85",
+    "fecha": "2026-07-20",
+    "titulo": "Serie duplicada: ahora pregunta",
+    "emoji": "⚙️",
+    "cambios": [
+      {
+        "tipo": "ajuste",
+        "texto": "Cuando una serie ya existe, Recepción ya no la bloquea: te pregunta \"¿Agregarla de todos modos?\" y decides tú. Si aceptas, queda marcada como duplicada."
+      }
+    ]
+  },
+  {
     "version": "1.55.84",
     "fecha": "2026-07-20",
     "titulo": "Recepción avisa series duplicadas",
@@ -200,18 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "Ordenamos cosas internas para que el sistema quede más sano."
-      }
-    ]
-  },
-  {
-    "version": "1.55.70",
-    "fecha": "2026-07-19",
-    "titulo": "Arreglo en la verificación 2FA",
-    "emoji": "🔧",
-    "cambios": [
-      {
-        "tipo": "fix",
-        "texto": "Al activar la verificación en 2 pasos ya no aparece un error falso: ahora confirma bien."
       }
     ]
   }
