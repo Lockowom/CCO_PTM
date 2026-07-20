@@ -72,6 +72,7 @@ export const APP_ROUTES = [
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
   { value: '/quality/acciones', label: 'Calidad - Acciones', module: 'quality' },
   { value: '/quality/bandeja', label: 'Calidad - Mi Bandeja', module: 'quality' },
+  { value: '/quality/clasificacion', label: 'Calidad - Clasificación de Productos', module: 'quality' },
 
   // Post-Venta
   { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },

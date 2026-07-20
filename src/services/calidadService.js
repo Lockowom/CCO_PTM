@@ -487,6 +487,18 @@ export function useCategoriasTarea(tareaId) {
   });
 }
 
+// Carga/actualización del mapeo producto→grupo (clasificación) y reclasificación.
+export async function cargarClasificacionGrupos(rows) {
+  const { data, error } = await supabase.rpc('calidad_cargar_clasificacion', { p_rows: rows });
+  if (error) throw error;
+  return data;
+}
+export async function reclasificarRecepciones() {
+  const { data, error } = await supabase.rpc('calidad_reclasificar_recepciones');
+  if (error) throw error;
+  return data;
+}
+
 export const ESTADO_TAREA_META = {
   PENDIENTE:    { label: 'Pendiente',    cls: 'bg-amber-100 text-amber-700 border-amber-200' },
   EN_PROCESO:   { label: 'En proceso',   cls: 'bg-sky-100 text-sky-700 border-sky-200' },

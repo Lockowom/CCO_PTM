@@ -12,7 +12,7 @@ import {
   Settings, Shield, Layers, FileBarChart,
   LogOut, ChevronDown, Menu, X, Lock, Upload, RefreshCw,
   Clock, Timer, Trash2, MessageSquare, History, ClipboardCheck, Eye, RotateCcw, Activity, Siren, FileSearch, Anchor, TrendingUp, Monitor, Scan,
-  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench, Sparkles, GitBranch, Share2, Zap, KeyRound
+  Scale, CloudOff, ChevronRight, CircleDot, Bell, User, Globe, ScanLine, Wrench, Sparkles, GitBranch, Share2, Zap, KeyRound, Tags
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -162,7 +162,8 @@ const Navbar = () => {
         { id: 'quality', label: 'Calidad', icon: <ClipboardCheck size={18} />, modules: [
             { label: 'Monitoreo', path: '/quality/monitoreo', icon: <FileSearch size={16} /> },
             { label: 'Mi Bandeja', path: '/quality/bandeja', icon: <Package size={16} /> },
-            { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> }
+            { label: 'Acciones de Calidad', path: '/quality/acciones', icon: <ClipboardCheck size={16} /> },
+            { label: 'Clasificación de Productos', path: '/quality/clasificacion', icon: <Tags size={16} /> }
           ]
         },
         { id: 'panel', label: 'Panel PTM', icon: <LayoutDashboard size={18} />, modules: [

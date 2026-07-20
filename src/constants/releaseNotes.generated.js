@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.89",
+    "fecha": "2026-07-20",
+    "titulo": "Calidad clasifica por grupo comercial",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "El checklist de Calidad ahora clasifica los productos por los 22 grupos comerciales del ERP (Muebles Clínicos, Ortopedia, Insumos Médicos, etc.) en vez de categorías de riesgo. Hay una pantalla nueva \"Clasificación de Productos\" para cargar/actualizar el mapeo con un botón."
+      }
+    ]
+  },
+  {
     "version": "1.55.88",
     "fecha": "2026-07-20",
     "titulo": "Carga Masiva valida el largo de la N.V.",
@@ -184,22 +196,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "seguridad",
         "texto": "Solo consulta información (no cambia nada) y respeta lo que cada persona tiene permitido ver."
-      }
-    ]
-  },
-  {
-    "version": "1.55.74",
-    "fecha": "2026-07-19",
-    "titulo": "Historial de ingresos",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Nueva pantalla \"Accesos\" para ver quién entró al sistema y cuándo."
-      },
-      {
-        "tipo": "mejora",
-        "texto": "Las pantallas de seguridad avisan mejor cuando algo está cargando o falló."
       }
     ]
   }

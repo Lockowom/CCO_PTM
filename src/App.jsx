@@ -51,6 +51,7 @@ const ProductDatasheet = React.lazy(() => import('./pages/Queries/ProductDatashe
 const MonitoreoCalidad = React.lazy(() => import('./pages/Quality/Monitoreo'));
 const AccionesCalidad = React.lazy(() => import('./pages/Quality/AccionesCalidad'));
 const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
+const ClasificacionProductos = React.lazy(() => import('./pages/Quality/ClasificacionProductos'));
 
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
@@ -383,6 +384,7 @@ function AppContent() {
           <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
           <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
           <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
+          <Route path="quality/clasificacion" element={<ErrorBoundary><ClasificacionProductos /></ErrorBoundary>} />
 
           {/* Post-Venta / Servicio Técnico */}
           <Route path="postventa/tickets" element={<ErrorBoundary><Postventa /></ErrorBoundary>} />
