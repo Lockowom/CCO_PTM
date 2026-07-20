@@ -201,7 +201,7 @@ export default function FlujoMaestro() {
   const TB = [['tarea', Square], ['decision', Diamond], ['inicio', Circle], ['fin', CircleDot]];
 
   return (
-    <div className="anim-fade-up max-w-[1400px] mx-auto pb-6">
+    <div className="anim-fade-up w-screen relative left-1/2 -translate-x-1/2 px-3 sm:px-6 lg:px-8 pb-6">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white grid place-items-center shadow-lg shadow-orange-500/20"><WorkflowIcon size={22} /></div>
@@ -252,7 +252,7 @@ export default function FlujoMaestro() {
 
       <div ref={wrapRef} onWheel={onWheel} onPointerDown={onBgDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}
         className={`relative overflow-hidden rounded-2xl border [background-size:22px_22px] select-none ${U.border} ${isDark ? 'bg-[radial-gradient(rgba(148,163,184,0.14)_1px,transparent_1px)]' : 'bg-[radial-gradient(theme(colors.slate.200)_1px,transparent_1px)] bg-white'} ${connectFrom !== null ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
-        style={{ height: 'calc(100vh - 230px)', minHeight: 460, touchAction: 'none', backgroundColor: U.canvasBg }}>
+        style={{ height: 'calc(100vh - 190px)', minHeight: 480, touchAction: 'none', backgroundColor: U.canvasBg }}>
         <div className="absolute top-0 left-0" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.s})`, transformOrigin: '0 0' }}>
           <svg className="absolute top-0 left-0" width="1" height="1" style={{ overflow: 'visible' }}>
             <defs><marker id="fm-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill={U.arrow} /></marker></defs>

@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.79",
+    "fecha": "2026-07-20",
+    "titulo": "Mapa de Procesos a pantalla completa",
+    "emoji": "⬆️",
+    "cambios": [
+      {
+        "tipo": "mejora",
+        "texto": "El Mapa de Procesos ahora ocupa todo el ancho de la pantalla (antes se veía como una franja estrecha al centro) y el lienzo es más alto."
+      }
+    ]
+  },
+  {
     "version": "1.55.78",
     "fecha": "2026-07-20",
     "titulo": "Mapa de Procesos en modo oscuro",
@@ -204,18 +216,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Se pueden crear muchos usuarios de una sola vez (carga masiva)."
-      }
-    ]
-  },
-  {
-    "version": "1.55.64",
-    "fecha": "2026-07-19",
-    "titulo": "Verificación en 2 pasos",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Puedes proteger tu cuenta con un código de tu teléfono, además de la contraseña."
       }
     ]
   }
