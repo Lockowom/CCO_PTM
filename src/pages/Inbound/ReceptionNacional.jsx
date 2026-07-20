@@ -60,6 +60,38 @@ const ReceptionNacional = () => {
   const [items, setItems] = useState([]);
   const [currentItem, setCurrentItem] = useState({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
 
+  // ── Auto-guardado del progreso (borrador de recepción NUEVA) ───────────────
+  // Cada cambio en la cabecera o los ítems se guarda en el navegador, así una
+  // recarga/cierre accidental no pierde lo avanzado. Al editar una recepción ya
+  // existente NO se toca el borrador. Se limpia al guardar o al vaciar el form.
+  const DRAFT_KEY = 'cco_recepcion_nacional_draft';
+  const [draft, setDraft] = useState(null);
+  const [autoguardado, setAutoguardado] = useState(false);
+
+  useEffect(() => {
+    try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const d = JSON.parse(raw); if (d && (d.items?.length || d.header)) setDraft(d); } }
+    catch { /* localStorage no disponible */ }
+  }, []);
+
+  useEffect(() => {
+    if (view !== 'form' || editingId !== null) return;
+    const h = header || {};
+    const hasContent = (items?.length > 0) || h.proveedor || h.oc || h.cant_bultos || h.pallets_usados || (h.notas || '').trim();
+    try {
+      if (hasContent) { const d = { header, items, ts: Date.now() }; localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); setDraft(d); setAutoguardado(true); }
+      else { localStorage.removeItem(DRAFT_KEY); setDraft(null); setAutoguardado(false); }
+    } catch { /* ignore */ }
+  }, [header, items, view, editingId]);
+
+  const limpiarBorrador = () => { try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ } setDraft(null); setAutoguardado(false); };
+  const continuarBorrador = () => {
+    if (!draft) return;
+    setHeader((prev) => ({ ...prev, ...draft.header }));
+    setItems(Array.isArray(draft.items) ? draft.items : []);
+    setEditingId(null);
+    setView('form');
+  };
+
   // Animación inicial
   useGSAP(() => {
     gsap.from(containerRef.current, { y: 20, opacity: 0, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
@@ -251,6 +283,7 @@ const ReceptionNacional = () => {
         actualizados: editingId ? items.length + 1 : 0,
         usuarioNombre: user?.nombre || user?.email,
       });
+      limpiarBorrador();
       resetForm();
       setView('dashboard');
     },
@@ -517,6 +550,20 @@ const ReceptionNacional = () => {
       {/* ==================== DASHBOARD VIEW — CORPORATE CLEAN ==================== */}
       {view === 'dashboard' && (
         <>
+          {/* Borrador recuperado: recepción sin terminar guardada automáticamente */}
+          {draft && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-amber-800 flex items-center gap-1.5"><Save size={15} /> Tienes una recepción sin terminar</p>
+                <p className="text-xs text-amber-700 mt-0.5">{draft.items?.length || 0} ítem(s){draft.header?.proveedor ? ` · ${draft.header.proveedor}` : ''} — se guardó automáticamente. Puedes continuar donde quedaste.</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={continuarBorrador} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-colors">Continuar</button>
+                <button onClick={() => { if (window.confirm('¿Descartar el borrador guardado? Se perderá lo no registrado.')) limpiarBorrador(); }} className="px-3 py-2 bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg text-xs font-bold transition-colors">Descartar</button>
+              </div>
+            </div>
+          )}
+
           {/* KPI Strip */}
           <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-6 gap-px bg-slate-200 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
             <KpiCell label="Recepciones" value={stats.total} sub={hasActiveFilters ? `de ${stats.globalTotal}` : null} />
@@ -941,9 +988,14 @@ const ReceptionNacional = () => {
             {/* Items List */}
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 className="font-black text-slate-900 text-sm flex items-center gap-2">
+                <h3 className="font-black text-slate-900 text-sm flex items-center gap-2 flex-wrap">
                   ÍTEMS REGISTRADOS
                   <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold">{items.length}</span>
+                  {editingId === null && autoguardado && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5" title="Tu progreso se guarda solo en este dispositivo">
+                      <CheckCircle size={11} /> Guardado automático
+                    </span>
+                  )}
                 </h3>
                 {items.length > 0 && (
                   <span className="text-xs font-bold text-slate-500">

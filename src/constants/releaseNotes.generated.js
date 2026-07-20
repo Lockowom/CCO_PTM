@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.82",
+    "fecha": "2026-07-20",
+    "titulo": "Recepción Nacionales tampoco pierde tu avance",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "El auto-guardado de progreso ahora también está en Recepción Nacionales: cada ítem/dato se guarda solo y puedes continuar donde quedaste tras una recarga."
+      }
+    ]
+  },
+  {
     "version": "1.55.81",
     "fecha": "2026-07-20",
     "titulo": "Recepción no pierde tu avance",
@@ -200,18 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "seguridad",
         "texto": "Más control sobre quién ve qué."
-      }
-    ]
-  },
-  {
-    "version": "1.55.67",
-    "fecha": "2026-07-19",
-    "titulo": "Cubrir a un compañero",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Alguien puede asumir por un tiempo los permisos de otra persona (vacaciones o reemplazo) y se le quitan solos al llegar la fecha de fin."
       }
     ]
   }
