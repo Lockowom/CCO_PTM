@@ -93,6 +93,14 @@ const ReceptionNacional = () => {
     setView('form');
   };
 
+  // Detección de series duplicadas (una serie no debería repetirse en la recepción).
+  const normSerie = (s) => (s || '').trim().toUpperCase();
+  const seriesDuplicadas = useMemo(() => {
+    const cnt = {};
+    for (const it of items) { const s = normSerie(it.serie); if (s) cnt[s] = (cnt[s] || 0) + 1; }
+    return new Set(Object.keys(cnt).filter((k) => cnt[k] > 1));
+  }, [items]);
+
   // Animación inicial
   useGSAP(() => {
     gsap.from(containerRef.current, { y: 20, opacity: 0, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
@@ -319,6 +327,15 @@ const ReceptionNacional = () => {
     if (parseInt(currentItem.cantidad) <= 0) {
       toast.error('La cantidad debe ser mayor a 0');
       return;
+    }
+    // Bloquear series duplicadas: una misma serie no puede registrarse dos veces.
+    const serieNorm = normSerie(currentItem.serie);
+    if (serieNorm) {
+      const rep = items.findIndex((it) => normSerie(it.serie) === serieNorm);
+      if (rep !== -1) {
+        toast.error(`⚠ La serie ${currentItem.serie.trim()} ya está registrada (fila ${rep + 1}). No se agregó.`, { duration: 3500 });
+        return;
+      }
     }
 
     // Agregar el ítem de INMEDIATO al estado local. No debe depender de una consulta de
@@ -1004,9 +1021,14 @@ const ReceptionNacional = () => {
                 <h3 className="font-black text-slate-900 text-sm flex items-center gap-2 flex-wrap">
                   ÍTEMS REGISTRADOS
                   <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold">{items.length}</span>
+                  {seriesDuplicadas.size > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-100 border border-red-300 rounded-full px-2 py-0.5" title="Hay series repetidas — revísalas (marcadas en rojo)">
+                      <AlertCircle size={12} /> {seriesDuplicadas.size} serie(s) duplicada(s)
+                    </span>
+                  )}
                   {editingId === null && autoguardado && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5" title="Tu progreso se guarda solo en este dispositivo">
-                      <CheckCircle size={11} /> Guardado automático
+                    <span key={ultimoGuardado} className="anim-saved inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-full px-2 py-0.5" title="Tu progreso se guarda solo en este dispositivo; puedes recargar sin perderlo">
+                      <CheckCircle size={12} /> Guardado {ultimoGuardado}
                     </span>
                   )}
                 </h3>
@@ -1039,12 +1061,17 @@ const ReceptionNacional = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((item, idx) => (
-                        <tr key={item._id || idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30'}`}>
+                      {items.map((item, idx) => {
+                        const dup = !!normSerie(item.serie) && seriesDuplicadas.has(normSerie(item.serie));
+                        return (
+                        <tr key={item._id || idx} className={`border-b border-slate-100 ${dup ? 'bg-red-50 hover:bg-red-100/70' : (idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30')}`}>
                           <td className="px-3 py-2 text-slate-400 text-xs">{idx + 1}</td>
                           <td className="px-3 py-2 font-mono font-bold text-slate-900">{item.reff}</td>
                           <td className="px-3 py-2 text-center font-bold text-emerald-700">{item.cantidad}</td>
-                          <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.serie || '-'}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-slate-600">
+                            <span className={dup ? 'text-red-700 font-bold' : ''}>{item.serie || '-'}</span>
+                            {dup && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-black text-red-700 bg-red-100 border border-red-300 rounded px-1 align-middle" title="Serie repetida en esta recepción"><AlertCircle size={9} /> DUPLICADA</span>}
+                          </td>
                           <td className="px-3 py-2 font-mono text-xs text-slate-600">{item.lote || '-'}</td>
                           <td className="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">{item.fecha_vencimiento || '-'}</td>
                           <td className="px-3 py-2 text-xs text-slate-600">{item.box || '-'}</td>
@@ -1054,7 +1081,8 @@ const ReceptionNacional = () => {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 )}

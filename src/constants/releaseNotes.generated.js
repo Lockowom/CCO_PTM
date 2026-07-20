@@ -4,6 +4,22 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.84",
+    "fecha": "2026-07-20",
+    "titulo": "Recepción avisa series duplicadas",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "Si escaneas o agregas una serie que ya está en la lista, el sistema lo bloquea y te avisa; y si hay repetidas, las marca en rojo con un contador."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "El aviso \"Guardado hh:mm\" ahora está junto a la lista de ítems, siempre a la vista, aunque bajes la pantalla."
+      }
+    ]
+  },
+  {
     "version": "1.55.83",
     "fecha": "2026-07-20",
     "titulo": "Ahora se ve cuándo se guarda",
@@ -196,18 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "fix",
         "texto": "Al activar la verificación en 2 pasos ya no aparece un error falso: ahora confirma bien."
-      }
-    ]
-  },
-  {
-    "version": "1.55.69",
-    "fecha": "2026-07-19",
-    "titulo": "Activar 2FA sin trabas",
-    "emoji": "🔧",
-    "cambios": [
-      {
-        "tipo": "fix",
-        "texto": "Si dejabas a medias la activación del 2FA y reintentabas, ya no se queda pegado con un error: ahora vuelve a empezar solo."
       }
     ]
   }
