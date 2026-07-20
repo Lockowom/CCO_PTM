@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.90",
+    "fecha": "2026-07-20",
+    "titulo": "El checklist ya muestra los 22 grupos",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "Dentro del checklist de Calidad, la sección \"Clasificación del producto\" ahora muestra los 22 grupos comerciales (Muebles Clínicos, Ortopedia y Traumatología, Insumos Médicos, etc.) en vez de las 6 etiquetas antiguas."
+      }
+    ]
+  },
+  {
     "version": "1.55.89",
     "fecha": "2026-07-20",
     "titulo": "Calidad clasifica por grupo comercial",
@@ -180,22 +192,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Ahora puedes prender o apagar el Asistente IA cuando quieras desde Configuración → Vistas."
-      }
-    ]
-  },
-  {
-    "version": "1.55.75",
-    "fecha": "2026-07-19",
-    "titulo": "¡Llegó el Asistente IA!",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Un chat con inteligencia artificial: pregúntale por tus ventas, tu stock o tus tickets y te responde al instante."
-      },
-      {
-        "tipo": "seguridad",
-        "texto": "Solo consulta información (no cambia nada) y respeta lo que cada persona tiene permitido ver."
       }
     ]
   }

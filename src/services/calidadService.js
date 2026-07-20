@@ -684,13 +684,30 @@ export const DISPOSICIONES_SALIDA = [
 ];
 
 // ── Extras del checklist de INGRESO (viven en checklist._extras, jsonb) ─────
+// Grupos comerciales del ERP (mismos códigos que tms_categorias_calidad).
 export const CLASIFICACION_INGRESO = [
-  { id: 'EQUIPO',         label: 'Equipo médico' },
-  { id: 'INSUMO_ESTERIL', label: 'Insumo estéril' },
-  { id: 'REACTIVO',       label: 'Reactivo' },
-  { id: 'AYUDA_TECNICA',  label: 'Ayuda técnica' },
-  { id: 'MOBILIARIO',     label: 'Mobiliario clínico' },
-  { id: 'REPUESTO',       label: 'Repuesto' },
+  { id: 'BEBES_Y_MATERNAL',          label: 'Bebés y Maternal' },
+  { id: 'CUIDADO_HERIDAS',           label: 'Cuidado Heridas' },
+  { id: 'DEPORTE_Y_SALUD',           label: 'Deporte y Salud' },
+  { id: 'EQUIPOS_DE_DIAGNOSTICO',    label: 'Equipos de Diagnóstico' },
+  { id: 'EQUIPOS_MEDICOS',           label: 'Equipos Médicos' },
+  { id: 'HOME_CARE',                 label: 'Home Care' },
+  { id: 'IMPOPLANET',                label: 'Impoplanet' },
+  { id: 'INSTRUMENTAL_QUIRURGICO',   label: 'Instrumental Quirúrgico' },
+  { id: 'INSUMOS_MEDICOS',           label: 'Insumos Médicos' },
+  { id: 'KINESIOLOGIA',              label: 'Kinesiología' },
+  { id: 'MATERIAS_PRIMA',            label: 'Materias Prima' },
+  { id: 'MOVILIDAD',                 label: 'Movilidad' },
+  { id: 'MUEBLES_CLINICOS',          label: 'Muebles Clínicos' },
+  { id: 'ODONTOLOGIA',               label: 'Odontología' },
+  { id: 'ORTOPEDIA_Y_TRAUMATOLOGIA', label: 'Ortopedia y Traumatología' },
+  { id: 'OSTOMIA',                   label: 'Ostomía' },
+  { id: 'PODOLOGIA',                 label: 'Podología' },
+  { id: 'PRODUCTOS_BEURER',          label: 'Productos Beurer' },
+  { id: 'PSICOMOTRICIDAD',           label: 'Psicomotricidad' },
+  { id: 'PUBLICIDAD',                label: 'Publicidad' },
+  { id: 'RESCATE',                   label: 'Rescate' },
+  { id: 'VARIOS',                    label: 'Varios' },
 ];
 // Evaluación del embalaje: bloque exclusivo (no solo "embalaje íntegro").
 // 'No aplica' = el envío no trae ese elemento (p. ej. viene sin pallet o sin film).

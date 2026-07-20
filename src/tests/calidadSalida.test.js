@@ -64,9 +64,11 @@ describe('Calidad · Salida — certificado reforzado', () => {
   });
 
   it('clasificación y disposición inmediata del ingreso tienen las opciones pedidas', () => {
-    expect(CLASIFICACION_INGRESO.map(c => c.label)).toEqual([
-      'Equipo médico', 'Insumo estéril', 'Reactivo', 'Ayuda técnica', 'Mobiliario clínico', 'Repuesto',
-    ]);
+    // Clasificación = los 22 grupos comerciales del ERP (ids = códigos de tms_categorias_calidad).
+    expect(CLASIFICACION_INGRESO.length).toBe(22);
+    expect(CLASIFICACION_INGRESO.map(c => c.label)).toContain('Muebles Clínicos');
+    expect(CLASIFICACION_INGRESO.map(c => c.label)).toContain('Ortopedia y Traumatología');
+    expect(CLASIFICACION_INGRESO.map(c => c.id)).toContain('INSUMOS_MEDICOS');
     expect(DISPOSICION_INMEDIATA_INGRESO).toContain('Cuarentena');
     expect(DISPOSICION_INMEDIATA_INGRESO).toContain('Pendiente evaluación');
   });
