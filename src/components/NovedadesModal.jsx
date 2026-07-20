@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sparkles, X, Plus, ArrowUp, Wrench } from 'lucide-react';
+import { Sparkles, X, Plus, ArrowUp, Wrench, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { RELEASE_NOTES } from '../constants/releaseNotes';
 
 // ── Novedades / Notas del parche ────────────────────────────────────────────
@@ -23,10 +23,13 @@ export function mostrarNovedades() {
   window.dispatchEvent(new CustomEvent('cco:novedades'));
 }
 
+// Etiquetas estilo "patch notes" (como los ajustes a un campeón: buff/nerf/nuevo/fix).
 const TIPO_META = {
   nuevo: { label: 'Nuevo', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Plus },
   mejora: { label: 'Mejora', cls: 'bg-blue-100 text-blue-700 border-blue-200', icon: ArrowUp },
   fix: { label: 'Arreglo', cls: 'bg-amber-100 text-amber-700 border-amber-200', icon: Wrench },
+  ajuste: { label: 'Ajuste', cls: 'bg-slate-100 text-slate-600 border-slate-200', icon: SlidersHorizontal },
+  seguridad: { label: 'Seguridad', cls: 'bg-violet-100 text-violet-700 border-violet-200', icon: ShieldCheck },
 };
 
 export default function NovedadesModal() {
@@ -119,8 +122,25 @@ export default function NovedadesModal() {
           ))}
         </div>
 
-        {/* Pie */}
-        <div className="px-5 py-4 border-t border-slate-100">
+        {/* Pie: leyenda de etiquetas (solo las que aparecen) + botón */}
+        <div className="px-5 py-4 border-t border-slate-100 space-y-3">
+          {(() => {
+            const presentes = [...new Set(notas.flatMap((n) => n.cambios.map((c) => (typeof c === 'string' ? null : c.tipo))).filter(Boolean))];
+            if (!presentes.length) return null;
+            return (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 justify-center">
+                {presentes.map((t) => {
+                  const m = TIPO_META[t]; if (!m) return null; const Icon = m.icon;
+                  return (
+                    <span key={t} className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                      <span className={`inline-flex items-center justify-center w-4 h-4 rounded border ${m.cls}`}><Icon size={9} /></span>
+                      {m.label}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })()}
           <button onClick={cerrar} className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm transition-colors">
             ¡Entendido!
           </button>

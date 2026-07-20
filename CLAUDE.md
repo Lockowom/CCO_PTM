@@ -7,6 +7,14 @@
   NO se edita a mano: basta mantener el changelog al día (que ya es obligatorio). El título de cada
   nota sale del **primer texto en negrita** de la fila del changelog; procura que empiece con un
   resumen claro en negrita.
+  - **Estilo _patch notes_ (lenguaje simple para el usuario)**: cada fila puede llevar, dentro de la
+    misma celda, dos anotaciones OPCIONALES que el generador usa para el modal (y quita del texto
+    técnico): `{{titulo: Título simple}}` y `{{simple: [etiqueta] texto ;; [etiqueta] texto}}`.
+    Etiquetas: `nuevo` 🆕 · `mejora` (alias `buff`) ⬆️ · `fix` (alias `arreglo`/`bug`) 🔧 ·
+    `ajuste` (alias `nerf`) ⚙️ · `seguridad` 🛡️. Separador de items: ` ;; ` (NUNCA usar `|`
+    dentro: rompe la tabla). Si NO hay `{{simple}}`, el generador **auto-clasifica** la versión y
+    **limpia la jerga** (quita nº de migración, rutas de archivo, nombres de RPC) tomando solo la
+    1ª frase. Recomendado: anota en simple las versiones de cara al usuario.
 - Fuente canónica de documentación técnica: **`DOCUMENTACION_PROYECTO.md`**.
 - Al cambiar versión, dependencias, rutas, tablas, RPCs, módulos o flujos → actualizar la
   sección correspondiente de `DOCUMENTACION_PROYECTO.md` **y** añadir una entrada en su

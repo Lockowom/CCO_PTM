@@ -1,154 +1,221 @@
 // ARCHIVO GENERADO — no editar a mano.
 // Se regenera en cada build desde el Changelog de DOCUMENTACION_PROYECTO.md
-// (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog.
+// (scripts/gen_release_notes.js). Para cambiar una nota, edita el changelog
+// (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
+  {
+    "version": "1.55.77",
+    "fecha": "2026-07-20",
+    "titulo": "Novedades más claras",
+    "emoji": "⬆️",
+    "cambios": [
+      {
+        "tipo": "mejora",
+        "texto": "Este cuadro de Novedades ahora habla en simple, con etiquetas de color (Nuevo, Mejora, Arreglo, Ajuste, Seguridad) como las notas de un parche de videojuego."
+      },
+      {
+        "tipo": "nuevo",
+        "texto": "Cada cambio se marca con su tipo para que se entienda de un vistazo."
+      }
+    ]
+  },
   {
     "version": "1.55.76",
     "fecha": "2026-07-19",
-    "titulo": "Asistente IA — interruptor para ocultarlo (Admin → Vistas)",
+    "titulo": "El Asistente IA se puede ocultar",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "La burbuja del Asistente CCO ahora respeta el toggle del módulo asistente en Admin → Vistas: apagarlo oculta la IA para todos al instante (realtime, sin desplegar) y encenderlo la reactiva — pensado para poder desactivarla mientras se pule y volver a activarla con un clic. AsistenteIA.jsx usa…"
+        "tipo": "nuevo",
+        "texto": "Ahora puedes prender o apagar el Asistente IA cuando quieras desde Configuración → Vistas."
       }
     ]
   },
   {
     "version": "1.55.75",
     "fecha": "2026-07-19",
-    "titulo": "Asistente IA (chat sobre datos reales, solo lectura)",
+    "titulo": "¡Llegó el Asistente IA!",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Nueva burbuja flotante Asistente CCO (src/components/AsistenteIA.jsx, montada en App.jsx) disponible en toda la app para quienes tengan el permiso view_asistente (ADMIN siempre). Conversa y responde sobre datos reales — operaciones/N.V., stock e inventario, y tickets de Post-Venta — usando tool use de Anthropic.…"
+        "tipo": "nuevo",
+        "texto": "Un chat con inteligencia artificial: pregúntale por tus ventas, tu stock o tus tickets y te responde al instante."
+      },
+      {
+        "tipo": "seguridad",
+        "texto": "Solo consulta información (no cambia nada) y respeta lo que cada persona tiene permitido ver."
       }
     ]
   },
   {
     "version": "1.55.74",
     "fecha": "2026-07-19",
-    "titulo": "Identidad y Seguridad — Historial de accesos + consistencia de estados",
+    "titulo": "Historial de ingresos",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Nueva pestaña Accesos en la consola *Identidad y Seguridad* (src/pages/Admin/HistorialAcceso.jsx, solo admin): tarjetas de resumen (ingresos totales, usuarios, hoy, últimos 7 días, último ingreso relativo), filtros por rango de fechas y búsqueda (nombre/email/rol) y lista de los ingresos exitosos más recientes con…"
+        "tipo": "nuevo",
+        "texto": "Nueva pantalla \"Accesos\" para ver quién entró al sistema y cuándo."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "Las pantallas de seguridad avisan mejor cuando algo está cargando o falló."
       }
     ]
   },
   {
     "version": "1.55.73",
     "fecha": "2026-07-19",
-    "titulo": "Auditoría — bugs LOW + rendimiento BD",
+    "titulo": "Arreglos y más velocidad",
+    "emoji": "🔧",
     "cambios": [
       {
-        "texto": "SalesStatus.jsx: guarda data[0]?.nv antes de .toLowerCase() (una fila con nv null crasheaba el render de resultados). DataImport.jsx: el dedup por clave única ahora funciona para 1, 2 y 3+ columnas (antes el guard solo cubría 2 columnas: con 3+ una clave vacía '||' colapsaba filas y las de clave vacía se descartaban…"
+        "tipo": "fix",
+        "texto": "Corregidos errores al consultar el estado de ventas y al importar datos."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "El sistema quedó un poco más rápido."
       }
     ]
   },
   {
     "version": "1.55.72",
     "fecha": "2026-07-19",
-    "titulo": "Auditoría — bloque de UI (móvil + consistencia + estados)",
+    "titulo": "Se ve mejor",
+    "emoji": "🔧",
     "cambios": [
       {
-        "texto": "H2 calendario Post-Venta en móvil: index.css excluye grid-cols-7 del colapso global !important (rompía la semana de 7 días; ahora scrollea). M3 clases Tailwind dinámicas: tailwind.config.js gana un safelist para los colores construidos en runtime (StatCard de Users por glowColor: orange/emerald/rose/amber; Heatmap por…"
+        "tipo": "fix",
+        "texto": "El calendario de Post-Venta ahora se ve bien en el celular."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "Colores y avisos de carga más claros en varias pantallas."
       }
     ]
   },
   {
     "version": "1.55.71",
     "fecha": "2026-07-19",
-    "titulo": "Auditoría — batch de limpieza y hardening (quick wins)",
+    "titulo": "Limpieza y seguridad",
+    "emoji": "🛡️",
     "cambios": [
       {
-        "texto": "Tras auditoría completa (4 barridos + advisors). Seguridad: migración 134 revoca SELECT de iam.user_effective_permissions a authenticated (la vista no filtra por auth.uid(); las RPC que la usan son SECURITY DEFINER) → cierra fuga potencial de la matriz de permisos. Repo↔BD: se reconstruyen los archivos de migración…"
+        "tipo": "seguridad",
+        "texto": "Reforzamos la protección de los datos de permisos tras una auditoría completa."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "Ordenamos cosas internas para que el sistema quede más sano."
       }
     ]
   },
   {
     "version": "1.55.70",
     "fecha": "2026-07-19",
-    "titulo": "Fix MFA — .catch inválido sobre supabase.rpc tras verificar",
+    "titulo": "Arreglo en la verificación 2FA",
+    "emoji": "🔧",
     "cambios": [
       {
-        "texto": "El query builder de supabase-js es *thenable* pero NO tiene .catch; await supabase.rpc('iam_mfa_sync').catch(...) lanzaba *\"r.rpc(…).catch is not a function\"* justo después de verificar el TOTP (el factor quedaba verified pero la UI mostraba error y el espejo mfa_enabled no se actualizaba).…"
+        "tipo": "fix",
+        "texto": "Al activar la verificación en 2 pasos ya no aparece un error falso: ahora confirma bien."
       }
     ]
   },
   {
     "version": "1.55.69",
     "fecha": "2026-07-19",
-    "titulo": "Fix MFA — enrolamiento auto-limpia factores pendientes",
+    "titulo": "Activar 2FA sin trabas",
+    "emoji": "🔧",
     "cambios": [
       {
-        "texto": "Al reintentar activar 2FA tras abandonar un intento (sin \"Cancelar\"), quedaba un factor unverified y Supabase rechazaba el nuevo con *\"A factor with the friendly name … already exists\"*. src/services/securityService.js (enrolarTOTP) ahora lista y des-enrola los factores sin verificar antes de enrolar (los verificados…"
+        "tipo": "fix",
+        "texto": "Si dejabas a medias la activación del 2FA y reintentabas, ya no se queda pegado con un error: ahora vuelve a empezar solo."
       }
     ]
   },
   {
     "version": "1.55.68",
     "fecha": "2026-07-19",
-    "titulo": "IAM — Primer enforcement REAL de ámbitos (Panel/N.V. por centro de costo)",
+    "titulo": "Cada quien ve lo suyo",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Se aplica de verdad el scope de Fase 4/8 en el Panel: src/pages/Panel/panelQueries.js (cargarRows, el único punto por el que pasan Dashboard, Detalle, TV y búsqueda) consulta iam_mis_scopes('view_panel','centro_costo') y, si el usuario está acotado a centros de costo (all=false), filtra tms_operaciones con…"
+        "tipo": "nuevo",
+        "texto": "El Panel puede mostrarle a cada persona solo las ventas de su centro de costo, según lo que el administrador le asigne."
+      },
+      {
+        "tipo": "seguridad",
+        "texto": "Más control sobre quién ve qué."
       }
     ]
   },
   {
     "version": "1.55.67",
     "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 9 (Delegación / sustituciones: cobertura por vacaciones)",
+    "titulo": "Cubrir a un compañero",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Migraciones 131+132. Un delegador presta sus permisos a un delegado durante una ventana [desde, hasta]; se implementa como una rama en iam.user_effective_permissions (la vista que leen el gate, iam_me, scopes y ABAC) → la cobertura entra y CADUCA sola sin tocar nada más (verificado: el delegado hereda los permisos del…"
+        "tipo": "nuevo",
+        "texto": "Alguien puede asumir por un tiempo los permisos de otra persona (vacaciones o reemplazo) y se le quitan solos al llegar la fecha de fin."
       }
     ]
   },
   {
     "version": "1.55.66",
     "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 8 (ABAC condicional: políticas por atributo del dato)",
+    "titulo": "Reglas inteligentes",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Migración 130. Motor de políticas con DSL en JSON evaluado en el servidor: tabla iam.policies (recurso, accion, condicion jsonb, activo); authz.user_context(uid) (rol, es_admin, sin_limite_centro, centros_costo), authz.eval_condition(cond, ctx, row) (combinadores all/any/not + hojas {attr, op, value} con ops…"
+        "tipo": "nuevo",
+        "texto": "Se pueden crear reglas según la situación del dato, por ejemplo \"no editar una venta que ya se despachó\"."
       }
     ]
   },
   {
     "version": "1.55.65",
     "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 7 (Escala)",
+    "titulo": "Preparado para crecer",
+    "emoji": "⬆️",
     "cambios": [
       {
-        "texto": "Migraciones 128+129. (29) Vista materializada iam.mv_user_permissions (permisos efectivos) con índice único por clave natural (assignment_id, permission_id) → REFRESH … CONCURRENTLY vía authz.refresh_permissions(), programada cada 5 min (pg_cron refresh-iam-permissions) y a demanda (RPC iam_refrescar_permisos);…"
+        "tipo": "mejora",
+        "texto": "Los permisos se calculan más rápido."
+      },
+      {
+        "tipo": "nuevo",
+        "texto": "Se pueden crear muchos usuarios de una sola vez (carga masiva)."
       }
     ]
   },
   {
     "version": "1.55.64",
     "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 6 (Seguridad avanzada: MFA/2FA + claims JWT)",
+    "titulo": "Verificación en 2 pasos",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Migración 127. MFA (TOTP) de extremo a extremo con Supabase Auth (auth.mfa.*, sin config de proveedor): página Seguridad de mi cuenta (/seguridad, cualquier autenticado, src/pages/Seguridad.jsx + src/services/securityService.js) — activar 2FA con QR + clave manual, verificar código de 6 dígitos, listar/quitar…"
+        "tipo": "nuevo",
+        "texto": "Puedes proteger tu cuenta con un código de tu teléfono, además de la contraseña."
       }
     ]
   },
   {
     "version": "1.55.63",
     "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 5 (Sesiones + Auditoría)",
+    "titulo": "Control de sesiones e historial",
+    "emoji": "🆕",
     "cambios": [
       {
-        "texto": "Migración 126. Reutiliza lo existente sin duplicar: la auditoría genérica (tms_audit_row() → tms_auditoria, ya cubría tms_roles/tms_usuarios) y las sesiones reales de Supabase Auth (auth.sessions) + presencia (tms_usuarios_activos) + bitácora (tms_accesos). Sesiones: RPC iam_sesiones() (lista admin:…"
-      }
-    ]
-  },
-  {
-    "version": "1.55.62",
-    "fecha": "2026-07-19",
-    "titulo": "Identity & Security — Fase 4 (Scopes / ABAC: \"sobre qué datos\")",
-    "cambios": [
+        "tipo": "nuevo",
+        "texto": "El administrador puede ver quién tiene la sesión abierta y cerrarla a distancia."
+      },
       {
-        "texto": "Migraciones 124 (enum centro_costo) + 125. La realidad de PTM: el único eje de ámbito multivaluado real es centro_costo (tms_operaciones, 9 valores); bodega está consolidada — así que el scope se modela sobre centro_costo sin inventar jerarquía de sucursales. iam.assignments gana scope_code (ámbito por código de…"
+        "tipo": "seguridad",
+        "texto": "Queda registro de los cambios importantes de permisos."
       }
     ]
   }
