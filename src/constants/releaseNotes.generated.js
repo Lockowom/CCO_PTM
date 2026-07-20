@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.81",
+    "fecha": "2026-07-20",
+    "titulo": "Recepción no pierde tu avance",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "En Recepción Importaciones, cada ítem y dato que agregas se guarda solo. Si se recarga o cierra la página, un aviso te deja continuar donde quedaste."
+      }
+    ]
+  },
+  {
     "version": "1.55.80",
     "fecha": "2026-07-20",
     "titulo": "Mapa de Procesos bien centrado",
@@ -200,18 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Alguien puede asumir por un tiempo los permisos de otra persona (vacaciones o reemplazo) y se le quitan solos al llegar la fecha de fin."
-      }
-    ]
-  },
-  {
-    "version": "1.55.66",
-    "fecha": "2026-07-19",
-    "titulo": "Reglas inteligentes",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "Se pueden crear reglas según la situación del dato, por ejemplo \"no editar una venta que ya se despachó\"."
       }
     ]
   }
