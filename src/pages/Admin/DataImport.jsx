@@ -398,6 +398,7 @@ const DataImport = () => {
     const [syncDeleted, setSyncDeleted] = useState(false);
     // Blindaje del catálogo de N.V.: chequeo de cruce de canal + modo reemplazar.
     const [nvCross, setNvCross] = useState(null);   // { count, canalOtro, actual, ejemplos:[] }
+    const [nvLenInfo, setNvLenInfo] = useState(null); // { allowed:[len...], principal:len, muestra:total } — largo de N.V. esperado por canal (auto-derivado)
     const [replaceCanal, setReplaceCanal] = useState(false);
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -442,7 +443,7 @@ const DataImport = () => {
     // archivo que ya existen en OTRO canal (PTM no comparte numeración con
     // Orange/Farmapack → un cruce con PTM casi siempre = archivo equivocado).
     useEffect(() => {
-        if (!esNvCat || step !== 'preview' || parsedRows.length === 0) { setNvCross(null); return; }
+        if (!esNvCat || step !== 'preview' || parsedRows.length === 0) { setNvCross(null); setNvLenInfo(null); return; }
         let vivo = true;
         (async () => {
             const otros = canalNv === 'ptm' ? ['orange', 'farmapack'] : ['ptm'];
@@ -457,7 +458,23 @@ const DataImport = () => {
                 if (nv && setOtro.has(nv)) { count++; if (ej.length < 6) ej.push(nv); }
             }
             setNvCross({ count, canalOtro: otros.join('/').toUpperCase(), actual: actualSet.size, ejemplos: ej });
-        })().catch(() => { if (vivo) setNvCross(null); });
+
+            // Perfil de LARGO de N.V. del canal (auto-derivado de los datos reales,
+            // así se adapta solo cuando la numeración crece: 3→4, 5→6, etc.).
+            // Solo se aplica si hay muestra suficiente (≥20 N.V.).
+            if (actualSet.size >= 20) {
+                const lenCount = {};
+                actualSet.forEach((nv) => { const L = normNvVal(nv).length; if (L) lenCount[L] = (lenCount[L] || 0) + 1; });
+                const umbral = Math.max(2, actualSet.size * 0.01);
+                const allowed = Object.keys(lenCount).map(Number).filter((L) => lenCount[L] >= umbral).sort((a, b) => a - b);
+                if (allowed.length) {
+                    const maxLen = Math.max(...allowed);
+                    if (!allowed.includes(maxLen + 1)) allowed.push(maxLen + 1); // permite el crecimiento natural
+                    const principal = Object.keys(lenCount).map(Number).reduce((a, b) => (lenCount[b] > (lenCount[a] || 0) ? b : a), allowed[0]);
+                    setNvLenInfo({ allowed, principal, muestra: actualSet.size });
+                } else setNvLenInfo(null);
+            } else setNvLenInfo(null);
+        })().catch(() => { if (vivo) { setNvCross(null); setNvLenInfo(null); } });
         return () => { vivo = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [esNvCat, step, parsedRows, canalNv]);
@@ -472,14 +489,29 @@ const DataImport = () => {
         for (const r of parsedRows) { if (esClienteMonto(r.cliente)) { count++; if (ej.length < 5) ej.push(`N.V ${r.nv}: “${String(r.cliente).slice(0, 20)}”`); } }
         return { count, ejemplos: ej };
     }, [esNvCat, parsedRows]);
+    // Blindaje 3 — LARGO de N.V. por canal (auto-derivado): en PTM las N.V. tienen
+    // 5 dígitos; en Orange/Farmapack, 3 (hoy). Si el archivo trae N.V. con un largo
+    // que no corresponde al canal, casi siempre es archivo equivocado / dato mal
+    // pegado. Se permite el largo actual del canal + 1 (para el crecimiento natural).
+    const nvLenBad = useMemo(() => {
+        if (!esNvCat || !nvLenInfo || parsedRows.length === 0) return { count: 0, ejemplos: [] };
+        const allowed = new Set(nvLenInfo.allowed);
+        let count = 0; const ej = [];
+        for (const r of parsedRows) { const nv = normNvVal(r.nv); const L = nv.length; if (L && !allowed.has(L)) { count++; if (ej.length < 5) ej.push(`N.V ${r.nv} (${L} díg.)`); } }
+        return { count, ejemplos: ej };
+    }, [esNvCat, nvLenInfo, parsedRows]);
+
     // Se BLOQUEA la carga cuando el archivo es claramente incorrecto:
     //  · muchas filas con el cliente descuadrado (≥15% y ≥15 filas), o
-    //  · la mayoría de las N.V. pertenecen a OTRO canal (archivo equivocado).
+    //  · la mayoría de las N.V. pertenecen a OTRO canal (archivo equivocado), o
+    //  · muchas N.V. con un largo que no corresponde al canal (≥15% y ≥15 filas).
     const nvShareMal = parsedRows.length ? nvMalformed.count / parsedRows.length : 0;
     const nvShareCross = (nvCross && parsedRows.length) ? nvCross.count / parsedRows.length : 0;
+    const nvShareLen = parsedRows.length ? nvLenBad.count / parsedRows.length : 0;
     const nvBloqueado = esNvCat && (
         (nvMalformed.count >= 15 && nvShareMal >= 0.15) ||
-        (nvShareCross >= 0.5 && (nvCross?.count || 0) >= 15)
+        (nvShareCross >= 0.5 && (nvCross?.count || 0) >= 15) ||
+        (nvLenBad.count >= 15 && nvShareLen >= 0.15)
     );
 
     const categoryTabs = useMemo(() =>
@@ -1287,6 +1319,18 @@ const DataImport = () => {
                                             <b>{nvMalformed.count.toLocaleString()}</b> fila(s) traen el <b>Nombre Cliente</b> con un monto o número en vez de un nombre (columnas corridas o archivo de otro tipo).
                                             {' '}Ej: {nvMalformed.ejemplos.join(' · ')}.
                                             {nvBloqueado && <> Corrige el Excel (que la columna Cliente sea el nombre) y vuelve a pegarlo.</>}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {nvLenBad.count > 0 && (
+                                    <div className={`flex items-start gap-2 rounded-xl px-4 py-3 text-sm ${nvBloqueado ? 'bg-red-100 border-2 border-red-400 text-red-900' : 'bg-amber-50 border border-amber-200 text-amber-900'}`}>
+                                        <AlertCircle size={18} className={`shrink-0 mt-0.5 ${nvBloqueado ? 'text-red-600' : 'text-amber-500'}`} />
+                                        <span>
+                                            {nvBloqueado ? <b>⛔ Largo de N.V. incorrecto — carga bloqueada. </b> : <b>Revisa el largo de N.V. </b>}
+                                            En <b>{canalNv.toUpperCase()}</b> las N.V. suelen tener <b>{nvLenInfo?.principal}</b> dígitos, pero <b>{nvLenBad.count.toLocaleString()}</b> fila(s) traen otro largo (posible archivo de otro canal o dato mal pegado).
+                                            {' '}Ej: {nvLenBad.ejemplos.join(' · ')}.
+                                            {nvBloqueado && <> Revisa que el archivo sea de {canalNv.toUpperCase()}.</>}
                                         </span>
                                     </div>
                                 )}

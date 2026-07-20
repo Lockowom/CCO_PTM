@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.88",
+    "fecha": "2026-07-20",
+    "titulo": "Carga Masiva valida el largo de la N.V.",
+    "emoji": "🛡️",
+    "cambios": [
+      {
+        "tipo": "seguridad",
+        "texto": "La Carga Masiva de N.V. ahora también bloquea si el largo de la N.V. no corresponde al canal (PTM 5 dígitos, Orange/Farmapack 3). Y se ajusta solo: cuando Orange/Farmapack empiecen a usar 4 dígitos o PTM 6, lo acepta automáticamente sin cambiar nada."
+      }
+    ]
+  },
+  {
     "version": "1.55.87",
     "fecha": "2026-07-20",
     "titulo": "Carga Masiva bloquea archivos de N.V. equivocados",
@@ -188,22 +200,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "Las pantallas de seguridad avisan mejor cuando algo está cargando o falló."
-      }
-    ]
-  },
-  {
-    "version": "1.55.73",
-    "fecha": "2026-07-19",
-    "titulo": "Arreglos y más velocidad",
-    "emoji": "🔧",
-    "cambios": [
-      {
-        "tipo": "fix",
-        "texto": "Corregidos errores al consultar el estado de ventas y al importar datos."
-      },
-      {
-        "tipo": "mejora",
-        "texto": "El sistema quedó un poco más rápido."
       }
     ]
   }
