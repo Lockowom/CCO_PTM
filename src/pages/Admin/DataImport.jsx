@@ -462,6 +462,26 @@ const DataImport = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [esNvCat, step, parsedRows, canalNv]);
 
+    // Blindaje 2 — columnas descuadradas: en un catálogo N.V. el "cliente" SIEMPRE
+    // es un nombre (tiene letras). Si viene sin letras y con dígitos (p. ej.
+    // "$91,667" o "6,473,475"), el archivo está descuadrado o es de otro tipo.
+    const esClienteMonto = (c) => { const t = String(c ?? '').trim(); return t !== '' && /\d/.test(t) && !/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t); };
+    const nvMalformed = useMemo(() => {
+        if (!esNvCat || parsedRows.length === 0) return { count: 0, ejemplos: [] };
+        let count = 0; const ej = [];
+        for (const r of parsedRows) { if (esClienteMonto(r.cliente)) { count++; if (ej.length < 5) ej.push(`N.V ${r.nv}: “${String(r.cliente).slice(0, 20)}”`); } }
+        return { count, ejemplos: ej };
+    }, [esNvCat, parsedRows]);
+    // Se BLOQUEA la carga cuando el archivo es claramente incorrecto:
+    //  · muchas filas con el cliente descuadrado (≥15% y ≥15 filas), o
+    //  · la mayoría de las N.V. pertenecen a OTRO canal (archivo equivocado).
+    const nvShareMal = parsedRows.length ? nvMalformed.count / parsedRows.length : 0;
+    const nvShareCross = (nvCross && parsedRows.length) ? nvCross.count / parsedRows.length : 0;
+    const nvBloqueado = esNvCat && (
+        (nvMalformed.count >= 15 && nvShareMal >= 0.15) ||
+        (nvShareCross >= 0.5 && (nvCross?.count || 0) >= 15)
+    );
+
     const categoryTabs = useMemo(() =>
         accessibleTabs.filter(t => t.category === activeCategory),
     [accessibleTabs, activeCategory]);
@@ -719,6 +739,12 @@ const DataImport = () => {
 
     const handleUpload = async () => {
         if (parsedRows.length === 0) return;
+        // Defensa: no cargar un catálogo N.V. claramente incorrecto (columnas
+        // descuadradas o archivo de otro canal), aunque el botón se dispare.
+        if (nvBloqueado) {
+            toast.error('Carga bloqueada: el archivo N.V. parece incorrecto (columnas descuadradas o de otro canal). Corrígelo y vuelve a intentar.');
+            return;
+        }
 
         // Modo "Reemplazar canal" (solo tarjetas N.V.): borra el canal antes de
         // cargar, para que quede EXACTAMENTE igual al archivo (sin residuos ni
@@ -1253,6 +1279,18 @@ const DataImport = () => {
                                     </div>
                                 )}
 
+                                {nvMalformed.count > 0 && (
+                                    <div className={`flex items-start gap-2 rounded-xl px-4 py-3 text-sm ${nvBloqueado ? 'bg-red-100 border-2 border-red-400 text-red-900' : 'bg-amber-50 border border-amber-200 text-amber-900'}`}>
+                                        <AlertCircle size={18} className={`shrink-0 mt-0.5 ${nvBloqueado ? 'text-red-600' : 'text-amber-500'}`} />
+                                        <span>
+                                            {nvBloqueado ? <b>⛔ Archivo descuadrado — carga bloqueada. </b> : <b>Revisa el archivo. </b>}
+                                            <b>{nvMalformed.count.toLocaleString()}</b> fila(s) traen el <b>Nombre Cliente</b> con un monto o número en vez de un nombre (columnas corridas o archivo de otro tipo).
+                                            {' '}Ej: {nvMalformed.ejemplos.join(' · ')}.
+                                            {nvBloqueado && <> Corrige el Excel (que la columna Cliente sea el nombre) y vuelve a pegarlo.</>}
+                                        </span>
+                                    </div>
+                                )}
+
                                 <label className="flex items-start gap-2.5 bg-white border border-slate-200 rounded-xl px-4 py-3 cursor-pointer">
                                     <input type="checkbox" checked={replaceCanal} onChange={(e) => setReplaceCanal(e.target.checked)} className="mt-0.5 w-4 h-4 accent-emerald-600" />
                                     <span className="text-sm text-slate-700">
@@ -1277,7 +1315,8 @@ const DataImport = () => {
                             <div className="flex-1" />
                             <button
                                 onClick={handleUpload}
-                                disabled={isLoading || ((stats.new === 0 && stats.update === 0) && !(esNvCat && replaceCanal))}
+                                disabled={isLoading || nvBloqueado || ((stats.new === 0 && stats.update === 0) && !(esNvCat && replaceCanal))}
+                                title={nvBloqueado ? 'El archivo parece incorrecto (columnas descuadradas o de otro canal). Corrígelo antes de cargar.' : undefined}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors disabled:cursor-not-allowed"
                             >
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}

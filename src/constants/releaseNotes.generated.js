@@ -4,6 +4,18 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.87",
+    "fecha": "2026-07-20",
+    "titulo": "Carga Masiva bloquea archivos de N.V. equivocados",
+    "emoji": "🛡️",
+    "cambios": [
+      {
+        "tipo": "seguridad",
+        "texto": "La Carga Masiva de N.V. ahora BLOQUEA el archivo cuando está descuadrado (el \"Cliente\" trae un monto en vez de un nombre) o cuando la mayoría de las N.V. son de otro canal. Antes solo avisaba y se podía cargar igual."
+      }
+    ]
+  },
+  {
     "version": "1.55.86",
     "fecha": "2026-07-20",
     "titulo": "El \"Guardado\" ahora se ve también al editar",
@@ -192,22 +204,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "El sistema quedó un poco más rápido."
-      }
-    ]
-  },
-  {
-    "version": "1.55.72",
-    "fecha": "2026-07-19",
-    "titulo": "Se ve mejor",
-    "emoji": "🔧",
-    "cambios": [
-      {
-        "tipo": "fix",
-        "texto": "El calendario de Post-Venta ahora se ve bien en el celular."
-      },
-      {
-        "tipo": "mejora",
-        "texto": "Colores y avisos de carga más claros en varias pantallas."
       }
     ]
   }
