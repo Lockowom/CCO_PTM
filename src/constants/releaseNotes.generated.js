@@ -4,6 +4,22 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.78",
+    "fecha": "2026-07-20",
+    "titulo": "Mapa de Procesos en modo oscuro",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "El Mapa de Procesos (Flujo Maestro) ahora se ve en modo oscuro, con los colores del diseño original."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "Nuevo botón sol/luna para cambiar entre claro y oscuro; recuerda tu elección."
+      }
+    ]
+  },
+  {
     "version": "1.55.77",
     "fecha": "2026-07-20",
     "titulo": "Novedades más claras",
@@ -200,22 +216,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "Puedes proteger tu cuenta con un código de tu teléfono, además de la contraseña."
-      }
-    ]
-  },
-  {
-    "version": "1.55.63",
-    "fecha": "2026-07-19",
-    "titulo": "Control de sesiones e historial",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "El administrador puede ver quién tiene la sesión abierta y cerrarla a distancia."
-      },
-      {
-        "tipo": "seguridad",
-        "texto": "Queda registro de los cambios importantes de permisos."
       }
     ]
   }

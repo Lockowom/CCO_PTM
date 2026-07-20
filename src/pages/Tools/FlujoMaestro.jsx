@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Workflow as WorkflowIcon, ZoomIn, ZoomOut, Maximize2, Search, X, Save, Pencil, Trash2, Link2, Square, Diamond, Circle, CircleDot, ExternalLink, RotateCcw, Download, Upload, SlidersHorizontal, Scissors } from 'lucide-react';
+import { Workflow as WorkflowIcon, ZoomIn, ZoomOut, Maximize2, Search, X, Save, Pencil, Trash2, Link2, Square, Diamond, Circle, CircleDot, ExternalLink, RotateCcw, Download, Upload, SlidersHorizontal, Scissors, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import seedMaestro from '../../data/flujoMaestro.json';
 import d1 from '../../data/diagramas/1-master-data.json';
@@ -11,11 +11,32 @@ import d4 from '../../data/diagramas/4-tms.json';
 import d5 from '../../data/diagramas/5-postventa.json';
 import { obtenerFlujo, guardarFlujo } from '../../services/flujoService';
 
-const TYPE = {
-  inicio:   { fill: '#ecfdf5', border: '#10b981', text: '#047857', pill: true,  dim: [128, 46] },
-  fin:      { fill: '#fff7ed', border: '#f97316', text: '#c2410c', pill: true,  dim: [128, 46] },
-  tarea:    { fill: '#ffffff', border: '#2f6f9f', text: '#1e3a4f', pill: false, dim: [152, 54] },
-  decision: { fill: '#fffbeb', border: '#d97706', text: '#92400e', pill: false, diamond: true, dim: [164, 58] },
+// Forma/dimensiones por tipo (independiente del tema).
+const SHAPE = {
+  inicio:   { pill: true,  dim: [128, 46] },
+  fin:      { pill: true,  dim: [128, 46] },
+  tarea:    { pill: false, dim: [152, 54] },
+  decision: { diamond: true, dim: [164, 58] },
+};
+// Colores por tema (claro/oscuro). El oscuro replica el "original" de referencia.
+const COLORS = {
+  light: {
+    inicio:   { fill: '#ecfdf5', border: '#10b981', text: '#047857' },
+    fin:      { fill: '#fff7ed', border: '#f97316', text: '#c2410c' },
+    tarea:    { fill: '#ffffff', border: '#2f6f9f', text: '#1e3a4f' },
+    decision: { fill: '#fffbeb', border: '#d97706', text: '#92400e' },
+  },
+  dark: {
+    inicio:   { fill: '#0e2a20', border: '#10b981', text: '#6ee7b7' },
+    fin:      { fill: '#3a1f10', border: '#f97316', text: '#fdba74' },
+    tarea:    { fill: '#14213b', border: '#4b7bb5', text: '#cfe0f5' },
+    decision: { fill: '#2e2513', border: '#caa14a', text: '#f5d98a' },
+  },
+};
+// Cromática de lienzo/aristas/etiquetas por tema.
+const UI = {
+  light: { canvasBg: undefined, dot: 'theme(colors.slate.200)', border: 'border-slate-200', edge: '#b6c2d1', arrow: '#94a3b8', labelBg: '#ffffff', labelBorder: '#e2e8f0', labelText: '#64748b', diamondBg: '#eef1f5' },
+  dark:  { canvasBg: '#0e1626', dot: 'rgba(148,163,184,0.14)', border: 'border-slate-700', edge: '#3f4f68', arrow: '#64748b', labelBg: '#16223a', labelBorder: '#2c3b55', labelText: '#94a3b8', diamondBg: '#1b2740' },
 };
 const DIAGRAMS = [
   { codigo: 'maestro',       titulo: 'Flujo Maestro',    seed: seedMaestro },
@@ -60,6 +81,12 @@ export default function FlujoMaestro() {
   const [sel, setSel] = useState(null);
   const [connectFrom, setConnectFrom] = useState(null);
   const [info, setInfo] = useState(null);
+  // Tema del lienzo (oscuro por defecto, como el original). Se recuerda.
+  const [tema, setTema] = useState(() => { try { return localStorage.getItem('fm_tema') || 'dark'; } catch { return 'dark'; } });
+  const isDark = tema === 'dark';
+  const C = COLORS[tema];
+  const U = UI[tema];
+  useEffect(() => { try { localStorage.setItem('fm_tema', tema); } catch { /* ignore */ } }, [tema]);
 
   const wrapRef = useRef(null);
   const fileRef = useRef(null);
@@ -127,7 +154,7 @@ export default function FlujoMaestro() {
   const patchNode = (id, patch) => { setNodes((ns) => ns.map((x) => x.id === id ? { ...x, ...patch } : x)); mark(); };
   const patchEdge = (id, patch) => { setModel((m) => ({ ...m, edges: m.edges.map((e) => e.id === id ? { ...e, ...patch } : e) })); mark(); };
   const addNode = (type) => {
-    const el = wrapRef.current; const cx = (el.clientWidth / 2 - view.x) / view.s, cy = (el.clientHeight / 2 - view.y) / view.s; const d = TYPE[type].dim;
+    const el = wrapRef.current; const cx = (el.clientWidth / 2 - view.x) / view.s, cy = (el.clientHeight / 2 - view.y) / view.s; const d = SHAPE[type].dim;
     const n = { id: uid('n'), type, label: type === 'decision' ? '¿Decisión?' : 'Nuevo', x: Math.round(cx - d[0] / 2), y: Math.round(cy - d[1] / 2), w: d[0], h: d[1] };
     setModel((m) => ({ ...m, nodes: [...m.nodes, n] })); setSel({ kind: 'node', id: n.id }); mark();
   };
@@ -198,6 +225,10 @@ export default function FlujoMaestro() {
             <button onClick={() => setView((v) => ({ ...v, s: Math.min(2.5, v.s * 1.12) }))} className="w-8 h-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><ZoomIn size={16} /></button>
             <button onClick={fit} title="Ajustar" className="w-8 h-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Maximize2 size={15} /></button>
           </div>
+          <button onClick={() => setTema((t) => (t === 'dark' ? 'light' : 'dark'))} title={isDark ? 'Cambiar a claro' : 'Cambiar a oscuro'}
+            className="w-9 h-9 rounded-xl bg-white border border-slate-200 grid place-items-center text-slate-500 hover:bg-slate-50">
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           {puedeEditar && <button onClick={() => { setEdit((v) => !v); setConnectFrom(null); setSel(null); setInfo(null); }} className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-colors ${edit ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}><Pencil size={15} /> {edit ? 'Salir' : 'Editar'}</button>}
         </div>
       </div>
@@ -220,29 +251,29 @@ export default function FlujoMaestro() {
       )}
 
       <div ref={wrapRef} onWheel={onWheel} onPointerDown={onBgDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}
-        className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-[radial-gradient(theme(colors.slate.200)_1px,transparent_1px)] [background-size:22px_22px] bg-white select-none ${connectFrom !== null ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
-        style={{ height: 'calc(100vh - 230px)', minHeight: 460, touchAction: 'none' }}>
+        className={`relative overflow-hidden rounded-2xl border [background-size:22px_22px] select-none ${U.border} ${isDark ? 'bg-[radial-gradient(rgba(148,163,184,0.14)_1px,transparent_1px)]' : 'bg-[radial-gradient(theme(colors.slate.200)_1px,transparent_1px)] bg-white'} ${connectFrom !== null ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
+        style={{ height: 'calc(100vh - 230px)', minHeight: 460, touchAction: 'none', backgroundColor: U.canvasBg }}>
         <div className="absolute top-0 left-0" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.s})`, transformOrigin: '0 0' }}>
           <svg className="absolute top-0 left-0" width="1" height="1" style={{ overflow: 'visible' }}>
-            <defs><marker id="fm-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8" /></marker></defs>
+            <defs><marker id="fm-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill={U.arrow} /></marker></defs>
             {model.edges.map((e) => {
               const a = byId[e.from], b = byId[e.to]; if (!a || !b) return null;
               const p1 = border(a, b.x + b.w / 2, b.y + b.h / 2), p2 = border(b, a.x + a.w / 2, a.y + a.h / 2);
               const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2; const on = sel?.kind === 'edge' && sel.id === e.id;
               return (
                 <g key={e.id}>
-                  <path d={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`} stroke={on ? '#f97316' : '#b6c2d1'} strokeWidth={on ? 2.4 : 1.6} fill="none" markerEnd="url(#fm-arrow)" />
+                  <path d={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`} stroke={on ? '#f97316' : U.edge} strokeWidth={on ? 2.4 : 1.6} fill="none" markerEnd="url(#fm-arrow)" />
                   <path d={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`} stroke="transparent" strokeWidth="14" fill="none" style={{ cursor: edit ? 'pointer' : 'default', pointerEvents: 'stroke' }} onPointerDown={(ev) => { ev.stopPropagation(); if (edit) setSel({ kind: 'edge', id: e.id }); }} />
                   {e.label && (<g data-elabel onPointerDown={(ev) => { ev.stopPropagation(); if (edit) setSel({ kind: 'edge', id: e.id }); }} style={{ cursor: edit ? 'pointer' : 'default' }}>
-                    <rect x={mx - e.label.length * 3.2 - 4} y={my - 8} width={e.label.length * 6.4 + 8} height={16} rx={4} fill="#fff" stroke={on ? '#f97316' : '#e2e8f0'} />
-                    <text x={mx} y={my + 3} textAnchor="middle" fontSize="10" fontFamily="ui-monospace,monospace" fill="#64748b">{e.label}</text>
+                    <rect x={mx - e.label.length * 3.2 - 4} y={my - 8} width={e.label.length * 6.4 + 8} height={16} rx={4} fill={U.labelBg} stroke={on ? '#f97316' : U.labelBorder} />
+                    <text x={mx} y={my + 3} textAnchor="middle" fontSize="10" fontFamily="ui-monospace,monospace" fill={U.labelText}>{e.label}</text>
                   </g>)}
                 </g>
               );
             })}
           </svg>
           {model.nodes.map((n) => {
-            const t = TYPE[n.type] || TYPE.tarea; const hot = term && n.label.toLowerCase().includes(term);
+            const t = { ...(SHAPE[n.type] || SHAPE.tarea), ...(C[n.type] || C.tarea) }; const hot = term && n.label.toLowerCase().includes(term);
             const on = sel?.kind === 'node' && sel.id === n.id; const src = connectFrom === n.id; const bc = n.color || t.border;
             return (
               <div key={n.id} data-node onPointerDown={(e) => onNodeDown(e, n)} onClick={(e) => onNodeClick(e, n)} onDoubleClick={(e) => onNodeDouble(e, n)}
@@ -250,7 +281,7 @@ export default function FlujoMaestro() {
                 style={{ left: n.x, top: n.y, width: n.w, height: n.h, background: t.fill, color: t.text,
                   border: `2px solid ${hot || on || src ? '#f97316' : bc}`, borderRadius: t.pill ? 999 : 12, fontSize: 12, whiteSpace: 'pre-line',
                   cursor: edit ? (connectFrom !== null ? 'crosshair' : 'grab') : (linkFor(n.label) ? 'pointer' : 'default'), boxShadow: (hot || on || src) ? '0 0 0 4px rgba(249,115,22,.25)' : undefined }}>
-                {t.diamond && <span style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', fontSize: 11, color: bc, background: '#eef1f5', padding: '0 3px', borderRadius: 4 }}>◆</span>}
+                {t.diamond && <span style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', fontSize: 11, color: bc, background: U.diamondBg, padding: '0 3px', borderRadius: 4 }}>◆</span>}
                 {n.label}
               </div>
             );
@@ -259,18 +290,18 @@ export default function FlujoMaestro() {
 
         {/* Panel de propiedades (edición) */}
         {edit && (selNode || selEdge) && (
-          <div className="absolute top-3 right-3 w-60 bg-white border border-slate-200 rounded-xl shadow-lg p-3 space-y-2.5">
-            <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-400 uppercase inline-flex items-center gap-1"><SlidersHorizontal size={12} /> Propiedades</span><button onClick={() => setSel(null)} className="text-slate-400"><X size={14} /></button></div>
+          <div className={`absolute top-3 right-3 w-60 border rounded-xl shadow-lg p-3 space-y-2.5 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-400 uppercase inline-flex items-center gap-1"><SlidersHorizontal size={12} /> Propiedades</span><button onClick={() => setSel(null)} className="text-slate-400 hover:text-slate-200"><X size={14} /></button></div>
             {selNode && <>
               <label className="block"><span className="text-[10px] font-bold text-slate-500 uppercase">Etiqueta</span><textarea rows={2} value={selNode.label} onChange={(e) => patchNode(selNode.id, { label: e.target.value })} className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[13px] outline-none focus:border-orange-400 resize-none" /></label>
               <label className="block"><span className="text-[10px] font-bold text-slate-500 uppercase">Tipo</span>
-                <select value={selNode.type} onChange={(e) => { const nt = e.target.value; patchNode(selNode.id, { type: nt, w: TYPE[nt].dim[0], h: TYPE[nt].dim[1], color: undefined }); }} className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[13px] outline-none focus:border-orange-400">
+                <select value={selNode.type} onChange={(e) => { const nt = e.target.value; patchNode(selNode.id, { type: nt, w: SHAPE[nt].dim[0], h: SHAPE[nt].dim[1], color: undefined }); }} className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-1.5 text-[13px] outline-none focus:border-orange-400">
                   <option value="tarea">Tarea</option><option value="decision">Decisión</option><option value="inicio">Inicio</option><option value="fin">Fin</option>
                 </select>
               </label>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Color</span>
-                <input type="color" value={selNode.color || TYPE[selNode.type].border} onChange={(e) => patchNode(selNode.id, { color: e.target.value })} className="w-8 h-8 rounded border border-slate-200 p-0.5" />
+                <input type="color" value={selNode.color || C[selNode.type].border} onChange={(e) => patchNode(selNode.id, { color: e.target.value })} className="w-8 h-8 rounded border border-slate-200 p-0.5" />
                 {selNode.color && <button onClick={() => patchNode(selNode.id, { color: undefined })} className="text-[11px] font-bold text-slate-400 hover:text-slate-600">reset</button>}
                 <button onClick={delSel} className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-red-500 hover:text-red-600"><Trash2 size={12} /> Borrar</button>
               </div>
@@ -285,19 +316,19 @@ export default function FlujoMaestro() {
 
         {/* Ficha de nodo (vista) */}
         {info && !edit && (
-          <div className="absolute bottom-3 right-3 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
-            <div className="flex items-start justify-between gap-2"><span className="text-[10px] font-black text-slate-400 uppercase">{info.type}</span><button onClick={() => setInfo(null)} className="text-slate-400"><X size={14} /></button></div>
-            <p className="text-[14px] font-black text-slate-800 mt-0.5 whitespace-pre-line">{info.label}</p>
+          <div className={`absolute bottom-3 right-3 w-64 border rounded-xl shadow-lg p-3 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <div className="flex items-start justify-between gap-2"><span className="text-[10px] font-black text-slate-400 uppercase">{info.type}</span><button onClick={() => setInfo(null)} className="text-slate-400 hover:text-slate-200"><X size={14} /></button></div>
+            <p className={`text-[14px] font-black mt-0.5 whitespace-pre-line ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{info.label}</p>
             {jump ? <button onClick={() => nav(jump)} className="mt-2 w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-lg bg-orange-500 text-white text-[12px] font-bold hover:bg-orange-600"><ExternalLink size={13} /> Ir al módulo</button>
                   : <p className="text-[11px] text-slate-400 mt-2">Sin módulo asociado directo.</p>}
           </div>
         )}
 
-        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur border border-slate-200 rounded-xl px-3 py-2 flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
-          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#10b981', background: '#ecfdf5' }} /> Inicio</span>
-          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded border-2" style={{ borderColor: '#2f6f9f' }} /> Tarea</span>
-          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded border-2" style={{ borderColor: '#d97706', background: '#fffbeb' }} /> Decisión</span>
-          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#f97316', background: '#fff7ed' }} /> Fin</span>
+        <div className={`absolute bottom-3 left-3 backdrop-blur border rounded-xl px-3 py-2 flex flex-wrap items-center gap-3 text-[10px] ${isDark ? 'bg-slate-900/80 border-slate-700 text-slate-300' : 'bg-white/90 border-slate-200 text-slate-500'}`}>
+          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: C.inicio.border, background: C.inicio.fill }} /> Inicio</span>
+          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded border-2" style={{ borderColor: C.tarea.border, background: C.tarea.fill }} /> Tarea</span>
+          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded border-2" style={{ borderColor: C.decision.border, background: C.decision.fill }} /> Decisión</span>
+          <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: C.fin.border, background: C.fin.fill }} /> Fin</span>
           {edit ? <span className="italic">{connectFrom !== null ? (connectFrom === '' ? 'toca ORIGEN' : 'toca DESTINO') : 'arrastra · doble clic renombra · Supr borra'}</span>
                 : <span className="italic">clic en un nodo para ver / ir</span>}
         </div>
