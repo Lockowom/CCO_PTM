@@ -4,6 +4,26 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.94",
+    "fecha": "2026-07-21",
+    "titulo": "El Panel ahora muestra cliente/vendedor y se actualiza solo",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "El Panel ya muestra el cliente, vendedor, centro de costo y división de cada N.V., igual que en Ingresar. Antes salían vacíos (\"—\") aunque la N.V. sí tenía los datos."
+      },
+      {
+        "tipo": "fix",
+        "texto": "El Dashboard ahora se actualiza solo al instante cuando se ingresa o edita una N.V. (antes solo cada 2 minutos)."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "Al ingresar una N.V. solo con su estado, el sistema completa cliente/vendedor/centro/división automáticamente desde el catálogo maestro."
+      }
+    ]
+  },
+  {
     "version": "1.55.93",
     "fecha": "2026-07-21",
     "titulo": "El Panel ahora cuadra con el Modo TV",
@@ -180,18 +200,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "fix",
         "texto": "El Mapa de Procesos se corría a la derecha; ahora sí ocupa todo el ancho y queda centrado."
-      }
-    ]
-  },
-  {
-    "version": "1.55.79",
-    "fecha": "2026-07-20",
-    "titulo": "Mapa de Procesos a pantalla completa",
-    "emoji": "⬆️",
-    "cambios": [
-      {
-        "tipo": "mejora",
-        "texto": "El Mapa de Procesos ahora ocupa todo el ancho de la pantalla (antes se veía como una franja estrecha al centro) y el lienzo es más alto."
       }
     ]
   }

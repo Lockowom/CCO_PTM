@@ -137,15 +137,22 @@ export default function DashboardReal() {
   const rangeRef = useRef(range);
   useEffect(() => { rangeRef.current = range; }, [range]);
 
-  // Realtime: al terminar cada sync (cron/import) se actualiza tms_operaciones_sync.
+  // Realtime: refresca al instante cuando cambia una N.V. (ingreso/edición en
+  // `tms_operaciones`) o al terminar un sync cron/import (`tms_operaciones_sync`).
+  // Se DEBOUNCE 2.5s para agrupar ráfagas (ej. carga masiva) en un solo refresco.
   useEffect(() => {
     if (!supabase) return undefined;
+    let t = null;
+    const refrescar = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => loadData(rangeRef.current.from, rangeRef.current.to), 2500);
+    };
     const canal = supabase
-      .channel('tms-oper-sync-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones_sync' },
-        () => { loadData(rangeRef.current.from, rangeRef.current.to); })
+      .channel('tms-oper-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones' }, refrescar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones_sync' }, refrescar)
       .subscribe();
-    return () => { supabase.removeChannel(canal); };
+    return () => { if (t) clearTimeout(t); supabase.removeChannel(canal); };
   }, [loadData]);
 
   const [countdown, setCountdown] = useState(120);
