@@ -347,14 +347,15 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   activasRows.forEach(enrichRow);
   rows.forEach(enrichRow);
 
-  // Backlog ACTIVO = snapshot EN VIVO (idéntico al Modo TV). NO se filtra por el
-  // rango de fechas del dashboard: una NV aprobada ANTES de la ventana pero que
-  // sigue en un estado activo continúa abierta HOY y debe contarse. Si se filtrara
-  // (comportamiento anterior), el panel mostraba menos activas que la realidad y
-  // no cuadraba con TV ("no está sincronizado"). El rango de fechas solo acota las
-  // métricas de PERÍODO (entregadas, tardanza, fill rate, tendencias, conteos por
-  // canal), nunca el trabajo en curso.
+  // Dos vistas del backlog activo, a propósito:
+  //  • activasSnapshot = TODAS las activas EN VIVO (idéntico al Modo TV). Alimenta
+  //    el KPI "NVs Activas" y las Alertas de Riesgo: son un "ahora", no dependen
+  //    del rango (una NV abierta importa aunque se aprobara antes de la ventana).
+  //  • activasFiltradas = las activas cuya aprobación cae DENTRO del rango. Alimenta
+  //    la TABLA de estados, su resumen y el embudo, para que esas tablas SÍ
+  //    respondan al filtro de fechas (si no, parecería que el filtro no funciona).
   const activasSnapshot = activasRows;
+  const activasFiltradas = activasSnapshot.filter((r) => dentroRangoAprob(r, dateFrom, dateTo));
 
   const rowsM = rows.filter((r) => !r._consolidado);
   const activasM = activasSnapshot.filter((r) => !r._consolidado);
@@ -372,7 +373,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     estadoCounts[e] = (estadoCounts[e] || 0) + 1;
   });
   ESTADOS_ACTIVOS.forEach((e) => { estadoCounts[e] = 0; });
-  activasSnapshot.forEach((r) => {
+  activasFiltradas.forEach((r) => {
     const e = r.estado || "null";
     estadoCounts[e] = (estadoCounts[e] || 0) + 1;
   });
@@ -381,6 +382,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   const nulas = estadoCounts["NULA"] || 0;
   const refacturados = estadoCounts["REFACTURADO"] || 0;
   const rechazados = estadoCounts["RECHAZADO"] || 0;
+  // KPI "NVs Activas": snapshot en vivo (TV), NO depende del rango.
   const activas = activasSnapshot.length;
 
   const despachosReales = total - nulas - refacturados - rechazados;
@@ -510,7 +512,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     if (ESTADOS_ACTIVOS.includes(r.estado || "")) return; // los activos se cuentan aparte
     acumular(r);
   });
-  activasSnapshot.forEach((r) => {
+  activasFiltradas.forEach((r) => {
     if (ESTADOS_ACTIVOS.includes(r.estado || "")) acumular(r);
   });
   const estadoTable = Object.entries(estadoGrouped)
@@ -581,7 +583,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
 
   // === Estado Resumen (active states only) ===
   const resumenCounts = {};
-  activasSnapshot.forEach((r) => {
+  activasFiltradas.forEach((r) => {
     if (ESTADOS_ACTIVOS.includes(r.estado || "")) {
       resumenCounts[r.estado] = (resumenCounts[r.estado] || 0) + 1;
     }
@@ -883,8 +885,8 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   const funnelEstados = FUNNEL_ETAPAS.map(({ etapa, incluye }) => {
     let cantidad = 0;
     rows.forEach((r) => { if (incluye.includes(r.estado || "")) cantidad++; });
-    activasSnapshot.forEach((r) => {
-      // sumar activas que estén en esta etapa (snapshot en vivo, sin filtro de fecha)
+    activasFiltradas.forEach((r) => {
+      // sumar activas que estén en esta etapa (dentro del rango de fechas)
       if (ESTADOS_ACTIVOS.includes(r.estado || "") && incluye.includes(r.estado || "")) cantidad++;
     });
     return { etapa, cantidad };
@@ -970,12 +972,17 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
 
 export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
   const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado";
-  const esEstadoActivo = estado === "ACTIVAS" || ESTADOS_ACTIVOS.includes(estado);
-  // Los estados ACTIVOS son un snapshot EN VIVO: NO se filtran por el rango de
-  // fechas (así el detalle cuadra con el KPI "NVs Activas" y con el Modo TV).
-  const data = esEstadoActivo
+  const esActivasKpi = estado === "ACTIVAS";
+  const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
+  const dataRaw = esEstadoActivo
     ? await fetchActivas(cols)
     : await fetchAll(cols, dateFrom, dateTo);
+  // El KPI "NVs Activas" (ACTIVAS) es snapshot EN VIVO → sin filtro de fecha (cuadra
+  // con TV). Una fila de estado activo específica (ej. Shipping) SÍ respeta el rango,
+  // para cuadrar con la tabla de estados del dashboard.
+  const data = (esEstadoActivo && !esActivasKpi)
+    ? dataRaw.filter((r) => dentroRangoAprob(r, dateFrom, dateTo))
+    : dataRaw;
 
   // Normalizar estados viejos → nuevos (igual que en fetchDashboardData)
   data.forEach((r) => {

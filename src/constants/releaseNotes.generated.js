@@ -4,6 +4,26 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.95",
+    "fecha": "2026-07-21",
+    "titulo": "El filtro de fecha ahora sí cambia la tabla de estados",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "La tabla \"por estado\" del Dashboard ahora responde al filtro de fecha: al cambiar el rango (última semana / mes / año completo) también cambian En Proceso, Shipping y En Ruta, no solo Entregado."
+      },
+      {
+        "tipo": "fix",
+        "texto": "Se corrigió una N.V. con una fecha mal escrita (año \"20206\") que la dejaba fuera de todos los filtros."
+      },
+      {
+        "tipo": "ajuste",
+        "texto": "El KPI \"NVs Activas\" sigue siendo la foto en vivo (igual que TV) e indica que no depende del rango; la tabla de estados es la vista del período elegido."
+      }
+    ]
+  },
+  {
     "version": "1.55.94",
     "fecha": "2026-07-21",
     "titulo": "El Panel ahora muestra cliente/vendedor y se actualiza solo",
@@ -188,18 +208,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "En Recepción Importaciones, cada ítem y dato que agregas se guarda solo. Si se recarga o cierra la página, un aviso te deja continuar donde quedaste."
-      }
-    ]
-  },
-  {
-    "version": "1.55.80",
-    "fecha": "2026-07-20",
-    "titulo": "Mapa de Procesos bien centrado",
-    "emoji": "🔧",
-    "cambios": [
-      {
-        "tipo": "fix",
-        "texto": "El Mapa de Procesos se corría a la derecha; ahora sí ocupa todo el ancho y queda centrado."
       }
     ]
   }
