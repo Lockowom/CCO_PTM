@@ -100,12 +100,12 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
   useEffect(() => {
     let alive = true;
     setAuditCargado(false);
-    fetchAuditByNv(nv)
+    fetchAuditByNv(nv, canal)
       .then((a) => { if (alive) setAudit(a); })
       .catch(() => { if (alive) setAudit([]); })
       .finally(() => { if (alive) setAuditCargado(true); });
     return () => { alive = false; };
-  }, [nv]);
+  }, [nv, canal]);
 
   // Timeline: último hito con fecha = "actual"; los siguientes, pendientes.
   const ultimoConFecha = HITOS.reduce((acc, h, i) => (r[h.key] ? i : acc), -1);
@@ -215,7 +215,7 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
         ) : (
           <ul className="space-y-2" role="list" aria-label="Historial de actividad de la NV">
             {audit.map((e) => {
-              const verbo = e.accion === "create" ? "creó" : e.accion === "update" ? "editó" : e.accion === "bulkUpdate" ? "actualizó" : e.accion;
+              const verbo = e.accion === "create" ? "creó la N.V." : e.accion === "estado" ? "cambió estado" : e.accion === "update" ? "editó" : e.accion === "bulkUpdate" ? "actualizó" : e.accion;
               const hora = new Date(e.timestamp).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
               return (
                 <li key={e.id} className="flex items-start gap-2.5 text-[12px]">

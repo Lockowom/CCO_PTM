@@ -1242,9 +1242,27 @@ function mapOperacionRow(r) {
   };
 }
 
-/** Eventos de auditoría de una NV — audit_log no existe en la BD destino. */
-export async function fetchAuditByNv(nv, limit = 15) {
-  return [];
+/** Bitácora / trazabilidad de una NV (creación, cambios de estado, ediciones).
+ *  Lee la RPC `nv_bitacora` (migración 146) y la mapea a la forma que consume
+ *  el feed de Actividad de NvDetalle. Si no hay canal, matchea por nº de N.V. */
+export async function fetchAuditByNv(nv, canal = 'ptm', limit = 60) {
+  if (!supabase || !nv) return [];
+  const { data, error } = await supabase.rpc('nv_bitacora', {
+    p_nv: String(nv),
+    p_canal: canal ? String(canal).toLowerCase() : null,
+    p_limit: limit,
+  });
+  if (error || !data) return [];
+  return data.map((e) => ({
+    id: e.id,
+    accion: e.accion,
+    operador: e.operador || 'Sistema',
+    campos: e.campos || '',
+    estadoAnterior: e.estado_anterior,
+    estadoNuevo: e.estado_nuevo,
+    exito: e.exito !== false,
+    timestamp: e.ts,
+  }));
 }
 
 /** Filas crudas de NVs ACTIVAS para el Builder (fuente "operaciones"). */

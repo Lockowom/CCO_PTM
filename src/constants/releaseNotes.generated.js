@@ -4,6 +4,22 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.96",
+    "fecha": "2026-07-21",
+    "titulo": "Trazabilidad de la N.V. (quién hizo qué y cuándo)",
+    "emoji": "🆕",
+    "cambios": [
+      {
+        "tipo": "nuevo",
+        "texto": "La ficha de una N.V. (Consulta · Info) ahora muestra su historial en \"Actividad\": quién la creó, cada cambio de estado (ej. \"María cambió estado · En Proceso → Shipping\") y ediciones de datos, con fecha y hora."
+      },
+      {
+        "tipo": "nuevo",
+        "texto": "Se registró el historial de todas las N.V. existentes desde sus fechas ya guardadas, para que las antiguas también muestren su trazabilidad."
+      }
+    ]
+  },
+  {
     "version": "1.55.95",
     "fecha": "2026-07-21",
     "titulo": "El filtro de fecha ahora sí cambia la tabla de estados",
@@ -196,18 +212,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "nuevo",
         "texto": "El auto-guardado de progreso ahora también está en Recepción Nacionales: cada ítem/dato se guarda solo y puedes continuar donde quedaste tras una recarga."
-      }
-    ]
-  },
-  {
-    "version": "1.55.81",
-    "fecha": "2026-07-20",
-    "titulo": "Recepción no pierde tu avance",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "En Recepción Importaciones, cada ítem y dato que agregas se guarda solo. Si se recarga o cierra la página, un aviso te deja continuar donde quedaste."
       }
     ]
   }
