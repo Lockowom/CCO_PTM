@@ -4,6 +4,22 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    "version": "1.55.93",
+    "fecha": "2026-07-21",
+    "titulo": "El Panel ahora cuadra con el Modo TV",
+    "emoji": "🔧",
+    "cambios": [
+      {
+        "tipo": "fix",
+        "texto": "\"NVs Activas\" del Panel ya coincide con el Modo TV. Antes, al filtrar por un rango de fechas (ej. último mes), el Panel escondía las NVs que seguían abiertas pero se aprobaron antes del rango, mostrando muchas menos activas de las reales."
+      },
+      {
+        "tipo": "mejora",
+        "texto": "El backlog activo (En Proceso, Shipping, etc.), su resumen, el embudo y las alertas de riesgo son ahora una foto EN VIVO que no depende del rango de fechas; el rango sigue acotando solo las métricas de período (entregadas, tardanza, fill rate, tendencias)."
+      }
+    ]
+  },
+  {
     "version": "1.55.92",
     "fecha": "2026-07-20",
     "titulo": "Se arregló Carga Masiva (\"Tabla no permitida\")",
@@ -176,22 +192,6 @@ export const RELEASE_NOTES = [
       {
         "tipo": "mejora",
         "texto": "El Mapa de Procesos ahora ocupa todo el ancho de la pantalla (antes se veía como una franja estrecha al centro) y el lienzo es más alto."
-      }
-    ]
-  },
-  {
-    "version": "1.55.78",
-    "fecha": "2026-07-20",
-    "titulo": "Mapa de Procesos en modo oscuro",
-    "emoji": "🆕",
-    "cambios": [
-      {
-        "tipo": "nuevo",
-        "texto": "El Mapa de Procesos (Flujo Maestro) ahora se ve en modo oscuro, con los colores del diseño original."
-      },
-      {
-        "tipo": "mejora",
-        "texto": "Nuevo botón sol/luna para cambiar entre claro y oscuro; recuerda tu elección."
       }
     ]
   }

@@ -8,6 +8,7 @@ export default function KpiGrid({ kpis, onDetalle }) {
       <KPICard
         title="NVs Activas"
         value={kpis?.activas || 0}
+        subtitle="Backlog en vivo · no depende del rango"
         color="#1565c0"
         icon="📦"
         onClick={() => onDetalle("ACTIVAS")}
