@@ -41,8 +41,14 @@ jobs:
         if: steps.ver.outputs.changed == 'yes'
         uses: actions/setup-node@v4
         with:
-          node-version: 22   # Capacitor 8 CLI requiere Node >= 22
+          node-version: 22.13.0   # jsdom 29 del lockfile exige >=22.13.0 en la rama 22
           cache: npm
+
+      - name: Mostrar versión de Node/NPM
+        if: steps.ver.outputs.changed == 'yes'
+        run: |
+          node -v
+          npm -v
 
       - name: Instalar dependencias
         if: steps.ver.outputs.changed == 'yes'

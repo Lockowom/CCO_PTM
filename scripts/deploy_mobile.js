@@ -54,7 +54,8 @@ try {
   versionWasUpdated = true;
 } catch (e) {
   console.error('❌ Error al actualizar la versión:', e.message);
-  console.log('⚠️ Continuando con el despliegue a pesar del error de versión...');
+  console.error('❌ ABORTADO: no se puede publicar OTA sin una versión nueva y consistente.');
+  process.exit(1);
 }
 
 // 1.1 Mantener package-lock.json sincronizado para que GitHub Actions pueda usar
