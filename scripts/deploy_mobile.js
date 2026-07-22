@@ -15,6 +15,7 @@ if (!process.env.VITE_SUPABASE_URL || !(process.env.VITE_SUPABASE_KEY || process
 }
 
 // 1. Auto-incrementar la versión (Patch) de manera extremadamente segura
+let versionWasUpdated = false;
 try {
   console.log('📦 Actualizando versión en package.json...');
   
@@ -50,9 +51,17 @@ try {
   // Escribir con un pequeño delay para asegurar que otros procesos hayan soltado el archivo
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   console.log(`✅ Versión actualizada exitosamente a ${pkg.version}`);
+  versionWasUpdated = true;
 } catch (e) {
   console.error('❌ Error al actualizar la versión:', e.message);
   console.log('⚠️ Continuando con el despliegue a pesar del error de versión...');
+}
+
+// 1.1 Mantener package-lock.json sincronizado para que GitHub Actions pueda usar
+// `npm ci` sin fallar por desalineación entre package.json y package-lock.json.
+if (versionWasUpdated) {
+  console.log('🔒 Sincronizando package-lock.json...');
+  execSync('npm install --package-lock-only --ignore-scripts', { stdio: 'inherit' });
 }
 
 // 2. Build de la aplicación Web
