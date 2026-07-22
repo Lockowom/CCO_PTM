@@ -18,6 +18,7 @@ const PillNavCanal = ({
   const circleRefs = useRef([]);
   const tlRefs = useRef([]);
   const activeTweenRefs = useRef([]);
+  const pillRefs = useRef([]);
 
   useEffect(() => {
     const layout = () => {
@@ -62,6 +63,38 @@ const PillNavCanal = ({
     return () => window.removeEventListener("resize", layout);
   }, [items, ease]);
 
+  useEffect(() => {
+    items.forEach((item, index) => {
+      const pill = pillRefs.current[index];
+      const tl = tlRefs.current[index];
+      const circle = circleRefs.current[index];
+      const label = pill?.querySelector(".pc-label");
+      const hover = pill?.querySelector(".pc-label-hover");
+      const isActive = active === item.value;
+      const itemAccent = item.color || accent;
+
+      activeTweenRefs.current[index]?.kill();
+      if (!pill || !circle || !tl) return;
+
+      if (isActive) {
+        pill.style.background = itemAccent;
+        pill.style.color = "#ffffff";
+        gsap.set(circle, { scale: 1.2, xPercent: -50 });
+        if (label) gsap.set(label, { y: -(pill.offsetHeight + 8) });
+        if (hover) gsap.set(hover, { y: 0, opacity: 1 });
+        tl.progress(1).pause();
+        return;
+      }
+
+      pill.style.background = "";
+      pill.style.color = "";
+      gsap.set(circle, { scale: 0, xPercent: -50 });
+      if (label) gsap.set(label, { y: 0 });
+      if (hover) gsap.set(hover, { y: pill.offsetHeight + 12, opacity: 0 });
+      tl.progress(0).pause();
+    });
+  }, [active, items, accent]);
+
   const handleEnter = (i) => {
     if (active === items[i]?.value) return;
     const tl = tlRefs.current[i];
@@ -90,13 +123,14 @@ const PillNavCanal = ({
             onMouseEnter={() => handleEnter(i)}
             onMouseLeave={() => handleLeave(i)}
             className={`pc-pill ${isActive ? "pc-active" : ""}`}
-            style={isActive ? { background: accent, color: "#fff" } : undefined}
+            aria-pressed={isActive}
+            ref={(el) => { pillRefs.current[i] = el; }}
           >
             <span
               className="pc-circle"
               aria-hidden="true"
               ref={(el) => { circleRefs.current[i] = el; }}
-              style={{ background: accent }}
+              style={{ background: item.color || accent }}
             />
             <span className="pc-label-stack">
               <span className="pc-label">{item.label}</span>

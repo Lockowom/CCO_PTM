@@ -8,8 +8,10 @@ import { supabase } from '../../../supabase';
 
 // ── Constantes / tipos compartidos ──────────────────────────────────────────
 export const CANALES = [
-  { value: 'ptm', label: 'PTM' }, { value: 'orange', label: 'Orange' },
-  { value: 'farmapack', label: 'Farmapack' }, { value: 'varios', label: 'Varios' },
+  { value: 'ptm', label: 'PTM', color: '#ea580c' },
+  { value: 'orange', label: 'Orange', color: '#f59e0b' },
+  { value: 'farmapack', label: 'Farmapack', color: '#0f766e' },
+  { value: 'varios', label: 'Varios', color: '#4f46e5' },
 ];
 export const VARIOS_TIPOS = ['N.V ANTICIPADA', 'DEMO', 'REGALO', 'BOLETA', 'GUÍA SALIDA'];
 // Estados seleccionables EXACTAMENTE como el proyecto original (Sheet/Panel):

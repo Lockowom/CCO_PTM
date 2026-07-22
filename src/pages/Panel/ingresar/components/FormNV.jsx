@@ -68,6 +68,8 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     }
   };
 
+  const canalColor = CANALES.find((item) => item.value === canal)?.color || ACCENT;
+
   const canalMeta = {
     ptm: {
       eyebrow: "Canal principal",
@@ -75,6 +77,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
       hint: "Flujo estándar para notas de venta institucionales de PTM.",
       tone: "from-orange-500/10 to-amber-500/10 border-orange-200",
       badge: "Operación base",
+      color: "#ea580c",
     },
     orange: {
       eyebrow: "Canal asociado",
@@ -82,6 +85,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
       hint: "Mantiene lookup y registro dedicado para el canal Orange.",
       tone: "from-amber-500/10 to-yellow-500/10 border-amber-200",
       badge: "Canal externo",
+      color: "#f59e0b",
     },
     farmapack: {
       eyebrow: "Canal asociado",
@@ -89,6 +93,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
       hint: "Pensado para seguimiento limpio de notas Farmapack sin mezclar numeración.",
       tone: "from-emerald-500/10 to-teal-500/10 border-emerald-200",
       badge: "Canal externo",
+      color: "#0f766e",
     },
     varios: {
       eyebrow: "Canal flexible",
@@ -96,6 +101,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
       hint: "Permite captura manual para casos especiales, demos y salidas no estándar.",
       tone: "from-slate-500/10 to-indigo-500/10 border-slate-200",
       badge: "Manual asistido",
+      color: "#4f46e5",
     },
   }[canal] || {
     eyebrow: "Canal",
@@ -103,6 +109,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     hint: "Selecciona un canal para comenzar.",
     tone: "from-slate-500/10 to-slate-500/10 border-slate-200",
     badge: "Selección",
+    color: ACCENT,
   };
 
   const lookupBadge = lookupResult
@@ -131,7 +138,14 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
           <div className="min-w-0">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">
+                <div
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{
+                    border: `1px solid ${canalColor}33`,
+                    background: `${canalColor}12`,
+                    color: canalColor,
+                  }}
+                >
                   <Sparkles size={12} />
                   Identificación
                 </div>
@@ -156,7 +170,6 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
               <PillNavCanal
                 items={CANALES}
                 active={canal}
-                accent={ACCENT}
                 onSelect={(value) => patch({ canal: value, lookupResult: null, mode: "idle" })}
               />
             </div>
@@ -177,7 +190,10 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
                     }}
                     onKeyDown={e => e.key === "Enter" && onLookup()}
                     placeholder="Ej: 97125"
-                    className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-semibold text-slate-800 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
+                    className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-semibold text-slate-800 shadow-sm outline-none transition-all placeholder:text-slate-400"
+                    style={{
+                      boxShadow: `0 0 0 0 rgba(0,0,0,0)`,
+                    }}
                   />
                 </div>
                 <p className="mt-2 text-xs text-slate-400">La consulta detecta si la N.V. existe para actualizarla o si corresponde crear un registro nuevo.</p>
@@ -188,7 +204,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
                 onClick={onLookup}
                 disabled={lookupLoading || !nv.trim()}
                 className="h-14 min-w-[152px] px-5 rounded-2xl text-white text-sm font-bold active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_16px_30px_-18px_rgba(24,24,27,0.8)] inline-flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #18181b 0%, #334155 100%)" }}
+                style={{ background: `linear-gradient(135deg, ${canalMeta.color} 0%, #18181b 100%)` }}
               >
                 {lookupLoading
                   ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -244,7 +260,13 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
             <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{canalMeta.eyebrow}</div>
             <div className="mt-2 flex items-center justify-between gap-3">
               <div className="text-2xl font-black text-slate-900">{canalMeta.title}</div>
-              <div className="rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[11px] font-bold text-slate-600">
+              <div
+                className="rounded-full border bg-white/80 px-3 py-1 text-[11px] font-bold"
+                style={{
+                  borderColor: `${canalMeta.color}33`,
+                  color: canalMeta.color,
+                }}
+              >
                 {canalMeta.badge}
               </div>
             </div>
