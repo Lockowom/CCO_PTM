@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   Loader2, ExternalLink, ArrowLeftRight, FolderOpen, ChevronDown, ChevronUp,
@@ -241,6 +241,80 @@ function CarpetaCalidadTrazabilidad() {
 
 const Traspasos = () => {
   const [cargando, setCargando] = useState(true);
+  const [iframeHeight, setIframeHeight] = useState('calc(100vh - 220px)');
+  const iframeRef = useRef(null);
+
+  const syncIframeHeight = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) return;
+      const body = doc.body;
+      const html = doc.documentElement;
+      const nextHeight = Math.max(
+        body?.scrollHeight || 0,
+        body?.offsetHeight || 0,
+        html?.clientHeight || 0,
+        html?.scrollHeight || 0,
+        html?.offsetHeight || 0
+      );
+      if (nextHeight > 0) {
+        setIframeHeight(`${nextHeight}px`);
+      }
+    } catch {
+      // same-origin esperado; si no se pudiera leer, mantenemos altura base.
+    }
+  }, []);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return undefined;
+
+    let frameWindow;
+    let resizeObserver;
+    let mutationObserver;
+    let intervalId;
+
+    const attachObservers = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) return;
+        const body = doc.body;
+        const html = doc.documentElement;
+
+        syncIframeHeight();
+
+        if (window.ResizeObserver && body) {
+          resizeObserver = new ResizeObserver(() => syncIframeHeight());
+          resizeObserver.observe(body);
+          if (html) resizeObserver.observe(html);
+        }
+
+        if (window.MutationObserver && body) {
+          mutationObserver = new MutationObserver(() => syncIframeHeight());
+          mutationObserver.observe(body, { childList: true, subtree: true, attributes: true });
+        }
+
+        frameWindow = iframe.contentWindow;
+        frameWindow?.addEventListener('resize', syncIframeHeight);
+        intervalId = window.setInterval(syncIframeHeight, 1200);
+      } catch {
+        // no-op
+      }
+    };
+
+    const onLoad = () => attachObservers();
+    iframe.addEventListener('load', onLoad);
+
+    return () => {
+      iframe.removeEventListener('load', onLoad);
+      frameWindow?.removeEventListener('resize', syncIframeHeight);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [syncIframeHeight]);
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%),#f8fafc]">
@@ -304,42 +378,46 @@ const Traspasos = () => {
 
       <CarpetaCalidadTrazabilidad />
 
-      <div className="mx-3 sm:mx-6 mt-3 sm:mt-4 mb-3 sm:mb-6 flex-1 min-h-[70vh]">
-        <div className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80">
-            <div>
-              <div className="text-sm sm:text-base font-black text-slate-900">Entorno operativo embebido</div>
-              <div className="text-xs text-slate-500">Ejecuta traspasos y ajustes sin salir del shell de CCO.</div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-black">
-              <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-orange-700">Correo listo para envío</span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">Integración con Calidad</span>
-            </div>
+      <div className="mx-3 sm:mx-6 mt-3 sm:mt-4 mb-3 sm:mb-6 flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 px-1">
+          <div>
+            <div className="text-sm sm:text-base font-black text-slate-900">Entorno operativo integrado</div>
+            <div className="text-xs text-slate-500">Sin marco extra y con altura automática para evitar doble scroll.</div>
           </div>
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-black">
+            <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-orange-700">Traspasos</span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">Ajustes</span>
+            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">Calidad conectada</span>
+          </div>
+        </div>
 
-          <div className="relative min-h-[70vh] bg-slate-50">
-            {cargando && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.92))] backdrop-blur-sm">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-orange-400/20 blur-xl" />
-                  <div className="relative w-16 h-16 rounded-full border border-orange-100 bg-white flex items-center justify-center shadow-lg">
-                    <Loader2 className="animate-spin text-orange-500" size={28} />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-slate-700">Cargando módulo operativo</p>
-                  <p className="text-xs text-slate-400 mt-1">Preparando el entorno de traspasos dentro de CCO.</p>
+        <div className="relative">
+          {cargando && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.92))] backdrop-blur-sm rounded-[1.5rem]">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-orange-400/20 blur-xl" />
+                <div className="relative w-16 h-16 rounded-full border border-orange-100 bg-white flex items-center justify-center shadow-lg">
+                  <Loader2 className="animate-spin text-orange-500" size={28} />
                 </div>
               </div>
-            )}
-            <iframe
-              src={SRC}
-              title="Registro de Traspasos"
-              onLoad={() => setCargando(false)}
-              className="w-full h-full min-h-[70vh] border-0 bg-white"
-              allow="clipboard-write; clipboard-read"
-            />
-          </div>
+              <div className="text-center">
+                <p className="text-sm font-black text-slate-700">Cargando módulo operativo</p>
+                <p className="text-xs text-slate-400 mt-1">Preparando el entorno de traspasos dentro de CCO.</p>
+              </div>
+            </div>
+          )}
+          <iframe
+            ref={iframeRef}
+            src={SRC}
+            title="Registro de Traspasos"
+            onLoad={() => {
+              setCargando(false);
+              syncIframeHeight();
+            }}
+            className="w-full border-0 bg-transparent"
+            style={{ minHeight: 'calc(100vh - 220px)', height: iframeHeight }}
+            allow="clipboard-write; clipboard-read"
+          />
         </div>
       </div>
     </div>

@@ -101,10 +101,14 @@ html.cco-embedded[data-theme="dark"] {
 .cco-embedded .layout {
   display: block;
   max-width: none;
-  padding: 14px 16px 22px;
+  padding: 6px 8px 14px;
 }
-.cco-embedded .form-card { position: static; margin-bottom: 16px; }
-@media (max-width: 1000px) { .cco-embedded .layout { padding: 12px; } }
+.cco-embedded .form-card,
+.cco-embedded .list-card {
+  position: static;
+  margin: 0 0 14px;
+}
+@media (max-width: 1000px) { .cco-embedded .layout { padding: 4px 0 12px; } }
 /* La tabla se AJUSTA al ancho disponible (sin forzar 940px) → entran todas las
    columnas sin scroll. Celdas y fechas más compactas para ganar espacio. */
 .cco-embedded table { min-width: 0; width: 100%; }
@@ -113,6 +117,62 @@ html.cco-embedded[data-theme="dark"] {
 .cco-embedded .date-cell { white-space: normal; font-size: 10px; }
 .cco-embedded td .desc { max-width: 200px; }
 .cco-embedded, .cco-embedded body { overflow-x: hidden; }
+.cco-embedded body {
+  background: #f8fafc !important;
+  background-image: none !important;
+}
+.cco-embedded .tabs {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  gap: 10px;
+  padding: 0 0 10px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, #f8fafc 0%, rgba(248,250,252,0.92) 72%, rgba(248,250,252,0));
+}
+.cco-embedded .tab {
+  border-radius: 999px;
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+.cco-embedded .tab:hover { transform: translateY(-1px); }
+.cco-embedded .card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.cco-embedded .card h2 {
+  margin-bottom: 14px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+.cco-embedded .form-section {
+  padding: 18px 0;
+}
+.cco-embedded input,
+.cco-embedded select,
+.cco-embedded textarea {
+  background: #fff;
+  border-color: #cbd5e1;
+  border-radius: 14px;
+}
+.cco-embedded .toolbar,
+.cco-embedded .flow,
+.cco-embedded .cat-stat {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.88);
+}
+.cco-embedded .table-wrap {
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.cco-embedded tbody tr:hover {
+  background: rgba(148,163,184,0.08);
+}
 
 /* ---------- Minimalismo: sin fondo 3D ni modo inmersivo ---------- */
 /* El campo de partículas Three.js no encaja con la estética limpia de
