@@ -10,6 +10,18 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { logUpload } from '../../utils/logUpload';
 
+const getEmptyFormData = () => ({
+  codigo_producto: '',
+  descripcion: '',
+  unidad_medida: '',
+  peso_unitario: '',
+  largo: '',
+  ancho: '',
+  alto: '',
+  tipo_empaque: 'UNIDAD',
+  observaciones: ''
+});
+
 const CubingRegistry = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -22,17 +34,7 @@ const CubingRegistry = () => {
   const infoRef = useRef(null);
 
   // Formulario de Cubicaje
-  const [formData, setFormData] = useState({
-    codigo_producto: '',
-    descripcion: '',
-    unidad_medida: '',
-    peso_unitario: '',
-    largo: '',
-    ancho: '',
-    alto: '',
-    tipo_empaque: 'UNIDAD',
-    observaciones: ''
-  });
+  const [formData, setFormData] = useState(getEmptyFormData);
 
   const codigoInputRef = useRef(null);
 
@@ -61,23 +63,43 @@ const CubingRegistry = () => {
   // Buscar producto al escribir código (con debounce)
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!searchTerm || searchTerm.length < 3) {
+      const termToSearch = searchTerm.trim().toUpperCase();
+
+      if (!termToSearch || termToSearch.length < 3) {
         setProductData(null);
+        setFormData(prev => (prev.codigo_producto ? getEmptyFormData() : prev));
         return;
       }
-      
-      let termToSearch = searchTerm;
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
+
+        setFormData(prev =>
+          prev.codigo_producto && prev.codigo_producto !== termToSearch
+            ? getEmptyFormData()
+            : prev
+        );
+
+        let { data, error } = await supabase
           .from('tms_matriz_codigos')
           .select('*')
-          .ilike('codigo_producto', `%${termToSearch}%`)
-          .limit(1)
+          .eq('codigo_producto', termToSearch)
           .maybeSingle();
 
         if (error) throw error;
+
+        if (!data) {
+          const partialResult = await supabase
+            .from('tms_matriz_codigos')
+            .select('*')
+            .ilike('codigo_producto', `%${termToSearch}%`)
+            .order('codigo_producto', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (partialResult.error) throw partialResult.error;
+          data = partialResult.data;
+        }
 
         if (data) {
           setProductData(data);
@@ -87,36 +109,37 @@ const CubingRegistry = () => {
             { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }
           );
 
-          if (data.codigo_producto.toUpperCase() === termToSearch.toUpperCase()) {
-            const { data: pesoData } = await supabase
-              .from('tms_pesos')
-              .select('*')
-              .eq('codigo_producto', data.codigo_producto)
-              .maybeSingle();
+          const { data: pesoData } = await supabase
+            .from('tms_pesos')
+            .select('*')
+            .eq('codigo_producto', data.codigo_producto)
+            .maybeSingle();
 
-            if (pesoData) {
-              toast.info(`⚠️ Este producto ya tiene cubicaje registrado. Editando valores actuales.`);
-            }
-
-            setFormData(prev => ({
-              ...prev,
-              codigo_producto: data.codigo_producto,
-              descripcion: data.producto || '',
-              unidad_medida: data.unidad_medida || 'UNI',
-              peso_unitario: pesoData?.peso_unitario || '',
-              largo: pesoData?.largo || '',
-              ancho: pesoData?.ancho || '',
-              alto: pesoData?.alto || '',
-              tipo_empaque: pesoData?.tipo_empaque || 'UNIDAD'
-            }));
-            
-            gsap.to(formRef.current, { 
-              boxShadow: "0 0 15px rgba(16, 185, 129, 0.3)", 
-              duration: 0.3, 
-              yoyo: true, 
-              repeat: 1 
-            });
+          if (pesoData) {
+            toast.info('⚠️ Este producto ya tiene cubicaje registrado. Editando valores actuales.');
           }
+
+          setFormData(prev => ({
+            ...prev,
+            codigo_producto: data.codigo_producto,
+            descripcion: data.producto || '',
+            unidad_medida: data.unidad_medida || 'UNI',
+            peso_unitario: pesoData?.peso_unitario ?? '',
+            largo: pesoData?.largo ?? '',
+            ancho: pesoData?.ancho ?? '',
+            alto: pesoData?.alto ?? '',
+            tipo_empaque: prev.tipo_empaque || 'UNIDAD'
+          }));
+          
+          gsap.to(formRef.current, { 
+            boxShadow: "0 0 15px rgba(16, 185, 129, 0.3)", 
+            duration: 0.3, 
+            yoyo: true, 
+            repeat: 1 
+          });
+        } else {
+          setProductData(null);
+          setFormData(prev => (prev.codigo_producto ? getEmptyFormData() : prev));
         }
       } catch (_) {
         console.error('Cubing data load error:', _);
@@ -173,17 +196,7 @@ const CubingRegistry = () => {
       
       setSearchTerm('');
       setProductData(null);
-      setFormData({
-        codigo_producto: '',
-        descripcion: '',
-        unidad_medida: '',
-        peso_unitario: '',
-        largo: '',
-        ancho: '',
-        alto: '',
-        tipo_empaque: 'UNIDAD',
-        observaciones: ''
-      });
+      setFormData(getEmptyFormData());
       
       codigoInputRef.current?.focus();
     },
@@ -422,7 +435,7 @@ const CubingRegistry = () => {
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setFormData({...formData, tipo_empaque: type})}
+                          onClick={() => setFormData(prev => ({ ...prev, tipo_empaque: type }))}
                           className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
                             formData.tipo_empaque === type 
                               ? 'bg-white text-blue-400 shadow-md border border-slate-200 transform scale-100' 
@@ -454,10 +467,7 @@ const CubingRegistry = () => {
                 type="button"
                 onClick={() => {
                    setSearchTerm('');
-                   setFormData({
-                    codigo_producto: '', descripcion: '', unidad_medida: '', peso_unitario: '',
-                    largo: '', ancho: '', alto: '', tipo_empaque: 'UNIDAD', observaciones: ''
-                   });
+                   setFormData(getEmptyFormData());
                    setProductData(null);
                 }}
                 className="px-6 py-4 text-slate-500 font-bold hover:bg-white hover:text-slate-900 rounded-xl transition-colors text-sm uppercase tracking-wider"
@@ -467,7 +477,7 @@ const CubingRegistry = () => {
               
               <button 
                 type="submit"
-                disabled={saveMutation.isPending || !formData.codigo_producto}
+                disabled={saveMutation.isPending || !formData.codigo_producto || !formData.peso_unitario}
                 className={`
                   px-8 py-4 rounded-xl font-black text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl
                   ${saveMutation.isSuccess 

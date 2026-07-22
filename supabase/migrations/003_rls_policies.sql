@@ -41,8 +41,21 @@ CREATE POLICY "auth_all_series" ON tms_series FOR ALL USING (auth.role() = 'auth
 ALTER TABLE tms_farmapack ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_farmapack" ON tms_farmapack FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
-ALTER TABLE tms_pesos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "auth_all_pesos" ON tms_pesos FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  IF to_regclass('public.tms_pesos') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.tms_pesos ENABLE ROW LEVEL SECURITY';
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = 'tms_pesos'
+        AND policyname = 'auth_all_pesos'
+    ) THEN
+      EXECUTE 'CREATE POLICY "auth_all_pesos" ON public.tms_pesos FOR ALL USING (auth.role() = ''authenticated'') WITH CHECK (auth.role() = ''authenticated'')';
+    END IF;
+  END IF;
+END $$;
 
 ALTER TABLE tms_control_despacho ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_control_despacho" ON tms_control_despacho FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
@@ -74,8 +87,21 @@ CREATE POLICY "auth_all_nv_eliminadas" ON tms_nv_eliminadas FOR ALL USING (auth.
 ALTER TABLE tms_errores_picking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_errores_picking" ON tms_errores_picking FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
-ALTER TABLE tms_cubicaje_historial ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "auth_all_cubicaje" ON tms_cubicaje_historial FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  IF to_regclass('public.tms_cubicaje_historial') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.tms_cubicaje_historial ENABLE ROW LEVEL SECURITY';
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = 'tms_cubicaje_historial'
+        AND policyname = 'auth_all_cubicaje'
+    ) THEN
+      EXECUTE 'CREATE POLICY "auth_all_cubicaje" ON public.tms_cubicaje_historial FOR ALL USING (auth.role() = ''authenticated'') WITH CHECK (auth.role() = ''authenticated'')';
+    END IF;
+  END IF;
+END $$;
 
 ALTER TABLE tms_inventario_general ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_all_inventario_general" ON tms_inventario_general FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
