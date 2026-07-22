@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { ArrowUpRight, Building2, FileSearch, Search, Sparkles } from "lucide-react";
 import { useFormNVStore } from "../store/useFormNVStore";
 import { ESTADOS, ESTADOS_SELECCIONABLES, estampaDespacho } from "../estados";
 import PillNavCanal from "./PillNavCanal";
@@ -67,67 +68,207 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     }
   };
 
+  const canalMeta = {
+    ptm: {
+      eyebrow: "Canal principal",
+      title: "PTM",
+      hint: "Flujo estándar para notas de venta institucionales de PTM.",
+      tone: "from-orange-500/10 to-amber-500/10 border-orange-200",
+      badge: "Operación base",
+    },
+    orange: {
+      eyebrow: "Canal asociado",
+      title: "Orange",
+      hint: "Mantiene lookup y registro dedicado para el canal Orange.",
+      tone: "from-amber-500/10 to-yellow-500/10 border-amber-200",
+      badge: "Canal externo",
+    },
+    farmapack: {
+      eyebrow: "Canal asociado",
+      title: "Farmapack",
+      hint: "Pensado para seguimiento limpio de notas Farmapack sin mezclar numeración.",
+      tone: "from-emerald-500/10 to-teal-500/10 border-emerald-200",
+      badge: "Canal externo",
+    },
+    varios: {
+      eyebrow: "Canal flexible",
+      title: "Varios",
+      hint: "Permite captura manual para casos especiales, demos y salidas no estándar.",
+      tone: "from-slate-500/10 to-indigo-500/10 border-slate-200",
+      badge: "Manual asistido",
+    },
+  }[canal] || {
+    eyebrow: "Canal",
+    title: "Operación",
+    hint: "Selecciona un canal para comenzar.",
+    tone: "from-slate-500/10 to-slate-500/10 border-slate-200",
+    badge: "Selección",
+  };
+
+  const lookupBadge = lookupResult
+    ? lookupResult.found
+      ? {
+          container: "bg-blue-50 text-blue-700 border-blue-200",
+          iconWrap: "bg-blue-100 text-blue-700",
+          title: "NV encontrada",
+          description: `Fila ${lookupResult.row} lista para actualizar en el panel.`,
+        }
+      : {
+          container: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          iconWrap: "bg-emerald-100 text-emerald-700",
+          title: "NV nueva",
+          description: "No existe una coincidencia previa; el flujo continúa como creación.",
+        }
+    : null;
+
   return (
     <div className="anim-fade-up space-y-4">
       {/* Identificación */}
-      <section className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-4">Identificación</h2>
-        <label className="field-label">Canal</label>
-        <div className="mb-4">
-          <PillNavCanal
-            items={CANALES}
-            active={canal}
-            accent={ACCENT}
-            onSelect={(value) => patch({ canal: value, lookupResult: null, mode: "idle" })}
-          />
-        </div>
-        <label className="field-label">N° Nota de Venta</label>
-        <div className="flex gap-2">
-          <input
-            type="text" inputMode="numeric" value={nv}
-            onChange={e => {
-              const v = e.target.value;
-              if (!v.trim() && mode !== "idle") patch({ nv: v, mode: "idle", lookupResult: null, submitResult: null, errors: [] });
-              else patch({ nv: v });
-            }}
-            onKeyDown={e => e.key === "Enter" && onLookup()}
-            placeholder="Ej: 97125" className="field-input"
-          />
-          <button onClick={onLookup} disabled={lookupLoading || !nv.trim()}
-            className="px-5 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform disabled:opacity-40" style={{ background: "#18181b" }}>
-            {lookupLoading ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Buscar"}
-          </button>
-        </div>
+      <section className="relative overflow-hidden bg-white rounded-[1.75rem] border border-slate-200/90 p-5 sm:p-6 shadow-[0_22px_70px_-45px_rgba(15,23,42,0.32)]">
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.10),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.08),transparent_22%)]" />
 
-        {lookupResult && (
-          <div className="mt-4 anim-fade-up">
-            <div className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13px] font-medium ${lookupResult.found ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>
-              <span>{lookupResult.found ? "✎" : "✨"}</span>
-              {lookupResult.found ? <span>NV encontrada (fila {lookupResult.row}) · <strong>actualizar</strong></span> : <span>NV nueva · <strong>crear</strong></span>}
-            </div>
-            {(() => {
-              const af = lookupResult.found ? lookupResult.data : lookupResult.autoFill;
-              if (!af) return null;
-              const cells = [
-                { l: "Cliente", v: af.cliente },
-                { l: "Vendedor", v: af.vendedor },
-                { l: "C. Costo", v: af.ccosto || af.centro_costo },
-                { l: "División", v: af.division },
-              ].filter(x => x.v);
-              if (cells.length === 0) return null;
-              return (
-                <div className="mt-2.5 grid grid-cols-2 gap-2">
-                  {cells.map(x => (
-                    <div key={x.l} className="bg-gray-50 rounded-lg px-3 py-2">
-                      <div className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">{x.l}</div>
-                      <div className="text-[13px] text-gray-700 font-medium truncate">{x.v}</div>
-                    </div>
-                  ))}
+        <div className="relative grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_290px] gap-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">
+                  <Sparkles size={12} />
+                  Identificación
                 </div>
-              );
-            })()}
+                <h2 className="mt-3 text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                  Ingresar nota de venta
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 max-w-2xl">
+                  Selecciona el canal, consulta la N.V. y continúa con el flujo correcto sin cambiar de pantalla.
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm">
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${mode === "idle" ? "bg-slate-300" : lookupResult?.found ? "bg-blue-500" : "bg-emerald-500"}`} />
+                {mode === "idle" ? "Pendiente de consulta" : lookupResult?.found ? "Modo actualización" : "Modo creación"}
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Building2 size={15} className="text-slate-400" />
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em]">Canal operativo</label>
+              </div>
+              <PillNavCanal
+                items={CANALES}
+                active={canal}
+                accent={ACCENT}
+                onSelect={(value) => patch({ canal: value, lookupResult: null, mode: "idle" })}
+              />
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-end">
+              <div className="min-w-0">
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2 block">N° Nota de venta</label>
+                <div className="relative">
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={nv}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (!v.trim() && mode !== "idle") patch({ nv: v, mode: "idle", lookupResult: null, submitResult: null, errors: [] });
+                      else patch({ nv: v });
+                    }}
+                    onKeyDown={e => e.key === "Enter" && onLookup()}
+                    placeholder="Ej: 97125"
+                    className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base font-semibold text-slate-800 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-400">La consulta detecta si la N.V. existe para actualizarla o si corresponde crear un registro nuevo.</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onLookup}
+                disabled={lookupLoading || !nv.trim()}
+                className="h-14 min-w-[152px] px-5 rounded-2xl text-white text-sm font-bold active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_16px_30px_-18px_rgba(24,24,27,0.8)] inline-flex items-center justify-center gap-2"
+                style={{ background: "linear-gradient(135deg, #18181b 0%, #334155 100%)" }}
+              >
+                {lookupLoading
+                  ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <><FileSearch size={16} /> Buscar N.V.</>}
+              </button>
+            </div>
+
+            {lookupResult && (
+              <div className="mt-4 anim-fade-up">
+                <div className={`rounded-[1.35rem] border p-4 ${lookupBadge.container}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`h-10 w-10 rounded-2xl flex items-center justify-center ${lookupBadge.iconWrap}`}>
+                        {lookupResult.found ? <ArrowUpRight size={18} /> : <Sparkles size={18} />}
+                      </div>
+                      <div>
+                        <div className="text-sm font-black">{lookupBadge.title}</div>
+                        <div className="text-xs mt-0.5 opacity-90">{lookupBadge.description}</div>
+                      </div>
+                    </div>
+                    <div className="rounded-full border border-current/20 bg-white/60 px-3 py-1 text-[11px] font-bold uppercase tracking-wide">
+                      {lookupResult.found ? "Actualizar" : "Crear"}
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const af = lookupResult.found ? lookupResult.data : lookupResult.autoFill;
+                    if (!af) return null;
+                    const cells = [
+                      { l: "Cliente", v: af.cliente },
+                      { l: "Vendedor", v: af.vendedor },
+                      { l: "C. Costo", v: af.ccosto || af.centro_costo },
+                      { l: "División", v: af.division },
+                    ].filter(x => x.v);
+                    if (cells.length === 0) return null;
+                    return (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {cells.map(x => (
+                          <div key={x.l} className="rounded-2xl border border-white/60 bg-white/70 px-3.5 py-3">
+                            <div className="text-[10px] uppercase tracking-[0.16em] opacity-60 font-bold">{x.l}</div>
+                            <div className="text-[13px] mt-1 font-semibold truncate">{x.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          <aside className={`relative rounded-[1.5rem] border bg-gradient-to-br ${canalMeta.tone} p-4 sm:p-5`}>
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{canalMeta.eyebrow}</div>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <div className="text-2xl font-black text-slate-900">{canalMeta.title}</div>
+              <div className="rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[11px] font-bold text-slate-600">
+                {canalMeta.badge}
+              </div>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{canalMeta.hint}</p>
+
+            <div className="mt-5 rounded-2xl border border-white/70 bg-white/80 p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Buenas prácticas</div>
+              <div className="mt-3 space-y-2.5">
+                <div className="flex items-start gap-2.5 text-sm text-slate-600">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-orange-500 shrink-0" />
+                  <span>Usa la N.V. exacta del canal seleccionado para evitar cruces de numeración.</span>
+                </div>
+                <div className="flex items-start gap-2.5 text-sm text-slate-600">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Si existe una coincidencia, el panel entra en modo actualización con los datos recuperados.</span>
+                </div>
+                <div className="flex items-start gap-2.5 text-sm text-slate-600">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-sky-500 shrink-0" />
+                  <span>Si no existe, continúas directo con creación sin salir del formulario.</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
       {/* Tipo + datos manuales para canal Varios */}
