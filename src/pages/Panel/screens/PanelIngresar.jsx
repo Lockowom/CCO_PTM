@@ -581,12 +581,12 @@ export default function PanelIngresar() {
 
   return (
     <div className="anim-fade-up space-y-4">
-      <div className="w-full max-w-3xl rounded-[1.6rem] border border-slate-200/90 bg-white/95 p-2 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.35)]">
-        <div className="mb-2 px-2 pt-1">
+      <div className="w-full max-w-3xl rounded-[1.6rem] border border-slate-200/90 bg-white/95 p-3 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.22)]">
+        <div className="mb-3 px-1 pt-1">
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Vista operativa</div>
           <div className="mt-1 text-sm font-semibold text-slate-600">Selecciona el flujo que quieres trabajar dentro del panel.</div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-[1.35rem] bg-slate-50/75 p-1.5">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.v;
@@ -595,26 +595,45 @@ export default function PanelIngresar() {
                 key={t.v}
                 type="button"
                 onClick={() => setTab(t.v)}
-                className={`group relative overflow-hidden rounded-[1.25rem] border px-4 py-3 text-left transition-all duration-200 ${
+                className={`group relative overflow-hidden rounded-[1.15rem] border px-4 py-3.5 text-left transition-all duration-200 ${
                   active
-                    ? 'border-transparent text-white shadow-[0_18px_32px_-22px_rgba(15,23,42,0.55)]'
-                    : 'border-slate-200 bg-slate-50/85 text-slate-600 hover:border-slate-300 hover:bg-white'
+                    ? 'bg-white text-slate-700 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.45)]'
+                    : 'border-transparent bg-transparent text-slate-600 hover:border-slate-200/80 hover:bg-white/80'
                 }`}
-                style={active ? { background: `linear-gradient(135deg, ${t.accent} 0%, #0f172a 100%)` } : undefined}
+                style={active ? { borderColor: `${t.accent}26` } : undefined}
                 aria-pressed={active}
               >
-                <div className={`absolute inset-0 pointer-events-none transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} style={{ background: `radial-gradient(circle at top right, ${t.accent}33, transparent 38%)` }} />
-                <div className="relative flex items-start gap-3">
+                {active && (
+                  <div className="absolute inset-x-4 top-0 h-[2px] rounded-full" style={{ background: t.accent }} />
+                )}
+                <div
+                  className={`absolute inset-0 pointer-events-none transition-opacity ${
+                    active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                  style={{ background: `radial-gradient(circle at top right, ${t.accent}14, transparent 42%)` }}
+                />
+                <div className="relative flex items-center gap-3">
                   <div
-                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-colors ${
-                      active ? 'border-white/20 bg-white/12 text-white' : 'border-slate-200 bg-white text-slate-500'
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-colors ${
+                      active ? 'bg-white' : 'border-slate-200 bg-white/90 text-slate-500'
                     }`}
+                    style={active ? { borderColor: `${t.accent}26`, color: t.accent, background: `${t.accent}10` } : undefined}
                   >
                     <Icon size={18} />
                   </div>
-                  <div className="min-w-0">
-                    <div className={`text-sm font-black tracking-tight ${active ? 'text-white' : 'text-slate-800'}`}>{t.label}</div>
-                    <div className={`mt-1 text-[12px] leading-5 ${active ? 'text-white/75' : 'text-slate-400'}`}>{t.hint}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className={`text-sm font-black tracking-tight ${active ? 'text-slate-900' : 'text-slate-800'}`}>{t.label}</div>
+                      {active && (
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
+                          style={{ background: `${t.accent}12`, color: t.accent }}
+                        >
+                          Activo
+                        </span>
+                      )}
+                    </div>
+                    <div className={`mt-1 text-[12px] leading-5 ${active ? 'text-slate-500' : 'text-slate-400'}`}>{t.hint}</div>
                   </div>
                 </div>
               </button>
