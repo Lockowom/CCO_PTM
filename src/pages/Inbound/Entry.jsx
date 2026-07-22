@@ -518,29 +518,38 @@ const Entry = () => {
   const optionalFieldsFilled = ['serie', 'partida', 'pieza', 'fecha_vencimiento', 'talla', 'color']
     .filter((key) => Boolean(form[key]))
     .length;
+  const BRAND = {
+    navy: '#0D1B2A',
+    blue: '#163D63',
+    slate: '#475569',
+    soft: '#E2E8F0',
+    orange: '#FF6D00',
+    amber: '#FFB26B',
+    green: '#22C55E',
+  };
 
   return (
     <div ref={containerRef} className="min-h-screen bg-slate-50 px-3 pb-20 pt-3 text-slate-700 sm:px-6 sm:pt-6">
       <div className="mx-auto max-w-[1680px] space-y-4 sm:space-y-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-42px_rgba(15,23,42,0.35)] sm:p-6 md:p-8">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-wms-alert via-orange-300 to-amber-200" />
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-wms-alert/10 blur-3xl" />
+          <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${BRAND.navy} 0%, ${BRAND.blue} 35%, ${BRAND.orange} 72%, ${BRAND.amber} 100%)` }} />
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl" style={{ background: `${BRAND.orange}14` }} />
           <div className="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-wms-alert/30 bg-gradient-to-br from-orange-50 to-white text-wms-alert shadow-[0_20px_35px_-28px_rgba(234,88,12,0.85)]">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border shadow-[0_20px_35px_-28px_rgba(13,27,42,0.75)]" style={{ borderColor: `${BRAND.blue}30`, background: `linear-gradient(135deg, ${BRAND.navy} 0%, ${BRAND.blue} 100%)`, color: '#fff' }}>
                 <PackagePlus size={28} strokeWidth={2.4} />
               </div>
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                  Inbound operativo
+                <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em]" style={{ border: `1px solid ${BRAND.soft}`, background: '#fff', color: BRAND.slate }}>
+                  <span className="rounded-md px-2 py-0.5 text-[9px] text-white" style={{ background: BRAND.orange }}>SYSTEM</span>
+                  CCO OPERACIONAL
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">
-                    Ingreso de <span className="text-wms-alert">Mercancía</span>
+                  <h2 className="text-2xl font-black tracking-tight sm:text-4xl" style={{ color: BRAND.navy }}>
+                    Ingreso de <span style={{ color: BRAND.orange }}>Mercancía</span>
                   </h2>
-                  <p className="mt-1 text-sm font-medium text-slate-500 sm:text-base">
-                    Registra entradas en ubicaciones, valida SKU y consolida la cola antes del guardado final.
+                  <p className="mt-1 text-sm font-medium sm:text-base" style={{ color: BRAND.slate }}>
+                    Centro Control Operacional. Registra entradas en ubicaciones, valida SKU y consolida la cola antes del guardado final.
                   </p>
                 </div>
               </div>
@@ -548,7 +557,7 @@ const Entry = () => {
 
             <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[620px]">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Estado</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: BRAND.slate }}>Estado</div>
                 <div className={`mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black ${
                   isOnline
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -594,30 +603,30 @@ const Entry = () => {
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_22px_55px_-38px_rgba(15,23,42,0.35)] sm:p-6">
               <div className="mb-5 flex items-start justify-between gap-3">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-700">
+                  <div className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em]" style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}08`, color: BRAND.blue }}>
                     Paso 1
                   </div>
-                  <h3 className="mt-3 text-lg font-black tracking-tight text-slate-900 sm:text-xl">Datos del producto</h3>
-                  <p className="mt-1 text-sm text-slate-500">Captura ubicación, SKU y cantidad con una interfaz más limpia y enfocada.</p>
+                  <h3 className="mt-3 text-lg font-black tracking-tight sm:text-xl" style={{ color: BRAND.navy }}>Datos del producto</h3>
+                  <p className="mt-1 text-sm" style={{ color: BRAND.slate }}>Captura ubicación, SKU y cantidad con una interfaz corporativa más limpia y enfocada.</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-right">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Flujo</div>
-                  <div className="mt-1 text-sm font-black text-slate-800">Put Away</div>
+                <div className="rounded-2xl px-3 py-2 text-right" style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.orange}08` }}>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: BRAND.slate }}>Flujo</div>
+                  <div className="mt-1 text-sm font-black" style={{ color: BRAND.navy }}>Put Away</div>
                 </div>
               </div>
 
               <form ref={formRef} onSubmit={addToQueue} className="space-y-5">
-                <div className="grid grid-cols-3 gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                <div className="grid grid-cols-3 gap-3 rounded-2xl p-3" style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}06` }}>
                   <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Ubicación</div>
-                    <div className="mt-2 truncate text-sm font-black text-slate-800">{form.ubicacion || 'Pendiente'}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: BRAND.slate }}>Ubicación</div>
+                    <div className="mt-2 truncate text-sm font-black" style={{ color: BRAND.navy }}>{form.ubicacion || 'Pendiente'}</div>
                   </div>
                   <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">SKU</div>
-                    <div className="mt-2 truncate text-sm font-black text-slate-800">{form.codigo || 'Pendiente'}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: BRAND.slate }}>SKU</div>
+                    <div className="mt-2 truncate text-sm font-black" style={{ color: BRAND.navy }}>{form.codigo || 'Pendiente'}</div>
                   </div>
                   <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Cantidad</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: BRAND.slate }}>Cantidad</div>
                     <div className="mt-2 truncate text-sm font-black text-emerald-700">{form.cantidad || '0'}</div>
                   </div>
                 </div>
@@ -632,7 +641,8 @@ const Entry = () => {
                     <input
                       type="text"
                       name="ubicacion"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-10 text-lg font-bold uppercase text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-wms-alert focus:bg-white"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-10 text-lg font-bold uppercase outline-none transition-all placeholder:text-slate-400 focus:bg-white"
+                      style={{ color: BRAND.navy }}
                       placeholder="AA-01-01A"
                       value={form.ubicacion}
                       onChange={handleInputChange}
@@ -641,14 +651,15 @@ const Entry = () => {
                       required
                       autoFocus
                     />
-                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: BRAND.slate }} size={20} />
                   </div>
                   {isSupportedDevice && (
                     <button
                       type="button"
                       onClick={scanUbicacion}
                       disabled={isScanning}
-                      className="flex items-center justify-center rounded-2xl border border-orange-300 bg-orange-50 px-3.5 text-wms-alert transition-colors hover:bg-wms-alert hover:text-white disabled:opacity-50"
+                      className="flex items-center justify-center rounded-2xl border px-3.5 transition-colors hover:text-white disabled:opacity-50"
+                      style={{ borderColor: `${BRAND.orange}50`, background: `${BRAND.orange}10`, color: BRAND.orange }}
                       title="Escanear con cámara"
                     >
                       <Camera size={20} />
@@ -674,7 +685,8 @@ const Entry = () => {
                       ref={codigoInputRef}
                       type="text"
                       name="codigo"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-10 text-lg font-bold uppercase text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-wms-alert focus:bg-white"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-10 text-lg font-bold uppercase outline-none transition-all placeholder:text-slate-400 focus:bg-white"
+                      style={{ color: BRAND.navy }}
                       placeholder="SKU-123..."
                       value={form.codigo}
                       onChange={handleInputChange}
@@ -682,9 +694,9 @@ const Entry = () => {
                       required
                     />
                     {loadingDesc ? (
-                      <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2 text-wms-alert" size={20} />
+                      <Loader2 className="loading-spinner absolute right-3 top-1/2 -translate-y-1/2" style={{ color: BRAND.orange }} size={20} />
                     ) : (
-                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-wms-alert transition-colors" size={20} />
+                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: BRAND.slate }} size={20} />
                     )}
                   </div>
                   {isSupportedDevice && (
@@ -692,7 +704,8 @@ const Entry = () => {
                       type="button"
                       onClick={scanCodigo}
                       disabled={isScanning}
-                      className="flex items-center justify-center rounded-2xl border border-orange-300 bg-orange-50 px-3.5 text-wms-alert transition-colors hover:bg-wms-alert hover:text-white disabled:opacity-50"
+                      className="flex items-center justify-center rounded-2xl border px-3.5 transition-colors hover:text-white disabled:opacity-50"
+                      style={{ borderColor: `${BRAND.orange}50`, background: `${BRAND.orange}10`, color: BRAND.orange }}
                       title="Escanear con cámara"
                     >
                       <Camera size={20} />
@@ -709,7 +722,8 @@ const Entry = () => {
                 <textarea
                   name="descripcion"
                   rows="2"
-                  className="desc-field w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold text-slate-700 transition-colors focus:outline-none"
+                  className="desc-field w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold transition-colors focus:outline-none"
+                  style={{ color: BRAND.slate }}
                   placeholder="Se llenará automáticamente..."
                   value={form.descripcion}
                   readOnly
@@ -726,7 +740,7 @@ const Entry = () => {
                   ref={cantidadInputRef}
                   type="number"
                   name="cantidad"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xl font-black text-emerald-700 outline-none transition-all focus:border-emerald-400 focus:bg-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xl font-black text-emerald-700 outline-none transition-all focus:bg-white"
                   placeholder="0"
                   min="0.01"
                   step="0.01"
@@ -737,14 +751,14 @@ const Entry = () => {
               </div>
 
               {/* CAMPOS OPCIONALES */}
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+              <div className="rounded-[1.5rem] p-4" style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}06` }}>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {/* SERIE */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serie</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-wms-alert" placeholder="S/N..." />
-                      <button type="button" onClick={scanSerie} disabled={isScanning} className="flex shrink-0 items-center justify-center rounded-xl border border-orange-200 bg-orange-50 px-2.5 text-wms-alert transition-colors hover:bg-wms-alert hover:text-white disabled:opacity-50" title="Escanear Serie">
+                      <input type="text" name="serie" value={form.serie} onChange={handleInputChange} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400" style={{ color: BRAND.navy }} placeholder="S/N..." />
+                      <button type="button" onClick={scanSerie} disabled={isScanning} className="flex shrink-0 items-center justify-center rounded-xl border px-2.5 transition-colors hover:text-white disabled:opacity-50" style={{ borderColor: `${BRAND.orange}40`, background: `${BRAND.orange}10`, color: BRAND.orange }} title="Escanear Serie">
                         <Camera size={16} />
                       </button>
                     </div>
@@ -753,8 +767,8 @@ const Entry = () => {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Partida</label>
                     <div className="flex gap-1.5">
-                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-wms-alert" placeholder="Lote..." />
-                      <button type="button" onClick={scanPartida} disabled={isScanning} className="flex shrink-0 items-center justify-center rounded-xl border border-orange-200 bg-orange-50 px-2.5 text-wms-alert transition-colors hover:bg-wms-alert hover:text-white disabled:opacity-50" title="Escanear Partida">
+                      <input type="text" name="partida" value={form.partida} onChange={handleInputChange} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400" style={{ color: BRAND.navy }} placeholder="Lote..." />
+                      <button type="button" onClick={scanPartida} disabled={isScanning} className="flex shrink-0 items-center justify-center rounded-xl border px-2.5 transition-colors hover:text-white disabled:opacity-50" style={{ borderColor: `${BRAND.orange}40`, background: `${BRAND.orange}10`, color: BRAND.orange }} title="Escanear Partida">
                         <Camera size={16} />
                       </button>
                     </div>
@@ -762,24 +776,24 @@ const Entry = () => {
                   {/* PIEZA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pieza</label>
-                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-wms-alert" placeholder="Ej: Motor..." />
+                    <input type="text" name="pieza" value={form.pieza} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400" style={{ color: BRAND.navy }} placeholder="Ej: Motor..." />
                   </div>
                   {/* VENCIMIENTO */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vencimiento</label>
                     <div className="relative">
-                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none focus:border-wms-alert" />
+                      <input type="date" name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none" style={{ color: BRAND.navy }} />
                     </div>
                   </div>
                   {/* TALLA */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Talla</label>
-                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-wms-alert" placeholder="S, M, L..." />
+                    <input type="text" name="talla" value={form.talla} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400" style={{ color: BRAND.navy }} placeholder="S, M, L..." />
                   </div>
                   {/* COLOR */}
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color</label>
-                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-wms-alert" placeholder="Rojo..." />
+                    <input type="text" name="color" value={form.color} onChange={handleInputChange} className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400" style={{ color: BRAND.navy }} placeholder="Rojo..." />
                   </div>
                 </div>
               </div>
@@ -791,7 +805,7 @@ const Entry = () => {
                 </div>
               )}
 
-              <button className="add-btn mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-wms-alert to-orange-500 px-4 py-4 text-base font-black text-white shadow-[0_22px_40px_-24px_rgba(234,88,12,0.95)] transition-all active:scale-95 sm:text-lg">
+              <button className="add-btn mt-2 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-4 text-base font-black text-white shadow-[0_22px_40px_-24px_rgba(13,27,42,0.85)] transition-all active:scale-95 sm:text-lg" style={{ background: `linear-gradient(135deg, ${BRAND.navy} 0%, ${BRAND.blue} 46%, ${BRAND.orange} 100%)` }}>
                 <PackagePlus size={24} />
                 <span>AGREGAR A COLA</span>
               </button>
@@ -804,11 +818,11 @@ const Entry = () => {
               <div className="border-b border-slate-200 bg-white p-5 sm:p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-700">
+                    <div className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em]" style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}08`, color: BRAND.blue }}>
                       Paso 2
                     </div>
-                    <h3 className="mt-3 text-lg font-black tracking-tight text-slate-900 sm:text-xl">Cola de procesamiento</h3>
-                    <p className="mt-1 text-sm text-slate-500">Revisa los movimientos antes de consolidarlos en ubicaciones.</p>
+                    <h3 className="mt-3 text-lg font-black tracking-tight sm:text-xl" style={{ color: BRAND.navy }}>Cola de procesamiento</h3>
+                    <p className="mt-1 text-sm" style={{ color: BRAND.slate }}>Revisa los movimientos antes de consolidarlos en ubicaciones.</p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -848,11 +862,11 @@ const Entry = () => {
                       <div
                         key={item.id}
                         ref={(el) => { if (el) queueItemsRef.current[index] = el; }}
-                        className="group rounded-[1.4rem] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-orange-200 hover:shadow-[0_18px_40px_-32px_rgba(234,88,12,0.45)]"
+                        className="group rounded-[1.4rem] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-[0_18px_40px_-32px_rgba(13,27,42,0.32)]"
                       >
                         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                           <div className="flex min-w-0 gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 text-sm font-black text-wms-alert">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg, ${BRAND.blue} 0%, ${BRAND.orange} 100%)` }}>
                               {queue.length - index}
                             </div>
 
@@ -864,7 +878,7 @@ const Entry = () => {
                                 </div>
                                 <div className="min-w-0">
                                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Código</p>
-                                  <p className="mt-1 truncate font-mono text-lg font-black text-wms-alert">{item.codigo}</p>
+                                  <p className="mt-1 truncate font-mono text-lg font-black" style={{ color: BRAND.orange }}>{item.codigo}</p>
                                   {item.descripcion && <p className="mt-1 truncate text-xs text-slate-500">{item.descripcion}</p>}
                                 </div>
                                 <div>
@@ -879,7 +893,7 @@ const Entry = () => {
 
                               {(item.serie || item.partida || item.pieza || item.fecha_vencimiento || item.talla || item.color) && (
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                  {item.serie && <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">Serie: {item.serie}</span>}
+                                  {item.serie && <span className="rounded-full border px-2.5 py-1 text-[11px] font-bold" style={{ borderColor: `${BRAND.blue}25`, background: `${BRAND.blue}10`, color: BRAND.blue }}>Serie: {item.serie}</span>}
                                   {item.partida && <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-bold text-violet-700">Partida: {item.partida}</span>}
                                   {item.pieza && <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600">Pieza: {item.pieza}</span>}
                                   {item.fecha_vencimiento && <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700">Vence: {item.fecha_vencimiento}</span>}
@@ -904,7 +918,8 @@ const Entry = () => {
                 <button
                   onClick={handleSync}
                   disabled={queue.length === 0 || syncMutation.isPending}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-wms-alert to-orange-500 px-4 py-4 text-lg font-black text-white transition-all disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_22px_40px_-24px_rgba(234,88,12,0.95)]"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl px-4 py-4 text-lg font-black text-white transition-all disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_22px_40px_-24px_rgba(13,27,42,0.85)]"
+                  style={{ background: `linear-gradient(135deg, ${BRAND.navy} 0%, ${BRAND.blue} 50%, ${BRAND.orange} 100%)` }}
                 >
                   {syncMutation.isPending ? (
                     <>
