@@ -738,12 +738,6 @@ const Entry = () => {
 
               {/* CAMPOS OPCIONALES */}
               <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Detalles opcionales</p>
-                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-                    {optionalFieldsFilled}/6 cargados
-                  </span>
-                </div>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {/* SERIE */}
                   <div>
