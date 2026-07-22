@@ -556,18 +556,71 @@ export default function PanelIngresar() {
   const puedeEliminar = puedeEliminarNV(user);
   const [tab, setTab] = useState('buscar');
   const TABS = [
-    { v: 'buscar', label: 'Buscar' },
-    { v: 'ingresar', label: 'Ingresar' },
-    ...(puedeEscribir ? [{ v: 'consolidados', label: 'Consolidados' }] : []),
+    {
+      v: 'buscar',
+      label: 'Buscar',
+      hint: 'Seguimiento y consulta',
+      icon: Search,
+      accent: '#2563eb',
+    },
+    {
+      v: 'ingresar',
+      label: 'Ingresar',
+      hint: 'Registro operativo',
+      icon: Sparkles,
+      accent: ACCENT,
+    },
+    ...(puedeEscribir ? [{
+      v: 'consolidados',
+      label: 'Consolidados',
+      hint: 'Agrupación comercial',
+      icon: Layers,
+      accent: '#0f766e',
+    }] : []),
   ];
 
   return (
     <div className="anim-fade-up space-y-4">
-      <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1 w-fit">
-        {TABS.map((t) => (
-          <button key={t.v} onClick={() => setTab(t.v)}
-            className={`px-4 py-1.5 rounded-xl text-sm font-black transition-colors ${tab === t.v ? 'bg-white text-orange-600 shadow' : 'text-slate-500 hover:text-orange-600'}`}>{t.label}</button>
-        ))}
+      <div className="w-full max-w-3xl rounded-[1.6rem] border border-slate-200/90 bg-white/95 p-2 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.35)]">
+        <div className="mb-2 px-2 pt-1">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Vista operativa</div>
+          <div className="mt-1 text-sm font-semibold text-slate-600">Selecciona el flujo que quieres trabajar dentro del panel.</div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.v;
+            return (
+              <button
+                key={t.v}
+                type="button"
+                onClick={() => setTab(t.v)}
+                className={`group relative overflow-hidden rounded-[1.25rem] border px-4 py-3 text-left transition-all duration-200 ${
+                  active
+                    ? 'border-transparent text-white shadow-[0_18px_32px_-22px_rgba(15,23,42,0.55)]'
+                    : 'border-slate-200 bg-slate-50/85 text-slate-600 hover:border-slate-300 hover:bg-white'
+                }`}
+                style={active ? { background: `linear-gradient(135deg, ${t.accent} 0%, #0f172a 100%)` } : undefined}
+                aria-pressed={active}
+              >
+                <div className={`absolute inset-0 pointer-events-none transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} style={{ background: `radial-gradient(circle at top right, ${t.accent}33, transparent 38%)` }} />
+                <div className="relative flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-colors ${
+                      active ? 'border-white/20 bg-white/12 text-white' : 'border-slate-200 bg-white text-slate-500'
+                    }`}
+                  >
+                    <Icon size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className={`text-sm font-black tracking-tight ${active ? 'text-white' : 'text-slate-800'}`}>{t.label}</div>
+                    <div className={`mt-1 text-[12px] leading-5 ${active ? 'text-white/75' : 'text-slate-400'}`}>{t.hint}</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
       {tab === 'buscar' && <TabBuscar puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} />}
       {tab === 'ingresar' && <TabIngresar />}
