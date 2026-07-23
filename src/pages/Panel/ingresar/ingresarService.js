@@ -260,6 +260,12 @@ const EXPORT_COLS = [
   ['observaciones_incidencia', 'OBS. INCIDENCIA'], ['dias_incidencia', 'DÍAS INCIDENCIA'], ['fillrate', 'FILLRATE'],
   ['origen', 'ORIGEN'], ['created_at', 'CREADO'], ['updated_at', 'ACTUALIZADO'],
 ];
+const EXPORT_DERIVED_COLS = [
+  ['canal_operacion', 'CANAL OPERACIÓN'],
+  ['nv_operacion', 'N.V OPERACIÓN'],
+  ['nv_orange_asociada_ptm', 'N.V ORANGE ASOCIADA PTM'],
+  ['tiene_asociacion_orange', 'PTM CON ASOCIACIÓN ORANGE'],
+];
 // Columnas de fecha (date) y de timestamp: se exportan SIEMPRE en formato chileno
 // dd/mm/aaaa (y dd/mm/aaaa hh:mm) para que la descarga sea consistente y no
 // dependa del locale de Excel. `fecha_facturacion` es texto libre → se deja igual.
@@ -299,6 +305,18 @@ export async function exportarOperaciones() {
       else if (DATE_COLS.has(k)) v = fmtFecha(v);       // dd/mm/aaaa
       else if (TS_COLS.has(k)) v = fmtTs(v);            // dd/mm/aaaa hh:mm
       o[h] = v;                                          // números ($ , bultos, días) quedan numéricos
+    });
+    const canal = canalDe(r);
+    const nvOperacion = nvDe(r);
+    const nvOrangeAsociadaPtm = r.nv_ptm ? (r.nv_orange || '') : '';
+    const derived = {
+      'CANAL OPERACIÓN': String(canal || '').toUpperCase(),
+      'N.V OPERACIÓN': nvOperacion || '',
+      'N.V ORANGE ASOCIADA PTM': nvOrangeAsociadaPtm,
+      'PTM CON ASOCIACIÓN ORANGE': r.nv_ptm ? (r.nv_orange ? 'SÍ' : 'NO') : '',
+    };
+    EXPORT_DERIVED_COLS.forEach(([, header]) => {
+      o[header] = derived[header] || '';
     });
     return o;
   });
