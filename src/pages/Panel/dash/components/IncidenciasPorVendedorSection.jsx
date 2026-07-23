@@ -6,10 +6,10 @@ export default function IncidenciasPorVendedorSection({ data = [], onOpenInciden
     <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">Reportes de errores</div>
-          <h3 className="mt-1 text-lg font-black text-gray-900">Incidencias por vendedor</h3>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">Ranking automático</div>
+          <h3 className="mt-1 text-lg font-black text-gray-900">Ranking de errores por vendedor</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Prioriza vendedores con incidencias activas y riesgo de incumplimiento sobre 48 horas.
+            Consolida automáticamente las incidencias activas por vendedor para medir errores no contabilizados y su impacto sobre el cumplimiento de 48 horas.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -26,7 +26,7 @@ export default function IncidenciasPorVendedorSection({ data = [], onOpenInciden
             onClick={onOpenIncidencias}
             className="rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-bold hover:bg-slate-800 transition-colors"
           >
-            Ver detalle global
+            Ver incidencias activas
           </button>
         </div>
       </div>

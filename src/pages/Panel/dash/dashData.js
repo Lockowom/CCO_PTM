@@ -854,17 +854,6 @@ export async function fetchDashboardData(dateFrom, dateTo) {
       }
     }
   });
-  const rankingVendedores = Object.entries(vendPerf)
-    .map(([nombre, d]) => ({
-      nombre,
-      total: d.total,
-      entregadas: d.entregadas,
-      activas: d.activas,
-      pctATiempo: d.entregadas > 0 ? +((d.aTiempo / d.entregadas) * 100).toFixed(0) : null,
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10);
-
   const incidenciasPorVendedor = Object.entries(
     incidenciasActivasRows.reduce((acc, r) => {
       const vendedor = (r.vendedor || "Sin vendedor").trim() || "Sin vendedor";
@@ -916,6 +905,32 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     }))
     .sort((a, b) => b.fuera48h - a.fuera48h || b.total - a.total || b.maxDias - a.maxDias)
     .slice(0, 12);
+
+  const incidenciasPorVendedorMap = incidenciasPorVendedor.reduce((acc, item) => {
+    acc[item.vendedor] = item;
+    return acc;
+  }, {});
+
+  const rankingVendedores = Object.entries(vendPerf)
+    .map(([nombre, d]) => {
+      const errores = incidenciasPorVendedorMap[nombre];
+      return {
+        nombre,
+        total: d.total,
+        entregadas: d.entregadas,
+        activas: d.activas,
+        pctATiempo: d.entregadas > 0 ? +((d.aTiempo / d.entregadas) * 100).toFixed(0) : null,
+        erroresActivos: errores?.total || 0,
+        errores48h: errores?.fuera48h || 0,
+        errorPrincipal: errores?.topTipo || "—",
+      };
+    })
+    .sort((a, b) =>
+      b.errores48h - a.errores48h ||
+      b.erroresActivos - a.erroresActivos ||
+      b.total - a.total
+    )
+    .slice(0, 10);
 
   // === Alertas Operacionales (NVs estancadas por estado) ===
   const UMBRAL_DIAS = {

@@ -269,8 +269,8 @@ export default function DashboardReal() {
 
         <TiemposCicloSection tiemposCiclo={tiemposCiclo} />
         <AlertasOperacionalesSection alertasOp={alertasOp} />
-        <RankingsSection rankTransp={rankTransp} rankVend={rankVend} />
         <IncidenciasPorVendedorSection data={incidenciasPorVendedor} onOpenIncidencias={abrirIncidencias} />
+        <RankingsSection rankTransp={rankTransp} rankVend={rankVend} />
         <OperadoresSection auditKpis={auditKpis} />
         <DivisionsSection divisions={divisions} />
         <TendenciaSection tendencia={tendencia} />
