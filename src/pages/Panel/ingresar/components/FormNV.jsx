@@ -522,63 +522,65 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
             </div>
           </details>
 
-          <section className="bg-white rounded-2xl border border-gray-200 p-5 anim-fade-up">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Reporte de errores / incidencias</h2>
-                <p className="mt-2 text-sm text-slate-500 max-w-3xl">
-                  Reporta incidencias logísticas de la N.V. para alimentar el dashboard de errores por vendedor y detectar riesgo de cumplimiento sobre 48 horas.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 max-w-sm">
-                Se consolida junto con la operación y después aparece en el tablero operacional como incidencia activa.
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {INCIDENCIAS_NV.map((tipo) => {
-                const active = incidencia === tipo;
-                const Icon = tipo === "PROBLEMAS DE DIRECCIÓN" ? MapPinned : tipo === "PROBLEMAS DE TRANSPORTE" ? Truck : AlertTriangle;
-                return (
-                  <button
-                    key={tipo}
-                    type="button"
-                    onClick={() => patch({ incidencia: active ? "" : tipo, estadoIncidencia: active ? "ABIERTA" : estadoIncidencia || "ABIERTA" })}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition-all ${
-                      active ? "border-orange-500 bg-orange-500 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50"
-                    }`}
-                  >
-                    <Icon size={14} />
-                    {tipo}
-                  </button>
-                );
-              })}
-            </div>
-
-            {incidencia && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3.5 anim-fade-up">
+          {mode === "update" && (
+            <section className="bg-white rounded-2xl border border-gray-200 p-5 anim-fade-up">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <label className="field-label">Estado incidencia</label>
-                  <select value={estadoIncidencia} onChange={(e) => patch({ estadoIncidencia: e.target.value })} className="field-input">
-                    {ESTADOS_INCIDENCIA.map((item) => <option key={item} value={item}>{item}</option>)}
-                  </select>
+                  <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Reporte de errores / incidencias</h2>
+                  <p className="mt-2 text-sm text-slate-500 max-w-3xl">
+                    Reporta incidencias logísticas de la N.V. para alimentar el dashboard de errores por vendedor y detectar riesgo de cumplimiento sobre 48 horas.
+                  </p>
                 </div>
-                <div>
-                  <label className="field-label">Tipo detectado</label>
-                  <input type="text" value={incidencia} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="field-label">Observaciones</label>
-                  <textarea
-                    value={observacionesIncidencia}
-                    onChange={(e) => patch({ observacionesIncidencia: e.target.value })}
-                    className="field-input min-h-[96px] resize-y"
-                    placeholder="Ej: dirección incompleta, contacto sin respuesta, transportista reprogramado, rechazo por zona..."
-                  />
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 max-w-sm">
+                  Se consolida junto con la operación y después aparece en el tablero operacional como incidencia activa.
                 </div>
               </div>
-            )}
-          </section>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {INCIDENCIAS_NV.map((tipo) => {
+                  const active = incidencia === tipo;
+                  const Icon = tipo === "PROBLEMAS DE DIRECCIÓN" ? MapPinned : tipo === "PROBLEMAS DE TRANSPORTE" ? Truck : AlertTriangle;
+                  return (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => patch({ incidencia: active ? "" : tipo, estadoIncidencia: active ? "ABIERTA" : estadoIncidencia || "ABIERTA" })}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition-all ${
+                        active ? "border-orange-500 bg-orange-500 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50"
+                      }`}
+                    >
+                      <Icon size={14} />
+                      {tipo}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {incidencia && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3.5 anim-fade-up">
+                  <div>
+                    <label className="field-label">Estado incidencia</label>
+                    <select value={estadoIncidencia} onChange={(e) => patch({ estadoIncidencia: e.target.value })} className="field-input">
+                      {ESTADOS_INCIDENCIA.map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="field-label">Tipo detectado</label>
+                    <input type="text" value={incidencia} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="field-label">Observaciones</label>
+                    <textarea
+                      value={observacionesIncidencia}
+                      onChange={(e) => patch({ observacionesIncidencia: e.target.value })}
+                      className="field-input min-h-[96px] resize-y"
+                      placeholder="Ej: dirección incompleta, contacto sin respuesta, transportista reprogramado, rechazo por zona..."
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {errors.length > 0 && (
             <div className="bg-red-50 border border-red-100 rounded-xl p-3.5 anim-fade-up">
