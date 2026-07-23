@@ -37,6 +37,9 @@ const normNV = (v) => {
   return /^\d+\.0+$/.test(t) ? t.split('.')[0] : t;
 };
 const normText = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const normWords = (v) => normText(v).replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+const STOP_WORDS_VENDEDOR = new Set(['de', 'del', 'la', 'las', 'los']);
+const vendorTokens = (v) => normWords(v).split(' ').filter((token) => token && !STOP_WORDS_VENDEDOR.has(token));
 const colDe = (canal) => (canal === 'ptm' ? 'nv_ptm' : canal === 'orange' ? 'nv_orange' : canal === 'farmapack' ? 'nv_farmapack' : 'varios');
 const canalDe = (r) => (r.nv_ptm ? 'ptm' : r.nv_orange ? 'orange' : r.nv_farmapack ? 'farmapack' : 'varios');
 const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || ''));
@@ -152,8 +155,31 @@ export async function buscarNvCatalogo(canal, nv) {
 export async function costoDeVendedor(vendedor) {
   const v = String(vendedor || '').trim(); if (!v) return null;
   const { data } = await supabase.from('tms_panel_vendedores')
-    .select('centro_costo, division').ilike('nombre', v).limit(1);
-  return (data && data[0]) || null;
+    .select('nombre, centro_costo, division').eq('activo', true).order('nombre', { ascending: true });
+  if (!data || data.length === 0) return null;
+  const base = normWords(v);
+  const baseTokens = vendorTokens(v);
+  const scored = data
+    .map((row) => {
+      const name = normWords(row.nombre);
+      const nameTokens = vendorTokens(row.nombre);
+      const exact = name === base;
+      const contains = !exact && (name.includes(base) || base.includes(name));
+      const shared = baseTokens.filter((token) => nameTokens.includes(token)).length;
+      const coversBase = baseTokens.length > 0 && baseTokens.every((token) => nameTokens.includes(token));
+      const coversCandidate = nameTokens.length > 0 && nameTokens.every((token) => baseTokens.includes(token));
+      let score = 0;
+      if (exact) score += 1000;
+      else if (contains) score += 700;
+      else if (coversBase || coversCandidate) score += 500;
+      score += shared * 100;
+      score -= Math.abs(name.length - base.length);
+      return { ...row, score };
+    })
+    .filter((row) => row.score >= 200)
+    .sort((a, b) => b.score - a.score);
+  const match = scored[0];
+  return match ? { centro_costo: match.centro_costo || '', division: match.division || '' } : null;
 }
 
 export async function lookup(canal, nv) {
@@ -187,24 +213,27 @@ export async function lookup(canal, nv) {
   return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
 }
 
-export async function lookupOrangeAssociation(nv) {
+export async function lookupOrangeAssociation(nv, fallback = {}) {
   const t = normNV(nv);
   if (!t) return null;
   const cat = await buscarNvCatalogo('orange', t);
   if (!cat) return null;
   let ccosto = cat.centro_costo || '';
   let division = cat.division || '';
-  if (cat.vendedor && (!ccosto || !division)) {
-    const vc = await costoDeVendedor(cat.vendedor);
+  const vendedorRef = cat.vendedor || fallback.vendedor || '';
+  if (vendedorRef && (!ccosto || !division)) {
+    const vc = await costoDeVendedor(vendedorRef);
     if (vc) {
       ccosto = ccosto || vc.centro_costo || '';
       division = division || vc.division || '';
     }
   }
+  ccosto = ccosto || fallback.ccosto || fallback.centro_costo || '';
+  division = division || fallback.division || '';
   return {
     nv: t,
     cliente: cat.cliente || '',
-    vendedor: cat.vendedor || '',
+    vendedor: cat.vendedor || fallback.vendedor || '',
     ccosto,
     division,
     fecha_aprobacion: soloFecha(cat.fecha_aprobacion),

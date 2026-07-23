@@ -464,6 +464,17 @@ function TabIngresar() {
     return () => clearTimeout(t);
   }, [toastMsg]);
 
+  const getCommercialFallback = useCallback(() => {
+    const st = useFormNVStore.getState();
+    const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
+    return {
+      vendedor: af?.vendedor || '',
+      ccosto: af?.ccosto || af?.centro_costo || '',
+      centro_costo: af?.centro_costo || af?.ccosto || '',
+      division: af?.division || '',
+    };
+  }, []);
+
   const hydrateOrangeAssociation = useCallback(async (orangeNv) => {
     const nv = String(orangeNv || '').trim();
     if (!nv) {
@@ -481,7 +492,7 @@ function TabIngresar() {
       orangeAssociationError: '',
     });
     try {
-      const data = await lookupOrangeAssociation(nv);
+      const data = await lookupOrangeAssociation(nv, getCommercialFallback());
       if (!data) {
         s.patch({
           orangeAssociationData: null,
@@ -504,7 +515,7 @@ function TabIngresar() {
       });
       return null;
     }
-  }, [s]);
+  }, [getCommercialFallback, s]);
 
   const handleLookup = async () => {
     const nv = String(s.nv || '').trim(); if (!nv) return;
