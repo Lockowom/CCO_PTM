@@ -14,6 +14,8 @@ export const CANALES = [
   { value: 'varios', label: 'Varios', color: '#4f46e5' },
 ];
 export const VARIOS_TIPOS = ['N.V ANTICIPADA', 'DEMO', 'REGALO', 'BOLETA', 'GUÍA SALIDA'];
+export const INCIDENCIAS_NV = ['PROBLEMAS DE DIRECCIÓN', 'PROBLEMAS DE TRANSPORTE', 'OTRO'];
+export const ESTADOS_INCIDENCIA = ['ABIERTA', 'EN GESTIÓN', 'RESUELTA'];
 // Estados seleccionables EXACTAMENTE como el proyecto original (Sheet/Panel):
 // En Proceso · Shipping · Currier · En Ruta · Entregado.
 export const ESTADOS_SELECCIONABLES = ['En Proceso', 'Shipping', 'Currier', 'En Ruta', 'Entregado'];
@@ -34,9 +36,14 @@ const normNV = (v) => {
   const t = String(v ?? '').trim();
   return /^\d+\.0+$/.test(t) ? t.split('.')[0] : t;
 };
+const normText = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 const colDe = (canal) => (canal === 'ptm' ? 'nv_ptm' : canal === 'orange' ? 'nv_orange' : canal === 'farmapack' ? 'nv_farmapack' : 'varios');
 const canalDe = (r) => (r.nv_ptm ? 'ptm' : r.nv_orange ? 'orange' : r.nv_farmapack ? 'farmapack' : 'varios');
 const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || ''));
+export const esClienteOrange = (cliente) => {
+  const t = normText(cliente);
+  return t.includes('orange');
+};
 
 // ── Lista de N.V. activas (pestaña Buscar) ──────────────────────────────────
 const LISTA_COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado';
@@ -130,7 +137,7 @@ export async function opciones() {
 }
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
-const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente';
+const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia';
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
   const t = normNV(nv); if (!t) return null;
@@ -178,6 +185,30 @@ export async function lookup(canal, nv) {
   }
   // N.V. nueva → autocompleta cliente/vendedor/ccosto/división (fuente precisa).
   return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
+}
+
+export async function lookupOrangeAssociation(nv) {
+  const t = normNV(nv);
+  if (!t) return null;
+  const cat = await buscarNvCatalogo('orange', t);
+  if (!cat) return null;
+  let ccosto = cat.centro_costo || '';
+  let division = cat.division || '';
+  if (cat.vendedor && (!ccosto || !division)) {
+    const vc = await costoDeVendedor(cat.vendedor);
+    if (vc) {
+      ccosto = ccosto || vc.centro_costo || '';
+      division = division || vc.division || '';
+    }
+  }
+  return {
+    nv: t,
+    cliente: cat.cliente || '',
+    vendedor: cat.vendedor || '',
+    ccosto,
+    division,
+    fecha_aprobacion: soloFecha(cat.fecha_aprobacion),
+  };
 }
 
 // ── Export a Excel de TODA la tabla de operaciones (maestro de N.V.) ─────────

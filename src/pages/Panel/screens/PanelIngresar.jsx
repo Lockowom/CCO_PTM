@@ -12,7 +12,7 @@ import {
   CANALES, VARIOS_TIPOS, ESTADOS_SELECCIONABLES, ESTADOS_ACTIVOS, TIPOS_DESPACHO, ACCENT, colorFor,
   listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
-  exportarOperaciones,
+  exportarOperaciones, esClienteOrange, lookupOrangeAssociation,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
@@ -464,6 +464,48 @@ function TabIngresar() {
     return () => clearTimeout(t);
   }, [toastMsg]);
 
+  const hydrateOrangeAssociation = useCallback(async (orangeNv) => {
+    const nv = String(orangeNv || '').trim();
+    if (!nv) {
+      s.patch({
+        orangeAssociationNv: '',
+        orangeAssociationData: null,
+        orangeAssociationLoading: false,
+        orangeAssociationError: '',
+      });
+      return null;
+    }
+    s.patch({
+      orangeAssociationNv: nv,
+      orangeAssociationLoading: true,
+      orangeAssociationError: '',
+    });
+    try {
+      const data = await lookupOrangeAssociation(nv);
+      if (!data) {
+        s.patch({
+          orangeAssociationData: null,
+          orangeAssociationLoading: false,
+          orangeAssociationError: 'No encontramos esa N.V. en el catálogo Orange.',
+        });
+        return null;
+      }
+      s.patch({
+        orangeAssociationData: data,
+        orangeAssociationLoading: false,
+        orangeAssociationError: '',
+      });
+      return data;
+    } catch (error) {
+      s.patch({
+        orangeAssociationData: null,
+        orangeAssociationLoading: false,
+        orangeAssociationError: 'No se pudo validar la N.V. Orange asociada.',
+      });
+      return null;
+    }
+  }, [s]);
+
   const handleLookup = async () => {
     const nv = String(s.nv || '').trim(); if (!nv) return;
     s.patch({ lookupLoading: true, submitResult: null, errors: [] });
@@ -471,15 +513,33 @@ function TabIngresar() {
     if (r.found) {
       s.patch({ lookupResult: { found: true, row: r.row, data: r.data } });
       s.applyFound(r.data);
+      const requireOrange = s.canal === 'ptm' && esClienteOrange(r.data?.cliente);
+      s.patch({
+        orangeAssociationRequired: requireOrange,
+        orangeAssociationError: '',
+        orangeAssociationData: null,
+        orangeAssociationNv: r.data?.nv_orange || '',
+      });
+      if (requireOrange && r.data?.nv_orange) await hydrateOrangeAssociation(r.data.nv_orange);
     } else if (s.canal !== 'varios' && !r.autoFill?.cliente) {
       // Canal real sin cliente en el catálogo → NO se crea a ciegas: avisar y
       // pedir actualizar la carga de N.V. (queda en idle hasta que se cargue).
-      s.patch({ lookupLoading: false, lookupResult: null, mode: 'idle' });
+      s.patch({
+        lookupLoading: false, lookupResult: null, mode: 'idle',
+        orangeAssociationRequired: false, orangeAssociationNv: '', orangeAssociationData: null, orangeAssociationError: '',
+      });
       setAviso({ canal: s.canal, nv });
       return;
     } else {
       s.patch({ lookupResult: { found: false, autoFill: r.autoFill } });
       s.applyNew(r.autoFill || {});
+      const requireOrange = s.canal === 'ptm' && esClienteOrange(r.autoFill?.cliente);
+      s.patch({
+        orangeAssociationRequired: requireOrange,
+        orangeAssociationNv: '',
+        orangeAssociationData: null,
+        orangeAssociationError: '',
+      });
     }
     s.patch({ lookupLoading: false });
   };
@@ -488,16 +548,23 @@ function TabIngresar() {
     const st = useFormNVStore.getState();
     if (st.mode === 'idle') return;
     if (!st.estado) { st.patch({ submitResult: { success: false, message: 'Falta el Estado' } }); return; }
+    if (st.orangeAssociationRequired && (!st.orangeAssociationNv || !st.orangeAssociationData)) {
+      st.patch({ submitResult: { success: false, message: 'Debes asociar una N.V. Orange válida para este cliente PTM.' } });
+      return;
+    }
     st.patch({ submitting: true, submitResult: null });
     // Datos comerciales precisos (del catálogo NV o de la operación encontrada).
     const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
+    const orangeData = st.orangeAssociationData;
     const payload = {
       id: st.mode === 'update' ? st.lookupResult?.row : null, mode: st.mode, canal: st.canal, nv: st.nv,
-      cliente: af?.cliente || '', vendedor: af?.vendedor || '', division: af?.division || '', centro_costo: af?.ccosto || af?.centro_costo || '',
+      cliente: orangeData?.cliente || af?.cliente || '', vendedor: orangeData?.vendedor || af?.vendedor || '', division: orangeData?.division || af?.division || '', centro_costo: orangeData?.ccosto || af?.ccosto || af?.centro_costo || '',
+      nvOrangeAsociada: st.orangeAssociationRequired ? st.orangeAssociationNv : (af?.nv_orange || ''),
       estado: st.estado, urgente: st.urgente, tipoDespacho: st.tipoDespacho, transportista: st.transportista,
       fechaCompromiso: st.fechaCompromiso, fechaAprobacion: st.fechaAprobacion, fechaAprobacionReal: st.fechaAprobacionReal,
       fechaFacturacion: st.fechaFacturacion, fechaDespacho: st.fechaDespacho, factura: st.factura, guia: st.guia,
       bultos: st.bultos, valorFactura: st.valorFactura, numeroEnvio: st.numeroEnvio,
+      incidencia: st.incidencia, estadoIncidencia: st.incidencia ? (st.estadoIncidencia || 'ABIERTA') : '', observacionesIncidencia: st.observacionesIncidencia,
       variosTipo: st.variosTipo, variosCliente: st.variosCliente, variosVendedor: st.variosVendedor,
       variosDivision: st.variosDivision, variosCcosto: st.variosCcosto,
     };
@@ -514,7 +581,13 @@ function TabIngresar() {
 
   return (
     <div className="pb-24">
-      <FormNV options={opts} transportistasOpts={opts?.transportistas || []} vendedoresMaestro={vendedores} onLookup={handleLookup} />
+      <FormNV
+        options={opts}
+        transportistasOpts={opts?.transportistas || []}
+        vendedoresMaestro={vendedores}
+        onLookup={handleLookup}
+        onLookupOrange={hydrateOrangeAssociation}
+      />
       {aviso && <ClienteNoEncontradoModal canal={aviso.canal} nv={aviso.nv} onClose={() => setAviso(null)} />}
       {s.mode !== 'idle' && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3">

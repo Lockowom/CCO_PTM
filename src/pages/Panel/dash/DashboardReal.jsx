@@ -17,6 +17,7 @@ import CalidadBanner from './components/CalidadBanner';
 import TiemposCicloSection from './components/TiemposCicloSection';
 import AlertasOperacionalesSection from './components/AlertasOperacionalesSection';
 import RankingsSection from './components/RankingsSection';
+import IncidenciasPorVendedorSection from './components/IncidenciasPorVendedorSection';
 import OperadoresSection from './components/OperadoresSection';
 import DivisionsSection from './components/DivisionsSection';
 import TendenciaSection from './components/TendenciaSection';
@@ -51,6 +52,7 @@ export default function DashboardReal() {
   const [otif, setOtif] = useState(null);
   const [rankTransp, setRankTransp] = useState([]);
   const [rankVend, setRankVend] = useState([]);
+  const [incidenciasPorVendedor, setIncidenciasPorVendedor] = useState([]);
   const [alertasOp, setAlertasOp] = useState([]);
   const [auditKpis, setAuditKpis] = useState([]);
   const [tendencia, setTendencia] = useState([]);
@@ -116,6 +118,7 @@ export default function DashboardReal() {
       setOtif(result.otif);
       setRankTransp(result.rankingTransportistas);
       setRankVend(result.rankingVendedores);
+      setIncidenciasPorVendedor(result.incidenciasPorVendedor || []);
       setAlertasOp(result.alertasOperacionales);
       setAlertasData(result.alertas);
       setCalidadData(result.calidad);
@@ -267,6 +270,7 @@ export default function DashboardReal() {
         <TiemposCicloSection tiemposCiclo={tiemposCiclo} />
         <AlertasOperacionalesSection alertasOp={alertasOp} />
         <RankingsSection rankTransp={rankTransp} rankVend={rankVend} />
+        <IncidenciasPorVendedorSection data={incidenciasPorVendedor} onOpenIncidencias={abrirIncidencias} />
         <OperadoresSection auditKpis={auditKpis} />
         <DivisionsSection divisions={divisions} />
         <TendenciaSection tendencia={tendencia} />

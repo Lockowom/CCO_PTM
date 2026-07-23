@@ -1,17 +1,17 @@
 import { useEffect, useMemo } from "react";
-import { ArrowUpRight, Building2, FileSearch, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Building2, FileSearch, Link2, MapPinned, Search, Sparkles, Truck } from "lucide-react";
 import { useFormNVStore } from "../store/useFormNVStore";
 import { ESTADOS, ESTADOS_SELECCIONABLES, estampaDespacho } from "../estados";
 import PillNavCanal from "./PillNavCanal";
 import PillNavEstado from "./PillNavEstado";
-import { CANALES, VARIOS_TIPOS, colorFor, ACCENT } from "../ingresarService";
+import { CANALES, VARIOS_TIPOS, colorFor, ACCENT, INCIDENCIAS_NV, ESTADOS_INCIDENCIA } from "../ingresarService";
 
 /**
  * Formulario "Ingresar NV" — presentacional. Lee/escribe TODO su estado desde
  * useFormNVStore (sin prop-drilling). La página solo le pasa opciones de catálogo
  * y el callback de lookup; el guardado (handleSubmit) lo dispara la barra inferior.
  */
-export default function FormNV({ options, transportistasOpts, vendedoresMaestro, onLookup }) {
+export default function FormNV({ options, transportistasOpts, vendedoresMaestro, onLookup, onLookupOrange }) {
   const s = useFormNVStore();
   const {
     canal, nv, lookupResult, lookupLoading, mode,
@@ -19,6 +19,8 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
     fechaAprobacionReal, fechaFacturacion, fechaDespacho,
     factura, guia, bultos, valorFactura, numeroEnvio, urgente,
     variosTipo, variosCliente, variosVendedor, variosDivision, variosCcosto,
+    orangeAssociationRequired, orangeAssociationNv, orangeAssociationData, orangeAssociationLoading, orangeAssociationError,
+    incidencia, estadoIncidencia, observacionesIncidencia,
     errors, submitResult, autoFilledDates,
     patch, markAutoFilled, clearAutoFilled, recalcCompromiso,
   } = s;
@@ -170,7 +172,15 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
               <PillNavCanal
                 items={CANALES}
                 active={canal}
-                onSelect={(value) => patch({ canal: value, lookupResult: null, mode: "idle" })}
+                onSelect={(value) => patch({
+                  canal: value,
+                  lookupResult: null,
+                  mode: "idle",
+                  orangeAssociationRequired: false,
+                  orangeAssociationNv: "",
+                  orangeAssociationData: null,
+                  orangeAssociationError: "",
+                })}
               />
             </div>
 
@@ -292,6 +302,73 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
           </aside>
         </div>
       </section>
+
+      {canal === "ptm" && orangeAssociationRequired && mode !== "idle" && (
+        <section className="bg-white rounded-2xl border border-amber-200 p-5 anim-fade-up">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 border border-amber-200">
+                <Link2 size={12} />
+                Asociación comercial
+              </div>
+              <h2 className="mt-3 text-base font-black text-slate-900">Asociar N.V. ORANGE</h2>
+              <p className="mt-1 text-sm text-slate-500 max-w-3xl">
+                Detectamos que esta N.V. PTM corresponde a un cliente Orange. Vincula la N.V. Orange para cargar automáticamente cliente, vendedor y centro de costo correctos.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-800 max-w-sm">
+              Esta asociación ayuda a visibilizar errores y atrasos de despacho por vendedor dentro del dashboard operacional.
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-end">
+            <div>
+              <label className="field-label">N.V. ORANGE asociada *</label>
+              <input
+                type="text"
+                value={orangeAssociationNv}
+                onChange={(e) => patch({ orangeAssociationNv: e.target.value, orangeAssociationError: "", orangeAssociationData: null })}
+                onKeyDown={(e) => e.key === "Enter" && onLookupOrange?.(orangeAssociationNv)}
+                className="field-input"
+                placeholder="Ej: ORG-100234"
+              />
+              <p className="mt-1 text-[11px] text-slate-400">Se busca contra el catálogo Orange y se guarda vinculado en la misma operación.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onLookupOrange?.(orangeAssociationNv)}
+              disabled={orangeAssociationLoading || !orangeAssociationNv.trim()}
+              className="h-11 px-5 rounded-xl bg-amber-500 text-white text-sm font-bold active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm inline-flex items-center justify-center gap-2"
+            >
+              {orangeAssociationLoading ? <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Link2 size={15} />}
+              Validar asociación
+            </button>
+          </div>
+
+          {orangeAssociationError && (
+            <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
+              <AlertTriangle size={16} />
+              {orangeAssociationError}
+            </div>
+          )}
+
+          {orangeAssociationData && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              {[
+                { label: "Cliente Orange", value: orangeAssociationData.cliente || "—" },
+                { label: "Vendedor", value: orangeAssociationData.vendedor || "—" },
+                { label: "Centro costo", value: orangeAssociationData.ccosto || "—" },
+                { label: "División", value: orangeAssociationData.division || "—" },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-amber-100 bg-amber-50/50 px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-amber-700 font-bold">{item.label}</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 truncate">{item.value}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Tipo + datos manuales para canal Varios */}
       {canal === "varios" && mode === "create" && (
@@ -444,6 +521,64 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
               <div><label className="field-label">N° de Envío</label><input type="text" value={numeroEnvio} onChange={e => patch({ numeroEnvio: e.target.value })} className="field-input" /></div>
             </div>
           </details>
+
+          <section className="bg-white rounded-2xl border border-gray-200 p-5 anim-fade-up">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Reporte de errores / incidencias</h2>
+                <p className="mt-2 text-sm text-slate-500 max-w-3xl">
+                  Reporta incidencias logísticas de la N.V. para alimentar el dashboard de errores por vendedor y detectar riesgo de cumplimiento sobre 48 horas.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 max-w-sm">
+                Se consolida junto con la operación y después aparece en el tablero operacional como incidencia activa.
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {INCIDENCIAS_NV.map((tipo) => {
+                const active = incidencia === tipo;
+                const Icon = tipo === "PROBLEMAS DE DIRECCIÓN" ? MapPinned : tipo === "PROBLEMAS DE TRANSPORTE" ? Truck : AlertTriangle;
+                return (
+                  <button
+                    key={tipo}
+                    type="button"
+                    onClick={() => patch({ incidencia: active ? "" : tipo, estadoIncidencia: active ? "ABIERTA" : estadoIncidencia || "ABIERTA" })}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition-all ${
+                      active ? "border-orange-500 bg-orange-500 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50"
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {tipo}
+                  </button>
+                );
+              })}
+            </div>
+
+            {incidencia && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3.5 anim-fade-up">
+                <div>
+                  <label className="field-label">Estado incidencia</label>
+                  <select value={estadoIncidencia} onChange={(e) => patch({ estadoIncidencia: e.target.value })} className="field-input">
+                    {ESTADOS_INCIDENCIA.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Tipo detectado</label>
+                  <input type="text" value={incidencia} readOnly className="field-input bg-gray-50 text-gray-500 cursor-not-allowed" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="field-label">Observaciones</label>
+                  <textarea
+                    value={observacionesIncidencia}
+                    onChange={(e) => patch({ observacionesIncidencia: e.target.value })}
+                    className="field-input min-h-[96px] resize-y"
+                    placeholder="Ej: dirección incompleta, contacto sin respuesta, transportista reprogramado, rechazo por zona..."
+                  />
+                </div>
+              </div>
+            )}
+          </section>
 
           {errors.length > 0 && (
             <div className="bg-red-50 border border-red-100 rounded-xl p-3.5 anim-fade-up">

@@ -136,6 +136,20 @@ function inicioSemana(fechaStr) {
   return monday.toISOString().split("T")[0];
 }
 
+function horasDesde(fechaStr) {
+  if (!fechaStr) return 0;
+  const ms = Date.now() - new Date(fechaStr).getTime();
+  if (Number.isNaN(ms)) return 0;
+  return ms / (1000 * 60 * 60);
+}
+
+function clasificarIncidencia(texto, observaciones = "") {
+  const t = `${texto || ""} ${observaciones || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (t.includes("direccion") || t.includes("domicilio") || t.includes("contacto")) return "direccion";
+  if (t.includes("transport") || t.includes("courier") || t.includes("currier") || t.includes("ruta") || t.includes("flete")) return "transporte";
+  return "otro";
+}
+
 const DASHBOARD_COLUMNS = "nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente";
 
 async function fetchAll(columns, dateFrom, dateTo) {
@@ -421,6 +435,9 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   const incidencias = rows.filter(
     (r) => r.incidencia && r.estado_incidencia !== "RESUELTA"
   ).length;
+  const incidenciasActivasRows = rowsM.filter(
+    (r) => r.incidencia && r.estado_incidencia !== "RESUELTA"
+  );
 
   // === Fill Rate (shipping dentro de plazo) ===
   const ahoraMs = Date.now();
@@ -848,6 +865,58 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
 
+  const incidenciasPorVendedor = Object.entries(
+    incidenciasActivasRows.reduce((acc, r) => {
+      const vendedor = (r.vendedor || "Sin vendedor").trim() || "Sin vendedor";
+      const key = vendedor;
+      if (!acc[key]) {
+        acc[key] = {
+          vendedor: key,
+          total: 0,
+          direccion: 0,
+          transporte: 0,
+          otros: 0,
+          fuera48h: 0,
+          clientes: new Set(),
+          transportistas: new Set(),
+          maxHoras: 0,
+          maxDias: 0,
+          tipos: {},
+        };
+      }
+      const item = acc[key];
+      item.total += 1;
+      item.clientes.add(r.cliente || "Sin cliente");
+      if (r.transportista) item.transportistas.add(r.transportista);
+      const categoria = clasificarIncidencia(r.incidencia, r.observaciones_incidencia);
+      if (categoria === "direccion") item.direccion += 1;
+      else if (categoria === "transporte") item.transporte += 1;
+      else item.otros += 1;
+      item.tipos[r.incidencia] = (item.tipos[r.incidencia] || 0) + 1;
+      const baseFecha = r.fecha_aprobacion_real || r.fecha_aprobacion || r.fecha_estado;
+      const horas = horasDesde(baseFecha);
+      if (horas > 48) item.fuera48h += 1;
+      if (horas > item.maxHoras) item.maxHoras = horas;
+      const dias = Number(r.dias_incidencia) || Math.max(0, Math.floor(horas / 24));
+      if (dias > item.maxDias) item.maxDias = dias;
+      return acc;
+    }, {})
+  )
+    .map(([, item]) => ({
+      vendedor: item.vendedor,
+      total: item.total,
+      direccion: item.direccion,
+      transporte: item.transporte,
+      otros: item.otros,
+      fuera48h: item.fuera48h,
+      clientes: item.clientes.size,
+      transportistas: item.transportistas.size,
+      maxDias: item.maxDias,
+      topTipo: Object.entries(item.tipos).sort((a, b) => b[1] - a[1])[0]?.[0] || "—",
+    }))
+    .sort((a, b) => b.fuera48h - a.fuera48h || b.total - a.total || b.maxDias - a.maxDias)
+    .slice(0, 12);
+
   // === Alertas Operacionales (NVs estancadas por estado) ===
   const UMBRAL_DIAS = {
     [ESTADOS.EN_PROCESO]: 3, [ESTADOS.P_VENDEDOR]: 3, [ESTADOS.P_STOCK]: 3, [ESTADOS.P_RETIRO]: 3,
@@ -922,6 +991,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     otif,
     rankingTransportistas,
     rankingVendedores,
+    incidenciasPorVendedor,
     alertasOperacionales,
     funnelEstados,
     heatmapData,

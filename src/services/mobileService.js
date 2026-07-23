@@ -1,6 +1,6 @@
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { App as CapApp, Capacitor } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { toast } from 'sonner';
 
