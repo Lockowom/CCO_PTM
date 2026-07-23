@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import {
   Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus,
   Trash2, X, Plus, Layers, AlertTriangle, UploadCloud, FileSpreadsheet,
+  MapPinned,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
@@ -12,7 +13,7 @@ import {
   CANALES, VARIOS_TIPOS, ESTADOS_SELECCIONABLES, ESTADOS_ACTIVOS, TIPOS_DESPACHO, ACCENT, colorFor,
   listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
-  exportarOperaciones, esClienteOrange, lookupOrangeAssociation,
+  exportarOperaciones, esClienteOrange, lookupOrangeAssociation, INCIDENCIAS_NV, ESTADOS_INCIDENCIA,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
@@ -138,7 +139,7 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
     return d;
   }, [edit, data]);
 
-  const COL_A_FORM = { estado: 'estado', urgente: 'urgente', transportista: 'transportista', tipo_despacho: 'tipoDespacho', fecha_compromiso: 'fechaCompromiso', fecha_aprobacion_real: 'fechaAprobacionReal', fecha_facturacion: 'fechaFacturacion', fecha_despacho: 'fechaDespacho', factura: 'factura', guia: 'guia', bultos: 'bultos', valor_factura: 'valorFactura', numero_envio: 'numeroEnvio' };
+  const COL_A_FORM = { estado: 'estado', urgente: 'urgente', transportista: 'transportista', tipo_despacho: 'tipoDespacho', fecha_compromiso: 'fechaCompromiso', fecha_aprobacion_real: 'fechaAprobacionReal', fecha_facturacion: 'fechaFacturacion', fecha_despacho: 'fechaDespacho', factura: 'factura', guia: 'guia', bultos: 'bultos', valor_factura: 'valorFactura', numero_envio: 'numeroEnvio', estado_incidencia: 'estadoIncidencia', observaciones_incidencia: 'observacionesIncidencia' };
   const onGuardar = async () => {
     setSaving(true); setResult(null);
     const payload = { id: item.id };
@@ -161,6 +162,7 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
 
   const transportistasOpts = opts?.transportistas || [];
   const esUrgente = String(detailVal('urgente')) === 'true';
+  const puedeReportarIncidencia = ESTADOS_ACTIVOS.includes(detailVal('estado')) || !!detailVal('incidencia');
 
   return createPortal(
     <div className="panel-portal fixed inset-0 z-[120] flex justify-end" onClick={onClose}>
@@ -241,6 +243,59 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
                       <div><label className="field-label">Valor Factura</label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">$</span><input type="text" inputMode="numeric" value={detailVal('valor_factura')} onChange={(e) => setDetailField('valor_factura', e.target.value.replace(/[^0-9.]/g, ''))} className="field-input pl-7" /></div></div>
                     </div>
                   </section>
+
+                  {puedeReportarIncidencia && (
+                    <section>
+                      <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Reporte de errores / incidencias</h3>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs text-slate-500 mb-3">
+                        Declara incidencias logísticas para esta N.V. mientras esté en proceso operativo y aliméntalas al dashboard por vendedor.
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {INCIDENCIAS_NV.map((tipo) => {
+                          const active = detailVal('incidencia') === tipo;
+                          const Icon = tipo === 'PROBLEMAS DE DIRECCIÓN' ? MapPinned : tipo === 'PROBLEMAS DE TRANSPORTE' ? Truck : AlertTriangle;
+                          return (
+                            <button
+                              key={tipo}
+                              type="button"
+                              onClick={() => {
+                                const nextActive = !active;
+                                setDetailField('incidencia', nextActive ? tipo : '');
+                                setDetailField('estado_incidencia', nextActive ? (detailVal('estado_incidencia') || 'ABIERTA') : 'ABIERTA');
+                                if (!nextActive) setDetailField('observaciones_incidencia', '');
+                              }}
+                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition-all ${
+                                active ? 'border-orange-500 bg-orange-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50'
+                              }`}
+                            >
+                              <Icon size={14} />
+                              {tipo}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {detailVal('incidencia') && (
+                        <div className="mt-3 grid grid-cols-1 gap-3">
+                          <div>
+                            <label className="field-label">Estado incidencia</label>
+                            <select value={detailVal('estado_incidencia') || 'ABIERTA'} onChange={(e) => setDetailField('estado_incidencia', e.target.value)} className="field-input">
+                              {ESTADOS_INCIDENCIA.map((item) => <option key={item} value={item}>{item}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="field-label">Observaciones</label>
+                            <textarea
+                              value={detailVal('observaciones_incidencia')}
+                              onChange={(e) => setDetailField('observaciones_incidencia', e.target.value)}
+                              className="field-input min-h-[88px] resize-y"
+                              placeholder="Ej: dirección incompleta, rechazo de zona, problema con transportista, contacto no responde..."
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
                 </>
               )}
 
