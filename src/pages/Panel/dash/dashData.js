@@ -150,7 +150,7 @@ function clasificarIncidencia(texto, observaciones = "") {
   return "otro";
 }
 
-const DASHBOARD_COLUMNS = "nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente";
+const DASHBOARD_COLUMNS = "nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente,reabierta,motivo_reapertura,fecha_reapertura";
 
 async function fetchAll(columns, dateFrom, dateTo) {
   const allRows = [];
@@ -842,10 +842,11 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   rowsM.forEach((r) => {
     const v = (r.vendedor || "").trim();
     if (!v || v === "—") return;
-    if (!vendPerf[v]) vendPerf[v] = { total: 0, entregadas: 0, aTiempo: 0, activas: 0 };
+    if (!vendPerf[v]) vendPerf[v] = { total: 0, entregadas: 0, aTiempo: 0, activas: 0, reabiertas: 0 };
     vendPerf[v].total++;
     if (ESTADOS_ENTREGADOS.includes(r.estado)) vendPerf[v].entregadas++;
     if (ESTADOS_ACTIVOS.includes(r.estado)) vendPerf[v].activas++;
+    if (r.reabierta === true) vendPerf[v].reabiertas++;
     if (ESTADOS_ENTREGADOS.includes(r.estado) && r.fecha_despacho && r.fecha_compromiso) {
       const promesa = fechaPromesaEfectiva(r);
       if (promesa) {
@@ -919,6 +920,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         total: d.total,
         entregadas: d.entregadas,
         activas: d.activas,
+        reabiertas: d.reabiertas,
         pctATiempo: d.entregadas > 0 ? +((d.aTiempo / d.entregadas) * 100).toFixed(0) : null,
         erroresActivos: errores?.total || 0,
         errores48h: errores?.fuera48h || 0,
@@ -928,6 +930,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     .sort((a, b) =>
       b.errores48h - a.errores48h ||
       b.erroresActivos - a.erroresActivos ||
+      b.reabiertas - a.reabiertas ||
       b.total - a.total
     )
     .slice(0, 10);
@@ -1056,7 +1059,7 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
 }
 
 export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
-  const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado";
+  const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura";
   const esActivasKpi = estado === "ACTIVAS";
   const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
   const dataRaw = esEstadoActivo
@@ -1162,6 +1165,9 @@ export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
         dias_atraso_ingreso: diasAtrasoIngreso,
         dias_entrega: diasEntrega,
         tipo_despacho: r.tipo_despacho || null,
+        reabierta: r.reabierta === true,
+        motivo_reapertura: r.motivo_reapertura || "",
+        fecha_reapertura: r.fecha_reapertura || null,
       };
     })
     .sort((a, b) =>

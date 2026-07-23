@@ -25,6 +25,7 @@ const csvFecha = (f) => fmtFechaCL(f, "");
 function descargarExcel(estado, data) {
   const headers = [
     "N.V", "Cliente", "Vendedor", "Transportista", "Tipo Desp.", "División",
+    "N.V Reabierta", "Motivo Reapertura",
     "Fecha N.V", "Fecha Creación N.V", "Aprob. Real", "Dif. (días)",
     "Compromiso", "Promesa Efect.", "Atraso Ingreso (días)", "Despacho", "Tiempo (días)",
   ];
@@ -34,6 +35,7 @@ function descargarExcel(estado, data) {
   };
   const filas = data.map((r) => [
     r.nv, r.cliente, r.vendedor, r.transportista, r.tipo_despacho || "", r.division,
+    r.reabierta ? "SI" : "NO", r.motivo_reapertura || "",
     csvFecha(r.fecha_registro_nv), csvFecha(r.fecha_aprobacion), csvFecha(r.fecha_aprobacion_real),
     r.dif_aprobacion === null ? "" : r.dif_aprobacion,
     csvFecha(r.fecha_compromiso), csvFecha(r.fecha_promesa_efectiva),
@@ -131,7 +133,7 @@ export default function EstadoDetalleModal({ estado, data, loading, onClose }) {
               <thead className="sticky top-0 z-10">
                 {/* Group headers */}
                 <tr>
-                  <th colSpan={6} className={`${COL_INFO} px-3 py-1 text-[10px] font-semibold text-gray-400 text-left border-b border-gray-100`}>INFORMACIÓN</th>
+                  <th colSpan={8} className={`${COL_INFO} px-3 py-1 text-[10px] font-semibold text-gray-400 text-left border-b border-gray-100`}>INFORMACIÓN</th>
                   <th colSpan={4} className={`${COL_APROB} px-3 py-1 text-[10px] font-semibold text-blue-400 text-left border-b border-blue-100 border-l border-l-blue-200/50`}>APROBACIÓN</th>
                   <th colSpan={5} className={`${COL_LOGISTICA} px-3 py-1 text-[10px] font-semibold text-amber-500 text-left border-b border-amber-100 border-l border-l-amber-200/50`}>LOGÍSTICA</th>
                 </tr>
@@ -142,6 +144,8 @@ export default function EstadoDetalleModal({ estado, data, loading, onClose }) {
                   <th className={`${COL_INFO} px-3 py-2`}>Transportista</th>
                   <th className={`${COL_INFO} px-3 py-2`}>Tipo Desp.</th>
                   <th className={`${COL_INFO} px-3 py-2`}>División</th>
+                  <th className={`${COL_INFO} px-3 py-2 text-center`}>Reab.</th>
+                  <th className={`${COL_INFO} px-3 py-2`}>Motivo</th>
                   <th className={`${COL_APROB} px-3 py-2 border-l border-l-blue-200/50`}>Fecha N.V</th>
                   <th className={`${COL_APROB} px-3 py-2`}>Fecha Creación N.V</th>
                   <th className={`${COL_APROB} px-3 py-2`}>Aprob. Real</th>
@@ -165,6 +169,16 @@ export default function EstadoDetalleModal({ estado, data, loading, onClose }) {
                     <td className={`${COL_INFO} px-3 py-2`}>{r.transportista}</td>
                     <td className={`${COL_INFO} px-3 py-2`}>{r.tipo_despacho || <span className="text-gray-300">—</span>}</td>
                     <td className={`${COL_INFO} px-3 py-2`}>{r.division}</td>
+                    <td className={`${COL_INFO} px-3 py-2 text-center`}>
+                      {r.reabierta ? (
+                        <span className="inline-block rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-700">SI</span>
+                      ) : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className={`${COL_INFO} px-3 py-2`}>
+                      {r.motivo_reapertura ? (
+                        <span className="line-clamp-2" title={r.motivo_reapertura}>{r.motivo_reapertura}</span>
+                      ) : <span className="text-gray-300">—</span>}
+                    </td>
                     {/* Aprobación (azul sutil) */}
                     <td className={`${COL_APROB} px-3 py-2 whitespace-nowrap border-l border-l-blue-200/30`}>{fmtFecha(r.fecha_registro_nv)}</td>
                     <td className={`${COL_APROB} px-3 py-2 whitespace-nowrap`}>{fmtFecha(r.fecha_aprobacion)}</td>

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import {
   Save, Search, Loader2, Hash, Truck, ClipboardList, Sparkles, PackagePlus,
   Trash2, X, Plus, Layers, AlertTriangle, UploadCloud, FileSpreadsheet,
-  MapPinned,
+  MapPinned, CheckCircle2, LockKeyhole, RefreshCcw, ShieldCheck, Undo2,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
@@ -14,6 +14,7 @@ import {
   listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
   exportarOperaciones, esClienteOrange, lookupOrangeAssociation, INCIDENCIAS_NV, ESTADOS_INCIDENCIA,
+  listarSolicitudesReapertura, solicitarReapertura, resolverReapertura,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
@@ -26,6 +27,7 @@ import '../ingresar/components/PillNavCanal.css';
 
 const hoy = () => new Date().toLocaleDateString('en-CA');
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
+const ESTADOS_DUPLICADO = ['Entregado', 'En Proceso', 'Shipping', 'Currier', 'En Ruta'];
 
 function SectionHead({ n, icon: Icon, title }) {
   return (
@@ -107,7 +109,7 @@ function Stepper({ data }) {
 }
 
 // ── Modal de detalle (panel lateral, port fiel del ModalDetalle) ────────────
-function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSaved, onDeleted }) {
+function DetalleDrawer({ item, puedeEscribir, puedeEliminar, puedeAprobarReapertura, opts, onClose, onSaved, onDeleted }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState({});          // valores editados
@@ -115,12 +117,37 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
   const [deleting, setDeleting] = useState(false);
   const [delConfirm, setDelConfirm] = useState(false);
   const [result, setResult] = useState(null);
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [solicitudesLoading, setSolicitudesLoading] = useState(false);
+  const [reopenReason, setReopenReason] = useState('');
+  const [resolveNote, setResolveNote] = useState('');
+  const [requestingReopen, setRequestingReopen] = useState(false);
+  const [resolvingReopen, setResolvingReopen] = useState(false);
 
   useEffect(() => {
     let on = true; setLoading(true);
-    lookup(item.canal, item.nv).then((r) => { if (!on) return; setData(r.found ? r.data : null); setLoading(false); });
+    lookup(item.canal, item.nv).then((r) => { if (!on) return; setData(r.found ? r.data : null); setEdit({}); setLoading(false); });
     return () => { on = false; };
   }, [item]);
+
+  const cargarSolicitudes = useCallback(async () => {
+    if (!item?.id) { setSolicitudes([]); return []; }
+    setSolicitudesLoading(true);
+    try {
+      const rows = await listarSolicitudesReapertura(item.id);
+      setSolicitudes(rows);
+      return rows;
+    } catch {
+      setSolicitudes([]);
+      return [];
+    } finally {
+      setSolicitudesLoading(false);
+    }
+  }, [item?.id]);
+
+  useEffect(() => {
+    cargarSolicitudes();
+  }, [cargarSolicitudes]);
 
   const detailVal = (field) => (field in edit ? edit[field] : (data?.[field] ?? '') ?? '');
   const setDetailField = (field, value) => {
@@ -150,7 +177,7 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
       setResult({ success: true, message: 'Cambios guardados' });
       onSaved?.({ ...item, estado: detailVal('estado') || item.estado, transportista: detailVal('transportista'), urgente: String(detailVal('urgente')) === 'true' });
       setTimeout(onClose, 700);
-    } else setResult({ success: false, message: res.error || 'No se pudo guardar' });
+    } else setResult({ success: false, message: res.message || res.error || 'No se pudo guardar' });
   };
   const onEliminar = async () => {
     setDeleting(true);
@@ -163,6 +190,53 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
   const transportistasOpts = opts?.transportistas || [];
   const esUrgente = String(detailVal('urgente')) === 'true';
   const puedeReportarIncidencia = ESTADOS_ACTIVOS.includes(detailVal('estado')) || !!detailVal('incidencia');
+  const solicitudPendiente = solicitudes.find((req) => req.estado === 'PENDIENTE') || null;
+  const isLocked = data?.estado === 'Entregado';
+
+  const onSolicitarReapertura = async () => {
+    const motivo = String(reopenReason || '').trim();
+    if (!motivo) {
+      setResult({ success: false, message: 'Debes indicar el motivo de la reapertura.' });
+      return;
+    }
+    setRequestingReopen(true);
+    const res = await solicitarReapertura(item.id, motivo);
+    setRequestingReopen(false);
+    if (res.ok) {
+      setReopenReason('');
+      await cargarSolicitudes();
+      setResult({ success: true, message: res.message || 'Solicitud de reapertura enviada.' });
+    } else {
+      setResult({ success: false, message: res.message || res.error || 'No se pudo solicitar la reapertura.' });
+    }
+  };
+
+  const onResolverReapertura = async (aprobar) => {
+    if (!solicitudPendiente?.id) return;
+    setResolvingReopen(true);
+    const res = await resolverReapertura(solicitudPendiente.id, aprobar, resolveNote);
+    setResolvingReopen(false);
+    if (!res.ok) {
+      setResult({ success: false, message: res.message || res.error || 'No se pudo resolver la solicitud.' });
+      return;
+    }
+    const fresh = await lookup(item.canal, item.nv);
+    if (fresh.found) {
+      setData(fresh.data);
+      setEdit({});
+      onSaved?.({
+        ...item,
+        estado: fresh.data.estado || item.estado,
+        transportista: fresh.data.transportista || item.transportista,
+        urgente: String(fresh.data.urgente) === 'true' || fresh.data.urgente === true,
+        reabierta: fresh.data.reabierta === true,
+        motivoReapertura: fresh.data.motivo_reapertura || '',
+      });
+    }
+    setResolveNote('');
+    await cargarSolicitudes();
+    setResult({ success: true, message: res.message || 'Solicitud resuelta correctamente.' });
+  };
 
   return createPortal(
     <div className="panel-portal fixed inset-0 z-[120] flex justify-end" onClick={onClose}>
@@ -199,7 +273,115 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
                 <div className="bg-gray-50 rounded-xl p-3"><Stepper data={data} /></div>
               </section>
 
-              {!puedeEscribir ? (
+              {data?.reabierta && (
+                <section className="rounded-xl border border-orange-200 bg-orange-50/80 px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+                      <Undo2 size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-700">N.V. reabierta</div>
+                      <div className="mt-1 text-sm font-semibold text-slate-800">{data.motivo_reapertura || 'Sin motivo informado.'}</div>
+                      {data.fecha_reapertura && (
+                        <div className="mt-1 text-xs text-slate-500">Aprobada el {soloFecha(data.fecha_reapertura)}</div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {isLocked ? (
+                <>
+                  <section className="rounded-xl border border-red-200 bg-red-50/80 px-4 py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-10 w-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center">
+                        <LockKeyhole size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black uppercase tracking-[0.16em] text-red-700">N.V. entregada bloqueada</div>
+                        <div className="mt-1 text-sm text-slate-700">
+                          Esta N.V. no puede editarse directo para no alterar el cumplimiento OTIF/SLA. Cualquier cambio debe pasar por una solicitud de reapertura aprobada por otro rol.
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Solicitud de reapertura</h3>
+                    {solicitudesLoading ? (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">Cargando solicitudes...</div>
+                    ) : solicitudPendiente ? (
+                      <div className="space-y-3">
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 h-9 w-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                              <RefreshCcw size={16} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Solicitud pendiente</div>
+                              <div className="mt-1 text-sm font-semibold text-slate-800">{solicitudPendiente.motivo}</div>
+                              <div className="mt-1 text-xs text-slate-500">
+                                Solicitada por {solicitudPendiente.solicitada_por_nombre || 'Usuario'} el {soloFecha(solicitudPendiente.solicitada_at)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {puedeAprobarReapertura && (
+                          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-4 space-y-3">
+                            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Aprobación de reapertura</div>
+                            <textarea
+                              value={resolveNote}
+                              onChange={(e) => setResolveNote(e.target.value)}
+                              className="field-input min-h-[84px] resize-y"
+                              placeholder="Observación de aprobación o rechazo..."
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => onResolverReapertura(true)}
+                                disabled={resolvingReopen}
+                                className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                              >
+                                {resolvingReopen ? 'Procesando...' : 'Aprobar y reabrir'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onResolverReapertura(false)}
+                                disabled={resolvingReopen}
+                                className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 disabled:opacity-50"
+                              >
+                                {resolvingReopen ? 'Procesando...' : 'Rechazar'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : puedeEscribir ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={reopenReason}
+                          onChange={(e) => setReopenReason(e.target.value)}
+                          className="field-input min-h-[96px] resize-y"
+                          placeholder="Motivo obligatorio de reapertura: por qué se necesita devolver esta N.V. a En Proceso..."
+                        />
+                        <button
+                          type="button"
+                          onClick={onSolicitarReapertura}
+                          disabled={requestingReopen}
+                          className="w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+                        >
+                          {requestingReopen ? 'Enviando solicitud...' : 'Solicitar reapertura'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        Solo un usuario con permisos de gestión puede solicitar la reapertura.
+                      </div>
+                    )}
+                  </section>
+                </>
+              ) : !puedeEscribir ? (
                 <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-4 py-3">Solo lectura · necesitas el permiso <b>manage_panel</b> para editar.</div>
               ) : (
                 <>
@@ -304,9 +486,9 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, opts, onClose, onSa
           )}
         </div>
 
-        {data && (puedeEscribir || puedeEliminar) && (
+        {data && ((puedeEscribir && !isLocked) || puedeEliminar) && (
           <div className="shrink-0 bg-white border-t border-gray-200 p-4 space-y-2">
-            {puedeEscribir && Object.keys(dirty).length > 0 && (
+            {puedeEscribir && !isLocked && Object.keys(dirty).length > 0 && (
               <button onClick={onGuardar} disabled={saving} className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60" style={{ background: ACCENT }}>
                 {saving ? <span className="inline-flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Guardando…</span> : `Guardar ${Object.keys(dirty).length} cambio${Object.keys(dirty).length !== 1 ? 's' : ''}`}
               </button>
@@ -351,7 +533,7 @@ function NvRow({ i, onOpen }) {
 }
 
 // ── Pestaña Buscar (lista de N.V. activas) ──────────────────────────────────
-function TabBuscar({ puedeEscribir, puedeEliminar }) {
+function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('Todos');
@@ -453,7 +635,7 @@ function TabBuscar({ puedeEscribir, puedeEliminar }) {
       )}
 
       {sel && (
-        <DetalleDrawer item={sel} puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} opts={opts}
+        <DetalleDrawer item={sel} puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} puedeAprobarReapertura={puedeAprobarReapertura} opts={opts}
           onClose={() => setSel(null)}
           onSaved={(upd) => { setLista((ls) => ls.map((x) => (x.key === upd.key ? { ...x, ...upd } : x))); setRemoto((rs) => rs && rs.map((x) => (x.key === upd.key ? { ...x, ...upd } : x))); }}
           onDeleted={(del) => { setLista((ls) => ls.filter((x) => x.key !== del.key)); setRemoto((rs) => rs && rs.filter((x) => x.key !== del.key)); }} />
@@ -502,22 +684,156 @@ function ClienteNoEncontradoModal({ canal, nv, onClose }) {
   );
 }
 
+function OperacionExistenteModal({ item, puedeEscribir, puedeAprobarReapertura, motivo, onMotivoChange, onRequestReopen, requesting, onClose }) {
+  if (!item) return null;
+  const isEntregada = item.estado === 'Entregado';
+  return (
+    <PanelModal
+      titulo={isEntregada ? 'N.V. entregada detectada' : 'N.V. ya registrada'}
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-5 space-y-4">
+        <div className={`rounded-2xl border px-4 py-4 ${isEntregada ? 'border-red-200 bg-red-50/80' : 'border-amber-200 bg-amber-50/80'}`}>
+          <div className="flex items-start gap-3">
+            <div className={`mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl ${isEntregada ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+              {isEntregada ? <LockKeyhole size={18} /> : <AlertTriangle size={18} />}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-black text-slate-900">N.V. {item.nv} ya existe en el sistema</div>
+              <div className="mt-1 text-sm text-slate-600">
+                Estado actual: <span className="font-bold text-slate-800">{item.estado}</span>.
+                {isEntregada
+                  ? ' Queda bloqueada para no alterar OTIF/SLA una vez entregada.'
+                  : ' El formulario ya quedó en modo actualización para evitar generar un duplicado.'}
+              </div>
+              {item.reabierta && (
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">
+                  <Undo2 size={12} />
+                  N.V. reabierta
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {item.motivo_reapertura && (
+          <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3">
+            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-700">Motivo de reapertura</div>
+            <div className="mt-1 text-sm text-slate-700">{item.motivo_reapertura}</div>
+          </div>
+        )}
+
+        {item.pendingRequest && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Solicitud pendiente</div>
+            <div className="mt-1 text-sm font-semibold text-slate-800">{item.pendingRequest.motivo}</div>
+            <div className="mt-1 text-xs text-slate-500">
+              Solicitada por {item.pendingRequest.solicitada_por_nombre || 'Usuario'} el {soloFecha(item.pendingRequest.solicitada_at)}
+            </div>
+          </div>
+        )}
+
+        {isEntregada && puedeEscribir && !item.pendingRequest && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-black text-slate-800">
+              <RefreshCcw size={16} className="text-orange-600" />
+              Solicitar reapertura
+            </div>
+            <textarea
+              value={motivo}
+              onChange={(e) => onMotivoChange(e.target.value)}
+              className="field-input min-h-[110px] resize-y"
+              placeholder="Observación obligatoria: explica por qué se necesita reabrir esta N.V. entregada..."
+            />
+            <button
+              type="button"
+              onClick={onRequestReopen}
+              disabled={requesting}
+              className="w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {requesting ? 'Enviando solicitud...' : 'Enviar solicitud de reapertura'}
+            </button>
+          </div>
+        )}
+
+        {!puedeEscribir && isEntregada && !puedeAprobarReapertura && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Necesitas permisos de gestión para solicitar la reapertura de esta N.V.
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </PanelModal>
+  );
+}
+
 // ── Pestaña Ingresar (FormNV + store, port fiel del original) ────────────────
-function TabIngresar() {
+function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
   const s = useFormNVStore();
   const [opts, setOpts] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
   const [vendedores, setVendedores] = useState([]);
   const [aviso, setAviso] = useState(null);   // { canal, nv } → modal "cliente no encontrado"
+  const [existingModal, setExistingModal] = useState(null);
+  const [reopenReason, setReopenReason] = useState('');
+  const [requestingReopen, setRequestingReopen] = useState(false);
+  const [reopenRequests, setReopenRequests] = useState([]);
   useEffect(() => { opciones().then(setOpts).catch(() => {}); }, []);
-  // Catálogo de vendedores (CENTRO COSTOS) para la lista emergente de Varios:
-  // al elegir un vendedor se auto-rellenan división + centro de costo.
   useEffect(() => { fetchVendedores().then(setVendedores).catch(() => setVendedores([])); }, []);
   useEffect(() => {
     if (!toastMsg) return undefined;
     const t = setTimeout(() => setToastMsg(null), 3000);
     return () => clearTimeout(t);
   }, [toastMsg]);
+
+  const currentLookup = s.lookupResult?.found ? s.lookupResult : null;
+  const currentLocked = currentLookup?.data?.estado === 'Entregado';
+  const currentPendingRequest = reopenRequests.find((req) => req.estado === 'PENDIENTE') || null;
+
+  const loadReopenRequests = useCallback(async (operacionId) => {
+    if (!operacionId) { setReopenRequests([]); return []; }
+    try {
+      const rows = await listarSolicitudesReapertura(operacionId);
+      setReopenRequests(rows);
+      return rows;
+    } catch {
+      setReopenRequests([]);
+      return [];
+    }
+  }, []);
+
+  const openExistingModal = useCallback((baseItem, requests = reopenRequests) => {
+    if (!baseItem) return;
+    const pendingRequest = requests.find((req) => req.estado === 'PENDIENTE') || null;
+    setExistingModal({ ...baseItem, pendingRequest });
+  }, [reopenRequests]);
+
+  const syncFoundResult = useCallback(async (r) => {
+    s.patch({ lookupResult: { found: true, row: r.row, data: r.data } });
+    s.applyFound(r.data);
+    const requireOrange = s.canal === 'ptm' && esClienteOrange(r.data?.cliente);
+    s.patch({
+      orangeAssociationRequired: requireOrange,
+      orangeAssociationError: '',
+      orangeAssociationData: null,
+      orangeAssociationNv: r.data?.nv_orange || '',
+    });
+    if (requireOrange && r.data?.nv_orange) await hydrateOrangeAssociation(r.data.nv_orange);
+  }, [s]);
+
+  useEffect(() => {
+    if (!currentLookup?.row) {
+      setReopenRequests([]);
+      return;
+    }
+    loadReopenRequests(currentLookup.row);
+  }, [currentLookup?.row, loadReopenRequests]);
 
   const getCommercialFallback = useCallback(() => {
     const st = useFormNVStore.getState();
@@ -577,19 +893,19 @@ function TabIngresar() {
     s.patch({ lookupLoading: true, submitResult: null, errors: [] });
     const r = await lookup(s.canal, nv);
     if (r.found) {
-      s.patch({ lookupResult: { found: true, row: r.row, data: r.data } });
-      s.applyFound(r.data);
-      const requireOrange = s.canal === 'ptm' && esClienteOrange(r.data?.cliente);
-      s.patch({
-        orangeAssociationRequired: requireOrange,
-        orangeAssociationError: '',
-        orangeAssociationData: null,
-        orangeAssociationNv: r.data?.nv_orange || '',
-      });
-      if (requireOrange && r.data?.nv_orange) await hydrateOrangeAssociation(r.data.nv_orange);
+      await syncFoundResult(r);
+      const requests = r.data?.estado === 'Entregado' ? await loadReopenRequests(r.row) : [];
+      if (ESTADOS_DUPLICADO.includes(r.data?.estado)) {
+        openExistingModal({
+          id: r.row,
+          canal: s.canal,
+          nv,
+          estado: r.data?.estado,
+          reabierta: r.data?.reabierta === true,
+          motivo_reapertura: r.data?.motivo_reapertura || '',
+        }, requests);
+      }
     } else if (s.canal !== 'varios' && !r.autoFill?.cliente) {
-      // Canal real sin cliente en el catálogo → NO se crea a ciegas: avisar y
-      // pedir actualizar la carga de N.V. (queda en idle hasta que se cargue).
       s.patch({
         lookupLoading: false, lookupResult: null, mode: 'idle',
         orangeAssociationRequired: false, orangeAssociationNv: '', orangeAssociationData: null, orangeAssociationError: '',
@@ -597,6 +913,8 @@ function TabIngresar() {
       setAviso({ canal: s.canal, nv });
       return;
     } else {
+      setExistingModal(null);
+      setReopenRequests([]);
       s.patch({ lookupResult: { found: false, autoFill: r.autoFill } });
       s.applyNew(r.autoFill || {});
       const requireOrange = s.canal === 'ptm' && esClienteOrange(r.autoFill?.cliente);
@@ -610,16 +928,61 @@ function TabIngresar() {
     s.patch({ lookupLoading: false });
   };
 
+  const handleRequestReopen = async () => {
+    const operacionId = currentLookup?.row || existingModal?.id;
+    const motivo = String(reopenReason || '').trim();
+    if (!operacionId) return;
+    if (!motivo) {
+      s.patch({ submitResult: { success: false, message: 'Debes indicar el motivo de la reapertura.' } });
+      return;
+    }
+    setRequestingReopen(true);
+    const res = await solicitarReapertura(operacionId, motivo);
+    setRequestingReopen(false);
+    if (!res.ok) {
+      const message = res.message || res.error || 'No se pudo solicitar la reapertura.';
+      s.patch({ submitResult: { success: false, message } });
+      setToastMsg({ type: 'error', message });
+      return;
+    }
+    const requests = await loadReopenRequests(operacionId);
+    setReopenReason('');
+    if (currentLookup?.data) {
+      openExistingModal({
+        id: currentLookup.row,
+        canal: s.canal,
+        nv: s.nv,
+        estado: currentLookup.data.estado,
+        reabierta: currentLookup.data.reabierta === true,
+        motivo_reapertura: currentLookup.data.motivo_reapertura || '',
+      }, requests);
+    }
+    s.patch({ submitResult: { success: true, message: res.message || 'Solicitud de reapertura enviada.' } });
+    setToastMsg({ type: 'success', message: res.message || 'Solicitud de reapertura enviada.' });
+  };
+
   const handleSubmit = async () => {
     const st = useFormNVStore.getState();
     if (st.mode === 'idle') return;
     if (!st.estado) { st.patch({ submitResult: { success: false, message: 'Falta el Estado' } }); return; }
+    if (st.lookupResult?.found && st.lookupResult?.data?.estado === 'Entregado') {
+      const requests = await loadReopenRequests(st.lookupResult.row);
+      openExistingModal({
+        id: st.lookupResult.row,
+        canal: st.canal,
+        nv: st.nv,
+        estado: st.lookupResult.data.estado,
+        reabierta: st.lookupResult.data.reabierta === true,
+        motivo_reapertura: st.lookupResult.data.motivo_reapertura || '',
+      }, requests);
+      st.patch({ submitResult: { success: false, message: 'La N.V. está entregada y bloqueada. Solicita reapertura para volver a gestionarla.' } });
+      return;
+    }
     if (st.orangeAssociationRequired && (!st.orangeAssociationNv || !st.orangeAssociationData)) {
       st.patch({ submitResult: { success: false, message: 'Debes asociar una N.V. Orange válida para este cliente PTM.' } });
       return;
     }
     st.patch({ submitting: true, submitResult: null });
-    // Datos comerciales precisos (del catálogo NV o de la operación encontrada).
     const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
     const orangeData = st.orangeAssociationData;
     const payload = {
@@ -637,12 +1000,31 @@ function TabIngresar() {
     const res = await guardar(payload);
     useFormNVStore.getState().patch({ submitting: false });
     if (res.ok) {
+      setExistingModal(null);
+      setReopenRequests([]);
       setToastMsg({ type: 'success', message: `NV ${payload.nv} ${payload.mode === 'update' ? 'actualizada' : 'creada'}` });
       useFormNVStore.getState().reset();
-    } else {
-      useFormNVStore.getState().patch({ submitResult: { success: false, message: res.error || 'No se pudo guardar' } });
-      setToastMsg({ type: 'error', message: res.error || 'No se pudo guardar' });
+      return;
     }
+
+    let message = res.message || res.error || 'No se pudo guardar';
+    if (res.duplicate || res.locked) {
+      const found = await lookup(st.canal, st.nv);
+      if (found.found) {
+        await syncFoundResult(found);
+        const requests = found.data?.estado === 'Entregado' ? await loadReopenRequests(found.row) : [];
+        openExistingModal({
+          id: found.row,
+          canal: st.canal,
+          nv: st.nv,
+          estado: found.data.estado,
+          reabierta: found.data.reabierta === true,
+          motivo_reapertura: found.data.motivo_reapertura || '',
+        }, requests);
+      }
+    }
+    useFormNVStore.getState().patch({ submitResult: { success: false, message } });
+    setToastMsg({ type: 'error', message });
   };
 
   return (
@@ -653,17 +1035,58 @@ function TabIngresar() {
         vendedoresMaestro={vendedores}
         onLookup={handleLookup}
         onLookupOrange={hydrateOrangeAssociation}
+        canRequestReopen={puedeEscribir}
+        onOpenReopen={() => openExistingModal({
+          id: currentLookup?.row,
+          canal: s.canal,
+          nv: s.nv,
+          estado: currentLookup?.data?.estado,
+          reabierta: currentLookup?.data?.reabierta === true,
+          motivo_reapertura: currentLookup?.data?.motivo_reapertura || '',
+        })}
+        latestReopenRequest={currentPendingRequest}
       />
       {aviso && <ClienteNoEncontradoModal canal={aviso.canal} nv={aviso.nv} onClose={() => setAviso(null)} />}
+      {existingModal && (
+        <OperacionExistenteModal
+          item={existingModal}
+          puedeEscribir={puedeEscribir}
+          puedeAprobarReapertura={puedeAprobarReapertura}
+          motivo={reopenReason}
+          onMotivoChange={setReopenReason}
+          onRequestReopen={handleRequestReopen}
+          requesting={requestingReopen}
+          onClose={() => setExistingModal(null)}
+        />
+      )}
       {s.mode !== 'idle' && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-2xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs text-slate-400">Canal <b className="text-slate-600 uppercase">{s.canal}</b> · N° <b className="text-slate-600">{s.nv || '—'}</b></span>
-            <button onClick={handleSubmit} disabled={s.submitting}
-              className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2">
-              {s.submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {s.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}
-            </button>
+            <div className="flex items-center gap-2">
+              {currentLocked && puedeEscribir && (
+                <button
+                  onClick={() => openExistingModal({
+                    id: currentLookup?.row,
+                    canal: s.canal,
+                    nv: s.nv,
+                    estado: currentLookup?.data?.estado,
+                    reabierta: currentLookup?.data?.reabierta === true,
+                    motivo_reapertura: currentLookup?.data?.motivo_reapertura || '',
+                    pendingRequest: currentPendingRequest,
+                  })}
+                  className="px-4 py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 font-black text-sm flex items-center gap-2"
+                >
+                  <RefreshCcw size={16} />
+                  Solicitar reapertura
+                </button>
+              )}
+              <button onClick={handleSubmit} disabled={s.submitting || currentLocked}
+                className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2">
+                {s.submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {currentLocked ? 'N.V. bloqueada' : s.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -692,6 +1115,7 @@ function puedeEliminarNV(user) {
 export default function PanelIngresar() {
   const { hasPermission, user } = useAuth();
   const puedeEscribir = hasPermission('manage_panel');
+  const puedeAprobarReapertura = hasPermission('approve_panel_reopen_nv') || hasPermission('manage_roles');
   const puedeEliminar = puedeEliminarNV(user);
   const [tab, setTab] = useState('buscar');
   const TABS = [
@@ -780,8 +1204,8 @@ export default function PanelIngresar() {
           })}
         </div>
       </div>
-      {tab === 'buscar' && <TabBuscar puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} />}
-      {tab === 'ingresar' && <TabIngresar />}
+      {tab === 'buscar' && <TabBuscar puedeEscribir={puedeEscribir} puedeEliminar={puedeEliminar} puedeAprobarReapertura={puedeAprobarReapertura} />}
+      {tab === 'ingresar' && <TabIngresar puedeEscribir={puedeEscribir} puedeAprobarReapertura={puedeAprobarReapertura} />}
       {tab === 'consolidados' && puedeEscribir && <TabConsolidados />}
     </div>
   );

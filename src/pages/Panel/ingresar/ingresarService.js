@@ -49,7 +49,7 @@ export const esClienteOrange = (cliente) => {
 };
 
 // ── Lista de N.V. activas (pestaña Buscar) ──────────────────────────────────
-const LISTA_COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado';
+const LISTA_COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado,reabierta,motivo_reapertura';
 
 // Mapea una fila de tms_operaciones al item que consume la lista/drawer de Buscar.
 function mapOperacionRow(r) {
@@ -59,6 +59,7 @@ function mapOperacionRow(r) {
     estado: r.estado || '', transportista: r.transportista || '', fechaCompromiso: soloFecha(r.fecha_compromiso),
     guia: r.guia || '', factura: r.factura || '', fechaAprobacion: soloFecha(r.fecha_aprobacion),
     fechaAprobacionReal: soloFecha(r.fecha_aprobacion_real), urgente: r.urgente === true, _estado: r.estado,
+    reabierta: r.reabierta === true, motivoReapertura: r.motivo_reapertura || '',
   };
 }
 
@@ -140,7 +141,7 @@ export async function opciones() {
 }
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
-const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia';
+const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia,reabierta,fecha_reapertura,motivo_reapertura';
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
   const t = normNV(nv); if (!t) return null;
@@ -323,16 +324,20 @@ export async function exportarOperaciones() {
 }
 
 // ── Escrituras (RPCs) ────────────────────────────────────────────────────────
+function rpcResult(data, error) {
+  if (error) return { ok: false, error: error.message, message: error.message };
+  if (data && typeof data === 'object') return data;
+  return { ok: true };
+}
+
 export async function guardar(payload) {
   const p = { ...payload, id: payload?.id ?? (payload?.mode === 'update' ? payload?.lookup?.row : null) };
   const { data, error } = await supabase.rpc('guardar_nv', { p });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return rpcResult(data, error);
 }
 export async function cambiarEstado(id, estado, urgente = null) {
   const { data, error } = await supabase.rpc('cambiar_estado_nv', { p_id: id, p_estado: estado, p_urgente: urgente });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return rpcResult(data, error);
 }
 // Edición inline por columnas: mapea nombres de columna → claves del RPC guardar_nv.
 const COL_A_FORM = {
@@ -345,13 +350,36 @@ export async function actualizarCampos(id, dirty) {
   const p = { id };
   Object.entries(dirty || {}).forEach(([k, v]) => { const fk = COL_A_FORM[k] || k; p[fk] = v; });
   const { data, error } = await supabase.rpc('guardar_nv', { p });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return rpcResult(data, error);
+}
+
+export async function listarSolicitudesReapertura(operacionId) {
+  if (!operacionId) return [];
+  const { data, error } = await supabase
+    .from('tms_nv_reaperturas')
+    .select('id, operacion_id, nv, canal, estado_origen, motivo, estado, solicitada_por, solicitada_por_nombre, solicitada_at, resuelta_por, resuelta_por_nombre, resuelta_at, observacion_resolucion')
+    .eq('operacion_id', operacionId)
+    .order('solicitada_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function solicitarReapertura(id, motivo) {
+  const { data, error } = await supabase.rpc('solicitar_reapertura_nv', { p_operacion_id: id, p_motivo: motivo });
+  return rpcResult(data, error);
+}
+
+export async function resolverReapertura(requestId, aprobar, observacion = '') {
+  const { data, error } = await supabase.rpc('resolver_reapertura_nv', {
+    p_request_id: requestId,
+    p_aprobar: aprobar,
+    p_observacion: observacion || null,
+  });
+  return rpcResult(data, error);
 }
 export async function eliminar(id) {
   const { data, error } = await supabase.rpc('eliminar_nv', { p_id: id });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return rpcResult(data, error);
 }
 
 // ── Consolidados ─────────────────────────────────────────────────────────────

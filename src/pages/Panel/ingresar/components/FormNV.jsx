@@ -11,7 +11,7 @@ import { CANALES, VARIOS_TIPOS, colorFor, ACCENT, INCIDENCIAS_NV, ESTADOS_INCIDE
  * useFormNVStore (sin prop-drilling). La página solo le pasa opciones de catálogo
  * y el callback de lookup; el guardado (handleSubmit) lo dispara la barra inferior.
  */
-export default function FormNV({ options, transportistasOpts, vendedoresMaestro, onLookup, onLookupOrange }) {
+export default function FormNV({ options, transportistasOpts, vendedoresMaestro, onLookup, onLookupOrange, canRequestReopen, onOpenReopen, latestReopenRequest }) {
   const s = useFormNVStore();
   const {
     canal, nv, lookupResult, lookupLoading, mode,
@@ -129,6 +129,7 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
           description: "No existe una coincidencia previa; el flujo continúa como creación.",
         }
     : null;
+  const nvEntregada = lookupResult?.found && lookupResult?.data?.estado === "Entregado";
 
   return (
     <div className="anim-fade-up space-y-4">
@@ -365,6 +366,42 @@ export default function FormNV({ options, transportistasOpts, vendedoresMaestro,
                   <div className="mt-1 text-sm font-semibold text-slate-800 truncate">{item.value}</div>
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {nvEntregada && (
+        <section className="rounded-2xl border border-red-200 bg-red-50/80 p-5 anim-fade-up">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-red-700">
+                <AlertTriangle size={12} />
+                N.V. entregada bloqueada
+              </div>
+              <h2 className="mt-3 text-base font-black text-slate-900">Esta N.V. no puede editarse directo</h2>
+              <p className="mt-1 text-sm text-slate-600 max-w-3xl">
+                Para no alterar el cumplimiento OTIF/SLA, cualquier cambio debe pasar por una solicitud de reapertura aprobada por otro rol. Al aprobarse, la N.V. vuelve automáticamente a <strong>En Proceso</strong>.
+              </p>
+            </div>
+            {canRequestReopen && (
+              <button
+                type="button"
+                onClick={onOpenReopen}
+                className="h-11 rounded-xl bg-orange-500 px-4 text-sm font-bold text-white shadow-sm hover:bg-orange-600"
+              >
+                Solicitar reapertura
+              </button>
+            )}
+          </div>
+
+          {latestReopenRequest && (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700">Solicitud pendiente</div>
+              <div className="mt-1 text-sm font-semibold text-slate-800">{latestReopenRequest.motivo}</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Solicitada por {latestReopenRequest.solicitada_por_nombre || "Usuario"} el {String(latestReopenRequest.solicitada_at || "").slice(0, 10) || "—"}
+              </div>
             </div>
           )}
         </section>

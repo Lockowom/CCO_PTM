@@ -45,6 +45,7 @@ export default function RankingsSection({ rankTransp, rankVend }) {
               <th className="text-left">Vendedor</th>
               <th>NVs</th>
               <th>Activas</th>
+              <th>Reab.</th>
               <th>Errores</th>
               <th>&gt;48h</th>
               <th>% A tiempo</th>
@@ -60,6 +61,13 @@ export default function RankingsSection({ rankTransp, rankVend }) {
                 <td>
                   {v.activas > 0 ? (
                     <span className="inline-flex items-center gap-1 text-blue-600 font-semibold">{v.activas}</span>
+                  ) : <span className="text-gray-300">0</span>}
+                </td>
+                <td>
+                  {v.reabiertas > 0 ? (
+                    <span className="inline-flex items-center justify-center min-w-[34px] rounded-full bg-orange-50 px-2 py-0.5 text-orange-700 font-bold">
+                      {v.reabiertas}
+                    </span>
                   ) : <span className="text-gray-300">0</span>}
                 </td>
                 <td>

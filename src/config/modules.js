@@ -185,6 +185,7 @@ export const APP_PERMISSIONS = [
     permissions: [
       { id: 'view_panel', label: 'Ver Panel PTM (Dashboard + acceso base a todo el módulo)' },
       { id: 'manage_panel', label: 'Gestionar Panel PTM (crear/editar N.V. y estados)' },
+      { id: 'approve_panel_reopen_nv', label: 'Panel · aprobar/rechazar reaperturas de N.V. entregadas' },
       // Control por pantalla (además del umbral view_panel, que da acceso a todo):
       { id: 'panel_ingresar', label: 'Panel · pantalla Ingresar N.V.' },
       { id: 'panel_info', label: 'Panel · pantalla Info N.V. (consulta)' },
