@@ -28,6 +28,42 @@ const ESTADOS = {
   PENDIENTE: { label: 'Pendiente', color: 'bg-slate-400', textColor: 'text-slate-600', bgLight: 'bg-slate-50' },
 };
 
+const BULK_SERIES_ALIAS = {
+  reff: ['reff', 'codigo', 'codigo reff', 'cod reff', 'cod. reff', 'codigo producto', 'sku'],
+  serie: ['serie', 'n serie', 'nserie', 'nro serie', 'numero serie', 'serial'],
+  lote: ['lote', 'partida', 'lote partida', 'lotepartida'],
+  fecha_vencimiento: ['fecha vencimiento', 'fecha de vencimiento', 'vencimiento', 'vence', 'fecha venc', 'f venc'],
+  box: ['box', 'caja', 'box caja', 'box/caja'],
+  cantidad: ['cantidad', 'cant', 'qty'],
+};
+
+const BULK_SERIES_ORDER = ['serie', 'lote', 'fecha_vencimiento', 'box', 'cantidad', 'reff'];
+
+const normalizeHeader = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const normalizeBulkDate = (value) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const slashMatch = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (slashMatch) {
+    const [, d, m, y] = slashMatch;
+    const year = y.length === 2 ? `20${y}` : y;
+    const iso = `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const check = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(check.getTime()) ? '' : iso;
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleDateString('en-CA');
+};
+
 const Reception = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -59,6 +95,11 @@ const Reception = () => {
   // Form state - Items
   const [items, setItems] = useState([]);
   const [currentItem, setCurrentItem] = useState({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
+  const [bulkSeriesExpanded, setBulkSeriesExpanded] = useState(false);
+  const [bulkSeriesText, setBulkSeriesText] = useState('');
+  const [bulkSeriesSummary, setBulkSeriesSummary] = useState(null);
+  const [bulkSeriesLoading, setBulkSeriesLoading] = useState(false);
+  const bulkSeriesFileRef = useRef(null);
 
   // ── Auto-guardado del progreso (borrador de recepción NUEVA) ───────────────
   // Cada cambio en la cabecera o los ítems se guarda en el navegador, así una
@@ -366,6 +407,170 @@ const Reception = () => {
       .catch(err => console.error('[Reception] Falló lookup de descripción:', err));
   };
 
+  const enrichItemsWithDescriptions = async (addedItems) => {
+    const uniqueCodes = [...new Set(addedItems.map(item => item.reff).filter(Boolean))];
+    if (uniqueCodes.length === 0) return;
+    const descEntries = await Promise.all(uniqueCodes.map(async (code) => [code, await lookupDescription(code)]));
+    const descMap = Object.fromEntries(descEntries.filter(([, desc]) => desc));
+    if (Object.keys(descMap).length === 0) return;
+    setItems(prev => prev.map(it => (descMap[it.reff] && !it.descripcion ? { ...it, descripcion: descMap[it.reff] } : it)));
+  };
+
+  const addBulkItems = async (preparedRows) => {
+    if (!preparedRows.length) return;
+    const duplicateCount = preparedRows.reduce((count, row) => {
+      const serieNorm = normSerie(row.serie);
+      return serieNorm && items.some((it) => normSerie(it.serie) === serieNorm) ? count + 1 : count;
+    }, 0);
+
+    if (duplicateCount > 0) {
+      const ok = window.confirm(`⚠ Se detectaron ${duplicateCount} serie(s) ya existentes en esta recepción.\n\n¿Quieres agregarlas de todos modos? Quedarán marcadas como duplicadas.`);
+      if (!ok) return;
+    }
+
+    const addedItems = preparedRows.map((row, idx) => ({
+      _id: Date.now() + idx,
+      reff: row.reff,
+      cantidad: row.cantidad,
+      serie: row.serie,
+      lote: row.lote,
+      box: row.box,
+      fecha_vencimiento: row.fecha_vencimiento,
+      descripcion: '',
+      um: 'UNI',
+    }));
+
+    setItems(prev => [...prev, ...addedItems]);
+    setFormTouched(true);
+    setBulkSeriesText('');
+    setBulkSeriesSummary({
+      added: addedItems.length,
+      reffs: [...new Set(addedItems.map(item => item.reff))].length,
+      defaultsApplied: addedItems.filter(item => item.reff === (currentItem.reff || '').trim().toUpperCase()).length,
+    });
+    toast.success(`${addedItems.length} serie(s) agregadas masivamente ✓`, { duration: 1800 });
+    enrichItemsWithDescriptions(addedItems).catch((err) => console.error('[Reception] Falló enrichItemsWithDescriptions:', err));
+  };
+
+  const parseBulkSeriesRows = (matrix) => {
+    const cleanRows = (matrix || [])
+      .map((row) => Array.isArray(row) ? row.map(cell => String(cell ?? '').trim()) : [String(row ?? '').trim()])
+      .filter((row) => row.some((cell) => cell !== ''));
+
+    if (cleanRows.length === 0) return { rows: [], skipped: 0 };
+
+    const firstRow = cleanRows[0];
+    const mappedHeaders = {};
+    let hasHeader = false;
+    firstRow.forEach((cell, index) => {
+      const normalized = normalizeHeader(cell);
+      Object.entries(BULK_SERIES_ALIAS).forEach(([key, aliases]) => {
+        if (!mappedHeaders[key] && aliases.includes(normalized)) {
+          mappedHeaders[key] = index;
+          hasHeader = true;
+        }
+      });
+    });
+
+    const dataRows = hasHeader ? cleanRows.slice(1) : cleanRows;
+    const defaultReff = (currentItem.reff || '').trim().toUpperCase();
+    const defaultLote = String(currentItem.lote || '').trim();
+    const defaultBox = String(currentItem.box || '').trim();
+    const defaultVence = normalizeBulkDate(currentItem.fecha_vencimiento);
+    let skipped = 0;
+
+    const parsed = dataRows.map((cells) => {
+      const read = (key) => {
+        if (hasHeader && mappedHeaders[key] !== undefined) return cells[mappedHeaders[key]] || '';
+        const index = BULK_SERIES_ORDER.indexOf(key);
+        return index >= 0 ? (cells[index] || '') : '';
+      };
+
+      const serie = String(read('serie') || '').trim();
+      const reff = String(read('reff') || defaultReff).trim().toUpperCase();
+      const lote = String(read('lote') || defaultLote).trim();
+      const box = String(read('box') || defaultBox).trim();
+      const fecha_vencimiento = normalizeBulkDate(read('fecha_vencimiento') || defaultVence);
+      const cantidadValue = String(read('cantidad') || '').trim();
+      const cantidad = cantidadValue ? (parseInt(cantidadValue, 10) || 1) : 1;
+
+      if (!serie || !reff) {
+        skipped += 1;
+        return null;
+      }
+
+      return {
+        reff,
+        serie,
+        lote,
+        box,
+        fecha_vencimiento,
+        cantidad: cantidad > 0 ? cantidad : 1,
+      };
+    }).filter(Boolean);
+
+    return { rows: parsed, skipped };
+  };
+
+  const parseBulkSeriesText = async (text) => {
+    const raw = String(text || '').trim();
+    if (!raw) {
+      toast.error('Pega las series o sube un archivo antes de procesar');
+      return;
+    }
+    setBulkSeriesLoading(true);
+    try {
+      const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      const separator = lines[0]?.includes('\t') ? '\t' : lines[0]?.includes(';') ? ';' : lines[0]?.includes(',') ? ',' : null;
+      const matrix = lines.map((line) => separator ? line.split(separator).map(cell => cell.trim()) : [line]);
+      const { rows, skipped } = parseBulkSeriesRows(matrix);
+      if (!rows.length) {
+        toast.error('No encontramos series válidas para agregar');
+        return;
+      }
+      await addBulkItems(rows);
+      if (skipped > 0) {
+        toast.warning(`${skipped} fila(s) fueron omitidas por faltar serie o REFF`, { duration: 2200 });
+      }
+    } finally {
+      setBulkSeriesLoading(false);
+    }
+  };
+
+  const loadBulkSeriesFile = async (file) => {
+    if (!file) return;
+    setBulkSeriesLoading(true);
+    try {
+      let matrix = [];
+      if (/\.(xlsx|xls)$/i.test(file.name)) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      } else {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        const separator = lines[0]?.includes('\t') ? '\t' : lines[0]?.includes(';') ? ';' : lines[0]?.includes(',') ? ',' : null;
+        matrix = lines.map((line) => separator ? line.split(separator).map(cell => cell.trim()) : [line]);
+      }
+
+      const { rows, skipped } = parseBulkSeriesRows(matrix);
+      if (!rows.length) {
+        toast.error('El archivo no trae series válidas');
+        return;
+      }
+      await addBulkItems(rows);
+      if (skipped > 0) {
+        toast.warning(`${skipped} fila(s) del archivo fueron omitidas por faltar serie o REFF`, { duration: 2200 });
+      }
+    } catch (error) {
+      toast.error(`No se pudo leer el archivo: ${error.message}`);
+    } finally {
+      setBulkSeriesLoading(false);
+      if (bulkSeriesFileRef.current) bulkSeriesFileRef.current.value = '';
+    }
+  };
+
   const removeItem = (index) => {
     setItems(prev => prev.filter((_, i) => i !== index));
     setFormTouched(true);
@@ -530,6 +735,9 @@ const Reception = () => {
     });
     setItems([]);
     setCurrentItem({ reff: '', cantidad: 1, serie: '', lote: '', box: '', fecha_vencimiento: '' });
+    setBulkSeriesText('');
+    setBulkSeriesSummary(null);
+    setBulkSeriesExpanded(false);
     setEditingId(null);
     setFormTouched(false);
   };
@@ -1009,6 +1217,91 @@ const Reception = () => {
                   onChange={e => setCurrentItem(p => ({ ...p, fecha_vencimiento: e.target.value }))}
                   className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-bold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
                 />
+              </div>
+
+              <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setBulkSeriesExpanded(prev => !prev)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-100/80 transition-colors"
+                >
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-wider text-slate-700">Carga masiva de series</div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      Pega desde Excel o sube un archivo con series. Usa el REFF actual como base y permite también `lote`, `vence`, `box`, `cantidad` y `reff`.
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-slate-400">
+                    {bulkSeriesExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  </div>
+                </button>
+
+                {bulkSeriesExpanded && (
+                  <div className="border-t border-slate-200 bg-white p-4 space-y-3">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[11px] text-emerald-800">
+                      <div className="font-black uppercase tracking-wider mb-1">Formatos soportados</div>
+                      <div>1. Una serie por línea: `26010500018`</div>
+                      <div>2. Varias columnas: `serie | lote | fecha vencimiento | box | cantidad | reff`</div>
+                      <div>3. Con encabezados: `Serie`, `Lote`, `Vence`, `Box`, `Cantidad`, `REFF`</div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <span className="font-black text-slate-600 uppercase tracking-wider">REFF base</span>
+                        <div className="mt-1 font-mono text-slate-800">{currentItem.reff || 'Debes completar el REFF o incluirlo en el archivo'}</div>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <span className="font-black text-slate-600 uppercase tracking-wider">Defaults heredados</span>
+                        <div className="mt-1 text-slate-600">Lote: {currentItem.lote || '—'} · Vence: {currentItem.fecha_vencimiento || '—'} · Box: {currentItem.box || '—'}</div>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={bulkSeriesText}
+                      onChange={(e) => setBulkSeriesText(e.target.value)}
+                      className="w-full min-h-[160px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm font-mono text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                      placeholder={`Pega aquí una serie por línea o columnas:\nSerie\tLote\tVence\tBox\tCantidad\n26010500018\tLOTE-1\t2026-12-31\tB1\t1`}
+                    />
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => parseBulkSeriesText(bulkSeriesText)}
+                          disabled={bulkSeriesLoading}
+                          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                        >
+                          {bulkSeriesLoading ? 'Procesando...' : 'Agregar series masivamente'}
+                        </button>
+                        <label className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-bold text-slate-600 transition-colors cursor-pointer">
+                          <input
+                            ref={bulkSeriesFileRef}
+                            type="file"
+                            accept=".csv,.tsv,.txt,.xlsx,.xls"
+                            className="hidden"
+                            onChange={(e) => loadBulkSeriesFile(e.target.files?.[0])}
+                          />
+                          Subir archivo
+                        </label>
+                        {(bulkSeriesText || bulkSeriesSummary) && (
+                          <button
+                            type="button"
+                            onClick={() => { setBulkSeriesText(''); setBulkSeriesSummary(null); }}
+                            className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 transition-colors"
+                          >
+                            Limpiar
+                          </button>
+                        )}
+                      </div>
+
+                      {bulkSeriesSummary && (
+                        <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                          {bulkSeriesSummary.added} serie(s) agregadas · {bulkSeriesSummary.reffs} REFF únicos · {bulkSeriesSummary.defaultsApplied} usando REFF base
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ===== BOTÓN AGREGAR ===== */}
