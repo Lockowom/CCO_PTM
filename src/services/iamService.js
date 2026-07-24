@@ -141,3 +141,68 @@ export async function historialAccesoResumen() {
   if (error) throw error;
   return data || { total: 0, usuarios: 0, hoy: 0, semana: 0, ultimo: null };
 }
+
+// ── Fase 10: Equipos / Grupos / Principals ───────────────────────────────────
+export async function catalogoOrg() {
+  const { data, error } = await supabase.rpc('iam_catalogo_org');
+  if (error) throw error;
+  return data || { usuarios: [], roles: [], departamentos: [] };
+}
+
+export async function listarTeams() {
+  const { data, error } = await supabase.rpc('iam_teams');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const guardarTeam = (p) => rpc('iam_team_guardar', { p });
+export const eliminarTeam = (id) => rpc('iam_team_eliminar', { p_id: id });
+
+export async function miembrosTeam(teamId) {
+  const { data, error } = await supabase.rpc('iam_team_members', { p_team: teamId });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const agregarMiembroTeam = (teamId, userId) => rpc('iam_team_member_add', { p_team: teamId, p_user: userId });
+export const quitarMiembroTeam = (teamId, userId) => rpc('iam_team_member_remove', { p_team: teamId, p_user: userId });
+
+export async function listarGroups() {
+  const { data, error } = await supabase.rpc('iam_groups');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const guardarGroup = (p) => rpc('iam_group_guardar', { p });
+export const eliminarGroup = (id) => rpc('iam_group_eliminar', { p_id: id });
+
+export async function miembrosGroup(groupId) {
+  const { data, error } = await supabase.rpc('iam_group_members', { p_group: groupId });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const agregarMiembroGroup = (groupId, userId) => rpc('iam_group_member_add', { p_group: groupId, p_user: userId });
+export const quitarMiembroGroup = (groupId, userId) => rpc('iam_group_member_remove', { p_group: groupId, p_user: userId });
+
+export async function asignacionesPrincipal(principalType, principalId) {
+  const { data, error } = await supabase.rpc('iam_principal_asignaciones', {
+    p_principal_type: principalType,
+    p_principal_id: principalId,
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export const asignarRolPrincipal = ({ principalType, principalId, role, scopeType = 'global', scopeCode = null, expires = null }) =>
+  rpc('iam_principal_asignar_rol', {
+    p_principal_type: principalType,
+    p_principal_id: principalId,
+    p_role: role,
+    p_scope_type: scopeType,
+    p_scope_code: scopeCode,
+    p_expires: expires,
+  });
+
+export const revocarAsignacionPrincipal = (id) => rpc('iam_principal_revocar_asignacion', { p_id: id });
+export const refrescarGruposDinamicos = (groupId = null) => rpc('iam_refresh_dynamic_groups', { p_group: groupId });
