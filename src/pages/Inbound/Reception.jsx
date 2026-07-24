@@ -365,9 +365,12 @@ const Reception = () => {
   const deleteRecepcion = async (id, proveedor) => {
     if (!window.confirm(`¿Eliminar la recepción de ${proveedor}? Se borrarán también todos sus ítems.`)) return;
     try {
-      await supabase.from('tms_recepcion_items').delete().eq('recepcion_id', id);
-      const { error } = await supabase.from('tms_recepciones').delete().eq('id', id);
+      const { data, error } = await supabase.rpc('eliminar_recepcion_completa', {
+        p_id: id,
+        p_origen: 'IMPORTACION',
+      });
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar la recepción');
       toast.success(`Recepción de ${proveedor} eliminada`);
       queryClient.invalidateQueries({ queryKey: ['recepciones'] });
       if (detailModal?.id === id) setDetailModal(null);
