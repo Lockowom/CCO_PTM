@@ -14,7 +14,7 @@ import {
   listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
   exportarOperaciones, esClienteOrange, lookupOrangeAssociation, INCIDENCIAS_NV, ESTADOS_INCIDENCIA,
-  listarSolicitudesReapertura, solicitarReapertura, resolverReapertura,
+  listarSolicitudesReapertura, solicitarReapertura, resolverReapertura, puedeEditarOperacion,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
@@ -784,6 +784,7 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
   const [reopenReason, setReopenReason] = useState('');
   const [requestingReopen, setRequestingReopen] = useState(false);
   const [reopenRequests, setReopenRequests] = useState([]);
+  const [editAccess, setEditAccess] = useState(null);
   useEffect(() => { opciones().then(setOpts).catch(() => {}); }, []);
   useEffect(() => { fetchVendedores().then(setVendedores).catch(() => setVendedores([])); }, []);
   useEffect(() => {
@@ -795,6 +796,23 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
   const currentLookup = s.lookupResult?.found ? s.lookupResult : null;
   const currentLocked = currentLookup?.data?.estado === 'Entregado';
   const currentPendingRequest = reopenRequests.find((req) => req.estado === 'PENDIENTE') || null;
+  const currentCanEdit = puedeEscribir && (!currentLookup || editAccess?.permitida !== false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!currentLookup?.row || !puedeEscribir) {
+      setEditAccess(null);
+      return undefined;
+    }
+    puedeEditarOperacion(currentLookup.row)
+      .then((result) => {
+        if (!cancelled) setEditAccess(result);
+      })
+      .catch(() => {
+        if (!cancelled) setEditAccess({ permitida: false, message: 'No se pudo validar el acceso IAM para esta N.V.' });
+      });
+    return () => { cancelled = true; };
+  }, [currentLookup?.row, puedeEscribir]);
 
   const loadReopenRequests = useCallback(async (operacionId) => {
     if (!operacionId) { setReopenRequests([]); return []; }
@@ -965,6 +983,11 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
     const st = useFormNVStore.getState();
     if (st.mode === 'idle') return;
     if (!st.estado) { st.patch({ submitResult: { success: false, message: 'Falta el Estado' } }); return; }
+    if (st.mode === 'update' && currentLookup?.row && editAccess?.permitida === false) {
+      st.patch({ submitResult: { success: false, message: editAccess.message || 'No tienes permisos IAM para editar esta N.V.' } });
+      setToastMsg({ type: 'error', message: editAccess.message || 'No tienes permisos IAM para editar esta N.V.' });
+      return;
+    }
     if (st.lookupResult?.found && st.lookupResult?.data?.estado === 'Entregado') {
       const requests = await loadReopenRequests(st.lookupResult.row);
       openExistingModal({
@@ -1064,6 +1087,11 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
           <div className="max-w-2xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs text-slate-400">Canal <b className="text-slate-600 uppercase">{s.canal}</b> · N° <b className="text-slate-600">{s.nv || '—'}</b></span>
             <div className="flex items-center gap-2">
+              {s.mode === 'update' && editAccess?.permitida === false && (
+                <div className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold">
+                  {editAccess.message || 'Sin acceso IAM para editar esta N.V.'}
+                </div>
+              )}
               {currentLocked && puedeEscribir && (
                 <button
                   onClick={() => openExistingModal({
@@ -1081,10 +1109,10 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
                   Solicitar reapertura
                 </button>
               )}
-              <button onClick={handleSubmit} disabled={s.submitting || currentLocked}
+              <button onClick={handleSubmit} disabled={s.submitting || currentLocked || (s.mode === 'update' && editAccess?.permitida === false)}
                 className="px-6 py-2.5 rounded-xl bg-orange-500 text-white font-black text-sm hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2">
                 {s.submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                {currentLocked ? 'N.V. bloqueada' : s.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}
+                {currentLocked ? 'N.V. bloqueada' : s.mode === 'update' && editAccess?.permitida === false ? 'Sin acceso IAM' : s.mode === 'update' ? 'Actualizar N.V.' : 'Crear N.V.'}
               </button>
             </div>
           </div>

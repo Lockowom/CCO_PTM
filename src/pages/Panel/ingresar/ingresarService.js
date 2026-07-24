@@ -335,6 +335,12 @@ export async function guardar(payload) {
   const { data, error } = await supabase.rpc('guardar_nv', { p });
   return rpcResult(data, error);
 }
+export async function puedeEditarOperacion(id) {
+  if (!id) return { permitida: false, message: 'N.V. no encontrada.' };
+  const { data, error } = await supabase.rpc('iam_puede_editar_nv', { p_id: id });
+  if (error) return { permitida: false, message: error.message || 'No se pudo validar el acceso IAM.' };
+  return data || { permitida: false, message: 'No se pudo validar el acceso IAM.' };
+}
 export async function cambiarEstado(id, estado, urgente = null) {
   const { data, error } = await supabase.rpc('cambiar_estado_nv', { p_id: id, p_estado: estado, p_urgente: urgente });
   return rpcResult(data, error);
