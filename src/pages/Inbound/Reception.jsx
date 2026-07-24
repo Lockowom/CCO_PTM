@@ -571,6 +571,60 @@ const Reception = () => {
     }
   };
 
+  const downloadBulkSeriesTemplate = () => {
+    const defaultReff = (currentItem.reff || '').trim().toUpperCase();
+    const defaultLote = String(currentItem.lote || '').trim();
+    const defaultBox = String(currentItem.box || '').trim();
+    const defaultVence = normalizeBulkDate(currentItem.fecha_vencimiento);
+
+    const templateRows = [
+      {
+        REFF: defaultReff || 'CMS60D1',
+        SERIE: '26010500018',
+        LOTE: defaultLote || 'LOTE-2026-01',
+        VENCE: defaultVence || '2026-12-31',
+        BOX: defaultBox || 'B1',
+        CANTIDAD: 1,
+      },
+      {
+        REFF: defaultReff || 'CMS60D1',
+        SERIE: '26010500019',
+        LOTE: defaultLote || 'LOTE-2026-01',
+        VENCE: defaultVence || '2026-12-31',
+        BOX: defaultBox || 'B1',
+        CANTIDAD: 1,
+      },
+    ];
+
+    const helpRows = [
+      { CAMPO: 'REFF', DESCRIPCION: 'Código del producto. Si todas las filas usan el mismo producto, puedes dejar el REFF base en pantalla y repetirlo aquí para mayor orden.' },
+      { CAMPO: 'SERIE', DESCRIPCION: 'Número de serie. Obligatorio.' },
+      { CAMPO: 'LOTE', DESCRIPCION: 'Lote o partida. Opcional; si queda vacío, usa el valor del formulario.' },
+      { CAMPO: 'VENCE', DESCRIPCION: 'Fecha de vencimiento en formato YYYY-MM-DD. Opcional; si queda vacío, usa el valor del formulario.' },
+      { CAMPO: 'BOX', DESCRIPCION: 'Caja o box. Opcional; si queda vacío, usa el valor del formulario.' },
+      { CAMPO: 'CANTIDAD', DESCRIPCION: 'Cantidad por fila. Si queda vacío, se toma 1.' },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const wsTemplate = XLSX.utils.json_to_sheet(templateRows);
+    wsTemplate['!cols'] = [
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 10 },
+    ];
+    const wsGuide = XLSX.utils.json_to_sheet(helpRows);
+    wsGuide['!cols'] = [{ wch: 18 }, { wch: 110 }];
+    XLSX.utils.book_append_sheet(wb, wsTemplate, 'MODELO SERIES');
+    XLSX.utils.book_append_sheet(wb, wsGuide, 'GUIA');
+
+    const fileName = `Modelo_Carga_Series_${defaultReff || 'REFF_BASE'}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast.success(`Modelo descargado: ${fileName}`);
+  };
+
   const removeItem = (index) => {
     setItems(prev => prev.filter((_, i) => i !== index));
     setFormTouched(true);
@@ -1243,6 +1297,7 @@ const Reception = () => {
                       <div>1. Una serie por línea: `26010500018`</div>
                       <div>2. Varias columnas: `serie | lote | fecha vencimiento | box | cantidad | reff`</div>
                       <div>3. Con encabezados: `Serie`, `Lote`, `Vence`, `Box`, `Cantidad`, `REFF`</div>
+                      <div>4. Modelo ordenado: descarga el Excel `MODELO SERIES`, complétalo y vuelve a subirlo aquí mismo.</div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
@@ -1272,6 +1327,13 @@ const Reception = () => {
                           className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors disabled:opacity-50"
                         >
                           {bulkSeriesLoading ? 'Procesando...' : 'Agregar series masivamente'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={downloadBulkSeriesTemplate}
+                          className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-sm font-bold text-emerald-700 transition-colors"
+                        >
+                          Descargar modelo
                         </button>
                         <label className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-bold text-slate-600 transition-colors cursor-pointer">
                           <input
