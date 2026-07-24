@@ -28,6 +28,8 @@ const ESTADOS = {
   PENDIENTE: { label: 'Pendiente', color: 'bg-slate-400', textColor: 'text-slate-600', bgLight: 'bg-slate-50' },
 };
 
+const RECEPCION_INSERT_CHUNK_SIZE = 500;
+
 const BULK_SERIES_ALIAS = {
   reff: ['reff', 'codigo', 'codigo reff', 'cod reff', 'cod. reff', 'codigo producto', 'sku'],
   serie: ['serie', 'n serie', 'nserie', 'nro serie', 'numero serie', 'serial'],
@@ -63,6 +65,30 @@ const normalizeBulkDate = (value) => {
   if (Number.isNaN(parsed.getTime())) return '';
   return parsed.toLocaleDateString('en-CA');
 };
+
+async function insertRecepcionItemsInChunks(items, recepcionId) {
+  for (let start = 0; start < items.length; start += RECEPCION_INSERT_CHUNK_SIZE) {
+    const chunk = items.slice(start, start + RECEPCION_INSERT_CHUNK_SIZE).map(item => ({
+      recepcion_id: recepcionId,
+      reff: item.reff.toUpperCase(),
+      descripcion: item.descripcion || null,
+      um: item.um || 'UNI',
+      cantidad: parseInt(item.cantidad, 10) || 1,
+      serie: item.serie || null,
+      lote: item.lote || null,
+      box: item.box || null,
+      fecha_vencimiento: item.fecha_vencimiento || null,
+    }));
+
+    const { error } = await supabase
+      .from('tms_recepcion_items')
+      .insert(chunk);
+
+    if (error) {
+      throw new Error(`Falló el bloque ${Math.floor(start / RECEPCION_INSERT_CHUNK_SIZE) + 1}: ${error.message}`);
+    }
+  }
+}
 
 const Reception = () => {
   const { user } = useAuth();
@@ -262,6 +288,8 @@ const Reception = () => {
       if (items.length === 0) throw new Error('Agrega al menos un ítem');
 
       let recepcionId = editingId;
+      const productosResumen = [...new Set(items.map(i => String(i.reff || '').trim().toUpperCase()).filter(Boolean))].join(', ');
+      const cantidadesResumen = String(items.length);
 
       if (editingId) {
         // Actualizar header
@@ -275,6 +303,8 @@ const Reception = () => {
             pallets_usados: parseInt(header.pallets_usados) || 0,
             tipo_contenedor: header.tipo_contenedor,
             notas: header.notas || null,
+            productos: productosResumen || null,
+            cantidades: cantidadesResumen,
             items_count: items.length,
             estado: header.oc ? 'COMPLETADO' : 'EN_REVISION',
             updated_at: new Date().toISOString()
@@ -283,7 +313,8 @@ const Reception = () => {
         if (error) throw error;
 
         // Borrar items anteriores y re-insertar
-        await supabase.from('tms_recepcion_items').delete().eq('recepcion_id', editingId);
+        const { error: deleteItemsError } = await supabase.from('tms_recepcion_items').delete().eq('recepcion_id', editingId);
+        if (deleteItemsError) throw deleteItemsError;
       } else {
         // Crear header
         const { data, error } = await supabase
@@ -296,8 +327,8 @@ const Reception = () => {
             pallets_usados: parseInt(header.pallets_usados) || 0,
             tipo_contenedor: header.tipo_contenedor,
             notas: header.notas || null,
-            productos: items.map(i => i.reff).join(', '),
-            cantidades: items.map(i => i.cantidad).join(', '),
+            productos: productosResumen || null,
+            cantidades: cantidadesResumen,
             items_count: items.length,
             estado: header.oc ? 'COMPLETADO' : 'EN_REVISION',
             usuario_nombre: user?.nombre || user?.email || 'Usuario'
@@ -308,24 +339,7 @@ const Reception = () => {
         recepcionId = data.id;
       }
 
-      // Insertar items
-      const itemsToInsert = items.map(item => ({
-        recepcion_id: recepcionId,
-        reff: item.reff.toUpperCase(),
-        descripcion: item.descripcion || null,
-        um: item.um || 'UNI',
-        cantidad: parseInt(item.cantidad) || 1,
-        serie: item.serie || null,
-        lote: item.lote || null,
-        box: item.box || null,
-        fecha_vencimiento: item.fecha_vencimiento || null,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('tms_recepcion_items')
-        .insert(itemsToInsert);
-
-      if (itemsError) throw itemsError;
+      await insertRecepcionItemsInChunks(items, recepcionId);
     },
     onSuccess: (_, variables) => {
       toast.success(editingId ? 'Recepción actualizada' : 'Recepción guardada correctamente');
