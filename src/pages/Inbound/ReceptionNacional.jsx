@@ -33,6 +33,7 @@ const ReceptionNacional = () => {
   const queryClient = useQueryClient();
   const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
   const containerRef = useRef(null);
+  const canManageReception = user?.rol === 'ADMIN' || user?.es_admin_delegado === true || user?.rol === 'CONTROL_CALIDAD';
 
   // Vista: 'dashboard' | 'form'
   const [view, setView] = useState('dashboard');
@@ -89,7 +90,13 @@ const ReceptionNacional = () => {
   }, [header, items, view, editingId, formTouched]);
 
   const limpiarBorrador = () => { try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ } setDraft(null); setAutoguardado(false); setUltimoGuardado(''); setFormTouched(false); };
+  const ensureReceptionWriteAccess = () => {
+    if (canManageReception) return true;
+    toast.error('Solo Control Calidad o Administrador pueden modificar recepciones');
+    return false;
+  };
   const continuarBorrador = () => {
+    if (!ensureReceptionWriteAccess()) return;
     if (!draft) return;
     setHeader((prev) => ({ ...prev, ...draft.header }));
     setItems(Array.isArray(draft.items) ? draft.items : []);
@@ -110,6 +117,13 @@ const ReceptionNacional = () => {
   useGSAP(() => {
     gsap.from(containerRef.current, { y: 20, opacity: 0, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
   }, { scope: containerRef });
+
+  useEffect(() => {
+    if (view === 'form' && !canManageReception) {
+      setView('dashboard');
+      setEditingId(null);
+    }
+  }, [view, canManageReception]);
 
   // ==================== QUERIES ====================
 
@@ -217,6 +231,7 @@ const ReceptionNacional = () => {
   // Guardar recepción (crear o actualizar)
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!canManageReception) throw new Error('Solo Control Calidad o Administrador pueden guardar recepciones');
       if (!header.proveedor) throw new Error('Proveedor es obligatorio');
       if (items.length === 0) throw new Error('Agrega al menos un ítem');
 
@@ -308,6 +323,7 @@ const ReceptionNacional = () => {
 
   // Eliminar recepción completa
   const deleteRecepcion = async (id, proveedor) => {
+    if (!ensureReceptionWriteAccess()) return;
     if (!window.confirm(`¿Eliminar la recepción de ${proveedor}? Se borrarán también todos sus ítems.`)) return;
     try {
       const { data, error } = await supabase.rpc('eliminar_recepcion_completa', {
@@ -415,6 +431,7 @@ const ReceptionNacional = () => {
   };
 
   const editRecepcion = async (recepcion) => {
+    if (!ensureReceptionWriteAccess()) return;
     try {
       const { data, error } = await supabase
         .from('tms_recepcion_items_nacionales')
@@ -564,9 +581,15 @@ const ReceptionNacional = () => {
               <button onClick={exportAllToExcel} className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
                 <FileSpreadsheet size={14} /> Exportar
               </button>
-              <button onClick={() => { resetForm(); setView('form'); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
-                <Plus size={14} /> Nueva Recepción
-              </button>
+              {canManageReception ? (
+                <button onClick={() => { resetForm(); setView('form'); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                  <Plus size={14} /> Nueva Recepción
+                </button>
+              ) : (
+                <span className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold">
+                  Solo lectura
+                </span>
+              )}
             </>
           )}
           {view === 'form' && (
@@ -590,7 +613,7 @@ const ReceptionNacional = () => {
       {view === 'dashboard' && (
         <>
           {/* Borrador recuperado: recepción sin terminar guardada automáticamente */}
-          {draft && (
+          {draft && canManageReception && (
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-amber-800 flex items-center gap-1.5"><Save size={15} /> Tienes una recepción sin terminar</p>
@@ -811,12 +834,16 @@ const ReceptionNacional = () => {
                               <button onClick={() => loadDetail(r)} className="p-1 hover:bg-slate-100 rounded transition-colors" title="Ver detalle">
                                 <Eye size={14} className="text-slate-400 hover:text-slate-600" />
                               </button>
-                              <button onClick={() => editRecepcion(r)} className="p-1 hover:bg-slate-100 rounded transition-colors" title="Editar">
-                                <ClipboardCheck size={14} className="text-slate-400 hover:text-amber-600" />
-                              </button>
-                              <button onClick={() => deleteRecepcion(r.id, r.proveedor)} className="p-1 hover:bg-red-50 rounded transition-colors" title="Eliminar">
-                                <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
-                              </button>
+                              {canManageReception && (
+                                <>
+                                  <button onClick={() => editRecepcion(r)} className="p-1 hover:bg-slate-100 rounded transition-colors" title="Editar">
+                                    <ClipboardCheck size={14} className="text-slate-400 hover:text-amber-600" />
+                                  </button>
+                                  <button onClick={() => deleteRecepcion(r.id, r.proveedor)} className="p-1 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+                                    <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1100,17 +1127,19 @@ const ReceptionNacional = () => {
               {/* Save Button */}
               {items.length > 0 && (
                 <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-                  <button
-                    onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-black text-lg flex items-center justify-center gap-3 transition-colors disabled:opacity-50 shadow-lg active:scale-[0.98]"
-                  >
-                    {saveMutation.isPending ? (
-                      <><Loader2 size={22} className="animate-spin" /> GUARDANDO...</>
-                    ) : (
-                      <><Save size={22} /> {editingId ? 'ACTUALIZAR' : 'GUARDAR'} RECEPCIÓN ({items.length} ítems)</>
-                    )}
-                  </button>
+                  {canManageReception && (
+                    <button
+                      onClick={() => saveMutation.mutate()}
+                      disabled={saveMutation.isPending}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-black text-lg flex items-center justify-center gap-3 transition-colors disabled:opacity-50 shadow-lg active:scale-[0.98]"
+                    >
+                      {saveMutation.isPending ? (
+                        <><Loader2 size={22} className="animate-spin" /> GUARDANDO...</>
+                      ) : (
+                        <><Save size={22} /> {editingId ? 'ACTUALIZAR' : 'GUARDAR'} RECEPCIÓN ({items.length} ítems)</>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1141,21 +1170,25 @@ const ReceptionNacional = () => {
 
             {/* Modal Actions */}
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex gap-3">
-              <button onClick={() => editRecepcion(detailModal)} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors">
-                <ClipboardCheck size={16} /> EDITAR
-              </button>
+              {canManageReception && (
+                <button onClick={() => editRecepcion(detailModal)} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors">
+                  <ClipboardCheck size={16} /> EDITAR
+                </button>
+              )}
               <button
                 onClick={() => exportToExcel(detailModal, detailModal.items)}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
               >
                 <Download size={16} /> DESCARGAR EXCEL
               </button>
-              <button
-                onClick={() => deleteRecepcion(detailModal.id, detailModal.proveedor)}
-                className="px-4 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors ml-auto"
-              >
-                <Trash2 size={16} /> ELIMINAR
-              </button>
+              {canManageReception && (
+                <button
+                  onClick={() => deleteRecepcion(detailModal.id, detailModal.proveedor)}
+                  className="px-4 py-2 bg-white border border-red-300 hover:bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors ml-auto"
+                >
+                  <Trash2 size={16} /> ELIMINAR
+                </button>
+              )}
             </div>
 
             {/* Modal Table */}
