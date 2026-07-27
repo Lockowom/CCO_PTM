@@ -28,6 +28,12 @@ const LEVEL_STYLES = {
   info: 'bg-sky-100 text-sky-700 border-sky-200',
 };
 
+const ALERT_STYLES = {
+  critical: 'bg-rose-100 text-rose-700 border-rose-200',
+  high: 'bg-amber-100 text-amber-700 border-amber-200',
+  medium: 'bg-sky-100 text-sky-700 border-sky-200',
+};
+
 const KIND_LABELS = {
   application: 'Aplicación',
   audit: 'Auditoría',
@@ -132,19 +138,29 @@ async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter,
     .gte('created_at', since)
     .eq('level', 'warn');
 
-  const [{ data, error, count }, errorRes, slowRes, warnRes] = await Promise.all([
+  const alertsQuery = supabase
+    .from('system_alerts')
+    .select('id, created_at, status, severity, rule_code, scope_key, titulo, mensaje, payload, occurrences, first_seen_at, last_seen_at, notified_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const [{ data, error, count }, errorRes, slowRes, warnRes, alertsRes] = await Promise.all([
     query,
     errorCountQuery,
     slowCountQuery,
     warnCountQuery,
+    alertsQuery,
   ]);
 
   if (error) throw error;
   if (errorRes.error) throw errorRes.error;
   if (slowRes.error) throw slowRes.error;
   if (warnRes.error) throw warnRes.error;
+  if (alertsRes.error) throw alertsRes.error;
 
   const logs = data || [];
+  const alerts = alertsRes.data || [];
   const errorLogs = logs.filter((item) => item.level === 'error');
   const usersAffected = new Set(logs.map((item) => item.usuario_email || item.usuario_nombre || item.rol).filter(Boolean)).size;
   const avgDuration = (() => {
@@ -160,9 +176,11 @@ async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter,
       errors: errorRes.count || 0,
       warns: warnRes.count || 0,
       slow: slowRes.count || 0,
+      openAlerts: alerts.filter((item) => item.status === 'open').length,
       usersAffected,
       avgDuration,
     },
+    alerts,
     topFingerprints: extractTop(errorLogs, (item) => item.fingerprint || item.message, 6),
     topModules: extractTop(logs, (item) => item.module, 6),
     topActions: extractTop(logs.filter((item) => Number(item.duration_ms) >= 1000), (item) => `${item.module}.${item.action}`, 6),
@@ -186,6 +204,10 @@ const StatCard = ({ icon, label, value, tone = 'slate', helper }) => (
     </div>
   </div>
 );
+
+function alertChipClass(severity) {
+  return ALERT_STYLES[severity] || 'bg-slate-100 text-slate-700 border-slate-200';
+}
 
 export default function Observability() {
   const containerRef = useRef(null);
@@ -213,6 +235,7 @@ export default function Observability() {
   });
 
   const logs = data?.logs || [];
+  const alerts = data?.alerts || [];
   const modules = useMemo(() => data?.modules || [], [data]);
   const kinds = useMemo(() => data?.kinds || [], [data]);
 
@@ -342,6 +365,43 @@ export default function Observability() {
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Alertas automáticas</h3>
+                <p className="text-[12px] text-slate-400 mt-1">Alertas materializadas desde `system_logs` con cooldown anti-spam.</p>
+              </div>
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-wide">Abiertas: {data?.totals.openAlerts ?? 0}</span>
+            </div>
+
+            {alerts.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-sm">Aún no hay alertas materializadas en la ventana actual.</div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {alerts.map((alert) => (
+                  <div key={alert.id} className="px-4 py-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`text-[10px] font-black uppercase rounded-lg border px-2 py-1 ${alertChipClass(alert.severity)}`}>{alert.severity}</span>
+                        <span className="text-[10px] font-black uppercase rounded-lg border px-2 py-1 bg-slate-100 text-slate-600 border-slate-200">{alert.status}</span>
+                        <span className="text-[11px] font-mono text-slate-400">{fmtDateTime(alert.created_at)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-slate-800 truncate">{alert.titulo}</p>
+                        <p className="text-[12px] text-slate-500 truncate mt-0.5">{alert.mensaje}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 shrink-0">
+                        <span>{alert.rule_code}</span>
+                        <span>{alert.occurrences}x</span>
+                        <span>{fmtAgo(alert.last_seen_at || alert.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
