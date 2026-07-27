@@ -1,7 +1,7 @@
 {
   "name": "cco-ptm",
   "private": true,
-  "version": "1.55.141",
+  "version": "1.55.142",
   "type": "module",
   "scripts": {
     "dev": "vite",

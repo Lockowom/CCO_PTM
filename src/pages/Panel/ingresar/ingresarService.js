@@ -5,12 +5,111 @@
 //  Script ni login propio: la autenticación es la de CCO (permiso manage_panel).
 // ============================================================================
 import { supabase } from '../../../supabase';
+import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const ACTIVES_CACHE_TTL_MS = 60 * 1000;
 const OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
 let listaActivasCache = { ts: 0, data: null, promise: null };
 let opcionesCache = { ts: 0, data: null, promise: null };
+
+function resetIngresarCaches() {
+  listaActivasCache = { ts: 0, data: null, promise: null };
+  opcionesCache = { ts: 0, data: null, promise: null };
+}
+
+function panelDuration(startedAt) {
+  return Math.round(Math.max(0, performance.now() - startedAt));
+}
+
+function summarizeOperacionPayload(payload = {}) {
+  return {
+    id: payload?.id ?? null,
+    mode: payload?.mode || null,
+    canal: payload?.canal || null,
+    nv: normNV(payload?.nv || ''),
+    estado: payload?.estado || null,
+    urgente: payload?.urgente === true,
+    transportista: payload?.transportista || null,
+    hasIncidencia: Boolean(String(payload?.incidencia || '').trim()),
+    reabierta: payload?.reabierta === true,
+  };
+}
+
+async function runPanelRead(action, fn, { screen = 'PanelIngresar', payload = null, slowMs = 900, message = '' } = {}) {
+  const startedAt = performance.now();
+  try {
+    const result = await fn();
+    const durationMs = panelDuration(startedAt);
+    if (durationMs >= slowMs) {
+      Logger.performance({
+        module: 'panel',
+        screen,
+        action,
+        message: message || `Operacion lenta de lectura: ${action}`,
+        durationMs,
+        status: 'ok',
+        payload,
+      });
+    }
+    return result;
+  } catch (error) {
+    Logger.error(error, {
+      module: 'panel',
+      screen,
+      action,
+      message: `Fallo operacion de lectura: ${action}`,
+      durationMs: panelDuration(startedAt),
+      status: 'error',
+      payload,
+    });
+    throw error;
+  }
+}
+
+async function runPanelMutation(action, fn, { screen = 'PanelIngresar', payload = null, message = '' } = {}) {
+  const startedAt = performance.now();
+  try {
+    const result = await fn();
+    const durationMs = panelDuration(startedAt);
+    if (result?.ok === false) {
+      Logger.error(new Error(result.error || result.message || `Operacion fallida: ${action}`), {
+        module: 'panel',
+        screen,
+        action,
+        message: `Operacion fallida: ${action}`,
+        durationMs,
+        status: 'failed',
+        payload,
+        context: {
+          result,
+        },
+      });
+      return result;
+    }
+    Logger.audit({
+      module: 'panel',
+      screen,
+      action,
+      message: message || `Operacion ejecutada: ${action}`,
+      durationMs,
+      status: 'ok',
+      payload,
+    });
+    return result;
+  } catch (error) {
+    Logger.error(error, {
+      module: 'panel',
+      screen,
+      action,
+      message: `Fallo operacion critica: ${action}`,
+      durationMs: panelDuration(startedAt),
+      status: 'error',
+      payload,
+    });
+    throw error;
+  }
+}
 
 // ── Constantes / tipos compartidos ──────────────────────────────────────────
 export const CANALES = [
@@ -194,6 +293,7 @@ function isMoreRecentOperacion(next, prev) {
 }
 
 export async function listaActivas({ force = false } = {}) {
+  return runPanelRead('lista_activas', async () => {
   const now = Date.now();
   if (!force && listaActivasCache.data && (now - listaActivasCache.ts) < ACTIVES_CACHE_TTL_MS) {
     return listaActivasCache.data;
@@ -231,6 +331,11 @@ export async function listaActivas({ force = false } = {}) {
       throw error;
     });
   return listaActivasCache.promise;
+  }, {
+    payload: { force },
+    slowMs: 700,
+    message: 'Carga de N.V. activas del Panel',
+  });
 }
 
 // Búsqueda en TODA la tabla (cualquier estado: incluye Entregado/NULA/etc.) por
@@ -238,6 +343,7 @@ export async function listaActivas({ force = false } = {}) {
 // en Buscar se pueda encontrar y abrir una N.V. ya entregada o cerrada, que la
 // lista de "activas" no muestra. Devuelve el mismo shape que listaActivas.
 export async function buscarOperaciones(term, { limit = 300 } = {}) {
+  return runPanelRead('buscar_operaciones', async () => {
   const t = String(term || '').trim();
   if (t.length < 2) return [];
   // PostgREST .or() usa comas/paréntesis como separadores → se neutralizan.
@@ -261,6 +367,11 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
     if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
   });
   return dedupeRankedItems(Array.from(dedup.values()), t, limit);
+  }, {
+    payload: { term: String(term || '').trim(), limit },
+    slowMs: 450,
+    message: 'Busqueda remota de operaciones del Panel',
+  });
 }
 
 export function buscarOperacionesUltraLocal(rows, term, { limit = 120 } = {}) {
@@ -275,6 +386,7 @@ export function fusionarResultadosBusqueda(localRows, remoteRows, term, { limit 
 
 // ── Opciones del formulario ─────────────────────────────────────────────────
 export async function opciones({ force = false } = {}) {
+  return runPanelRead('cargar_opciones', async () => {
   const now = Date.now();
   if (!force && opcionesCache.data && (now - opcionesCache.ts) < OPTIONS_CACHE_TTL_MS) {
     return opcionesCache.data;
@@ -314,6 +426,11 @@ export async function opciones({ force = false } = {}) {
       throw error;
     });
   return opcionesCache.promise;
+  }, {
+    payload: { force },
+    slowMs: 1200,
+    message: 'Carga de opciones del formulario Panel',
+  });
 }
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
@@ -360,6 +477,7 @@ export async function costoDeVendedor(vendedor) {
 }
 
 export async function lookup(canal, nv) {
+  return runPanelRead('lookup_nv', async () => {
   const col = colDe(canal); const t = normNV(nv);
   let q = supabase.from(OPERACIONES_READ_VIEW).select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
   q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
@@ -388,6 +506,11 @@ export async function lookup(canal, nv) {
   }
   // N.V. nueva → autocompleta cliente/vendedor/ccosto/división (fuente precisa).
   return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
+  }, {
+    payload: { canal, nv: normNV(nv) },
+    slowMs: 550,
+    message: 'Lookup de N.V. en Panel',
+  });
 }
 
 export async function lookupOrangeAssociation(nv, fallback = {}) {
@@ -461,6 +584,7 @@ const fmtTs = (v) => {
 };
 
 export async function exportarOperaciones() {
+  return runPanelRead('exportar_operaciones', async () => {
   const cols = EXPORT_COLS.map((c) => c[0]).join(',');
   // Orden estable por id de la fila vigente. La descarga es SOLO LECTURA: no
   // toca ni bloquea la tabla base, así el llenado desde Ingresar sigue normal.
@@ -497,6 +621,11 @@ export async function exportarOperaciones() {
     });
     return o;
   });
+  }, {
+    payload: { scope: 'maestro_vigente' },
+    slowMs: 1800,
+    message: 'Exportacion de operaciones vigentes',
+  });
 }
 
 // ── Escrituras (RPCs) ────────────────────────────────────────────────────────
@@ -508,8 +637,15 @@ function rpcResult(data, error) {
 
 export async function guardar(payload) {
   const p = { ...payload, id: payload?.id ?? (payload?.mode === 'update' ? payload?.lookup?.row : null) };
-  const { data, error } = await supabase.rpc('guardar_nv', { p });
-  return rpcResult(data, error);
+  return runPanelMutation('guardar_nv', async () => {
+    const { data, error } = await supabase.rpc('guardar_nv', { p });
+    const result = rpcResult(data, error);
+    if (result?.ok !== false) resetIngresarCaches();
+    return result;
+  }, {
+    payload: summarizeOperacionPayload(p),
+    message: 'Guardado de N.V. en Panel',
+  });
 }
 export async function puedeEditarOperacion(id) {
   if (!id) return { permitida: false, message: 'N.V. no encontrada.' };
@@ -524,8 +660,15 @@ export async function puedeCambiarEstadoOperacion(id, estado = null) {
   return data || { permitida: false, message: 'No se pudo validar la transición de estado.' };
 }
 export async function cambiarEstado(id, estado, urgente = null) {
-  const { data, error } = await supabase.rpc('cambiar_estado_nv', { p_id: id, p_estado: estado, p_urgente: urgente });
-  return rpcResult(data, error);
+  return runPanelMutation('cambiar_estado_nv', async () => {
+    const { data, error } = await supabase.rpc('cambiar_estado_nv', { p_id: id, p_estado: estado, p_urgente: urgente });
+    const result = rpcResult(data, error);
+    if (result?.ok !== false) resetIngresarCaches();
+    return result;
+  }, {
+    payload: { id, estado, urgente },
+    message: 'Cambio de estado de N.V. en Panel',
+  });
 }
 // Edición inline por columnas: mapea nombres de columna → claves del RPC guardar_nv.
 const COL_A_FORM = {
@@ -537,67 +680,130 @@ const COL_A_FORM = {
 export async function actualizarCampos(id, dirty) {
   const p = { id };
   Object.entries(dirty || {}).forEach(([k, v]) => { const fk = COL_A_FORM[k] || k; p[fk] = v; });
-  const { data, error } = await supabase.rpc('guardar_nv', { p });
-  return rpcResult(data, error);
+  return runPanelMutation('actualizar_campos_nv', async () => {
+    const { data, error } = await supabase.rpc('guardar_nv', { p });
+    const result = rpcResult(data, error);
+    if (result?.ok !== false) resetIngresarCaches();
+    return result;
+  }, {
+    payload: {
+      id,
+      fields: Object.keys(dirty || {}),
+    },
+    message: 'Actualizacion parcial de N.V. en Panel',
+  });
 }
 
 export async function listarSolicitudesReapertura(operacionId) {
-  if (!operacionId) return [];
-  const { data, error } = await supabase
-    .from('tms_nv_reaperturas')
-    .select('id, operacion_id, nv, canal, estado_origen, motivo, estado, solicitada_por, solicitada_por_nombre, solicitada_at, resuelta_por, resuelta_por_nombre, resuelta_at, observacion_resolucion')
-    .eq('operacion_id', operacionId)
-    .order('solicitada_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  return runPanelRead('listar_reaperturas_nv', async () => {
+    if (!operacionId) return [];
+    const { data, error } = await supabase
+      .from('tms_nv_reaperturas')
+      .select('id, operacion_id, nv, canal, estado_origen, motivo, estado, solicitada_por, solicitada_por_nombre, solicitada_at, resuelta_por, resuelta_por_nombre, resuelta_at, observacion_resolucion')
+      .eq('operacion_id', operacionId)
+      .order('solicitada_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }, {
+    payload: { operacionId },
+    slowMs: 450,
+    message: 'Consulta de historial de reaperturas',
+  });
 }
 
 export async function solicitarReapertura(id, motivo) {
-  const { data, error } = await supabase.rpc('solicitar_reapertura_nv', { p_operacion_id: id, p_motivo: motivo });
-  return rpcResult(data, error);
+  return runPanelMutation('solicitar_reapertura_nv', async () => {
+    const { data, error } = await supabase.rpc('solicitar_reapertura_nv', { p_operacion_id: id, p_motivo: motivo });
+    return rpcResult(data, error);
+  }, {
+    payload: { id, motivoLength: String(motivo || '').trim().length },
+    message: 'Solicitud de reapertura de N.V.',
+  });
 }
 
 export async function resolverReapertura(requestId, aprobar, observacion = '') {
-  const { data, error } = await supabase.rpc('resolver_reapertura_nv', {
-    p_request_id: requestId,
-    p_aprobar: aprobar,
-    p_observacion: observacion || null,
+  return runPanelMutation('resolver_reapertura_nv', async () => {
+    const { data, error } = await supabase.rpc('resolver_reapertura_nv', {
+      p_request_id: requestId,
+      p_aprobar: aprobar,
+      p_observacion: observacion || null,
+    });
+    return rpcResult(data, error);
+  }, {
+    payload: {
+      requestId,
+      aprobar,
+      observacionLength: String(observacion || '').trim().length,
+    },
+    message: 'Resolucion de solicitud de reapertura',
   });
-  return rpcResult(data, error);
 }
 export async function eliminar(id) {
-  const { data, error } = await supabase.rpc('eliminar_nv', { p_id: id });
-  return rpcResult(data, error);
+  return runPanelMutation('eliminar_nv', async () => {
+    const { data, error } = await supabase.rpc('eliminar_nv', { p_id: id });
+    const result = rpcResult(data, error);
+    if (result?.ok !== false) resetIngresarCaches();
+    return result;
+  }, {
+    payload: { id },
+    message: 'Eliminacion de N.V. en Panel',
+  });
 }
 
 // ── Consolidados ─────────────────────────────────────────────────────────────
 export async function listarConsolidados() {
-  const [{ data: cons }, { data: nvs }] = await Promise.all([
-    supabase.from('tms_consolidados').select('id, ticket, fecha_comprometida, estado, observacion, created_by, created_at').order('id', { ascending: false }),
-    supabase.from('tms_consolidado_nvs').select('id, consolidado_id, nv, canal, cliente'),
-  ]);
-  const byId = {};
-  (nvs || []).forEach((n) => { (byId[n.consolidado_id] = byId[n.consolidado_id] || []).push({ id: n.id, nv: n.nv, canal: n.canal, cliente: n.cliente }); });
-  return (cons || []).map((c) => ({ ...c, nvs: byId[c.id] || [] }));
+  return runPanelRead('listar_consolidados', async () => {
+    const [{ data: cons }, { data: nvs }] = await Promise.all([
+      supabase.from('tms_consolidados').select('id, ticket, fecha_comprometida, estado, observacion, created_by, created_at').order('id', { ascending: false }),
+      supabase.from('tms_consolidado_nvs').select('id, consolidado_id, nv, canal, cliente'),
+    ]);
+    const byId = {};
+    (nvs || []).forEach((n) => { (byId[n.consolidado_id] = byId[n.consolidado_id] || []).push({ id: n.id, nv: n.nv, canal: n.canal, cliente: n.cliente }); });
+    return (cons || []).map((c) => ({ ...c, nvs: byId[c.id] || [] }));
+  }, {
+    payload: { feature: 'consolidados' },
+    slowMs: 700,
+    message: 'Carga de consolidados del Panel',
+  });
 }
 export async function guardarConsolidado(p) {
-  const { data, error } = await supabase.rpc('guardar_consolidado', { p });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return runPanelMutation('guardar_consolidado', async () => {
+    const { data, error } = await supabase.rpc('guardar_consolidado', { p });
+    if (error) return { ok: false, error: error.message };
+    return data || { ok: true };
+  }, {
+    payload: {
+      id: p?.id ?? null,
+      ticket: p?.ticket || '',
+      nvs: Array.isArray(p?.nvs) ? p.nvs.length : 0,
+    },
+    message: 'Guardado de consolidado',
+  });
 }
 export async function eliminarConsolidado(id) {
-  const { data, error } = await supabase.rpc('eliminar_consolidado', { p_id: id });
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: true };
+  return runPanelMutation('eliminar_consolidado', async () => {
+    const { data, error } = await supabase.rpc('eliminar_consolidado', { p_id: id });
+    if (error) return { ok: false, error: error.message };
+    return data || { ok: true };
+  }, {
+    payload: { id },
+    message: 'Eliminacion de consolidado',
+  });
 }
 // Valida una N.V. (para armar consolidados): busca en los 4 canales.
 export async function buscarNvBasico(nv) {
-  const t = String(nv).trim(); if (!t) return null;
-  const ors = [];
-  if (/^\d+$/.test(t)) ors.push(`nv_ptm.eq.${Number(t)}`);
-  ors.push(`nv_orange.eq.${t}`, `nv_farmapack.eq.${t}`, `varios.ilike.*${t}*`);
-  const { data } = await supabase.from(OPERACIONES_READ_VIEW).select('nv_ptm,nv_orange,nv_farmapack,varios,cliente,estado,fecha_estado').or(ors.join(',')).order('fecha_estado', { ascending: false }).limit(1);
-  if (!data || data.length === 0) return null;
-  const r = data[0];
-  return { nv: nvDe(r), canal: canalDe(r), cliente: r.cliente || null, estado: r.estado || null };
+  return runPanelRead('buscar_nv_basico', async () => {
+    const t = String(nv).trim(); if (!t) return null;
+    const ors = [];
+    if (/^\d+$/.test(t)) ors.push(`nv_ptm.eq.${Number(t)}`);
+    ors.push(`nv_orange.eq.${t}`, `nv_farmapack.eq.${t}`, `varios.ilike.*${t}*`);
+    const { data } = await supabase.from(OPERACIONES_READ_VIEW).select('nv_ptm,nv_orange,nv_farmapack,varios,cliente,estado,fecha_estado').or(ors.join(',')).order('fecha_estado', { ascending: false }).limit(1);
+    if (!data || data.length === 0) return null;
+    const r = data[0];
+    return { nv: nvDe(r), canal: canalDe(r), cliente: r.cliente || null, estado: r.estado || null };
+  }, {
+    payload: { nv: String(nv || '').trim() },
+    slowMs: 400,
+    message: 'Busqueda basica de N.V. para consolidados',
+  });
 }

@@ -1,7 +1,48 @@
 import { supabase } from '../../../supabase';
 import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha } from './dashHelpers';
+import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+
+function dashDuration(startedAt) {
+  return Math.round(Math.max(0, performance.now() - startedAt));
+}
+
+async function runDashboardRead(action, fn, {
+  screen = 'PanelDashboard',
+  payload = null,
+  slowMs = 1200,
+  message = '',
+} = {}) {
+  const startedAt = performance.now();
+  try {
+    const result = await fn();
+    const durationMs = dashDuration(startedAt);
+    if (durationMs >= slowMs) {
+      Logger.performance({
+        module: 'panel',
+        screen,
+        action,
+        message: message || `Operacion lenta del dashboard: ${action}`,
+        durationMs,
+        status: 'ok',
+        payload,
+      });
+    }
+    return result;
+  } catch (error) {
+    Logger.error(error, {
+      module: 'panel',
+      screen,
+      action,
+      message: `Fallo operacion de dashboard: ${action}`,
+      durationMs: dashDuration(startedAt),
+      status: 'error',
+      payload,
+    });
+    throw error;
+  }
+}
 
 function fechaAprobEfectiva(r) {
   return r.fecha_aprobacion_real || r.fecha_aprobacion || null;
@@ -342,17 +383,24 @@ export async function buscarNvBasico(nv) {
 
 // Set de claves canal:nv que están en algún consolidado → para excluir de métricas.
 export async function fetchConsolidadoKeys() {
-  const { data, error } = await supabase.from("consolidado_nvs").select("nv, canal");
-  if (error) return new Set();
-  return new Set((data || []).map((n) => `${n.canal || "ptm"}:${n.nv}`));
+  return runDashboardRead('fetch_consolidado_keys', async () => {
+    const { data, error } = await supabase.from("consolidado_nvs").select("nv, canal");
+    if (error) return new Set();
+    return new Set((data || []).map((n) => `${n.canal || "ptm"}:${n.nv}`));
+  }, {
+    payload: { feature: 'consolidados' },
+    slowMs: 500,
+    message: 'Carga de claves consolidadas para dashboard',
+  });
 }
 
 export async function fetchDashboardData(dateFrom, dateTo) {
-  const [rows, activasRows, consolidadoKeys] = await Promise.all([
-    fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo),
-    fetchActivas(DASHBOARD_COLUMNS),
-    fetchConsolidadoKeys(),
-  ]);
+  return runDashboardRead('fetch_dashboard_data', async () => {
+    const [rows, activasRows, consolidadoKeys] = await Promise.all([
+      fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo),
+      fetchActivas(DASHBOARD_COLUMNS),
+      fetchConsolidadoKeys(),
+    ]);
 
   const enrichRow = (r) => {
     r.estado = normalizaEstado(r.estado);
@@ -999,184 +1047,197 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     })
     .sort((a, b) => b.cantidad - a.cantidad);
 
-  return {
-    kpis,
-    estadoTable,
-    divisions,
-    transportistas,
-    weeklyTrend,
-    estadoResumen,
-    leadTimeSemanal,
-    alertas,
-    calidad,
-    tiemposCiclo: calcularTiemposCiclo(rowsM),
-    otif,
-    rankingTransportistas,
-    rankingVendedores,
-    incidenciasPorVendedor,
-    alertasOperacionales,
-    funnelEstados,
-    heatmapData,
-  };
+    return {
+      kpis,
+      estadoTable,
+      divisions,
+      transportistas,
+      weeklyTrend,
+      estadoResumen,
+      leadTimeSemanal,
+      alertas,
+      calidad,
+      tiemposCiclo: calcularTiemposCiclo(rowsM),
+      otif,
+      rankingTransportistas,
+      rankingVendedores,
+      incidenciasPorVendedor,
+      alertasOperacionales,
+      funnelEstados,
+      heatmapData,
+    };
+  }, {
+    payload: { dateFrom: dateFrom || null, dateTo: dateTo || null },
+    slowMs: 1800,
+    message: 'Carga principal de datos del dashboard del Panel',
+  });
 }
 
 export async function getIncidenciasActivas(dateFrom, dateTo) {
-  const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, incidencia, estado_incidencia, observaciones_incidencia, dias_incidencia, fecha_aprobacion, fecha_aprobacion_real";
-  if (!supabase) return [];
-  const allRows = [];
-  let from = 0;
-  const pageSize = 1000;
-  while (true) {
-    let q = supabase.from(OPERACIONES_READ_VIEW).select(cols)
-      .not("incidencia", "is", null)
-      .neq("estado_incidencia", "RESUELTA")
-      .order('id', { ascending: true })
-      .range(from, from + pageSize - 1);
-    if (dateFrom) q = q.or(`fecha_aprobacion_real.gte.${dateFrom},and(fecha_aprobacion_real.is.null,fecha_aprobacion.gte.${dateFrom})`);
-    if (dateTo) q = q.or(`fecha_aprobacion_real.lte.${dateTo},and(fecha_aprobacion_real.is.null,fecha_aprobacion.lte.${dateTo})`);
-    const { data, error } = await q;
-    if (error || !data || data.length === 0) break;
-    allRows.push(...data);
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-
-  return allRows
-    .map((r) => ({
-      nv:
-        (r.nv_ptm && String(r.nv_ptm)) ||
-        r.nv_orange ||
-        r.nv_farmapack ||
-        r.varios ||
-        "—",
-      fecha: r.fecha_aprobacion_real || r.fecha_aprobacion || null,
-      cliente: r.cliente || "—",
-      vendedor: r.vendedor || "—",
-      transportista: r.transportista || "—",
-      estado: normalizaEstado(r.estado) || "—",
-      incidencia: r.incidencia || "—",
-      estado_incidencia: r.estado_incidencia || "—",
-      observaciones: r.observaciones_incidencia || "—",
-      dias: r.dias_incidencia || 0,
-    }))
-    .sort((a, b) => b.dias - a.dias);
-}
-
-export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
-  const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura";
-  const esActivasKpi = estado === "ACTIVAS";
-  const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
-  const dataRaw = esEstadoActivo
-    ? await fetchActivas(cols)
-    : await fetchAll(cols, dateFrom, dateTo);
-  // El KPI "NVs Activas" (ACTIVAS) es snapshot EN VIVO → sin filtro de fecha (cuadra
-  // con TV). Una fila de estado activo específica (ej. Shipping) SÍ respeta el rango,
-  // para cuadrar con la tabla de estados del dashboard.
-  const data = (esEstadoActivo && !esActivasKpi)
-    ? dataRaw.filter((r) => dentroRangoAprob(r, dateFrom, dateTo))
-    : dataRaw;
-
-  // Normalizar estados viejos → nuevos (igual que en fetchDashboardData)
-  data.forEach((r) => {
-    r.estado = normalizaEstado(r.estado);
-  });
-
-  const filtered = data.filter((r) => {
-    if (estado === "ACTIVAS") return ESTADOS_ACTIVOS.includes(r.estado || "");
-    if (estado === "TARDIAS") {
-      if (!ESTADOS_ENTREGADOS.includes(r.estado) || !r.fecha_despacho || !r.fecha_compromiso) return false;
-      const promesa = fechaPromesaEfectiva(r);
-      if (!promesa) return false;
-      const diff = (new Date(r.fecha_despacho).getTime() - new Date(promesa.fecha).getTime()) / (1000 * 60 * 60 * 24);
-      return diff > 0 && Math.abs(diff) <= 30;
+  return runDashboardRead('get_incidencias_activas', async () => {
+    const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, incidencia, estado_incidencia, observaciones_incidencia, dias_incidencia, fecha_aprobacion, fecha_aprobacion_real";
+    if (!supabase) return [];
+    const allRows = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      let q = supabase.from(OPERACIONES_READ_VIEW).select(cols)
+        .not("incidencia", "is", null)
+        .neq("estado_incidencia", "RESUELTA")
+        .order('id', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (dateFrom) q = q.or(`fecha_aprobacion_real.gte.${dateFrom},and(fecha_aprobacion_real.is.null,fecha_aprobacion.gte.${dateFrom})`);
+      if (dateTo) q = q.or(`fecha_aprobacion_real.lte.${dateTo},and(fecha_aprobacion_real.is.null,fecha_aprobacion.lte.${dateTo})`);
+      const { data, error } = await q;
+      if (error || !data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
     }
-    if (estado === "ATIEMPO") {
-      if (!ESTADOS_ENTREGADOS.includes(r.estado) || !r.fecha_despacho || !r.fecha_compromiso) return false;
-      const promesa = fechaPromesaEfectiva(r);
-      if (!promesa) return false;
-      const diff = (new Date(r.fecha_despacho).getTime() - new Date(promesa.fecha).getTime()) / (1000 * 60 * 60 * 24);
-      return diff <= 0 && Math.abs(diff) <= 30;
-    }
-    if (estado === "ENTREGADAS") return ESTADOS_ENTREGADOS.includes(r.estado);
-    if (estado === "FILLRATE_CUMPLE") return evaluaFillRate(r, Date.now()) === true;
-    if (estado === "FILLRATE_NOCUMPLE") return evaluaFillRate(r, Date.now()) === false;
-    if (estado === "NVCUMPLE" || estado === "NVNOCUMPLE") {
-      if (!r.fecha_registro_nv) return false;
-      if (ESTADOS_DESCARTADOS.includes(r.estado || "")) return false;
-      const regStr = typeof r.fecha_registro_nv === "string"
-        ? r.fecha_registro_nv.split("T")[0]
-        : new Date(r.fecha_registro_nv).toISOString().split("T")[0];
-      const hoyKey = inicioSemana(new Date().toISOString().split("T")[0]);
-      if (inicioSemana(regStr) !== hoyKey) return false;
-      const promesa = fechaPromesaEfectiva(r);
-      if (!promesa) return false;
-      const compMs = new Date(promesa.fecha + "T23:59:59").getTime();
-      if (ESTADOS_PRE_SHIPPING.includes(r.estado)) {
-        return estado === "NVNOCUMPLE" && Date.now() > compMs;
-      }
-      const exitDate = r.fecha_shipping || r.fecha_en_ruta || r.fecha_entregado;
-      if (!exitDate) return false;
-      const cumple = new Date(exitDate).getTime() <= compMs;
-      return estado === "NVCUMPLE" ? cumple : !cumple;
-    }
-    if (estado === "CANAL:PTM") return !!r.nv_ptm;
-    if (estado === "CANAL:ORANGE") return !!r.nv_orange;
-    if (estado === "CANAL:FARMAPACK") return !!r.nv_farmapack;
-    if (estado === "CANAL:VARIOS") return !!r.varios;
-    if (estado === "null" || estado === "SIN ESTADO") return !r.estado;
-    return r.estado === estado;
-  });
 
-  return filtered
-    .map((r) => {
-      let difAprobacion = null;
-      if (r.fecha_aprobacion && r.fecha_aprobacion_real) {
-        const sistema = new Date(r.fecha_aprobacion);
-        const real = new Date(r.fecha_aprobacion_real);
-        difAprobacion = Math.round(
-          (real.getTime() - sistema.getTime()) / (1000 * 60 * 60 * 24)
-        );
-      }
-      let diasEntrega = null;
-      const promesa = fechaPromesaEfectiva(r);
-      const fechaPromesaReal = promesa?.fecha || r.fecha_compromiso;
-      const diasAtrasoIngreso = promesa?.diasAtraso || 0;
-      if (r.fecha_despacho && fechaPromesaReal) {
-        const desp = new Date(r.fecha_despacho);
-        const comp = new Date(fechaPromesaReal);
-        diasEntrega = Math.round(
-          (desp.getTime() - comp.getTime()) / (1000 * 60 * 60 * 24)
-        );
-      }
-      return {
+    return allRows
+      .map((r) => ({
         nv:
           (r.nv_ptm && String(r.nv_ptm)) ||
           r.nv_orange ||
           r.nv_farmapack ||
           r.varios ||
           "—",
+        fecha: r.fecha_aprobacion_real || r.fecha_aprobacion || null,
         cliente: r.cliente || "—",
         vendedor: r.vendedor || "—",
         transportista: r.transportista || "—",
-        division: r.division || "—",
-        fecha_registro_nv: r.fecha_registro_nv || null,
-        fecha_aprobacion: r.fecha_aprobacion || null,
-        fecha_aprobacion_real: r.fecha_aprobacion_real || null,
-        dif_aprobacion: difAprobacion,
-        fecha_despacho: r.fecha_despacho || null,
-        fecha_compromiso: r.fecha_compromiso || null,
-        fecha_promesa_efectiva: fechaPromesaReal || null,
-        dias_atraso_ingreso: diasAtrasoIngreso,
-        dias_entrega: diasEntrega,
-        tipo_despacho: r.tipo_despacho || null,
-        reabierta: r.reabierta === true,
-        motivo_reapertura: r.motivo_reapertura || "",
-        fecha_reapertura: r.fecha_reapertura || null,
-      };
-    })
-    .sort((a, b) =>
-      (b.fecha_aprobacion || "").localeCompare(a.fecha_aprobacion || "")
-    );
+        estado: normalizaEstado(r.estado) || "—",
+        incidencia: r.incidencia || "—",
+        estado_incidencia: r.estado_incidencia || "—",
+        observaciones: r.observaciones_incidencia || "—",
+        dias: r.dias_incidencia || 0,
+      }))
+      .sort((a, b) => b.dias - a.dias);
+  }, {
+    payload: { dateFrom: dateFrom || null, dateTo: dateTo || null },
+    slowMs: 900,
+    message: 'Carga de incidencias activas del dashboard',
+  });
+}
+
+export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
+  return runDashboardRead('get_operaciones_por_estado', async () => {
+    const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura";
+    const esActivasKpi = estado === "ACTIVAS";
+    const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
+    const dataRaw = esEstadoActivo
+      ? await fetchActivas(cols)
+      : await fetchAll(cols, dateFrom, dateTo);
+    const data = (esEstadoActivo && !esActivasKpi)
+      ? dataRaw.filter((r) => dentroRangoAprob(r, dateFrom, dateTo))
+      : dataRaw;
+
+    data.forEach((r) => {
+      r.estado = normalizaEstado(r.estado);
+    });
+
+    const filtered = data.filter((r) => {
+      if (estado === "ACTIVAS") return ESTADOS_ACTIVOS.includes(r.estado || "");
+      if (estado === "TARDIAS") {
+        if (!ESTADOS_ENTREGADOS.includes(r.estado) || !r.fecha_despacho || !r.fecha_compromiso) return false;
+        const promesa = fechaPromesaEfectiva(r);
+        if (!promesa) return false;
+        const diff = (new Date(r.fecha_despacho).getTime() - new Date(promesa.fecha).getTime()) / (1000 * 60 * 60 * 24);
+        return diff > 0 && Math.abs(diff) <= 30;
+      }
+      if (estado === "ATIEMPO") {
+        if (!ESTADOS_ENTREGADOS.includes(r.estado) || !r.fecha_despacho || !r.fecha_compromiso) return false;
+        const promesa = fechaPromesaEfectiva(r);
+        if (!promesa) return false;
+        const diff = (new Date(r.fecha_despacho).getTime() - new Date(promesa.fecha).getTime()) / (1000 * 60 * 60 * 24);
+        return diff <= 0 && Math.abs(diff) <= 30;
+      }
+      if (estado === "ENTREGADAS") return ESTADOS_ENTREGADOS.includes(r.estado);
+      if (estado === "FILLRATE_CUMPLE") return evaluaFillRate(r, Date.now()) === true;
+      if (estado === "FILLRATE_NOCUMPLE") return evaluaFillRate(r, Date.now()) === false;
+      if (estado === "NVCUMPLE" || estado === "NVNOCUMPLE") {
+        if (!r.fecha_registro_nv) return false;
+        if (ESTADOS_DESCARTADOS.includes(r.estado || "")) return false;
+        const regStr = typeof r.fecha_registro_nv === "string"
+          ? r.fecha_registro_nv.split("T")[0]
+          : new Date(r.fecha_registro_nv).toISOString().split("T")[0];
+        const hoyKey = inicioSemana(new Date().toISOString().split("T")[0]);
+        if (inicioSemana(regStr) !== hoyKey) return false;
+        const promesa = fechaPromesaEfectiva(r);
+        if (!promesa) return false;
+        const compMs = new Date(promesa.fecha + "T23:59:59").getTime();
+        if (ESTADOS_PRE_SHIPPING.includes(r.estado)) {
+          return estado === "NVNOCUMPLE" && Date.now() > compMs;
+        }
+        const exitDate = r.fecha_shipping || r.fecha_en_ruta || r.fecha_entregado;
+        if (!exitDate) return false;
+        const cumple = new Date(exitDate).getTime() <= compMs;
+        return estado === "NVCUMPLE" ? cumple : !cumple;
+      }
+      if (estado === "CANAL:PTM") return !!r.nv_ptm;
+      if (estado === "CANAL:ORANGE") return !!r.nv_orange;
+      if (estado === "CANAL:FARMAPACK") return !!r.nv_farmapack;
+      if (estado === "CANAL:VARIOS") return !!r.varios;
+      if (estado === "null" || estado === "SIN ESTADO") return !r.estado;
+      return r.estado === estado;
+    });
+
+    return filtered
+      .map((r) => {
+        let difAprobacion = null;
+        if (r.fecha_aprobacion && r.fecha_aprobacion_real) {
+          const sistema = new Date(r.fecha_aprobacion);
+          const real = new Date(r.fecha_aprobacion_real);
+          difAprobacion = Math.round(
+            (real.getTime() - sistema.getTime()) / (1000 * 60 * 60 * 24)
+          );
+        }
+        let diasEntrega = null;
+        const promesa = fechaPromesaEfectiva(r);
+        const fechaPromesaReal = promesa?.fecha || r.fecha_compromiso;
+        const diasAtrasoIngreso = promesa?.diasAtraso || 0;
+        if (r.fecha_despacho && fechaPromesaReal) {
+          const desp = new Date(r.fecha_despacho);
+          const comp = new Date(fechaPromesaReal);
+          diasEntrega = Math.round(
+            (desp.getTime() - comp.getTime()) / (1000 * 60 * 60 * 24)
+          );
+        }
+        return {
+          nv:
+            (r.nv_ptm && String(r.nv_ptm)) ||
+            r.nv_orange ||
+            r.nv_farmapack ||
+            r.varios ||
+            "—",
+          cliente: r.cliente || "—",
+          vendedor: r.vendedor || "—",
+          transportista: r.transportista || "—",
+          division: r.division || "—",
+          fecha_registro_nv: r.fecha_registro_nv || null,
+          fecha_aprobacion: r.fecha_aprobacion || null,
+          fecha_aprobacion_real: r.fecha_aprobacion_real || null,
+          dif_aprobacion: difAprobacion,
+          fecha_despacho: r.fecha_despacho || null,
+          fecha_compromiso: r.fecha_compromiso || null,
+          fecha_promesa_efectiva: fechaPromesaReal || null,
+          dias_atraso_ingreso: diasAtrasoIngreso,
+          dias_entrega: diasEntrega,
+          tipo_despacho: r.tipo_despacho || null,
+          reabierta: r.reabierta === true,
+          motivo_reapertura: r.motivo_reapertura || "",
+          fecha_reapertura: r.fecha_reapertura || null,
+        };
+      })
+      .sort((a, b) =>
+        (b.fecha_aprobacion || "").localeCompare(a.fecha_aprobacion || "")
+      );
+  }, {
+    payload: { estado, dateFrom: dateFrom || null, dateTo: dateTo || null },
+    slowMs: 1100,
+    message: 'Detalle de operaciones por estado en dashboard',
+  });
 }
 
 // La tabla `audit_log` NO existe en la BD destino → sin consulta.
@@ -1370,89 +1431,103 @@ export async function fetchOperacionesRows() {
 // TV Dashboard — fetch de estados activos + NVs por estado (panel interactivo)
 // ---------------------------------------------------------------------------
 export async function fetchTVEstados() {
-  const rows = await fetchActivas(
-    "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_compromiso, fecha_estado, fecha_despacho, fecha_entregado, fecha_aprobacion, fecha_aprobacion_real, urgente"
-  );
-  const hoyMs = Date.now();
-  const msPerDay = 1000 * 60 * 60 * 24;
-  const diasDesde = (f) => f ? Math.floor((hoyMs - new Date(f + "T12:00:00").getTime()) / msPerDay) : null;
+  return runDashboardRead('fetch_tv_estados', async () => {
+    const rows = await fetchActivas(
+      "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_compromiso, fecha_estado, fecha_despacho, fecha_entregado, fecha_aprobacion, fecha_aprobacion_real, urgente"
+    );
+    const hoyMs = Date.now();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diasDesde = (f) => f ? Math.floor((hoyMs - new Date(f + "T12:00:00").getTime()) / msPerDay) : null;
 
-  const grupos = {};
-  const urgentes = [];
-  let total = 0;
+    const grupos = {};
+    const urgentes = [];
+    let total = 0;
 
-  const FINALIZADOS = [ESTADOS.ENTREGADO, ESTADOS.RECIBIDO_CONFORME, ESTADOS.RECIBIDO_OBS];
+    const FINALIZADOS = [ESTADOS.ENTREGADO, ESTADOS.RECIBIDO_CONFORME, ESTADOS.RECIBIDO_OBS];
 
-  rows.forEach((r) => {
-    const est = normalizaEstado(r.estado) || "Sin estado";
-    if (FINALIZADOS.includes(est)) return; // fuera de la operación
-    const nv = (r.nv_ptm && String(r.nv_ptm)) || r.nv_orange || r.nv_farmapack || r.varios || "?";
-    const canal = r.nv_ptm ? "PTM" : r.nv_orange ? "Orange" : r.nv_farmapack ? "Farmapack" : "Varios";
-    const esUrgente = r.urgente === true || String(r.urgente) === "true";
-    const fechaEst = soloFecha(r.fecha_estado);
-    const fechaAprob = soloFecha(r.fecha_aprobacion);
-    const fechaAprobReal = soloFecha(r.fecha_aprobacion_real);
-    const fechaAprobEfectivaVal = fechaAprobReal || fechaAprob;
-    const fcRaw = r.fecha_compromiso || calcFechaCompromiso(r.fecha_aprobacion, r.fecha_aprobacion_real);
-    const item = {
-      nv,
-      canal,
-      cliente: r.cliente || "—",
-      vendedor: r.vendedor || "—",
-      transportista: r.transportista || "—",
-      fecha_compromiso: soloFecha(fcRaw),
-      fecha_estado: fechaEst,
-      fecha_despacho: soloFecha(r.fecha_despacho),
-      fecha_entregado: soloFecha(r.fecha_entregado),
-      fecha_aprobacion: fechaAprob,
-      fecha_aprobacion_real: fechaAprobReal,
-      fecha_aprob_efectiva: fechaAprobEfectivaVal,
-      diasEnEstado: diasDesde(fechaEst),
-      diasDesdeAprobacion: diasDesde(fechaAprobEfectivaVal),
-      urgente: esUrgente,
-    };
-    if (!grupos[est]) grupos[est] = [];
-    grupos[est].push(item);
-    const estTerminal = [ESTADOS.ENTREGADO, ESTADOS.RECIBIDO_CONFORME, ESTADOS.RECIBIDO_OBS].includes(est);
-    if (esUrgente && !estTerminal) urgentes.push(item);
-    total++;
+    rows.forEach((r) => {
+      const est = normalizaEstado(r.estado) || "Sin estado";
+      if (FINALIZADOS.includes(est)) return;
+      const nv = (r.nv_ptm && String(r.nv_ptm)) || r.nv_orange || r.nv_farmapack || r.varios || "?";
+      const canal = r.nv_ptm ? "PTM" : r.nv_orange ? "Orange" : r.nv_farmapack ? "Farmapack" : "Varios";
+      const esUrgente = r.urgente === true || String(r.urgente) === "true";
+      const fechaEst = soloFecha(r.fecha_estado);
+      const fechaAprob = soloFecha(r.fecha_aprobacion);
+      const fechaAprobReal = soloFecha(r.fecha_aprobacion_real);
+      const fechaAprobEfectivaVal = fechaAprobReal || fechaAprob;
+      const fcRaw = r.fecha_compromiso || calcFechaCompromiso(r.fecha_aprobacion, r.fecha_aprobacion_real);
+      const item = {
+        nv,
+        canal,
+        cliente: r.cliente || "—",
+        vendedor: r.vendedor || "—",
+        transportista: r.transportista || "—",
+        fecha_compromiso: soloFecha(fcRaw),
+        fecha_estado: fechaEst,
+        fecha_despacho: soloFecha(r.fecha_despacho),
+        fecha_entregado: soloFecha(r.fecha_entregado),
+        fecha_aprobacion: fechaAprob,
+        fecha_aprobacion_real: fechaAprobReal,
+        fecha_aprob_efectiva: fechaAprobEfectivaVal,
+        diasEnEstado: diasDesde(fechaEst),
+        diasDesdeAprobacion: diasDesde(fechaAprobEfectivaVal),
+        urgente: esUrgente,
+      };
+      if (!grupos[est]) grupos[est] = [];
+      grupos[est].push(item);
+      const estTerminal = [ESTADOS.ENTREGADO, ESTADOS.RECIBIDO_CONFORME, ESTADOS.RECIBIDO_OBS].includes(est);
+      if (esUrgente && !estTerminal) urgentes.push(item);
+      total++;
+    });
+
+    const ORDEN = ESTADOS_ACTIVOS;
+    const estados = ORDEN
+      .filter((e) => (grupos[e]?.length || 0) > 0)
+      .map((e) => ({
+        estado: e,
+        cantidad: grupos[e].length,
+        nvs: grupos[e].sort((a, b) => (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0)),
+      }));
+
+    return { estados, total, urgentes };
+  }, {
+    screen: 'PanelTV',
+    payload: { source: 'tv_estados' },
+    slowMs: 1200,
+    message: 'Carga de estados para Modo TV',
   });
-
-  const ORDEN = ESTADOS_ACTIVOS;
-  const estados = ORDEN
-    .filter(e => (grupos[e]?.length || 0) > 0)
-    .map(e => ({
-      estado: e,
-      cantidad: grupos[e].length,
-      nvs: grupos[e].sort((a, b) => (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0)),
-    }));
-
-  return { estados, total, urgentes };
 }
 
 // ---------------------------------------------------------------------------
 // TV Dashboard v2 — datos completos para centro de control operacional
 // ---------------------------------------------------------------------------
 export async function fetchTVData() {
-  const [tvEstados, dashData] = await Promise.all([
-    fetchTVEstados(),
-    fetchDashboardData(),
-  ]);
+  return runDashboardRead('fetch_tv_data', async () => {
+    const [tvEstados, dashData] = await Promise.all([
+      fetchTVEstados(),
+      fetchDashboardData(),
+    ]);
 
-  const hoy = new Date().toISOString().slice(0, 10);
-  const entregadasHoy = dashData.estadoTable
-    ?.filter((r) => r.fecha_entregado?.slice(0, 10) === hoy).length || 0;
+    const hoy = new Date().toISOString().slice(0, 10);
+    const entregadasHoy = dashData.estadoTable
+      ?.filter((r) => r.fecha_entregado?.slice(0, 10) === hoy).length || 0;
 
-  return {
-    ...tvEstados,
-    otif: dashData.otif,
-    alertas: dashData.alertas,
-    rankingTransportistas: dashData.rankingTransportistas,
-    rankingVendedores: dashData.rankingVendedores,
-    alertasOperacionales: dashData.alertasOperacionales,
-    funnelEstados: dashData.funnelEstados,
-    entregadasHoy,
-  };
+    return {
+      ...tvEstados,
+      otif: dashData.otif,
+      alertas: dashData.alertas,
+      rankingTransportistas: dashData.rankingTransportistas,
+      rankingVendedores: dashData.rankingVendedores,
+      alertasOperacionales: dashData.alertasOperacionales,
+      funnelEstados: dashData.funnelEstados,
+      entregadasHoy,
+    };
+  }, {
+    screen: 'PanelTV',
+    payload: { source: 'tv_data' },
+    slowMs: 1800,
+    message: 'Carga integral del Modo TV del Panel',
+  });
 }
 
 // Exporta funciones puras internas para testing (no para uso en componentes).
