@@ -14,6 +14,7 @@ import {
   listaActivas, buscarOperaciones, opciones, lookup, guardar, eliminar,
   listarConsolidados, guardarConsolidado, eliminarConsolidado, buscarNvBasico,
   exportarOperaciones, esClienteOrange, lookupOrangeAssociation, INCIDENCIAS_NV, ESTADOS_INCIDENCIA,
+  buscarOperacionesUltraLocal, fusionarResultadosBusqueda,
   listarSolicitudesReapertura, solicitarReapertura, resolverReapertura, puedeEditarOperacion, puedeCambiarEstadoOperacion,
 } from '../ingresar/ingresarService';
 import { fetchVendedores } from '../config/configService';
@@ -541,12 +542,14 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [filtro, setFiltro] = useState('Todos');
   const [q, setQ] = useState('');
   const [remoto, setRemoto] = useState(null);   // resultados de búsqueda en TODA la tabla
+  const [localSearch, setLocalSearch] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [sel, setSel] = useState(null);
   const [opts, setOpts] = useState(null);
   const [exportando, setExportando] = useState(false);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
   const loadMoreRef = useRef(null);
+  const remoteReqRef = useRef(0);
 
   const cargar = useCallback((force = false) => {
     setLoading(true);
@@ -559,13 +562,30 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const enBusqueda = q.trim().length >= 2;
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) { setRemoto(null); setBuscando(false); return; }
+    if (term.length < 2) {
+      setLocalSearch([]);
+      setRemoto(null);
+      setBuscando(false);
+      return;
+    }
+    setLocalSearch(buscarOperacionesUltraLocal(lista, term, { limit: 120 }));
     setBuscando(true);
+    const reqId = remoteReqRef.current + 1;
+    remoteReqRef.current = reqId;
     const h = setTimeout(() => {
-      buscarOperaciones(term).then((rows) => setRemoto(rows)).catch(() => setRemoto([])).finally(() => setBuscando(false));
-    }, 250);
+      buscarOperaciones(term, { limit: 200 })
+        .then((rows) => {
+          if (remoteReqRef.current === reqId) setRemoto(rows);
+        })
+        .catch(() => {
+          if (remoteReqRef.current === reqId) setRemoto([]);
+        })
+        .finally(() => {
+          if (remoteReqRef.current === reqId) setBuscando(false);
+        });
+    }, 160);
     return () => clearTimeout(h);
-  }, [q]);
+  }, [q, lista]);
 
   // Descarga TODA la tabla de operaciones (todas las columnas y datos) a Excel.
   const onExportar = useCallback(async () => {
@@ -586,9 +606,9 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   // sin aplicar el filtro de pills (que es solo de estados activos). Sin término:
   // la lista de activas con su filtro por estado.
   const filtrada = useMemo(() => {
-    if (enBusqueda) return remoto || [];
+    if (enBusqueda) return fusionarResultadosBusqueda(localSearch, remoto || [], q, { limit: 160 });
     return lista.filter((r) => filtro === 'Todos' || r.estado === filtro);
-  }, [enBusqueda, remoto, lista, filtro]);
+  }, [enBusqueda, localSearch, remoto, q, lista, filtro]);
   const visibleRows = useMemo(() => filtrada.slice(0, visibleCount), [filtrada, visibleCount]);
   const conteo = useMemo(() => { const m = {}; lista.forEach((r) => { m[r.estado] = (m[r.estado] || 0) + 1; }); return m; }, [lista]);
 

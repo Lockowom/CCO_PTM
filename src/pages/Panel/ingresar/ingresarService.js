@@ -75,6 +75,108 @@ function operacionKey(r) {
   return nv ? `${canal}:${nv}` : '';
 }
 
+function splitSearchTerms(term) {
+  return normWords(term).split(' ').filter(Boolean);
+}
+
+function buildOperacionSearchMeta(item) {
+  const nv = normNV(item?.nv || '');
+  const guia = normText(item?.guia || '');
+  const factura = normText(item?.factura || '');
+  const cliente = normWords(item?.cliente || '');
+  const vendedor = normWords(item?.vendedor || '');
+  const transportista = normWords(item?.transportista || '');
+  const canal = normText(item?.canal || '');
+  const estado = normText(item?.estado || '');
+  const searchable = [nv, guia, factura, cliente, vendedor, transportista, canal, estado]
+    .filter(Boolean)
+    .join(' ');
+  const words = new Set(searchable.split(' ').filter(Boolean));
+  return { nv, guia, factura, cliente, vendedor, transportista, canal, estado, searchable, words };
+}
+
+function scoreOperacionSearch(item, rawTerm) {
+  const safeTerm = String(rawTerm || '').trim();
+  if (!safeTerm) return Number.NEGATIVE_INFINITY;
+  const nvTerm = normNV(safeTerm);
+  const textTerm = normText(safeTerm);
+  const wordsTerm = normWords(safeTerm);
+  const tokens = splitSearchTerms(safeTerm);
+  const meta = buildOperacionSearchMeta(item);
+  let score = 0;
+
+  if (meta.nv && nvTerm) {
+    if (meta.nv === nvTerm) score += 20000;
+    else if (meta.nv.startsWith(nvTerm)) score += 12000;
+    else if (meta.nv.includes(nvTerm)) score += 8000;
+  }
+  if (meta.guia && textTerm) {
+    if (meta.guia === textTerm) score += 15000;
+    else if (meta.guia.startsWith(textTerm)) score += 9000;
+    else if (meta.guia.includes(textTerm)) score += 4500;
+  }
+  if (meta.factura && textTerm) {
+    if (meta.factura === textTerm) score += 15000;
+    else if (meta.factura.startsWith(textTerm)) score += 9000;
+    else if (meta.factura.includes(textTerm)) score += 4500;
+  }
+  if (wordsTerm) {
+    if (meta.cliente === wordsTerm) score += 7000;
+    else if (meta.cliente.startsWith(wordsTerm)) score += 4800;
+    else if (meta.cliente.includes(wordsTerm)) score += 2800;
+
+    if (meta.vendedor === wordsTerm) score += 6500;
+    else if (meta.vendedor.startsWith(wordsTerm)) score += 4400;
+    else if (meta.vendedor.includes(wordsTerm)) score += 2400;
+
+    if (meta.transportista === wordsTerm) score += 5000;
+    else if (meta.transportista.startsWith(wordsTerm)) score += 3200;
+    else if (meta.transportista.includes(wordsTerm)) score += 1800;
+  }
+
+  if (tokens.length > 0) {
+    let matchedTokens = 0;
+    tokens.forEach((token) => {
+      if (meta.words.has(token)) {
+        matchedTokens += 1;
+        score += 950;
+        return;
+      }
+      for (const word of meta.words) {
+        if (word.startsWith(token)) {
+          matchedTokens += 0.6;
+          score += 360;
+          return;
+        }
+      }
+      if (meta.searchable.includes(token)) score += 120;
+    });
+    if (matchedTokens >= tokens.length) score += 1600;
+  }
+
+  if (textTerm && meta.searchable.includes(textTerm)) score += 600;
+  if (item?.urgente) score += 45;
+  score += Math.min(recencyScore(item) / 1000000000, 120);
+  return score;
+}
+
+function dedupeRankedItems(rows, term, limit = 200) {
+  const ranked = new Map();
+  (rows || []).forEach((item) => {
+    if (!item?.key) return;
+    const score = scoreOperacionSearch(item, term);
+    if (!Number.isFinite(score) || score <= 0) return;
+    const prev = ranked.get(item.key);
+    if (!prev || score > prev.score || (score === prev.score && recencyScore(item) > recencyScore(prev.item))) {
+      ranked.set(item.key, { item, score });
+    }
+  });
+  return Array.from(ranked.values())
+    .sort((a, b) => (b.score - a.score) || (recencyScore(b.item) - recencyScore(a.item)))
+    .slice(0, limit)
+    .map(({ item }) => item);
+}
+
 function recencyScore(r) {
   return (
     Date.parse(r?.fecha_estado || '')
@@ -158,7 +260,17 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
     const key = `${canalDe(r)}:${nv}`;
     if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
   });
-  return Array.from(dedup.values());
+  return dedupeRankedItems(Array.from(dedup.values()), t, limit);
+}
+
+export function buscarOperacionesUltraLocal(rows, term, { limit = 120 } = {}) {
+  const t = String(term || '').trim();
+  if (t.length < 2) return [];
+  return dedupeRankedItems(rows || [], t, limit);
+}
+
+export function fusionarResultadosBusqueda(localRows, remoteRows, term, { limit = 160 } = {}) {
+  return dedupeRankedItems([...(localRows || []), ...(remoteRows || [])], term, limit);
 }
 
 // ── Opciones del formulario ─────────────────────────────────────────────────
