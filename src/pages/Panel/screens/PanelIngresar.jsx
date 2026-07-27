@@ -692,89 +692,96 @@ function OperacionExistenteModal({ item, puedeEscribir, puedeAprobarReapertura, 
     <PanelModal
       titulo={isEntregada ? 'N.V. entregada detectada' : 'N.V. ya registrada'}
       onClose={onClose}
-      maxWidth="max-w-4xl"
+      fullscreen
     >
-      <div className="p-6 space-y-5">
-        <div className={`rounded-3xl border-2 px-5 py-5 ${isEntregada ? 'border-red-300 bg-red-50' : 'border-amber-300 bg-amber-50'}`}>
-          <div className={`mb-4 rounded-2xl border px-4 py-3 ${isEntregada ? 'border-red-200 bg-red-100 text-red-800' : 'border-amber-200 bg-amber-100 text-amber-800'}`}>
-            <div className="text-base sm:text-xl font-black uppercase tracking-[0.18em] leading-tight">
-              {alertTitle}
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className={`mt-0.5 flex h-14 w-14 items-center justify-center rounded-2xl ${isEntregada ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-              {isEntregada ? <LockKeyhole size={22} /> : <AlertTriangle size={22} />}
-            </div>
-            <div className="min-w-0">
-              <div className="text-lg font-black uppercase text-slate-900">
-                N.V. {item.nv} YA EXISTE EN EL SISTEMA
+      <div className="flex min-h-full flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-5 sm:px-8 sm:py-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-6">
+          <div className={`rounded-[2rem] border-2 px-5 py-6 sm:px-8 sm:py-8 shadow-2xl ${isEntregada ? 'border-red-300 bg-red-50' : 'border-amber-300 bg-amber-50'}`}>
+            <div className={`mb-5 rounded-2xl border px-4 py-4 sm:px-6 ${isEntregada ? 'border-red-200 bg-red-100 text-red-800' : 'border-amber-200 bg-amber-100 text-amber-800'}`}>
+              <div className="text-lg sm:text-3xl font-black uppercase tracking-[0.18em] leading-tight text-center">
+                {alertTitle}
               </div>
-              <div className="mt-2 text-sm sm:text-base font-bold uppercase text-slate-700 leading-relaxed">
-                Estado actual: <span className="text-slate-900">{item.estado}</span>.
-                {isEntregada
-                  ? ' QUEDA BLOQUEADA PARA NO ALTERAR OTIF Y SLA UNA VEZ ENTREGADA.'
-                  : ' EL FORMULARIO YA QUEDO EN MODO ACTUALIZACION PARA EVITAR GENERAR UN DUPLICADO.'}
+            </div>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+              <div className={`mt-0.5 flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl ${isEntregada ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                {isEntregada ? <LockKeyhole size={34} /> : <AlertTriangle size={34} />}
               </div>
-              {item.reabierta && (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">
-                  <Undo2 size={12} />
-                  N.V. reabierta
+              <div className="min-w-0 flex-1">
+                <div className="text-2xl sm:text-5xl font-black uppercase leading-tight text-slate-900">
+                  N.V. {item.nv} YA EXISTE EN EL SISTEMA
                 </div>
-              )}
+                <div className="mt-4 text-base sm:text-2xl font-black uppercase text-slate-700 leading-relaxed">
+                  Estado actual: <span className="text-slate-900">{item.estado}</span>.
+                  {isEntregada
+                    ? ' QUEDA BLOQUEADA PARA NO ALTERAR OTIF Y SLA UNA VEZ ENTREGADA.'
+                    : ' EL FORMULARIO YA QUEDO EN MODO ACTUALIZACION PARA EVITAR GENERAR UN DUPLICADO.'}
+                </div>
+                {item.reabierta && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-orange-700">
+                    <Undo2 size={14} />
+                    N.V. reabierta
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {item.motivo_reapertura && (
-          <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3">
-            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-700">Motivo de reapertura</div>
-            <div className="mt-1 text-sm text-slate-700">{item.motivo_reapertura}</div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {item.motivo_reapertura && (
+              <div className="rounded-3xl border border-orange-200 bg-white px-5 py-4 shadow-xl">
+                <div className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-700">Motivo de reapertura</div>
+                <div className="mt-2 text-sm sm:text-base text-slate-700">{item.motivo_reapertura}</div>
+              </div>
+            )}
+
+            {item.pendingRequest && (
+              <div className="rounded-3xl border border-amber-200 bg-white px-5 py-4 shadow-xl">
+                <div className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Solicitud pendiente</div>
+                <div className="mt-2 text-sm sm:text-base font-semibold text-slate-800">{item.pendingRequest.motivo}</div>
+                <div className="mt-2 text-xs sm:text-sm text-slate-500">
+                  Solicitada por {item.pendingRequest.solicitada_por_nombre || 'Usuario'} el {soloFecha(item.pendingRequest.solicitada_at)}
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {item.pendingRequest && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Solicitud pendiente</div>
-            <div className="mt-1 text-sm font-semibold text-slate-800">{item.pendingRequest.motivo}</div>
-            <div className="mt-1 text-xs text-slate-500">
-              Solicitada por {item.pendingRequest.solicitada_por_nombre || 'Usuario'} el {soloFecha(item.pendingRequest.solicitada_at)}
+          {isEntregada && puedeEscribir && !item.pendingRequest && (
+            <div className="rounded-[2rem] border border-slate-200 bg-white px-5 py-5 shadow-2xl sm:px-8 sm:py-6">
+              <div className="flex items-center gap-3 text-base sm:text-xl font-black uppercase text-slate-800">
+                <RefreshCcw size={20} className="text-orange-600" />
+                Solicitar reapertura
+              </div>
+              <textarea
+                value={motivo}
+                onChange={(e) => onMotivoChange(e.target.value)}
+                className="field-input mt-4 min-h-[160px] resize-y"
+                placeholder="Observación obligatoria: explica por qué se necesita reabrir esta N.V. entregada..."
+              />
+              <button
+                type="button"
+                onClick={onRequestReopen}
+                disabled={requesting}
+                className="mt-4 w-full rounded-2xl bg-orange-500 px-4 py-4 text-base font-black uppercase tracking-[0.12em] text-white disabled:opacity-50"
+              >
+                {requesting ? 'Enviando solicitud...' : 'Enviar solicitud de reapertura'}
+              </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {isEntregada && puedeEscribir && !item.pendingRequest && (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 space-y-3">
-            <div className="flex items-center gap-2 text-sm font-black text-slate-800">
-              <RefreshCcw size={16} className="text-orange-600" />
-              Solicitar reapertura
+          {!puedeEscribir && isEntregada && !puedeAprobarReapertura && (
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-sm sm:text-base text-slate-500 shadow-xl">
+              Necesitas permisos de gestión para solicitar la reapertura de esta N.V.
             </div>
-            <textarea
-              value={motivo}
-              onChange={(e) => onMotivoChange(e.target.value)}
-              className="field-input min-h-[110px] resize-y"
-              placeholder="Observación obligatoria: explica por qué se necesita reabrir esta N.V. entregada..."
-            />
+          )}
+
+          <div className="flex justify-center pt-2">
             <button
-              type="button"
-              onClick={onRequestReopen}
-              disabled={requesting}
-              className="w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+              onClick={onClose}
+              className="min-w-[14rem] rounded-2xl border border-white/30 bg-white/10 px-6 py-3 text-sm sm:text-base font-black uppercase tracking-[0.12em] text-white backdrop-blur hover:bg-white/20"
             >
-              {requesting ? 'Enviando solicitud...' : 'Enviar solicitud de reapertura'}
+              Cerrar alerta
             </button>
           </div>
-        )}
-
-        {!puedeEscribir && isEntregada && !puedeAprobarReapertura && (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            Necesitas permisos de gestión para solicitar la reapertura de esta N.V.
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-            Cerrar
-          </button>
         </div>
       </div>
     </PanelModal>
