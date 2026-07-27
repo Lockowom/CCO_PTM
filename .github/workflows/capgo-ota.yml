@@ -19,11 +19,14 @@ concurrency:
   group: capgo-ota
   cancel-in-progress: false
 
+env:
+  CAPGO_CLI_VERSION: 8.25.1
+
 jobs:
   ota:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2   # para comparar la versión con el commit anterior
 
@@ -39,7 +42,7 @@ jobs:
 
       - name: Setup Node
         if: steps.ver.outputs.changed == 'yes'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24.12.0   # npm ci pasa estable con Node 24 / npm 11 en este repo
           cache: npm
@@ -72,10 +75,13 @@ jobs:
             echo "::warning::Falta el secreto CAPGO_TOKEN — se omite la subida OTA. Agrégalo en Settings → Secrets → Actions."
             exit 0
           fi
-          npx -y @capgo/cli@latest bundle upload com.cco.wms \
+          npx -y @capgo/cli@${CAPGO_CLI_VERSION} bundle upload com.cco.wms \
             --apikey "$CAPGO_TOKEN" \
+            --path ./dist \
             --channel beta \
-            --bundle "${{ steps.ver.outputs.new }}"
+            --bundle "${{ steps.ver.outputs.new }}" \
+            --version-exists-ok \
+            --comment "GitHub Actions ${GITHUB_SHA}"
           echo "::notice::Bundle ${{ steps.ver.outputs.new }} subido a BETA. Valida en un PDA de prueba y luego ejecuta 'Capgo PROMOVER a producción'."
 
       - name: Sin cambio de versión

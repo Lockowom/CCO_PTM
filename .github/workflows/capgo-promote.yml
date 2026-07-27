@@ -24,6 +24,9 @@ concurrency:
   group: capgo-promote
   cancel-in-progress: false
 
+env:
+  CAPGO_CLI_VERSION: 8.25.1
+
 jobs:
   promote:
     runs-on: ubuntu-latest
@@ -39,7 +42,7 @@ jobs:
           fi
           echo "Promoviendo $VERSION al canal production…"
           # Enlaza el bundle existente al canal production (sin recompilar).
-          npx -y @capgo/cli@latest channel set production com.cco.wms \
+          npx -y @capgo/cli@${CAPGO_CLI_VERSION} channel set production com.cco.wms \
             --apikey "$CAPGO_TOKEN" \
             --bundle "$VERSION"
           echo "::notice::Versión $VERSION promovida a PRODUCTION. Toda la bodega la recibirá con autoUpdate."
