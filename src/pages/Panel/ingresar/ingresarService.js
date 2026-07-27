@@ -341,6 +341,12 @@ export async function puedeEditarOperacion(id) {
   if (error) return { permitida: false, message: error.message || 'No se pudo validar el acceso IAM.' };
   return data || { permitida: false, message: 'No se pudo validar el acceso IAM.' };
 }
+export async function puedeCambiarEstadoOperacion(id, estado = null) {
+  if (!id) return { permitida: false, message: 'N.V. no encontrada.' };
+  const { data, error } = await supabase.rpc('iam_puede_cambiar_estado_nv', { p_id: id, p_estado: estado });
+  if (error) return { permitida: false, message: error.message || 'No se pudo validar la transición de estado.' };
+  return data || { permitida: false, message: 'No se pudo validar la transición de estado.' };
+}
 export async function cambiarEstado(id, estado, urgente = null) {
   const { data, error } = await supabase.rpc('cambiar_estado_nv', { p_id: id, p_estado: estado, p_urgente: urgente });
   return rpcResult(data, error);
