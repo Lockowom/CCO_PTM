@@ -1,13 +1,14 @@
 {
   "name": "cco-ptm",
   "private": true,
-  "version": "1.55.132",
+  "version": "1.55.133",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/gen_release_notes.js",
     "gen:notes": "node scripts/gen_release_notes.js",
     "build": "vite build",
+    "docs:iam:pptx": "node scripts/generate_iam_tutorial_pptx.mjs",
     "preview": "vite preview",
     "start": "node server.js",
     "deploy": "node deploy.js",
@@ -58,6 +59,7 @@
     "autoprefixer": "^10.4.16",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.31",
+    "pptxgenjs": "^4.0.1",
     "tailwindcss": "^3.3.5",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^1.2.0",

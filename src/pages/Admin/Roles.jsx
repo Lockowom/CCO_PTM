@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { APP_PERMISSIONS, APP_ROUTES } from '../../config/modules';
 import { accesosConPermisos } from '../../constants/permissions';
+import { getRoleBlueprint } from '../../config/iamBlueprints.js';
 import {
   Shield, Plus, Edit, Trash2, Save, X, Check,
   Lock, Users, LayoutDashboard, Truck, Package,
@@ -152,6 +153,19 @@ const RolesPage = ({ embedded = false }) => {
     saveRoleMutation.mutate(selectedRole);
   };
 
+  const applyBlueprint = () => {
+    const blueprint = getRoleBlueprint(selectedRole?.id);
+    if (!blueprint) return;
+    setSelectedRole((prev) => ({
+      ...prev,
+      nombre: blueprint.nombre,
+      descripcion: blueprint.descripcion,
+      landing_page: blueprint.landingPage,
+      permisos: [...blueprint.permissions],
+    }));
+    toast.success(`Plantilla oficial cargada para ${blueprint.id}`);
+  };
+
   const handleDeleteRole = (roleId) => {
     if (!confirm('¿Eliminar este rol?')) return;
     deleteRoleMutation.mutate(roleId);
@@ -280,6 +294,18 @@ const RolesPage = ({ embedded = false }) => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl sm:rounded-[3rem] border border-slate-200 shadow-[0_30px_100px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden flex-1">
+            {(() => {
+              const blueprint = getRoleBlueprint(selectedRole?.id);
+              if (!blueprint) return null;
+              return (
+                <div className="mx-4 mt-4 sm:mx-10 sm:mt-10 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-sm text-orange-900">
+                  <div className="font-black uppercase tracking-wider text-[11px] text-orange-700">Plantilla Oficial Frontend</div>
+                  <div className="mt-1 font-semibold">
+                    Este rol tiene blueprint central en `src/config/iamBlueprints.js` con landing `{blueprint.landingPage}` y {blueprint.permissions.length} permiso(s).
+                  </div>
+                </div>
+              );
+            })()}
             <div className="p-4 sm:p-10 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start bg-slate-50/30 gap-4">
               <div className="flex items-center gap-8 flex-1">
                 <button
@@ -352,6 +378,14 @@ const RolesPage = ({ embedded = false }) => {
               <div className="flex gap-4">
                 {isEditing ? (
                   <>
+                    {getRoleBlueprint(selectedRole?.id) && (
+                      <button
+                        onClick={applyBlueprint}
+                        className="px-6 py-4 bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 transition-all"
+                      >
+                        <Layers size={20} /> Cargar Plantilla
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setIsEditing(false);
