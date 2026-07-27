@@ -226,8 +226,16 @@ export const initPushNotifications = async (userId) => {
 
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
       const data = action.notification?.data;
+      if (data?.route) {
+        window.location.href = data.route;
+        return;
+      }
       if (data?.type === 'NEW_TICKET' || data?.type === 'TICKET_UPDATE') {
         window.location.href = '/admin/tickets';
+        return;
+      }
+      if (data?.type === 'NV_REOPEN_REQUEST') {
+        window.location.href = '/admin/eventos';
       }
     });
 
