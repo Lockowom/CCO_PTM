@@ -4,17 +4,54 @@ import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ConfigProvider } from './context/ConfigContext.jsx'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { initSentry } from './lib/sentry'
 import { validateEnv } from './lib/env'
+import { installGlobalErrorHandlers, Logger, setLoggerAppContext } from './lib/logger'
 
 // Validar variables de entorno críticas antes de hacer nada
 validateEnv();
 
 // Inicializar Sentry (Monitoreo de Errores)
 initSentry();
+installGlobalErrorHandlers();
+setLoggerAppContext({
+  appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
+  buildNumber: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
+});
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      Logger.error(error, {
+        kind: 'query',
+        module: 'react-query',
+        screen: document.title || '',
+        action: 'query_error',
+        message: `Query fallo: ${Array.isArray(query.queryKey) ? query.queryKey.join('.') : 'unknown'}`,
+        context: {
+          queryKey: query.queryKey,
+          meta: query.meta || null,
+        },
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, variables, _context, mutation) => {
+      Logger.error(error, {
+        kind: 'mutation',
+        module: 'react-query',
+        screen: document.title || '',
+        action: 'mutation_error',
+        message: `Mutacion fallo: ${Array.isArray(mutation.options.mutationKey) ? mutation.options.mutationKey.join('.') : 'unknown'}`,
+        payload: variables,
+        context: {
+          mutationKey: mutation.options.mutationKey || null,
+          meta: mutation.meta || null,
+        },
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 2,       // 2 min — los datos se consideran frescos

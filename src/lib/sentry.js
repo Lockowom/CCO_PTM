@@ -25,8 +25,15 @@ export const logError = (error, context = {}) => {
 };
 
 export const setUserForTracking = (user) => {
-  if (!user) return;
+  if (!user) {
+    Sentry.setUser(null);
+    return;
+  }
   // Solo el id interno — sin email ni nombre real (minimización de PII hacia
   // el tercero; con el id un admin puede correlacionar internamente si hace falta).
   Sentry.setUser({ id: user.id });
+};
+
+export const clearUserForTracking = () => {
+  Sentry.setUser(null);
 };

@@ -4,9 +4,10 @@ import { wmsToast } from '../lib/notifications';
 import { syncOfflineData } from '../lib/syncManager';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '../services/mobileService';
-import { setUserForTracking, logError } from '../lib/sentry';
+import { clearUserForTracking, setUserForTracking } from '../lib/sentry';
 import { withTimeout } from '../lib/supabaseQuery';
 import { toast } from 'sonner';
+import { clearLoggerUserContext, Logger, setLoggerUserContext } from '../lib/logger';
 
 const AuthContext = createContext();
 
@@ -112,7 +113,15 @@ export const AuthProvider = ({ children }) => {
         }
       )
       .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
+        if (err) {
+          Logger.warn(err, {
+            kind: 'realtime',
+            module: 'auth',
+            screen: 'AuthProvider',
+            action: 'roles_realtime_subscribe',
+            message: 'Fallo la suscripcion realtime de roles',
+          });
+        }
       });
 
     return () => {
@@ -145,7 +154,13 @@ export const AuthProvider = ({ children }) => {
 
       return data;
     } catch (err) {
-      console.error('[Auth] Error loading user profile:', err);
+      Logger.error(err, {
+        module: 'auth',
+        screen: 'AuthProvider',
+        action: 'load_user_profile',
+        message: 'Error cargando perfil de usuario',
+        payload: { authEmail },
+      });
       return null;
     }
   }, []);
@@ -167,6 +182,7 @@ export const AuthProvider = ({ children }) => {
     sessionStartRef.current = Date.now();
     setUser(userData);
     setUserForTracking(userData);
+    setLoggerUserContext(userData);
     await loadRoleConfig(userData.rol);
 
     if (Capacitor.isNativePlatform()) {
@@ -205,7 +221,12 @@ export const AuthProvider = ({ children }) => {
               const parsed = JSON.parse(stored);
               // Intentar login automático con Supabase Auth no es posible sin contraseña
               // Forzar re-login
-              console.warn('[Auth] Sesión legacy encontrada, requiere re-login con Supabase Auth');
+              Logger.warn('[Auth] Sesion legacy encontrada, requiere re-login con Supabase Auth', {
+                module: 'auth',
+                screen: 'AuthProvider',
+                action: 'legacy_session_detected',
+                message: 'Sesion legacy detectada y removida del almacenamiento local',
+              });
               localStorage.removeItem('currentUser');
             } catch (_) {
               localStorage.removeItem('currentUser');
@@ -213,8 +234,12 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (err) {
-        console.error('[Auth] Init session error:', err);
-        logError(err, { context: 'auth_init_session' });
+        Logger.error(err, {
+          module: 'auth',
+          screen: 'AuthProvider',
+          action: 'init_session',
+          message: 'No se pudo restaurar la sesion inicial',
+        });
         // Caer a la pantalla de login en vez de quedar colgado en "Cargando…".
         toast.error('No se pudo restaurar la sesión a tiempo. Inicia sesión de nuevo.');
       } finally {
@@ -236,6 +261,8 @@ export const AuthProvider = ({ children }) => {
         if (event === 'SIGNED_OUT') {
           loadedEmailRef.current = null;
           setUser(null);
+          clearUserForTracking();
+          clearLoggerUserContext();
           setPermissions([]);
           setRoles([]);
           setLandingPage('/');
@@ -263,8 +290,12 @@ export const AuthProvider = ({ children }) => {
                 await supabase.auth.signOut();
               }
             } catch (err) {
-              console.error('[Auth] SIGNED_IN profile load error:', err);
-              logError(err, { context: 'auth_signed_in' });
+              Logger.error(err, {
+                module: 'auth',
+                screen: 'AuthProvider',
+                action: 'signed_in_profile_load',
+                message: 'No se pudo cargar el perfil despues del inicio de sesion',
+              });
               toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
             }
           }, 0);
@@ -312,7 +343,16 @@ export const AuthProvider = ({ children }) => {
             modulo_actual: window.location.pathname,
             estado: 'ONLINE'
           }, { onConflict: 'usuario_id' });
-      } catch (_) { console.error('Heartbeat update failed:', _); }
+      } catch (_) {
+        Logger.warn(_, {
+          kind: 'presence',
+          module: 'auth',
+          screen: 'AuthProvider',
+          action: 'heartbeat_update',
+          message: 'Fallo el heartbeat de presencia del usuario',
+          persist: false,
+        });
+      }
     };
 
     updateHeartbeat();
@@ -383,7 +423,15 @@ export const AuthProvider = ({ children }) => {
               modulo_actual: 'Inicio de Sesión',
               estado: 'ONLINE'
             }, { onConflict: 'usuario_id' });
-        } catch (_) { console.error('Login tracking failed:', _); }
+        } catch (_) {
+          Logger.warn(_, {
+            kind: 'audit',
+            module: 'auth',
+            screen: 'AuthProvider',
+            action: 'login_tracking',
+            message: 'No se pudo registrar el acceso del usuario',
+          });
+        }
 
         setLoading(false);
         return true;
@@ -397,7 +445,13 @@ export const AuthProvider = ({ children }) => {
       return false;
 
     } catch (err) {
-      console.error('[Auth] Login error:', err);
+      Logger.error(err, {
+        module: 'auth',
+        screen: 'AuthProvider',
+        action: 'login',
+        message: 'Error del sistema durante login',
+        payload: { email: email?.toLowerCase?.() || '' },
+      });
       setError('Error en el sistema');
       setLoading(false);
       return false;
@@ -410,6 +464,8 @@ export const AuthProvider = ({ children }) => {
 
     loadedEmailRef.current = null;
     setUser(null);
+    clearUserForTracking();
+    clearLoggerUserContext();
     setPermissions([]);
     setRoles([]);
     localStorage.removeItem('currentUser'); // Limpiar legacy
@@ -459,7 +515,14 @@ export const AuthProvider = ({ children }) => {
     // Cerrar sesión Supabase Auth
     try {
       await supabase.auth.signOut();
-    } catch (_) { console.error('Auth signOut error:', _); }
+    } catch (_) {
+      Logger.warn(_, {
+        module: 'auth',
+        screen: 'AuthProvider',
+        action: 'logout',
+        message: 'Fallo el cierre de sesion en Supabase Auth',
+      });
+    }
   }, [user?.id]);
 
   // ── Session Guard (realtime) ──
@@ -515,7 +578,15 @@ export const AuthProvider = ({ children }) => {
         }
       )
       .subscribe((status, err) => {
-        if (err) console.error('Realtime subscription error:', err);
+        if (err) {
+          Logger.warn(err, {
+            kind: 'realtime',
+            module: 'auth',
+            screen: 'AuthProvider',
+            action: 'session_guard_subscribe',
+            message: 'Fallo la suscripcion realtime del guard de sesion',
+          });
+        }
       });
 
     return () => {
