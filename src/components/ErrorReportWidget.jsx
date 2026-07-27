@@ -1,13 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
-import { 
-  MessageSquare, 
-  X, 
-  Send, 
-  CheckCircle, 
-  AlertTriangle 
-} from 'lucide-react';
+import { MessageSquare, X, Send, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const ErrorReportWidget = () => {
   const { user } = useAuth();
@@ -19,7 +13,10 @@ const ErrorReportWidget = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim()) return;
-    if (!user?.id) { setStatus('error'); return; } // requiere sesión válida
+    if (!user?.id) {
+      setStatus('error');
+      return;
+    } // requiere sesión válida
 
     setLoading(true);
     setStatus(null);
@@ -30,7 +27,7 @@ const ErrorReportWidget = () => {
     try {
       // Generar ID amigable: T-{YYYYMMDD}-{HHMM}
       const now = new Date();
-      const timestamp = now.toISOString().replace(/[-:T.]/g, '').slice(0, 12);
+      const timestamp = now.toISOString().replace(/\D/g, '').slice(0, 12);
       const ticketId = `T-${timestamp}`;
 
       const { error } = await supabase
@@ -55,7 +52,6 @@ const ErrorReportWidget = () => {
         setIsOpen(false);
         setStatus(null);
       }, 2500);
-
     } catch (err) {
       setStatus('error');
     } finally {
@@ -82,17 +78,19 @@ const ErrorReportWidget = () => {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-start sm:p-4 pointer-events-none">
           {/* Backdrop for mobile */}
-          <div className="absolute inset-0 bg-black/20 sm:hidden pointer-events-auto" onClick={() => setIsOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/20 sm:hidden pointer-events-auto"
+            onClick={() => setIsOpen(false)}
+          />
 
           <div className="bg-white w-full sm:w-96 rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 pointer-events-auto animate-in slide-in-from-bottom-10 fade-in duration-200">
-            
             {/* Header */}
             <div className="bg-slate-900 text-white p-4 rounded-t-xl flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <MessageSquare size={18} className="text-amber-400" />
                 <h3 className="font-bold">Reportar Problema TI</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="text-slate-500 hover:text-slate-900 transition-colors p-1 hover:bg-white rounded-lg"
               >
@@ -122,7 +120,7 @@ const ErrorReportWidget = () => {
                       autoFocus
                     />
                   </div>
-                  
+
                   {status === 'error' && (
                     <div className="mb-4 p-2 bg-red-50 text-red-600 text-xs rounded flex items-center gap-2 animate-pulse">
                       <AlertTriangle size={14} />
@@ -143,7 +141,9 @@ const ErrorReportWidget = () => {
                       disabled={loading || !description.trim()}
                       className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-500/20"
                     >
-                      {loading ? 'Enviando...' : (
+                      {loading ? (
+                        'Enviando...'
+                      ) : (
                         <>
                           <Send size={14} /> Enviar Reporte
                         </>
@@ -153,7 +153,7 @@ const ErrorReportWidget = () => {
                 </form>
               )}
             </div>
-            
+
             {/* Footer info */}
             <div className="bg-slate-50 p-2 text-center border-t border-slate-100 rounded-b-xl">
               <p className="text-[10px] text-slate-500 font-mono">

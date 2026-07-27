@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 /**
@@ -13,8 +12,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
  */
 const QueryErrorState = ({ error, onRetry, className = '' }) => {
   const message =
-    error?.message ||
-    'No se pudieron cargar los datos. Revisa tu conexión e inténtalo de nuevo.';
+    error?.message || 'No se pudieron cargar los datos. Revisa tu conexión e inténtalo de nuevo.';
 
   return (
     <div

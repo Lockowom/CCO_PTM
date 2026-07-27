@@ -1,8 +1,20 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Search, X, Download, RefreshCw, Save, Trash2, MoveRight,
-  MapPin, Package, Edit3, Check, AlertTriangle, Filter,
-  ChevronLeft, ChevronRight, ArrowUpDown, Loader2
+  Search,
+  X,
+  Download,
+  RefreshCw,
+  Trash2,
+  MoveRight,
+  MapPin,
+  Package,
+  Edit3,
+  AlertTriangle,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
@@ -14,8 +26,11 @@ const PAGE_SIZE = 50;
 
 const normalizeLoc = (loc) => {
   if (!loc) return '';
-  let cleaned = loc.trim().toUpperCase().replace(/[\s\.]+/g, '-');
-  const parts = cleaned.split('-').filter(p => p !== '');
+  let cleaned = loc
+    .trim()
+    .toUpperCase()
+    .replace(/[\s.]+/g, '-');
+  const parts = cleaned.split('-').filter((p) => p !== '');
   if (parts.length >= 2) {
     const rack = parts[0];
     let p1 = parts[1];
@@ -42,7 +57,7 @@ const EditableCell = ({ value, field, rowId, onSave, type = 'text' }) => {
 
   const handleSave = () => {
     setEditing(false);
-    const finalValue = type === 'number' ? (parseInt(tempValue) || 0) : tempValue.trim();
+    const finalValue = type === 'number' ? parseInt(tempValue) || 0 : tempValue.trim();
     if (finalValue !== (value ?? '')) {
       onSave(rowId, field, finalValue);
     }
@@ -50,7 +65,10 @@ const EditableCell = ({ value, field, rowId, onSave, type = 'text' }) => {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') { setEditing(false); setTempValue(value ?? ''); }
+    if (e.key === 'Escape') {
+      setEditing(false);
+      setTempValue(value ?? '');
+    }
   };
 
   if (editing) {
@@ -69,14 +87,20 @@ const EditableCell = ({ value, field, rowId, onSave, type = 'text' }) => {
 
   return (
     <div
-      onClick={() => { setEditing(true); setTempValue(value ?? ''); }}
+      onClick={() => {
+        setEditing(true);
+        setTempValue(value ?? '');
+      }}
       className="group cursor-pointer px-2 py-1 rounded-md hover:bg-slate-100 transition-colors flex items-center gap-1 min-h-[32px]"
       title="Click para editar"
     >
       <span className={`text-sm ${value ? 'text-slate-700' : 'text-slate-300 italic'}`}>
         {value || '—'}
       </span>
-      <Edit3 size={12} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      <Edit3
+        size={12}
+        className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+      />
     </div>
   );
 };
@@ -98,8 +122,14 @@ const MoveModal = ({ item, onClose, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="text-lg font-bold text-slate-900 mb-1">Mover Producto</h3>
         <p className="text-sm text-slate-500 mb-4">Cambiar la ubicación de este producto</p>
 
@@ -114,14 +144,18 @@ const MoveModal = ({ item, onClose, onConfirm }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-400 uppercase w-20">Actual:</span>
-            <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{item.ubicacion}</span>
+            <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+              {item.ubicacion}
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 mb-6">
           <MoveRight size={20} className="text-slate-400 shrink-0" />
           <div className="flex-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Nueva Ubicación</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">
+              Nueva Ubicación
+            </label>
             <input
               type="text"
               placeholder="Ej: B-10-03"
@@ -135,7 +169,10 @@ const MoveModal = ({ item, onClose, onConfirm }) => {
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
             Cancelar
           </button>
           <button
@@ -163,8 +200,14 @@ const DeleteModal = ({ item, onClose, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 mx-4" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
             <AlertTriangle size={20} className="text-red-600" />
@@ -176,13 +219,22 @@ const DeleteModal = ({ item, onClose, onConfirm }) => {
         </div>
 
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 text-sm space-y-1">
-          <p><span className="font-semibold text-red-800">Código:</span> {item.codigo}</p>
-          <p><span className="font-semibold text-red-800">Ubicación:</span> {item.ubicacion}</p>
-          <p><span className="font-semibold text-red-800">Cantidad:</span> {item.cantidad}</p>
+          <p>
+            <span className="font-semibold text-red-800">Código:</span> {item.codigo}
+          </p>
+          <p>
+            <span className="font-semibold text-red-800">Ubicación:</span> {item.ubicacion}
+          </p>
+          <p>
+            <span className="font-semibold text-red-800">Cantidad:</span> {item.cantidad}
+          </p>
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
             Cancelar
           </button>
           <button
@@ -219,9 +271,7 @@ export default function LocationManager() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('wms_ubicaciones')
-        .select('*', { count: 'exact' });
+      let query = supabase.from('wms_ubicaciones').select('*', { count: 'exact' });
 
       // Search filter
       if (search.trim()) {
@@ -253,10 +303,14 @@ export default function LocationManager() {
     }
   }, [search, rackFilter, sortField, sortDir, page]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(0); }, [search, rackFilter]);
+  useEffect(() => {
+    setPage(0);
+  }, [search, rackFilter]);
 
   // ─── Actions ────────────────────────────────────────
   const handleInlineSave = async (rowId, field, value) => {
@@ -268,19 +322,19 @@ export default function LocationManager() {
         updateData.ubicacion = normalizeLoc(value);
       }
 
-      const { error } = await supabase
-        .from('wms_ubicaciones')
-        .update(updateData)
-        .eq('id', rowId);
+      const { error } = await supabase.from('wms_ubicaciones').update(updateData).eq('id', rowId);
 
       if (error) throw error;
 
       // Update local state
-      setData(prev => prev.map(row =>
-        row.id === rowId ? { ...row, ...updateData } : row
-      ));
+      setData((prev) => prev.map((row) => (row.id === rowId ? { ...row, ...updateData } : row)));
       toast.success('Actualizado correctamente');
-      logUpload({ modulo: 'Gestión Ubicaciones', tablaDestino: 'wms_ubicaciones', totalRegistros: 1, actualizados: 1 });
+      logUpload({
+        modulo: 'Gestión Ubicaciones',
+        tablaDestino: 'wms_ubicaciones',
+        totalRegistros: 1,
+        actualizados: 1
+      });
     } catch (err) {
       toast.error('Error al guardar: ' + err.message);
     } finally {
@@ -308,15 +362,17 @@ export default function LocationManager() {
         if (mergeErr) throw mergeErr;
 
         // Delete original
-        const { error: delErr } = await supabase
-          .from('wms_ubicaciones')
-          .delete()
-          .eq('id', item.id);
+        const { error: delErr } = await supabase.from('wms_ubicaciones').delete().eq('id', item.id);
 
         if (delErr) throw delErr;
 
         toast.success(`Producto fusionado en ${newUbicacion} (cantidad sumada)`);
-        logUpload({ modulo: 'Gestión Ubicaciones', tablaDestino: 'wms_ubicaciones', totalRegistros: 1, actualizados: 1 });
+        logUpload({
+          modulo: 'Gestión Ubicaciones',
+          tablaDestino: 'wms_ubicaciones',
+          totalRegistros: 1,
+          actualizados: 1
+        });
       } else {
         // Simple move
         const { error } = await supabase
@@ -326,7 +382,12 @@ export default function LocationManager() {
 
         if (error) throw error;
         toast.success(`Movido a ${newUbicacion}`);
-        logUpload({ modulo: 'Gestión Ubicaciones', tablaDestino: 'wms_ubicaciones', totalRegistros: 1, actualizados: 1 });
+        logUpload({
+          modulo: 'Gestión Ubicaciones',
+          tablaDestino: 'wms_ubicaciones',
+          totalRegistros: 1,
+          actualizados: 1
+        });
       }
 
       setMoveItem(null);
@@ -338,10 +399,7 @@ export default function LocationManager() {
 
   const handleDelete = async (item) => {
     try {
-      const { error } = await supabase
-        .from('wms_ubicaciones')
-        .delete()
-        .eq('id', item.id);
+      const { error } = await supabase.from('wms_ubicaciones').delete().eq('id', item.id);
 
       if (error) throw error;
 
@@ -355,7 +413,7 @@ export default function LocationManager() {
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
       setSortDir('asc');
@@ -364,20 +422,25 @@ export default function LocationManager() {
 
   const exportToExcel = () => {
     if (data.length === 0) return;
-    const ws = XLSX.utils.json_to_sheet(data.map(r => ({
-      Ubicación: r.ubicacion,
-      Código: r.codigo,
-      Descripción: r.descripcion,
-      Cantidad: r.cantidad,
-      Serie: r.serie || '',
-      Partida: r.partida || '',
-      Pieza: r.pieza || '',
-      Talla: r.talla || '',
-      Color: r.color || ''
-    })));
+    const ws = XLSX.utils.json_to_sheet(
+      data.map((r) => ({
+        Ubicación: r.ubicacion,
+        Código: r.codigo,
+        Descripción: r.descripcion,
+        Cantidad: r.cantidad,
+        Serie: r.serie || '',
+        Partida: r.partida || '',
+        Pieza: r.pieza || '',
+        Talla: r.talla || '',
+        Color: r.color || ''
+      }))
+    );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ubicaciones');
-    XLSX.writeFile(wb, `ubicaciones_${rackFilter || 'ALL'}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `ubicaciones_${rackFilter || 'ALL'}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
     toast.success('Exportado correctamente');
   };
 
@@ -393,7 +456,9 @@ export default function LocationManager() {
             <MapPin size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Gestión Ubicaciones</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Gestión Ubicaciones
+            </h1>
             <p className="text-sm text-slate-500">Mover, editar y eliminar productos del WMS</p>
           </div>
         </div>
@@ -413,7 +478,10 @@ export default function LocationManager() {
               className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <X size={14} />
               </button>
             )}
@@ -425,17 +493,21 @@ export default function LocationManager() {
             <button
               onClick={() => setRackFilter('')}
               className={`px-2.5 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                !rackFilter ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                !rackFilter
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               Todos
             </button>
-            {RACKS.map(rack => (
+            {RACKS.map((rack) => (
               <button
                 key={rack}
                 onClick={() => setRackFilter(rack)}
                 className={`px-2.5 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                  rackFilter === rack ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  rackFilter === rack
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {rack}
@@ -461,7 +533,8 @@ export default function LocationManager() {
               <Download size={16} />
             </button>
             <div className="text-xs text-slate-400 font-medium pl-2 border-l border-slate-200">
-              <span className="font-bold text-slate-700">{totalCount.toLocaleString()}</span> registros
+              <span className="font-bold text-slate-700">{totalCount.toLocaleString()}</span>{' '}
+              registros
             </div>
           </div>
         </div>
@@ -486,8 +559,8 @@ export default function LocationManager() {
                   { key: 'descripcion', label: 'Descripción', w: 'w-64' },
                   { key: 'cantidad', label: 'Cant.', w: 'w-20' },
                   { key: 'serie', label: 'Serie', w: 'w-28' },
-                  { key: 'partida', label: 'Partida/Lote', w: 'w-28' },
-                ].map(col => (
+                  { key: 'partida', label: 'Partida/Lote', w: 'w-28' }
+                ].map((col) => (
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
@@ -495,13 +568,13 @@ export default function LocationManager() {
                   >
                     <div className="flex items-center gap-1">
                       {col.label}
-                      {sortField === col.key && (
-                        <ArrowUpDown size={12} className="text-blue-500" />
-                      )}
+                      {sortField === col.key && <ArrowUpDown size={12} className="text-blue-500" />}
                     </div>
                   </th>
                 ))}
-                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase w-28 text-center">Acciones</th>
+                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase w-28 text-center">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -521,9 +594,17 @@ export default function LocationManager() {
                 </tr>
               ) : (
                 data.map((row) => (
-                  <tr key={row.id} className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors">
+                  <tr
+                    key={row.id}
+                    className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors"
+                  >
                     <td className="px-3 py-1">
-                      <EditableCell value={row.ubicacion} field="ubicacion" rowId={row.id} onSave={handleInlineSave} />
+                      <EditableCell
+                        value={row.ubicacion}
+                        field="ubicacion"
+                        rowId={row.id}
+                        onSave={handleInlineSave}
+                      />
                     </td>
                     <td className="px-3 py-1">
                       <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
@@ -531,16 +612,37 @@ export default function LocationManager() {
                       </span>
                     </td>
                     <td className="px-3 py-1">
-                      <EditableCell value={row.descripcion} field="descripcion" rowId={row.id} onSave={handleInlineSave} />
+                      <EditableCell
+                        value={row.descripcion}
+                        field="descripcion"
+                        rowId={row.id}
+                        onSave={handleInlineSave}
+                      />
                     </td>
                     <td className="px-3 py-1">
-                      <EditableCell value={row.cantidad} field="cantidad" rowId={row.id} onSave={handleInlineSave} type="number" />
+                      <EditableCell
+                        value={row.cantidad}
+                        field="cantidad"
+                        rowId={row.id}
+                        onSave={handleInlineSave}
+                        type="number"
+                      />
                     </td>
                     <td className="px-3 py-1">
-                      <EditableCell value={row.serie} field="serie" rowId={row.id} onSave={handleInlineSave} />
+                      <EditableCell
+                        value={row.serie}
+                        field="serie"
+                        rowId={row.id}
+                        onSave={handleInlineSave}
+                      />
                     </td>
                     <td className="px-3 py-1">
-                      <EditableCell value={row.partida} field="partida" rowId={row.id} onSave={handleInlineSave} />
+                      <EditableCell
+                        value={row.partida}
+                        field="partida"
+                        rowId={row.id}
+                        onSave={handleInlineSave}
+                      />
                     </td>
                     <td className="px-3 py-1">
                       <div className="flex items-center justify-center gap-1">
@@ -571,11 +673,15 @@ export default function LocationManager() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50/50">
             <p className="text-xs text-slate-500">
-              Mostrando <span className="font-bold text-slate-700">{page * PAGE_SIZE + 1}</span>–<span className="font-bold text-slate-700">{Math.min((page + 1) * PAGE_SIZE, totalCount)}</span> de <span className="font-bold text-slate-700">{totalCount.toLocaleString()}</span>
+              Mostrando <span className="font-bold text-slate-700">{page * PAGE_SIZE + 1}</span>–
+              <span className="font-bold text-slate-700">
+                {Math.min((page + 1) * PAGE_SIZE, totalCount)}
+              </span>{' '}
+              de <span className="font-bold text-slate-700">{totalCount.toLocaleString()}</span>
             </p>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
                 className="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
@@ -585,7 +691,7 @@ export default function LocationManager() {
                 {page + 1} / {totalPages}
               </span>
               <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
                 className="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
@@ -597,8 +703,16 @@ export default function LocationManager() {
       </div>
 
       {/* Modals */}
-      {moveItem && <MoveModal item={moveItem} onClose={() => setMoveItem(null)} onConfirm={handleMove} />}
-      {deleteItem && <DeleteModal item={deleteItem} onClose={() => setDeleteItem(null)} onConfirm={handleDelete} />}
+      {moveItem && (
+        <MoveModal item={moveItem} onClose={() => setMoveItem(null)} onConfirm={handleMove} />
+      )}
+      {deleteItem && (
+        <DeleteModal
+          item={deleteItem}
+          onClose={() => setDeleteItem(null)}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   );
 }

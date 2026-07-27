@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, RefreshCw, Inbox } from 'lucide-react';
 
 // Estados unificados para listas/tablas de las pantallas de administración:
@@ -29,10 +28,14 @@ export function ListaError({ mensaje, onRetry }) {
     <div className="py-12 text-center px-4">
       <AlertTriangle size={28} className="mx-auto text-red-400 mb-2" />
       <p className="text-slate-600 text-sm font-bold">No se pudo cargar</p>
-      {mensaje && <p className="text-slate-400 text-[12px] mt-0.5 max-w-md mx-auto break-words">{mensaje}</p>}
+      {mensaje && (
+        <p className="text-slate-400 text-[12px] mt-0.5 max-w-md mx-auto break-words">{mensaje}</p>
+      )}
       {onRetry && (
-        <button onClick={onRetry}
-          className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50">
+        <button
+          onClick={onRetry}
+          className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50"
+        >
           <RefreshCw size={14} /> Reintentar
         </button>
       )}

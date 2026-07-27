@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import Navbar from './Navbar';
 import ErrorReportWidget from './ErrorReportWidget';
 import OtaBanner from './OtaBanner';
@@ -22,29 +22,33 @@ const Layout = ({ children }) => {
       if (insertCounters.tms_nv_diarias > 0) {
         const n = insertCounters.tms_nv_diarias;
         toast.info(n === 1 ? 'Nueva N.V. Cargada' : `${n} N.V. Cargadas`, {
-          id: 'batch-nv', duration: 5000,
+          id: 'batch-nv',
+          duration: 5000
         });
       }
       if (insertCounters.tms_partidas > 0) {
         const n = insertCounters.tms_partidas;
         toast.success(n === 1 ? 'Nueva Partida' : `${n} Partidas cargadas`, {
-          id: 'batch-partidas', duration: 4000,
+          id: 'batch-partidas',
+          duration: 4000
         });
       }
       if (insertCounters.tms_series > 0) {
         const n = insertCounters.tms_series;
         toast.success(n === 1 ? 'Nueva Serie' : `${n} Series cargadas`, {
-          id: 'batch-series', duration: 4000,
+          id: 'batch-series',
+          duration: 4000
         });
       }
       if (insertCounters.tms_farmapack > 0) {
         const n = insertCounters.tms_farmapack;
         toast.success(n === 1 ? 'Farmapack Actualizado' : `${n} lotes Farmapack cargados`, {
-          id: 'batch-farmapack', duration: 4000,
+          id: 'batch-farmapack',
+          duration: 4000
         });
       }
       // Reset
-      Object.keys(insertCounters).forEach(k => insertCounters[k] = 0);
+      Object.keys(insertCounters).forEach((k) => (insertCounters[k] = 0));
     };
 
     const scheduleFlush = () => {
@@ -57,23 +61,23 @@ const Layout = ({ children }) => {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_nv_diarias' },
-        () => { insertCounters.tms_nv_diarias++; scheduleFlush(); }
+        () => {
+          insertCounters.tms_nv_diarias++;
+          scheduleFlush();
+        }
       )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'tms_partidas' },
-        () => { insertCounters.tms_partidas++; scheduleFlush(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'tms_series' },
-        () => { insertCounters.tms_series++; scheduleFlush(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'tms_farmapack' },
-        () => { insertCounters.tms_farmapack++; scheduleFlush(); }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tms_partidas' }, () => {
+        insertCounters.tms_partidas++;
+        scheduleFlush();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tms_series' }, () => {
+        insertCounters.tms_series++;
+        scheduleFlush();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tms_farmapack' }, () => {
+        insertCounters.tms_farmapack++;
+        scheduleFlush();
+      })
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'tms_nv_diarias' },
@@ -82,7 +86,7 @@ const Layout = ({ children }) => {
             toast.info('Cambio de Estado', {
               description: `N.V. #${payload.new.nv} → ${payload.new.estado}`,
               id: `estado-${payload.new.nv}`,
-              duration: 4000,
+              duration: 4000
             });
           }
         }
@@ -100,22 +104,31 @@ const Layout = ({ children }) => {
   // Animaciones Enterprise para transiciones de página
   useGSAP(() => {
     // Animación de entrada de página
-    gsap.fromTo(mainRef.current, 
-      { opacity: 0, y: 20, filter: "blur(10px)", scale: 0.98 }, 
-      { opacity: 1, y: 0, filter: "blur(0px)", scale: 1, duration: 0.8, ease: "expo.out", clearProps: 'all' }
+    gsap.fromTo(
+      mainRef.current,
+      { opacity: 0, y: 20, filter: 'blur(10px)', scale: 0.98 },
+      {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        scale: 1,
+        duration: 0.8,
+        ease: 'expo.out',
+        clearProps: 'all'
+      }
     );
 
     // Animación de los orbes del fondo
-    gsap.to(".layout-orb", {
-      x: "random(-100, 100)",
-      y: "random(-50, 50)",
-      duration: "random(15, 25)",
+    gsap.to('.layout-orb', {
+      x: 'random(-100, 100)',
+      y: 'random(-50, 50)',
+      duration: 'random(15, 25)',
       repeat: -1,
       yoyo: true,
-      ease: "sine.inOut",
+      ease: 'sine.inOut',
       stagger: 2
     });
-  }, [location.pathname]); 
+  }, [location.pathname]);
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
@@ -132,12 +145,14 @@ const Layout = ({ children }) => {
 
       {/* Main App Shell Container */}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
-        
         {/* Main Content Area — overflow-x-hidden contiene cualquier elemento ancho
             para que NINGÚN módulo empuje la página de lado en el celular. Las tablas
             anchas siguen con su propio scroll interno (overflow-x-auto en su wrapper). */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative pt-[72px] sm:pt-[100px]">
-          <div ref={mainRef} className="max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10 pb-24">
+          <div
+            ref={mainRef}
+            className="max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10 pb-24"
+          >
             {children}
           </div>
         </main>

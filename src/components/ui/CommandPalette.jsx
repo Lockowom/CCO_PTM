@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Package, Truck, User, FileText, MapPin, Scan } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, X, Package, FileText, Scan } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
 import { withTimeout } from '../../lib/supabaseQuery';
@@ -44,7 +44,7 @@ const CommandPalette = () => {
 
     const searchData = async () => {
       setIsLoading(true);
-      
+
       try {
         // Buscar en productos (wms_ubicaciones) — con timeout para que el
         // spinner del palette no quede colgado si la red no responde.
@@ -68,9 +68,9 @@ const CommandPalette = () => {
         );
 
         const newResults = [];
-        
+
         if (locs) {
-          locs.forEach(l => {
+          locs.forEach((l) => {
             newResults.push({
               type: 'product',
               icon: <Package size={16} className="text-emerald-400" />,
@@ -82,7 +82,7 @@ const CommandPalette = () => {
         }
 
         if (nvs) {
-          nvs.forEach(n => {
+          nvs.forEach((n) => {
             newResults.push({
               type: 'nv',
               icon: <FileText size={16} className="text-indigo-400" />,
@@ -95,11 +95,19 @@ const CommandPalette = () => {
 
         // Acciones globales
         const globalActions = [
-          { title: 'Lotes / Series', path: '/queries/batches', icon: <Package size={16} className="text-emerald-400"/> },
-          { title: 'PDA Operativa (Bodega)', path: '/mobile/pda', icon: <Scan size={16} className="text-amber-400"/> },
-        ].filter(a => a.title.toLowerCase().includes(query.toLowerCase()));
+          {
+            title: 'Lotes / Series',
+            path: '/queries/batches',
+            icon: <Package size={16} className="text-emerald-400" />
+          },
+          {
+            title: 'PDA Operativa (Bodega)',
+            path: '/mobile/pda',
+            icon: <Scan size={16} className="text-amber-400" />
+          }
+        ].filter((a) => a.title.toLowerCase().includes(query.toLowerCase()));
 
-        globalActions.forEach(a => {
+        globalActions.forEach((a) => {
           newResults.push({
             type: 'action',
             icon: a.icon,
@@ -127,10 +135,10 @@ const CommandPalette = () => {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (results[selectedIndex]) {
@@ -144,9 +152,12 @@ const CommandPalette = () => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 sm:px-0">
-      <div className="fixed inset-0 bg-slate-50/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-      
-      <div 
+      <div
+        className="fixed inset-0 bg-slate-50/60 backdrop-blur-sm"
+        onClick={() => setIsOpen(false)}
+      />
+
+      <div
         className="bg-white border border-slate-300 w-full max-w-2xl rounded-2xl shadow-2xl relative overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-4"
         onKeyDown={handleKeyDown}
       >
@@ -161,7 +172,10 @@ const CommandPalette = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button onClick={() => setIsOpen(false)} className="p-1 text-slate-500 hover:text-slate-700 transition-colors">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-1 text-slate-500 hover:text-slate-700 transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
@@ -183,9 +197,7 @@ const CommandPalette = () => {
                 }}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
-                <div className="p-2 bg-slate-50 rounded-lg shadow-inner">
-                  {result.icon}
-                </div>
+                <div className="p-2 bg-slate-50 rounded-lg shadow-inner">{result.icon}</div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">{result.title}</h4>
                   <p className="text-xs text-slate-500">{result.subtitle}</p>
@@ -193,18 +205,32 @@ const CommandPalette = () => {
               </div>
             ))
           ) : query ? (
-            <div className="p-4 text-center text-slate-500 text-sm">No se encontraron resultados para "{query}"</div>
+            <div className="p-4 text-center text-slate-500 text-sm">
+              No se encontraron resultados para "{query}"
+            </div>
           ) : (
-            <div className="p-4 text-center text-slate-500 text-sm">Empieza a escribir para buscar...</div>
+            <div className="p-4 text-center text-slate-500 text-sm">
+              Empieza a escribir para buscar...
+            </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="bg-slate-50/50 p-3 border-t border-slate-300 flex justify-between items-center text-xs text-slate-500">
           <div className="flex gap-4">
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↑</kbd> <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↓</kbd> Navegar</span>
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Enter</kbd> Seleccionar</span>
-            <span className="flex items-center gap-1"><kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Esc</kbd> Cerrar</span>
+            <span className="flex items-center gap-1">
+              <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↑</kbd>{' '}
+              <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">↓</kbd>{' '}
+              Navegar
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Enter</kbd>{' '}
+              Seleccionar
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="bg-white border border-slate-300 px-1.5 py-0.5 rounded">Esc</kbd>{' '}
+              Cerrar
+            </span>
           </div>
         </div>
       </div>

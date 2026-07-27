@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 
 const ConfigContext = createContext();
@@ -11,14 +11,12 @@ export const ConfigProvider = ({ children }) => {
 
   const loadConfig = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('tms_modules_config')
-        .select('id, enabled');
+      const { data, error } = await supabase.from('tms_modules_config').select('id, enabled');
 
       if (error) throw error;
 
       const configMap = {};
-      (data || []).forEach(item => {
+      (data || []).forEach((item) => {
         configMap[item.id] = item.enabled;
       });
 
@@ -41,11 +39,9 @@ export const ConfigProvider = ({ children }) => {
 
     const channel = supabase
       .channel('config_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tms_modules_config' },
-        () => { loadConfig(); }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_modules_config' }, () => {
+        loadConfig();
+      })
       .subscribe((status, err) => {
         if (err) console.error('Realtime subscription error:', err);
       });
@@ -55,17 +51,22 @@ export const ConfigProvider = ({ children }) => {
     };
   }, [loadConfig]);
 
-  const isModuleEnabled = useCallback((moduleId) => {
-    return modulesConfig[moduleId] !== false;
-  }, [modulesConfig]);
+  const isModuleEnabled = useCallback(
+    (moduleId) => {
+      return modulesConfig[moduleId] !== false;
+    },
+    [modulesConfig]
+  );
 
   return (
-    <ConfigContext.Provider value={{
-      modulesConfig,
-      isModuleEnabled,
-      refreshConfig,
-      loading
-    }}>
+    <ConfigContext.Provider
+      value={{
+        modulesConfig,
+        isModuleEnabled,
+        refreshConfig,
+        loading
+      }}
+    >
       {children}
     </ConfigContext.Provider>
   );

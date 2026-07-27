@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Mocks ──
 
@@ -8,11 +8,11 @@ const mockSyncQueue = {
   add: vi.fn(),
   toArray: vi.fn(),
   update: vi.fn(),
-  delete: vi.fn(),
+  delete: vi.fn()
 };
 
 vi.mock('../lib/db', () => ({
-  db: { syncQueue: mockSyncQueue },
+  db: { syncQueue: mockSyncQueue }
 }));
 
 // Mock Supabase
@@ -22,12 +22,12 @@ const mockSupabase = {
     upsert: vi.fn(),
     update: vi.fn(() => ({ eq: vi.fn() })),
     insert: vi.fn(),
-    delete: vi.fn(() => ({ eq: vi.fn() })),
-  })),
+    delete: vi.fn(() => ({ eq: vi.fn() }))
+  }))
 };
 
 vi.mock('../supabase', () => ({
-  supabase: mockSupabase,
+  supabase: mockSupabase
 }));
 
 // Import after mocks
@@ -38,7 +38,7 @@ const {
   syncOfflineData,
   getFailedItems,
   retryItem,
-  removeItem,
+  removeItem
 } = await import('../lib/syncManager');
 
 // ── Tests ──
@@ -61,7 +61,7 @@ describe('syncManager', () => {
         tableName: 'wms_ubicaciones',
         recordId: 'test-1',
         data: { ubicacion: 'A-01-1', codigo: 'SKU001' },
-        onConflict: 'ubicacion,codigo',
+        onConflict: 'ubicacion,codigo'
       });
 
       expect(result).toBe(true);
@@ -81,7 +81,7 @@ describe('syncManager', () => {
         type: 'insert',
         tableName: 'tms_nv_diarias',
         recordId: 'nv-1',
-        data: { estado: 'PENDIENTE' },
+        data: { estado: 'PENDIENTE' }
       });
 
       expect(result).toBe(false);
@@ -95,7 +95,7 @@ describe('syncManager', () => {
         type: 'insert',
         tableName: 'tms_nv_diarias',
         recordId: 'nv-1',
-        data: { estado: 'PENDIENTE' },
+        data: { estado: 'PENDIENTE' }
       });
 
       expect(result).toBe(true);
@@ -107,7 +107,7 @@ describe('syncManager', () => {
         type: 'upsert',
         tableName: 'test_table',
         recordId: '1',
-        data: {},
+        data: {}
       });
 
       const addedItem = mockSyncQueue.add.mock.calls[0][0];
@@ -121,14 +121,14 @@ describe('syncManager', () => {
     it('encola upsert batch con onConflict', async () => {
       const rows = [
         { ubicacion: 'A-01-1', codigo: 'SKU001', cantidad: 10 },
-        { ubicacion: 'A-01-2', codigo: 'SKU002', cantidad: 5 },
+        { ubicacion: 'A-01-2', codigo: 'SKU002', cantidad: 5 }
       ];
 
       const result = await enqueueUpsert({
         tableName: 'wms_ubicaciones',
         data: rows,
         onConflict: 'ubicacion,codigo',
-        userId: 'user-123',
+        userId: 'user-123'
       });
 
       expect(result).toBe(true);
@@ -144,7 +144,7 @@ describe('syncManager', () => {
 
       const result = await enqueueUpsert({
         tableName: 'test',
-        data: [{ foo: 'bar' }],
+        data: [{ foo: 'bar' }]
       });
 
       expect(result).toBe(false);
@@ -157,7 +157,7 @@ describe('syncManager', () => {
     it('encola update_picking como tipo update', async () => {
       await enqueueOfflineAction('update_picking', {
         id: 'pick-123',
-        data: { estado: 'COMPLETADO', cantidad_real: 10 },
+        data: { estado: 'COMPLETADO', cantidad_real: 10 }
       });
 
       const addedItem = mockSyncQueue.add.mock.calls[0][0];
@@ -170,7 +170,7 @@ describe('syncManager', () => {
       await enqueueOfflineAction('move_stock', {
         from: 'A-01-1',
         to: 'B-02-3',
-        qty: 5,
+        qty: 5
       });
 
       const addedItem = mockSyncQueue.add.mock.calls[0][0];
@@ -203,17 +203,16 @@ describe('syncManager', () => {
           onConflict: 'ubicacion,codigo',
           status: 'pending',
           timestamp: Date.now(),
-          retryCount: 0,
-        },
+          retryCount: 0
+        }
       ]);
 
       await syncOfflineData();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('wms_ubicaciones');
-      expect(mockUpsert).toHaveBeenCalledWith(
-        [{ ubicacion: 'A-01-1', codigo: 'SKU001' }],
-        { onConflict: 'ubicacion,codigo' }
-      );
+      expect(mockUpsert).toHaveBeenCalledWith([{ ubicacion: 'A-01-1', codigo: 'SKU001' }], {
+        onConflict: 'ubicacion,codigo'
+      });
       expect(mockSyncQueue.delete).toHaveBeenCalledWith(1);
     });
 
@@ -228,13 +227,16 @@ describe('syncManager', () => {
           data: { from: 'A-01-1', to: 'B-02-3' },
           status: 'pending',
           timestamp: Date.now(),
-          retryCount: 0,
-        },
+          retryCount: 0
+        }
       ]);
 
       await syncOfflineData();
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('wms_move_stock', { from: 'A-01-1', to: 'B-02-3' });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('wms_move_stock', {
+        from: 'A-01-1',
+        to: 'B-02-3'
+      });
       expect(mockSyncQueue.delete).toHaveBeenCalledWith(2);
     });
 
@@ -250,17 +252,20 @@ describe('syncManager', () => {
           data: [{ a: 1 }],
           status: 'pending',
           timestamp: Date.now(),
-          retryCount: 0,
-        },
+          retryCount: 0
+        }
       ]);
 
       await syncOfflineData();
 
-      expect(mockSyncQueue.update).toHaveBeenCalledWith(3, expect.objectContaining({
-        status: 'failed',
-        retryCount: 1,
-        lastError: 'DB error',
-      }));
+      expect(mockSyncQueue.update).toHaveBeenCalledWith(
+        3,
+        expect.objectContaining({
+          status: 'failed',
+          retryCount: 1,
+          lastError: 'DB error'
+        })
+      );
       expect(mockSyncQueue.delete).not.toHaveBeenCalledWith(3);
     });
 
@@ -277,15 +282,15 @@ describe('syncManager', () => {
           status: 'failed',
           timestamp: Date.now() - 300000,
           retryCount: 7, // next attempt = 8 = MAX_RETRIES
-          lastAttempt: Date.now() - 300000, // 5 min ago, well past 2^7=128s backoff
-        },
+          lastAttempt: Date.now() - 300000 // 5 min ago, well past 2^7=128s backoff
+        }
       ]);
 
       await syncOfflineData();
 
       // Should have been updated to 'syncing' first, then to 'dead'
       const updateCalls = mockSyncQueue.update.mock.calls;
-      const deadCall = updateCalls.find(c => c[1].status === 'dead');
+      const deadCall = updateCalls.find((c) => c[1].status === 'dead');
       expect(deadCall).toBeTruthy();
       expect(deadCall[1].retryCount).toBe(8);
     });
@@ -300,8 +305,8 @@ describe('syncManager', () => {
           status: 'failed',
           timestamp: Date.now(),
           retryCount: 5,
-          lastAttempt: Date.now(), // just attempted — backoff should block
-        },
+          lastAttempt: Date.now() // just attempted — backoff should block
+        }
       ]);
 
       await syncOfflineData();
@@ -320,8 +325,8 @@ describe('syncManager', () => {
           data: [{ a: 1 }],
           status: 'dead',
           timestamp: Date.now(),
-          retryCount: 8,
-        },
+          retryCount: 8
+        }
       ]);
 
       await syncOfflineData();
@@ -343,8 +348,8 @@ describe('syncManager', () => {
           data: { estado: 'COMPLETADO' },
           status: 'pending',
           timestamp: Date.now(),
-          retryCount: 0,
-        },
+          retryCount: 0
+        }
       ]);
 
       await syncOfflineData();
@@ -368,8 +373,8 @@ describe('syncManager', () => {
           data: {},
           status: 'pending',
           timestamp: Date.now(),
-          retryCount: 0,
-        },
+          retryCount: 0
+        }
       ]);
 
       await syncOfflineData();
@@ -388,13 +393,13 @@ describe('syncManager', () => {
         { id: 1, status: 'pending' },
         { id: 2, status: 'failed', lastError: 'err1' },
         { id: 3, status: 'dead', lastError: 'err2' },
-        { id: 4, status: 'syncing' },
+        { id: 4, status: 'syncing' }
       ]);
 
       const failed = await getFailedItems();
 
       expect(failed).toHaveLength(2);
-      expect(failed.map(i => i.id)).toEqual([2, 3]);
+      expect(failed.map((i) => i.id)).toEqual([2, 3]);
     });
 
     it('retorna array vacío en error', async () => {
@@ -416,7 +421,7 @@ describe('syncManager', () => {
       expect(mockSyncQueue.update).toHaveBeenCalledWith(42, {
         status: 'pending',
         retryCount: 0,
-        lastAttempt: null,
+        lastAttempt: null
       });
     });
   });

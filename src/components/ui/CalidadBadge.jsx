@@ -1,4 +1,3 @@
-import React from 'react';
 import { FLAG_META } from '../../services/calidadService';
 
 /**

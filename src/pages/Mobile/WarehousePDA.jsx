@@ -1,13 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Scan, Package, ArrowRight, CheckCircle,
-  AlertTriangle, RotateCcw, Search, LogOut,
-  Box, MapPin, ClipboardList, ArrowLeft, Wifi, WifiOff,
-  Plus, Minus, ChevronRight, Archive, Camera, CloudOff, UploadCloud
+  Scan,
+  Package,
+  ArrowRight,
+  CheckCircle,
+  RotateCcw,
+  Search,
+  LogOut,
+  MapPin,
+  ArrowLeft,
+  Wifi,
+  WifiOff,
+  Plus,
+  Minus,
+  ChevronRight,
+  Archive,
+  Camera,
+  CloudOff,
+  UploadCloud
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
-import gsap from 'gsap';
 import { toast } from 'sonner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
@@ -31,11 +44,15 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 // ============================================================================
 
 const hapticSuccess = async () => {
-  try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (_) {}
+  try {
+    await Haptics.impact({ style: ImpactStyle.Light });
+  } catch (_) {}
 };
 
 const hapticError = async () => {
-  try { await Haptics.impact({ style: ImpactStyle.Heavy }); } catch (_) {}
+  try {
+    await Haptics.impact({ style: ImpactStyle.Heavy });
+  } catch (_) {}
 };
 
 const WarehousePDA = () => {
@@ -48,7 +65,12 @@ const WarehousePDA = () => {
 
   // PUTAWAY STATE
   const [putawayStep, setPutawayStep] = useState('SCAN_LOC'); // SCAN_LOC -> SCAN_SKU -> ENTER_QTY -> CONFIRM
-  const [putawayData, setPutawayData] = useState({ ubicacion: '', codigo: '', descripcion: '', cantidad: 1 });
+  const [putawayData, setPutawayData] = useState({
+    ubicacion: '',
+    codigo: '',
+    descripcion: '',
+    cantidad: 1
+  });
   const [putawayCount, setPutawayCount] = useState(0);
 
   const inputRef = useRef(null);
@@ -107,24 +129,27 @@ const WarehousePDA = () => {
       // (la operación queda en cola y se valida al sincronizar en el servidor).
       if (!online) {
         hapticSuccess();
-        setPutawayData(prev => ({ ...prev, ubicacion: val }));
+        setPutawayData((prev) => ({ ...prev, ubicacion: val }));
         setPutawayStep('SCAN_SKU');
         toast.success(`Ubicación: ${val} (offline)`);
         return;
       }
       try {
         const { error } = await supabase
-          .from('wms_ubicaciones').select('ubicacion').eq('ubicacion', val).limit(1);
+          .from('wms_ubicaciones')
+          .select('ubicacion')
+          .eq('ubicacion', val)
+          .limit(1);
         if (error) throw error;
         hapticSuccess();
-        setPutawayData(prev => ({ ...prev, ubicacion: val }));
+        setPutawayData((prev) => ({ ...prev, ubicacion: val }));
         setPutawayStep('SCAN_SKU');
         toast.success(`Ubicación: ${val}`);
       } catch (err) {
         // Caída de red a mitad → dejar seguir en modo offline.
         if (esErrorDeRed(err)) {
           hapticSuccess();
-          setPutawayData(prev => ({ ...prev, ubicacion: val }));
+          setPutawayData((prev) => ({ ...prev, ubicacion: val }));
           setPutawayStep('SCAN_SKU');
           toast.warning(`Ubicación: ${val} (sin validar, offline)`);
           return;
@@ -136,7 +161,7 @@ const WarehousePDA = () => {
       // Offline: sin catálogo → se acepta el código con descripción "por validar".
       if (!online) {
         hapticSuccess();
-        setPutawayData(prev => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
+        setPutawayData((prev) => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
         setPutawayStep('ENTER_QTY');
         toast.success(`Producto: ${val} (offline)`);
         return;
@@ -145,7 +170,9 @@ const WarehousePDA = () => {
         const { data, error } = await supabase
           .from('tms_matriz_codigos')
           .select('codigo_producto, producto')
-          .eq('codigo_producto', val).limit(1).maybeSingle();
+          .eq('codigo_producto', val)
+          .limit(1)
+          .maybeSingle();
         if (error) throw error;
         if (!data) {
           hapticError();
@@ -153,13 +180,21 @@ const WarehousePDA = () => {
           return;
         }
         hapticSuccess();
-        setPutawayData(prev => ({ ...prev, codigo: data.codigo_producto, descripcion: data.producto }));
+        setPutawayData((prev) => ({
+          ...prev,
+          codigo: data.codigo_producto,
+          descripcion: data.producto
+        }));
         setPutawayStep('ENTER_QTY');
         toast.success(`Producto: ${data.producto}`);
       } catch (err) {
         if (esErrorDeRed(err)) {
           hapticSuccess();
-          setPutawayData(prev => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
+          setPutawayData((prev) => ({
+            ...prev,
+            codigo: val,
+            descripcion: 'Por validar (offline)'
+          }));
           setPutawayStep('ENTER_QTY');
           toast.warning(`Producto: ${val} (sin validar, offline)`);
           return;
@@ -175,7 +210,7 @@ const WarehousePDA = () => {
       ubicacion: putawayData.ubicacion,
       codigo: putawayData.codigo,
       descripcion: putawayData.descripcion,
-      cantidad: putawayData.cantidad,
+      cantidad: putawayData.cantidad
     };
 
     // Continúa al siguiente ítem (se guardó online o quedó en cola offline).
@@ -189,16 +224,20 @@ const WarehousePDA = () => {
     // Guarda la operación en la cola local para subirla al reconectar.
     const encolar = async () => {
       await enqueueSyncItem({
-        type: 'insert', tableName: 'wms_ubicaciones',
+        type: 'insert',
+        tableName: 'wms_ubicaciones',
         recordId: `putaway_${registro.ubicacion}_${registro.codigo}_${Date.now()}`,
-        data: registro,
+        data: registro
       });
       // enqueueSyncItem ya muestra "Operación guardada offline".
       avanzar();
     };
 
     // Sin señal → directo a la cola (no intentamos la red).
-    if (!online) { await encolar(); return; }
+    if (!online) {
+      await encolar();
+      return;
+    }
 
     try {
       toast.loading('Guardando...', { id: 'putaway-save' });
@@ -211,7 +250,10 @@ const WarehousePDA = () => {
       toast.dismiss('putaway-save');
       console.error('Error putaway:', err);
       // Si fue caída de red → guardar offline en vez de perder el trabajo.
-      if (esErrorDeRed(err)) { await encolar(); return; }
+      if (esErrorDeRed(err)) {
+        await encolar();
+        return;
+      }
       hapticError();
       toast.error('Error al ubicar: ' + (err.message || 'Error desconocido'));
     }
@@ -229,28 +271,44 @@ const WarehousePDA = () => {
     return (
       <div key="home" className="anim-slide-in min-h-dvh bg-slate-900 text-white flex flex-col">
         {/* Top Bar (respeta el notch / barra de estado) */}
-        <div className="bg-white text-slate-900 p-3 sm:p-4 flex justify-between items-center shadow-md" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+        <div
+          className="bg-white text-slate-900 p-3 sm:p-4 flex justify-between items-center shadow-md"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        >
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold flex-shrink-0">
               {(user?.nombre || user?.email || '?').charAt(0).toUpperCase()}
             </div>
             <div className="text-xs min-w-0">
-              <div className="font-bold truncate">{user?.nombre || user?.email?.split('@')[0] || 'Operario'}</div>
+              <div className="font-bold truncate">
+                {user?.nombre || user?.email?.split('@')[0] || 'Operario'}
+              </div>
               {online ? (
-                <div className="text-emerald-600 flex items-center gap-1"><Wifi size={10} /> Conectado</div>
+                <div className="text-emerald-600 flex items-center gap-1">
+                  <Wifi size={10} /> Conectado
+                </div>
               ) : (
-                <div className="text-rose-600 flex items-center gap-1 font-bold"><WifiOff size={10} /> Sin señal</div>
+                <div className="text-rose-600 flex items-center gap-1 font-bold">
+                  <WifiOff size={10} /> Sin señal
+                </div>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
             {pending > 0 && (
-              <button onClick={syncNow} title="Sincronizar pendientes"
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-black ${online ? 'bg-amber-100 text-amber-700 active:bg-amber-200' : 'bg-slate-200 text-slate-600'}`}>
+              <button
+                onClick={syncNow}
+                title="Sincronizar pendientes"
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-black ${online ? 'bg-amber-100 text-amber-700 active:bg-amber-200' : 'bg-slate-200 text-slate-600'}`}
+              >
                 {online ? <UploadCloud size={14} /> : <CloudOff size={14} />} {pending}
               </button>
             )}
-            <button onClick={logout} className="p-2 bg-slate-100 rounded-lg active:bg-slate-200" aria-label="Cerrar sesión">
+            <button
+              onClick={logout}
+              className="p-2 bg-slate-100 rounded-lg active:bg-slate-200"
+              aria-label="Cerrar sesión"
+            >
               <LogOut size={18} />
             </button>
           </div>
@@ -265,8 +323,12 @@ const WarehousePDA = () => {
         )}
         {online && pending > 0 && (
           <div className="bg-amber-500 text-white text-xs font-bold px-3 py-2 flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2"><UploadCloud size={14} className="shrink-0" /> {pending} operación(es) por subir…</span>
-            <button onClick={syncNow} className="underline underline-offset-2">Sincronizar</button>
+            <span className="flex items-center gap-2">
+              <UploadCloud size={14} className="shrink-0" /> {pending} operación(es) por subir…
+            </span>
+            <button onClick={syncNow} className="underline underline-offset-2">
+              Sincronizar
+            </button>
           </div>
         )}
 
@@ -276,7 +338,10 @@ const WarehousePDA = () => {
             icon={<ArrowRight size={32} />}
             label="UBICAR (PUTAWAY)"
             color="bg-emerald-600"
-            onClick={() => { setMode('PUTAWAY'); setPutawayStep('SCAN_LOC'); }}
+            onClick={() => {
+              setMode('PUTAWAY');
+              setPutawayStep('SCAN_LOC');
+            }}
           />
           <MenuButton
             icon={<RotateCcw size={32} />}
@@ -292,7 +357,10 @@ const WarehousePDA = () => {
           />
         </div>
 
-        <div className="p-4 text-center text-slate-500 text-xs font-mono" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        <div
+          className="p-4 text-center text-slate-500 text-xs font-mono"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
           WMS HANDHELD · v{APP_VERSION}
         </div>
       </div>
@@ -306,18 +374,31 @@ const WarehousePDA = () => {
     const currentStepIdx = steps.indexOf(putawayStep) + 1;
 
     return (
-      <div key="putaway" className="anim-slide-in min-h-dvh bg-black text-white flex flex-col font-mono">
+      <div
+        key="putaway"
+        className="anim-slide-in min-h-dvh bg-black text-white flex flex-col font-mono"
+      >
         {/* Header (respeta el notch / barra de estado) */}
-        <div className="bg-emerald-900 p-3 flex justify-between items-center" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+        <div
+          className="bg-emerald-900 p-3 flex justify-between items-center"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        >
           <div className="flex items-center gap-2">
-            <button onClick={goHome} className="text-emerald-300 hover:text-white" aria-label="Volver">
+            <button
+              onClick={goHome}
+              className="text-emerald-300 hover:text-white"
+              aria-label="Volver"
+            >
               <ArrowLeft size={20} />
             </button>
             <span className="text-sm font-bold text-emerald-300">PUTAWAY</span>
           </div>
           <div className="flex items-center gap-2">
             {pending > 0 && (
-              <span className="flex items-center gap-1 text-[11px] font-black text-amber-300" title="Pendientes de subir">
+              <span
+                className="flex items-center gap-1 text-[11px] font-black text-amber-300"
+                title="Pendientes de subir"
+              >
                 {online ? <UploadCloud size={12} /> : <CloudOff size={12} />} {pending}
               </span>
             )}
@@ -331,15 +412,21 @@ const WarehousePDA = () => {
         <div className="bg-slate-900 px-4 py-3 flex items-center gap-2">
           {steps.map((step, idx) => (
             <React.Fragment key={step}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                idx + 1 < currentStepIdx ? 'bg-emerald-500 text-white' :
-                idx + 1 === currentStepIdx ? 'bg-emerald-400 text-black ring-2 ring-emerald-300' :
-                'bg-slate-700 text-slate-500'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  idx + 1 < currentStepIdx
+                    ? 'bg-emerald-500 text-white'
+                    : idx + 1 === currentStepIdx
+                      ? 'bg-emerald-400 text-black ring-2 ring-emerald-300'
+                      : 'bg-slate-700 text-slate-500'
+                }`}
+              >
                 {idx + 1 < currentStepIdx ? <CheckCircle size={14} /> : idx + 1}
               </div>
               {idx < steps.length - 1 && (
-                <div className={`flex-1 h-1 rounded ${idx + 1 < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                <div
+                  className={`flex-1 h-1 rounded ${idx + 1 < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                />
               )}
             </React.Fragment>
           ))}
@@ -349,29 +436,46 @@ const WarehousePDA = () => {
         <div className="flex-1 p-4 flex flex-col gap-4">
           {/* STEP 1: SCAN LOCATION */}
           {putawayStep === 'SCAN_LOC' && (
-            <div key="s1" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
+            <div
+              key="s1"
+              className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4"
+            >
               <MapPin size={48} className="text-emerald-400" />
               <h2 className="text-2xl font-black text-emerald-400">ESCANEAR UBICACIÓN</h2>
-              <p className="text-slate-500 text-sm text-center">Escanee o escriba la ubicación destino<br/>(RACK-POSICIÓN-NIVEL)</p>
+              <p className="text-slate-500 text-sm text-center">
+                Escanee o escriba la ubicación destino
+                <br />
+                (RACK-POSICIÓN-NIVEL)
+              </p>
             </div>
           )}
 
           {/* STEP 2: SCAN SKU */}
           {putawayStep === 'SCAN_SKU' && (
-            <div key="s2" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
+            <div
+              key="s2"
+              className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4"
+            >
               <div className="bg-slate-800 rounded-xl p-3 w-full">
-                <label className="text-[10px] text-slate-500 uppercase">Ubicación seleccionada</label>
+                <label className="text-[10px] text-slate-500 uppercase">
+                  Ubicación seleccionada
+                </label>
                 <div className="text-2xl font-black text-emerald-400">{putawayData.ubicacion}</div>
               </div>
               <Package size={48} className="text-emerald-400 mt-4" />
               <h2 className="text-2xl font-black text-emerald-400">ESCANEAR PRODUCTO</h2>
-              <p className="text-slate-500 text-sm text-center">Escanee el código del producto (SKU)</p>
+              <p className="text-slate-500 text-sm text-center">
+                Escanee el código del producto (SKU)
+              </p>
             </div>
           )}
 
           {/* STEP 3: ENTER QUANTITY */}
           {putawayStep === 'ENTER_QTY' && (
-            <div key="s3" className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4">
+            <div
+              key="s3"
+              className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4"
+            >
               <div className="bg-slate-800 rounded-xl p-3 w-full">
                 <label className="text-[10px] text-slate-500 uppercase">Ubicación</label>
                 <div className="text-lg font-bold text-emerald-400">{putawayData.ubicacion}</div>
@@ -385,7 +489,12 @@ const WarehousePDA = () => {
               <h2 className="text-xl font-black text-emerald-400 mt-2">CANTIDAD</h2>
               <div className="flex items-center gap-3 sm:gap-4">
                 <button
-                  onClick={() => setPutawayData(prev => ({ ...prev, cantidad: Math.max(1, prev.cantidad - 1) }))}
+                  onClick={() =>
+                    setPutawayData((prev) => ({
+                      ...prev,
+                      cantidad: Math.max(1, prev.cantidad - 1)
+                    }))
+                  }
                   className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
                 >
                   <Minus size={24} className="text-white" />
@@ -393,12 +502,19 @@ const WarehousePDA = () => {
                 <input
                   type="number"
                   value={putawayData.cantidad}
-                  onChange={e => setPutawayData(prev => ({ ...prev, cantidad: Math.max(1, parseInt(e.target.value) || 1) }))}
+                  onChange={(e) =>
+                    setPutawayData((prev) => ({
+                      ...prev,
+                      cantidad: Math.max(1, parseInt(e.target.value) || 1)
+                    }))
+                  }
                   className="w-24 h-14 bg-slate-800 border-2 border-emerald-400 rounded-xl text-center text-3xl font-black text-white outline-none"
                   min="1"
                 />
                 <button
-                  onClick={() => setPutawayData(prev => ({ ...prev, cantidad: prev.cantidad + 1 }))}
+                  onClick={() =>
+                    setPutawayData((prev) => ({ ...prev, cantidad: prev.cantidad + 1 }))
+                  }
                   className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
                 >
                   <Plus size={24} className="text-white" />
@@ -417,12 +533,16 @@ const WarehousePDA = () => {
           {/* STEP 4: CONFIRM */}
           {putawayStep === 'CONFIRM' && (
             <div key="s4" className="anim-fade-up flex-1 flex flex-col gap-4">
-              <h2 className="text-xl font-black text-emerald-400 text-center">CONFIRMAR UBICACIÓN</h2>
+              <h2 className="text-xl font-black text-emerald-400 text-center">
+                CONFIRMAR UBICACIÓN
+              </h2>
 
               <div className="bg-slate-800 rounded-xl p-4 space-y-3">
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase">Ubicación</label>
-                  <div className="text-2xl font-black text-emerald-400">{putawayData.ubicacion}</div>
+                  <div className="text-2xl font-black text-emerald-400">
+                    {putawayData.ubicacion}
+                  </div>
                 </div>
                 <div className="border-t border-slate-700 pt-3">
                   <label className="text-[10px] text-slate-500 uppercase">Producto</label>
@@ -458,14 +578,19 @@ const WarehousePDA = () => {
           <form onSubmit={handleScan} className="p-2 bg-slate-900 border-t border-slate-700">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Scan className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
+                <Scan
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"
+                  size={20}
+                />
                 <input
                   ref={inputRef}
                   type="text"
                   value={scannedValue}
-                  onChange={e => setScannedValue(e.target.value)}
+                  onChange={(e) => setScannedValue(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-600 rounded-lg py-3 pl-10 text-white font-bold outline-none focus:border-emerald-400 min-h-[44px]"
-                  placeholder={putawayStep === 'SCAN_LOC' ? 'Escanear ubicación...' : 'Escanear producto...'}
+                  placeholder={
+                    putawayStep === 'SCAN_LOC' ? 'Escanear ubicación...' : 'Escanear producto...'
+                  }
                   autoComplete="off"
                 />
               </div>
@@ -504,7 +629,9 @@ const WarehousePDA = () => {
       <div className="text-center p-8">
         <Package size={64} className="mx-auto mb-4 text-slate-700" />
         <h2 className="text-xl font-bold text-slate-500">Error de Estado</h2>
-        <button onClick={goHome} className="mt-4 text-indigo-400">Volver</button>
+        <button onClick={goHome} className="mt-4 text-indigo-400">
+          Volver
+        </button>
       </div>
     </div>
   );
@@ -516,7 +643,9 @@ const MenuButton = ({ icon, label, color, onClick }) => (
     className={`${color} text-slate-900 p-4 sm:p-6 rounded-2xl shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center gap-2 sm:gap-3 h-32 sm:h-40 min-h-[44px]`}
   >
     {icon}
-    <span className="font-bold text-xs sm:text-sm tracking-wide text-center leading-tight">{label}</span>
+    <span className="font-bold text-xs sm:text-sm tracking-wide text-center leading-tight">
+      {label}
+    </span>
   </button>
 );
 

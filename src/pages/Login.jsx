@@ -1,5 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, RefreshCw, KeyRound, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  RefreshCw,
+  KeyRound,
+  Loader2
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { nivelAAL, factoresVerificados, verificarTOTP } from '../services/securityService';
@@ -52,21 +62,34 @@ const Login = () => {
   };
 
   const confirmarMfa = async () => {
-    if (mfaCode.length < 6) { setError('Ingresa el código de 6 dígitos'); return; }
-    setMfaBusy(true); setError(null);
+    if (mfaCode.length < 6) {
+      setError('Ingresa el código de 6 dígitos');
+      return;
+    }
+    setMfaBusy(true);
+    setError(null);
     try {
       await verificarTOTP(mfaFactorId, mfaCode);
       setMfaRequired(false);
       await finalizarIngreso();
     } catch (e) {
       setError('Código incorrecto. Intenta de nuevo.');
-    } finally { setMfaBusy(false); }
+    } finally {
+      setMfaBusy(false);
+    }
   };
 
   const cancelarMfa = async () => {
-    setMfaRequired(false); setMfaCode(''); setMfaFactorId(null);
-    setLoading(false); setLoadingPhase(0);
-    try { await logout(); } catch { /* noop */ }
+    setMfaRequired(false);
+    setMfaCode('');
+    setMfaFactorId(null);
+    setLoading(false);
+    setLoadingPhase(0);
+    try {
+      await logout();
+    } catch {
+      /* noop */
+    }
   };
 
   const handleLogin = async (e) => {
@@ -95,16 +118,18 @@ const Login = () => {
               return;
             }
           }
-        } catch { /* fail-open: sin MFA o error → ingreso normal */ }
+        } catch {
+          /* fail-open: sin MFA o error → ingreso normal */
+        }
 
         await finalizarIngreso();
       } else {
         setLoadingPhase(0);
-        setError("Acceso denegado. Verifica tus credenciales.");
+        setError('Acceso denegado. Verifica tus credenciales.');
       }
     } catch (err) {
       setLoadingPhase(0);
-      setError("Error de conexión con el servidor.");
+      setError('Error de conexión con el servidor.');
     } finally {
       if (!isAuthenticated) setLoading(false);
     }
@@ -112,10 +137,14 @@ const Login = () => {
 
   const getLoadingMessage = () => {
     switch (loadingPhase) {
-      case 1: return "Validando identidad…";
-      case 2: return "Sincronizando módulos…";
-      case 3: return "Conexión establecida. Redirigiendo…";
-      default: return "Cargando…";
+      case 1:
+        return 'Validando identidad…';
+      case 2:
+        return 'Sincronizando módulos…';
+      case 3:
+        return 'Conexión establecida. Redirigiendo…';
+      default:
+        return 'Cargando…';
     }
   };
 
@@ -128,19 +157,37 @@ const Login = () => {
       {mfaRequired && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-5">
           <div className="w-full max-w-sm bg-white rounded-[2rem] border border-slate-200 shadow-2xl p-7 text-center anim-scale-in">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 grid place-items-center text-orange-600 mb-4"><KeyRound size={26} /></div>
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 grid place-items-center text-orange-600 mb-4">
+              <KeyRound size={26} />
+            </div>
             <h2 className="text-xl font-black text-slate-900">Verificación en dos pasos</h2>
-            <p className="text-[13px] text-slate-500 mt-1 mb-5">Ingresa el código de 6 dígitos de tu app autenticadora.</p>
-            <input autoFocus value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            <p className="text-[13px] text-slate-500 mt-1 mb-5">
+              Ingresa el código de 6 dígitos de tu app autenticadora.
+            </p>
+            <input
+              autoFocus
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               onKeyDown={(e) => e.key === 'Enter' && confirmarMfa()}
-              inputMode="numeric" placeholder="000000"
-              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-2xl font-mono tracking-[0.4em] text-center outline-none focus:border-orange-400" />
+              inputMode="numeric"
+              placeholder="000000"
+              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-2xl font-mono tracking-[0.4em] text-center outline-none focus:border-orange-400"
+            />
             {error && <p className="text-[12px] text-red-500 font-semibold mt-2">{error}</p>}
-            <button onClick={confirmarMfa} disabled={mfaBusy || mfaCode.length < 6}
-              className="w-full mt-4 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 text-white text-sm font-black hover:bg-orange-600 disabled:opacity-50">
-              {mfaBusy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} Verificar
+            <button
+              onClick={confirmarMfa}
+              disabled={mfaBusy || mfaCode.length < 6}
+              className="w-full mt-4 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-500 text-white text-sm font-black hover:bg-orange-600 disabled:opacity-50"
+            >
+              {mfaBusy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}{' '}
+              Verificar
             </button>
-            <button onClick={cancelarMfa} className="w-full mt-2 py-2 text-[13px] font-bold text-slate-400 hover:text-slate-600">Cancelar</button>
+            <button
+              onClick={cancelarMfa}
+              className="w-full mt-2 py-2 text-[13px] font-bold text-slate-400 hover:text-slate-600"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
@@ -155,7 +202,6 @@ const Login = () => {
       {/* Tarjeta */}
       <div className="login-container w-full max-w-[400px] relative z-10">
         <div className="relative bg-white/90 backdrop-blur-xl border border-slate-200/70 rounded-3xl px-7 py-9 sm:px-9 sm:py-10 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.25)] overflow-hidden">
-
           {/* Overlay de carga (claro) */}
           {loading && (
             <div className="absolute inset-0 z-50 bg-white/85 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center anim-scale-in">
@@ -167,21 +213,33 @@ const Login = () => {
                   </div>
                 </div>
               </div>
-              <h4 className="text-slate-800 font-black text-sm tracking-tight mb-4">{getLoadingMessage()}</h4>
+              <h4 className="text-slate-800 font-black text-sm tracking-tight mb-4">
+                {getLoadingMessage()}
+              </h4>
               <div className="w-52 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-700 ease-out ${loadingPhase >= 1 ? 'w-1/3' : 'w-0'} ${loadingPhase >= 2 ? 'w-2/3' : ''} ${loadingPhase >= 3 ? 'w-full' : ''}`} />
+                <div
+                  className={`h-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-700 ease-out ${loadingPhase >= 1 ? 'w-1/3' : 'w-0'} ${loadingPhase >= 2 ? 'w-2/3' : ''} ${loadingPhase >= 3 ? 'w-full' : ''}`}
+                />
               </div>
             </div>
           )}
 
           {/* Encabezado */}
           <div className="animate-form-item flex flex-col items-center text-center mb-8">
-            <img src="/logo-ptm.png" alt="PTM Health Care" className="h-14 w-auto object-contain mb-5" />
+            <img
+              src="/logo-ptm.png"
+              alt="PTM Health Care"
+              className="h-14 w-auto object-contain mb-5"
+            />
             <div className="flex items-center gap-2.5 mb-1.5">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight">CCO</h3>
-              <span className="px-2.5 py-1 bg-orange-500 text-white text-[10px] font-black rounded-md tracking-[0.15em] uppercase">System</span>
+              <span className="px-2.5 py-1 bg-orange-500 text-white text-[10px] font-black rounded-md tracking-[0.15em] uppercase">
+                System
+              </span>
             </div>
-            <p className="text-xs font-semibold text-slate-400 tracking-wide">Warehouse Management System</p>
+            <p className="text-xs font-semibold text-slate-400 tracking-wide">
+              Warehouse Management System
+            </p>
           </div>
 
           {error && (
@@ -195,7 +253,10 @@ const Login = () => {
             <div className="animate-form-item">
               <div className="relative">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <User size={18} className={`transition-colors ${focusedInput === 'email' ? 'text-orange-500' : 'text-slate-400'}`} />
+                  <User
+                    size={18}
+                    className={`transition-colors ${focusedInput === 'email' ? 'text-orange-500' : 'text-slate-400'}`}
+                  />
                 </div>
                 <input
                   type="email"
@@ -215,10 +276,13 @@ const Login = () => {
             <div className="animate-form-item">
               <div className="relative">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Lock size={18} className={`transition-colors ${focusedInput === 'password' ? 'text-orange-500' : 'text-slate-400'}`} />
+                  <Lock
+                    size={18}
+                    className={`transition-colors ${focusedInput === 'password' ? 'text-orange-500' : 'text-slate-400'}`}
+                  />
                 </div>
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setFocusedInput('password')}
@@ -252,7 +316,10 @@ const Login = () => {
                   ) : (
                     <>
                       <span>Iniciar sesión</span>
-                      <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight
+                        size={17}
+                        className="group-hover:translate-x-1 transition-transform"
+                      />
                     </>
                   )}
                 </span>

@@ -1,13 +1,46 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 // ── Datos con forma de CCO (los que devolverían las RPC/tablas reales) ──────
-const SESIONES = [{ id: 's1', nombre: 'Semana 28', descripcion: null, tipo: 'ciclico', estado: 'abierta', semana: 28, creado_por_nombre: 'QA' }];
-const CONCIL = [{ codigo_producto: '0010950005', descripcion: 'APOSITO NO TEJIDO - ALGODON 10X20', unidad_medida: 'UNI', contado: 5, sistema: 150, diferencia: -145, costo_unitario: 1000, impacto: -145000, estado: 'FALTA' }];
-const AJUSTE = [{ codigo_producto: '0010950005', descripcion: 'APOSITO', partida: '(sin partida)', contado: 5, sistema: 150, diferencia: -145, costo_unitario: 1000, impacto: -145000, estado: 'FALTA' }];
+const SESIONES = [
+  {
+    id: 's1',
+    nombre: 'Semana 28',
+    descripcion: null,
+    tipo: 'ciclico',
+    estado: 'abierta',
+    semana: 28,
+    creado_por_nombre: 'QA'
+  }
+];
+const CONCIL = [
+  {
+    codigo_producto: '0010950005',
+    descripcion: 'APOSITO NO TEJIDO - ALGODON 10X20',
+    unidad_medida: 'UNI',
+    contado: 5,
+    sistema: 150,
+    diferencia: -145,
+    costo_unitario: 1000,
+    impacto: -145000,
+    estado: 'FALTA'
+  }
+];
+const AJUSTE = [
+  {
+    codigo_producto: '0010950005',
+    descripcion: 'APOSITO',
+    partida: '(sin partida)',
+    contado: 5,
+    sistema: 150,
+    diferencia: -145,
+    costo_unitario: 1000,
+    impacto: -145000,
+    estado: 'FALTA'
+  }
+];
 const LOTES = [{ tipo: 'P', valor: 'L-001', disponible: 150, ubicacion: 'G-01-01' }];
 
 const TABLE_DATA = {
@@ -16,22 +49,32 @@ const TABLE_DATA = {
   tms_conteo_bloques: [],
   tms_conteo_bloque_items: [],
   tms_conteo_auditorias: [],
-  tms_conteo_proyecciones: [],
+  tms_conteo_proyecciones: []
 };
 const RPC_DATA = {
   conteo_conciliacion: CONCIL,
   conteo_ajuste_erp: AJUSTE,
   calidad_lotes_series: LOTES,
   crear_conteo_sesion: { id: 's2', nombre: 'Nueva', estado: 'abierta' },
-  registrar_conteo: { codigo_producto: '0010950005', cantidad_contada: 5, cantidad_sistema: 150, estado: 'FALTA', partida: '', serie: '' },
+  registrar_conteo: {
+    codigo_producto: '0010950005',
+    cantidad_contada: 5,
+    cantidad_sistema: 150,
+    estado: 'FALTA',
+    partida: '',
+    serie: ''
+  }
 };
 
 // Builder encadenable que resuelve a { data, error } (soporta await y maybeSingle).
 function builder(data) {
   const res = { data, error: null };
   const b = {};
-  ['select', 'order', 'limit', 'eq', 'is', 'or', 'ilike', 'gte', 'lte', 'in', 'range'].forEach((m) => (b[m] = () => b));
-  b.maybeSingle = () => Promise.resolve({ data: Array.isArray(data) ? (data[0] || null) : data, error: null });
+  ['select', 'order', 'limit', 'eq', 'is', 'or', 'ilike', 'gte', 'lte', 'in', 'range'].forEach(
+    (m) => (b[m] = () => b)
+  );
+  b.maybeSingle = () =>
+    Promise.resolve({ data: Array.isArray(data) ? data[0] || null : data, error: null });
   b.single = b.maybeSingle;
   b.then = (resolve) => resolve(res);
   return b;
@@ -40,28 +83,37 @@ function builder(data) {
 vi.mock('../supabase', () => ({
   supabase: {
     from: (table) => builder(TABLE_DATA[table] ?? []),
-    rpc: (name) => Promise.resolve({ data: RPC_DATA[name] ?? [], error: null }),
-  },
+    rpc: (name) => Promise.resolve({ data: RPC_DATA[name] ?? [], error: null })
+  }
 }));
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'u1', rol: 'ADMIN', es_admin_delegado: false, nombre: 'QA Tester' },
     hasPermission: () => true,
-    logout: vi.fn(),
-  }),
+    logout: vi.fn()
+  })
 }));
 
 // Dependencias nativas del PDA
-vi.mock('../hooks/useBarcodeScanner', () => ({ default: () => ({ startScan: vi.fn(), isScanning: false, isSupportedDevice: false }) }));
-vi.mock('@capacitor/haptics', () => ({ Haptics: { impact: vi.fn() }, ImpactStyle: { Light: 'L', Heavy: 'H' } }));
+vi.mock('../hooks/useBarcodeScanner', () => ({
+  default: () => ({ startScan: vi.fn(), isScanning: false, isSupportedDevice: false })
+}));
+vi.mock('@capacitor/haptics', () => ({
+  Haptics: { impact: vi.fn() },
+  ImpactStyle: { Light: 'L', Heavy: 'H' }
+}));
 
 import ConteoCiclico from '../pages/Inventory/ConteoCiclico';
 import ConteoPDA from '../pages/Mobile/ConteoPDA';
 
 function wrap(ui, route = '/inventory/conteo') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
@@ -87,7 +139,9 @@ describe('Conteo Cíclico — módulo de escritorio (integrado en CCO)', () => {
     wrap(<ConteoCiclico />, '/inventory/conteo?tab=conciliacion');
     await waitFor(() => expect(screen.getByText('0010950005')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Correo de ajuste \(1\)/i }));
-    await waitFor(() => expect(screen.getByText(/Correo de ajuste de inventario/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Correo de ajuste de inventario/i)).toBeInTheDocument()
+    );
     expect(screen.getByText(/Diferencias a incluir \(1\/1\)/i)).toBeInTheDocument();
     expect(screen.getByText(/FALTANTES \(1\):/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Abrir en correo/i })).toBeInTheDocument();

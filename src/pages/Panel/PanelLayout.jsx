@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard } from 'lucide-react';
 import './panel.css';
@@ -11,7 +10,12 @@ import './panel.css';
 export default function PanelLayout() {
   const { pathname } = useLocation();
   const esDashboard = pathname === '/panel' || pathname === '/panel/';
-  if (esDashboard) return <div className="panel-dash-wrap"><Outlet /></div>;
+  if (esDashboard)
+    return (
+      <div className="panel-dash-wrap">
+        <Outlet />
+      </div>
+    );
   return (
     <div className="panel-root space-y-4">
       {/* Cabecera estilo módulo CCO (franja degradada + ícono naranja) */}
@@ -25,7 +29,9 @@ export default function PanelLayout() {
             <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">
               Panel <span className="text-orange-600">PTM</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 truncate">Resumen operacional · datos reales</p>
+            <p className="text-xs sm:text-sm text-slate-500 truncate">
+              Resumen operacional · datos reales
+            </p>
           </div>
         </div>
       </div>

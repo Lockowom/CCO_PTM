@@ -1,15 +1,38 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../supabase';
 import {
-  History, Database, Search, FileText, TrendingUp,
-  AlertCircle, CheckCircle2, RefreshCw, Download, X,
-  Calendar, ChevronDown, ChevronUp, BarChart3, Loader2,
-  ArrowUpRight, Clock, Filter, Zap, Eye
+  History,
+  Database,
+  Search,
+  FileText,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
+  Download,
+  X,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Loader2,
+  Clock,
+  Filter,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
 
 // ─── KPI Cell ──────────────────────────────────────────
 const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
@@ -19,18 +42,28 @@ const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
     emerald: 'from-emerald-500 to-teal-500 shadow-emerald-200',
     red: 'from-red-500 to-rose-500 shadow-red-200',
     slate: 'from-slate-600 to-slate-800 shadow-slate-200',
-    violet: 'from-violet-500 to-purple-500 shadow-violet-200',
+    violet: 'from-violet-500 to-purple-500 shadow-violet-200'
   };
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-2 sm:mb-3">
-        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          {label}
+        </p>
+        <div
+          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}
+        >
           <Icon size={14} className="text-white" />
         </div>
       </div>
-      <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
-      {sub && <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">{sub}</p>}
+      <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+        {value}
+      </p>
+      {sub && (
+        <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">
+          {sub}
+        </p>
+      )}
     </div>
   );
 };
@@ -52,10 +85,16 @@ const DetailPanel = ({ row }) => (
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha/Hora Exacta</p>
             <p className="text-sm font-bold text-slate-700">
-              {row.fecha_carga ? new Date(row.fecha_carga).toLocaleString('es-CL', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-              }) : '—'}
+              {row.fecha_carga
+                ? new Date(row.fecha_carga).toLocaleString('es-CL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })
+                : '—'}
             </p>
           </div>
           <div>
@@ -64,12 +103,14 @@ const DetailPanel = ({ row }) => (
               <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${row.registros_error > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${row.registros_totales > 0 ? ((row.registros_totales - (row.registros_error || 0)) / row.registros_totales * 100) : 0}%` }}
+                  style={{
+                    width: `${row.registros_totales > 0 ? ((row.registros_totales - (row.registros_error || 0)) / row.registros_totales) * 100 : 0}%`
+                  }}
                 />
               </div>
               <span className="text-xs font-bold text-slate-700">
                 {row.registros_totales > 0
-                  ? `${Math.round((row.registros_totales - (row.registros_error || 0)) / row.registros_totales * 100)}%`
+                  ? `${Math.round(((row.registros_totales - (row.registros_error || 0)) / row.registros_totales) * 100)}%`
                   : '—'}
               </span>
             </div>
@@ -87,8 +128,12 @@ const ChartTooltip = ({ active, payload }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 text-xs">
       <p className="font-bold text-slate-700 mb-1">{d.label}</p>
-      <p className="text-slate-500">Cargas: <span className="font-bold text-slate-900">{d.count}</span></p>
-      <p className="text-slate-500">Registros: <span className="font-bold text-slate-900">{d.registros?.toLocaleString()}</span></p>
+      <p className="text-slate-500">
+        Cargas: <span className="font-bold text-slate-900">{d.count}</span>
+      </p>
+      <p className="text-slate-500">
+        Registros: <span className="font-bold text-slate-900">{d.registros?.toLocaleString()}</span>
+      </p>
     </div>
   );
 };
@@ -113,22 +158,27 @@ const UploadHistory = () => {
 
     const channel = supabase
       .channel('realtime-uploads')
-      .on('postgres_changes',
+      .on(
+        'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'tms_historial_cargas' },
         (payload) => {
-          setHistory(prev => [payload.new, ...prev].slice(0, 200));
+          setHistory((prev) => [payload.new, ...prev].slice(0, 200));
           toast.info('Nueva carga registrada', {
             description: `${payload.new.usuario_nombre} — ${payload.new.modulo}`,
-            duration: 4000,
+            duration: 4000
           });
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  useEffect(() => { fetchHistory(); }, [startDate, endDate]);
+  useEffect(() => {
+    fetchHistory();
+  }, [startDate, endDate]);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -153,12 +203,12 @@ const UploadHistory = () => {
 
   // ─── Computed ────────────────────────────────────────
   const modules = useMemo(() => {
-    const set = new Set(history.map(h => h.modulo));
+    const set = new Set(history.map((h) => h.modulo));
     return [...set].sort();
   }, [history]);
 
   const filtered = useMemo(() => {
-    return history.filter(item => {
+    return history.filter((item) => {
       if (moduleFilter && item.modulo !== moduleFilter) return false;
       if (searchTerm) {
         const q = searchTerm.toLowerCase();
@@ -166,7 +216,8 @@ const UploadHistory = () => {
           !(item.usuario_nombre || '').toLowerCase().includes(q) &&
           !(item.modulo || '').toLowerCase().includes(q) &&
           !(item.tabla_destino || '').toLowerCase().includes(q)
-        ) return false;
+        )
+          return false;
       }
       return true;
     });
@@ -179,7 +230,9 @@ const UploadHistory = () => {
     const totalActualizados = filtered.reduce((acc, c) => acc + (c.registros_actualizados || 0), 0);
     const totalErrores = filtered.reduce((acc, c) => acc + (c.registros_error || 0), 0);
     const hoy = new Date().toLocaleDateString();
-    const cargasHoy = filtered.filter(i => new Date(i.fecha_carga).toLocaleDateString() === hoy).length;
+    const cargasHoy = filtered.filter(
+      (i) => new Date(i.fecha_carga).toLocaleDateString() === hoy
+    ).length;
     return { total, totalRegistros, totalNuevos, totalActualizados, totalErrores, cargasHoy };
   }, [filtered]);
 
@@ -191,13 +244,17 @@ const UploadHistory = () => {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      days[key] = { label: d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }), count: 0, registros: 0 };
+      days[key] = {
+        label: d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }),
+        count: 0,
+        registros: 0
+      };
     }
-    history.forEach(h => {
+    history.forEach((h) => {
       const key = h.fecha_carga?.slice(0, 10);
       if (days[key]) {
         days[key].count++;
-        days[key].registros += (h.registros_totales || 0);
+        days[key].registros += h.registros_totales || 0;
       }
     });
     return Object.values(days);
@@ -206,16 +263,18 @@ const UploadHistory = () => {
   // ─── Actions ─────────────────────────────────────────
   const exportToExcel = () => {
     if (filtered.length === 0) return;
-    const ws = XLSX.utils.json_to_sheet(filtered.map(r => ({
-      Fecha: r.fecha_carga ? new Date(r.fecha_carga).toLocaleString('es-CL') : '',
-      Operador: r.usuario_nombre,
-      Módulo: r.modulo,
-      'Tabla Destino': r.tabla_destino || '',
-      Total: r.registros_totales,
-      Nuevos: r.registros_nuevos,
-      Actualizados: r.registros_actualizados,
-      Errores: r.registros_error,
-    })));
+    const ws = XLSX.utils.json_to_sheet(
+      filtered.map((r) => ({
+        Fecha: r.fecha_carga ? new Date(r.fecha_carga).toLocaleString('es-CL') : '',
+        Operador: r.usuario_nombre,
+        Módulo: r.modulo,
+        'Tabla Destino': r.tabla_destino || '',
+        Total: r.registros_totales,
+        Nuevos: r.registros_nuevos,
+        Actualizados: r.registros_actualizados,
+        Errores: r.registros_error
+      }))
+    );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Historial');
     XLSX.writeFile(wb, `historial_cargas_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -252,23 +311,36 @@ const UploadHistory = () => {
             <History size={22} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Historial de Cargas</h1>
-            <p className="text-sm text-slate-500">Auditoría de cargas masivas y actualizaciones de datos</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Historial de Cargas
+            </h1>
+            <p className="text-sm text-slate-500">
+              Auditoría de cargas masivas y actualizaciones de datos
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowChart(v => !v)}
+            onClick={() => setShowChart((v) => !v)}
             className={`p-2.5 border rounded-lg transition-colors ${showChart ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
             title="Mostrar/ocultar gráfico"
           >
             <BarChart3 size={16} />
           </button>
-          <button onClick={exportToExcel} className="p-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 transition-colors" title="Exportar Excel">
+          <button
+            onClick={exportToExcel}
+            className="p-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 transition-colors"
+            title="Exportar Excel"
+          >
             <Download size={16} />
           </button>
-          <button onClick={fetchHistory} disabled={loading} className="p-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 transition-colors" title="Refrescar">
+          <button
+            onClick={fetchHistory}
+            disabled={loading}
+            className="p-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 transition-colors"
+            title="Refrescar"
+          >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -276,18 +348,56 @@ const UploadHistory = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-5">
-        <KpiCell label="Cargas" value={stats.total} icon={TrendingUp} color="orange" sub="Total registradas" />
-        <KpiCell label="Registros" value={stats.totalRegistros.toLocaleString()} icon={Database} color="blue" sub="Procesados" />
-        <KpiCell label="Nuevos" value={stats.totalNuevos.toLocaleString()} icon={CheckCircle2} color="emerald" sub="Insertados" />
-        <KpiCell label="Actualizados" value={stats.totalActualizados.toLocaleString()} icon={Zap} color="violet" sub="Modificados" />
-        <KpiCell label="Errores" value={stats.totalErrores} icon={AlertCircle} color="red" sub="Detectados" />
-        <KpiCell label="Hoy" value={stats.cargasHoy} icon={Clock} color="slate" sub="Cargas del día" />
+        <KpiCell
+          label="Cargas"
+          value={stats.total}
+          icon={TrendingUp}
+          color="orange"
+          sub="Total registradas"
+        />
+        <KpiCell
+          label="Registros"
+          value={stats.totalRegistros.toLocaleString()}
+          icon={Database}
+          color="blue"
+          sub="Procesados"
+        />
+        <KpiCell
+          label="Nuevos"
+          value={stats.totalNuevos.toLocaleString()}
+          icon={CheckCircle2}
+          color="emerald"
+          sub="Insertados"
+        />
+        <KpiCell
+          label="Actualizados"
+          value={stats.totalActualizados.toLocaleString()}
+          icon={Zap}
+          color="violet"
+          sub="Modificados"
+        />
+        <KpiCell
+          label="Errores"
+          value={stats.totalErrores}
+          icon={AlertCircle}
+          color="red"
+          sub="Detectados"
+        />
+        <KpiCell
+          label="Hoy"
+          value={stats.cargasHoy}
+          icon={Clock}
+          color="slate"
+          sub="Cargas del día"
+        />
       </div>
 
       {/* Chart */}
       {showChart && (
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 mb-5">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Cargas por Día — Últimos 14 Días</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+            Cargas por Día — Últimos 14 Días
+          </p>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartData} barSize={20}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -318,7 +428,10 @@ const UploadHistory = () => {
               className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <X size={14} />
               </button>
             )}
@@ -333,7 +446,7 @@ const UploadHistory = () => {
             >
               Todos
             </button>
-            {modules.map(mod => (
+            {modules.map((mod) => (
               <button
                 key={mod}
                 onClick={() => setModuleFilter(mod)}
@@ -347,13 +460,25 @@ const UploadHistory = () => {
           {/* Date Range */}
           <div className="flex items-center gap-2 ml-auto flex-wrap">
             <Calendar size={14} className="text-slate-400" />
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-400" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-400"
+            />
             <span className="text-slate-300">→</span>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-400" />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-400"
+            />
             {hasFilters && (
-              <button onClick={clearFilters} className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-500" title="Limpiar filtros">
+              <button
+                onClick={clearFilters}
+                className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-500"
+                title="Limpiar filtros"
+              >
                 <X size={14} />
               </button>
             )}
@@ -373,13 +498,27 @@ const UploadHistory = () => {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase w-8"></th>
-                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Fecha</th>
-                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Operador</th>
-                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">Módulo</th>
-                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase text-center">Total</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-emerald-600 uppercase text-center">Nuevos</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-blue-600 uppercase text-center">Modif.</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-red-600 uppercase text-center">Errores</th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">
+                  Fecha
+                </th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">
+                  Operador
+                </th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase">
+                  Módulo
+                </th>
+                <th className="px-2 sm:px-4 py-3 text-[11px] font-bold text-slate-500 uppercase text-center">
+                  Total
+                </th>
+                <th className="px-4 py-3 text-[11px] font-bold text-emerald-600 uppercase text-center">
+                  Nuevos
+                </th>
+                <th className="px-4 py-3 text-[11px] font-bold text-blue-600 uppercase text-center">
+                  Modif.
+                </th>
+                <th className="px-4 py-3 text-[11px] font-bold text-red-600 uppercase text-center">
+                  Errores
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -394,28 +533,51 @@ const UploadHistory = () => {
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <Database size={32} className="text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-500 mb-1">Sin registros de actividad</p>
-                    <p className="text-xs text-slate-400">{hasFilters ? 'Intenta cambiar los filtros' : 'Las cargas aparecerán aquí automáticamente'}</p>
+                    <p className="text-sm font-bold text-slate-500 mb-1">
+                      Sin registros de actividad
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {hasFilters
+                        ? 'Intenta cambiar los filtros'
+                        : 'Las cargas aparecerán aquí automáticamente'}
+                    </p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((row) => (
                   <React.Fragment key={row.id}>
-                    <tr className="border-b border-slate-100 hover:bg-orange-50/30 transition-colors group cursor-pointer"
-                        onClick={() => setExpandedRow(expandedRow === row.id ? null : row.id)}>
+                    <tr
+                      className="border-b border-slate-100 hover:bg-orange-50/30 transition-colors group cursor-pointer"
+                      onClick={() => setExpandedRow(expandedRow === row.id ? null : row.id)}
+                    >
                       <td className="px-2 sm:px-4 py-3">
                         <button className="p-1 rounded-md hover:bg-slate-100 text-slate-400 transition-colors">
-                          {expandedRow === row.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {expandedRow === row.id ? (
+                            <ChevronUp size={14} />
+                          ) : (
+                            <ChevronDown size={14} />
+                          )}
                         </button>
                       </td>
                       <td className="px-2 sm:px-4 py-3">
                         <div>
                           <p className="text-sm font-bold text-slate-800">
-                            {row.fecha_carga ? new Date(row.fecha_carga).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                            {row.fecha_carga
+                              ? new Date(row.fecha_carga).toLocaleDateString('es-CL', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })
+                              : '—'}
                           </p>
                           <p className="text-[10px] text-slate-400 flex items-center gap-1">
                             <Clock size={9} />
-                            {row.fecha_carga ? new Date(row.fecha_carga).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            {row.fecha_carga
+                              ? new Date(row.fecha_carga).toLocaleTimeString('es-CL', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : ''}
                           </p>
                         </div>
                       </td>
@@ -424,7 +586,9 @@ const UploadHistory = () => {
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
                             {(row.usuario_nombre || 'U').charAt(0)}
                           </div>
-                          <span className="text-sm font-semibold text-slate-700">{row.usuario_nombre}</span>
+                          <span className="text-sm font-semibold text-slate-700">
+                            {row.usuario_nombre}
+                          </span>
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3">
@@ -434,26 +598,40 @@ const UploadHistory = () => {
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-center">
-                        <span className="text-sm font-black text-slate-900">{row.registros_totales}</span>
+                        <span className="text-sm font-black text-slate-900">
+                          {row.registros_totales}
+                        </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-center">
-                        <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
-                          (row.registros_nuevos || 0) > 0 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'text-slate-300'
-                        }`}>
+                        <span
+                          className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
+                            (row.registros_nuevos || 0) > 0
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                              : 'text-slate-300'
+                          }`}
+                        >
                           {(row.registros_nuevos || 0) > 0 ? `+${row.registros_nuevos}` : '0'}
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-center">
-                        <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
-                          (row.registros_actualizados || 0) > 0 ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'text-slate-300'
-                        }`}>
+                        <span
+                          className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
+                            (row.registros_actualizados || 0) > 0
+                              ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                              : 'text-slate-300'
+                          }`}
+                        >
                           {row.registros_actualizados || '0'}
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-center">
-                        <span className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
-                          (row.registros_error || 0) > 0 ? 'bg-red-100 text-red-700 border border-red-200' : 'text-slate-300'
-                        }`}>
+                        <span
+                          className={`inline-block min-w-[36px] px-2 py-0.5 rounded-md text-xs font-bold ${
+                            (row.registros_error || 0) > 0
+                              ? 'bg-red-100 text-red-700 border border-red-200'
+                              : 'text-slate-300'
+                          }`}
+                        >
                           {row.registros_error || '0'}
                         </span>
                       </td>

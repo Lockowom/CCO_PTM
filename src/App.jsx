@@ -1,5 +1,12 @@
 import React, { useEffect, useState, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation
+} from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
@@ -15,7 +22,13 @@ import NovedadesModal from './components/NovedadesModal';
 import AsistenteIA from './components/AsistenteIA';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
-import { PanelIngresar, PanelInfo, PanelTV, PanelBuilder, PanelConfig } from './pages/Panel/PanelScreens';
+import {
+  PanelIngresar,
+  PanelInfo,
+  PanelTV,
+  PanelBuilder,
+  PanelConfig
+} from './pages/Panel/PanelScreens';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
@@ -86,7 +99,6 @@ const ApiKeys = React.lazy(() => import('./pages/Admin/ApiKeys')); // API de Ope
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
-
 // Orden de prioridad para la primera ruta disponible
 const ROUTE_PRIORITY = [
   '/panel',
@@ -99,9 +111,8 @@ const ROUTE_PRIORITY = [
   '/queries/locations',
   '/admin/users',
   '/admin/roles',
-  '/admin/views',
+  '/admin/views'
 ];
-
 
 // Global Suspense Loader Cyber-Logístico (con escape de seguridad a los 15s)
 const SuspenseLoader = () => <SuspenseLoaderTimeout />;
@@ -122,7 +133,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
               <p className="font-mono text-red-700 break-all mb-3">{route}</p>
               <p className="font-bold text-red-900 mb-2">Permisos requeridos:</p>
               <div className="space-y-1">
-                {requiredPermissions.map(perm => (
+                {requiredPermissions.map((perm) => (
                   <div key={perm} className="text-red-700 flex items-center gap-2">
                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
                     {perm}
@@ -131,7 +142,10 @@ const AccessDenied = ({ requiredPermissions, route }) => {
               </div>
             </div>
 
-            <a href="/" className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-colors">
+            <a
+              href="/"
+              className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-colors"
+            >
               Volver al inicio
             </a>
           </div>
@@ -158,8 +172,11 @@ const SmartRedirect = () => {
   // deep-links de pestañas y el mapa de permisos se indexa por pathname puro.
   if (landingPage && landingPage !== '/') {
     const requiredPerms = permisosDeRuta(String(landingPage).split('?')[0]);
-    const hasAccess = user?.rol === 'ADMIN' || user?.es_admin_delegado ||
-      (Array.isArray(requiredPerms) && (requiredPerms.length === 0 || requiredPerms.some(perm => hasPermission(perm))));
+    const hasAccess =
+      user?.rol === 'ADMIN' ||
+      user?.es_admin_delegado ||
+      (Array.isArray(requiredPerms) &&
+        (requiredPerms.length === 0 || requiredPerms.some((perm) => hasPermission(perm))));
 
     if (hasAccess) {
       return <Navigate to={landingPage} replace />;
@@ -177,7 +194,7 @@ const SmartRedirect = () => {
     if (requiredPerms.length === 0) {
       return <Navigate to={route} replace />;
     }
-    const hasAccess = requiredPerms.some(perm => hasPermission(perm));
+    const hasAccess = requiredPerms.some((perm) => hasPermission(perm));
     if (hasAccess) {
       return <Navigate to={route} replace />;
     }
@@ -217,7 +234,13 @@ const ProtectedRoute = () => {
   if (!isAuthenticated) {
     // Conservar el destino: Login vuelve aquí tras autenticarse (clave para el
     // QR de bloques /inventory/bloque/:codigo escaneado sin sesión activa).
-    return <Navigate to="/login" replace state={{ from: { pathname: location.pathname, search: location.search } }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: { pathname: location.pathname, search: location.search } }}
+      />
+    );
   }
 
   // Contrato del proyecto: una ruta SIN permisos declarados se DENIEGA (antes el
@@ -227,12 +250,18 @@ const ProtectedRoute = () => {
   // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
   // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
   const requiredPermissions = permisosDeRuta(location.pathname);
-  const hasAccess = location.pathname === '/' || user?.rol === 'ADMIN' || user?.es_admin_delegado ||
+  const hasAccess =
+    location.pathname === '/' ||
+    user?.rol === 'ADMIN' ||
+    user?.es_admin_delegado ||
     (Array.isArray(requiredPermissions) &&
-      (requiredPermissions.length === 0 || requiredPermissions.some(perm => hasPermission(perm))));
+      (requiredPermissions.length === 0 ||
+        requiredPermissions.some((perm) => hasPermission(perm))));
 
   if (!hasAccess) {
-    return <AccessDenied requiredPermissions={requiredPermissions || []} route={location.pathname} />;
+    return (
+      <AccessDenied requiredPermissions={requiredPermissions || []} route={location.pathname} />
+    );
   }
 
   return (
@@ -241,13 +270,6 @@ const ProtectedRoute = () => {
     </Layout>
   );
 };
-
-// Error Boundary por módulo para evitar crashes globales
-const ModuleBoundary = ({ children }) => (
-  <ErrorBoundary>
-    {children}
-  </ErrorBoundary>
-);
 
 function AppContent() {
   const { user } = useAuth();
@@ -276,7 +298,10 @@ function AppContent() {
             description: `${usuario_nombre} cargó ${registros_totales} registros.${registros_error > 0 ? ` (${registros_error} errores)` : ''}`,
             icon: <Database className="text-orange-500" size={18} />,
             duration: 6000,
-            action: { label: 'Ver Historial', onClick: () => window.location.href = '/admin/upload-history' }
+            action: {
+              label: 'Ver Historial',
+              onClick: () => (window.location.href = '/admin/upload-history')
+            }
           });
         }
       )
@@ -293,13 +318,17 @@ function AppContent() {
           // No notificar al creador
           if (user && usuario_nombre === user.nombre) return;
 
-          const prioLabel = prioridad === 'ALTA' ? '🔴 ALTA' : prioridad === 'MEDIA' ? '🟡 MEDIA' : '🔵 BAJA';
+          const prioLabel =
+            prioridad === 'ALTA' ? '🔴 ALTA' : prioridad === 'MEDIA' ? '🟡 MEDIA' : '🔵 BAJA';
 
           toast.warning(`🎟️ Nuevo Ticket: ${ticket_id}`, {
             description: `${usuario_nombre}: ${asunto || descripcion?.slice(0, 60) || 'Sin detalle'} — Prioridad ${prioLabel}`,
             icon: <MessageSquare className="text-indigo-500" size={18} />,
             duration: 10000,
-            action: { label: 'Ver Tickets', onClick: () => window.location.href = '/admin/tickets' }
+            action: {
+              label: 'Ver Tickets',
+              onClick: () => (window.location.href = '/admin/tickets')
+            }
           });
         }
       )
@@ -307,15 +336,16 @@ function AppContent() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'tms_tickets' },
         (payload) => {
-          const { estado, ticket_id, respuesta_admin } = payload.new;
+          const { estado, ticket_id } = payload.new;
           const oldEstado = payload.old?.estado;
           // Solo notificar cambios de estado o respuesta nueva
           if (estado !== oldEstado) {
-            const statusEmoji = estado === 'RESUELTO' ? '✅' : estado === 'EN_PROCESO' ? '⚡' : '⏳';
+            const statusEmoji =
+              estado === 'RESUELTO' ? '✅' : estado === 'EN_PROCESO' ? '⚡' : '⏳';
             toast.info(`${statusEmoji} Ticket ${ticket_id} → ${estado.replace('_', ' ')}`, {
               icon: <MessageSquare className="text-indigo-500" size={18} />,
               duration: 6000,
-              action: { label: 'Ver', onClick: () => window.location.href = '/admin/tickets' }
+              action: { label: 'Ver', onClick: () => (window.location.href = '/admin/tickets') }
             });
           }
         }
@@ -344,94 +374,418 @@ function AppContent() {
       <AsistenteIA />
       <CommandPalette />
       <VersionGuard />
-      <Suspense fallback={<SuspenseLoader />}><Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/verificar" element={<VerificarCertificado />} />
-        {/* Formulario público de solicitud de servicio (sin login) */}
-        <Route path="/soporte" element={<ErrorBoundary><SolicitudPublica /></ErrorBoundary>} />
-        {/* Consulta pública de Nota de Venta (Info N.V. sin login) */}
-        <Route path="/consulta" element={<ErrorBoundary><ConsultaNV /></ErrorBoundary>} />
+      <Suspense fallback={<SuspenseLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/verificar" element={<VerificarCertificado />} />
+          {/* Formulario público de solicitud de servicio (sin login) */}
+          <Route
+            path="/soporte"
+            element={
+              <ErrorBoundary>
+                <SolicitudPublica />
+              </ErrorBoundary>
+            }
+          />
+          {/* Consulta pública de Nota de Venta (Info N.V. sin login) */}
+          <Route
+            path="/consulta"
+            element={
+              <ErrorBoundary>
+                <ConsultaNV />
+              </ErrorBoundary>
+            }
+          />
 
-        {/* Protected Routes (Wrapped in ProtectedRoute) */}
-        <Route path="/" element={<ProtectedRoute />}>
-          {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
-          <Route index element={<SmartRedirect />} />
+          {/* Protected Routes (Wrapped in ProtectedRoute) */}
+          <Route path="/" element={<ProtectedRoute />}>
+            {/* Smart redirect: ir a la primera ruta que el usuario puede ver */}
+            <Route index element={<SmartRedirect />} />
 
-          {/* PDA Operativa de Bodega */}
-          <Route path="mobile/pda" element={<ErrorBoundary><WarehousePDA /></ErrorBoundary>} />
+            {/* PDA Operativa de Bodega */}
+            <Route
+              path="mobile/pda"
+              element={
+                <ErrorBoundary>
+                  <WarehousePDA />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* TMS (Transporte) */}
-          <Route path="tms/control" element={<ErrorBoundary><TmsTransporte /></ErrorBoundary>} />
-          <Route path="tms/pda" element={<ErrorBoundary><TmsMiRuta /></ErrorBoundary>} />
+            {/* TMS (Transporte) */}
+            <Route
+              path="tms/control"
+              element={
+                <ErrorBoundary>
+                  <TmsTransporte />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="tms/pda"
+              element={
+                <ErrorBoundary>
+                  <TmsMiRuta />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* Inbound Modules */}
-          <Route path="inbound/reception" element={<ErrorBoundary><Reception /></ErrorBoundary>} />
-          <Route path="inbound/reception-nacional" element={<ErrorBoundary><ReceptionNacional /></ErrorBoundary>} />
-          <Route path="inbound/entry" element={<ErrorBoundary><Entry /></ErrorBoundary>} />
-          <Route path="inbound/cubing" element={<ErrorBoundary><CubingRegistry /></ErrorBoundary>} />
-          <Route path="inbound/data-import" element={<ErrorBoundary><DataImport /></ErrorBoundary>} />
+            {/* Inbound Modules */}
+            <Route
+              path="inbound/reception"
+              element={
+                <ErrorBoundary>
+                  <Reception />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inbound/reception-nacional"
+              element={
+                <ErrorBoundary>
+                  <ReceptionNacional />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inbound/entry"
+              element={
+                <ErrorBoundary>
+                  <Entry />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inbound/cubing"
+              element={
+                <ErrorBoundary>
+                  <CubingRegistry />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inbound/data-import"
+              element={
+                <ErrorBoundary>
+                  <DataImport />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* Queries Modules */}
-          <Route path="queries/batches" element={<ErrorBoundary><Batches /></ErrorBoundary>} />
-          <Route path="queries/sales-status" element={<ErrorBoundary><SalesStatus /></ErrorBoundary>} />
-          <Route path="queries/addresses" element={<ErrorBoundary><Addresses /></ErrorBoundary>} />
-          <Route path="queries/locations" element={<ErrorBoundary><WmsLocations /></ErrorBoundary>} />
-          <Route path="queries/heatmap" element={<ErrorBoundary><Heatmap /></ErrorBoundary>} />
-          <Route path="queries/historial-nv" element={<ErrorBoundary><HistorialNV /></ErrorBoundary>} />
-          <Route path="queries/dispatch-control" element={<ErrorBoundary><DispatchControl /></ErrorBoundary>} />
-          <Route path="queries/datasheet" element={<ErrorBoundary><ProductDatasheet /></ErrorBoundary>} />
-          <Route path="queries/grupo" element={<ErrorBoundary><ConsultaGrupo /></ErrorBoundary>} />
+            {/* Queries Modules */}
+            <Route
+              path="queries/batches"
+              element={
+                <ErrorBoundary>
+                  <Batches />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/sales-status"
+              element={
+                <ErrorBoundary>
+                  <SalesStatus />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/addresses"
+              element={
+                <ErrorBoundary>
+                  <Addresses />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/locations"
+              element={
+                <ErrorBoundary>
+                  <WmsLocations />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/heatmap"
+              element={
+                <ErrorBoundary>
+                  <Heatmap />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/historial-nv"
+              element={
+                <ErrorBoundary>
+                  <HistorialNV />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/dispatch-control"
+              element={
+                <ErrorBoundary>
+                  <DispatchControl />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/datasheet"
+              element={
+                <ErrorBoundary>
+                  <ProductDatasheet />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="queries/grupo"
+              element={
+                <ErrorBoundary>
+                  <ConsultaGrupo />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* Quality Modules */}
-          <Route path="quality/monitoreo" element={<ErrorBoundary><MonitoreoCalidad /></ErrorBoundary>} />
-          <Route path="quality/acciones" element={<ErrorBoundary><AccionesCalidad /></ErrorBoundary>} />
-          <Route path="quality/bandeja" element={<ErrorBoundary><MiBandeja /></ErrorBoundary>} />
-          <Route path="quality/clasificacion" element={<ErrorBoundary><ClasificacionProductos /></ErrorBoundary>} />
+            {/* Quality Modules */}
+            <Route
+              path="quality/monitoreo"
+              element={
+                <ErrorBoundary>
+                  <MonitoreoCalidad />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="quality/acciones"
+              element={
+                <ErrorBoundary>
+                  <AccionesCalidad />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="quality/bandeja"
+              element={
+                <ErrorBoundary>
+                  <MiBandeja />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="quality/clasificacion"
+              element={
+                <ErrorBoundary>
+                  <ClasificacionProductos />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* Post-Venta / Servicio Técnico */}
-          <Route path="postventa/tickets" element={<ErrorBoundary><Postventa /></ErrorBoundary>} />
+            {/* Post-Venta / Servicio Técnico */}
+            <Route
+              path="postventa/tickets"
+              element={
+                <ErrorBoundary>
+                  <Postventa />
+                </ErrorBoundary>
+              }
+            />
 
-          {/* Inventario */}
-          <Route path="inventory/traspasos" element={<ErrorBoundary><Traspasos /></ErrorBoundary>} />
-          {/* Panel PTM nativo (estructura con datos de ejemplo) */}
-          <Route path="panel" element={<ErrorBoundary><PanelLayout /></ErrorBoundary>}>
-            <Route index element={<DashboardReal />} />
-            <Route path="ingresar" element={<PanelIngresar />} />
-            <Route path="info" element={<PanelInfo />} />
-            <Route path="tv" element={<PanelTV />} />
-            <Route path="builder" element={<PanelBuilder />} />
-            <Route path="configuracion" element={<PanelConfig />} />
+            {/* Inventario */}
+            <Route
+              path="inventory/traspasos"
+              element={
+                <ErrorBoundary>
+                  <Traspasos />
+                </ErrorBoundary>
+              }
+            />
+            {/* Panel PTM nativo (estructura con datos de ejemplo) */}
+            <Route
+              path="panel"
+              element={
+                <ErrorBoundary>
+                  <PanelLayout />
+                </ErrorBoundary>
+              }
+            >
+              <Route index element={<DashboardReal />} />
+              <Route path="ingresar" element={<PanelIngresar />} />
+              <Route path="info" element={<PanelInfo />} />
+              <Route path="tv" element={<PanelTV />} />
+              <Route path="builder" element={<PanelBuilder />} />
+              <Route path="configuracion" element={<PanelConfig />} />
+            </Route>
+            <Route
+              path="inventory/conteo"
+              element={
+                <ErrorBoundary>
+                  <ConteoCiclico />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inventory/analisis"
+              element={
+                <ErrorBoundary>
+                  <AnalisisCodigos />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inventory/carteles"
+              element={
+                <ErrorBoundary>
+                  <Carteles />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inventory/insumos"
+              element={
+                <ErrorBoundary>
+                  <Insumos />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="inventory/bloque/:codigo"
+              element={
+                <ErrorBoundary>
+                  <BloqueDetalle />
+                </ErrorBoundary>
+              }
+            />
+
+            {/* Seguridad de mi cuenta (MFA) — cualquier usuario autenticado */}
+            <Route
+              path="seguridad"
+              element={
+                <ErrorBoundary>
+                  <Seguridad />
+                </ErrorBoundary>
+              }
+            />
+
+            {/* Admin Modules */}
+            <Route
+              path="admin/users"
+              element={
+                <ErrorBoundary>
+                  <AccessControl />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/roles"
+              element={
+                <ErrorBoundary>
+                  <AccessControl />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/views"
+              element={
+                <ErrorBoundary>
+                  <Views />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/cleanup"
+              element={
+                <ErrorBoundary>
+                  <Cleanup />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/tickets"
+              element={
+                <ErrorBoundary>
+                  <Tickets />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/upload-history"
+              element={
+                <ErrorBoundary>
+                  <UploadHistory />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/locations"
+              element={
+                <ErrorBoundary>
+                  <LocationManager />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/bodegas-softland"
+              element={
+                <ErrorBoundary>
+                  <BodegasSoftland />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/monitor"
+              element={
+                <ErrorBoundary>
+                  <AdminMonitor />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/observability"
+              element={
+                <ErrorBoundary>
+                  <Observability />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/workflows"
+              element={
+                <ErrorBoundary>
+                  <Workflows />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/flujo-maestro"
+              element={
+                <ErrorBoundary>
+                  <FlujoMaestro />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/eventos"
+              element={
+                <ErrorBoundary>
+                  <Eventos />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/api"
+              element={
+                <ErrorBoundary>
+                  <ApiKeys />
+                </ErrorBoundary>
+              }
+            />
           </Route>
-          <Route path="inventory/conteo" element={<ErrorBoundary><ConteoCiclico /></ErrorBoundary>} />
-          <Route path="inventory/analisis" element={<ErrorBoundary><AnalisisCodigos /></ErrorBoundary>} />
-          <Route path="inventory/carteles" element={<ErrorBoundary><Carteles /></ErrorBoundary>} />
-          <Route path="inventory/insumos" element={<ErrorBoundary><Insumos /></ErrorBoundary>} />
-          <Route path="inventory/bloque/:codigo" element={<ErrorBoundary><BloqueDetalle /></ErrorBoundary>} />
 
-          {/* Seguridad de mi cuenta (MFA) — cualquier usuario autenticado */}
-          <Route path="seguridad" element={<ErrorBoundary><Seguridad /></ErrorBoundary>} />
-
-          {/* Admin Modules */}
-          <Route path="admin/users" element={<ErrorBoundary><AccessControl /></ErrorBoundary>} />
-          <Route path="admin/roles" element={<ErrorBoundary><AccessControl /></ErrorBoundary>} />
-          <Route path="admin/views" element={<ErrorBoundary><Views /></ErrorBoundary>} />
-          <Route path="admin/cleanup" element={<ErrorBoundary><Cleanup /></ErrorBoundary>} />
-          <Route path="admin/tickets" element={<ErrorBoundary><Tickets /></ErrorBoundary>} />
-          <Route path="admin/upload-history" element={<ErrorBoundary><UploadHistory /></ErrorBoundary>} />
-          <Route path="admin/locations" element={<ErrorBoundary><LocationManager /></ErrorBoundary>} />
-          <Route path="admin/bodegas-softland" element={<ErrorBoundary><BodegasSoftland /></ErrorBoundary>} />
-          <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
-          <Route path="admin/observability" element={<ErrorBoundary><Observability /></ErrorBoundary>} />
-          <Route path="admin/workflows" element={<ErrorBoundary><Workflows /></ErrorBoundary>} />
-          <Route path="admin/flujo-maestro" element={<ErrorBoundary><FlujoMaestro /></ErrorBoundary>} />
-          <Route path="admin/eventos" element={<ErrorBoundary><Eventos /></ErrorBoundary>} />
-          <Route path="admin/api" element={<ErrorBoundary><ApiKeys /></ErrorBoundary>} />
-        </Route>
-
-        {/* Fallback 404 en lugar de Navigate al login */}
-        <Route path="*" element={<NotFound />} />
-      </Routes></Suspense>
+          {/* Fallback 404 en lugar de Navigate al login */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

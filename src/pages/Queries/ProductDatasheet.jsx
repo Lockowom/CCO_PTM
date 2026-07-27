@@ -1,7 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Search, X, Camera, ImagePlus, Trash2, Star, StarOff, Package,
-  ScanLine, Layers, Clock, Boxes, RefreshCw, ChevronLeft, Ruler, ImageOff, ShieldCheck
+  Search,
+  X,
+  Camera,
+  ImagePlus,
+  Trash2,
+  Star,
+  StarOff,
+  Package,
+  ScanLine,
+  Layers,
+  Clock,
+  Boxes,
+  RefreshCw,
+  ChevronLeft,
+  Ruler,
+  ImageOff,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -55,12 +70,17 @@ const ProductDatasheet = () => {
   // ── Búsqueda con debounce ──
   useEffect(() => {
     const q = term.trim();
-    if (q.length < 2) { setResults([]); return; }
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
     setSearching(true);
     const t = setTimeout(async () => {
       const { data, error } = await supabase.rpc('search_productos', { p_query: q, p_limit: 30 });
-      if (error) { toast.error('Error buscando productos'); setResults([]); }
-      else setResults(data || []);
+      if (error) {
+        toast.error('Error buscando productos');
+        setResults([]);
+      } else setResults(data || []);
       setSearching(false);
     }, 400);
     return () => clearTimeout(t);
@@ -70,8 +90,10 @@ const ProductDatasheet = () => {
   const loadFicha = useCallback(async (codigo) => {
     setLoadingFicha(true);
     const { data, error } = await supabase.rpc('get_ficha_producto', { p_codigo: codigo });
-    if (error) { toast.error('No se pudo cargar la ficha'); setFicha(null); }
-    else setFicha(data);
+    if (error) {
+      toast.error('No se pudo cargar la ficha');
+      setFicha(null);
+    } else setFicha(data);
     setLoadingFicha(false);
   }, []);
 
@@ -90,7 +112,10 @@ const ProductDatasheet = () => {
     const file = e.target.files?.[0];
     e.target.value = ''; // permitir re-seleccionar el mismo archivo
     if (!file || !selected) return;
-    if (!file.type.startsWith('image/')) { toast.error('El archivo debe ser una imagen'); return; }
+    if (!file.type.startsWith('image/')) {
+      toast.error('El archivo debe ser una imagen');
+      return;
+    }
 
     setUploading(true);
     try {
@@ -111,7 +136,7 @@ const ProductDatasheet = () => {
         storage_path: path,
         es_principal: esPrimera,
         creado_por: user?.id || null,
-        creado_nombre: user?.nombre || null,
+        creado_nombre: user?.nombre || null
       });
       if (insErr) {
         // limpiar el objeto huérfano si la fila falla
@@ -123,9 +148,11 @@ const ProductDatasheet = () => {
       await loadFicha(selected);
     } catch (err) {
       console.error(err);
-      toast.error(err?.message?.includes('row-level security')
-        ? 'No tienes permiso para subir fotos'
-        : 'Error al subir la foto');
+      toast.error(
+        err?.message?.includes('row-level security')
+          ? 'No tienes permiso para subir fotos'
+          : 'Error al subir la foto'
+      );
     } finally {
       setUploading(false);
     }
@@ -146,8 +173,14 @@ const ProductDatasheet = () => {
 
   const setPrincipal = async (img) => {
     try {
-      await supabase.from('tms_fichas_imagenes').update({ es_principal: false }).eq('codigo_producto', selected);
-      const { error } = await supabase.from('tms_fichas_imagenes').update({ es_principal: true }).eq('id', img.id);
+      await supabase
+        .from('tms_fichas_imagenes')
+        .update({ es_principal: false })
+        .eq('codigo_producto', selected);
+      const { error } = await supabase
+        .from('tms_fichas_imagenes')
+        .update({ es_principal: true })
+        .eq('id', img.id);
       if (error) throw error;
       await loadFicha(selected);
     } catch (err) {
@@ -156,15 +189,21 @@ const ProductDatasheet = () => {
   };
 
   const imagenes = ficha?.imagenes || [];
-  const principal = imagenes.find(i => i.es_principal) || imagenes[0] || null;
+  const principal = imagenes.find((i) => i.es_principal) || imagenes[0] || null;
 
   // Bucket privado (mig 065): las fotos de la ficha usan URLs firmadas.
   const [fotoUrls, setFotoUrls] = useState({});
   useEffect(() => {
     let on = true;
-    signedUrls(BUCKET, (ficha?.imagenes || []).map((i) => i.storage_path))
-      .then((m) => { if (on) setFotoUrls(m); });
-    return () => { on = false; };
+    signedUrls(
+      BUCKET,
+      (ficha?.imagenes || []).map((i) => i.storage_path)
+    ).then((m) => {
+      if (on) setFotoUrls(m);
+    });
+    return () => {
+      on = false;
+    };
   }, [ficha]);
   const fotoUrl = (img) => (img ? fotoUrls[img.storage_path] || '' : '');
   const partidas = ficha?.partidas || [];
@@ -182,7 +221,9 @@ const ProductDatasheet = () => {
               <ScanLine size={22} />
             </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none">Ficha Técnica</h1>
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none">
+                Ficha Técnica
+              </h1>
               <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
                 Presentación del producto
               </p>
@@ -190,7 +231,10 @@ const ProductDatasheet = () => {
           </div>
 
           <div className="relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${searching ? 'animate-pulse text-orange-500' : 'text-slate-400'}`} size={18} />
+            <Search
+              className={`absolute left-4 top-1/2 -translate-y-1/2 ${searching ? 'animate-pulse text-orange-500' : 'text-slate-400'}`}
+              size={18}
+            />
             <input
               type="text"
               inputMode="search"
@@ -202,7 +246,10 @@ const ProductDatasheet = () => {
               autoFocus
             />
             {term && (
-              <button onClick={() => setTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-rose-500 p-1">
+              <button
+                onClick={() => setTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-rose-500 p-1"
+              >
                 <X size={18} />
               </button>
             )}
@@ -235,15 +282,26 @@ const ProductDatasheet = () => {
                   onClick={() => openFicha(r.codigo_producto)}
                   className="group flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200 hover:border-orange-400 hover:shadow-lg text-left transition-all active:scale-[0.99]"
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${r.tiene_foto ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-300'}`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${r.tiene_foto ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-300'}`}
+                  >
                     {r.tiene_foto ? <Camera size={22} /> : <ImageOff size={22} />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-mono text-xs font-black text-orange-500 uppercase tracking-wider">{r.codigo_producto}</p>
-                    <p className="font-bold text-slate-900 text-sm leading-tight truncate">{r.producto || '—'}</p>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide mt-0.5">{r.unidad_medida || ''}</p>
+                    <p className="font-mono text-xs font-black text-orange-500 uppercase tracking-wider">
+                      {r.codigo_producto}
+                    </p>
+                    <p className="font-bold text-slate-900 text-sm leading-tight truncate">
+                      {r.producto || '—'}
+                    </p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide mt-0.5">
+                      {r.unidad_medida || ''}
+                    </p>
                   </div>
-                  <ChevronLeft size={18} className="rotate-180 text-slate-300 group-hover:text-orange-500 transition-colors" />
+                  <ChevronLeft
+                    size={18}
+                    className="rotate-180 text-slate-300 group-hover:text-orange-500 transition-colors"
+                  />
                 </button>
               ))}
             </div>
@@ -253,14 +311,19 @@ const ProductDatasheet = () => {
         {/* FICHA SELECCIONADA */}
         {selected && (
           <div>
-            <button onClick={closeFicha} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 mb-4 transition-colors">
+            <button
+              onClick={closeFicha}
+              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-orange-600 mb-4 transition-colors"
+            >
               <ChevronLeft size={18} /> Volver a la búsqueda
             </button>
 
             {loadingFicha ? (
               <div className="flex flex-col items-center justify-center py-24 gap-3">
                 <RefreshCw className="animate-spin text-orange-500" size={28} />
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Cargando ficha...</p>
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+                  Cargando ficha...
+                </p>
               </div>
             ) : (
               <div className="space-y-5">
@@ -286,14 +349,19 @@ const ProductDatasheet = () => {
 
                     {/* Datos */}
                     <div className="p-5 sm:p-7 flex flex-col justify-center">
-                      <span className="font-mono text-xs font-black text-orange-500 uppercase tracking-[0.2em] mb-2">{header?.codigo_producto || selected}</span>
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-4">{header?.producto || '—'}</h2>
+                      <span className="font-mono text-xs font-black text-orange-500 uppercase tracking-[0.2em] mb-2">
+                        {header?.codigo_producto || selected}
+                      </span>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-4">
+                        {header?.producto || '—'}
+                      </h2>
                       <div className="flex flex-wrap gap-2">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-black uppercase tracking-wide">
                           <Ruler size={13} /> U. Medida: {header?.unidad_medida || '—'}
                         </span>
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-200 text-[11px] font-black uppercase tracking-wide">
-                          <Layers size={13} /> {partidas.length} partida{partidas.length === 1 ? '' : 's'}
+                          <Layers size={13} /> {partidas.length} partida
+                          {partidas.length === 1 ? '' : 's'}
                         </span>
                       </div>
                     </div>
@@ -312,7 +380,11 @@ const ProductDatasheet = () => {
                         disabled={uploading}
                         className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all active:scale-95"
                       >
-                        {uploading ? <RefreshCw size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                        {uploading ? (
+                          <RefreshCw size={16} className="animate-spin" />
+                        ) : (
+                          <ImagePlus size={16} />
+                        )}
                         {uploading ? 'Subiendo...' : 'Agregar / Tomar foto'}
                       </button>
                     )}
@@ -332,13 +404,18 @@ const ProductDatasheet = () => {
                     <div className="text-center py-12 text-slate-300">
                       <ImageOff size={44} className="mx-auto mb-3" />
                       <p className="font-bold text-sm">
-                        {canManage ? 'Aún no hay fotos. Agrega la primera presentación.' : 'Este producto no tiene fotos todavía.'}
+                        {canManage
+                          ? 'Aún no hay fotos. Agrega la primera presentación.'
+                          : 'Este producto no tiene fotos todavía.'}
                       </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                       {imagenes.map((img) => (
-                        <div key={img.id} className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <div
+                          key={img.id}
+                          className="relative group aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100"
+                        >
                           <img
                             src={fotoUrl(img)}
                             alt=""
@@ -353,13 +430,19 @@ const ProductDatasheet = () => {
                           {canManage && (
                             <div className="absolute inset-x-0 bottom-0 p-1.5 flex items-center justify-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                               {!img.es_principal && (
-                                <button onClick={() => setPrincipal(img)} title="Marcar como principal"
-                                  className="p-1.5 rounded-lg bg-white/90 text-amber-600 hover:bg-white active:scale-90">
+                                <button
+                                  onClick={() => setPrincipal(img)}
+                                  title="Marcar como principal"
+                                  className="p-1.5 rounded-lg bg-white/90 text-amber-600 hover:bg-white active:scale-90"
+                                >
                                   <StarOff size={14} />
                                 </button>
                               )}
-                              <button onClick={() => deleteFoto(img)} title="Eliminar"
-                                className="p-1.5 rounded-lg bg-white/90 text-rose-600 hover:bg-white active:scale-90">
+                              <button
+                                onClick={() => deleteFoto(img)}
+                                title="Eliminar"
+                                className="p-1.5 rounded-lg bg-white/90 text-rose-600 hover:bg-white active:scale-90"
+                              >
                                 <Trash2 size={14} />
                               </button>
                             </div>
@@ -376,16 +459,26 @@ const ProductDatasheet = () => {
                     <Boxes size={18} className="text-orange-500" /> Partidas / Tallas
                   </h3>
                   {partidas.length === 0 ? (
-                    <p className="text-slate-400 font-bold text-sm py-6 text-center">Sin partidas registradas para este código.</p>
+                    <p className="text-slate-400 font-bold text-sm py-6 text-center">
+                      Sin partidas registradas para este código.
+                    </p>
                   ) : (
                     <div className="overflow-x-auto custom-scrollbar -mx-1">
                       <table className="w-full text-left border-collapse min-w-[460px]">
                         <thead>
                           <tr className="border-b-2 border-slate-100">
-                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Partida / Talla</th>
-                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Fecha Venc.</th>
-                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Disponible</th>
-                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Stock Total</th>
+                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                              Partida / Talla
+                            </th>
+                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                              Fecha Venc.
+                            </th>
+                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                              Disponible
+                            </th>
+                            <th className="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                              Stock Total
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -398,15 +491,25 @@ const ProductDatasheet = () => {
                               </td>
                               <td className="px-3 py-3">
                                 {p.fecha_vencimiento ? (
-                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black ${isExpired(p.fecha_vencimiento) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`}>
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black ${isExpired(p.fecha_vencimiento) ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`}
+                                  >
                                     <Clock size={12} /> {p.fecha_vencimiento}
                                   </span>
-                                ) : <span className="text-slate-300 font-bold">—</span>}
+                                ) : (
+                                  <span className="text-slate-300 font-bold">—</span>
+                                )}
                               </td>
                               <td className="px-3 py-3 text-right">
-                                <span className={`font-black ${(p.disponible || 0) > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>{p.disponible || 0}</span>
+                                <span
+                                  className={`font-black ${(p.disponible || 0) > 0 ? 'text-emerald-600' : 'text-slate-300'}`}
+                                >
+                                  {p.disponible || 0}
+                                </span>
                               </td>
-                              <td className="px-3 py-3 text-right font-black text-slate-900">{p.stock_total || 0}</td>
+                              <td className="px-3 py-3 text-right font-black text-slate-900">
+                                {p.stock_total || 0}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -428,8 +531,13 @@ const ProductDatasheet = () => {
 
       {/* LIGHTBOX */}
       {lightbox && (
-        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <button className="absolute top-4 right-4 text-white/80 hover:text-white p-2"><X size={28} /></button>
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white p-2">
+            <X size={28} />
+          </button>
           <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-xl" />
         </div>
       )}

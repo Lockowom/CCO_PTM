@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Layout, RefreshCw, Power, Home,
-  AlertTriangle, Loader2
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Layout, RefreshCw, Power, Home, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useConfig } from '../../context/ConfigContext';
 import { APP_MODULES, APP_ROUTES } from '../../config/modules';
@@ -34,19 +31,15 @@ const ViewsPage = () => {
         .select('*')
         .order('id');
 
-      const { data: rolesData } = await supabase
-        .from('tms_roles')
-        .select('*')
-        .order('nombre');
+      const { data: rolesData } = await supabase.from('tms_roles').select('*').order('nombre');
 
       // 💡 FILTRADO DINÁMICO: Solo mostrar módulos que existen en APP_MODULES
       // Esto elimina automáticamente los módulos borrados del proyecto
-      const validModuleIds = APP_MODULES.map(m => m.id);
-      const filteredModules = (modulesData || []).filter(m => validModuleIds.includes(m.id));
+      const validModuleIds = APP_MODULES.map((m) => m.id);
+      const filteredModules = (modulesData || []).filter((m) => validModuleIds.includes(m.id));
 
       setModulesConfig(filteredModules);
       setRoles(rolesData || []);
-
     } catch (_) {
       console.error('Views fetch error:', _);
     } finally {
@@ -62,9 +55,7 @@ const ViewsPage = () => {
       const newStatus = !currentStatus;
 
       // Actualización optimista local
-      setModulesConfig(prev => prev.map(m =>
-        m.id === id ? { ...m, enabled: newStatus } : m
-      ));
+      setModulesConfig((prev) => prev.map((m) => (m.id === id ? { ...m, enabled: newStatus } : m)));
 
       // Guardar en BD
       const { error } = await supabase
@@ -80,7 +71,6 @@ const ViewsPage = () => {
       // La actualización en Navbar ocurre vía Realtime (ConfigContext)
       // Pero forzamos un refresh local por si acaso
       await refreshConfig();
-
     } catch (error) {
       alert('Error: ' + error.message);
       await fetchData(); // Revertir en caso de error
@@ -93,9 +83,7 @@ const ViewsPage = () => {
     try {
       setSaving(true);
 
-      setRoles(prev => prev.map(r =>
-        r.id === roleId ? { ...r, landing_page: newPath } : r
-      ));
+      setRoles((prev) => prev.map((r) => (r.id === roleId ? { ...r, landing_page: newPath } : r)));
 
       const { error } = await supabase
         .from('tms_roles')
@@ -103,7 +91,6 @@ const ViewsPage = () => {
         .eq('id', roleId);
 
       if (error) throw error;
-
     } catch (error) {
       alert('Error: ' + error.message);
       await fetchData();
@@ -136,7 +123,10 @@ const ViewsPage = () => {
           </div>
           <div>
             <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
-              Configuración de <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">Vistas</span>
+              Configuración de{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
+                Vistas
+              </span>
               {saving && <Loader2 size={20} className="animate-spin text-emerald-500" />}
             </h1>
             <p className="text-slate-500 text-sm mt-1 font-medium flex items-center gap-2">
@@ -161,20 +151,22 @@ const ViewsPage = () => {
       <div className="flex gap-4 relative z-10 overflow-x-auto pb-2 no-scrollbar">
         <button
           onClick={() => setActiveTab('modules')}
-          className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${activeTab === 'modules'
+          className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${
+            activeTab === 'modules'
               ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
               : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
-            }`}
+          }`}
         >
           <Power size={18} />
           Activar/Desactivar Módulos
         </button>
         <button
           onClick={() => setActiveTab('landing')}
-          className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${activeTab === 'landing'
+          className={`px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center gap-3 transition-all flex-shrink-0 ${
+            activeTab === 'landing'
               ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
               : 'bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200'
-            }`}
+          }`}
         >
           <Home size={18} />
           Página de Inicio por Rol
@@ -182,7 +174,6 @@ const ViewsPage = () => {
       </div>
 
       <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-4 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
         {activeTab === 'modules' && (
           <div className="space-y-8">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-start gap-4 text-amber-900 shadow-sm">
@@ -192,24 +183,31 @@ const ViewsPage = () => {
               <div>
                 <h4 className="font-bold text-lg mb-1">Control Global de Módulos</h4>
                 <p className="opacity-90">
-                  Desactivar un módulo aquí lo ocultará para <strong>todos los usuarios del sistema</strong>, independientemente de sus roles.
+                  Desactivar un módulo aquí lo ocultará para{' '}
+                  <strong>todos los usuarios del sistema</strong>, independientemente de sus roles.
                   El menú se actualiza <strong>instantáneamente</strong> al cambiar.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-              {modulesConfig.map(module => (
+              {modulesConfig.map((module) => (
                 <div
                   key={module.id}
-                  className={`relative overflow-hidden flex flex-col justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all group ${module.enabled
+                  className={`relative overflow-hidden flex flex-col justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all group ${
+                    module.enabled
                       ? 'bg-white border-orange-100 shadow-md hover:border-orange-300 hover:shadow-xl hover:-translate-y-1'
                       : 'bg-slate-50 border-slate-200 opacity-70 grayscale hover:grayscale-0 hover:opacity-100'
-                    }`}
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${module.enabled ? 'bg-gradient-to-br from-orange-100 to-amber-50 text-orange-600 shadow-inner' : 'bg-slate-200 text-slate-400'
-                      }`}>
+                    <div
+                      className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                        module.enabled
+                          ? 'bg-gradient-to-br from-orange-100 to-amber-50 text-orange-600 shadow-inner'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}
+                    >
                       <Layout size={28} />
                     </div>
 
@@ -221,16 +219,24 @@ const ViewsPage = () => {
                         onChange={() => handleToggleModule(module.id, module.enabled)}
                         disabled={saving}
                       />
-                      <span className={`block w-full h-full rounded-full transition-colors duration-300 shadow-inner ${module.enabled ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-slate-300'}`}></span>
-                      <span className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 shadow-md ${module.enabled ? 'translate-x-7' : 'translate-x-0'}`}></span>
+                      <span
+                        className={`block w-full h-full rounded-full transition-colors duration-300 shadow-inner ${module.enabled ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-slate-300'}`}
+                      ></span>
+                      <span
+                        className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 shadow-md ${module.enabled ? 'translate-x-7' : 'translate-x-0'}`}
+                      ></span>
                     </label>
                   </div>
 
                   <div className="relative z-10">
-                    <h4 className={`text-xl font-black mb-1 transition-colors ${module.enabled ? 'text-slate-800' : 'text-slate-500'}`}>
+                    <h4
+                      className={`text-xl font-black mb-1 transition-colors ${module.enabled ? 'text-slate-800' : 'text-slate-500'}`}
+                    >
                       {module.label || module.id}
                     </h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{module.id}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      {module.id}
+                    </p>
                   </div>
 
                   {module.enabled && (
@@ -251,22 +257,29 @@ const ViewsPage = () => {
               <div>
                 <h4 className="font-bold text-lg mb-1">Rutas de Inicio Personalizadas</h4>
                 <p className="opacity-90">
-                  Define a qué pantalla será redirigido cada rol inmediatamente después de iniciar sesión.
-                  Esto optimiza el flujo de trabajo para cada tipo de usuario.
+                  Define a qué pantalla será redirigido cada rol inmediatamente después de iniciar
+                  sesión. Esto optimiza el flujo de trabajo para cada tipo de usuario.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
-              {roles.map(role => (
-                <div key={role.id} className="p-4 sm:p-6 border border-slate-200 rounded-2xl sm:rounded-3xl bg-white hover:shadow-xl hover:-translate-y-1 hover:border-orange-300 transition-all duration-300 group">
+              {roles.map((role) => (
+                <div
+                  key={role.id}
+                  className="p-4 sm:p-6 border border-slate-200 rounded-2xl sm:rounded-3xl bg-white hover:shadow-xl hover:-translate-y-1 hover:border-orange-300 transition-all duration-300 group"
+                >
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 font-black text-2xl group-hover:bg-gradient-to-br group-hover:from-orange-500 group-hover:to-amber-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-orange-500/30 transition-all duration-300">
                       {role.nombre?.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="font-black text-xl text-slate-800 group-hover:text-orange-600 transition-colors">{role.nombre}</h3>
-                      <p className="text-sm font-medium text-slate-500">{role.descripcion || 'Sin descripción'}</p>
+                      <h3 className="font-black text-xl text-slate-800 group-hover:text-orange-600 transition-colors">
+                        {role.nombre}
+                      </h3>
+                      <p className="text-sm font-medium text-slate-500">
+                        {role.descripcion || 'Sin descripción'}
+                      </p>
                     </div>
                   </div>
 
@@ -280,14 +293,26 @@ const ViewsPage = () => {
                         value={role.landing_page || '/panel'}
                         onChange={(e) => handleUpdateLandingPage(role.id, e.target.value)}
                       >
-                        {availableRoutes.map(route => (
+                        {availableRoutes.map((route) => (
                           <option key={route.value} value={route.value}>
                             {route.label}
                           </option>
                         ))}
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400 group-hover/select:text-orange-500 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.5"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
                       </div>
                     </div>
                   </div>

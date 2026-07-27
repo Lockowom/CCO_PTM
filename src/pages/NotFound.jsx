@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertOctagon, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,10 +19,13 @@ const NotFound = () => {
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-slate-900 mb-4 tracking-wide">Destino Desconocido</h1>
-        
+        <h1 className="text-3xl font-black text-slate-900 mb-4 tracking-wide">
+          Destino Desconocido
+        </h1>
+
         <p className="text-slate-500 mb-8 text-lg">
-          La ruta logística que intentas consultar no existe en la base de datos del sistema, o fue reasignada.
+          La ruta logística que intentas consultar no existe en la base de datos del sistema, o fue
+          reasignada.
         </p>
 
         <button

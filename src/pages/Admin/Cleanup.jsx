@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../../supabase';
 import { Trash2, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 
 const Cleanup = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
-  
+
   const [options, setOptions] = useState({
     cleanNV: false,
     cleanPartidas: false,
@@ -22,14 +22,18 @@ const Cleanup = () => {
 
   const handleCleanup = async () => {
     // Doble confirmación
-    if (!window.confirm("⚠️ ADVERTENCIA CRÍTICA ⚠️\n\nEstás a punto de ELIMINAR PERMANENTEMENTE datos operativos.\nEsta acción NO SE PUEDE DESHACER.\n\n¿Estás absolutamente seguro de continuar?")) {
+    if (
+      !window.confirm(
+        '⚠️ ADVERTENCIA CRÍTICA ⚠️\n\nEstás a punto de ELIMINAR PERMANENTEMENTE datos operativos.\nEsta acción NO SE PUEDE DESHACER.\n\n¿Estás absolutamente seguro de continuar?'
+      )
+    ) {
       return;
     }
 
     // Segunda confirmación por si acaso
     const confirmText = prompt("Para confirmar, escribe 'BORRAR' en mayúsculas:");
     if (confirmText !== 'BORRAR') {
-      alert("Acción cancelada.");
+      alert('Acción cancelada.');
       return;
     }
 
@@ -48,7 +52,7 @@ const Cleanup = () => {
       if (error) throw error;
 
       setStatus({ type: 'success', message: data || 'Limpieza realizada con éxito.' });
-      
+
       // Resetear opciones
       setOptions({
         cleanNV: false,
@@ -56,9 +60,8 @@ const Cleanup = () => {
         cleanSeries: false,
         cleanFarmapack: false
       });
-
     } catch (error) {
-      setStatus({ type: 'error', message: "Error al limpiar datos: " + error.message });
+      setStatus({ type: 'error', message: 'Error al limpiar datos: ' + error.message });
     } finally {
       setLoading(false);
     }
@@ -72,8 +75,9 @@ const Cleanup = () => {
           <div>
             <h3 className="text-red-800 font-bold text-lg">Zona de Peligro: Limpieza de Datos</h3>
             <p className="text-red-700 text-sm mt-1">
-              Esta herramienta permite eliminar masivamente registros de las tablas operativas. 
-              Úsala con extrema precaución, idealmente solo para reiniciar entornos de prueba o limpiezas anuales.
+              Esta herramienta permite eliminar masivamente registros de las tablas operativas.
+              Úsala con extrema precaución, idealmente solo para reiniciar entornos de prueba o
+              limpiezas anuales.
             </p>
           </div>
         </div>
@@ -86,22 +90,26 @@ const Cleanup = () => {
 
         <div className="space-y-4 mb-8">
           <label className="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               name="cleanNV"
               checked={options.cleanNV}
               onChange={handleCheckboxChange}
               className="w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300"
             />
             <div className="ml-3">
-              <span className="block text-sm font-bold text-slate-700">Notas de Venta + Entregas TMS</span>
-              <span className="block text-xs text-slate-500">Elimina N.V. Diarias y sus entregas asociadas en el planificador.</span>
+              <span className="block text-sm font-bold text-slate-700">
+                Notas de Venta + Entregas TMS
+              </span>
+              <span className="block text-xs text-slate-500">
+                Elimina N.V. Diarias y sus entregas asociadas en el planificador.
+              </span>
             </div>
           </label>
 
           <label className="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               name="cleanPartidas"
               checked={options.cleanPartidas}
               onChange={handleCheckboxChange}
@@ -109,13 +117,15 @@ const Cleanup = () => {
             />
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Partidas</span>
-              <span className="block text-xs text-slate-500">Elimina el detalle de partidas/líneas de venta.</span>
+              <span className="block text-xs text-slate-500">
+                Elimina el detalle de partidas/líneas de venta.
+              </span>
             </div>
           </label>
 
           <label className="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               name="cleanSeries"
               checked={options.cleanSeries}
               onChange={handleCheckboxChange}
@@ -123,13 +133,15 @@ const Cleanup = () => {
             />
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Series</span>
-              <span className="block text-xs text-slate-500">Elimina el registro de series de productos.</span>
+              <span className="block text-xs text-slate-500">
+                Elimina el registro de series de productos.
+              </span>
             </div>
           </label>
 
           <label className="flex items-center p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               name="cleanFarmapack"
               checked={options.cleanFarmapack}
               onChange={handleCheckboxChange}
@@ -137,7 +149,9 @@ const Cleanup = () => {
             />
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Farmapack</span>
-              <span className="block text-xs text-slate-500">Elimina datos de integración Farmapack.</span>
+              <span className="block text-xs text-slate-500">
+                Elimina datos de integración Farmapack.
+              </span>
             </div>
           </label>
         </div>
@@ -152,7 +166,9 @@ const Cleanup = () => {
         </button>
 
         {status && (
-          <div className={`mt-4 p-4 rounded-lg flex items-center gap-2 ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <div
+            className={`mt-4 p-4 rounded-lg flex items-center gap-2 ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+          >
             {status.type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
             <span>{status.message}</span>
           </div>

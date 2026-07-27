@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Fallback de Suspense con escape de seguridad. Si tras `timeoutMs` (15s) el
@@ -42,7 +42,9 @@ const SuspenseLoaderTimeout = ({ timeoutMs = 15000 }) => {
           <div className="w-8 h-8 bg-orange-500/20 rounded-full animate-ping"></div>
         </div>
       </div>
-      <h2 className="text-orange-400 font-black tracking-[0.2em] uppercase text-sm animate-pulse">Inicializando Módulo...</h2>
+      <h2 className="text-orange-400 font-black tracking-[0.2em] uppercase text-sm animate-pulse">
+        Inicializando Módulo...
+      </h2>
     </div>
   );
 };

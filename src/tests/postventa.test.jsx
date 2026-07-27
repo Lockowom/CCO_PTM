@@ -1,50 +1,120 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 // ── Datos con forma de CCO (los que devolverían las RPC/tablas reales) ──────
 const TICKETS = [
-  { id: 't1', numero: 'TKT-2026-001', fecha_apertura: '2026-07-09', cliente: 'Hospital Regional', region: 'Metropolitana de Santiago',
-    contacto: null, equipo_modelo: 'ADE X100', numero_serie: 'SN-1', tipo_solicitud: 'Falla Técnica', prioridad: 'Alta',
-    tecnico_asignado: 'Cesar Tapia', estado: 'Abierto', descripcion: 'Equipo no enciende', cotizar: 'No',
-    fecha_cierre: null, resultado: null, observaciones: null, origen: 'Manual' },
-  { id: 't2', numero: 'TKT-2026-002', fecha_apertura: '2026-07-08', cliente: 'Clínica Correo', region: 'Valparaíso',
-    contacto: null, equipo_modelo: 'GIVAS V2', numero_serie: null, tipo_solicitud: 'Otro', prioridad: 'Media',
-    tecnico_asignado: 'Sin Asignar', estado: 'Cerrado', descripcion: 'Desde correo', cotizar: 'No',
-    fecha_cierre: '2026-07-09', resultado: 'Resuelto', observaciones: null, origen: 'Correo' },
+  {
+    id: 't1',
+    numero: 'TKT-2026-001',
+    fecha_apertura: '2026-07-09',
+    cliente: 'Hospital Regional',
+    region: 'Metropolitana de Santiago',
+    contacto: null,
+    equipo_modelo: 'ADE X100',
+    numero_serie: 'SN-1',
+    tipo_solicitud: 'Falla Técnica',
+    prioridad: 'Alta',
+    tecnico_asignado: 'Cesar Tapia',
+    estado: 'Abierto',
+    descripcion: 'Equipo no enciende',
+    cotizar: 'No',
+    fecha_cierre: null,
+    resultado: null,
+    observaciones: null,
+    origen: 'Manual'
+  },
+  {
+    id: 't2',
+    numero: 'TKT-2026-002',
+    fecha_apertura: '2026-07-08',
+    cliente: 'Clínica Correo',
+    region: 'Valparaíso',
+    contacto: null,
+    equipo_modelo: 'GIVAS V2',
+    numero_serie: null,
+    tipo_solicitud: 'Otro',
+    prioridad: 'Media',
+    tecnico_asignado: 'Sin Asignar',
+    estado: 'Cerrado',
+    descripcion: 'Desde correo',
+    cotizar: 'No',
+    fecha_cierre: '2026-07-09',
+    resultado: 'Resuelto',
+    observaciones: null,
+    origen: 'Correo'
+  }
 ];
 const TECNICOS = [
   { id: 'tec1', nombre: 'Cesar Tapia', activo: true, orden: 1 },
-  { id: 'tec2', nombre: 'Sin Asignar', activo: true, orden: 99 },
+  { id: 'tec2', nombre: 'Sin Asignar', activo: true, orden: 99 }
 ];
 const DASHBOARD = {
-  resumen: { total: 2, abiertos: 1, en_proceso: 0, pendiente_cliente: 0, cerrados: 1, prioridad_alta: 1 },
+  resumen: {
+    total: 2,
+    abiertos: 1,
+    en_proceso: 0,
+    pendiente_cliente: 0,
+    cerrados: 1,
+    prioridad_alta: 1
+  },
   tiempos: { promedio_dias: 1, min_dias: 1, max_dias: 1, cerrados_mes: 1, sin_tecnico: 1 },
-  por_tipo: { 'Falla Técnica': 1, 'Otro': 1 },
+  por_tipo: { 'Falla Técnica': 1, Otro: 1 },
   por_estado: { Abierto: 1, Cerrado: 1 },
-  por_tecnico: { 'Cesar Tapia': { total: 1, abiertos: 1 }, 'Sin Asignar': { total: 1, abiertos: 0 } },
-  tickets_recientes: TICKETS,
+  por_tecnico: {
+    'Cesar Tapia': { total: 1, abiertos: 1 },
+    'Sin Asignar': { total: 1, abiertos: 0 }
+  },
+  tickets_recientes: TICKETS
 };
 
 const TABLE_DATA = {
   tms_postventa_tickets: TICKETS,
-  tms_postventa_tecnicos: TECNICOS,
+  tms_postventa_tecnicos: TECNICOS
 };
 const RPC_DATA = {
   pv_dashboard: DASHBOARD,
   crear_pv_ticket: TICKETS[0],
   actualizar_pv_ticket: TICKETS[0],
-  pv_familias_stock: [{ familia: 'NGE', skus: 423, ejemplo: 'MANGO DE BISTURI Nº 3' }, { familia: '0GI', skus: 52, ejemplo: 'CINTURON GIVAS' }],
-  pv_correos_ticket: [{ id_correo: 'EID-A', remitente_nombre: 'Juan', remitente_email: 'juan@hospital.cl', para: 'postventa@ptm.cl', cc: '', asunto: 'Falla balanza', cuerpo: 'No enciende', adjuntos: '', recibido: '2026-06-18T10:00:00Z' }],
+  pv_familias_stock: [
+    { familia: 'NGE', skus: 423, ejemplo: 'MANGO DE BISTURI Nº 3' },
+    { familia: '0GI', skus: 52, ejemplo: 'CINTURON GIVAS' }
+  ],
+  pv_correos_ticket: [
+    {
+      id_correo: 'EID-A',
+      remitente_nombre: 'Juan',
+      remitente_email: 'juan@hospital.cl',
+      para: 'postventa@ptm.cl',
+      cc: '',
+      asunto: 'Falla balanza',
+      cuerpo: 'No enciende',
+      adjuntos: '',
+      recibido: '2026-06-18T10:00:00Z'
+    }
+  ]
 };
 
 function builder(data) {
   const res = { data, error: null };
   const b = {};
-  ['select', 'order', 'limit', 'eq', 'is', 'or', 'ilike', 'gte', 'lte', 'in', 'range', 'not'].forEach((m) => (b[m] = () => b));
-  b.maybeSingle = () => Promise.resolve({ data: Array.isArray(data) ? (data[0] || null) : data, error: null });
+  [
+    'select',
+    'order',
+    'limit',
+    'eq',
+    'is',
+    'or',
+    'ilike',
+    'gte',
+    'lte',
+    'in',
+    'range',
+    'not'
+  ].forEach((m) => (b[m] = () => b));
+  b.maybeSingle = () =>
+    Promise.resolve({ data: Array.isArray(data) ? data[0] || null : data, error: null });
   b.single = b.maybeSingle;
   b.then = (resolve) => resolve(res);
   return b;
@@ -53,23 +123,27 @@ function builder(data) {
 vi.mock('../supabase', () => ({
   supabase: {
     from: (table) => builder(TABLE_DATA[table] ?? []),
-    rpc: (name) => Promise.resolve({ data: RPC_DATA[name] ?? [], error: null }),
-  },
+    rpc: (name) => Promise.resolve({ data: RPC_DATA[name] ?? [], error: null })
+  }
 }));
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'u1', rol: 'ADMIN', es_admin_delegado: false, nombre: 'QA Tester' },
     hasPermission: () => true,
-    logout: vi.fn(),
-  }),
+    logout: vi.fn()
+  })
 }));
 
 import Postventa from '../pages/Postventa/Postventa';
 
 function wrap(ui, route = '/postventa/tickets') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe('Post-Venta / Servicio Técnico (integrado en CCO)', () => {

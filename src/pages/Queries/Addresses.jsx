@@ -1,5 +1,18 @@
-import React, { useState } from 'react';
-import { Search, MapPin, Phone, Building, Loader2, Pencil, X, Save, Truck, Trash2, Check, Download } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Search,
+  MapPin,
+  Phone,
+  Building,
+  Loader2,
+  Pencil,
+  X,
+  Save,
+  Truck,
+  Trash2,
+  Check,
+  Download
+} from 'lucide-react';
 import { supabase } from '../../supabase';
 import { withTimeout } from '../../lib/supabaseQuery';
 import { exportToExcel } from '../../lib/exportExcel';
@@ -8,14 +21,14 @@ import { toast } from 'sonner';
 // Campos editables del modal (clave en BD → etiqueta visible).
 const EDIT_FIELDS = [
   { key: 'razon_social', label: 'Razón Social', full: true },
-  { key: 'nombre',       label: 'Nombre / Fantasía', full: true },
-  { key: 'rut',          label: 'RUT' },
-  { key: 'transporte',   label: 'Transporte' },
-  { key: 'direccion',    label: 'Dirección', full: true },
-  { key: 'comuna',       label: 'Comuna' },
-  { key: 'ciudad',       label: 'Ciudad' },
-  { key: 'region',       label: 'Región' },
-  { key: 'telefono_1',   label: 'Teléfono' },
+  { key: 'nombre', label: 'Nombre / Fantasía', full: true },
+  { key: 'rut', label: 'RUT' },
+  { key: 'transporte', label: 'Transporte' },
+  { key: 'direccion', label: 'Dirección', full: true },
+  { key: 'comuna', label: 'Comuna' },
+  { key: 'ciudad', label: 'Ciudad' },
+  { key: 'region', label: 'Región' },
+  { key: 'telefono_1', label: 'Teléfono' }
 ];
 
 const Addresses = () => {
@@ -52,7 +65,9 @@ const Addresses = () => {
         const { data, error } = await withTimeout(
           supabase
             .from('tms_direcciones')
-            .select('razon_social, nombre, rut, transporte, direccion, comuna, ciudad, region, telefono_1, latitud, longitud')
+            .select(
+              'razon_social, nombre, rut, transporte, direccion, comuna, ciudad, region, telefono_1, latitud, longitud'
+            )
             .order('razon_social', { ascending: true })
             .range(from, from + PAGE - 1),
           { ms: 20000, label: 'descarga de matriz' }
@@ -64,13 +79,23 @@ const Addresses = () => {
         if (data.length < PAGE) break;
         from += PAGE;
       }
-      if (all.length === 0) { toast.warning('No hay registros para exportar'); return; }
+      if (all.length === 0) {
+        toast.warning('No hay registros para exportar');
+        return;
+      }
 
       const rows = all.map((r) => ({
-        Razon_Social: r.razon_social || '', Nombre: r.nombre || '', RUT: r.rut || '',
-        Transporte: r.transporte || '', Direccion: r.direccion || '',
-        Comuna: r.comuna || '', Ciudad: r.ciudad || '', Region: r.region || '',
-        Telefono: r.telefono_1 || '', Latitud: r.latitud ?? '', Longitud: r.longitud ?? '',
+        Razon_Social: r.razon_social || '',
+        Nombre: r.nombre || '',
+        RUT: r.rut || '',
+        Transporte: r.transporte || '',
+        Direccion: r.direccion || '',
+        Comuna: r.comuna || '',
+        Ciudad: r.ciudad || '',
+        Region: r.region || '',
+        Telefono: r.telefono_1 || '',
+        Latitud: r.latitud ?? '',
+        Longitud: r.longitud ?? ''
       }));
       exportToExcel({ filename: 'Maestro_Direcciones', sheets: [{ name: 'Direcciones', rows }] });
       toast.success(`Matriz descargada: ${all.length} registros`);
@@ -108,22 +133,33 @@ const Addresses = () => {
     }
   };
 
-  const openEdit = (item) => { setModalConfirm(false); setEditing({ ...item }); };
-  const closeEdit = () => { if (!saving) { setEditing(null); setModalConfirm(false); } };
-  const setField = (key, value) => setEditing(prev => ({ ...prev, [key]: value }));
+  const openEdit = (item) => {
+    setModalConfirm(false);
+    setEditing({ ...item });
+  };
+  const closeEdit = () => {
+    if (!saving) {
+      setEditing(null);
+      setModalConfirm(false);
+    }
+  };
+  const setField = (key, value) => setEditing((prev) => ({ ...prev, [key]: value }));
 
   // Elimina un registro por id (lo usa tanto la fila como el modal).
   const deleteRow = async (id) => {
     setDeletingId(id);
     try {
-      const { error } = await withTimeout(
-        supabase.from('tms_direcciones').delete().eq('id', id),
-        { ms: 12000, label: 'eliminar dirección' }
-      );
+      const { error } = await withTimeout(supabase.from('tms_direcciones').delete().eq('id', id), {
+        ms: 12000,
+        label: 'eliminar dirección'
+      });
       if (error) throw error;
-      setResults(prev => prev.filter(r => r.id !== id));
+      setResults((prev) => prev.filter((r) => r.id !== id));
       toast.success('Registro eliminado');
-      if (editing?.id === id) { setEditing(null); setModalConfirm(false); }
+      if (editing?.id === id) {
+        setEditing(null);
+        setModalConfirm(false);
+      }
     } catch (err) {
       toast.error('No se pudo eliminar: ' + err.message);
     } finally {
@@ -143,7 +179,7 @@ const Addresses = () => {
       const patch = {};
       EDIT_FIELDS.forEach(({ key }) => {
         const v = editing[key];
-        patch[key] = typeof v === 'string' ? (v.trim() || null) : (v ?? null);
+        patch[key] = typeof v === 'string' ? v.trim() || null : (v ?? null);
       });
       patch.updated_at = new Date().toISOString();
 
@@ -154,7 +190,7 @@ const Addresses = () => {
       if (error) throw error;
 
       // Refleja el cambio en la tabla sin re-buscar.
-      setResults(prev => prev.map(r => (r.id === editing.id ? { ...r, ...patch } : r)));
+      setResults((prev) => prev.map((r) => (r.id === editing.id ? { ...r, ...patch } : r)));
       toast.success('Registro actualizado');
       setEditing(null);
     } catch (err) {
@@ -170,7 +206,9 @@ const Addresses = () => {
       <div className="flex flex-wrap justify-between items-end gap-3">
         <div>
           <h2 className="text-lg sm:text-2xl font-bold text-slate-800">Maestro de Direcciones</h2>
-          <p className="text-slate-500 text-xs sm:text-sm">Consulta, edición y limpieza de clientes y puntos de entrega</p>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            Consulta, edición y limpieza de clientes y puntos de entrega
+          </p>
         </div>
         <button
           onClick={descargarMatriz}
@@ -179,13 +217,12 @@ const Addresses = () => {
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60 text-sm"
         >
           {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          {exporting ? (exportMsg || 'Descargando…') : 'Descargar matriz'}
+          {exporting ? exportMsg || 'Descargando…' : 'Descargar matriz'}
         </button>
       </div>
 
       {/* Área de Trabajo */}
       <div className="bg-slate-50 min-h-[calc(100vh-200px)] rounded-xl border border-slate-200 p-3 sm:p-6 md:p-10">
-
         {/* Buscador Flotante Centrado */}
         <div className="max-w-3xl mx-auto mb-8">
           <div className="bg-white rounded-xl shadow-lg shadow-slate-200/50 flex items-center p-1.5 sm:p-2 border border-slate-100 transition-all focus-within:ring-4 focus-within:ring-indigo-100 focus-within:border-indigo-300">
@@ -231,20 +268,36 @@ const Addresses = () => {
                     <table className="w-full text-left border-collapse min-w-[820px]">
                       <thead className="bg-slate-50 border-b border-slate-100">
                         <tr>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-1/4">Razón Social / Nombre</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-32">RUT</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Ubicación</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Dirección</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Transporte</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">Teléfono</th>
-                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-24 text-center">Acciones</th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-1/4">
+                            Razón Social / Nombre
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-32">
+                            RUT
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                            Ubicación
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                            Dirección
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                            Transporte
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                            Teléfono
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-xs font-bold text-slate-500 uppercase w-24 text-center">
+                            Acciones
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {results.map((item) => (
                           <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-2 sm:px-4 py-3 align-top">
-                              <div className="font-bold text-slate-800 text-sm">{item.razon_social}</div>
+                              <div className="font-bold text-slate-800 text-sm">
+                                {item.razon_social}
+                              </div>
                               {item.nombre && item.nombre !== item.razon_social && (
                                 <div className="text-xs text-slate-500 mt-1">{item.nombre}</div>
                               )}
@@ -255,8 +308,12 @@ const Addresses = () => {
                               </span>
                             </td>
                             <td className="px-2 sm:px-4 py-3 align-top">
-                              <div className="text-sm text-slate-700 font-medium">{item.comuna}</div>
-                              <div className="text-xs text-slate-500 mt-0.5">{item.ciudad}, {item.region}</div>
+                              <div className="text-sm text-slate-700 font-medium">
+                                {item.comuna}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-0.5">
+                                {item.ciudad}, {item.region}
+                              </div>
                             </td>
                             <td className="px-2 sm:px-4 py-3 align-top">
                               <div className="flex items-start gap-2 text-sm text-slate-600">
@@ -291,7 +348,11 @@ const Addresses = () => {
                                       title="Confirmar eliminación"
                                       className="p-2 rounded-lg text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-60"
                                     >
-                                      {deletingId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                      {deletingId === item.id ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                      ) : (
+                                        <Check size={16} />
+                                      )}
                                     </button>
                                     <button
                                       onClick={() => setConfirmId(null)}
@@ -311,7 +372,9 @@ const Addresses = () => {
                                       <Pencil size={16} />
                                     </button>
                                     <button
-                                      onClick={() => { setConfirmId(item.id); }}
+                                      onClick={() => {
+                                        setConfirmId(item.id);
+                                      }}
                                       title="Eliminar registro"
                                       className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                                     >
@@ -360,8 +423,11 @@ const Addresses = () => {
                 <h3 className="text-lg font-black text-slate-800">Editar registro</h3>
                 <p className="text-xs text-slate-400">{editing.razon_social || '—'}</p>
               </div>
-              <button onClick={closeEdit} disabled={saving}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50">
+              <button
+                onClick={closeEdit}
+                disabled={saving}
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -369,7 +435,9 @@ const Addresses = () => {
             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {EDIT_FIELDS.map(({ key, label, full }) => (
                 <div key={key} className={full ? 'sm:col-span-2' : ''}>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {label}
+                  </label>
                   <input
                     value={editing[key] ?? ''}
                     onChange={(e) => setField(key, e.target.value)}
@@ -383,24 +451,42 @@ const Addresses = () => {
             <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
               {/* Eliminar (2 pasos) a la izquierda */}
               {modalConfirm ? (
-                <button onClick={() => deleteRow(editing.id)} disabled={deletingId === editing.id}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700 disabled:opacity-60">
-                  {deletingId === editing.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} ¿Confirmar?
+                <button
+                  onClick={() => deleteRow(editing.id)}
+                  disabled={deletingId === editing.id}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center gap-2 hover:bg-rose-700 disabled:opacity-60"
+                >
+                  {deletingId === editing.id ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}{' '}
+                  ¿Confirmar?
                 </button>
               ) : (
-                <button onClick={() => setModalConfirm(true)} disabled={saving}
-                  className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 font-bold text-sm flex items-center gap-2 hover:bg-rose-50 disabled:opacity-50">
+                <button
+                  onClick={() => setModalConfirm(true)}
+                  disabled={saving}
+                  className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 font-bold text-sm flex items-center gap-2 hover:bg-rose-50 disabled:opacity-50"
+                >
                   <Trash2 size={16} /> Eliminar
                 </button>
               )}
               <div className="flex gap-3">
-                <button onClick={closeEdit} disabled={saving}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 disabled:opacity-50">
+                <button
+                  onClick={closeEdit}
+                  disabled={saving}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 disabled:opacity-50"
+                >
                   Cancelar
                 </button>
-                <button onClick={saveEdit} disabled={saving}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50">
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Guardar
+                <button
+                  onClick={saveEdit}
+                  disabled={saving}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{' '}
+                  Guardar
                 </button>
               </div>
             </div>

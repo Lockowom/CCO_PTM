@@ -1,7 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  Box, Search, Scale, Save, CheckCircle,
-  AlertCircle, Package, QrCode, Ruler, Info, Loader2, Zap
+  Box,
+  Search,
+  Scale,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  Package,
+  QrCode,
+  Ruler,
+  Info,
+  Loader2,
+  Zap
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
@@ -27,7 +37,7 @@ const CubingRegistry = () => {
   const [loading, setLoading] = useState(false);
   const [productData, setProductData] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Refs for animations
   const containerRef = useRef(null);
   const formRef = useRef(null);
@@ -39,17 +49,20 @@ const CubingRegistry = () => {
   const codigoInputRef = useRef(null);
 
   // Initial Animation
-  useGSAP(() => {
-    gsap.from(containerRef.current, { opacity: 0, duration: 0.5 });
-    gsap.from(".anim-stagger", { 
-      y: 20, 
-      opacity: 0, 
-      duration: 0.6, 
-      stagger: 0.1, 
-      ease: "power2.out",
-      clearProps: 'all'
-    });
-  }, { scope: containerRef });
+  useGSAP(
+    () => {
+      gsap.from(containerRef.current, { opacity: 0, duration: 0.5 });
+      gsap.from('.anim-stagger', {
+        y: 20,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power2.out',
+        clearProps: 'all'
+      });
+    },
+    { scope: containerRef }
+  );
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -67,17 +80,15 @@ const CubingRegistry = () => {
 
       if (!termToSearch || termToSearch.length < 3) {
         setProductData(null);
-        setFormData(prev => (prev.codigo_producto ? getEmptyFormData() : prev));
+        setFormData((prev) => (prev.codigo_producto ? getEmptyFormData() : prev));
         return;
       }
 
       try {
         setLoading(true);
 
-        setFormData(prev =>
-          prev.codigo_producto && prev.codigo_producto !== termToSearch
-            ? getEmptyFormData()
-            : prev
+        setFormData((prev) =>
+          prev.codigo_producto && prev.codigo_producto !== termToSearch ? getEmptyFormData() : prev
         );
 
         let { data, error } = await supabase
@@ -103,10 +114,11 @@ const CubingRegistry = () => {
 
         if (data) {
           setProductData(data);
-          
-          gsap.fromTo(".product-card", 
-            { scale: 0.95, opacity: 0 }, 
-            { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }
+
+          gsap.fromTo(
+            '.product-card',
+            { scale: 0.95, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.7)' }
           );
 
           const { data: pesoData } = await supabase
@@ -119,7 +131,7 @@ const CubingRegistry = () => {
             toast.info('⚠️ Este producto ya tiene cubicaje registrado. Editando valores actuales.');
           }
 
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             codigo_producto: data.codigo_producto,
             descripcion: data.producto || '',
@@ -130,16 +142,16 @@ const CubingRegistry = () => {
             alto: pesoData?.alto ?? '',
             tipo_empaque: prev.tipo_empaque || 'UNIDAD'
           }));
-          
-          gsap.to(formRef.current, { 
-            boxShadow: "0 0 15px rgba(16, 185, 129, 0.3)", 
-            duration: 0.3, 
-            yoyo: true, 
-            repeat: 1 
+
+          gsap.to(formRef.current, {
+            boxShadow: '0 0 15px rgba(16, 185, 129, 0.3)',
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1
           });
         } else {
           setProductData(null);
-          setFormData(prev => (prev.codigo_producto ? getEmptyFormData() : prev));
+          setFormData((prev) => (prev.codigo_producto ? getEmptyFormData() : prev));
         }
       } catch (_) {
         console.error('Cubing data load error:', _);
@@ -154,7 +166,7 @@ const CubingRegistry = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -162,9 +174,8 @@ const CubingRegistry = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const { error: pesoError } = await supabase
-        .from('tms_pesos')
-        .upsert({
+      const { error: pesoError } = await supabase.from('tms_pesos').upsert(
+        {
           codigo_producto: formData.codigo_producto,
           descripcion: formData.descripcion,
           peso_unitario: parseFloat(formData.peso_unitario),
@@ -172,32 +183,39 @@ const CubingRegistry = () => {
           ancho: parseFloat(formData.ancho) || 0,
           alto: parseFloat(formData.alto) || 0,
           updated_at: new Date()
-        }, { onConflict: 'codigo_producto' });
+        },
+        { onConflict: 'codigo_producto' }
+      );
 
       if (pesoError) throw pesoError;
 
       try {
-        await supabase
-          .from('tms_cubicaje_historial')
-          .insert({
-            codigo_producto: formData.codigo_producto,
-            peso: parseFloat(formData.peso_unitario),
-            largo: parseFloat(formData.largo) || 0,
-            ancho: parseFloat(formData.ancho) || 0,
-            alto: parseFloat(formData.alto) || 0,
-            tipo_empaque: formData.tipo_empaque,
-            observaciones: formData.observaciones
-          });
-      } catch (_) { console.error('Cubing save error:', _); }
+        await supabase.from('tms_cubicaje_historial').insert({
+          codigo_producto: formData.codigo_producto,
+          peso: parseFloat(formData.peso_unitario),
+          largo: parseFloat(formData.largo) || 0,
+          ancho: parseFloat(formData.ancho) || 0,
+          alto: parseFloat(formData.alto) || 0,
+          tipo_empaque: formData.tipo_empaque,
+          observaciones: formData.observaciones
+        });
+      } catch (_) {
+        console.error('Cubing save error:', _);
+      }
     },
     onSuccess: () => {
       toast.success(`Cubicaje guardado para ${formData.codigo_producto}`);
-      logUpload({ modulo: 'Cubicaje', tablaDestino: 'tms_pesos', totalRegistros: 1, actualizados: 1 });
-      
+      logUpload({
+        modulo: 'Cubicaje',
+        tablaDestino: 'tms_pesos',
+        totalRegistros: 1,
+        actualizados: 1
+      });
+
       setSearchTerm('');
       setProductData(null);
       setFormData(getEmptyFormData());
-      
+
       codigoInputRef.current?.focus();
     },
     onError: (error) => {
@@ -216,7 +234,10 @@ const CubingRegistry = () => {
   };
 
   return (
-    <div ref={containerRef} className="max-w-[1600px] mx-auto pb-20 space-y-4 sm:space-y-8 min-h-screen bg-slate-50 p-3 sm:p-6 text-slate-700">
+    <div
+      ref={containerRef}
+      className="max-w-[1600px] mx-auto pb-20 space-y-4 sm:space-y-8 min-h-screen bg-slate-50 p-3 sm:p-6 text-slate-700"
+    >
       {/* Header Moderno Glassmorphism */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 pb-6 anim-stagger bg-white backdrop-blur-xl p-6 rounded-3xl shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -225,13 +246,15 @@ const CubingRegistry = () => {
             <Scale size={32} />
           </div>
           <div>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Registro de Cubicaje</h1>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Registro de Cubicaje
+            </h1>
             <p className="text-slate-500 font-medium mt-1 flex items-center gap-2">
               <Ruler size={16} /> Maestro de Pesos y Dimensiones
             </p>
           </div>
         </div>
-        
+
         <div className="hidden md:flex items-center gap-2 bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full font-bold text-sm border border-blue-500/30 relative z-10">
           <Zap size={16} className="fill-blue-400" />
           Actualización en Tiempo Real
@@ -239,18 +262,17 @@ const CubingRegistry = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
-        
         <div className="lg:col-span-4 space-y-6 anim-stagger">
           <div className="bg-white backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-slate-200 relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-            
+
             <h3 className="font-black text-slate-900 mb-6 flex items-center gap-3 text-lg">
               <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400">
                 <Search size={20} />
               </div>
               BUSCAR PRODUCTO
             </h3>
-            
+
             <div className="space-y-6">
               <div className="relative group/input">
                 <input
@@ -262,8 +284,11 @@ const CubingRegistry = () => {
                   className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-mono font-bold text-xl text-slate-900 focus:border-blue-500 outline-none transition-all uppercase placeholder:text-slate-600"
                   autoFocus
                 />
-                <QrCode className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-blue-500 transition-colors" size={24} />
-                
+                <QrCode
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-blue-500 transition-colors"
+                  size={24}
+                />
+
                 {loading && (
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <Loader2 className="animate-spin text-blue-500" size={24} />
@@ -278,8 +303,12 @@ const CubingRegistry = () => {
                       <CheckCircle size={24} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-wms-neon uppercase tracking-widest mb-1">Producto Identificado</p>
-                      <p className="font-bold text-slate-900 text-lg leading-tight mb-1">{productData.producto}</p>
+                      <p className="text-[10px] font-black text-wms-neon uppercase tracking-widest mb-1">
+                        Producto Identificado
+                      </p>
+                      <p className="font-bold text-slate-900 text-lg leading-tight mb-1">
+                        {productData.producto}
+                      </p>
                       <span className="inline-block bg-slate-50 px-2 py-1 rounded text-xs font-mono font-bold text-slate-500 border border-slate-200">
                         {productData.codigo_producto}
                       </span>
@@ -299,13 +328,18 @@ const CubingRegistry = () => {
               ) : (
                 <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-8 text-center">
                   <Package size={48} className="mx-auto text-slate-600 mb-3" />
-                  <p className="text-slate-500 font-bold text-sm">Escanee un código para comenzar</p>
+                  <p className="text-slate-500 font-bold text-sm">
+                    Escanee un código para comenzar
+                  </p>
                 </div>
               )}
             </div>
           </div>
 
-          <div ref={infoRef} className="bg-white p-6 rounded-3xl text-slate-700 shadow-xl relative overflow-hidden border border-slate-200">
+          <div
+            ref={infoRef}
+            className="bg-white p-6 rounded-3xl text-slate-700 shadow-xl relative overflow-hidden border border-slate-200"
+          >
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <Box size={120} />
             </div>
@@ -314,19 +348,27 @@ const CubingRegistry = () => {
             </h4>
             <ul className="text-sm space-y-3 opacity-90 relative z-10">
               <li className="flex gap-3 items-start">
-                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  1
+                </span>
                 <span>Escanea el código SKU del producto físico.</span>
               </li>
               <li className="flex gap-3 items-start">
-                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  2
+                </span>
                 <span>La descripción se carga automáticamente.</span>
               </li>
               <li className="flex gap-3 items-start">
-                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  3
+                </span>
                 <span>Pesa el producto unitario (Kg).</span>
               </li>
               <li className="flex gap-3 items-start">
-                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
+                <span className="bg-blue-500/20 text-blue-400 w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  4
+                </span>
                 <span>Mide Largo, Ancho y Alto (cm).</span>
               </li>
             </ul>
@@ -334,9 +376,9 @@ const CubingRegistry = () => {
         </div>
 
         <div className="lg:col-span-8 anim-stagger">
-          <form 
-            ref={formRef} 
-            onSubmit={handleSave} 
+          <form
+            ref={formRef}
+            onSubmit={handleSave}
             className="bg-white backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full"
           >
             <div className="p-4 sm:p-6 md:p-8 border-b border-slate-200 bg-slate-50/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -350,39 +392,49 @@ const CubingRegistry = () => {
                 </span>
               )}
             </div>
-            
+
             <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
-              
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Código SKU</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                    Código SKU
+                  </label>
                   <div className="relative">
-                    <input 
-                      type="text" 
-                      value={formData.codigo_producto} 
-                      readOnly 
+                    <input
+                      type="text"
+                      value={formData.codigo_producto}
+                      readOnly
                       className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-mono text-slate-900 font-bold"
                       placeholder="---"
                     />
-                    {formData.codigo_producto && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-wms-neon" size={16} />}
+                    {formData.codigo_producto && (
+                      <CheckCircle
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-wms-neon"
+                        size={16}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Unidad</label>
-                  <input 
-                    type="text" 
-                    value={formData.unidad_medida} 
-                    readOnly 
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                    Unidad
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.unidad_medida}
+                    readOnly
                     className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-slate-500 text-center"
                     placeholder="-"
                   />
                 </div>
                 <div className="md:col-span-7">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">Descripción del Producto</label>
-                  <input 
-                    type="text" 
-                    value={formData.descripcion} 
-                    readOnly 
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
+                    Descripción del Producto
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.descripcion}
+                    readOnly
                     className="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium text-slate-900"
                     placeholder="Esperando selección..."
                   />
@@ -392,13 +444,13 @@ const CubingRegistry = () => {
               <div className="h-px bg-wms-border w-full"></div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
                 <div className="md:col-span-2 lg:col-span-1 bg-blue-500/10 p-4 rounded-2xl border border-blue-500/30 group focus-within:border-blue-500 transition-colors">
                   <label className="block text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
-                    <Scale size={16} /> Peso Unitario (Kg) <span className="text-wms-danger">*</span>
+                    <Scale size={16} /> Peso Unitario (Kg){' '}
+                    <span className="text-wms-danger">*</span>
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.001"
                     name="peso_unitario"
                     value={formData.peso_unitario}
@@ -414,8 +466,8 @@ const CubingRegistry = () => {
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1 group-focus-within:text-blue-400 transition-colors">
                       <Ruler size={14} /> {dim} (cm)
                     </label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.1"
                       name={dim}
                       value={formData[dim]}
@@ -429,28 +481,32 @@ const CubingRegistry = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 <div>
-                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Tipo de Empaque</label>
-                   <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
-                      {['UNIDAD', 'CAJA', 'BOLSA'].map(type => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, tipo_empaque: type }))}
-                          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                            formData.tipo_empaque === type 
-                              ? 'bg-white text-blue-400 shadow-md border border-slate-200 transform scale-100' 
-                              : 'text-slate-500 hover:text-slate-700'
-                          }`}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                   </div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">
+                    Tipo de Empaque
+                  </label>
+                  <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200">
+                    {['UNIDAD', 'CAJA', 'BOLSA'].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, tipo_empaque: type }))}
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
+                          formData.tipo_empaque === type
+                            ? 'bg-white text-blue-400 shadow-md border border-slate-200 transform scale-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Observaciones</label>
-                  <input 
-                    type="text" 
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">
+                    Observaciones
+                  </label>
+                  <input
+                    type="text"
                     name="observaciones"
                     value={formData.observaciones}
                     onChange={handleInputChange}
@@ -459,30 +515,32 @@ const CubingRegistry = () => {
                   />
                 </div>
               </div>
-
             </div>
 
             <div className="p-4 sm:p-6 bg-slate-50/40 border-t border-slate-200 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => {
-                   setSearchTerm('');
-                   setFormData(getEmptyFormData());
-                   setProductData(null);
+                  setSearchTerm('');
+                  setFormData(getEmptyFormData());
+                  setProductData(null);
                 }}
                 className="px-6 py-4 text-slate-500 font-bold hover:bg-white hover:text-slate-900 rounded-xl transition-colors text-sm uppercase tracking-wider"
               >
                 Cancelar / Limpiar
               </button>
-              
-              <button 
+
+              <button
                 type="submit"
-                disabled={saveMutation.isPending || !formData.codigo_producto || !formData.peso_unitario}
+                disabled={
+                  saveMutation.isPending || !formData.codigo_producto || !formData.peso_unitario
+                }
                 className={`
                   px-8 py-4 rounded-xl font-black text-sm uppercase tracking-wider flex items-center gap-3 transition-all shadow-xl
-                  ${saveMutation.isSuccess 
-                    ? 'bg-wms-neon text-wms-dark scale-105 shadow-neon-green' 
-                    : 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:-translate-y-1 active:scale-95'
+                  ${
+                    saveMutation.isSuccess
+                      ? 'bg-wms-neon text-wms-dark scale-105 shadow-neon-green'
+                      : 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:-translate-y-1 active:scale-95'
                   }
                   disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none
                 `}

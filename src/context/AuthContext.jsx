@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
 import { wmsToast } from '../lib/notifications';
 import { syncOfflineData } from '../lib/syncManager';
@@ -8,6 +8,7 @@ import { clearUserForTracking, setUserForTracking } from '../lib/sentry';
 import { withTimeout } from '../lib/supabaseQuery';
 import { toast } from 'sonner';
 import { clearLoggerUserContext, Logger, setLoggerUserContext } from '../lib/logger';
+import { db } from '../lib/db';
 
 const AuthContext = createContext();
 
@@ -63,7 +64,9 @@ export const AuthProvider = ({ children }) => {
         .single();
       legacyPerms = Array.isArray(data?.permisos_json) ? data.permisos_json : [];
       landing = data?.landing_page || '/';
-    } catch { /* respaldo vacío; el IAM puede cubrir */ }
+    } catch {
+      /* respaldo vacío; el IAM puede cubrir */
+    }
 
     // 2) IAM efectivo (autoritativo). Si falla, se usa solo el legado.
     let iamPerms = null;
@@ -74,12 +77,12 @@ export const AuthProvider = ({ children }) => {
         iamPerms = me.permisos;
         if (Array.isArray(me.roles) && me.roles.length) iamRoles = me.roles;
       }
-    } catch { /* usa respaldo legado */ }
+    } catch {
+      /* usa respaldo legado */
+    }
 
     // Unión IAM ∨ legado (idéntico al gate del servidor).
-    const perms = iamPerms
-      ? Array.from(new Set([...iamPerms, ...legacyPerms]))
-      : legacyPerms;
+    const perms = iamPerms ? Array.from(new Set([...iamPerms, ...legacyPerms])) : legacyPerms;
 
     setPermissions(perms);
     setRoles(iamRoles ?? [rolId]);
@@ -119,7 +122,7 @@ export const AuthProvider = ({ children }) => {
             module: 'auth',
             screen: 'AuthProvider',
             action: 'roles_realtime_subscribe',
-            message: 'Fallo la suscripcion realtime de roles',
+            message: 'Fallo la suscripcion realtime de roles'
           });
         }
       });
@@ -159,36 +162,39 @@ export const AuthProvider = ({ children }) => {
         screen: 'AuthProvider',
         action: 'load_user_profile',
         message: 'Error cargando perfil de usuario',
-        payload: { authEmail },
+        payload: { authEmail }
       });
       return null;
     }
   }, []);
 
   // ── Establecer usuario en el estado ──
-  const setUserState = useCallback(async (profile) => {
-    if (!profile) return;
+  const setUserState = useCallback(
+    async (profile) => {
+      if (!profile) return;
 
-    const userData = {
-      id: profile.id,
-      nombre: profile.nombre,
-      email: profile.email,
-      rol: profile.rol,
-      activo: profile.activo,
-      es_admin_delegado: profile.es_admin_delegado || false,
-    };
+      const userData = {
+        id: profile.id,
+        nombre: profile.nombre,
+        email: profile.email,
+        rol: profile.rol,
+        activo: profile.activo,
+        es_admin_delegado: profile.es_admin_delegado || false
+      };
 
-    loadedEmailRef.current = (userData.email || '').toLowerCase();
-    sessionStartRef.current = Date.now();
-    setUser(userData);
-    setUserForTracking(userData);
-    setLoggerUserContext(userData);
-    await loadRoleConfig(userData.rol);
+      loadedEmailRef.current = (userData.email || '').toLowerCase();
+      sessionStartRef.current = Date.now();
+      setUser(userData);
+      setUserForTracking(userData);
+      setLoggerUserContext(userData);
+      await loadRoleConfig(userData.rol);
 
-    if (Capacitor.isNativePlatform()) {
-      initPushNotifications(userData.id);
-    }
-  }, [loadRoleConfig]);
+      if (Capacitor.isNativePlatform()) {
+        initPushNotifications(userData.id);
+      }
+    },
+    [loadRoleConfig]
+  );
 
   // ── Restaurar sesión al iniciar (Supabase Auth) ──
   useEffect(() => {
@@ -197,16 +203,15 @@ export const AuthProvider = ({ children }) => {
         // Timeout (10s): si getSession() o la carga de perfil se cuelga (auth-lock
         // en WebView, red caída), el `await` nunca resolvería y la pantalla global
         // "Cargando…" quedaría infinita. Con el timeout el `finally` siempre corre.
-        const { data: { session } } = await withTimeout(
-          supabase.auth.getSession(),
-          { ms: 10000, label: 'inicio de sesión' }
-        );
+        const {
+          data: { session }
+        } = await withTimeout(supabase.auth.getSession(), { ms: 10000, label: 'inicio de sesión' });
 
         if (session?.user?.email) {
-          const profile = await withTimeout(
-            loadUserProfile(session.user.email),
-            { ms: 10000, label: 'inicio de sesión' }
-          );
+          const profile = await withTimeout(loadUserProfile(session.user.email), {
+            ms: 10000,
+            label: 'inicio de sesión'
+          });
           if (profile) {
             await setUserState(profile);
           } else {
@@ -218,14 +223,14 @@ export const AuthProvider = ({ children }) => {
           const stored = localStorage.getItem('currentUser');
           if (stored) {
             try {
-              const parsed = JSON.parse(stored);
+              JSON.parse(stored);
               // Intentar login automático con Supabase Auth no es posible sin contraseña
               // Forzar re-login
               Logger.warn('[Auth] Sesion legacy encontrada, requiere re-login con Supabase Auth', {
                 module: 'auth',
                 screen: 'AuthProvider',
                 action: 'legacy_session_detected',
-                message: 'Sesion legacy detectada y removida del almacenamiento local',
+                message: 'Sesion legacy detectada y removida del almacenamiento local'
               });
               localStorage.removeItem('currentUser');
             } catch (_) {
@@ -238,7 +243,7 @@ export const AuthProvider = ({ children }) => {
           module: 'auth',
           screen: 'AuthProvider',
           action: 'init_session',
-          message: 'No se pudo restaurar la sesion inicial',
+          message: 'No se pudo restaurar la sesion inicial'
         });
         // Caer a la pantalla de login en vez de quedar colgado en "Cargando…".
         toast.error('No se pudo restaurar la sesión a tiempo. Inicia sesión de nuevo.');
@@ -253,57 +258,57 @@ export const AuthProvider = ({ children }) => {
 
   // ── Listener de cambios de sesión auth ──
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // Solo procesar después de la inicialización
-        if (!initDoneRef.current) return;
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Solo procesar después de la inicialización
+      if (!initDoneRef.current) return;
 
-        if (event === 'SIGNED_OUT') {
-          loadedEmailRef.current = null;
-          setUser(null);
-          clearUserForTracking();
-          clearLoggerUserContext();
-          setPermissions([]);
-          setRoles([]);
-          setLandingPage('/');
-        } else if (event === 'SIGNED_IN' && session?.user?.email) {
-          // Deduplicar: si login() ya cargó este perfil, no re-cargar.
-          if (loadedEmailRef.current === session.user.email.toLowerCase()) return;
-          // IMPORTANTE: NO hacer llamadas a supabase (`from`/`rpc`) directamente
-          // dentro del callback de onAuthStateChange. supabase-js mantiene un
-          // "auth lock" mientras corre el callback; cualquier consulta que a su
-          // vez necesite ese lock se DEADLOCKEA y nunca resuelve → el timeout de
-          // 10s disparaba "No se pudo cargar tu perfil" para TODOS los usuarios.
-          // La solución oficial es diferir el trabajo fuera del callback.
-          setTimeout(async () => {
-            try {
-              const profile = await withTimeout(
-                loadUserProfile(session.user.email),
-                { ms: 10000, label: 'inicio de sesión' }
-              );
-              if (profile) {
-                await setUserState(profile);
-              } else {
-                // Perfil inexistente o desactivado: destruir también el token de
-                // auth (igual que initSession); si queda en localStorage, un
-                // usuario desactivado conserva un JWT utilizable contra la API.
-                await supabase.auth.signOut();
-              }
-            } catch (err) {
-              Logger.error(err, {
-                module: 'auth',
-                screen: 'AuthProvider',
-                action: 'signed_in_profile_load',
-                message: 'No se pudo cargar el perfil despues del inicio de sesion',
-              });
-              toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
+      if (event === 'SIGNED_OUT') {
+        loadedEmailRef.current = null;
+        setUser(null);
+        clearUserForTracking();
+        clearLoggerUserContext();
+        setPermissions([]);
+        setRoles([]);
+        setLandingPage('/');
+      } else if (event === 'SIGNED_IN' && session?.user?.email) {
+        // Deduplicar: si login() ya cargó este perfil, no re-cargar.
+        if (loadedEmailRef.current === session.user.email.toLowerCase()) return;
+        // IMPORTANTE: NO hacer llamadas a supabase (`from`/`rpc`) directamente
+        // dentro del callback de onAuthStateChange. supabase-js mantiene un
+        // "auth lock" mientras corre el callback; cualquier consulta que a su
+        // vez necesite ese lock se DEADLOCKEA y nunca resuelve → el timeout de
+        // 10s disparaba "No se pudo cargar tu perfil" para TODOS los usuarios.
+        // La solución oficial es diferir el trabajo fuera del callback.
+        setTimeout(async () => {
+          try {
+            const profile = await withTimeout(loadUserProfile(session.user.email), {
+              ms: 10000,
+              label: 'inicio de sesión'
+            });
+            if (profile) {
+              await setUserState(profile);
+            } else {
+              // Perfil inexistente o desactivado: destruir también el token de
+              // auth (igual que initSession); si queda en localStorage, un
+              // usuario desactivado conserva un JWT utilizable contra la API.
+              await supabase.auth.signOut();
             }
-          }, 0);
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token renovado automáticamente — no hacer nada
-        }
+          } catch (err) {
+            Logger.error(err, {
+              module: 'auth',
+              screen: 'AuthProvider',
+              action: 'signed_in_profile_load',
+              message: 'No se pudo cargar el perfil despues del inicio de sesion'
+            });
+            toast.error('No se pudo cargar tu perfil. Reintenta el ingreso.');
+          }
+        }, 0);
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Token renovado automáticamente — no hacer nada
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -330,9 +335,8 @@ export const AuthProvider = ({ children }) => {
       if (!navigator.onLine) return;
 
       try {
-        await supabase
-          .from('tms_usuarios_activos')
-          .upsert({
+        await supabase.from('tms_usuarios_activos').upsert(
+          {
             usuario_id: user.id,
             nombre: user.nombre,
             rol: user.rol,
@@ -342,7 +346,9 @@ export const AuthProvider = ({ children }) => {
             // así que el módulo reportado quedaba congelado en el de entrada.
             modulo_actual: window.location.pathname,
             estado: 'ONLINE'
-          }, { onConflict: 'usuario_id' });
+          },
+          { onConflict: 'usuario_id' }
+        );
       } catch (_) {
         Logger.warn(_, {
           kind: 'presence',
@@ -350,7 +356,7 @@ export const AuthProvider = ({ children }) => {
           screen: 'AuthProvider',
           action: 'heartbeat_update',
           message: 'Fallo el heartbeat de presencia del usuario',
-          persist: false,
+          persist: false
         });
       }
     };
@@ -374,7 +380,7 @@ export const AuthProvider = ({ children }) => {
       // 1. Intentar login con Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
-        password,
+        password
       });
 
       if (!authError && authData?.session) {
@@ -397,7 +403,8 @@ export const AuthProvider = ({ children }) => {
 
         // Asegurar que auth_uid está vinculado
         if (!profile.auth_uid) {
-          await supabase.from('tms_usuarios')
+          await supabase
+            .from('tms_usuarios')
             .update({ auth_uid: authData.session.user.id })
             .eq('id', profile.id);
         }
@@ -413,23 +420,24 @@ export const AuthProvider = ({ children }) => {
             rol: profile.rol
           });
 
-          await supabase
-            .from('tms_usuarios_activos')
-            .upsert({
+          await supabase.from('tms_usuarios_activos').upsert(
+            {
               usuario_id: profile.id,
               nombre: profile.nombre,
               rol: profile.rol,
               ultima_actividad: new Date().toISOString(),
               modulo_actual: 'Inicio de Sesión',
               estado: 'ONLINE'
-            }, { onConflict: 'usuario_id' });
+            },
+            { onConflict: 'usuario_id' }
+          );
         } catch (_) {
           Logger.warn(_, {
             kind: 'audit',
             module: 'auth',
             screen: 'AuthProvider',
             action: 'login_tracking',
-            message: 'No se pudo registrar el acceso del usuario',
+            message: 'No se pudo registrar el acceso del usuario'
           });
         }
 
@@ -443,14 +451,13 @@ export const AuthProvider = ({ children }) => {
       setError('Usuario o contraseña inválidos');
       setLoading(false);
       return false;
-
     } catch (err) {
       Logger.error(err, {
         module: 'auth',
         screen: 'AuthProvider',
         action: 'login',
         message: 'Error del sistema durante login',
-        payload: { email: email?.toLowerCase?.() || '' },
+        payload: { email: email?.toLowerCase?.() || '' }
       });
       setError('Error en el sistema');
       setLoading(false);
@@ -477,9 +484,11 @@ export const AuthProvider = ({ children }) => {
       try {
         await Promise.allSettled([
           supabase.from('tms_usuarios_activos').delete().eq('usuario_id', userId),
-          supabase.from('tms_usuarios').update({ push_token: null }).eq('id', userId),
+          supabase.from('tms_usuarios').update({ push_token: null }).eq('id', userId)
         ]);
-      } catch (_) { /* best-effort */ }
+      } catch (_) {
+        /* best-effort */
+      }
     }
 
     // Estado local persistido de otros usuarios en el mismo equipo:
@@ -489,7 +498,9 @@ export const AuthProvider = ({ children }) => {
       const { usePickingStore } = await import('../stores/pickingStore');
       usePickingStore.getState().endSession();
       localStorage.removeItem('picking-session');
-    } catch (_) { /* best-effort */ }
+    } catch (_) {
+      /* best-effort */
+    }
     // Datos operativos del turno en un PDA compartido: cola de recepción,
     // estado de patios y cachés offline de Dexie (se conserva la cola de
     // sincronización pendiente para no perder trabajo sin subir).
@@ -498,11 +509,14 @@ export const AuthProvider = ({ children }) => {
       Object.keys(localStorage)
         .filter((k) => k.startsWith('yard_'))
         .forEach((k) => localStorage.removeItem(k));
-    } catch (_) { /* best-effort */ }
+    } catch (_) {
+      /* best-effort */
+    }
     try {
-      const { db } = await import('../lib/db');
       await Promise.allSettled([db.cachedProducts.clear(), db.cachedLocations.clear()]);
-    } catch (_) { /* best-effort */ }
+    } catch (_) {
+      /* best-effort */
+    }
     try {
       if (typeof caches !== 'undefined') {
         const keys = await caches.keys();
@@ -510,7 +524,9 @@ export const AuthProvider = ({ children }) => {
           keys.filter((k) => k.includes('supabase')).map((k) => caches.delete(k))
         );
       }
-    } catch (_) { /* best-effort */ }
+    } catch (_) {
+      /* best-effort */
+    }
 
     // Cerrar sesión Supabase Auth
     try {
@@ -520,7 +536,7 @@ export const AuthProvider = ({ children }) => {
         module: 'auth',
         screen: 'AuthProvider',
         action: 'logout',
-        message: 'Fallo el cierre de sesion en Supabase Auth',
+        message: 'Fallo el cierre de sesion en Supabase Auth'
       });
     }
   }, [user?.id]);
@@ -559,7 +575,8 @@ export const AuthProvider = ({ children }) => {
               // También aplicar en caliente la concesión/revocación de admin
               // delegado: antes solo se reaccionaba al cambio de rol y un
               // delegado revocado conservaba acceso total hasta recargar.
-              const delegadoCambio = newUser.es_admin_delegado !== undefined &&
+              const delegadoCambio =
+                newUser.es_admin_delegado !== undefined &&
                 newUser.es_admin_delegado !== user.es_admin_delegado;
               if (rolCambio || delegadoCambio) {
                 const updatedUser = {
@@ -568,7 +585,10 @@ export const AuthProvider = ({ children }) => {
                   nombre: newUser.nombre !== undefined ? newUser.nombre : user.nombre,
                   email: newUser.email !== undefined ? newUser.email : user.email,
                   activo: newUser.activo !== undefined ? newUser.activo : user.activo,
-                  es_admin_delegado: newUser.es_admin_delegado !== undefined ? newUser.es_admin_delegado : user.es_admin_delegado
+                  es_admin_delegado:
+                    newUser.es_admin_delegado !== undefined
+                      ? newUser.es_admin_delegado
+                      : user.es_admin_delegado
                 };
                 setUser(updatedUser);
                 if (rolCambio) loadRoleConfig(newUser.rol);
@@ -584,7 +604,7 @@ export const AuthProvider = ({ children }) => {
             module: 'auth',
             screen: 'AuthProvider',
             action: 'session_guard_subscribe',
-            message: 'Fallo la suscripcion realtime del guard de sesion',
+            message: 'Fallo la suscripcion realtime del guard de sesion'
           });
         }
       });
@@ -598,25 +618,30 @@ export const AuthProvider = ({ children }) => {
   // El admin delegado equivale a ADMIN: el guard de rutas ya le concede todo,
   // pero los botones internos y el Navbar consultan hasPermission — sin esta
   // línea el delegado tenía acceso por URL y una UI llena de acciones denegadas.
-  const hasPermission = useCallback((permissionId) => {
-    if (user?.rol === 'ADMIN' || user?.es_admin_delegado === true) return true;
-    return permissions.includes(permissionId);
-  }, [permissions, user?.rol, user?.es_admin_delegado]);
+  const hasPermission = useCallback(
+    (permissionId) => {
+      if (user?.rol === 'ADMIN' || user?.es_admin_delegado === true) return true;
+      return permissions.includes(permissionId);
+    },
+    [permissions, user?.rol, user?.es_admin_delegado]
+  );
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      permissions,
-      roles,
-      landingPage,
-      loading,
-      error,
-      login,
-      logout,
-      isAuthenticated: !!user,
-      hasPermission,
-      refreshPermissions
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        permissions,
+        roles,
+        landingPage,
+        loading,
+        error,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        hasPermission,
+        refreshPermissions
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

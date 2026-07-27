@@ -1,9 +1,27 @@
 // HistorialNV.jsx - Historial completo de Notas de Venta (estados REALES)
-import React, { useState, useRef } from 'react';
-import { 
-  Search, Eye, AlertCircle, X, Package, Truck, Calendar, User, FileText,
-  Hand, CheckCircle, Clock, Box, Send, RefreshCw, Download, Filter,
-  ThumbsUp, Hourglass, Ban, History, BarChart3, RotateCcw, Ship
+import { useState, useRef } from 'react';
+import {
+  Search,
+  Eye,
+  AlertCircle,
+  X,
+  Package,
+  Truck,
+  Calendar,
+  User,
+  FileText,
+  Hand,
+  Clock,
+  Box,
+  Send,
+  RefreshCw,
+  Download,
+  ThumbsUp,
+  Hourglass,
+  History,
+  BarChart3,
+  RotateCcw,
+  Ship
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery } from '@tanstack/react-query';
@@ -14,15 +32,87 @@ import QueryErrorState from '../../components/ui/QueryErrorState';
 
 // Todos los estados REALES
 const TODOS_ESTADOS = [
-  { key: 'Pendiente', label: 'Pendiente', icon: Hourglass, bgColor: 'bg-slate-500', lightBg: 'bg-slate-500/20', textColor: 'text-slate-700', borderColor: 'border-slate-500/30' },
-  { key: 'PENDIENTE', label: 'Pendiente', icon: Hourglass, bgColor: 'bg-slate-500', lightBg: 'bg-slate-500/20', textColor: 'text-slate-700', borderColor: 'border-slate-500/30' },
-  { key: 'Aprobada', label: 'Aprobada', icon: ThumbsUp, bgColor: 'bg-amber-500', lightBg: 'bg-amber-500/20', textColor: 'text-amber-400', borderColor: 'border-amber-500/30' },
-  { key: 'Pendiente Picking', label: 'En Picking', icon: Hand, bgColor: 'bg-cyan-500', lightBg: 'bg-cyan-500/20', textColor: 'text-cyan-400', borderColor: 'border-cyan-500/30' },
-  { key: 'PACKING', label: 'Packing', icon: Box, bgColor: 'bg-indigo-500', lightBg: 'bg-indigo-500/20', textColor: 'text-indigo-400', borderColor: 'border-indigo-500/30' },
-  { key: 'LISTO_DESPACHO', label: 'Listo Despacho', icon: Send, bgColor: 'bg-purple-500', lightBg: 'bg-purple-500/20', textColor: 'text-purple-400', borderColor: 'border-purple-500/30' },
-  { key: 'Pendiente Shipping', label: 'Pend. Shipping', icon: Ship, bgColor: 'bg-blue-500', lightBg: 'bg-blue-500/20', textColor: 'text-blue-400', borderColor: 'border-blue-500/30' },
-  { key: 'Despachado', label: 'Despachado', icon: Truck, bgColor: 'bg-emerald-500', lightBg: 'bg-emerald-500/20', textColor: 'text-emerald-400', borderColor: 'border-emerald-500/30' },
-  { key: 'Refacturacion', label: 'Refacturación', icon: RotateCcw, bgColor: 'bg-orange-500', lightBg: 'bg-orange-500/20', textColor: 'text-orange-400', borderColor: 'border-orange-500/30' },
+  {
+    key: 'Pendiente',
+    label: 'Pendiente',
+    icon: Hourglass,
+    bgColor: 'bg-slate-500',
+    lightBg: 'bg-slate-500/20',
+    textColor: 'text-slate-700',
+    borderColor: 'border-slate-500/30'
+  },
+  {
+    key: 'PENDIENTE',
+    label: 'Pendiente',
+    icon: Hourglass,
+    bgColor: 'bg-slate-500',
+    lightBg: 'bg-slate-500/20',
+    textColor: 'text-slate-700',
+    borderColor: 'border-slate-500/30'
+  },
+  {
+    key: 'Aprobada',
+    label: 'Aprobada',
+    icon: ThumbsUp,
+    bgColor: 'bg-amber-500',
+    lightBg: 'bg-amber-500/20',
+    textColor: 'text-amber-400',
+    borderColor: 'border-amber-500/30'
+  },
+  {
+    key: 'Pendiente Picking',
+    label: 'En Picking',
+    icon: Hand,
+    bgColor: 'bg-cyan-500',
+    lightBg: 'bg-cyan-500/20',
+    textColor: 'text-cyan-400',
+    borderColor: 'border-cyan-500/30'
+  },
+  {
+    key: 'PACKING',
+    label: 'Packing',
+    icon: Box,
+    bgColor: 'bg-indigo-500',
+    lightBg: 'bg-indigo-500/20',
+    textColor: 'text-indigo-400',
+    borderColor: 'border-indigo-500/30'
+  },
+  {
+    key: 'LISTO_DESPACHO',
+    label: 'Listo Despacho',
+    icon: Send,
+    bgColor: 'bg-purple-500',
+    lightBg: 'bg-purple-500/20',
+    textColor: 'text-purple-400',
+    borderColor: 'border-purple-500/30'
+  },
+  {
+    key: 'Pendiente Shipping',
+    label: 'Pend. Shipping',
+    icon: Ship,
+    bgColor: 'bg-blue-500',
+    lightBg: 'bg-blue-500/20',
+    textColor: 'text-blue-400',
+    borderColor: 'border-blue-500/30'
+  },
+  {
+    key: 'Despachado',
+    label: 'Despachado',
+    icon: Truck,
+    bgColor: 'bg-emerald-500',
+    lightBg: 'bg-emerald-500/20',
+    textColor: 'text-emerald-400',
+    borderColor: 'border-emerald-500/30'
+  },
+  {
+    key: 'Refacturacion',
+    label: 'Refacturación',
+    icon: RotateCcw,
+    bgColor: 'bg-orange-500',
+    lightBg: 'bg-orange-500/20',
+    textColor: 'text-orange-400',
+    borderColor: 'border-orange-500/30'
+  }
 ];
 
 // Estados únicos para los filtros (sin duplicados)
@@ -34,29 +124,40 @@ const ESTADOS_FILTRO = [
   { key: 'LISTO_DESPACHO', label: 'Listo Despacho' },
   { key: 'Pendiente Shipping', label: 'Pend. Shipping' },
   { key: 'Despachado', label: 'Despachado' },
-  { key: 'Refacturacion', label: 'Refacturación' },
+  { key: 'Refacturacion', label: 'Refacturación' }
 ];
 
 const HistorialNV = () => {
   const container = useRef();
   // ?q= permite llegar con la búsqueda pre-cargada (Command Palette → NV).
-  const [searchTerm, setSearchTerm] = useState(() => (new URLSearchParams(window.location.search).get('q') || '').trim());
+  const [searchTerm, setSearchTerm] = useState(() =>
+    (new URLSearchParams(window.location.search).get('q') || '').trim()
+  );
   const [filterEstado, setFilterEstado] = useState('TODOS');
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  useGSAP(() => {
-    gsap.from(container.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.4,
-      ease: 'power3.out',
-      clearProps: 'all'
-    });
-  }, { scope: container });
+  useGSAP(
+    () => {
+      gsap.from(container.current, {
+        y: 20,
+        opacity: 0,
+        duration: 0.4,
+        ease: 'power3.out',
+        clearProps: 'all'
+      });
+    },
+    { scope: container }
+  );
 
-  const { data: orders = [], isLoading: loading, isError, error, refetch } = useQuery({
+  const {
+    data: orders = [],
+    isLoading: loading,
+    isError,
+    error,
+    refetch
+  } = useQuery({
     queryKey: ['historial_nv', filterFechaDesde, filterFechaHasta],
     queryFn: async () => {
       let query = supabase
@@ -71,10 +172,10 @@ const HistorialNV = () => {
         query = query.lte('fecha_emision', filterFechaHasta + 'T23:59:59');
       }
 
-      const { data, error } = await withTimeout(
-        query.limit(2000),
-        { ms: 12000, label: 'historial de N.V.' }
-      );
+      const { data, error } = await withTimeout(query.limit(2000), {
+        ms: 12000,
+        label: 'historial de N.V.'
+      });
 
       if (error) throw error;
       return data || [];
@@ -83,17 +184,18 @@ const HistorialNV = () => {
 
   const stats = {
     total: orders.length,
-    despachados: orders.filter(o => o.estado === 'Despachado').length,
-    enProceso: orders.filter(o => !['Despachado', 'Refacturacion'].includes(o.estado)).length,
-    refacturacion: orders.filter(o => o.estado === 'Refacturacion').length
+    despachados: orders.filter((o) => o.estado === 'Despachado').length,
+    enProceso: orders.filter((o) => !['Despachado', 'Refacturacion'].includes(o.estado)).length,
+    refacturacion: orders.filter((o) => o.estado === 'Refacturacion').length
   };
 
   // Filtrar
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order) => {
     // Normalizar PENDIENTE a Pendiente para comparación
     const estadoOrder = order.estado === 'PENDIENTE' ? 'Pendiente' : order.estado;
     const matchEstado = filterEstado === 'TODOS' || estadoOrder === filterEstado;
-    const matchSearch = !searchTerm || 
+    const matchSearch =
+      !searchTerm ||
       order.nv?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.codigo_producto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,25 +204,38 @@ const HistorialNV = () => {
   });
 
   const getEstadoConfig = (estado) => {
-    return TODOS_ESTADOS.find(e => e.key === estado) || TODOS_ESTADOS[0];
+    return TODOS_ESTADOS.find((e) => e.key === estado) || TODOS_ESTADOS[0];
   };
 
   // Exportar CSV
   const exportToCSV = () => {
-    const headers = ['NV', 'Fecha', 'Cliente', 'Vendedor', 'Código', 'Producto', 'Cantidad', 'Unidad', 'Estado'];
-    const rows = filteredOrders.map(o => [
-      o.nv, 
-      o.fecha_emision || '', 
-      o.cliente, 
-      o.vendedor, 
-      o.codigo_producto, 
-      o.descripcion_producto, 
-      o.cantidad, 
-      o.unidad, 
+    const headers = [
+      'NV',
+      'Fecha',
+      'Cliente',
+      'Vendedor',
+      'Código',
+      'Producto',
+      'Cantidad',
+      'Unidad',
+      'Estado'
+    ];
+    const rows = filteredOrders.map((o) => [
+      o.nv,
+      o.fecha_emision || '',
+      o.cliente,
+      o.vendedor,
+      o.codigo_producto,
+      o.descripcion_producto,
+      o.cantidad,
+      o.unidad,
       o.estado
     ]);
-    
-    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c || ''}"`).join(','))].join('\n');
+
+    const csv = [
+      headers.join(','),
+      ...rows.map((r) => r.map((c) => `"${c || ''}"`).join(','))
+    ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -129,7 +244,10 @@ const HistorialNV = () => {
   };
 
   return (
-    <div ref={container} className="bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6 space-y-4 sm:space-y-8">
+    <div
+      ref={container}
+      className="bg-slate-50 min-h-screen text-slate-700 p-3 sm:p-6 space-y-4 sm:space-y-8"
+    >
       {/* Header Moderno */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 page-header">
         <div className="flex items-center gap-3">
@@ -137,7 +255,9 @@ const HistorialNV = () => {
             <History className="text-indigo-400" size={20} />
           </div>
           <div>
-            <h1 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight">Consulta Maestra</h1>
+            <h1 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight">
+              Consulta Maestra
+            </h1>
             <p className="text-slate-500 text-xs sm:text-lg">Trazabilidad de Notas de Venta</p>
           </div>
         </div>
@@ -169,7 +289,9 @@ const HistorialNV = () => {
               <BarChart3 size={20} />
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Total</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                Total
+              </p>
               <p className="text-xl sm:text-3xl font-black text-slate-900">{stats.total}</p>
             </div>
           </div>
@@ -182,7 +304,9 @@ const HistorialNV = () => {
               <Truck size={20} />
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Despachados</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                Despachados
+              </p>
               <p className="text-xl sm:text-3xl font-black text-emerald-400">{stats.despachados}</p>
             </div>
           </div>
@@ -195,7 +319,9 @@ const HistorialNV = () => {
               <Clock size={20} />
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">En Proceso</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                En Proceso
+              </p>
               <p className="text-xl sm:text-3xl font-black text-blue-400">{stats.enProceso}</p>
             </div>
           </div>
@@ -208,8 +334,12 @@ const HistorialNV = () => {
               <RotateCcw size={20} />
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Refacturación</p>
-              <p className="text-xl sm:text-3xl font-black text-orange-400">{stats.refacturacion}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                Refacturación
+              </p>
+              <p className="text-xl sm:text-3xl font-black text-orange-400">
+                {stats.refacturacion}
+              </p>
             </div>
           </div>
         </div>
@@ -218,45 +348,55 @@ const HistorialNV = () => {
       {/* Filtros Flotantes Modernos */}
       <div className="bg-white/90 backdrop-blur-xl p-2 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xl flex flex-col gap-2 items-stretch filters-bar sticky top-2 sm:top-4 z-30">
         <div className="flex-1 relative w-full group">
-          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-wms-neon transition-colors" size={18} />
+          <Search
+            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-wms-neon transition-colors"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Buscar NV, cliente, producto..."
             className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon transition-all text-sm sm:text-base text-slate-900 placeholder-slate-600 font-medium"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="flex gap-2 w-full overflow-x-auto pb-1 sm:pb-0">
           <select
             value={filterEstado}
-            onChange={e => setFilterEstado(e.target.value)}
+            onChange={(e) => setFilterEstado(e.target.value)}
             className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-[120px] sm:min-w-[140px]"
           >
             <option value="TODOS">Todos</option>
-            {ESTADOS_FILTRO.map(e => (
-              <option key={e.key} value={e.key}>{e.label}</option>
+            {ESTADOS_FILTRO.map((e) => (
+              <option key={e.key} value={e.key}>
+                {e.label}
+              </option>
             ))}
           </select>
 
           <input
             type="date"
             value={filterFechaDesde}
-            onChange={e => setFilterFechaDesde(e.target.value)}
+            onChange={(e) => setFilterFechaDesde(e.target.value)}
             className="px-2 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-0"
           />
           <span className="self-center text-slate-500 font-bold hidden sm:inline">-</span>
           <input
             type="date"
             value={filterFechaHasta}
-            onChange={e => setFilterFechaHasta(e.target.value)}
+            onChange={(e) => setFilterFechaHasta(e.target.value)}
             className="px-2 sm:px-4 py-2.5 sm:py-3 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-wms-neon font-bold text-sm text-slate-700 cursor-pointer transition-colors min-w-0"
           />
 
           {(filterEstado !== 'TODOS' || filterFechaDesde || filterFechaHasta || searchTerm) && (
             <button
-              onClick={() => { setFilterEstado('TODOS'); setFilterFechaDesde(''); setFilterFechaHasta(''); setSearchTerm(''); }}
+              onClick={() => {
+                setFilterEstado('TODOS');
+                setFilterFechaDesde('');
+                setFilterFechaHasta('');
+                setSearchTerm('');
+              }}
               className="px-3 sm:px-4 py-2.5 sm:py-3 bg-wms-danger/20 border border-wms-danger/50 text-wms-danger hover:bg-wms-danger/40 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-[0_0_10px_rgba(239,68,68,0.2)] flex-shrink-0"
               title="Limpiar filtros"
             >
@@ -305,7 +445,9 @@ const HistorialNV = () => {
                           <RefreshCw size={24} className="text-indigo-400" />
                         </div>
                       </div>
-                      <p className="text-slate-500 font-medium animate-pulse">Consultando base de datos...</p>
+                      <p className="text-slate-500 font-medium animate-pulse">
+                        Consultando base de datos...
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -323,7 +465,9 @@ const HistorialNV = () => {
                         <Package size={48} className="text-slate-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-slate-500">No se encontraron registros</h3>
+                        <h3 className="text-lg font-bold text-slate-500">
+                          No se encontraron registros
+                        </h3>
                         <p>Intenta ajustar los filtros de búsqueda</p>
                       </div>
                     </div>
@@ -333,32 +477,50 @@ const HistorialNV = () => {
                 filteredOrders.map((order) => {
                   const config = getEstadoConfig(order.estado);
                   return (
-                    <tr key={order.id || order.nv} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr
+                      key={order.id || order.nv}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">
                         <span className="font-black text-indigo-400 text-lg">#{order.nv}</span>
                       </td>
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 font-medium">
-                        {order.fecha_emision ? new Date(order.fecha_emision).toLocaleDateString() : '-'}
+                        {order.fecha_emision
+                          ? new Date(order.fecha_emision).toLocaleDateString()
+                          : '-'}
                       </td>
-                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-slate-900 truncate max-w-[200px]" title={order.cliente}>
+                      <td
+                        className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 font-bold text-slate-900 truncate max-w-[200px]"
+                        title={order.cliente}
+                      >
                         {order.cliente}
                       </td>
-                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 text-xs font-medium uppercase">{order.vendedor}</td>
+                      <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-slate-500 text-xs font-medium uppercase">
+                        {order.vendedor}
+                      </td>
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4">
-                        <div className="font-mono font-bold text-slate-700">{order.codigo_producto}</div>
-                        <div className="text-xs text-slate-500 truncate max-w-[250px] font-medium">{order.descripcion_producto}</div>
+                        <div className="font-mono font-bold text-slate-700">
+                          {order.codigo_producto}
+                        </div>
+                        <div className="text-xs text-slate-500 truncate max-w-[250px] font-medium">
+                          {order.descripcion_producto}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">
                         <div className="font-black text-slate-900 text-lg">{order.cantidad}</div>
-                        <div className="text-[10px] text-slate-500 font-bold uppercase">{order.unidad}</div>
+                        <div className="text-[10px] text-slate-500 font-bold uppercase">
+                          {order.unidad}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm ${config.lightBg} ${config.textColor} ${config.borderColor}`}
+                        >
                           <config.icon size={12} /> {config.label}
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 md:px-6 py-3 sm:py-4 text-right">
-                        <button 
+                        <button
                           onClick={() => setSelectedOrder(order)}
                           className="bg-slate-50 hover:bg-indigo-500/20 text-slate-500 hover:text-indigo-400 p-2 rounded-xl border border-slate-200 hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(99,102,241,0.3)]"
                           title="Ver Detalle"
@@ -388,32 +550,42 @@ const HistorialNV = () => {
             {(() => {
               const config = getEstadoConfig(selectedOrder.estado);
               return (
-                <div className={`bg-slate-50 p-4 sm:p-6 md:p-8 flex justify-between items-start border-b border-slate-200 relative overflow-hidden`}>
-                  <div className={`absolute top-0 right-0 w-48 h-48 ${config.lightBg} rounded-full blur-3xl`}></div>
+                <div
+                  className={`bg-slate-50 p-4 sm:p-6 md:p-8 flex justify-between items-start border-b border-slate-200 relative overflow-hidden`}
+                >
+                  <div
+                    className={`absolute top-0 right-0 w-48 h-48 ${config.lightBg} rounded-full blur-3xl`}
+                  ></div>
                   <div className="flex items-center gap-4 relative z-10">
-                    <div className={`${config.lightBg} border ${config.borderColor} p-3 rounded-2xl ${config.textColor} shadow-lg`}>
+                    <div
+                      className={`${config.lightBg} border ${config.borderColor} p-3 rounded-2xl ${config.textColor} shadow-lg`}
+                    >
                       <FileText size={32} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Nota de Venta</p>
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Nota de Venta
+                      </p>
                       <h2 className="text-4xl font-black text-slate-900">#{selectedOrder.nv}</h2>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-3 relative z-10">
-                    <button 
-                      onClick={() => setSelectedOrder(null)} 
+                    <button
+                      onClick={() => setSelectedOrder(null)}
                       className="p-2 bg-slate-50 border border-slate-200 hover:bg-white rounded-full text-slate-500 hover:text-rose-500 transition-colors"
                     >
                       <X size={24} />
                     </button>
-                    <span className={`px-4 py-2 rounded-full text-sm font-black uppercase tracking-wide border shadow-sm flex items-center gap-2 ${config.lightBg} ${config.textColor} ${config.borderColor}`}>
+                    <span
+                      className={`px-4 py-2 rounded-full text-sm font-black uppercase tracking-wide border shadow-sm flex items-center gap-2 ${config.lightBg} ${config.textColor} ${config.borderColor}`}
+                    >
                       <config.icon size={16} /> {config.label}
                     </span>
                   </div>
                 </div>
               );
             })()}
-            
+
             <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 bg-white">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-inner">
@@ -422,16 +594,21 @@ const HistorialNV = () => {
                     <p className="text-xs font-bold uppercase">Fecha Emisión</p>
                   </div>
                   <p className="font-bold text-slate-900 text-lg">
-                    {selectedOrder.fecha_emision ? new Date(selectedOrder.fecha_emision).toLocaleDateString() : '-'}
+                    {selectedOrder.fecha_emision
+                      ? new Date(selectedOrder.fecha_emision).toLocaleDateString()
+                      : '-'}
                   </p>
                 </div>
-                
+
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-inner col-span-2">
                   <div className="flex items-center gap-2 mb-2 text-slate-500">
                     <User size={16} />
                     <p className="text-xs font-bold uppercase">Cliente</p>
                   </div>
-                  <p className="font-bold text-slate-900 text-lg truncate" title={selectedOrder.cliente}>
+                  <p
+                    className="font-bold text-slate-900 text-lg truncate"
+                    title={selectedOrder.cliente}
+                  >
                     {selectedOrder.cliente}
                   </p>
                 </div>
@@ -442,17 +619,21 @@ const HistorialNV = () => {
                   <Package size={120} />
                 </div>
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 text-indigo-400">
                       <Box size={16} />
                       <p className="text-xs font-bold uppercase">Detalle del Producto</p>
                     </div>
-                    <p className="font-mono text-2xl font-black text-indigo-300 mb-1">{selectedOrder.codigo_producto}</p>
-                    <p className="text-indigo-200 font-medium text-lg leading-tight">{selectedOrder.descripcion_producto}</p>
+                    <p className="font-mono text-2xl font-black text-indigo-300 mb-1">
+                      {selectedOrder.codigo_producto}
+                    </p>
+                    <p className="text-indigo-200 font-medium text-lg leading-tight">
+                      {selectedOrder.descripcion_producto}
+                    </p>
                   </div>
-                  
+
                   <div className="flex flex-col items-end justify-center min-w-[120px] bg-slate-50/80 p-4 rounded-2xl backdrop-blur-sm border border-indigo-500/30 shadow-inner">
                     <p className="text-xs font-bold text-indigo-400 uppercase mb-1">Cantidad</p>
                     <p className="text-4xl font-black text-indigo-300">{selectedOrder.cantidad}</p>
@@ -460,7 +641,7 @@ const HistorialNV = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between text-xs font-medium text-slate-500 pt-4 border-t border-slate-200">
                 <span>Vendedor: {selectedOrder.vendedor || 'N/A'}</span>
                 <span>ID Sistema: {selectedOrder.id}</span>

@@ -1,12 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import {
-  MessageSquare, CheckCircle, Clock, AlertTriangle, Search,
-  RefreshCw, User, Filter, AlertCircle, Trash2, Send, X,
-  ChevronDown, ChevronUp, Eye, MessageCircle, Loader2,
-  BarChart3, TrendingUp, Zap, Shield, Calendar, MoreVertical,
-  ArrowRight, CircleDot, Hash
+  MessageSquare,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Search,
+  RefreshCw,
+  AlertCircle,
+  Trash2,
+  Send,
+  X,
+  Eye,
+  MessageCircle,
+  Loader2,
+  BarChart3,
+  Zap,
+  Shield,
+  Hash
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -14,19 +26,70 @@ import { toast } from 'sonner';
 
 // ─── Status & Priority Config ──────────────────────────
 const STATUS_CONFIG = {
-  PENDIENTE: { label: 'Pendiente', color: 'amber', icon: Clock, bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-  EN_PROCESO: { label: 'En Proceso', color: 'blue', icon: Zap, bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-  RESUELTO: { label: 'Resuelto', color: 'emerald', icon: CheckCircle, bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  PENDIENTE: {
+    label: 'Pendiente',
+    color: 'amber',
+    icon: Clock,
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    badge: 'bg-amber-100 text-amber-700 border-amber-200',
+    dot: 'bg-amber-500'
+  },
+  EN_PROCESO: {
+    label: 'En Proceso',
+    color: 'blue',
+    icon: Zap,
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    badge: 'bg-blue-100 text-blue-700 border-blue-200',
+    dot: 'bg-blue-500'
+  },
+  RESUELTO: {
+    label: 'Resuelto',
+    color: 'emerald',
+    icon: CheckCircle,
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    dot: 'bg-emerald-500'
+  }
 };
 
 const PRIORITY_CONFIG = {
-  ALTA: { label: 'Alta', color: 'red', icon: '🔴', bg: 'bg-red-50 border-red-200 text-red-700', ring: 'ring-red-200' },
-  MEDIA: { label: 'Media', color: 'amber', icon: '🟡', bg: 'bg-amber-50 border-amber-200 text-amber-700', ring: 'ring-amber-200' },
-  BAJA: { label: 'Baja', color: 'blue', icon: '🔵', bg: 'bg-blue-50 border-blue-200 text-blue-700', ring: 'ring-blue-200' },
+  ALTA: {
+    label: 'Alta',
+    color: 'red',
+    icon: '🔴',
+    bg: 'bg-red-50 border-red-200 text-red-700',
+    ring: 'ring-red-200'
+  },
+  MEDIA: {
+    label: 'Media',
+    color: 'amber',
+    icon: '🟡',
+    bg: 'bg-amber-50 border-amber-200 text-amber-700',
+    ring: 'ring-amber-200'
+  },
+  BAJA: {
+    label: 'Baja',
+    color: 'blue',
+    icon: '🔵',
+    bg: 'bg-blue-50 border-blue-200 text-blue-700',
+    ring: 'ring-blue-200'
+  }
 };
 
 const CATEGORIES = [
-  'Hardware', 'Software', 'Red/Internet', 'Impresora', 'Sistema CCO', 'Accesos', 'Otro'
+  'Hardware',
+  'Software',
+  'Red/Internet',
+  'Impresora',
+  'Sistema CCO',
+  'Accesos',
+  'Otro'
 ];
 
 // ─── KPI Cell ──────────────────────────────────────────
@@ -36,18 +99,28 @@ const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
     blue: 'from-blue-500 to-indigo-500 shadow-blue-200',
     emerald: 'from-emerald-500 to-teal-500 shadow-emerald-200',
     slate: 'from-slate-600 to-slate-800 shadow-slate-200',
-    red: 'from-red-500 to-rose-500 shadow-red-200',
+    red: 'from-red-500 to-rose-500 shadow-red-200'
   };
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all group">
       <div className="flex items-start justify-between mb-2 sm:mb-3">
-        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+        <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          {label}
+        </p>
+        <div
+          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}
+        >
           <Icon size={14} className="text-white" />
         </div>
       </div>
-      <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">{value}</p>
-      {sub && <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">{sub}</p>}
+      <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+        {value}
+      </p>
+      {sub && (
+        <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-1 sm:mt-1.5 hidden xs:block">
+          {sub}
+        </p>
+      )}
     </div>
   );
 };
@@ -56,12 +129,14 @@ const KpiCell = ({ label, value, sub, icon: Icon, color = 'slate' }) => {
 const TicketCard = ({ ticket, onStatusChange, onViewDetail, onDelete, isAdmin }) => {
   const status = STATUS_CONFIG[ticket.estado] || STATUS_CONFIG.PENDIENTE;
   const priority = PRIORITY_CONFIG[ticket.prioridad] || PRIORITY_CONFIG.MEDIA;
-  const StatusIcon = status.icon;
-
   return (
-    <div className={`bg-white border rounded-xl overflow-hidden hover:shadow-lg transition-all group ${
-      ticket.estado === 'RESUELTO' ? 'border-slate-200 opacity-80 hover:opacity-100' : `${status.border} shadow-sm`
-    }`}>
+    <div
+      className={`bg-white border rounded-xl overflow-hidden hover:shadow-lg transition-all group ${
+        ticket.estado === 'RESUELTO'
+          ? 'border-slate-200 opacity-80 hover:opacity-100'
+          : `${status.border} shadow-sm`
+      }`}
+    >
       <div className="p-5">
         {/* Top Row: ID + Priority + Status */}
         <div className="flex items-center justify-between mb-3">
@@ -87,7 +162,9 @@ const TicketCard = ({ ticket, onStatusChange, onViewDetail, onDelete, isAdmin })
               </select>
             )}
             {!isAdmin && (
-              <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border flex items-center gap-1.5 ${status.badge}`}>
+              <span
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border flex items-center gap-1.5 ${status.badge}`}
+              >
                 <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}></span>
                 {status.label}
               </span>
@@ -96,10 +173,14 @@ const TicketCard = ({ ticket, onStatusChange, onViewDetail, onDelete, isAdmin })
         </div>
 
         {/* Title */}
-        <h3 className="font-bold text-slate-900 text-base mb-2 line-clamp-1">{ticket.asunto || 'Sin Asunto'}</h3>
+        <h3 className="font-bold text-slate-900 text-base mb-2 line-clamp-1">
+          {ticket.asunto || 'Sin Asunto'}
+        </h3>
 
         {/* Description Preview */}
-        <p className="text-sm text-slate-500 line-clamp-2 mb-3 leading-relaxed">{ticket.descripcion}</p>
+        <p className="text-sm text-slate-500 line-clamp-2 mb-3 leading-relaxed">
+          {ticket.descripcion}
+        </p>
 
         {/* Category tag if exists */}
         {ticket.categoria && (
@@ -128,7 +209,12 @@ const TicketCard = ({ ticket, onStatusChange, onViewDetail, onDelete, isAdmin })
               <p className="text-xs font-semibold text-slate-700">{ticket.usuario_nombre}</p>
               <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Clock size={9} />
-                {ticket.created_at ? formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es }) : '—'}
+                {ticket.created_at
+                  ? formatDistanceToNow(new Date(ticket.created_at), {
+                      addSuffix: true,
+                      locale: es
+                    })
+                  : '—'}
               </p>
             </div>
           </div>
@@ -173,8 +259,14 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div className="flex items-center gap-3">
@@ -183,10 +275,15 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
             </div>
             <div>
               <span className="font-mono text-xs font-bold text-slate-400">{ticket.ticket_id}</span>
-              <h3 className="font-bold text-slate-900 text-lg leading-tight">{ticket.asunto || 'Sin Asunto'}</h3>
+              <h3 className="font-bold text-slate-900 text-lg leading-tight">
+                {ticket.asunto || 'Sin Asunto'}
+              </h3>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+          >
             <X size={18} />
           </button>
         </div>
@@ -207,7 +304,9 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
                   <option value="RESUELTO">Resuelto</option>
                 </select>
               ) : (
-                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold border ${status.badge}`}>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold border ${status.badge}`}
+                >
                   <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}></span>
                   {status.label}
                 </span>
@@ -215,7 +314,9 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
             </div>
             <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Prioridad</p>
-              <span className={`inline-block text-xs font-bold px-2 py-1 rounded border ${priority.bg}`}>
+              <span
+                className={`inline-block text-xs font-bold px-2 py-1 rounded border ${priority.bg}`}
+              >
                 {priority.icon} {priority.label}
               </span>
             </div>
@@ -226,7 +327,9 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
             <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha</p>
               <p className="text-sm font-bold text-slate-700">
-                {ticket.created_at ? format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: es }) : '—'}
+                {ticket.created_at
+                  ? format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: es })
+                  : '—'}
               </p>
             </div>
           </div>
@@ -243,7 +346,9 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
 
           {/* Description */}
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase mb-2">Descripción del Incidente</p>
+            <p className="text-xs font-bold text-slate-400 uppercase mb-2">
+              Descripción del Incidente
+            </p>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
               {ticket.descripcion}
             </div>
@@ -265,7 +370,8 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
           {isAdmin && (
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1.5">
-                <MessageCircle size={12} /> {ticket.respuesta_admin ? 'Actualizar Respuesta' : 'Responder al Ticket'}
+                <MessageCircle size={12} />{' '}
+                {ticket.respuesta_admin ? 'Actualizar Respuesta' : 'Responder al Ticket'}
               </p>
               <textarea
                 rows={3}
@@ -294,7 +400,12 @@ const DetailModal = ({ ticket, onClose, onStatusChange, onRespond, isAdmin }) =>
 
 // ─── Create Modal ────────────────────────────────────────
 const CreateModal = ({ onClose, onCreate }) => {
-  const [form, setForm] = useState({ asunto: '', descripcion: '', prioridad: 'MEDIA', categoria: '' });
+  const [form, setForm] = useState({
+    asunto: '',
+    descripcion: '',
+    prioridad: 'MEDIA',
+    categoria: ''
+  });
   const [creating, setCreating] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -309,8 +420,14 @@ const CreateModal = ({ onClose, onCreate }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
@@ -322,7 +439,10 @@ const CreateModal = ({ onClose, onCreate }) => {
               <p className="text-xs text-slate-400">Reportar un incidente o solicitud</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+          >
             <X size={18} />
           </button>
         </div>
@@ -330,12 +450,14 @@ const CreateModal = ({ onClose, onCreate }) => {
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Asunto */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Asunto</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Asunto
+            </label>
             <input
               required
               type="text"
               value={form.asunto}
-              onChange={e => setForm({ ...form, asunto: e.target.value })}
+              onChange={(e) => setForm({ ...form, asunto: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               placeholder="Ej: Error al imprimir etiqueta de despacho"
             />
@@ -343,9 +465,11 @@ const CreateModal = ({ onClose, onCreate }) => {
 
           {/* Categoría */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Categoría</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Categoría
+            </label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map(cat => (
+              {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -364,7 +488,9 @@ const CreateModal = ({ onClose, onCreate }) => {
 
           {/* Prioridad */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Prioridad</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Prioridad
+            </label>
             <div className="grid grid-cols-3 gap-2">
               {Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => (
                 <button
@@ -385,12 +511,14 @@ const CreateModal = ({ onClose, onCreate }) => {
 
           {/* Descripción */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Descripción Detallada</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+              Descripción Detallada
+            </label>
             <textarea
               required
               rows={4}
               value={form.descripcion}
-              onChange={e => setForm({ ...form, descripcion: e.target.value })}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none leading-relaxed"
               placeholder="Describe qué pasó, dónde ocurrió y qué esperabas que sucediera..."
             />
@@ -431,8 +559,14 @@ const DeleteModal = ({ ticket, onClose, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
             <AlertTriangle size={20} className="text-red-600" />
@@ -443,11 +577,18 @@ const DeleteModal = ({ ticket, onClose, onConfirm }) => {
           </div>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 text-sm">
-          <p><span className="font-bold text-red-800">ID:</span> {ticket.ticket_id}</p>
-          <p><span className="font-bold text-red-800">Asunto:</span> {ticket.asunto}</p>
+          <p>
+            <span className="font-bold text-red-800">ID:</span> {ticket.ticket_id}
+          </p>
+          <p>
+            <span className="font-bold text-red-800">Asunto:</span> {ticket.asunto}
+          </p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
             Cancelar
           </button>
           <button
@@ -493,7 +634,9 @@ const Tickets = () => {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(subscription); };
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const fetchTickets = async () => {
@@ -514,16 +657,16 @@ const Tickets = () => {
 
   // ─── Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
-    const pendientes = tickets.filter(t => t.estado === 'PENDIENTE').length;
-    const enProceso = tickets.filter(t => t.estado === 'EN_PROCESO').length;
-    const resueltos = tickets.filter(t => t.estado === 'RESUELTO').length;
-    const alta = tickets.filter(t => t.prioridad === 'ALTA' && t.estado !== 'RESUELTO').length;
+    const pendientes = tickets.filter((t) => t.estado === 'PENDIENTE').length;
+    const enProceso = tickets.filter((t) => t.estado === 'EN_PROCESO').length;
+    const resueltos = tickets.filter((t) => t.estado === 'RESUELTO').length;
+    const alta = tickets.filter((t) => t.prioridad === 'ALTA' && t.estado !== 'RESUELTO').length;
     return { pendientes, enProceso, resueltos, total: tickets.length, alta };
   }, [tickets]);
 
   // ─── Filtered ───────────────────────────────────────
   const filteredTickets = useMemo(() => {
-    return tickets.filter(t => {
+    return tickets.filter((t) => {
       if (filter !== 'ALL' && t.estado !== filter) return false;
       if (searchTerm) {
         const q = searchTerm.toLowerCase();
@@ -533,7 +676,8 @@ const Tickets = () => {
           !(t.asunto || '').toLowerCase().includes(q) &&
           !(t.usuario_nombre || '').toLowerCase().includes(q) &&
           !(t.categoria || '').toLowerCase().includes(q)
-        ) return false;
+        )
+          return false;
       }
       return true;
     });
@@ -541,8 +685,8 @@ const Tickets = () => {
 
   // ─── Actions ────────────────────────────────────────
   const handleStatusChange = async (id, newStatus) => {
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, estado: newStatus } : t));
-    if (detailTicket?.id === id) setDetailTicket(prev => ({ ...prev, estado: newStatus }));
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, estado: newStatus } : t)));
+    if (detailTicket?.id === id) setDetailTicket((prev) => ({ ...prev, estado: newStatus }));
 
     const { error } = await supabase
       .from('tms_tickets')
@@ -560,20 +704,29 @@ const Tickets = () => {
   const handleRespond = async (id, respuesta) => {
     const { error } = await supabase
       .from('tms_tickets')
-      .update({ respuesta_admin: respuesta, estado: 'EN_PROCESO', updated_at: new Date().toISOString() })
+      .update({
+        respuesta_admin: respuesta,
+        estado: 'EN_PROCESO',
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) {
       toast.error('Error al responder');
     } else {
       toast.success('Respuesta enviada');
-      setDetailTicket(prev => prev ? { ...prev, respuesta_admin: respuesta, estado: 'EN_PROCESO' } : null);
+      setDetailTicket((prev) =>
+        prev ? { ...prev, respuesta_admin: respuesta, estado: 'EN_PROCESO' } : null
+      );
       fetchTickets();
     }
   };
 
   const handleCreate = async (form) => {
-    if (!user?.id) { toast.error('Sesión no válida. Vuelve a iniciar sesión.'); return; }
+    if (!user?.id) {
+      toast.error('Sesión no válida. Vuelve a iniciar sesión.');
+      return;
+    }
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), 15000);
     try {
@@ -589,7 +742,10 @@ const Tickets = () => {
         created_at: new Date().toISOString()
       };
 
-      const { error } = await supabase.from('tms_tickets').insert(ticketData).abortSignal(ctrl.signal);
+      const { error } = await supabase
+        .from('tms_tickets')
+        .insert(ticketData)
+        .abortSignal(ctrl.signal);
       if (error) throw error;
 
       // Push notification se envía automáticamente via DB trigger → Edge Function (notify-ticket)
@@ -626,7 +782,9 @@ const Tickets = () => {
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Soporte TI</h1>
-            <p className="text-sm text-slate-500">Gestión de incidentes y requerimientos técnicos</p>
+            <p className="text-sm text-slate-500">
+              Gestión de incidentes y requerimientos técnicos
+            </p>
           </div>
         </div>
 
@@ -650,11 +808,41 @@ const Tickets = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 mb-5">
-        <KpiCell label="Pendientes" value={stats.pendientes} icon={Clock} color="amber" sub="Esperando atención" />
-        <KpiCell label="En Proceso" value={stats.enProceso} icon={Zap} color="blue" sub="Siendo atendidos" />
-        <KpiCell label="Resueltos" value={stats.resueltos} icon={CheckCircle} color="emerald" sub="Completados" />
-        <KpiCell label="Prioridad Alta" value={stats.alta} icon={AlertTriangle} color="red" sub="Requieren acción" />
-        <KpiCell label="Total" value={stats.total} icon={BarChart3} color="slate" sub="Todos los tickets" />
+        <KpiCell
+          label="Pendientes"
+          value={stats.pendientes}
+          icon={Clock}
+          color="amber"
+          sub="Esperando atención"
+        />
+        <KpiCell
+          label="En Proceso"
+          value={stats.enProceso}
+          icon={Zap}
+          color="blue"
+          sub="Siendo atendidos"
+        />
+        <KpiCell
+          label="Resueltos"
+          value={stats.resueltos}
+          icon={CheckCircle}
+          color="emerald"
+          sub="Completados"
+        />
+        <KpiCell
+          label="Prioridad Alta"
+          value={stats.alta}
+          icon={AlertTriangle}
+          color="red"
+          sub="Requieren acción"
+        />
+        <KpiCell
+          label="Total"
+          value={stats.total}
+          icon={BarChart3}
+          color="slate"
+          sub="Todos los tickets"
+        />
       </div>
 
       {/* Filters */}
@@ -671,7 +859,10 @@ const Tickets = () => {
               className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <X size={14} />
               </button>
             )}
@@ -683,8 +874,8 @@ const Tickets = () => {
               { key: 'ALL', label: 'Todos', count: stats.total },
               { key: 'PENDIENTE', label: 'Pendientes', count: stats.pendientes },
               { key: 'EN_PROCESO', label: 'En Proceso', count: stats.enProceso },
-              { key: 'RESUELTO', label: 'Resueltos', count: stats.resueltos },
-            ].map(tab => (
+              { key: 'RESUELTO', label: 'Resueltos', count: stats.resueltos }
+            ].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
@@ -696,9 +887,13 @@ const Tickets = () => {
               >
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold ${
-                    filter === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'
-                  }`}>
+                  <span
+                    className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold ${
+                      filter === tab.key
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
                     {tab.count}
                   </span>
                 )}
@@ -723,12 +918,14 @@ const Tickets = () => {
           <MessageSquare className="mx-auto text-slate-300 mb-3" size={40} />
           <h3 className="text-lg font-bold text-slate-600 mb-1">No hay tickets</h3>
           <p className="text-sm text-slate-400">
-            {searchTerm || filter !== 'ALL' ? 'Intenta cambiar los filtros' : 'Crea el primer ticket de soporte'}
+            {searchTerm || filter !== 'ALL'
+              ? 'Intenta cambiar los filtros'
+              : 'Crea el primer ticket de soporte'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredTickets.map(ticket => (
+          {filteredTickets.map((ticket) => (
             <TicketCard
               key={ticket.id}
               ticket={ticket}
