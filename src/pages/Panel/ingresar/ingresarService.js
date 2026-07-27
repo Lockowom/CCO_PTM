@@ -7,6 +7,10 @@
 import { supabase } from '../../../supabase';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+const ACTIVES_CACHE_TTL_MS = 60 * 1000;
+const OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
+let listaActivasCache = { ts: 0, data: null, promise: null };
+let opcionesCache = { ts: 0, data: null, promise: null };
 
 // ── Constantes / tipos compartidos ──────────────────────────────────────────
 export const CANALES = [
@@ -87,27 +91,44 @@ function isMoreRecentOperacion(next, prev) {
   return Number(next?.id || 0) > Number(prev?.id || 0);
 }
 
-export async function listaActivas() {
-  const latest = new Map(); let from = 0; const page = 1000;
-  for (;;) {
-    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
-      .order('fecha_estado', { ascending: false, nullsFirst: false })
-      .order('id', { ascending: false })
-      .range(from, from + page - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    data.forEach((r) => {
-      const key = operacionKey(r);
-      if (!key) return;
-      const prev = latest.get(key);
-      if (!prev || isMoreRecentOperacion(r, prev)) latest.set(key, r);
-    });
-    if (data.length < page) break;
-    from += page;
+export async function listaActivas({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && listaActivasCache.data && (now - listaActivasCache.ts) < ACTIVES_CACHE_TTL_MS) {
+    return listaActivasCache.data;
   }
-  return Array.from(latest.values())
-    .filter((r) => ESTADOS_ACTIVOS.includes(r.estado))
-    .map(mapOperacionRow);
+  if (!force && listaActivasCache.promise) {
+    return listaActivasCache.promise;
+  }
+
+  const run = async () => {
+    const rows = [];
+    let from = 0;
+    const page = 500;
+    for (;;) {
+      const { data, error } = await supabase
+        .from(OPERACIONES_READ_VIEW)
+        .select(LISTA_COLS)
+        .in('estado', ESTADOS_ACTIVOS)
+        .order('fecha_estado', { ascending: false, nullsFirst: false })
+        .order('id', { ascending: false })
+        .range(from, from + page - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+      if (data.length < page) break;
+      from += page;
+    }
+    const mapped = rows.map(mapOperacionRow);
+    listaActivasCache = { ts: Date.now(), data: mapped, promise: null };
+    return mapped;
+  };
+
+  listaActivasCache.promise = run()
+    .catch((error) => {
+      listaActivasCache.promise = null;
+      throw error;
+    });
+  return listaActivasCache.promise;
 }
 
 // Búsqueda en TODA la tabla (cualquier estado: incluye Entregado/NULA/etc.) por
@@ -141,7 +162,16 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
 }
 
 // ── Opciones del formulario ─────────────────────────────────────────────────
-export async function opciones() {
+export async function opciones({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && opcionesCache.data && (now - opcionesCache.ts) < OPTIONS_CACHE_TTL_MS) {
+    return opcionesCache.data;
+  }
+  if (!force && opcionesCache.promise) {
+    return opcionesCache.promise;
+  }
+
+  const run = async () => {
   const set = new Set();
   // 1) Catálogo maestro (Configuración → Transportistas): fuente mantenida.
   const { data: cat } = await supabase.from('tms_panel_transportistas')
@@ -161,7 +191,17 @@ export async function opciones() {
     from += page;
   }
   const transportistas = [...set].sort((a, b) => a.localeCompare(b, 'es'));
-  return { estados: ESTADOS_SELECCIONABLES, transportistas, tiposDespacho: TIPOS_DESPACHO };
+    const result = { estados: ESTADOS_SELECCIONABLES, transportistas, tiposDespacho: TIPOS_DESPACHO };
+    opcionesCache = { ts: Date.now(), data: result, promise: null };
+    return result;
+  };
+
+  opcionesCache.promise = run()
+    .catch((error) => {
+      opcionesCache.promise = null;
+      throw error;
+    });
+  return opcionesCache.promise;
 }
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────

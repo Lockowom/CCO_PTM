@@ -544,9 +544,9 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [opts, setOpts] = useState(null);
   const [exportando, setExportando] = useState(false);
 
-  const cargar = useCallback(() => {
+  const cargar = useCallback((force = false) => {
     setLoading(true);
-    listaActivas().then((rows) => { setLista(rows); setLoading(false); }).catch(() => { setLista([]); setLoading(false); });
+    listaActivas({ force }).then((rows) => { setLista(rows); setLoading(false); }).catch(() => { setLista([]); setLoading(false); });
   }, []);
   useEffect(() => { cargar(); opciones().then(setOpts).catch(() => {}); }, [cargar]);
 
@@ -620,7 +620,7 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
             {exportando ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
             {exportando ? 'Exportando…' : 'Exportar Excel'}
           </button>
-          <button onClick={cargar} className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-orange-600 font-medium">↻ Recargar</button>
+          <button onClick={() => cargar(true)} className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-orange-600 font-medium">↻ Recargar</button>
         </div>
       </div>
 
