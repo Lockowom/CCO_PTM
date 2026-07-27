@@ -143,11 +143,14 @@ export default function TVDashboard() {
   }, [loadData]);
 
   // Realtime SIEMPRE: recarga en vivo ante cualquier cambio en operaciones
-  // (además del poll de respaldo). Debounce para no recargar en ráfaga.
+  // (además del poll de respaldo) y al finalizar sync/import.
   useEffect(() => {
     let t;
     const ch = supabase.channel('panel_tv_rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones' }, () => {
+        clearTimeout(t); t = setTimeout(loadData, 1200);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones_sync' }, () => {
         clearTimeout(t); t = setTimeout(loadData, 1200);
       })
       .subscribe();

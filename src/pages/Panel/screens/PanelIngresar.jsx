@@ -687,28 +687,36 @@ function ClienteNoEncontradoModal({ canal, nv, onClose }) {
 function OperacionExistenteModal({ item, puedeEscribir, puedeAprobarReapertura, motivo, onMotivoChange, onRequestReopen, requesting, onClose }) {
   if (!item) return null;
   const isEntregada = item.estado === 'Entregado';
+  const alertTitle = isEntregada ? 'ALERTA CRITICA: N.V. ENTREGADA Y BLOQUEADA' : 'ALERTA CRITICA: N.V. DUPLICADA DETECTADA';
   return (
     <PanelModal
       titulo={isEntregada ? 'N.V. entregada detectada' : 'N.V. ya registrada'}
       onClose={onClose}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-4xl"
     >
-      <div className="p-5 space-y-4">
-        <div className={`rounded-2xl border px-4 py-4 ${isEntregada ? 'border-red-200 bg-red-50/80' : 'border-amber-200 bg-amber-50/80'}`}>
+      <div className="p-6 space-y-5">
+        <div className={`rounded-3xl border-2 px-5 py-5 ${isEntregada ? 'border-red-300 bg-red-50' : 'border-amber-300 bg-amber-50'}`}>
+          <div className={`mb-4 rounded-2xl border px-4 py-3 ${isEntregada ? 'border-red-200 bg-red-100 text-red-800' : 'border-amber-200 bg-amber-100 text-amber-800'}`}>
+            <div className="text-base sm:text-xl font-black uppercase tracking-[0.18em] leading-tight">
+              {alertTitle}
+            </div>
+          </div>
           <div className="flex items-start gap-3">
-            <div className={`mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl ${isEntregada ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-              {isEntregada ? <LockKeyhole size={18} /> : <AlertTriangle size={18} />}
+            <div className={`mt-0.5 flex h-14 w-14 items-center justify-center rounded-2xl ${isEntregada ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+              {isEntregada ? <LockKeyhole size={22} /> : <AlertTriangle size={22} />}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-black text-slate-900">N.V. {item.nv} ya existe en el sistema</div>
-              <div className="mt-1 text-sm text-slate-600">
-                Estado actual: <span className="font-bold text-slate-800">{item.estado}</span>.
+              <div className="text-lg font-black uppercase text-slate-900">
+                N.V. {item.nv} YA EXISTE EN EL SISTEMA
+              </div>
+              <div className="mt-2 text-sm sm:text-base font-bold uppercase text-slate-700 leading-relaxed">
+                Estado actual: <span className="text-slate-900">{item.estado}</span>.
                 {isEntregada
-                  ? ' Queda bloqueada para no alterar OTIF/SLA una vez entregada.'
-                  : ' El formulario ya quedó en modo actualización para evitar generar un duplicado.'}
+                  ? ' QUEDA BLOQUEADA PARA NO ALTERAR OTIF Y SLA UNA VEZ ENTREGADA.'
+                  : ' EL FORMULARIO YA QUEDO EN MODO ACTUALIZACION PARA EVITAR GENERAR UN DUPLICADO.'}
               </div>
               {item.reabierta && (
-                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">
                   <Undo2 size={12} />
                   N.V. reabierta
                 </div>

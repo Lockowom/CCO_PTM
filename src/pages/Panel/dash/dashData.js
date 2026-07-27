@@ -435,12 +435,13 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     ? ((atiempoCount / validEntregados) * 100).toFixed(0)
     : "0";
 
-  const incidencias = rows.filter(
-    (r) => r.incidencia && r.estado_incidencia !== "RESUELTA"
-  ).length;
-  const incidenciasActivasRows = rowsM.filter(
-    (r) => r.incidencia && r.estado_incidencia !== "RESUELTA"
-  );
+  const tieneIncidenciaActiva = (r) => {
+    const incidencia = String(r?.incidencia || "").trim();
+    const estadoIncidencia = String(r?.estado_incidencia || "").trim().toUpperCase();
+    return incidencia.length > 0 && estadoIncidencia !== "RESUELTA";
+  };
+  const incidenciasActivasRows = rowsM.filter(tieneIncidenciaActiva);
+  const incidencias = incidenciasActivasRows.length;
 
   // === Fill Rate (shipping dentro de plazo) ===
   const ahoraMs = Date.now();
