@@ -1,6 +1,8 @@
 import { supabase } from '../../../supabase';
 import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha } from './dashHelpers';
 
+const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+
 function fechaAprobEfectiva(r) {
   return r.fecha_aprobacion_real || r.fecha_aprobacion || null;
 }
@@ -158,7 +160,7 @@ async function fetchAll(columns, dateFrom, dateTo) {
   const pageSize = 1000;
   while (true) {
     let query = supabase
-      .from('tms_operaciones')
+      .from(OPERACIONES_READ_VIEW)
       .select(columns)
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
@@ -204,7 +206,7 @@ function nvKey(r) {
   return `${canal}:${nv}`;
 }
 
-// Deduplica filas por canal:nv quedándose con la de `fecha_estado` MÁS RECIENTE.
+// Safety-net local por si una consulta futura vuelve a apuntar a la tabla cruda.
 function dedupePorNv(rows) {
   const best = new Map();
   for (const r of rows) {
@@ -229,7 +231,7 @@ async function fetchActivas(columns) {
   const pageSize = 1000;
   while (true) {
     const { data, error } = await supabase
-      .from('tms_operaciones')
+      .from(OPERACIONES_READ_VIEW)
       .select(columns)
       .order("fecha_estado", { ascending: false, nullsFirst: false })
       .order('id', { ascending: false })
@@ -261,7 +263,7 @@ export async function fetchActivasLista() {
   const pageSize = 1000;
   while (true) {
     const { data, error } = await supabase
-      .from('tms_operaciones')
+      .from(OPERACIONES_READ_VIEW)
       .select(cols)
       .in("estado", ESTADOS_DB_LISTA)
       .order('id', { ascending: true })
@@ -326,7 +328,7 @@ export async function buscarNvBasico(nv) {
   if (/^\d+$/.test(t)) ors.push(`nv_ptm.eq.${Number(t)}`);
   ors.push(`nv_orange.eq.${t}`, `nv_farmapack.eq.${t}`, `varios.ilike.*${t}*`);
   const { data, error } = await supabase
-    .from('tms_operaciones')
+    .from(OPERACIONES_READ_VIEW)
     .select("nv_ptm, nv_orange, nv_farmapack, varios, cliente, estado, fecha_estado")
     .or(ors.join(","))
     .order("fecha_estado", { ascending: false })
@@ -1024,7 +1026,7 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
   let from = 0;
   const pageSize = 1000;
   while (true) {
-    let q = supabase.from('tms_operaciones').select(cols)
+    let q = supabase.from(OPERACIONES_READ_VIEW).select(cols)
       .not("incidencia", "is", null)
       .neq("estado_incidencia", "RESUELTA")
       .order('id', { ascending: true })
@@ -1312,7 +1314,7 @@ const CALC_PREVIEW_COLS = "nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor
 export async function fetchOperacionesSample(limit = 25) {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('tms_operaciones')
+    .from(OPERACIONES_READ_VIEW)
     .select(CALC_PREVIEW_COLS)
     .order("fecha_estado", { ascending: false, nullsFirst: false })
     .limit(limit);

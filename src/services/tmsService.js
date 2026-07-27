@@ -6,6 +6,8 @@
 // ============================================================================
 import { supabase } from '../supabase';
 
+const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+
 // Máquina de estados (orden y metadatos visuales).
 export const ESTADOS = [
   { id: 'pendiente_asignacion', label: 'Pendiente Asignación', color: '#f59e0b', bg: '#fffbeb', text: '#b45309' },
@@ -60,7 +62,7 @@ export async function crearOrdenDesdeNV(nv) {
   const ors = [];
   if (/^\d+$/.test(t)) ors.push(`nv_ptm.eq.${Number(t)}`);
   ors.push(`nv_orange.eq.${t}`, `nv_farmapack.eq.${t}`, `varios.eq.${t}`);
-  const { data } = await supabase.from('tms_operaciones').select('id').or(ors.join(',')).limit(1);
+  const { data } = await supabase.from(OPERACIONES_READ_VIEW).select('id').or(ors.join(',')).limit(1);
   if (!data || !data.length) return { ok: false, error: `No existe la N.V. ${t}` };
   const { data: res, error } = await supabase.rpc('tms_orden_crear_desde_nv', { p_oper_id: data[0].id });
   if (error) return { ok: false, error: error.message };

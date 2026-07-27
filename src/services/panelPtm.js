@@ -7,6 +7,8 @@
 // el cutover). Usa el cliente CCO autenticado (sesión del usuario + RLS).
 import { supabase } from '../supabase';
 
+const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+
 const CAMPOS = [
   'nv_ptm', 'cliente', 'vendedor', 'factura', 'guia', 'transportista',
   'empresa_transporte', 'bultos', 'estado', 'tipo_despacho', 'urgente',
@@ -37,7 +39,7 @@ export async function fetchNvPanel(nv) {
   const num = String(nv || '').replace(/[^0-9]/g, '');
   if (!num) return null;
   const { data, error } = await supabase
-    .from('tms_operaciones')
+    .from(OPERACIONES_READ_VIEW)
     .select(CAMPOS)
     .eq('nv_ptm', Number(num))
     .order('fecha_estado', { ascending: false })

@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { supabase } from '../../../supabase';
+
+const OPERACIONES_READ_VIEW = "tms_operaciones_vigentes";
 import { normEstado, ESTADO_COLOR } from '../dash/dashHelpers';
 import { soloFecha } from '../dash/dashHelpers';
 import NvDetalle from './NvDetalle';
@@ -132,7 +134,7 @@ export default function PanelInfoReal() {
     setLimite(lim);
 
     try {
-      let sb = supabase.from('tms_operaciones').select(SEARCH_COLUMNS.join(","));
+      let sb = supabase.from(OPERACIONES_READ_VIEW).select(SEARCH_COLUMNS.join(","));
 
       if (fechaDesde) sb = sb.gte("fecha_registro_nv", fechaDesde + "T00:00:00");
       if (fechaHasta) sb = sb.lte("fecha_registro_nv", fechaHasta + "T23:59:59");

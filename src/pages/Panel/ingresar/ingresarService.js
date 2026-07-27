@@ -6,6 +6,8 @@
 // ============================================================================
 import { supabase } from '../../../supabase';
 
+const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+
 // ── Constantes / tipos compartidos ──────────────────────────────────────────
 export const CANALES = [
   { value: 'ptm', label: 'PTM', color: '#ea580c' },
@@ -88,7 +90,7 @@ function isMoreRecentOperacion(next, prev) {
 export async function listaActivas() {
   const latest = new Map(); let from = 0; const page = 1000;
   for (;;) {
-    const { data, error } = await supabase.from('tms_operaciones').select(LISTA_COLS)
+    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
       .order('fecha_estado', { ascending: false, nullsFirst: false })
       .order('id', { ascending: false })
       .range(from, from + page - 1);
@@ -126,7 +128,7 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
     `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
     `factura.ilike.${like}`, `transportista.ilike.${like}`,
   );
-  const { data, error } = await supabase.from('tms_operaciones').select(LISTA_COLS)
+  const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
     .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit);
   if (error) throw error;
   const dedup = new Map();
@@ -150,7 +152,7 @@ export async function opciones() {
   //    a los que solo aparecían más allá de la primera página, p.ej. Transfarma).
   let from = 0; const page = 1000;
   for (;;) {
-    const { data, error } = await supabase.from('tms_operaciones')
+    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW)
       .select('transportista').not('transportista', 'is', null)
       .order('id', { ascending: true }).range(from, from + page - 1);
     if (error || !data || data.length === 0) break;
@@ -207,7 +209,7 @@ export async function costoDeVendedor(vendedor) {
 
 export async function lookup(canal, nv) {
   const col = colDe(canal); const t = normNV(nv);
-  let q = supabase.from('tms_operaciones').select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
+  let q = supabase.from(OPERACIONES_READ_VIEW).select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
   q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
   const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
   const r = data && data.length ? data[0] : null;
@@ -263,9 +265,9 @@ export async function lookupOrangeAssociation(nv, fallback = {}) {
   };
 }
 
-// ── Export a Excel de TODA la tabla de operaciones (maestro de N.V.) ─────────
-// Todas las columnas y todos los datos, con encabezados legibles (paridad con
-// la "hoja principal"). Orden estable por id; pagina para traerlo completo.
+// ── Export a Excel del maestro vigente de N.V. ───────────────────────────────
+// Expone una sola fila actual por N.V. para evitar inconsistencias por
+// historial multi-fila en `tms_operaciones`.
 const EXPORT_COLS = [
   ['id', 'ID'],
   ['nv_ptm', 'N.V PTM'], ['nv_orange', 'N.V ORANGE'], ['nv_farmapack', 'N.V FARMAPACK'], ['varios', 'VARIOS'],
@@ -308,11 +310,11 @@ const fmtTs = (v) => {
 
 export async function exportarOperaciones() {
   const cols = EXPORT_COLS.map((c) => c[0]).join(',');
-  // Orden estable por id (orden de ingreso). La descarga es SOLO LECTURA: no
-  // toca ni bloquea la tabla, así el llenado desde Ingresar sigue normal.
+  // Orden estable por id de la fila vigente. La descarga es SOLO LECTURA: no
+  // toca ni bloquea la tabla base, así el llenado desde Ingresar sigue normal.
   const all = []; let from = 0; const page = 1000;
   for (;;) {
-    const { data, error } = await supabase.from('tms_operaciones').select(cols).order('id', { ascending: true }).range(from, from + page - 1);
+    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(cols).order('id', { ascending: true }).range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
     all.push(...data);
@@ -442,7 +444,7 @@ export async function buscarNvBasico(nv) {
   const ors = [];
   if (/^\d+$/.test(t)) ors.push(`nv_ptm.eq.${Number(t)}`);
   ors.push(`nv_orange.eq.${t}`, `nv_farmapack.eq.${t}`, `varios.ilike.*${t}*`);
-  const { data } = await supabase.from('tms_operaciones').select('nv_ptm,nv_orange,nv_farmapack,varios,cliente,estado,fecha_estado').or(ors.join(',')).order('fecha_estado', { ascending: false }).limit(1);
+  const { data } = await supabase.from(OPERACIONES_READ_VIEW).select('nv_ptm,nv_orange,nv_farmapack,varios,cliente,estado,fecha_estado').or(ors.join(',')).order('fecha_estado', { ascending: false }).limit(1);
   if (!data || data.length === 0) return null;
   const r = data[0];
   return { nv: nvDe(r), canal: canalDe(r), cliente: r.cliente || null, estado: r.estado || null };
