@@ -212,9 +212,9 @@ function dedupePorNv(rows) {
     if (!key.endsWith(":")) {
       const prev = best.get(key);
       if (!prev) { best.set(key, r); continue; }
-      const ta = Date.parse(r.fecha_estado || "") || 0;
-      const tb = Date.parse(prev.fecha_estado || "") || 0;
-      if (ta >= tb) best.set(key, r);
+      const ta = Date.parse(r.fecha_estado || "") || Date.parse(r.fecha_aprobacion_real || "") || Date.parse(r.fecha_aprobacion || "") || 0;
+      const tb = Date.parse(prev.fecha_estado || "") || Date.parse(prev.fecha_aprobacion_real || "") || Date.parse(prev.fecha_aprobacion || "") || 0;
+      if (ta > tb || (ta === tb && Number(r.id || 0) > Number(prev.id || 0))) best.set(key, r);
     } else {
       best.set(`__sinnv__${best.size}`, r);
     }
@@ -222,7 +222,7 @@ function dedupePorNv(rows) {
   return Array.from(best.values());
 }
 
-// Trae TODAS las filas en estados activos, sin filtro de fecha.
+// Trae la última fila real por N.V. y deja solo las que siguen activas.
 async function fetchActivas(columns) {
   const allRows = [];
   let from = 0;
@@ -231,8 +231,8 @@ async function fetchActivas(columns) {
     const { data, error } = await supabase
       .from('tms_operaciones')
       .select(columns)
-      .in("estado", ESTADOS_DB_ACTIVOS)
-      .order('id', { ascending: true })
+      .order("fecha_estado", { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
       .range(from, from + pageSize - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
@@ -240,7 +240,8 @@ async function fetchActivas(columns) {
     if (data.length < pageSize) break;
     from += pageSize;
   }
-  return columns === "*" || columns.includes("fecha_estado") ? dedupePorNv(allRows) : allRows;
+  const latestRows = dedupePorNv(allRows);
+  return latestRows.filter((r) => ESTADOS_DB_ACTIVOS.includes(r.estado));
 }
 
 // Estados CRUDOS visibles en la LISTA de /ingresar (pestaña Buscar).

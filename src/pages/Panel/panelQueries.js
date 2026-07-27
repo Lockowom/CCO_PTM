@@ -73,6 +73,31 @@ const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'O
 
 const canalDe = (r) => (r.nv_ptm ? 'PTM' : r.nv_orange ? 'Orange' : r.nv_farmapack ? 'Farmapack' : 'Varios');
 const nvDe = (r) => (r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || '—'));
+const nvKey = (r) => {
+  const nv = r.nv_ptm ? String(r.nv_ptm) : (r.nv_orange || r.nv_farmapack || r.varios || '');
+  if (!nv) return '';
+  const canal = r.nv_ptm ? 'ptm' : r.nv_orange ? 'orange' : r.nv_farmapack ? 'farmapack' : 'varios';
+  return `${canal}:${nv}`;
+};
+const recencyScore = (r) => (
+  Date.parse(r?.fecha_estado || '')
+  || Date.parse(r?.fecha_aprobacion_real || '')
+  || Date.parse(r?.fecha_aprobacion || '')
+  || 0
+);
+function dedupeRowsByNv(rows) {
+  const best = new Map();
+  for (const r of rows) {
+    const key = nvKey(r);
+    if (!key) continue;
+    const prev = best.get(key);
+    if (!prev) { best.set(key, r); continue; }
+    const ta = recencyScore(r);
+    const tb = recencyScore(prev);
+    if (ta > tb || (ta === tb && Number(r?.id || 0) > Number(prev?.id || 0))) best.set(key, r);
+  }
+  return Array.from(best.values());
+}
 
 // ── Carga cruda (paginada) con micro-caché de 30 s ──────────────────────────
 const COLS = 'id,nv_ptm,nv_orange,nv_farmapack,varios,factura,guia,numero_envio,vendedor,cliente,centro_costo,division,transportista,empresa_transporte,tipo_despacho,estado,urgente,fecha_aprobacion,fecha_aprobacion_real,fecha_facturacion,fecha_despacho,fecha_compromiso,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,valor_factura,costo_flete,valor_nv,bultos,dias_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,fillrate';
@@ -116,8 +141,9 @@ export async function cargarRows(force = false) {
     if (data.length < page) break;
     from += page;
   }
-  _cache = { at: Date.now(), rows: all, sig };
-  return all;
+  const latest = dedupeRowsByNv(all);
+  _cache = { at: Date.now(), rows: latest, sig };
+  return latest;
 }
 
 // ── Dashboard ───────────────────────────────────────────────────────────────

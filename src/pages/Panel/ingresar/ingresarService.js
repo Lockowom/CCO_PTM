@@ -63,27 +63,49 @@ function mapOperacionRow(r) {
   };
 }
 
+function operacionKey(r) {
+  const canal = canalDe(r);
+  const nv = nvDe(r);
+  return nv ? `${canal}:${nv}` : '';
+}
+
+function recencyScore(r) {
+  return (
+    Date.parse(r?.fecha_estado || '')
+    || Date.parse(r?.fecha_aprobacion_real || '')
+    || Date.parse(r?.fecha_aprobacion || '')
+    || 0
+  );
+}
+
+function isMoreRecentOperacion(next, prev) {
+  const a = recencyScore(next);
+  const b = recencyScore(prev);
+  if (a !== b) return a > b;
+  return Number(next?.id || 0) > Number(prev?.id || 0);
+}
+
 export async function listaActivas() {
-  const all = []; let from = 0; const page = 1000;
+  const latest = new Map(); let from = 0; const page = 1000;
   for (;;) {
     const { data, error } = await supabase.from('tms_operaciones').select(LISTA_COLS)
-      .in('estado', ESTADOS_ACTIVOS).order('id', { ascending: true }).range(from, from + page - 1);
+      .order('fecha_estado', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .range(from, from + page - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
-    all.push(...data);
+    data.forEach((r) => {
+      const key = operacionKey(r);
+      if (!key) return;
+      const prev = latest.get(key);
+      if (!prev || isMoreRecentOperacion(r, prev)) latest.set(key, r);
+    });
     if (data.length < page) break;
     from += page;
   }
-  const dedup = new Map();
-  all.forEach((r) => {
-    const canal = canalDe(r); const nv = nvDe(r); if (!nv) return;
-    const key = `${canal}:${nv}`;
-    const prev = dedup.get(key);
-    if (!prev || ESTADOS_ACTIVOS.indexOf(r.estado) > ESTADOS_ACTIVOS.indexOf(prev._estado)) {
-      dedup.set(key, mapOperacionRow(r));
-    }
-  });
-  return Array.from(dedup.values());
+  return Array.from(latest.values())
+    .filter((r) => ESTADOS_ACTIVOS.includes(r.estado))
+    .map(mapOperacionRow);
 }
 
 // Búsqueda en TODA la tabla (cualquier estado: incluye Entregado/NULA/etc.) por
