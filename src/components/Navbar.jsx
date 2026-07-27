@@ -204,6 +204,7 @@ const Navbar = () => {
             { label: 'Historial Cargas', path: '/admin/upload-history', icon: <History size={16} /> },
             { label: 'Bodegas Softland', path: '/admin/bodegas-softland', icon: <Package size={16} /> },
             { label: 'Monitor', path: '/admin/monitor', icon: <Activity size={16} /> },
+            { label: 'Observabilidad', path: '/admin/observability', icon: <Shield size={16} /> },
             { label: 'Workflows', path: '/admin/workflows', icon: <GitBranch size={16} /> },
             { label: 'Mapa de Procesos', path: '/admin/flujo-maestro', icon: <Share2 size={16} /> },
             { label: 'Eventos y Notificaciones', path: '/admin/eventos', icon: <Zap size={16} /> },

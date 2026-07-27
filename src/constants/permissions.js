@@ -84,6 +84,7 @@ export const ROUTE_PERMISSIONS = {
   '/admin/tickets': ['manage_tickets'],
   '/admin/upload-history': ['admin_upload_history'],
   '/admin/monitor': ['admin_monitor'],
+  '/admin/observability': ['admin_monitor'],
   '/admin/workflows': ['view_workflows', 'manage_workflows'],
   '/admin/flujo-maestro': ['view_workflows', 'manage_workflows'],
   '/admin/eventos': ['view_eventos', 'manage_eventos'],

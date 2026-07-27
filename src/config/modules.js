@@ -92,6 +92,7 @@ export const APP_ROUTES = [
   { value: '/admin/upload-history', label: 'Admin - Historial de Cargas', module: 'admin' },
   { value: '/admin/bodegas-softland', label: 'Admin - Bodegas Softland', module: 'admin' },
   { value: '/admin/monitor', label: 'Admin - Monitor Tiempo Real', module: 'admin' },
+  { value: '/admin/observability', label: 'Admin - Centro de Observabilidad', module: 'admin' },
   { value: '/admin/workflows', label: 'Admin - Workflows (procesos)', module: 'admin' },
   { value: '/admin/flujo-maestro', label: 'Admin - Mapa de Procesos', module: 'admin' },
   { value: '/admin/eventos', label: 'Admin - Eventos y Notificaciones', module: 'admin' },

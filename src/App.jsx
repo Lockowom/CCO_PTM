@@ -77,6 +77,7 @@ const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 const LocationManager = React.lazy(() => import('./pages/Admin/LocationManager')); // Gestión Ubicaciones
 const AdminMonitor = React.lazy(() => import('./pages/Admin/AdminMonitor')); // Monitor Tiempo Real
+const Observability = React.lazy(() => import('./pages/Admin/Observability')); // Centro de Observabilidad
 const Workflows = React.lazy(() => import('./pages/Admin/Workflows')); // Workflow Engine (procesos como datos)
 const FlujoMaestro = React.lazy(() => import('./pages/Tools/FlujoMaestro')); // Mapa de Procesos (vista ejecutiva, solo lectura)
 const Eventos = React.lazy(() => import('./pages/Admin/Eventos')); // Motor de Eventos + Centro de Notificaciones
@@ -421,6 +422,7 @@ function AppContent() {
           <Route path="admin/locations" element={<ErrorBoundary><LocationManager /></ErrorBoundary>} />
           <Route path="admin/bodegas-softland" element={<ErrorBoundary><BodegasSoftland /></ErrorBoundary>} />
           <Route path="admin/monitor" element={<ErrorBoundary><AdminMonitor /></ErrorBoundary>} />
+          <Route path="admin/observability" element={<ErrorBoundary><Observability /></ErrorBoundary>} />
           <Route path="admin/workflows" element={<ErrorBoundary><Workflows /></ErrorBoundary>} />
           <Route path="admin/flujo-maestro" element={<ErrorBoundary><FlujoMaestro /></ErrorBoundary>} />
           <Route path="admin/eventos" element={<ErrorBoundary><Eventos /></ErrorBoundary>} />
