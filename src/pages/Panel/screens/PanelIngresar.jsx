@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -28,6 +28,8 @@ import '../ingresar/components/PillNavCanal.css';
 const hoy = () => new Date().toLocaleDateString('en-CA');
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
 const ESTADOS_DUPLICADO = ['Entregado', 'En Proceso', 'Shipping', 'Currier', 'En Ruta'];
+const INITIAL_VISIBLE_ROWS = 60;
+const VISIBLE_ROWS_STEP = 80;
 
 function SectionHead({ n, icon: Icon, title }) {
   return (
@@ -515,7 +517,7 @@ function DetalleDrawer({ item, puedeEscribir, puedeEliminar, puedeAprobarReapert
 }
 
 // ── Fila de la lista (port fiel de NvRow) ───────────────────────────────────
-function NvRow({ i, onOpen }) {
+const NvRow = React.memo(function NvRow({ i, onOpen }) {
   return (
     <div onClick={() => onOpen(i)} className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border bg-white hover:border-gray-300 text-left transition-all cursor-pointer ${i.urgente ? 'border-red-200' : 'border-gray-200'}`}>
       <span className="min-w-0 flex-1">
@@ -530,7 +532,7 @@ function NvRow({ i, onOpen }) {
       <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="m9 5 7 7-7 7" /></svg>
     </div>
   );
-}
+});
 
 // ── Pestaña Buscar (lista de N.V. activas) ──────────────────────────────────
 function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
@@ -543,12 +545,14 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [sel, setSel] = useState(null);
   const [opts, setOpts] = useState(null);
   const [exportando, setExportando] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
+  const loadMoreRef = useRef(null);
 
   const cargar = useCallback((force = false) => {
     setLoading(true);
     listaActivas({ force }).then((rows) => { setLista(rows); setLoading(false); }).catch(() => { setLista([]); setLoading(false); });
   }, []);
-  useEffect(() => { cargar(); opciones().then(setOpts).catch(() => {}); }, [cargar]);
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Búsqueda contra TODA la tabla (incluye Entregado/NULA/etc.): la lista base
   // solo trae activas, así que sin esto una N.V. entregada no se puede encontrar.
@@ -559,7 +563,7 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
     setBuscando(true);
     const h = setTimeout(() => {
       buscarOperaciones(term).then((rows) => setRemoto(rows)).catch(() => setRemoto([])).finally(() => setBuscando(false));
-    }, 350);
+    }, 250);
     return () => clearTimeout(h);
   }, [q]);
 
@@ -585,7 +589,36 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
     if (enBusqueda) return remoto || [];
     return lista.filter((r) => filtro === 'Todos' || r.estado === filtro);
   }, [enBusqueda, remoto, lista, filtro]);
+  const visibleRows = useMemo(() => filtrada.slice(0, visibleCount), [filtrada, visibleCount]);
   const conteo = useMemo(() => { const m = {}; lista.forEach((r) => { m[r.estado] = (m[r.estado] || 0) + 1; }); return m; }, [lista]);
+
+  useEffect(() => {
+    setVisibleCount((prev) => {
+      const nextBase = Math.min(filtrada.length, INITIAL_VISIBLE_ROWS);
+      return prev === nextBase && prev <= filtrada.length ? prev : nextBase;
+    });
+  }, [enBusqueda, filtro, q, filtrada.length]);
+
+  useEffect(() => {
+    if (!sel || opts) return;
+    opciones().then(setOpts).catch(() => {});
+  }, [sel, opts]);
+
+  useEffect(() => {
+    if (visibleCount >= filtrada.length) return undefined;
+    const node = loadMoreRef.current;
+    if (!node) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((prev) => Math.min(prev + VISIBLE_ROWS_STEP, filtrada.length));
+        }
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [visibleCount, filtrada.length]);
 
   return (
     <div className="space-y-4">
@@ -610,8 +643,8 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="text-[12px] text-gray-400">
           {enBusqueda
-            ? `${filtrada.length} resultado${filtrada.length !== 1 ? 's' : ''} · búsqueda en todos los estados`
-            : `${filtrada.length} resultados de ${lista.length} activas`}
+            ? `${visibleRows.length} de ${filtrada.length} resultado${filtrada.length !== 1 ? 's' : ''} · búsqueda en todos los estados`
+            : `${visibleRows.length} de ${filtrada.length} activas visibles · total activas ${lista.length}`}
         </span>
         <div className="flex items-center gap-3">
           <button onClick={onExportar} disabled={exportando}
@@ -630,7 +663,15 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
         <div className="text-center py-16 text-gray-400 text-sm">{enBusqueda ? 'Sin N.V. que coincidan con la búsqueda.' : 'Sin N.V. activas para este filtro.'}</div>
       ) : (
         <div className="space-y-2">
-          {filtrada.map((r) => <NvRow key={r.key} i={r} onOpen={setSel} />)}
+          {visibleRows.map((r) => <NvRow key={r.key} i={r} onOpen={setSel} />)}
+          {visibleCount < filtrada.length && (
+            <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-semibold text-slate-500 shadow-sm">
+                <Loader2 size={14} className="animate-spin text-orange-500" />
+                Cargando más N.V...
+              </div>
+            </div>
+          )}
         </div>
       )}
 
