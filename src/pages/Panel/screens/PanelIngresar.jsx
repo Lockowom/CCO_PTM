@@ -1046,10 +1046,15 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
 
   const cargar = useCallback((force = false) => {
     setLoading(true);
-    listaActivas({ force })
+    listaActivas({ force, full: false, limit: 400 })
       .then((rows) => {
         setLista(rows);
         setLoading(false);
+        return listaActivas({ force, full: true })
+          .then((fullRows) => {
+            setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
+          })
+          .catch(() => {});
       })
       .catch(() => {
         setLista([]);

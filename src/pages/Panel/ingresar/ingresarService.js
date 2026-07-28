@@ -16,7 +16,9 @@ const LOOKUP_CACHE_TTL_MS = 3 * 60 * 1000;
 const NV_CATALOGO_CACHE_TTL_MS = 5 * 60 * 1000;
 const VENDEDORES_CACHE_TTL_MS = 10 * 60 * 1000;
 let listaActivasCache = { ts: 0, data: null, promise: null };
+let listaActivasPreviewCache = { ts: 0, data: null, promise: null };
 let opcionesCache = { ts: 0, data: null, promise: null };
+let opcionesBasicasCache = { ts: 0, data: null, promise: null };
 let vendedoresCache = { ts: 0, data: null, promise: null };
 const busquedaCache = new Map();
 const lookupCache = new Map();
@@ -24,7 +26,9 @@ const nvCatalogoCache = new Map();
 
 function resetIngresarCaches() {
   listaActivasCache = { ts: 0, data: null, promise: null };
+  listaActivasPreviewCache = { ts: 0, data: null, promise: null };
   opcionesCache = { ts: 0, data: null, promise: null };
+  opcionesBasicasCache = { ts: 0, data: null, promise: null };
   vendedoresCache = { ts: 0, data: null, promise: null };
   busquedaCache.clear();
   lookupCache.clear();
@@ -328,17 +332,32 @@ function isMoreRecentOperacion(next, prev) {
   return Number(next?.id || 0) > Number(prev?.id || 0);
 }
 
-export async function listaActivas({ force = false } = {}) {
+export async function listaActivas({ force = false, full = true, limit = 400 } = {}) {
   return runPanelRead('lista_activas', async () => {
   const now = Date.now();
-  if (!force && listaActivasCache.data && (now - listaActivasCache.ts) < ACTIVES_CACHE_TTL_MS) {
-    return listaActivasCache.data;
+  const targetCache = full ? listaActivasCache : listaActivasPreviewCache;
+  if (!force && targetCache.data && (now - targetCache.ts) < ACTIVES_CACHE_TTL_MS) {
+    return targetCache.data;
   }
-  if (!force && listaActivasCache.promise) {
-    return listaActivasCache.promise;
+  if (!force && targetCache.promise) {
+    return targetCache.promise;
   }
 
   const run = async () => {
+    if (!full) {
+      const { data, error } = await supabase
+        .from(OPERACIONES_READ_VIEW)
+        .select(LISTA_COLS)
+        .in('estado', ESTADOS_ACTIVOS)
+        .order('fecha_estado', { ascending: false, nullsFirst: false })
+        .order('id', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      const mappedPreview = (data || []).map(mapOperacionRow);
+      listaActivasPreviewCache = { ts: Date.now(), data: mappedPreview, promise: null };
+      return mappedPreview;
+    }
+
     const rows = [];
     let from = 0;
     const page = 500;
@@ -361,14 +380,14 @@ export async function listaActivas({ force = false } = {}) {
     return mapped;
   };
 
-  listaActivasCache.promise = run()
+  targetCache.promise = run()
     .catch((error) => {
-      listaActivasCache.promise = null;
+      targetCache.promise = null;
       throw error;
     });
-  return listaActivasCache.promise;
+  return targetCache.promise;
   }, {
-    payload: { force },
+    payload: { force, full, limit: full ? null : limit },
     slowMs: 700,
     message: 'Carga de N.V. activas del Panel',
   });
@@ -452,14 +471,15 @@ export function fusionarResultadosBusqueda(localRows, remoteRows, term, { limit 
 }
 
 // ── Opciones del formulario ─────────────────────────────────────────────────
-export async function opciones({ force = false } = {}) {
+export async function opciones({ force = false, includeHistoricos = false } = {}) {
   return runPanelRead('cargar_opciones', async () => {
   const now = Date.now();
-  if (!force && opcionesCache.data && (now - opcionesCache.ts) < OPTIONS_CACHE_TTL_MS) {
-    return opcionesCache.data;
+  const targetCache = includeHistoricos ? opcionesCache : opcionesBasicasCache;
+  if (!force && targetCache.data && (now - targetCache.ts) < OPTIONS_CACHE_TTL_MS) {
+    return targetCache.data;
   }
-  if (!force && opcionesCache.promise) {
-    return opcionesCache.promise;
+  if (!force && targetCache.promise) {
+    return targetCache.promise;
   }
 
   const run = async () => {
@@ -468,33 +488,34 @@ export async function opciones({ force = false } = {}) {
   const { data: cat } = await supabase.from('tms_panel_transportistas')
     .select('nombre').eq('activo', true).order('nombre', { ascending: true });
   (cat || []).forEach((r) => { const t = (r.nombre || '').trim(); if (t) set.add(t); });
-  // 2) Además, TODO transportista ya usado en N.V. — paginado con .order/.range
-  //    para NO depender del tope de 1.000 filas de PostgREST (que dejaba fuera
-  //    a los que solo aparecían más allá de la primera página, p.ej. Transfarma).
-  let from = 0; const page = 1000;
-  for (;;) {
-    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW)
-      .select('transportista').not('transportista', 'is', null)
-      .order('id', { ascending: true }).range(from, from + page - 1);
-    if (error || !data || data.length === 0) break;
-    data.forEach((r) => { const t = (r.transportista || '').trim(); if (t) set.add(t); });
-    if (data.length < page) break;
-    from += page;
+  if (includeHistoricos) {
+    let from = 0; const page = 1000;
+    for (;;) {
+      const { data, error } = await supabase.from(OPERACIONES_READ_VIEW)
+        .select('transportista').not('transportista', 'is', null)
+        .order('id', { ascending: true }).range(from, from + page - 1);
+      if (error || !data || data.length === 0) break;
+      data.forEach((r) => { const t = (r.transportista || '').trim(); if (t) set.add(t); });
+      if (data.length < page) break;
+      from += page;
+    }
   }
   const transportistas = [...set].sort((a, b) => a.localeCompare(b, 'es'));
     const result = { estados: ESTADOS_SELECCIONABLES, transportistas, tiposDespacho: TIPOS_DESPACHO };
-    opcionesCache = { ts: Date.now(), data: result, promise: null };
+    targetCache.data = result;
+    targetCache.ts = Date.now();
+    targetCache.promise = null;
     return result;
   };
 
-  opcionesCache.promise = run()
+  targetCache.promise = run()
     .catch((error) => {
-      opcionesCache.promise = null;
+      targetCache.promise = null;
       throw error;
     });
-  return opcionesCache.promise;
+  return targetCache.promise;
   }, {
-    payload: { force },
+    payload: { force, includeHistoricos },
     slowMs: 1200,
     message: 'Carga de opciones del formulario Panel',
   });
