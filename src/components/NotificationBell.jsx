@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 import { misNotificaciones, marcarLeida, marcarTodasLeidas } from '../services/eventosService';
+import { Logger } from '../lib/logger';
 
 const fmt = (ts) => {
   if (!ts) return '';
@@ -25,8 +26,13 @@ export default function NotificationBell() {
   const load = useCallback(async () => {
     try {
       setItems(await misNotificaciones());
-    } catch {
-      /* silencioso */
+    } catch (error) {
+      Logger.error(error, {
+        module: 'eventos',
+        screen: 'NotificationBell',
+        action: 'mis_notificaciones_load',
+        message: 'Fallo la carga de notificaciones en la campana'
+      });
     }
   }, []);
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 import { withTimeout } from '../lib/supabaseQuery';
+import { Logger } from '../lib/logger';
 
 // UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
 // viejos y lanzaría TypeError al construir el path de la evidencia.
@@ -38,6 +39,7 @@ export const FLAG_META = {
 export function useInformes() {
   return useQuery({
     queryKey: ['monitoreo_informes'],
+    meta: { module: 'quality', action: 'monitoreo_informes_query', table: 'tms_monitoreo_informes' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase
@@ -56,6 +58,7 @@ export function useInformeItems(informeId) {
   return useQuery({
     queryKey: ['monitoreo_items', informeId],
     enabled: !!informeId,
+    meta: { module: 'quality', action: 'monitoreo_items_query', table: 'tms_monitoreo_items' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase
@@ -113,7 +116,15 @@ export async function pushAdminInventario({ title, body, payload }) {
     await supabase.functions.invoke('notify-inventario', {
       body: { rol: 'ADMIN', title, body, payload: payload || {} },
     });
-  } catch (e) { console.error('pushAdminInventario', e); }
+  } catch (error) {
+    Logger.error(error, {
+      module: 'quality',
+      screen: 'calidadService',
+      action: 'push_admin_inventario',
+      message: 'Fallo el envio push de Calidad a ADMIN',
+      payload: { title, hasPayload: Boolean(payload) }
+    });
+  }
 }
 
 // Alerta por SKU no registrado hallado en auditoría.
@@ -576,6 +587,7 @@ export function useAsignacionesCalidad() {
     refetchOnWindowFocus: true,
     refetchInterval: 20000,
     refetchIntervalInBackground: false,
+    meta: { module: 'quality', action: 'calidad_asignaciones_query', table: 'tms_calidad_asignaciones' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase.from('tms_calidad_asignaciones').select('*').order('created_at', { ascending: false }),

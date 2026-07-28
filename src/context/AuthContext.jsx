@@ -232,7 +232,7 @@ export const AuthProvider = ({ children }) => {
         screen: 'AuthProvider',
         action: 'load_user_profile',
         message: 'Error cargando perfil de usuario',
-        payload: { authEmail }
+        payload: { authEmail, authUid }
       });
       return null;
     }

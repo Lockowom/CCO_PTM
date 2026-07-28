@@ -14,6 +14,7 @@ import { supabase } from '../supabase';
 export function useCalidadFlags() {
   const { data: flags = [], isLoading } = useQuery({
     queryKey: ['calidad_flags'],
+    meta: { module: 'quality', action: 'calidad_flags_query', table: 'tms_calidad_flags' },
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tms_calidad_flags')
