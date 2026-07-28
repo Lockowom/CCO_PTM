@@ -11,6 +11,36 @@ import { clearLoggerUserContext, Logger, setLoggerUserContext } from '../lib/log
 import { db } from '../lib/db';
 
 const AuthContext = createContext();
+const PROFILE_SELECT = 'id, nombre, email, rol, activo, es_admin_delegado, auth_uid';
+const PROFILE_CACHE_TTL_MS = 30 * 1000;
+const profileCache = new Map();
+
+function getProfileCache(email) {
+  const key = String(email || '').trim().toLowerCase();
+  if (!key) return null;
+  const entry = profileCache.get(key);
+  if (!entry) return null;
+  if (entry.promise) return entry.promise;
+  if (Object.prototype.hasOwnProperty.call(entry, 'value') && (Date.now() - entry.ts) < PROFILE_CACHE_TTL_MS) {
+    return entry.value;
+  }
+  profileCache.delete(key);
+  return null;
+}
+
+function setProfileCacheValue(email, value) {
+  const key = String(email || '').trim().toLowerCase();
+  if (!key) return value;
+  profileCache.set(key, { ts: Date.now(), value });
+  return value;
+}
+
+function setProfileCachePromise(email, promise) {
+  const key = String(email || '').trim().toLowerCase();
+  if (!key) return promise;
+  profileCache.set(key, { ts: Date.now(), promise });
+  return promise;
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -135,27 +165,29 @@ export const AuthProvider = ({ children }) => {
   // ── Cargar perfil desde tms_usuarios usando email de sesión auth ──
   const loadUserProfile = useCallback(async (authEmail) => {
     try {
-      const { data, error } = await supabase
-        .from('tms_usuarios')
-        .select('id, nombre, email, rol, activo, es_admin_delegado, auth_uid')
-        .eq('email', authEmail)
-        .eq('activo', true)
-        .single();
+      const safeEmail = String(authEmail || '').trim().toLowerCase();
+      if (!safeEmail) return null;
 
-      if (error || !data) {
-        // Intentar con email en minúsculas (por si hay case mismatch)
-        const { data: dataLower, error: errLower } = await supabase
+      const cached = getProfileCache(safeEmail);
+      if (cached) return cached;
+
+      const run = async () => {
+        const { data, error } = await supabase
           .from('tms_usuarios')
-          .select('id, nombre, email, rol, activo, es_admin_delegado, auth_uid')
-          .ilike('email', authEmail)
+          .select(PROFILE_SELECT)
+          .ilike('email', safeEmail)
           .eq('activo', true)
-          .single();
+          .limit(1);
 
-        if (errLower || !dataLower) return null;
-        return dataLower;
-      }
+        if (error) throw error;
+        return setProfileCacheValue(safeEmail, (data && data[0]) || null);
+      };
 
-      return data;
+      const promise = run().catch((err) => {
+        profileCache.delete(safeEmail);
+        throw err;
+      });
+      return setProfileCachePromise(safeEmail, promise);
     } catch (err) {
       Logger.error(err, {
         module: 'auth',

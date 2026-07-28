@@ -31,8 +31,22 @@ export default function NotificationBell() {
   }, []);
   useEffect(() => {
     load();
-    const t = setInterval(load, 45000);
-    return () => clearInterval(t);
+    const runIfVisible = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      load();
+    };
+    const t = setInterval(runIfVisible, 90000);
+    const onVisibility = () => {
+      if (typeof document !== 'undefined' && !document.hidden) load();
+    };
+    const onFocus = () => load();
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [load]);
 
   const leer = async (id) => {

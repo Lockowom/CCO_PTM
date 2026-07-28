@@ -7,6 +7,13 @@
 import { supabase } from '../supabase';
 import { rpcCommand, rpcQuery } from '../core/infrastructure/supabase/rpcClient';
 
+const NOTIFICACIONES_CACHE_TTL_MS = 30 * 1000;
+let misNotificacionesCache = { ts: 0, data: null, promise: null };
+
+function resetEventosCaches() {
+  misNotificacionesCache = { ts: 0, data: null, promise: null };
+}
+
 export async function listarEventos({ agregado, limit = 100 } = {}) {
   let q = supabase
     .from('dominio_eventos')
@@ -61,21 +68,39 @@ export async function metricasProceso(workflow) {
 }
 
 export async function misNotificaciones() {
-  const data = await rpcQuery(
-    'mis_notificaciones',
-    {},
-    { module: 'eventos', action: 'mis_notificaciones' }
-  );
-  return data || [];
+  const now = Date.now();
+  if (misNotificacionesCache.data && (now - misNotificacionesCache.ts) < NOTIFICACIONES_CACHE_TTL_MS) {
+    return misNotificacionesCache.data;
+  }
+  if (misNotificacionesCache.promise) {
+    return misNotificacionesCache.promise;
+  }
+
+  const run = async () => {
+    const data = await rpcQuery(
+      'mis_notificaciones',
+      {},
+      { module: 'eventos', action: 'mis_notificaciones' }
+    );
+    const rows = data || [];
+    misNotificacionesCache = { ts: Date.now(), data: rows, promise: null };
+    return rows;
+  };
+
+  misNotificacionesCache.promise = run().catch((error) => {
+    misNotificacionesCache.promise = null;
+    throw error;
+  });
+  return misNotificacionesCache.promise;
 }
 export const marcarLeida = (id) =>
   rpcCommand(
     'marcar_notificacion_leida',
     { p_id: id },
     { module: 'eventos', action: 'marcar_leida', payload: { id } }
-  );
+  ).finally(resetEventosCaches);
 export const marcarTodasLeidas = () =>
-  rpcCommand('marcar_todas_leidas', {}, { module: 'eventos', action: 'marcar_todas_leidas' });
+  rpcCommand('marcar_todas_leidas', {}, { module: 'eventos', action: 'marcar_todas_leidas' }).finally(resetEventosCaches);
 
 // Despacha las notificaciones push pendientes vía la Edge notify-inventario (FCM/Capgo).
 export async function despacharPush() {

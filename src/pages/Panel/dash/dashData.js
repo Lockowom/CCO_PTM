@@ -3,6 +3,35 @@ import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha } from './das
 import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+const CONSOLIDADO_KEYS_CACHE_TTL_MS = 60 * 1000;
+const DASHBOARD_CACHE_TTL_MS = 15 * 1000;
+const INCIDENCIAS_CACHE_TTL_MS = 15 * 1000;
+let consolidadoKeysCache = { ts: 0, data: null, promise: null };
+const dashboardCache = new Map();
+const incidenciasCache = new Map();
+
+function hasFreshDashCacheValue(entry, ttlMs) {
+  return Boolean(entry) && Object.prototype.hasOwnProperty.call(entry, 'value') && (Date.now() - entry.ts) < ttlMs;
+}
+
+function getDashMapCache(cache, key, ttlMs) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.promise) return entry.promise;
+  if (hasFreshDashCacheValue(entry, ttlMs)) return entry.value;
+  cache.delete(key);
+  return null;
+}
+
+function setDashMapCacheValue(cache, key, value) {
+  cache.set(key, { ts: Date.now(), value });
+  return value;
+}
+
+function setDashMapCachePromise(cache, key, promise) {
+  cache.set(key, { ts: Date.now(), promise });
+  return promise;
+}
 
 function dashDuration(startedAt) {
   return Math.round(Math.max(0, performance.now() - startedAt));
@@ -384,9 +413,26 @@ export async function buscarNvBasico(nv) {
 // Set de claves canal:nv que están en algún consolidado → para excluir de métricas.
 export async function fetchConsolidadoKeys() {
   return runDashboardRead('fetch_consolidado_keys', async () => {
-    const { data, error } = await supabase.from("consolidado_nvs").select("nv, canal");
-    if (error) return new Set();
-    return new Set((data || []).map((n) => `${n.canal || "ptm"}:${n.nv}`));
+    const now = Date.now();
+    if (consolidadoKeysCache.data && (now - consolidadoKeysCache.ts) < CONSOLIDADO_KEYS_CACHE_TTL_MS) {
+      return consolidadoKeysCache.data;
+    }
+    if (consolidadoKeysCache.promise) {
+      return consolidadoKeysCache.promise;
+    }
+
+    const run = async () => {
+      const { data, error } = await supabase.from("consolidado_nvs").select("nv, canal");
+      const keys = error ? new Set() : new Set((data || []).map((n) => `${n.canal || "ptm"}:${n.nv}`));
+      consolidadoKeysCache = { ts: Date.now(), data: keys, promise: null };
+      return keys;
+    };
+
+    consolidadoKeysCache.promise = run().catch((error) => {
+      consolidadoKeysCache.promise = null;
+      throw error;
+    });
+    return consolidadoKeysCache.promise;
   }, {
     payload: { feature: 'consolidados' },
     slowMs: 500,
@@ -396,6 +442,11 @@ export async function fetchConsolidadoKeys() {
 
 export async function fetchDashboardData(dateFrom, dateTo) {
   return runDashboardRead('fetch_dashboard_data', async () => {
+    const cacheKey = `${dateFrom || ''}:${dateTo || ''}`;
+    const cached = getDashMapCache(dashboardCache, cacheKey, DASHBOARD_CACHE_TTL_MS);
+    if (cached) return cached;
+
+    const run = async () => {
     const [rows, activasRows, consolidadoKeys] = await Promise.all([
       fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo),
       fetchActivas(DASHBOARD_COLUMNS),
@@ -1047,7 +1098,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
     })
     .sort((a, b) => b.cantidad - a.cantidad);
 
-    return {
+    return setDashMapCacheValue(dashboardCache, cacheKey, {
       kpis,
       estadoTable,
       divisions,
@@ -1065,7 +1116,14 @@ export async function fetchDashboardData(dateFrom, dateTo) {
       alertasOperacionales,
       funnelEstados,
       heatmapData,
+    });
     };
+
+    const promise = run().catch((error) => {
+      dashboardCache.delete(cacheKey);
+      throw error;
+    });
+    return setDashMapCachePromise(dashboardCache, cacheKey, promise);
   }, {
     payload: { dateFrom: dateFrom || null, dateTo: dateTo || null },
     slowMs: 1800,
@@ -1075,6 +1133,11 @@ export async function fetchDashboardData(dateFrom, dateTo) {
 
 export async function getIncidenciasActivas(dateFrom, dateTo) {
   return runDashboardRead('get_incidencias_activas', async () => {
+    const cacheKey = `${dateFrom || ''}:${dateTo || ''}`;
+    const cached = getDashMapCache(incidenciasCache, cacheKey, INCIDENCIAS_CACHE_TTL_MS);
+    if (cached) return cached;
+
+    const run = async () => {
     const cols = "nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, incidencia, estado_incidencia, observaciones_incidencia, dias_incidencia, fecha_aprobacion, fecha_aprobacion_real";
     if (!supabase) return [];
     const allRows = [];
@@ -1095,7 +1158,7 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
       from += pageSize;
     }
 
-    return allRows
+    return setDashMapCacheValue(incidenciasCache, cacheKey, allRows
       .map((r) => ({
         nv:
           (r.nv_ptm && String(r.nv_ptm)) ||
@@ -1113,7 +1176,14 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
         observaciones: r.observaciones_incidencia || "—",
         dias: r.dias_incidencia || 0,
       }))
-      .sort((a, b) => b.dias - a.dias);
+      .sort((a, b) => b.dias - a.dias));
+    };
+
+    const promise = run().catch((error) => {
+      incidenciasCache.delete(cacheKey);
+      throw error;
+    });
+    return setDashMapCachePromise(incidenciasCache, cacheKey, promise);
   }, {
     payload: { dateFrom: dateFrom || null, dateTo: dateTo || null },
     slowMs: 900,

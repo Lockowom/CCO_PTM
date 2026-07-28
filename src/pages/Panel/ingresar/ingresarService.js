@@ -10,12 +10,47 @@ import { Logger } from '../../../lib/logger';
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const ACTIVES_CACHE_TTL_MS = 60 * 1000;
 const OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
+const SEARCH_CACHE_TTL_MS = 20 * 1000;
+const LOOKUP_CACHE_TTL_MS = 3 * 60 * 1000;
+const NV_CATALOGO_CACHE_TTL_MS = 5 * 60 * 1000;
+const VENDEDORES_CACHE_TTL_MS = 10 * 60 * 1000;
 let listaActivasCache = { ts: 0, data: null, promise: null };
 let opcionesCache = { ts: 0, data: null, promise: null };
+let vendedoresCache = { ts: 0, data: null, promise: null };
+const busquedaCache = new Map();
+const lookupCache = new Map();
+const nvCatalogoCache = new Map();
 
 function resetIngresarCaches() {
   listaActivasCache = { ts: 0, data: null, promise: null };
   opcionesCache = { ts: 0, data: null, promise: null };
+  vendedoresCache = { ts: 0, data: null, promise: null };
+  busquedaCache.clear();
+  lookupCache.clear();
+  nvCatalogoCache.clear();
+}
+
+function hasFreshCacheValue(entry, ttlMs) {
+  return Boolean(entry) && Object.prototype.hasOwnProperty.call(entry, 'value') && (Date.now() - entry.ts) < ttlMs;
+}
+
+function getFreshMapCache(cache, key, ttlMs) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.promise) return entry.promise;
+  if (hasFreshCacheValue(entry, ttlMs)) return entry.value;
+  cache.delete(key);
+  return null;
+}
+
+function setMapCacheValue(cache, key, value) {
+  cache.set(key, { ts: Date.now(), value });
+  return value;
+}
+
+function setMapCachePromise(cache, key, promise) {
+  cache.set(key, { ts: Date.now(), promise });
+  return promise;
 }
 
 function panelDuration(startedAt) {
@@ -346,27 +381,38 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
   return runPanelRead('buscar_operaciones', async () => {
   const t = String(term || '').trim();
   if (t.length < 2) return [];
+  const cacheKey = `${limit}:${normWords(t) || normText(t)}`;
+  const cached = getFreshMapCache(busquedaCache, cacheKey, SEARCH_CACHE_TTL_MS);
+  if (cached) return cached;
   // PostgREST .or() usa comas/paréntesis como separadores → se neutralizan.
   const safe = t.replace(/[(),*]/g, ' ').trim();
   if (!safe) return [];
-  const like = `*${safe}*`;
-  const ors = [];
-  if (/^\d+$/.test(safe)) ors.push(`nv_ptm.eq.${Number(safe)}`);
-  ors.push(
-    `nv_orange.ilike.${like}`, `nv_farmapack.ilike.${like}`, `varios.ilike.${like}`,
-    `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
-    `factura.ilike.${like}`, `transportista.ilike.${like}`,
-  );
-  const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
-    .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit);
-  if (error) throw error;
-  const dedup = new Map();
-  (data || []).forEach((r) => {
-    const nv = nvDe(r); if (!nv) return;
-    const key = `${canalDe(r)}:${nv}`;
-    if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
+  const run = async () => {
+    const like = `*${safe}*`;
+    const ors = [];
+    if (/^\d+$/.test(safe)) ors.push(`nv_ptm.eq.${Number(safe)}`);
+    ors.push(
+      `nv_orange.ilike.${like}`, `nv_farmapack.ilike.${like}`, `varios.ilike.${like}`,
+      `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
+      `factura.ilike.${like}`, `transportista.ilike.${like}`,
+    );
+    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
+      .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit);
+    if (error) throw error;
+    const dedup = new Map();
+    (data || []).forEach((r) => {
+      const nv = nvDe(r); if (!nv) return;
+      const key = `${canalDe(r)}:${nv}`;
+      if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
+    });
+    return setMapCacheValue(busquedaCache, cacheKey, dedupeRankedItems(Array.from(dedup.values()), t, limit));
+  };
+
+  const promise = run().catch((error) => {
+    busquedaCache.delete(cacheKey);
+    throw error;
   });
-  return dedupeRankedItems(Array.from(dedup.values()), t, limit);
+  return setMapCachePromise(busquedaCache, cacheKey, promise);
   }, {
     payload: { term: String(term || '').trim(), limit },
     slowMs: 450,
@@ -438,18 +484,51 @@ const PREVIEW = 'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
   const t = normNV(nv); if (!t) return null;
-  const { data } = await supabase.from('tms_nv_catalogo')
-    .select('cliente, vendedor, fecha_aprobacion, centro_costo, division')
-    .eq('canal', String(canal).toLowerCase()).eq('nv', t).limit(1);
-  return (data && data[0]) || null;
+  const cacheKey = `${String(canal).toLowerCase()}:${t}`;
+  const cached = getFreshMapCache(nvCatalogoCache, cacheKey, NV_CATALOGO_CACHE_TTL_MS);
+  if (cached) return cached;
+  const run = async () => {
+    const { data } = await supabase.from('tms_nv_catalogo')
+      .select('cliente, vendedor, fecha_aprobacion, centro_costo, division')
+      .eq('canal', String(canal).toLowerCase()).eq('nv', t).limit(1);
+    return setMapCacheValue(nvCatalogoCache, cacheKey, (data && data[0]) || null);
+  };
+  const promise = run().catch((error) => {
+    nvCatalogoCache.delete(cacheKey);
+    throw error;
+  });
+  return setMapCachePromise(nvCatalogoCache, cacheKey, promise);
 }
 
 // Cascada CENTRO COSTOS: vendedor → centro de costo + división.
 // Cruce tolerante a mayúsculas/espacios (ilike sobre el nombre ya recortado).
+async function cargarVendedoresActivos() {
+  const now = Date.now();
+  if (vendedoresCache.data && (now - vendedoresCache.ts) < VENDEDORES_CACHE_TTL_MS) {
+    return vendedoresCache.data;
+  }
+  if (vendedoresCache.promise) {
+    return vendedoresCache.promise;
+  }
+
+  const run = async () => {
+    const { data } = await supabase.from('tms_panel_vendedores')
+      .select('nombre, centro_costo, division').eq('activo', true).order('nombre', { ascending: true });
+    const rows = data || [];
+    vendedoresCache = { ts: Date.now(), data: rows, promise: null };
+    return rows;
+  };
+
+  vendedoresCache.promise = run().catch((error) => {
+    vendedoresCache.promise = null;
+    throw error;
+  });
+  return vendedoresCache.promise;
+}
+
 export async function costoDeVendedor(vendedor) {
   const v = String(vendedor || '').trim(); if (!v) return null;
-  const { data } = await supabase.from('tms_panel_vendedores')
-    .select('nombre, centro_costo, division').eq('activo', true).order('nombre', { ascending: true });
+  const data = await cargarVendedoresActivos();
   if (!data || data.length === 0) return null;
   const base = normWords(v);
   const baseTokens = vendorTokens(v);
@@ -478,34 +557,45 @@ export async function costoDeVendedor(vendedor) {
 
 export async function lookup(canal, nv) {
   return runPanelRead('lookup_nv', async () => {
-  const col = colDe(canal); const t = normNV(nv);
-  let q = supabase.from(OPERACIONES_READ_VIEW).select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
-  q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
-  const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
-  const r = data && data.length ? data[0] : null;
+  const t = normNV(nv);
+  if (!t) return { found: false, autoFill: { cliente: '', vendedor: '', ccosto: '', division: '' } };
+  const cacheKey = `${String(canal).toLowerCase()}:${t}`;
+  const cached = getFreshMapCache(lookupCache, cacheKey, LOOKUP_CACHE_TTL_MS);
+  if (cached) return cached;
 
-  // Cliente/Vendedor: prioriza la operación; si falta, el catálogo NV.
-  const cliente = r?.cliente || cat?.cliente || '';
-  const vendedor = r?.vendedor || cat?.vendedor || '';
-  let ccosto = r?.centro_costo || cat?.centro_costo || '';
-  let division = r?.division || cat?.division || '';
-  // Cascada: si falta centro de costo/división, se derivan del vendedor.
-  if (vendedor && (!ccosto || !division)) {
-    const vc = await costoDeVendedor(vendedor);
-    if (vc) { ccosto = ccosto || vc.centro_costo || ''; division = division || vc.division || ''; }
-  }
+  const run = async () => {
+    const col = colDe(canal);
+    let q = supabase.from(OPERACIONES_READ_VIEW).select(PREVIEW).order('fecha_estado', { ascending: false }).limit(1);
+    q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
+    const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
+    const r = data && data.length ? data[0] : null;
 
-  if (r) {
-    return {
-      found: true, row: r.id,
-      data: {
-        ...r, canal, nv: nvDe(r), estado: r.estado, cliente, vendedor, ccosto, division,
-        fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
-      },
-    };
-  }
-  // N.V. nueva → autocompleta cliente/vendedor/ccosto/división (fuente precisa).
-  return { found: false, autoFill: { cliente, vendedor, ccosto, division } };
+    const cliente = r?.cliente || cat?.cliente || '';
+    const vendedor = r?.vendedor || cat?.vendedor || '';
+    let ccosto = r?.centro_costo || cat?.centro_costo || '';
+    let division = r?.division || cat?.division || '';
+    if (vendedor && (!ccosto || !division)) {
+      const vc = await costoDeVendedor(vendedor);
+      if (vc) { ccosto = ccosto || vc.centro_costo || ''; division = division || vc.division || ''; }
+    }
+
+    if (r) {
+      return setMapCacheValue(lookupCache, cacheKey, {
+        found: true, row: r.id,
+        data: {
+          ...r, canal, nv: nvDe(r), estado: r.estado, cliente, vendedor, ccosto, division,
+          fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
+        },
+      });
+    }
+    return setMapCacheValue(lookupCache, cacheKey, { found: false, autoFill: { cliente, vendedor, ccosto, division } });
+  };
+
+  const promise = run().catch((error) => {
+    lookupCache.delete(cacheKey);
+    throw error;
+  });
+  return setMapCachePromise(lookupCache, cacheKey, promise);
   }, {
     payload: { canal, nv: normNV(nv) },
     slowMs: 550,

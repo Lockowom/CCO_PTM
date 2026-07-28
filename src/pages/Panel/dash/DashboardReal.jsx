@@ -147,6 +147,7 @@ export default function DashboardReal() {
     if (!supabase) return undefined;
     let t = null;
     const refrescar = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       if (t) clearTimeout(t);
       t = setTimeout(() => loadData(rangeRef.current.from, rangeRef.current.to), 2500);
     };
@@ -169,11 +170,24 @@ export default function DashboardReal() {
       if (countdownRef.current <= 0) {
         countdownRef.current = 120;
         setCountdown(120);
+        if (typeof document !== 'undefined' && document.hidden) return;
         loadData(range.from, range.to);
       }
     }, 1000);
     return () => clearInterval(tick);
   }, [loadData, range]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        countdownRef.current = 120;
+        setCountdown(120);
+        loadData(rangeRef.current.from, rangeRef.current.to);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [loadData]);
 
   if (loading && !kpis) {
     return (
