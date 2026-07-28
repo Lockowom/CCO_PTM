@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 import { withTimeout } from '../lib/supabaseQuery';
 import { Logger } from '../lib/logger';
+import { useAuth } from '../context/AuthContext';
 
 // UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
 // viejos y lanzaría TypeError al construir el path de la evidencia.
@@ -35,10 +36,41 @@ export const FLAG_META = {
   LIBERADO:     { label: 'Liberado',     cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
 };
 
+function useCanViewCalidadOperativa() {
+  const { user, loading, hasPermission } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
+  const canView = isAdmin || [
+    'manage_quality',
+    'manage_monitoreo',
+    'view_acciones_calidad',
+    'manage_inventory',
+  ].some((permissionId) => hasPermission(permissionId));
+  return !loading && canView;
+}
+
+function useCanViewCalidadFlags() {
+  const { user, loading, hasPermission } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
+  const canView = isAdmin || [
+    'manage_quality',
+    'manage_monitoreo',
+    'view_acciones_calidad',
+    'manage_inventory',
+    'view_locations',
+    'manage_locations',
+    'view_stock',
+    'manage_stock',
+    'view_inventario',
+  ].some((permissionId) => hasPermission(permissionId));
+  return !loading && canView;
+}
+
 // ── Lectura de informes ───────────────────────────────────────────────────
 export function useInformes() {
+  const enabled = useCanViewCalidadOperativa();
   return useQuery({
     queryKey: ['monitoreo_informes'],
+    enabled,
     meta: { module: 'quality', action: 'monitoreo_informes_query', table: 'tms_monitoreo_informes' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
@@ -521,13 +553,16 @@ export const ESTADO_TAREA_META = {
 // staleTime 0 + refetchOnMount → al abrir la pestaña siempre trae lo último
 // (una recepción recién registrada aparece de inmediato); realtime complementa.
 export function useTareasChecklist() {
+  const enabled = useCanViewCalidadOperativa();
   return useQuery({
     queryKey: ['calidad_tareas'],
+    enabled,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,   // al volver a la pestaña del navegador, refresca
     refetchInterval: 20000,       // respaldo por si realtime no entrega (poll 20s)
     refetchIntervalInBackground: false,
+    meta: { module: 'quality', action: 'calidad_tareas_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase
@@ -580,8 +615,10 @@ export const ESTADO_ASIGNACION_META = {
 
 // Cola de asignaciones del hito 2 (pendientes/en proceso primero).
 export function useAsignacionesCalidad() {
+  const enabled = useCanViewCalidadOperativa();
   return useQuery({
     queryKey: ['calidad_asignaciones'],
+    enabled,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
@@ -864,13 +901,16 @@ export async function uploadEvidenciaIngreso({ tareaId, tipo, blob }) {
 
 // Cola de certificaciones de salida (tipo CERTIFICADO_SALIDA).
 export function useTareasSalida() {
+  const enabled = useCanViewCalidadOperativa();
   return useQuery({
     queryKey: ['calidad_tareas_salida'],
+    enabled,
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     refetchInterval: 20000,
     refetchIntervalInBackground: false,
+    meta: { module: 'quality', action: 'calidad_tareas_salida_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
       const { data, error } = await withTimeout(
         supabase.from('tms_calidad_tareas').select('*')

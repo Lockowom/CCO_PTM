@@ -1,6 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { supabase } from '../supabase';
+import { useAuth } from '../context/AuthContext';
+
+function useCanViewCalidadFlags() {
+  const { user, loading, hasPermission } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
+  const canView = isAdmin || [
+    'manage_quality',
+    'manage_monitoreo',
+    'view_acciones_calidad',
+    'manage_inventory',
+    'view_locations',
+    'manage_locations',
+    'view_stock',
+    'manage_stock',
+    'view_inventario',
+  ].some((permissionId) => hasPermission(permissionId));
+  return !loading && canView;
+}
 
 /**
  * Lee el overlay persistente de estado de calidad (tms_calidad_flags) y lo
@@ -12,8 +30,10 @@ import { supabase } from '../supabase';
  *  - flagForItem(codigo, ubicacion): resuelve el flag más específico/severo.
  */
 export function useCalidadFlags() {
+  const enabled = useCanViewCalidadFlags();
   const { data: flags = [], isLoading } = useQuery({
     queryKey: ['calidad_flags'],
+    enabled,
     meta: { module: 'quality', action: 'calidad_flags_query', table: 'tms_calidad_flags' },
     queryFn: async () => {
       const { data, error } = await supabase

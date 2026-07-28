@@ -188,32 +188,41 @@ export const AuthProvider = ({ children }) => {
         let error = null;
 
         if (authUid) {
-          ({ data, error } = await supabase
-            .from('tms_usuarios')
-            .select(PROFILE_SELECT)
-            .eq('auth_uid', authUid)
-            .eq('activo', true)
-            .limit(1));
+          ({ data, error } = await withTimeout(
+            supabase
+              .from('tms_usuarios')
+              .select(PROFILE_SELECT)
+              .eq('auth_uid', authUid)
+              .eq('activo', true)
+              .limit(1),
+            { ms: 4000, label: 'perfil por auth_uid' }
+          ));
           if (error) throw error;
         }
 
         if (!data || !data.length) {
-          ({ data, error } = await supabase
-            .from('tms_usuarios')
-            .select(PROFILE_SELECT)
-            .eq('email', safeEmail)
-            .eq('activo', true)
-            .limit(1));
+          ({ data, error } = await withTimeout(
+            supabase
+              .from('tms_usuarios')
+              .select(PROFILE_SELECT)
+              .eq('email', safeEmail)
+              .eq('activo', true)
+              .limit(1),
+            { ms: 4000, label: 'perfil por email' }
+          ));
           if (error) throw error;
         }
 
         if ((!data || !data.length) && safeEmail) {
-          ({ data, error } = await supabase
-            .from('tms_usuarios')
-            .select(PROFILE_SELECT)
-            .ilike('email', safeEmail)
-            .eq('activo', true)
-            .limit(1));
+          ({ data, error } = await withTimeout(
+            supabase
+              .from('tms_usuarios')
+              .select(PROFILE_SELECT)
+              .ilike('email', safeEmail)
+              .eq('activo', true)
+              .limit(1),
+            { ms: 4000, label: 'perfil por email fallback' }
+          ));
           if (error) throw error;
         }
 
