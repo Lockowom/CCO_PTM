@@ -35,7 +35,7 @@ export default function NotificationBell() {
       if (typeof document !== 'undefined' && document.hidden) return;
       load();
     };
-    const t = setInterval(runIfVisible, 90000);
+    const t = setInterval(runIfVisible, 180000);
     const onVisibility = () => {
       if (typeof document !== 'undefined' && !document.hidden) load();
     };

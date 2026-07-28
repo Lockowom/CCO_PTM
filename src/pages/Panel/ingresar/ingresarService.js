@@ -435,9 +435,36 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
       `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
       `factura.ilike.${like}`, `transportista.ilike.${like}`,
     );
-    const { data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
-      .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit);
-    if (error) throw error;
+    let data = null;
+    let error = null;
+    ({ data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
+      .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit));
+    if (error) {
+      const softLimit = Math.min(limit, 60);
+      const prefix = `${safe}*`;
+      const candidates = await Promise.allSettled([
+        /^\d+$/.test(safe)
+          ? supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).eq('nv_ptm', Number(safe)).limit(softLimit)
+          : Promise.resolve({ data: [] }),
+        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_orange', prefix).limit(softLimit),
+        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_farmapack', prefix).limit(softLimit),
+        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('varios', prefix).limit(softLimit),
+        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('guia', prefix).limit(softLimit),
+        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('factura', prefix).limit(softLimit),
+        safe.length >= 4
+          ? supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('cliente', prefix).limit(softLimit)
+          : Promise.resolve({ data: [] }),
+      ]);
+      const fallbackRows = candidates
+        .filter((entry) => entry.status === 'fulfilled' && Array.isArray(entry.value?.data))
+        .flatMap((entry) => entry.value.data || []);
+      if (fallbackRows.length) {
+        data = fallbackRows;
+        error = null;
+      } else {
+        throw error;
+      }
+    }
     const dedup = new Map();
     (data || []).forEach((r) => {
       const nv = nvDe(r); if (!nv) return;

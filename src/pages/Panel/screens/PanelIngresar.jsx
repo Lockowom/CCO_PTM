@@ -1043,18 +1043,37 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
   const loadMoreRef = useRef(null);
   const remoteReqRef = useRef(0);
+  const qRef = useRef('');
+  const fullHydrateTimerRef = useRef(null);
+  const pendingFullRowsRef = useRef(null);
+
+  useEffect(() => {
+    qRef.current = q;
+  }, [q]);
 
   const cargar = useCallback((force = false) => {
+    if (fullHydrateTimerRef.current) {
+      clearTimeout(fullHydrateTimerRef.current);
+      fullHydrateTimerRef.current = null;
+    }
     setLoading(true);
     listaActivas({ force, full: false, limit: 400 })
       .then((rows) => {
         setLista(rows);
         setLoading(false);
-        return listaActivas({ force, full: true })
-          .then((fullRows) => {
-            setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
-          })
-          .catch(() => {});
+        fullHydrateTimerRef.current = setTimeout(() => {
+          if (typeof document !== 'undefined' && document.hidden) return;
+          if (qRef.current.trim().length >= 2) return;
+          listaActivas({ force, full: true })
+            .then((fullRows) => {
+              if (qRef.current.trim().length >= 2) {
+                pendingFullRowsRef.current = fullRows;
+                return;
+              }
+              setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
+            })
+            .catch(() => {});
+        }, 1200);
       })
       .catch(() => {
         setLista([]);
@@ -1063,25 +1082,53 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   }, []);
   useEffect(() => {
     cargar();
+    return () => {
+      if (fullHydrateTimerRef.current) clearTimeout(fullHydrateTimerRef.current);
+    };
   }, [cargar]);
 
-  // Búsqueda contra TODA la tabla (incluye Entregado/NULA/etc.): la lista base
-  // solo trae activas, así que sin esto una N.V. entregada no se puede encontrar.
+  // Búsqueda local sobre la lista cargada.
   const enBusqueda = q.trim().length >= 2;
   useEffect(() => {
     const term = q.trim();
     if (term.length < 2) {
       setLocalSearch([]);
+      if (pendingFullRowsRef.current) {
+        const fullRows = pendingFullRowsRef.current;
+        pendingFullRowsRef.current = null;
+        setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
+      }
+      if (!fullHydrateTimerRef.current) {
+        fullHydrateTimerRef.current = setTimeout(() => {
+          if (qRef.current.trim().length >= 2) return;
+          listaActivas({ full: true })
+            .then((fullRows) => {
+              setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
+            })
+            .catch(() => {})
+            .finally(() => {
+              fullHydrateTimerRef.current = null;
+            });
+        }, 400);
+      }
+      return;
+    }
+    setLocalSearch(buscarOperacionesUltraLocal(lista, term, { limit: 120 }));
+  }, [q, lista]);
+
+  // Búsqueda remota contra TODA la tabla (incluye Entregado/NULA/etc.).
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) {
       setRemoto(null);
       setBuscando(false);
       return;
     }
-    setLocalSearch(buscarOperacionesUltraLocal(lista, term, { limit: 120 }));
     setBuscando(true);
     const reqId = remoteReqRef.current + 1;
     remoteReqRef.current = reqId;
     const h = setTimeout(() => {
-      buscarOperaciones(term, { limit: 200 })
+      buscarOperaciones(term, { limit: 120 })
         .then((rows) => {
           if (remoteReqRef.current === reqId) setRemoto(rows);
         })
@@ -1091,9 +1138,9 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
         .finally(() => {
           if (remoteReqRef.current === reqId) setBuscando(false);
         });
-    }, 160);
+    }, 220);
     return () => clearTimeout(h);
-  }, [q, lista]);
+  }, [q]);
 
   // Descarga TODA la tabla de operaciones (todas las columnas y datos) a Excel.
   const onExportar = useCallback(async () => {

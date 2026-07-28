@@ -7,7 +7,7 @@
 import { supabase } from '../supabase';
 import { rpcCommand, rpcQuery } from '../core/infrastructure/supabase/rpcClient';
 
-const NOTIFICACIONES_CACHE_TTL_MS = 30 * 1000;
+const NOTIFICACIONES_CACHE_TTL_MS = 90 * 1000;
 let misNotificacionesCache = { ts: 0, data: null, promise: null };
 
 function resetEventosCaches() {
