@@ -8,6 +8,7 @@ import { supabase } from '../../../supabase';
 import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
+const OPERACIONES_BASE_TABLE = 'tms_operaciones';
 const ACTIVES_CACHE_TTL_MS = 60 * 1000;
 const OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
 const SEARCH_CACHE_TTL_MS = 20 * 1000;
@@ -388,6 +389,25 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
   const safe = t.replace(/[(),*]/g, ' ').trim();
   if (!safe) return [];
   const run = async () => {
+    if (/^\d{4,}$/.test(safe)) {
+      const exactRows = await Promise.all([
+        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_ptm', Number(safe)).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_orange', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_farmapack', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('varios', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+      ]);
+      const exactErrors = exactRows.find((result) => result.error);
+      if (exactErrors?.error) throw exactErrors.error;
+      const exactMapped = dedupeRankedItems(
+        exactRows.flatMap((result) => (result.data || []).map(mapOperacionRow)),
+        t,
+        Math.min(limit, 20)
+      );
+      if (exactMapped.length) {
+        return setMapCacheValue(busquedaCache, cacheKey, exactMapped);
+      }
+    }
+
     const like = `*${safe}*`;
     const ors = [];
     if (/^\d+$/.test(safe)) ors.push(`nv_ptm.eq.${Number(safe)}`);
@@ -405,7 +425,8 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
       const key = `${canalDe(r)}:${nv}`;
       if (!dedup.has(key)) dedup.set(key, mapOperacionRow(r));
     });
-    return setMapCacheValue(busquedaCache, cacheKey, dedupeRankedItems(Array.from(dedup.values()), t, limit));
+    const ranked = dedupeRankedItems(Array.from(dedup.values()), t, limit);
+    return setMapCacheValue(busquedaCache, cacheKey, ranked);
   };
 
   const promise = run().catch((error) => {
@@ -580,13 +601,14 @@ export async function lookup(canal, nv) {
     }
 
     if (r) {
-      return setMapCacheValue(lookupCache, cacheKey, {
+      const result = {
         found: true, row: r.id,
         data: {
           ...r, canal, nv: nvDe(r), estado: r.estado, cliente, vendedor, ccosto, division,
           fecha_compromiso: soloFecha(r.fecha_compromiso), fecha_registro_nv: soloFecha(r.fecha_registro_nv),
         },
-      });
+      };
+      return setMapCacheValue(lookupCache, cacheKey, result);
     }
     return setMapCacheValue(lookupCache, cacheKey, { found: false, autoFill: { cliente, vendedor, ccosto, division } });
   };
@@ -600,6 +622,56 @@ export async function lookup(canal, nv) {
     payload: { canal, nv: normNV(nv) },
     slowMs: 550,
     message: 'Lookup de N.V. en Panel',
+  });
+}
+
+export async function lookupById(id, { canal = null, nv = null } = {}) {
+  return runPanelRead('lookup_nv_by_id', async () => {
+    if (!id) return lookup(canal, nv);
+    const { data, error } = await supabase
+      .from(OPERACIONES_BASE_TABLE)
+      .select(PREVIEW)
+      .eq('id', id)
+      .limit(1);
+    if (error) throw error;
+    const row = data && data.length ? data[0] : null;
+    if (!row) return lookup(canal, nv);
+
+    const normalizedCanal = canal || canalDe(row);
+    const normalizedNv = nv || nvDe(row);
+    const cat = await buscarNvCatalogo(normalizedCanal, normalizedNv);
+    const cliente = row?.cliente || cat?.cliente || '';
+    const vendedor = row?.vendedor || cat?.vendedor || '';
+    let ccosto = row?.centro_costo || cat?.centro_costo || '';
+    let division = row?.division || cat?.division || '';
+    if (vendedor && (!ccosto || !division)) {
+      const vc = await costoDeVendedor(vendedor);
+      if (vc) {
+        ccosto = ccosto || vc.centro_costo || '';
+        division = division || vc.division || '';
+      }
+    }
+    const result = {
+      found: true,
+      row: row.id,
+      data: {
+        ...row,
+        canal: normalizedCanal,
+        nv: normalizedNv,
+        estado: row.estado,
+        cliente,
+        vendedor,
+        ccosto,
+        division,
+        fecha_compromiso: soloFecha(row.fecha_compromiso),
+        fecha_registro_nv: soloFecha(row.fecha_registro_nv),
+      },
+    };
+    return result;
+  }, {
+    payload: { id, canal, nv: normNV(nv) },
+    slowMs: 350,
+    message: 'Lookup de N.V. por id en Panel',
   });
 }
 

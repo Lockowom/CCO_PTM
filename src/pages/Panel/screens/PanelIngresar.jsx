@@ -30,6 +30,7 @@ import {
   buscarOperaciones,
   opciones,
   lookup,
+  lookupById,
   guardar,
   eliminar,
   exportarOperaciones,
@@ -202,10 +203,47 @@ function DetalleDrawer({
   const [requestingReopen, setRequestingReopen] = useState(false);
   const [resolvingReopen, setResolvingReopen] = useState(false);
 
+  const snapshotFromItem = useMemo(() => ({
+    id: item?.id ?? null,
+    canal: item?.canal || '',
+    nv: item?.nv || '',
+    cliente: item?.cliente || '',
+    vendedor: item?.vendedor || '',
+    ccosto: '',
+    division: '',
+    estado: item?.estado || '',
+    transportista: item?.transportista || '',
+    tipo_despacho: '',
+    fecha_aprobacion: item?.fechaAprobacion || '',
+    fecha_aprobacion_real: item?.fechaAprobacionReal || '',
+    fecha_compromiso: item?.fechaCompromiso || '',
+    fecha_facturacion: item?.factura ? '' : '',
+    fecha_despacho: '',
+    fecha_estado: '',
+    fecha_registro_nv: '',
+    fecha_en_proceso: '',
+    fecha_shipping: '',
+    fecha_en_ruta: '',
+    fecha_entregado: '',
+    factura: item?.factura || '',
+    guia: item?.guia || '',
+    bultos: '',
+    valor_factura: '',
+    numero_envio: '',
+    urgente: item?.urgente === true,
+    incidencia: '',
+    estado_incidencia: '',
+    observaciones_incidencia: '',
+    reabierta: item?.reabierta === true,
+    fecha_reapertura: '',
+    motivo_reapertura: item?.motivoReapertura || '',
+  }), [item]);
+
   useEffect(() => {
     let on = true;
-    setLoading(true);
-    lookup(item.canal, item.nv).then((r) => {
+    setData(snapshotFromItem);
+    setLoading(false);
+    lookupById(item.id, { canal: item.canal, nv: item.nv }).then((r) => {
       if (!on) return;
       setData(r.found ? r.data : null);
       setEdit({});
@@ -214,7 +252,7 @@ function DetalleDrawer({
     return () => {
       on = false;
     };
-  }, [item]);
+  }, [item, snapshotFromItem]);
 
   const cargarSolicitudes = useCallback(async () => {
     if (!item?.id) {
