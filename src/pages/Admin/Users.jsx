@@ -22,7 +22,10 @@ import {
   Square,
   Power,
   PowerOff,
-  Clock
+  Clock,
+  Target,
+  ShieldCheck,
+  TriangleAlert
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,6 +34,7 @@ import { APP_ROUTES } from '../../config/modules';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
+import { listarAsignaciones, refrescarPermisos } from '../../services/iamService';
 
 // Alta/edición pasan por la RPC transaccional `guardar_usuario` (crea la cuenta
 // auth + la fila en una sola transacción, gateada a admin). Las acciones en
@@ -39,6 +43,7 @@ import { toast } from 'sonner';
 
 const OK_STYLE = { background: '#1e293b', border: '1px solid #10b981', color: '#f8fafc' };
 const ERR_STYLE = { background: '#1e293b', border: '1px solid #ef4444', color: '#f8fafc' };
+const INFO_STYLE = { background: '#1e293b', border: '1px solid #f59e0b', color: '#f8fafc' };
 
 // "Último acceso" legible desde tms_usuarios.last_seen.
 const fmtUltimo = (ts) => {
@@ -116,12 +121,18 @@ const UsersPage = ({ embedded = false }) => {
       const { data, error } = await supabase
         .from('tms_usuarios')
         .select(
-          'id, id_usuario, nombre, email, rol, activo, es_admin_delegado, created_at, last_seen'
+          'id, auth_uid, id_usuario, nombre, email, rol, activo, es_admin_delegado, created_at, last_seen'
         )
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
+  });
+
+  const { data: scopedAssignments = [], isLoading: loadingScopes } = useQuery({
+    queryKey: ['iam_user_scopes'],
+    queryFn: () => listarAsignaciones(),
+    staleTime: 30 * 1000
   });
 
   // Realtime (con debounce) → refresca ambos queryKeys propios.
@@ -148,6 +159,60 @@ const UsersPage = ({ embedded = false }) => {
     };
   }, [queryClient]);
 
+  const rolePermissions = React.useCallback(
+    (rol) => (Array.isArray(rolesById[rol]?.permisos_json) ? rolesById[rol].permisos_json : []),
+    [rolesById]
+  );
+
+  const scopedAssignmentsByUser = React.useMemo(() => {
+    const map = new Map();
+    scopedAssignments.forEach((assignment) => {
+      const prev = map.get(assignment.user_id) || [];
+      prev.push(assignment);
+      map.set(assignment.user_id, prev);
+    });
+    return map;
+  }, [scopedAssignments]);
+
+  const getUserAccessMeta = React.useCallback(
+    (userLike) => {
+      const permisos = rolePermissions(userLike?.rol);
+      const scoped = userLike?.auth_uid ? scopedAssignmentsByUser.get(userLike.auth_uid) || [] : [];
+      const hasManagePanel = permisos.includes('manage_panel');
+      const hasManageRoles = permisos.includes('manage_roles');
+      const hasPanelAccess =
+        hasManagePanel ||
+        permisos.includes('view_panel') ||
+        permisos.includes('panel_ingresar') ||
+        permisos.includes('panel_info') ||
+        permisos.includes('panel_tv') ||
+        permisos.includes('panel_builder');
+      return {
+        permisos,
+        scoped,
+        scopeCount: scoped.length,
+        hasManagePanel,
+        hasManageRoles,
+        hasPanelAccess,
+        needsReloginNotice:
+          hasManagePanel ||
+          hasManageRoles ||
+          userLike?.es_admin_delegado ||
+          userLike?.rol === 'ADMIN'
+      };
+    },
+    [rolePermissions, scopedAssignmentsByUser]
+  );
+
+  const syncIamAfterUserChange = React.useCallback(async () => {
+    await refrescarPermisos();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin_users'] }),
+      queryClient.invalidateQueries({ queryKey: ['roles_catalogo'] }),
+      queryClient.invalidateQueries({ queryKey: ['iam_user_scopes'] })
+    ]);
+  }, [queryClient]);
+
   // Mutation: Guardar Usuario (RPC transaccional gateada).
   const saveMutation = useMutation({
     mutationFn: async (user) => {
@@ -165,11 +230,18 @@ const UsersPage = ({ embedded = false }) => {
       if (data && data.ok === false) throw new Error(data.error || 'No se pudo guardar');
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+    onSuccess: async (_data, user) => {
+      await syncIamAfterUserChange();
+      const accessMeta = getUserAccessMeta(user);
       toast.success(`Usuario ${editingUser ? 'actualizado' : 'creado'} exitosamente`, {
         style: OK_STYLE
       });
+      if (accessMeta.needsReloginNotice) {
+        toast(
+          'IAM sincronizado. El usuario debe cerrar sesión y volver a ingresar para tomar los permisos nuevos. Si su operación será acotada, configúrala en Ámbitos.',
+          { style: INFO_STYLE, duration: 7000 }
+        );
+      }
       setIsModalOpen(false);
     },
     onError: (err) => toast.error('Error al guardar usuario: ' + err.message, { style: ERR_STYLE })
@@ -199,8 +271,8 @@ const UsersPage = ({ embedded = false }) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+    onSuccess: async (data, vars) => {
+      await syncIamAfterUserChange();
       const verbo =
         {
           activar: 'activado(s)',
@@ -209,6 +281,12 @@ const UsersPage = ({ embedded = false }) => {
           eliminar: 'eliminado(s)'
         }[vars.accion] || 'actualizado(s)';
       toast.success(`${data?.n ?? vars.ids.length} usuario(s) ${verbo}`, { style: OK_STYLE });
+      if (vars.accion === 'rol' || vars.accion === 'activar' || vars.accion === 'desactivar') {
+        toast(
+          'Permisos efectivos refrescados. Los usuarios impactados deben volver a iniciar sesión; si operan por centro de costo, revisa también la pestaña Ámbitos.',
+          { style: INFO_STYLE, duration: 7000 }
+        );
+      }
       if (vars.accion !== '__toggle') {
         setSelected(new Set());
         setBulkRole('');
@@ -312,9 +390,10 @@ const UsersPage = ({ embedded = false }) => {
       total: users.length,
       active: users.filter((u) => u.activo).length,
       admins: users.filter((u) => u.rol?.toUpperCase() === 'ADMIN' || u.es_admin_delegado).length,
-      supervisors: users.filter((u) => u.rol?.toUpperCase() === 'SUPERVISOR').length
+      supervisors: users.filter((u) => u.rol?.toUpperCase() === 'SUPERVISOR').length,
+      panel: users.filter((u) => getUserAccessMeta(u).hasManagePanel).length
     }),
-    [users]
+    [getUserAccessMeta, users]
   );
 
   const getRoleBadgeColor = (rol) => {
@@ -429,6 +508,23 @@ const UsersPage = ({ embedded = false }) => {
           value={stats.supervisors}
           glowColor="amber"
         />
+        <StatCard
+          icon={<ShieldCheck size={24} />}
+          label="Gestionan Panel"
+          value={stats.panel}
+          glowColor="blue"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12.5px] text-slate-700 relative z-10">
+        <div className="flex items-start gap-2.5">
+          <TriangleAlert size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <p>
+            La pestaña <b>Usuarios</b> define el rol global. Si el usuario opera sobre datos
+            acotados, completa también <b>Ámbitos</b>. Después de cambios críticos de rol o
+            privilegios, el usuario debe <b>cerrar sesión y volver a entrar</b>.
+          </p>
+        </div>
       </div>
 
       {/* Filtros + orden + vista */}
@@ -603,6 +699,7 @@ const UsersPage = ({ embedded = false }) => {
                     </th>
                     <th className="p-3 text-left">Usuario</th>
                     <th className="p-3 text-left hidden sm:table-cell">Rol</th>
+                    <th className="p-3 text-left hidden lg:table-cell">IAM</th>
                     <th className="p-3 text-left">Estado</th>
                     <th className="p-3 text-left hidden md:table-cell">Último acceso</th>
                     <th className="p-3 text-right">Acciones</th>
@@ -611,6 +708,7 @@ const UsersPage = ({ embedded = false }) => {
                 <tbody>
                   {filteredUsers.map((user) => {
                     const isSel = selected.has(user.id);
+                    const accessMeta = getUserAccessMeta(user);
                     return (
                       <tr
                         key={user.id}
@@ -650,6 +748,26 @@ const UsersPage = ({ embedded = false }) => {
                             {getRoleIcon(user.rol)}
                             {rolesById[user.rol]?.nombre || user.rol}
                           </span>
+                        </td>
+                        <td className="p-3 hidden lg:table-cell">
+                          <div className="flex flex-wrap gap-1.5">
+                            {accessMeta.hasManagePanel && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-200 bg-blue-50 text-[11px] font-black text-blue-700">
+                                <ShieldCheck size={11} />
+                                manage_panel
+                              </span>
+                            )}
+                            {accessMeta.scopeCount > 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-[11px] font-black text-emerald-700">
+                                <Target size={11} />
+                                {accessMeta.scopeCount} ámbito(s)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500">
+                                Global por rol
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="p-3">
                           <button
@@ -699,6 +817,7 @@ const UsersPage = ({ embedded = false }) => {
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {filteredUsers.map((user) => {
               const isSel = selected.has(user.id);
+              const accessMeta = getUserAccessMeta(user);
               return (
                 <div
                   key={user.id}
@@ -772,6 +891,25 @@ const UsersPage = ({ embedded = false }) => {
                           {rolesById[user.rol]?.nombre || user.rol}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="mb-5 flex flex-wrap gap-2">
+                      {accessMeta.hasManagePanel && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-blue-200 bg-blue-50 text-[11px] font-black text-blue-700">
+                          <ShieldCheck size={12} />
+                          Gestiona Panel
+                        </span>
+                      )}
+                      {accessMeta.scopeCount > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-emerald-200 bg-emerald-50 text-[11px] font-black text-emerald-700">
+                          <Target size={12} />
+                          {accessMeta.scopeCount} ámbito(s) activo(s)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500">
+                          Sin ámbitos acotados
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex gap-3 pt-4 border-t border-slate-200">
@@ -950,6 +1088,8 @@ const UsersPage = ({ embedded = false }) => {
                     const landing =
                       APP_ROUTES.find((r) => r.value === rolSel.landing_page)?.label ||
                       rolSel.landing_page;
+                    const managePanel = permisos.includes('manage_panel');
+                    const manageRoles = permisos.includes('manage_roles');
                     return (
                       <div className="bg-orange-50 rounded-xl p-4 border border-orange-100 text-xs space-y-2">
                         <div className="font-black text-orange-800">
@@ -986,6 +1126,13 @@ const UsersPage = ({ embedded = false }) => {
                         {modulos.some((m) => m.soloAdmin) && (
                           <div className="text-orange-600 text-[11px]">
                             Las rutas de Configuración además requieren rol ADMIN.
+                          </div>
+                        )}
+                        {(managePanel || manageRoles) && (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">
+                            Rol crítico: después de guardar, el usuario debe cerrar sesión y volver
+                            a entrar. Si su operación debe restringirse por centro de costo,
+                            complétala en la pestaña <b>Ámbitos</b>.
                           </div>
                         )}
                       </div>
