@@ -16,12 +16,17 @@ const PROFILE_CACHE_TTL_MS = 30 * 1000;
 const profileCache = new Map();
 
 function getProfileCache(email) {
-  const key = String(email || '').trim().toLowerCase();
+  const key = String(email || '')
+    .trim()
+    .toLowerCase();
   if (!key) return null;
   const entry = profileCache.get(key);
   if (!entry) return null;
   if (entry.promise) return entry.promise;
-  if (Object.prototype.hasOwnProperty.call(entry, 'value') && (Date.now() - entry.ts) < PROFILE_CACHE_TTL_MS) {
+  if (
+    Object.prototype.hasOwnProperty.call(entry, 'value') &&
+    Date.now() - entry.ts < PROFILE_CACHE_TTL_MS
+  ) {
     return entry.value;
   }
   profileCache.delete(key);
@@ -29,14 +34,18 @@ function getProfileCache(email) {
 }
 
 function setProfileCacheValue(email, value) {
-  const key = String(email || '').trim().toLowerCase();
+  const key = String(email || '')
+    .trim()
+    .toLowerCase();
   if (!key) return value;
   profileCache.set(key, { ts: Date.now(), value });
   return value;
 }
 
 function setProfileCachePromise(email, promise) {
-  const key = String(email || '').trim().toLowerCase();
+  const key = String(email || '')
+    .trim()
+    .toLowerCase();
   if (!key) return promise;
   profileCache.set(key, { ts: Date.now(), promise });
   return promise;
@@ -117,7 +126,6 @@ export const AuthProvider = ({ children }) => {
     setPermissions(perms);
     setRoles(iamRoles ?? [rolId]);
     setLandingPage(landing);
-
     return { permissions: perms, landingPage: landing };
   }, []);
 
@@ -163,24 +171,54 @@ export const AuthProvider = ({ children }) => {
   }, [user?.rol, loadRoleConfig]);
 
   // ── Cargar perfil desde tms_usuarios usando email de sesión auth ──
-  const loadUserProfile = useCallback(async (authEmail) => {
+  const loadUserProfile = useCallback(async (authEmail, authUid = null) => {
     try {
-      const safeEmail = String(authEmail || '').trim().toLowerCase();
+      const safeEmail = String(authEmail || '')
+        .trim()
+        .toLowerCase();
       if (!safeEmail) return null;
 
       const cached = getProfileCache(safeEmail);
-      if (cached) return cached;
+      if (cached) {
+        return cached;
+      }
 
       const run = async () => {
-        const { data, error } = await supabase
-          .from('tms_usuarios')
-          .select(PROFILE_SELECT)
-          .ilike('email', safeEmail)
-          .eq('activo', true)
-          .limit(1);
+        let data = null;
+        let error = null;
 
-        if (error) throw error;
-        return setProfileCacheValue(safeEmail, (data && data[0]) || null);
+        if (authUid) {
+          ({ data, error } = await supabase
+            .from('tms_usuarios')
+            .select(PROFILE_SELECT)
+            .eq('auth_uid', authUid)
+            .eq('activo', true)
+            .limit(1));
+          if (error) throw error;
+        }
+
+        if (!data || !data.length) {
+          ({ data, error } = await supabase
+            .from('tms_usuarios')
+            .select(PROFILE_SELECT)
+            .eq('email', safeEmail)
+            .eq('activo', true)
+            .limit(1));
+          if (error) throw error;
+        }
+
+        if ((!data || !data.length) && safeEmail) {
+          ({ data, error } = await supabase
+            .from('tms_usuarios')
+            .select(PROFILE_SELECT)
+            .ilike('email', safeEmail)
+            .eq('activo', true)
+            .limit(1));
+          if (error) throw error;
+        }
+
+        const result = setProfileCacheValue(safeEmail, (data && data[0]) || null);
+        return result;
       };
 
       const promise = run().catch((err) => {
@@ -240,7 +278,7 @@ export const AuthProvider = ({ children }) => {
         } = await withTimeout(supabase.auth.getSession(), { ms: 10000, label: 'inicio de sesión' });
 
         if (session?.user?.email) {
-          const profile = await withTimeout(loadUserProfile(session.user.email), {
+          const profile = await withTimeout(loadUserProfile(session.user.email, session.user.id), {
             ms: 10000,
             label: 'inicio de sesión'
           });
@@ -315,10 +353,13 @@ export const AuthProvider = ({ children }) => {
         // La solución oficial es diferir el trabajo fuera del callback.
         setTimeout(async () => {
           try {
-            const profile = await withTimeout(loadUserProfile(session.user.email), {
-              ms: 10000,
-              label: 'inicio de sesión'
-            });
+            const profile = await withTimeout(
+              loadUserProfile(session.user.email, session.user.id),
+              {
+                ms: 10000,
+                label: 'inicio de sesión'
+              }
+            );
             if (profile) {
               await setUserState(profile);
             } else {
@@ -417,7 +458,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!authError && authData?.session) {
         // Login exitoso con Supabase Auth
-        const profile = await loadUserProfile(email);
+        const profile = await loadUserProfile(email, authData.session.user.id);
 
         if (!profile) {
           setError('Usuario no encontrado o desactivado');
@@ -444,34 +485,36 @@ export const AuthProvider = ({ children }) => {
         await setUserState(profile);
 
         // Registrar acceso
-        try {
-          await supabase.from('tms_accesos').insert({
-            usuario_id: profile.id,
-            nombre: profile.nombre,
-            email: profile.email,
-            rol: profile.rol
-          });
-
-          await supabase.from('tms_usuarios_activos').upsert(
-            {
+        void (async () => {
+          try {
+            await supabase.from('tms_accesos').insert({
               usuario_id: profile.id,
               nombre: profile.nombre,
-              rol: profile.rol,
-              ultima_actividad: new Date().toISOString(),
-              modulo_actual: 'Inicio de Sesión',
-              estado: 'ONLINE'
-            },
-            { onConflict: 'usuario_id' }
-          );
-        } catch (_) {
-          Logger.warn(_, {
-            kind: 'audit',
-            module: 'auth',
-            screen: 'AuthProvider',
-            action: 'login_tracking',
-            message: 'No se pudo registrar el acceso del usuario'
-          });
-        }
+              email: profile.email,
+              rol: profile.rol
+            });
+
+            await supabase.from('tms_usuarios_activos').upsert(
+              {
+                usuario_id: profile.id,
+                nombre: profile.nombre,
+                rol: profile.rol,
+                ultima_actividad: new Date().toISOString(),
+                modulo_actual: 'Inicio de Sesión',
+                estado: 'ONLINE'
+              },
+              { onConflict: 'usuario_id' }
+            );
+          } catch (_) {
+            Logger.warn(_, {
+              kind: 'audit',
+              module: 'auth',
+              screen: 'AuthProvider',
+              action: 'login_tracking',
+              message: 'No se pudo registrar el acceso del usuario'
+            });
+          }
+        })();
 
         setLoading(false);
         return true;

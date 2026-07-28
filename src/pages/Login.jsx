@@ -55,9 +55,9 @@ const Login = () => {
 
   const finalizarIngreso = async () => {
     setLoadingPhase(2);
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 120));
     setLoadingPhase(3);
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 80));
     navigate(from, { replace: true });
   };
 
