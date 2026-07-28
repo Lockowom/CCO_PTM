@@ -25,7 +25,7 @@ import {
   Clock,
   Target,
   ShieldCheck,
-  TriangleAlert
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -518,7 +518,7 @@ const UsersPage = ({ embedded = false }) => {
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12.5px] text-slate-700 relative z-10">
         <div className="flex items-start gap-2.5">
-          <TriangleAlert size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
           <p>
             La pestaña <b>Usuarios</b> define el rol global. Si el usuario opera sobre datos
             acotados, completa también <b>Ámbitos</b>. Después de cambios críticos de rol o

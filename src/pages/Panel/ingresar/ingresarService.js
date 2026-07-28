@@ -6,6 +6,7 @@
 // ============================================================================
 import { supabase } from '../../../supabase';
 import { Logger } from '../../../lib/logger';
+import { withTimeout } from '../../../lib/supabaseQuery';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const OPERACIONES_BASE_TABLE = 'tms_operaciones';
@@ -408,12 +409,25 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
   const safe = t.replace(/[(),*]/g, ' ').trim();
   if (!safe) return [];
   const run = async () => {
-    if (/^\d{4,}$/.test(safe)) {
+    const isNumericLookup = /^\d{4,}$/.test(safe);
+    if (isNumericLookup) {
       const exactRows = await Promise.all([
-        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_ptm', Number(safe)).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
-        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_orange', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
-        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_farmapack', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
-        supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('varios', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+        withTimeout(
+          supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_ptm', Number(safe)).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+          { ms: 2500, label: 'Busqueda exacta nv_ptm Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_orange', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+          { ms: 2500, label: 'Busqueda exacta nv_orange Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('nv_farmapack', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+          { ms: 2500, label: 'Busqueda exacta nv_farmapack Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_BASE_TABLE).select(LISTA_COLS).eq('varios', safe).order('fecha_estado', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1),
+          { ms: 2500, label: 'Busqueda exacta varios Panel' }
+        ),
       ]);
       const exactErrors = exactRows.find((result) => result.error);
       if (exactErrors?.error) throw exactErrors.error;
@@ -425,11 +439,48 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
       if (exactMapped.length) {
         return setMapCacheValue(busquedaCache, cacheKey, exactMapped);
       }
+
+      const softLimit = Math.min(limit, 60);
+      const numericPrefix = `${safe}%`;
+      const numericCandidates = await Promise.allSettled([
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).eq('nv_ptm', Number(safe)).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica nv_ptm Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_orange', numericPrefix).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica nv_orange Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_farmapack', numericPrefix).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica nv_farmapack Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('varios', numericPrefix).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica varios Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('guia', numericPrefix).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica guia Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('factura', numericPrefix).limit(softLimit),
+          { ms: 2500, label: 'Busqueda numerica factura Panel' }
+        ),
+      ]);
+      const numericRows = numericCandidates
+        .filter((entry) => entry.status === 'fulfilled' && Array.isArray(entry.value?.data))
+        .flatMap((entry) => entry.value.data || []);
+      const numericRanked = dedupeRankedItems(
+        numericRows.map(mapOperacionRow),
+        t,
+        limit
+      );
+      return setMapCacheValue(busquedaCache, cacheKey, numericRanked);
     }
 
     const like = `*${safe}*`;
     const ors = [];
-    if (/^\d+$/.test(safe)) ors.push(`nv_ptm.eq.${Number(safe)}`);
     ors.push(
       `nv_orange.ilike.${like}`, `nv_farmapack.ilike.${like}`, `varios.ilike.${like}`,
       `cliente.ilike.${like}`, `vendedor.ilike.${like}`, `guia.ilike.${like}`,
@@ -437,22 +488,40 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
     );
     let data = null;
     let error = null;
-    ({ data, error } = await supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
-      .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit));
+    ({ data, error } = await withTimeout(
+      supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS)
+        .or(ors.join(',')).order('fecha_estado', { ascending: false, nullsFirst: false }).limit(limit),
+      { ms: 4000, label: 'Busqueda remota amplia del Panel' }
+    ));
     if (error) {
       const softLimit = Math.min(limit, 60);
       const prefix = `${safe}*`;
       const candidates = await Promise.allSettled([
-        /^\d+$/.test(safe)
-          ? supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).eq('nv_ptm', Number(safe)).limit(softLimit)
-          : Promise.resolve({ data: [] }),
-        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_orange', prefix).limit(softLimit),
-        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_farmapack', prefix).limit(softLimit),
-        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('varios', prefix).limit(softLimit),
-        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('guia', prefix).limit(softLimit),
-        supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('factura', prefix).limit(softLimit),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_orange', prefix).limit(softLimit),
+          { ms: 2500, label: 'Fallback nv_orange Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('nv_farmapack', prefix).limit(softLimit),
+          { ms: 2500, label: 'Fallback nv_farmapack Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('varios', prefix).limit(softLimit),
+          { ms: 2500, label: 'Fallback varios Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('guia', prefix).limit(softLimit),
+          { ms: 2500, label: 'Fallback guia Panel' }
+        ),
+        withTimeout(
+          supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('factura', prefix).limit(softLimit),
+          { ms: 2500, label: 'Fallback factura Panel' }
+        ),
         safe.length >= 4
-          ? supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('cliente', prefix).limit(softLimit)
+          ? withTimeout(
+            supabase.from(OPERACIONES_READ_VIEW).select(LISTA_COLS).ilike('cliente', prefix).limit(softLimit),
+            { ms: 2500, label: 'Fallback cliente Panel' }
+          )
           : Promise.resolve({ data: [] }),
       ]);
       const fallbackRows = candidates
