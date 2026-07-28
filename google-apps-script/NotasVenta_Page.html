@@ -1786,21 +1786,30 @@
     var btnCargarExcel = document.getElementById('btnCargarExcel');
     if (!btnCargarExcel) return;
     
-    // Verificar rol del usuario actual
+    // Verificar permisos efectivos del usuario actual
     var userRole = '';
+    var userPermissions = [];
     if (window.App && window.App.user && window.App.user.rol) {
       userRole = String(window.App.user.rol).toUpperCase();
     }
+    if (window.App && window.App.user && Array.isArray(window.App.user.permisos)) {
+      userPermissions = window.App.user.permisos.map(function(permission) {
+        return String(permission || '').toLowerCase().trim();
+      });
+    }
     
-    // Roles autorizados
-    var authorizedRoles = ['ADMINISTRADOR', 'SUPERVISOR', 'ADMIN'];
+    // Fallback legacy por rol si los permisos aún no están listos
+    var authorizedRoles = ['ADMINISTRADOR', 'SUPERVISOR', 'ADMIN', 'OPERADOR'];
+    var canUpload = userPermissions.indexOf('*') !== -1 ||
+      userPermissions.indexOf('notasventa') !== -1 ||
+      authorizedRoles.indexOf(userRole) !== -1;
     
-    if (authorizedRoles.indexOf(userRole) !== -1) {
+    if (canUpload) {
       btnCargarExcel.style.display = 'inline-flex';
-      console.log('Excel upload: Usuario autorizado (' + userRole + ')');
+      console.log('Excel upload: Usuario autorizado (' + userRole + ')', userPermissions);
     } else {
       btnCargarExcel.style.display = 'none';
-      console.log('Excel upload: Usuario no autorizado (' + userRole + ')');
+      console.log('Excel upload: Usuario no autorizado (' + userRole + ')', userPermissions);
     }
   }
   

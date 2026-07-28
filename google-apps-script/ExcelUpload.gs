@@ -1,11 +1,12 @@
 /**
  * ExcelUpload.gs - Módulo de Carga de Archivos Excel
  * Permite cargar datos de archivos Excel a la hoja N.V DIARIAS
- * Solo usuarios con rol ADMINISTRADOR o SUPERVISOR pueden usar esta función
+ * Autoriza la carga según permisos efectivos del usuario sobre N.V
  */
 
-// Roles autorizados para cargar Excel
-var EXCEL_UPLOAD_ROLES = ['ADMINISTRADOR', 'SUPERVISOR', 'ADMIN'];
+// Fallback de roles con acceso a N.V si los permisos aún no están cargados
+var EXCEL_UPLOAD_ROLES = ['ADMINISTRADOR', 'SUPERVISOR', 'ADMIN', 'OPERADOR'];
+var EXCEL_UPLOAD_REQUIRED_PERMISSION = 'notasventa';
 
 // Columnas requeridas en el Excel (nombres esperados)
 var REQUIRED_COLUMNS = ['Fecha Entrega', 'N.Venta', 'Nombre Cliente', 'Cod.Producto', 'Descripción Producto', 'Pedido'];
@@ -26,16 +27,22 @@ var COLUMN_MAPPING = {
 /**
  * Verifica si el usuario tiene permisos para cargar archivos Excel
  * @param {string} sessionId - ID de sesión del usuario (opcional, usa usuario actual)
- * @returns {Object} - {success, canUpload, userRole, userName}
+ * @returns {Object} - {success, canUpload, userRole, userName, permisos}
  */
 function getUploadPermission(sessionId) {
   try {
     // Obtener información del usuario actual
     var userInfo = null;
+    var permissionsResult = null;
+    
+    // Obtener permisos efectivos cuando exista sesión válida
+    if (sessionId && typeof getUserPermissions === 'function') {
+      permissionsResult = getUserPermissions(sessionId);
+    }
     
     // Intentar obtener usuario por sesión si se proporciona
-    if (sessionId && typeof getSessionUser === 'function') {
-      userInfo = getSessionUser(sessionId);
+    if (sessionId && typeof getUserBySession === 'function') {
+      userInfo = getUserBySession(sessionId);
     }
     
     // Si no hay sesión, intentar obtener del contexto global
@@ -55,17 +62,30 @@ function getUploadPermission(sessionId) {
     
     var userRole = String(userInfo.rol || userInfo.role || '').toUpperCase();
     var userName = userInfo.nombre || userInfo.name || 'Usuario';
+    var permisos = [];
+    
+    if (permissionsResult && permissionsResult.success && permissionsResult.permisos) {
+      permisos = permissionsResult.permisos.map(function(permission) {
+        return String(permission || '').toLowerCase().trim();
+      });
+    }
     
     Logger.log('getUploadPermission: Usuario=' + userName + ', Rol=' + userRole);
     
-    // Verificar si el rol está en la lista de autorizados
-    var canUpload = EXCEL_UPLOAD_ROLES.indexOf(userRole) !== -1;
+    // Priorizar permisos efectivos del usuario; usar rol solo como fallback
+    var canUpload = permisos.indexOf('*') !== -1 ||
+      permisos.indexOf(EXCEL_UPLOAD_REQUIRED_PERMISSION) !== -1;
+    
+    if (!canUpload) {
+      canUpload = EXCEL_UPLOAD_ROLES.indexOf(userRole) !== -1;
+    }
     
     return {
       success: true,
       canUpload: canUpload,
       userRole: userRole,
-      userName: userName
+      userName: userName,
+      permisos: permisos
     };
     
   } catch (e) {
@@ -389,8 +409,7 @@ function testCheckExistingNV() {
 
 /**
  * Property Test 6: Control de Acceso por Rol
- * For any usuario del sistema, getUploadPermission debe retornar canUpload: true
- * si y solo si el usuario tiene rol "ADMINISTRADOR" o "SUPERVISOR"
+ * Fallback legacy: los roles de N.V deben poder cargar incluso sin permisos precargados
  * 
  * **Feature: excel-upload-notas-venta, Property 6: Control de Acceso por Rol**
  * **Validates: Requirements 5.1, 5.3**
@@ -406,8 +425,8 @@ function testProperty6_ControlAccesoPorRol() {
     { rol: 'administrador', expectedAccess: true },  // Case insensitive
     { rol: 'Supervisor', expectedAccess: true },
     
-    // Roles que NO deben tener acceso
-    { rol: 'OPERADOR', expectedAccess: false },
+    // Roles adicionales de prueba
+    { rol: 'OPERADOR', expectedAccess: true },
     { rol: 'USUARIO', expectedAccess: false },
     { rol: 'PICKER', expectedAccess: false },
     { rol: 'PACKER', expectedAccess: false },
@@ -439,7 +458,7 @@ function testProperty6_ControlAccesoPorRol() {
     var randomRol = randomRoles[Math.floor(Math.random() * randomRoles.length)];
     var rolUpper = randomRol.toUpperCase();
     var hasAccess = EXCEL_UPLOAD_ROLES.indexOf(rolUpper) !== -1;
-    var expectedAccess = (rolUpper === 'ADMINISTRADOR' || rolUpper === 'SUPERVISOR' || rolUpper === 'ADMIN');
+    var expectedAccess = (rolUpper === 'ADMINISTRADOR' || rolUpper === 'SUPERVISOR' || rolUpper === 'ADMIN' || rolUpper === 'OPERADOR');
     
     if (hasAccess === expectedAccess) {
       passed++;
