@@ -90,6 +90,17 @@ function sanitizeInformeCabecera(cabecera = {}) {
   };
 }
 
+function isCalidadReadPermissionIssue(error) {
+  const code = String(error?.code || '').trim();
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    code === '42501' ||
+    message.includes('permission denied') ||
+    message.includes('row-level security') ||
+    message.includes('not allowed')
+  );
+}
+
 // ── Lectura de informes ───────────────────────────────────────────────────
 export function useInformes() {
   const enabled = useCanViewCalidadOperativa();
@@ -627,19 +638,35 @@ export function useTareasChecklist() {
     refetchOnWindowFocus: true, // al volver a la pestaña del navegador, refresca
     refetchInterval: 20000, // respaldo por si realtime no entrega (poll 20s)
     refetchIntervalInBackground: false,
+    retry: false,
     meta: { module: 'quality', action: 'calidad_tareas_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('tms_calidad_tareas')
-          .select('*')
-          .eq('tipo', 'CHECKLIST_INGRESO') // solo hito 1 (excluye CERTIFICADO_SALIDA)
-          .order('created_at', { ascending: false }),
-        { ms: 12000, label: 'tareas de checklist' }
-      );
-      if (error) throw error;
-      const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
-      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+      try {
+        const { data, error } = await withTimeout(
+          supabase
+            .from('tms_calidad_tareas')
+            .select('*')
+            .eq('tipo', 'CHECKLIST_INGRESO') // solo hito 1 (excluye CERTIFICADO_SALIDA)
+            .order('created_at', { ascending: false }),
+          { ms: 12000, label: 'tareas de checklist' }
+        );
+        if (error) throw error;
+        const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
+        return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+      } catch (error) {
+        if (isCalidadReadPermissionIssue(error)) {
+          Logger.warn(error, {
+            module: 'quality',
+            screen: 'ChecklistIngreso',
+            action: 'calidad_tareas_query_denied',
+            message: 'Lectura de tareas de checklist bloqueada por permisos o RLS',
+            context: { table: 'tms_calidad_tareas', tipo: 'CHECKLIST_INGRESO' },
+            persist: false
+          });
+          return [];
+        }
+        throw error;
+      }
     }
   });
 }
@@ -1077,19 +1104,35 @@ export function useTareasSalida() {
     refetchOnWindowFocus: true,
     refetchInterval: 20000,
     refetchIntervalInBackground: false,
+    retry: false,
     meta: { module: 'quality', action: 'calidad_tareas_salida_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('tms_calidad_tareas')
-          .select('*')
-          .eq('tipo', 'CERTIFICADO_SALIDA')
-          .order('created_at', { ascending: false }),
-        { ms: 12000, label: 'certificaciones de salida' }
-      );
-      if (error) throw error;
-      const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
-      return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+      try {
+        const { data, error } = await withTimeout(
+          supabase
+            .from('tms_calidad_tareas')
+            .select('*')
+            .eq('tipo', 'CERTIFICADO_SALIDA')
+            .order('created_at', { ascending: false }),
+          { ms: 12000, label: 'certificaciones de salida' }
+        );
+        if (error) throw error;
+        const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
+        return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
+      } catch (error) {
+        if (isCalidadReadPermissionIssue(error)) {
+          Logger.warn(error, {
+            module: 'quality',
+            screen: 'SalidaCertificacion',
+            action: 'calidad_tareas_salida_query_denied',
+            message: 'Lectura de certificaciones de salida bloqueada por permisos o RLS',
+            context: { table: 'tms_calidad_tareas', tipo: 'CERTIFICADO_SALIDA' },
+            persist: false
+          });
+          return [];
+        }
+        throw error;
+      }
     }
   });
 }
