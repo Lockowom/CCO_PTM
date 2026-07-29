@@ -12,6 +12,7 @@ module.exports = {
   settings: { react: { version: '18.2' } },
   globals: {
     __APP_VERSION__: 'readonly',
+    __APP_BUILD_ID__: 'readonly',
   },
   plugins: ['unused-imports'],
   rules: {
