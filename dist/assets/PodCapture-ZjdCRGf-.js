@@ -1,0 +1,322 @@
+import { j as n } from './query-vendor-CojWQiBV.js';
+import { r as f } from './react-vendor-CA7EHQ1X.js';
+import { n as L, aM as q, aW as U, X as F, c as B, t as m } from './ui-vendor-C7KFTQPV.js';
+import { s as i } from './index-BncYchmL.js';
+const z = 'tms_operaciones_vigentes',
+  G = [
+    {
+      id: 'pendiente_asignacion',
+      label: 'Pendiente Asignación',
+      color: '#f59e0b',
+      bg: '#fffbeb',
+      text: '#b45309'
+    },
+    { id: 'programado', label: 'Programado', color: '#2563eb', bg: '#eff6ff', text: '#1d4ed8' },
+    { id: 'en_carga', label: 'En Carga', color: '#7c3aed', bg: '#f5f3ff', text: '#6d28d9' },
+    { id: 'despachado', label: 'Despachado', color: '#0891b2', bg: '#ecfeff', text: '#0e7490' },
+    { id: 'en_ruta', label: 'En Ruta', color: '#06b6d4', bg: '#ecfeff', text: '#0e7490' },
+    { id: 'entregado', label: 'Entregado', color: '#10b981', bg: '#ecfdf5', text: '#047857' },
+    { id: 'cerrado', label: 'Cerrado', color: '#64748b', bg: '#f8fafc', text: '#475569' },
+    { id: 'cancelado', label: 'Cancelado', color: '#ef4444', bg: '#fef2f2', text: '#b91c1c' }
+  ],
+  H = Object.fromEntries(G.map((r) => [r.id, r])),
+  J = {
+    programado: { to: 'en_carga', label: 'Marcar En Carga' },
+    en_carga: { to: 'despachado', label: 'Marcar Despachado' },
+    despachado: { to: 'en_ruta', label: 'Salir a Ruta' },
+    entregado: { to: 'cerrado', label: 'Cerrar orden' }
+  },
+  Q = ['Retraso', 'Accidente', 'Cliente Ausente', 'Dirección Incorrecta', 'Producto Dañado'];
+async function Z() {
+  const { data: r, error: e } = await i
+    .from('tms_transporte_ordenes')
+    .select('*, vehiculo:tms_vehiculos(patente,tipo)')
+    .order('id', { ascending: !1 });
+  if (e) throw e;
+  return r || [];
+}
+async function ee() {
+  const { data: r } = await i.from('tms_vehiculos').select('*').eq('activo', !0).order('patente');
+  return r || [];
+}
+async function te() {
+  const { data: r } = await i.from('tms_conductores').select('id,nombre,apellido').order('nombre');
+  return (r || []).map((e) => ({
+    id: e.id,
+    nombre: [e.nombre, e.apellido].filter(Boolean).join(' ') || `#${e.id}`
+  }));
+}
+async function re(r) {
+  const { data: e } = await i
+    .from('tms_transporte_incidencias')
+    .select('*')
+    .eq('orden_id', r)
+    .order('id', { ascending: !1 });
+  return e || [];
+}
+async function ae(r) {
+  const e = String(r || '').trim();
+  if (!e) return { ok: !1, error: 'Ingresa el número de N.V.' };
+  const o = [];
+  (/^\d+$/.test(e) && o.push(`nv_ptm.eq.${Number(e)}`),
+    o.push(`nv_orange.eq.${e}`, `nv_farmapack.eq.${e}`, `varios.eq.${e}`));
+  const { data: a } = await i.from(z).select('id').or(o.join(',')).limit(1);
+  if (!a || !a.length) return { ok: !1, error: `No existe la N.V. ${e}` };
+  const { data: c, error: l } = await i.rpc('tms_orden_crear_desde_nv', { p_oper_id: a[0].id });
+  return l ? { ok: !1, error: l.message } : c || { ok: !0 };
+}
+async function oe(r, e) {
+  const { data: o, error: a } = await i.rpc('tms_orden_asignar', { p_id: r, p: e });
+  return a ? { ok: !1, error: a.message } : o || { ok: !0 };
+}
+async function ne(r, e) {
+  const { data: o, error: a } = await i.rpc('tms_orden_transicion', { p_id: r, p_estado: e });
+  return a ? { ok: !1, error: a.message } : o || { ok: !0 };
+}
+async function M(r, e) {
+  const { data: o, error: a } = await i.rpc('tms_orden_pod', { p_id: r, p: e });
+  return a ? { ok: !1, error: a.message } : o || { ok: !0 };
+}
+async function se(r, e, o) {
+  const { data: a, error: c } = await i.rpc('tms_incidencia_crear', {
+    p_orden_id: r,
+    p_tipo: e,
+    p_detalle: o || null
+  });
+  return c ? { ok: !1, error: c.message } : a || { ok: !0 };
+}
+async function ie(r, e) {
+  const { data: o, error: a } = await i.rpc('tms_incidencia_resolver', {
+    p_id: r,
+    p_resolucion: e
+  });
+  return a ? { ok: !1, error: a.message } : o || { ok: !0 };
+}
+const V = 'tms-pod';
+async function R(r, e, o, a) {
+  const c = new Date().toISOString().replace(/[:.]/g, '-'),
+    l = `ordenes/${r}/${e}-${c}.${a || 'jpg'}`,
+    { error: g } = await i.storage
+      .from(V)
+      .upload(l, o, { upsert: !0, contentType: o.type || 'image/jpeg' });
+  if (g) throw g;
+  return l;
+}
+async function ce() {
+  var l;
+  const { data: r } = await i.auth.getUser(),
+    e = (l = r == null ? void 0 : r.user) == null ? void 0 : l.id;
+  if (!e) return null;
+  const { data: o } = await i.from('tms_usuarios').select('id').eq('auth_uid', e).limit(1),
+    a = o && o.length ? o[0].id : null;
+  if (!a) return null;
+  const { data: c } = await i.from('tms_conductores').select('id').eq('user_id', a).limit(1);
+  return c && c.length ? c[0].id : null;
+}
+function le({ ordenId: r, onDone: e, onCancel: o }) {
+  const [a, c] = f.useState(''),
+    [l, g] = f.useState(''),
+    [b, P] = f.useState(null),
+    [v, I] = f.useState(null),
+    [w, y] = f.useState(!1),
+    x = f.useRef(null),
+    h = f.useRef(!1),
+    _ = f.useRef(!1);
+  f.useEffect(() => {
+    const t = x.current;
+    if (!t) return;
+    const s = t.getContext('2d'),
+      d = window.devicePixelRatio || 1,
+      j = t.getBoundingClientRect();
+    ((t.width = j.width * d),
+      (t.height = j.height * d),
+      s.scale(d, d),
+      (s.lineWidth = 2.2),
+      (s.lineCap = 'round'),
+      (s.strokeStyle = '#0f172a'));
+    const C = (u) => {
+        const p = t.getBoundingClientRect(),
+          S = u.touches ? u.touches[0] : u;
+        return { x: S.clientX - p.left, y: S.clientY - p.top };
+      },
+      E = (u) => {
+        (u.preventDefault(), (h.current = !0));
+        const p = C(u);
+        (s.beginPath(), s.moveTo(p.x, p.y));
+      },
+      N = (u) => {
+        if (!h.current) return;
+        u.preventDefault();
+        const p = C(u);
+        (s.lineTo(p.x, p.y), s.stroke(), (_.current = !0));
+      },
+      k = () => {
+        h.current = !1;
+      };
+    return (
+      t.addEventListener('pointerdown', E),
+      t.addEventListener('pointermove', N),
+      window.addEventListener('pointerup', k),
+      () => {
+        (t.removeEventListener('pointerdown', E),
+          t.removeEventListener('pointermove', N),
+          window.removeEventListener('pointerup', k));
+      }
+    );
+  }, []);
+  const O = () => {
+      const t = x.current;
+      (t.getContext('2d').clearRect(0, 0, t.width, t.height), (_.current = !1));
+    },
+    $ = (t) => {
+      var d;
+      const s = (d = t.target.files) == null ? void 0 : d[0];
+      s && (P(s), I(URL.createObjectURL(s)));
+    },
+    T = () => {
+      if (!navigator.geolocation) return m.info('GPS no disponible');
+      navigator.geolocation.getCurrentPosition(
+        (t) => g(`${t.coords.latitude.toFixed(5)},${t.coords.longitude.toFixed(5)}`),
+        () => m.error('No se pudo obtener ubicación')
+      );
+    },
+    A = () =>
+      new Promise((t) => {
+        if (!_.current) return t(null);
+        x.current.toBlob((s) => t(s), 'image/png');
+      }),
+    D = async () => {
+      if (!a.trim()) return m.info('Indica quién recibió');
+      y(!0);
+      try {
+        const t = { recibido_por: a.trim(), gps: l };
+        b && (t.foto_url = await R(r, 'foto', b, b.name.split('.').pop() || 'jpg'));
+        const s = await A();
+        s && (t.firma_url = await R(r, 'firma', s, 'png'));
+        const d = await M(r, t);
+        d.ok
+          ? (m.success('Entrega registrada'), e == null || e())
+          : m.error(d.error || 'No se pudo registrar');
+      } catch (t) {
+        m.error('Error al subir evidencia: ' + ((t == null ? void 0 : t.message) || ''));
+      } finally {
+        y(!1);
+      }
+    };
+  return n.jsxs('div', {
+    className: 'space-y-3',
+    children: [
+      n.jsx('input', {
+        value: a,
+        onChange: (t) => c(t.target.value),
+        placeholder: 'Recibido por (nombre)',
+        className:
+          'w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-emerald-400'
+      }),
+      n.jsxs('div', {
+        className: 'flex gap-2',
+        children: [
+          n.jsx('input', {
+            value: l,
+            onChange: (t) => g(t.target.value),
+            placeholder: 'GPS (lat,lon)',
+            className:
+              'flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-emerald-400'
+          }),
+          n.jsxs('button', {
+            onClick: T,
+            className:
+              'px-3 rounded-xl border border-slate-200 text-slate-600 text-sm inline-flex items-center gap-1',
+            children: [n.jsx(L, { size: 15 }), ' Ubicar']
+          })
+        ]
+      }),
+      n.jsxs('div', {
+        children: [
+          n.jsxs('label', {
+            className:
+              'flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-500 text-sm font-semibold cursor-pointer hover:border-emerald-300',
+            children: [
+              n.jsx(q, { size: 17 }),
+              ' ',
+              b ? 'Cambiar foto' : 'Tomar / adjuntar foto',
+              n.jsx('input', {
+                type: 'file',
+                accept: 'image/*',
+                capture: 'environment',
+                onChange: $,
+                className: 'hidden'
+              })
+            ]
+          }),
+          v &&
+            n.jsx('img', {
+              src: v,
+              alt: 'evidencia',
+              className: 'mt-2 w-full max-h-44 object-cover rounded-xl border border-slate-200'
+            })
+        ]
+      }),
+      n.jsxs('div', {
+        children: [
+          n.jsxs('div', {
+            className: 'flex items-center justify-between mb-1',
+            children: [
+              n.jsxs('span', {
+                className:
+                  'text-[11px] font-bold text-slate-500 uppercase inline-flex items-center gap-1',
+                children: [n.jsx(U, { size: 13 }), ' Firma']
+              }),
+              n.jsx('button', {
+                onClick: O,
+                className: 'text-[11px] text-slate-400 hover:text-red-500',
+                children: 'Limpiar'
+              })
+            ]
+          }),
+          n.jsx('canvas', {
+            ref: x,
+            className: 'w-full h-36 rounded-xl border border-slate-200 bg-white touch-none',
+            style: { touchAction: 'none' }
+          })
+        ]
+      }),
+      n.jsxs('div', {
+        className: 'flex gap-2 pt-1',
+        children: [
+          o &&
+            n.jsx('button', {
+              onClick: o,
+              className:
+                'px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold',
+              children: n.jsx(F, { size: 15 })
+            }),
+          n.jsxs('button', {
+            onClick: D,
+            disabled: w,
+            className:
+              'flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 inline-flex items-center justify-center gap-2',
+            children: [n.jsx(B, { size: 16 }), ' ', w ? 'Registrando…' : 'Confirmar entrega']
+          })
+        ]
+      })
+    ]
+  });
+}
+export {
+  G as E,
+  le as P,
+  J as S,
+  Q as T,
+  ee as a,
+  te as b,
+  H as c,
+  re as d,
+  ae as e,
+  oe as f,
+  se as g,
+  Z as l,
+  ce as m,
+  ie as r,
+  ne as t
+};
