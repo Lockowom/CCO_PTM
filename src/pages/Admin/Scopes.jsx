@@ -38,7 +38,7 @@ const inp =
 const lbl = 'text-[11px] font-bold text-slate-500 uppercase tracking-wide';
 
 export default function Scopes() {
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, user, loading: authLoading, isAuthenticated } = useAuth();
   const puede = hasPermission('manage_roles') || user?.rol === 'ADMIN' || user?.es_admin_delegado;
 
   const [cat, setCat] = useState({ usuarios: [], roles: [], centros_costo: [] });
@@ -55,6 +55,13 @@ export default function Scopes() {
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
+    if (authLoading || !isAuthenticated || !puede) {
+      setCat({ usuarios: [], roles: [], centros_costo: [] });
+      setAsigs([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -66,7 +73,7 @@ export default function Scopes() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authLoading, isAuthenticated, puede]);
   useEffect(() => {
     cargar();
   }, [cargar]);

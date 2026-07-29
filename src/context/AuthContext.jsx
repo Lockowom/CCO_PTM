@@ -417,6 +417,10 @@ export const AuthProvider = ({ children }) => {
       if (!navigator.onLine) return;
 
       try {
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
         await supabase.from('tms_usuarios_activos').upsert(
           {
             usuario_id: user.id,
@@ -496,24 +500,16 @@ export const AuthProvider = ({ children }) => {
         // Registrar acceso
         void (async () => {
           try {
+            const {
+              data: { session }
+            } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
             await supabase.from('tms_accesos').insert({
               usuario_id: profile.id,
               nombre: profile.nombre,
               email: profile.email,
               rol: profile.rol
             });
-
-            await supabase.from('tms_usuarios_activos').upsert(
-              {
-                usuario_id: profile.id,
-                nombre: profile.nombre,
-                rol: profile.rol,
-                ultima_actividad: new Date().toISOString(),
-                modulo_actual: 'Inicio de Sesión',
-                estado: 'ONLINE'
-              },
-              { onConflict: 'usuario_id' }
-            );
           } catch (_) {
             Logger.warn(_, {
               kind: 'audit',

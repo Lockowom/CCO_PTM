@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 import { misNotificaciones, marcarLeida, marcarTodasLeidas } from '../services/eventosService';
 import { Logger } from '../lib/logger';
+import { useAuth } from '../context/AuthContext';
 
 const fmt = (ts) => {
   if (!ts) return '';
@@ -20,10 +21,15 @@ const fmt = (ts) => {
 // Campana de notificaciones in-app (Centro de Notificaciones, migración 114).
 export default function NotificationBell() {
   const nav = useNavigate();
+  const { isAuthenticated, loading, user } = useAuth();
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
+    if (loading || !isAuthenticated || !user?.id) {
+      setItems([]);
+      return;
+    }
     try {
       setItems(await misNotificaciones());
     } catch (error) {
@@ -34,8 +40,12 @@ export default function NotificationBell() {
         message: 'Fallo la carga de notificaciones en la campana'
       });
     }
-  }, []);
+  }, [isAuthenticated, loading, user?.id]);
   useEffect(() => {
+    if (loading || !isAuthenticated || !user?.id) {
+      setItems([]);
+      return undefined;
+    }
     load();
     const runIfVisible = () => {
       if (typeof document !== 'undefined' && document.hidden) return;
@@ -53,7 +63,7 @@ export default function NotificationBell() {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onFocus);
     };
-  }, [load]);
+  }, [isAuthenticated, load, loading, user?.id]);
 
   const leer = async (id) => {
     await marcarLeida(id);

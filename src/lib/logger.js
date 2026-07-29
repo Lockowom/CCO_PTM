@@ -14,8 +14,8 @@ const loggerState = {
   handlersInstalled: false,
   appContext: {
     appVersion: APP_VERSION,
-    source: 'frontend',
-  },
+    source: 'frontend'
+  }
 };
 
 function createId() {
@@ -39,18 +39,21 @@ function safeSerialize(value, depth = 4, seen = new WeakSet()) {
     return {
       name: value.name,
       message: truncate(value.message),
-      stack: truncate(value.stack || '', 12000),
+      stack: truncate(value.stack || '', 12000)
     };
   }
   if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.slice(0, 50).map((item) => safeSerialize(item, depth - 1, seen));
+  if (Array.isArray(value))
+    return value.slice(0, 50).map((item) => safeSerialize(item, depth - 1, seen));
   if (typeof value === 'object') {
     if (seen.has(value)) return '[circular]';
     seen.add(value);
     const out = {};
-    Object.entries(value).slice(0, 60).forEach(([key, item]) => {
-      out[key] = safeSerialize(item, depth - 1, seen);
-    });
+    Object.entries(value)
+      .slice(0, 60)
+      .forEach(([key, item]) => {
+        out[key] = safeSerialize(item, depth - 1, seen);
+      });
     seen.delete(value);
     return out;
   }
@@ -78,7 +81,7 @@ function browserInfo() {
     online: navigator.onLine,
     url: window.location.href,
     referrer: document.referrer || '',
-    viewport: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
+    viewport: `${window.innerWidth || 0}x${window.innerHeight || 0}`
   });
 }
 
@@ -99,14 +102,17 @@ function buildMessage(details) {
 }
 
 function buildFingerprint(details) {
-  return truncate([
-    details.kind || DEFAULT_KIND,
-    details.module || inferModule(details.route),
-    details.screen || '',
-    details.action || '',
-    details.errorName || details.error?.name || '',
-    buildMessage(details),
-  ].join('|'), 512);
+  return truncate(
+    [
+      details.kind || DEFAULT_KIND,
+      details.module || inferModule(details.route),
+      details.screen || '',
+      details.action || '',
+      details.errorName || details.error?.name || '',
+      buildMessage(details)
+    ].join('|'),
+    512
+  );
 }
 
 function buildEvent(level, input, extra = {}) {
@@ -130,7 +136,9 @@ function buildEvent(level, input, extra = {}) {
     payload,
     context,
     browser: safeSerialize({ ...browserInfo(), ...(details.browser || {}) }),
-    durationMs: Number.isFinite(details.durationMs) ? Math.max(0, Math.round(details.durationMs)) : null,
+    durationMs: Number.isFinite(details.durationMs)
+      ? Math.max(0, Math.round(details.durationMs))
+      : null,
     appVersion: details.appVersion || loggerState.appContext.appVersion,
     commitSha: details.commitSha || loggerState.appContext.commitSha || '',
     buildNumber: details.buildNumber || loggerState.appContext.buildNumber || '',
@@ -139,8 +147,8 @@ function buildEvent(level, input, extra = {}) {
     handled: details.handled !== false,
     fingerprint: details.fingerprint || buildFingerprint(details),
     user: safeSerialize(loggerState.user || {}),
-    persist: details.persist ?? (level !== 'info'),
-    rawError: error,
+    persist: details.persist ?? level !== 'info',
+    rawError: error
   };
   return event;
 }
@@ -154,11 +162,16 @@ function writeConsole(level, event) {
     user: event.user,
     context: event.context,
     payload: event.payload,
-    durationMs: event.durationMs,
+    durationMs: event.durationMs
   });
 }
 
 async function persistEvent(event) {
+  if (!loggerState.user?.id) return;
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) return;
   const rpcPayload = {
     level: event.level,
     kind: event.kind,
@@ -181,7 +194,7 @@ async function persistEvent(event) {
     correlation_id: event.correlationId,
     session_id: event.sessionId,
     handled: event.handled,
-    fingerprint: event.fingerprint,
+    fingerprint: event.fingerprint
   };
   const { error } = await supabase.rpc('log_client_event', { p_event: rpcPayload });
   if (error) throw error;
@@ -224,7 +237,7 @@ function captureToSentry(event) {
     route: event.route,
     correlationId: event.correlationId,
     payload: event.payload,
-    context: event.context,
+    context: event.context
   });
 }
 
@@ -245,7 +258,7 @@ export function setLoggerUserContext(user) {
     id: user.id ?? null,
     email: user.email ?? '',
     nombre: user.nombre ?? '',
-    rol: user.rol ?? '',
+    rol: user.rol ?? ''
   };
 }
 
@@ -256,7 +269,7 @@ export function clearLoggerUserContext() {
 export function setLoggerAppContext(context = {}) {
   loggerState.appContext = {
     ...loggerState.appContext,
-    ...safeSerialize(context),
+    ...safeSerialize(context)
   };
 }
 
@@ -275,15 +288,18 @@ export function installGlobalErrorHandlers() {
       context: {
         filename: event.filename || '',
         lineno: event.lineno || null,
-        colno: event.colno || null,
-      },
+        colno: event.colno || null
+      }
     });
   });
 
   window.addEventListener('unhandledrejection', (event) => {
-    const reason = event.reason instanceof Error
-      ? event.reason
-      : new Error(typeof event.reason === 'string' ? event.reason : 'Unhandled promise rejection');
+    const reason =
+      event.reason instanceof Error
+        ? event.reason
+        : new Error(
+            typeof event.reason === 'string' ? event.reason : 'Unhandled promise rejection'
+          );
     emit('error', reason, {
       kind: 'frontend',
       module: inferModule(currentRoute()),
@@ -292,8 +308,8 @@ export function installGlobalErrorHandlers() {
       route: currentRoute(),
       handled: false,
       context: {
-        reason: safeSerialize(event.reason),
-      },
+        reason: safeSerialize(event.reason)
+      }
     });
   });
 }
@@ -326,7 +342,7 @@ export const Logger = {
         durationMs: performance.now() - started,
         status: 'ok',
         payload: extra.payload,
-        context: extra.context,
+        context: extra.context
       });
       return result;
     } catch (error) {
@@ -338,9 +354,9 @@ export const Logger = {
         durationMs: performance.now() - started,
         status: 'error',
         payload: extra.payload,
-        context: extra.context,
+        context: extra.context
       });
       throw error;
     }
-  },
+  }
 };

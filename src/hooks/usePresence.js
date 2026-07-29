@@ -19,9 +19,9 @@ export const usePresence = (roomName) => {
     const channel = supabase.channel(`room:${roomName}`, {
       config: {
         presence: {
-          key: user.id,
-        },
-      },
+          key: user.id
+        }
+      }
     });
 
     channel
@@ -38,7 +38,7 @@ export const usePresence = (roomName) => {
             id: user.id,
             name: user.nombre || user.email,
             rol: user.rol,
-            joined_at: new Date().toISOString(),
+            joined_at: new Date().toISOString()
           });
         }
       });
@@ -75,7 +75,7 @@ const PATH_TO_MODULE = {
   '/admin/upload-history': 'Historial Cargas',
   '/admin/locations': 'Gestión Ubicaciones',
   '/admin/cleanup': 'Limpieza',
-  '/admin/monitor': 'Monitor Tiempo Real',
+  '/admin/monitor': 'Monitor Tiempo Real'
 };
 
 export const getModuleName = (path) => PATH_TO_MODULE[path] || path;
@@ -95,13 +95,17 @@ export const usePresenceTracker = () => {
     if (!user?.id) return;
     const moduleName = PATH_TO_MODULE[pathname] || pathname;
     try {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
       await supabase
         .from('tms_usuarios')
         .update({
           last_seen: new Date().toISOString(),
           current_module: moduleName,
           current_path: pathname,
-          session_start: sessionStartRef.current,
+          session_start: sessionStartRef.current
         })
         .eq('id', user.id);
     } catch (_) {
