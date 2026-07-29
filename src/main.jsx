@@ -17,7 +17,8 @@ initSentry();
 installGlobalErrorHandlers();
 setLoggerAppContext({
   appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
-  buildNumber: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+  buildNumber: typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : 'dev',
+  commitSha: typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : ''
 });
 
 const queryClient = new QueryClient({
