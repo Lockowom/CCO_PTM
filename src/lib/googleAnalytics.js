@@ -19,9 +19,9 @@ function ensureDataLayer() {
   }
 }
 
-function gtag(...args) {
+function gtag() {
   ensureDataLayer();
-  window.dataLayer.push(args);
+  window.dataLayer.push(arguments);
 }
 
 function loadGaScript() {
