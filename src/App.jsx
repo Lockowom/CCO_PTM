@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -22,13 +22,6 @@ import NovedadesModal from './components/NovedadesModal';
 import AsistenteIA from './components/AsistenteIA';
 import { supabase } from './supabase';
 import { toast, Toaster } from 'sonner';
-import {
-  PanelIngresar,
-  PanelInfo,
-  PanelTV,
-  PanelBuilder,
-  PanelConfig
-} from './pages/Panel/PanelScreens';
 
 // Login & Dashboard
 const Login = React.lazy(() => import('./pages/Login'));
@@ -36,6 +29,14 @@ const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertifica
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
+import { trackPageView } from './lib/googleAnalytics';
+
+// Panel PTM
+const PanelIngresar = React.lazy(() => import('./pages/Panel/screens/PanelIngresar'));
+const PanelInfo = React.lazy(() => import('./pages/Panel/info/PanelInfoReal'));
+const PanelTV = React.lazy(() => import('./pages/Panel/tv/PanelTVReal'));
+const PanelBuilder = React.lazy(() => import('./pages/Panel/builder/PanelBuilderReal'));
+const PanelConfig = React.lazy(() => import('./pages/Panel/config/PanelConfigReal'));
 
 // Mobile — PDA Operativa de Bodega
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
@@ -116,6 +117,45 @@ const ROUTE_PRIORITY = [
 
 // Global Suspense Loader Cyber-Logístico (con escape de seguridad a los 15s)
 const SuspenseLoader = () => <SuspenseLoaderTimeout />;
+
+function inferRouteArea(pathname = '') {
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/consulta') ||
+    pathname.startsWith('/verificar') ||
+    pathname.startsWith('/soporte')
+  ) {
+    return 'public';
+  }
+  return 'internal';
+}
+
+const AnalyticsRouteTracker = () => {
+  const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
+  const lastTrackedPathRef = useRef('');
+
+  useEffect(() => {
+    const path = `${location.pathname || ''}${location.search || ''}`;
+    if (!path || lastTrackedPathRef.current === path) return;
+
+    const authState = loading ? 'loading' : isAuthenticated ? 'authenticated' : 'anonymous';
+    const routeArea = inferRouteArea(location.pathname);
+    const raf = requestAnimationFrame(() => {
+      trackPageView({
+        path,
+        title: document.title || 'CCO PTM',
+        authState,
+        routeArea
+      });
+      lastTrackedPathRef.current = path;
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [isAuthenticated, loading, location.pathname, location.search]);
+
+  return null;
+};
 
 // Componente de Acceso Denegado
 const AccessDenied = ({ requiredPermissions, route }) => {
@@ -363,6 +403,7 @@ function AppContent() {
 
   return (
     <Router>
+      <AnalyticsRouteTracker />
       {/* OTA Update Overlay — fullscreen blocker while applying */}
       <UpdateOverlay
         updateInfo={pendingUpdate}

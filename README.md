@@ -106,6 +106,8 @@ VITE_SUPABASE_KEY=tu_anon_key
 VITE_SENTRY_DSN=tu_dsn_publico_sentry
 VITE_SENTRY_ENVIRONMENT=development
 VITE_SENTRY_ENABLE_DEV=false
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+VITE_GA_ENABLE_DEV=false
 
 npm run dev              # desarrollo (Vite)
 npm test                 # tests (Vitest)
@@ -113,6 +115,9 @@ npm run build            # build producción → dist/
 npm run deploy:mobile    # bundle OTA a Capgo (canal production)
 npm run update:traspasos # re-sincroniza el módulo Traspasos (em-il)
 ```
+
+- `VITE_GA_MEASUREMENT_ID`: Measurement ID de Google Analytics 4 para la web.
+- `VITE_GA_ENABLE_DEV=true`: habilita GA4 localmente solo para pruebas; por defecto se mantiene apagado en desarrollo.
 
 ## 🚢 Despliegue
 

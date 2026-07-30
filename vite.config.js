@@ -121,7 +121,9 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'supabase-vendor': ['@supabase/supabase-js'],
-          'ui-vendor': ['lucide-react', 'sonner', 'recharts', 'gsap', '@gsap/react'],
+          'ui-vendor': ['lucide-react', 'sonner'],
+          'charts-vendor': ['recharts'],
+          'animation-vendor': ['gsap', '@gsap/react'],
           'query-vendor': ['@tanstack/react-query']
         }
       }

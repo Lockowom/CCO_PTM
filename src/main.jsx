@@ -8,12 +8,14 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import { initSentry } from './lib/sentry';
 import { validateEnv } from './lib/env';
 import { installGlobalErrorHandlers, Logger, setLoggerAppContext } from './lib/logger';
+import { initGoogleAnalytics } from './lib/googleAnalytics';
 
 // Validar variables de entorno críticas antes de hacer nada
 validateEnv();
 
 // Inicializar Sentry (Monitoreo de Errores)
 initSentry();
+initGoogleAnalytics();
 installGlobalErrorHandlers();
 setLoggerAppContext({
   appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',

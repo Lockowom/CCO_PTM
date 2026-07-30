@@ -10,7 +10,12 @@ export const AppEnvSchema = z
       .string()
       .min(1, 'VITE_SENTRY_ENVIRONMENT no puede estar vacia')
       .optional(),
-    VITE_SENTRY_ENABLE_DEV: z.enum(['true', 'false']).optional()
+    VITE_SENTRY_ENABLE_DEV: z.enum(['true', 'false']).optional(),
+    VITE_GA_MEASUREMENT_ID: z
+      .string()
+      .regex(/^G-[A-Z0-9]+$/, 'VITE_GA_MEASUREMENT_ID debe tener formato G-XXXXXXXXXX')
+      .optional(),
+    VITE_GA_ENABLE_DEV: z.enum(['true', 'false']).optional()
   })
   .superRefine((value, ctx) => {
     if (!value.VITE_SUPABASE_KEY && !value.VITE_SUPABASE_ANON_KEY) {
