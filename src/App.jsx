@@ -29,7 +29,7 @@ const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertifica
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
-import { trackPageView } from './lib/googleAnalytics';
+import { initGoogleAnalytics, trackPageView } from './lib/googleAnalytics';
 
 // Panel PTM
 const PanelIngresar = React.lazy(() => import('./pages/Panel/screens/PanelIngresar'));
@@ -142,13 +142,15 @@ const AnalyticsRouteTracker = () => {
     const authState = loading ? 'loading' : isAuthenticated ? 'authenticated' : 'anonymous';
     const routeArea = inferRouteArea(location.pathname);
     const raf = requestAnimationFrame(() => {
-      trackPageView({
-        path,
-        title: document.title || 'CCO PTM',
-        authState,
-        routeArea
+      void initGoogleAnalytics().finally(() => {
+        trackPageView({
+          path,
+          title: document.title || 'CCO PTM',
+          authState,
+          routeArea
+        });
+        lastTrackedPathRef.current = path;
       });
-      lastTrackedPathRef.current = path;
     });
 
     return () => cancelAnimationFrame(raf);
