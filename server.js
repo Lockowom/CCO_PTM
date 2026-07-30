@@ -83,7 +83,7 @@ app.use((req, res, next) => {
     // sin nominatim/osrm.
     // frame-src: 'self' (iframe propio de Traspasos en /traspasos/). El Panel PTM
     // ahora es NATIVO en CCO — el iframe externo (Vercel) se retiró tras la migración.
-    "default-src 'self'; script-src 'self' 'sha256-FS5pu9F1XSI0eqDWQs2P/lSOYdkqq1PG0kBMjc4+SfE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io; font-src 'self'; frame-src 'self';"
+    "default-src 'self'; script-src 'self' 'sha256-FS5pu9F1XSI0eqDWQs2P/lSOYdkqq1PG0kBMjc4+SfE=' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://*.google-analytics.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; font-src 'self'; frame-src 'self';"
   );
   next();
 });
@@ -385,15 +385,13 @@ app.post('/api/asistente', express.json({ limit: '1mb' }), async (req, res) => {
     });
   } catch (e) {
     const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
-    return res
-      .status(timedOut ? 504 : 502)
-      .json({
-        error: {
-          message: timedOut
-            ? 'La IA tardó demasiado en responder.'
-            : 'Error al contactar la IA: ' + String(e)
-        }
-      });
+    return res.status(timedOut ? 504 : 502).json({
+      error: {
+        message: timedOut
+          ? 'La IA tardó demasiado en responder.'
+          : 'Error al contactar la IA: ' + String(e)
+      }
+    });
   }
 });
 
