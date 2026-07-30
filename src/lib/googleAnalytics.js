@@ -53,6 +53,20 @@ export async function initGoogleAnalytics() {
     typeof window === 'undefined' ||
     typeof document === 'undefined'
   ) {
+    // #region debug-point A:ga-init-skip
+    Logger.info('[DEBUG] GA init omitido', {
+      module: 'analytics',
+      screen: 'bootstrap',
+      action: 'ga_init_skip',
+      persist: false,
+      payload: {
+        isEnabled: isGaEnabled(),
+        gaInitialized,
+        hasWindow: typeof window !== 'undefined',
+        hasDocument: typeof document !== 'undefined'
+      }
+    });
+    // #endregion
     return;
   }
 
@@ -69,6 +83,19 @@ export async function initGoogleAnalytics() {
       app_version: APP_VERSION,
       debug_mode: !IS_PROD && GA_ENABLE_DEV
     });
+    // #region debug-point A:ga-init-success
+    Logger.info('[DEBUG] GA inicializado', {
+      module: 'analytics',
+      screen: 'bootstrap',
+      action: 'ga_init_ok',
+      persist: false,
+      payload: {
+        measurementId: GA_MEASUREMENT_ID,
+        appVersion: APP_VERSION,
+        buildId: APP_BUILD_ID
+      }
+    });
+    // #endregion
     gaInitialized = true;
   } catch (error) {
     Logger.warn(error, {
@@ -82,8 +109,38 @@ export async function initGoogleAnalytics() {
 }
 
 export function trackPageView({ path, title, authState = 'unknown', routeArea = 'internal' } = {}) {
-  if (!gaInitialized || typeof window === 'undefined' || !path) return;
+  if (!gaInitialized || typeof window === 'undefined' || !path) {
+    // #region debug-point A:page-view-skip
+    Logger.info('[DEBUG] page_view omitido', {
+      module: 'analytics',
+      screen: 'router',
+      action: 'ga_page_view_skip',
+      persist: false,
+      payload: {
+        gaInitialized,
+        hasWindow: typeof window !== 'undefined',
+        path: path || ''
+      }
+    });
+    // #endregion
+    return;
+  }
 
+  // #region debug-point A:page-view-fire
+  Logger.info('[DEBUG] page_view enviado a gtag', {
+    module: 'analytics',
+    screen: 'router',
+    action: 'ga_page_view_fire',
+    persist: false,
+    payload: {
+      path,
+      title: title || document.title || 'CCO PTM',
+      authState,
+      routeArea,
+      buildId: APP_BUILD_ID
+    }
+  });
+  // #endregion
   window.gtag('event', 'page_view', {
     page_title: title || document.title || 'CCO PTM',
     page_path: path,

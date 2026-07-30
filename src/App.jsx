@@ -30,6 +30,7 @@ const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPub
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
 import { initGoogleAnalytics, trackPageView } from './lib/googleAnalytics';
+import { Logger } from './lib/logger';
 
 // Panel PTM
 const PanelIngresar = React.lazy(() => import('./pages/Panel/screens/PanelIngresar'));
@@ -141,8 +142,35 @@ const AnalyticsRouteTracker = () => {
 
     const authState = loading ? 'loading' : isAuthenticated ? 'authenticated' : 'anonymous';
     const routeArea = inferRouteArea(location.pathname);
+    // #region debug-point B:route-tracker
+    Logger.info('[DEBUG] AnalyticsRouteTracker programado', {
+      module: 'analytics',
+      screen: 'router',
+      action: 'ga_route_tracker_scheduled',
+      persist: false,
+      payload: {
+        path,
+        authState,
+        routeArea,
+        lastTrackedPath: lastTrackedPathRef.current || ''
+      }
+    });
+    // #endregion
     const raf = requestAnimationFrame(() => {
       void initGoogleAnalytics().finally(() => {
+        // #region debug-point B:route-tracker-finally
+        Logger.info('[DEBUG] AnalyticsRouteTracker ejecuta trackPageView', {
+          module: 'analytics',
+          screen: 'router',
+          action: 'ga_route_tracker_fire',
+          persist: false,
+          payload: {
+            path,
+            authState,
+            routeArea
+          }
+        });
+        // #endregion
         trackPageView({
           path,
           title: document.title || 'CCO PTM',
