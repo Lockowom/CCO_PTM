@@ -97,12 +97,6 @@ export default defineConfig({
               },
               cacheableResponse: {
                 statuses: [0, 200]
-              },
-              backgroundSync: {
-                name: 'supabase-background-sync',
-                options: {
-                  maxRetentionTime: 24 * 60 // Retener peticiones fallidas por 24h
-                }
               }
             }
           }
