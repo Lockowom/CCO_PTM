@@ -1,0 +1,7 @@
+# CCO PTM Edge Function policy.
+# Database webhooks must be configured with "Add auth header with service key".
+[functions.notify-ticket]
+verify_jwt = true
+
+[functions.notify-ticket-update]
+verify_jwt = true
