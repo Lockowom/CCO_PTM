@@ -6,17 +6,19 @@ import { useAuth } from '../context/AuthContext';
 function useCanViewCalidadFlags() {
   const { user, loading, hasPermission } = useAuth();
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
-  const canView = isAdmin || [
-    'manage_quality',
-    'manage_monitoreo',
-    'view_acciones_calidad',
-    'manage_inventory',
-    'view_locations',
-    'manage_locations',
-    'view_stock',
-    'manage_stock',
-    'view_inventario',
-  ].some((permissionId) => hasPermission(permissionId));
+  const canView =
+    isAdmin ||
+    [
+      'manage_quality',
+      'manage_monitoreo',
+      'view_acciones_calidad',
+      'manage_inventory',
+      'view_locations',
+      'manage_locations',
+      'view_stock',
+      'manage_stock',
+      'view_inventario'
+    ].some((permissionId) => hasPermission(permissionId));
   return !loading && canView;
 }
 
@@ -44,6 +46,10 @@ export function useCalidadFlags() {
       return data || [];
     },
     staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 2_000)
   });
 
   const { byCodigo, byCodigoUbic } = useMemo(() => {

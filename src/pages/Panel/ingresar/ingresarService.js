@@ -840,13 +840,25 @@ export async function lookup(canal, nv) {
 
       const run = async () => {
         const col = colDe(canal);
-        let q = supabase
-          .from(OPERACIONES_READ_VIEW)
-          .select(PREVIEW)
-          .order('fecha_estado', { ascending: false })
-          .limit(1);
-        q = canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
-        const [{ data }, cat] = await Promise.all([q, buscarNvCatalogo(canal, t)]);
+        // Es una coincidencia exacta: consultar la tabla base permite que
+        // PostgreSQL use el índice de N.V. y evita recalcular toda la vista
+        // tms_operaciones_vigentes (que deduplica el histórico completo).
+        const [lookupResult, cat] = await Promise.all([
+          readWithPoolRetry(
+            () => {
+              let q = supabase
+                .from(OPERACIONES_BASE_TABLE)
+                .select(PREVIEW)
+                .order('fecha_estado', { ascending: false })
+                .limit(1);
+              return canal === 'ptm' && /^\d+$/.test(t) ? q.eq(col, Number(t)) : q.eq(col, t);
+            },
+            { ms: 2500, label: 'Lookup exacto de N.V. del Panel' }
+          ),
+          buscarNvCatalogo(canal, t)
+        ]);
+        if (lookupResult?.error) throw lookupResult.error;
+        const data = lookupResult?.data || [];
         const r = data && data.length ? data[0] : null;
 
         const cliente = r?.cliente || cat?.cliente || '';

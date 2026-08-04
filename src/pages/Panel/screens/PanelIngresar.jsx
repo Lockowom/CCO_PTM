@@ -203,41 +203,44 @@ function DetalleDrawer({
   const [requestingReopen, setRequestingReopen] = useState(false);
   const [resolvingReopen, setResolvingReopen] = useState(false);
 
-  const snapshotFromItem = useMemo(() => ({
-    id: item?.id ?? null,
-    canal: item?.canal || '',
-    nv: item?.nv || '',
-    cliente: item?.cliente || '',
-    vendedor: item?.vendedor || '',
-    ccosto: '',
-    division: '',
-    estado: item?.estado || '',
-    transportista: item?.transportista || '',
-    tipo_despacho: '',
-    fecha_aprobacion: item?.fechaAprobacion || '',
-    fecha_aprobacion_real: item?.fechaAprobacionReal || '',
-    fecha_compromiso: item?.fechaCompromiso || '',
-    fecha_facturacion: item?.factura ? '' : '',
-    fecha_despacho: '',
-    fecha_estado: '',
-    fecha_registro_nv: '',
-    fecha_en_proceso: '',
-    fecha_shipping: '',
-    fecha_en_ruta: '',
-    fecha_entregado: '',
-    factura: item?.factura || '',
-    guia: item?.guia || '',
-    bultos: '',
-    valor_factura: '',
-    numero_envio: '',
-    urgente: item?.urgente === true,
-    incidencia: '',
-    estado_incidencia: '',
-    observaciones_incidencia: '',
-    reabierta: item?.reabierta === true,
-    fecha_reapertura: '',
-    motivo_reapertura: item?.motivoReapertura || '',
-  }), [item]);
+  const snapshotFromItem = useMemo(
+    () => ({
+      id: item?.id ?? null,
+      canal: item?.canal || '',
+      nv: item?.nv || '',
+      cliente: item?.cliente || '',
+      vendedor: item?.vendedor || '',
+      ccosto: '',
+      division: '',
+      estado: item?.estado || '',
+      transportista: item?.transportista || '',
+      tipo_despacho: '',
+      fecha_aprobacion: item?.fechaAprobacion || '',
+      fecha_aprobacion_real: item?.fechaAprobacionReal || '',
+      fecha_compromiso: item?.fechaCompromiso || '',
+      fecha_facturacion: item?.factura ? '' : '',
+      fecha_despacho: '',
+      fecha_estado: '',
+      fecha_registro_nv: '',
+      fecha_en_proceso: '',
+      fecha_shipping: '',
+      fecha_en_ruta: '',
+      fecha_entregado: '',
+      factura: item?.factura || '',
+      guia: item?.guia || '',
+      bultos: '',
+      valor_factura: '',
+      numero_envio: '',
+      urgente: item?.urgente === true,
+      incidencia: '',
+      estado_incidencia: '',
+      observaciones_incidencia: '',
+      reabierta: item?.reabierta === true,
+      fecha_reapertura: '',
+      motivo_reapertura: item?.motivoReapertura || ''
+    }),
+    [item]
+  );
 
   useEffect(() => {
     let on = true;
@@ -1043,37 +1046,13 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ROWS);
   const loadMoreRef = useRef(null);
   const remoteReqRef = useRef(0);
-  const qRef = useRef('');
-  const fullHydrateTimerRef = useRef(null);
-  const pendingFullRowsRef = useRef(null);
-
-  useEffect(() => {
-    qRef.current = q;
-  }, [q]);
 
   const cargar = useCallback((force = false) => {
-    if (fullHydrateTimerRef.current) {
-      clearTimeout(fullHydrateTimerRef.current);
-      fullHydrateTimerRef.current = null;
-    }
     setLoading(true);
     listaActivas({ force, full: false, limit: 400 })
       .then((rows) => {
         setLista(rows);
         setLoading(false);
-        fullHydrateTimerRef.current = setTimeout(() => {
-          if (typeof document !== 'undefined' && document.hidden) return;
-          if (qRef.current.trim().length >= 2) return;
-          listaActivas({ force, full: true })
-            .then((fullRows) => {
-              if (qRef.current.trim().length >= 2) {
-                pendingFullRowsRef.current = fullRows;
-                return;
-              }
-              setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
-            })
-            .catch(() => {});
-        }, 1200);
       })
       .catch(() => {
         setLista([]);
@@ -1082,9 +1061,6 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
   }, []);
   useEffect(() => {
     cargar();
-    return () => {
-      if (fullHydrateTimerRef.current) clearTimeout(fullHydrateTimerRef.current);
-    };
   }, [cargar]);
 
   // Búsqueda local sobre la lista cargada.
@@ -1093,24 +1069,6 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
     const term = q.trim();
     if (term.length < 2) {
       setLocalSearch([]);
-      if (pendingFullRowsRef.current) {
-        const fullRows = pendingFullRowsRef.current;
-        pendingFullRowsRef.current = null;
-        setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
-      }
-      if (!fullHydrateTimerRef.current) {
-        fullHydrateTimerRef.current = setTimeout(() => {
-          if (qRef.current.trim().length >= 2) return;
-          listaActivas({ full: true })
-            .then((fullRows) => {
-              setLista((prev) => (fullRows.length >= prev.length ? fullRows : prev));
-            })
-            .catch(() => {})
-            .finally(() => {
-              fullHydrateTimerRef.current = null;
-            });
-        }, 400);
-      }
       return;
     }
     setLocalSearch(buscarOperacionesUltraLocal(lista, term, { limit: 120 }));
