@@ -4,7 +4,9 @@ import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const CONSOLIDADO_KEYS_CACHE_TTL_MS = 60 * 1000;
-const DASHBOARD_CACHE_TTL_MS = 15 * 1000;
+const DASHBOARD_CACHE_TTL_MS = 45 * 1000;
+const DASHBOARD_SESSION_CACHE_TTL_MS = 2 * 60 * 1000;
+const DASHBOARD_SESSION_CACHE_PREFIX = 'cco:panel-dashboard:';
 const INCIDENCIAS_CACHE_TTL_MS = 15 * 1000;
 const TV_ESTADOS_CACHE_TTL_MS = 10 * 1000;
 let consolidadoKeysCache = { ts: 0, data: null, promise: null };
@@ -37,6 +39,61 @@ function setDashMapCacheValue(cache, key, value) {
 function setDashMapCachePromise(cache, key, promise) {
   cache.set(key, { ts: Date.now(), promise });
   return promise;
+}
+
+function readDashboardSessionCache(key) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null;
+  try {
+    const raw = window.sessionStorage.getItem(`${DASHBOARD_SESSION_CACHE_PREFIX}${key}`);
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    return hasFreshDashCacheValue(entry, DASHBOARD_SESSION_CACHE_TTL_MS) ? entry.value : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeDashboardSessionCache(key, value) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return;
+  try {
+    window.sessionStorage.setItem(
+      `${DASHBOARD_SESSION_CACHE_PREFIX}${key}`,
+      JSON.stringify({ ts: Date.now(), value })
+    );
+  } catch (_) {
+    // Cachear es opcional: el dashboard debe continuar si el navegador no lo permite.
+  }
+}
+
+function isTransientDashboardError(error) {
+  const status = Number(error?.status || error?.statusCode || 0);
+  return (
+    [408, 429, 500, 502, 503, 504].includes(status) ||
+    /network|fetch|timeout|connection pool|temporar/i.test(String(error?.message || error || ''))
+  );
+}
+
+async function retryDashboardRead(fn, attempts = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientDashboardError(error) || attempt === attempts - 1) throw error;
+      const delayMs = 250 * 2 ** attempt + Math.floor(Math.random() * 100);
+      Logger.warn(error, {
+        module: 'panel',
+        screen: 'PanelDashboard',
+        action: 'dashboard_retry',
+        message: 'Reintento de carga del dashboard por error transitorio',
+        attempt: attempt + 1,
+        delayMs
+      });
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError;
 }
 
 function dashDuration(startedAt) {
@@ -541,6 +598,11 @@ export async function fetchDashboardData(dateFrom, dateTo) {
       const cacheKey = `${dateFrom || ''}:${dateTo || ''}`;
       const cached = getDashMapCache(dashboardCache, cacheKey, DASHBOARD_CACHE_TTL_MS);
       if (cached) return cached;
+      const sessionCached = readDashboardSessionCache(cacheKey);
+      if (sessionCached) {
+        dashboardCache.set(cacheKey, { ts: Date.now(), value: sessionCached });
+        return sessionCached;
+      }
 
       const run = async () => {
         const [rows, activasRows, consolidadoKeys] = await Promise.all([
@@ -1267,7 +1329,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           })
           .sort((a, b) => b.cantidad - a.cantidad);
 
-        return setDashMapCacheValue(dashboardCache, cacheKey, {
+        const result = {
           kpis,
           estadoTable,
           divisions,
@@ -1285,10 +1347,12 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           alertasOperacionales,
           funnelEstados,
           heatmapData
-        });
+        };
+        writeDashboardSessionCache(cacheKey, result);
+        return setDashMapCacheValue(dashboardCache, cacheKey, result);
       };
 
-      const promise = run().catch((error) => {
+      const promise = retryDashboardRead(run).catch((error) => {
         dashboardCache.delete(cacheKey);
         throw error;
       });
