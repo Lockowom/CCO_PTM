@@ -71,12 +71,38 @@ const ESTADOS = {
 };
 
 const RECEPCION_NACIONAL_FETCH_PAGE_SIZE = 1000;
+const RECEPCION_NACIONAL_INSERT_CHUNK_SIZE = 500;
+
+async function insertRecepcionItemsNacionalesInChunks(items, recepcionId) {
+  for (let start = 0; start < items.length; start += RECEPCION_NACIONAL_INSERT_CHUNK_SIZE) {
+    const chunk = items.slice(start, start + RECEPCION_NACIONAL_INSERT_CHUNK_SIZE).map((item) => ({
+      recepcion_id: recepcionId,
+      reff: item.reff.toUpperCase(),
+      descripcion: item.descripcion || null,
+      um: item.um || 'UNI',
+      cantidad: parseInt(item.cantidad, 10) || 1,
+      serie: item.serie || null,
+      lote: item.lote || null,
+      box: item.box || null,
+      fecha_vencimiento: item.fecha_vencimiento || null
+    }));
+    const { error } = await supabase.from('tms_recepcion_items_nacionales').insert(chunk);
+    if (error)
+      throw new Error(
+        `Falló el bloque ${Math.floor(start / RECEPCION_NACIONAL_INSERT_CHUNK_SIZE) + 1}: ${error.message}`
+      );
+  }
+}
 
 async function fetchRecepcionItemsNacionalesAll(recepcionId) {
-  const allItems = [];
-  let from = 0;
+  const { count, error: countError } = await supabase
+    .from('tms_recepcion_items_nacionales')
+    .select('*', { count: 'exact', head: true })
+    .eq('recepcion_id', recepcionId);
+  if (countError) throw countError;
 
-  while (true) {
+  const allItems = [];
+  for (let from = 0; from < (count || 0); from += RECEPCION_NACIONAL_FETCH_PAGE_SIZE) {
     const to = from + RECEPCION_NACIONAL_FETCH_PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('tms_recepcion_items_nacionales')
@@ -86,12 +112,7 @@ async function fetchRecepcionItemsNacionalesAll(recepcionId) {
       .range(from, to);
 
     if (error) throw error;
-
-    const chunk = data || [];
-    allItems.push(...chunk);
-
-    if (chunk.length < RECEPCION_NACIONAL_FETCH_PAGE_SIZE) break;
-    from += RECEPCION_NACIONAL_FETCH_PAGE_SIZE;
+    allItems.push(...(data || []));
   }
 
   return allItems;
@@ -445,23 +466,7 @@ const ReceptionNacional = () => {
       }
 
       // Insertar items
-      const itemsToInsert = items.map((item) => ({
-        recepcion_id: recepcionId,
-        reff: item.reff.toUpperCase(),
-        descripcion: item.descripcion || null,
-        um: item.um || 'UNI',
-        cantidad: parseInt(item.cantidad) || 1,
-        serie: item.serie || null,
-        lote: item.lote || null,
-        box: item.box || null,
-        fecha_vencimiento: item.fecha_vencimiento || null
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('tms_recepcion_items_nacionales')
-        .insert(itemsToInsert);
-
-      if (itemsError) throw itemsError;
+      await insertRecepcionItemsNacionalesInChunks(items, recepcionId);
     },
     onSuccess: (_, variables) => {
       toast.success(editingId ? 'Recepción actualizada' : 'Recepción guardada correctamente');

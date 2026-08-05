@@ -146,10 +146,16 @@ async function insertRecepcionItemsInChunks(items, recepcionId) {
 }
 
 async function fetchRecepcionItemsAll(recepcionId) {
-  const allItems = [];
-  let from = 0;
+  const { count, error: countError } = await supabase
+    .from('tms_recepcion_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('recepcion_id', recepcionId);
+  if (countError) throw countError;
 
-  while (true) {
+  const allItems = [];
+  // Supabase limita cada respuesta, no la recepción completa. Se recorren todas
+  // las páginas conocidas por el conteo, incluso cuando hay más de 1.000 series.
+  for (let from = 0; from < (count || 0); from += RECEPCION_FETCH_PAGE_SIZE) {
     const to = from + RECEPCION_FETCH_PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('tms_recepcion_items')
@@ -159,12 +165,7 @@ async function fetchRecepcionItemsAll(recepcionId) {
       .range(from, to);
 
     if (error) throw error;
-
-    const chunk = data || [];
-    allItems.push(...chunk);
-
-    if (chunk.length < RECEPCION_FETCH_PAGE_SIZE) break;
-    from += RECEPCION_FETCH_PAGE_SIZE;
+    allItems.push(...(data || []));
   }
 
   return allItems;
@@ -2196,6 +2197,13 @@ const Reception = () => {
                     className="text-emerald-700 hover:text-emerald-800 transition-colors"
                   >
                     Cargar {Math.min(ITEM_LIST_RENDER_STEP, items.length - visibleItems.length)} más
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleItemCount(items.length)}
+                    className="text-slate-600 hover:text-slate-900 transition-colors"
+                  >
+                    Mostrar todas ({items.length})
                   </button>
                 </div>
               )}
