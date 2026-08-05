@@ -26,12 +26,11 @@ import {
   getOperacionesPorEstado,
   getIncidenciasActivas,
   fetchAuditStats,
-  fetchDashboardExportRows,
   fetchTendenciaHistorica
 } from './dashData';
 import { supabase } from '../../../supabase';
 import { hoyChile } from './dashHelpers';
-import { exportPanelDashboardPDF } from '../../../lib/exportPanelDashboard';
+import { printPanelDashboard } from '../../../lib/printPanelDashboard';
 import { toast } from 'sonner';
 import './dash.css';
 
@@ -50,12 +49,10 @@ export default function DashboardReal() {
   const [kpis, setKpis] = useState(null);
   const [estadoTable, setEstadoTable] = useState([]);
   const [divisions, setDivisions] = useState([]);
-  const [transportistas, setTransportistas] = useState([]);
   const [weekly, setWeekly] = useState([]);
   const [resumen, setResumen] = useState([]);
   const [leadTime, setLeadTime] = useState([]);
   const [tiemposCiclo, setTiemposCiclo] = useState(null);
-  const [otif, setOtif] = useState(null);
   const [rankTransp, setRankTransp] = useState([]);
   const [rankVend, setRankVend] = useState([]);
   const [incidenciasPorVendedor, setIncidenciasPorVendedor] = useState([]);
@@ -66,7 +63,7 @@ export default function DashboardReal() {
   const [fetchError, setFetchError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState('');
   const [range, setRange] = useState(getInitialFilter);
-  const [exportingPdf, setExportingPdf] = useState(false);
+  const dashboardPrintRef = useRef(null);
 
   const [detalleEstado, setDetalleEstado] = useState(null);
   const [detalleData, setDetalleData] = useState([]);
@@ -126,12 +123,10 @@ export default function DashboardReal() {
       setKpis(result.kpis);
       setEstadoTable(result.estadoTable);
       setDivisions(result.divisions);
-      setTransportistas(result.transportistas);
       setWeekly(result.weeklyTrend);
       setResumen(result.estadoResumen);
       setLeadTime(result.leadTimeSemanal);
       setTiemposCiclo(result.tiemposCiclo);
-      setOtif(result.otif);
       setRankTransp(result.rankingTransportistas);
       setRankVend(result.rankingVendedores);
       setIncidenciasPorVendedor(result.incidenciasPorVendedor || []);
@@ -146,54 +141,18 @@ export default function DashboardReal() {
     setLoading(false);
   }, []);
 
-  const downloadPdf = useCallback(async () => {
-    if (!kpis || exportingPdf) return;
-    setExportingPdf(true);
+  const downloadPdf = useCallback(() => {
+    if (!kpis) return;
     try {
-      // El detalle se consulta con el mismo rango vigente del Dashboard, sin
-      // límites de paginación, para que el PDF refleje todas las N.V. filtradas.
-      const operaciones = await fetchDashboardExportRows(range.from, range.to);
-      await exportPanelDashboardPDF({
-        range,
-        kpis,
-        estadoTable,
-        weekly,
-        leadTime,
-        tiemposCiclo,
-        otif,
-        divisions,
-        transportistas,
-        rankTransp,
-        rankVend,
-        alertas: alertasData,
-        alertasOperacionales: alertasOp,
-        calidad: calidadData,
-        operaciones
-      });
-      toast.success(`PDF descargado con ${operaciones.length} N.V. del período filtrado.`);
+      printPanelDashboard(dashboardPrintRef.current, range);
+      toast.info(
+        'En la ventana abierta, selecciona “Guardar como PDF” para descargar el Dashboard tal como se ve.'
+      );
     } catch (error) {
       console.error('Error exportando PDF del panel:', error);
-      toast.error('No se pudo generar el PDF. Intenta nuevamente.');
-    } finally {
-      setExportingPdf(false);
+      toast.error(error.message || 'No se pudo preparar el PDF. Intenta nuevamente.');
     }
-  }, [
-    alertasData,
-    alertasOp,
-    calidadData,
-    divisions,
-    estadoTable,
-    exportingPdf,
-    kpis,
-    leadTime,
-    otif,
-    range,
-    rankTransp,
-    rankVend,
-    tiemposCiclo,
-    transportistas,
-    weekly
-  ]);
+  }, [kpis, range]);
 
   useEffect(() => {
     const init = getInitialFilter();
@@ -298,7 +257,7 @@ export default function DashboardReal() {
   }
 
   return (
-    <div className="dash-root min-h-screen bg-gray-50">
+    <div ref={dashboardPrintRef} className="dash-root min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
@@ -318,16 +277,11 @@ export default function DashboardReal() {
             <DateFilter onFilter={loadData} defaultFrom={defaultFrom} defaultTo={defaultTo} />
             <button
               onClick={downloadPdf}
-              disabled={loading || exportingPdf || !kpis}
+              disabled={loading || !kpis}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors disabled:opacity-50"
               title="Descargar informe PDF del período filtrado"
             >
-              <svg
-                className={`w-3.5 h-3.5 ${exportingPdf ? 'animate-bounce' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -335,7 +289,7 @@ export default function DashboardReal() {
                   d="M12 3v12m0 0 4-4m-4 4-4-4m-5 6v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"
                 />
               </svg>
-              <span>{exportingPdf ? 'Generando...' : 'Descargar PDF'}</span>
+              <span>Descargar PDF</span>
             </button>
             <button
               onClick={() => {
