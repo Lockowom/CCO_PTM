@@ -170,7 +170,7 @@ const Entry = () => {
 
       try {
         // 1. Buscar en matriz de códigos (tiene índice PK, muy rápido)
-        const { data, error: err1 } = await supabase
+        const { data } = await supabase
           .from('tms_matriz_codigos')
           .select('producto')
           .eq('codigo_producto', codigo)
@@ -464,14 +464,6 @@ const Entry = () => {
   };
 
   const requiredReady = Boolean(form.ubicacion && form.codigo);
-  const optionalFieldsFilled = [
-    'serie',
-    'partida',
-    'pieza',
-    'fecha_vencimiento',
-    'talla',
-    'color'
-  ].filter((key) => Boolean(form[key])).length;
   const BRAND = {
     navy: '#0D1B2A',
     blue: '#163D63',
@@ -601,9 +593,7 @@ const Entry = () => {
                   {requiredReady ? 'Lista para agregar' : 'Completa obligatorios'}
                 </div>
                 <p className="mt-3 text-xs text-slate-500">
-                  {optionalFieldsFilled} detalle{optionalFieldsFilled === 1 ? '' : 's'} opcional
-                  {optionalFieldsFilled === 1 ? '' : 'es'} cargado
-                  {optionalFieldsFilled === 1 ? '' : 's'}.
+                  Solo se requiere ubicación y código para la referencia visual.
                 </p>
               </div>
             </div>
@@ -767,106 +757,6 @@ const Entry = () => {
                     readOnly
                     tabIndex="-1"
                   />
-                </div>
-
-                {/* CAMPOS OPCIONALES */}
-                <div
-                  className="rounded-[1.5rem] p-4"
-                  style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}06` }}
-                >
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    {/* SERIE */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Serie
-                      </label>
-                      <input
-                        type="text"
-                        name="serie"
-                        value={form.serie}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                        style={{ color: BRAND.navy }}
-                        placeholder="S/N..."
-                      />
-                    </div>
-                    {/* PARTIDA */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Partida
-                      </label>
-                      <input
-                        type="text"
-                        name="partida"
-                        value={form.partida}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                        style={{ color: BRAND.navy }}
-                        placeholder="Lote..."
-                      />
-                    </div>
-                    {/* PIEZA */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Pieza
-                      </label>
-                      <input
-                        type="text"
-                        name="pieza"
-                        value={form.pieza}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                        style={{ color: BRAND.navy }}
-                        placeholder="Ej: Motor..."
-                      />
-                    </div>
-                    {/* VENCIMIENTO */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Vencimiento
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          name="fecha_vencimiento"
-                          value={form.fecha_vencimiento}
-                          onChange={handleInputChange}
-                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none"
-                          style={{ color: BRAND.navy }}
-                        />
-                      </div>
-                    </div>
-                    {/* TALLA */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Talla
-                      </label>
-                      <input
-                        type="text"
-                        name="talla"
-                        value={form.talla}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                        style={{ color: BRAND.navy }}
-                        placeholder="S, M, L..."
-                      />
-                    </div>
-                    {/* COLOR */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                        Color
-                      </label>
-                      <input
-                        type="text"
-                        name="color"
-                        value={form.color}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                        style={{ color: BRAND.navy }}
-                        placeholder="Rojo..."
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 {error && (
