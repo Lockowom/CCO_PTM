@@ -9,8 +9,7 @@ import {
   Box,
   AlertCircle,
   Loader2,
-  AlertTriangle,
-  Camera
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -20,12 +19,10 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
-import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 const Entry = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { startScan, isScanning, isSupportedDevice } = useBarcodeScanner();
   const [queue, setQueue] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [loadingDesc, setLoadingDesc] = useState(false);
@@ -38,8 +35,8 @@ const Entry = () => {
   const listRef = useRef(null);
   const queueItemsRef = useRef([]);
 
-  // Subscribe to realtime changes on wms_ubicaciones
-  useRealtimeTable('wms_ubicaciones', [['inventory']]);
+  // Put Away solo registra referencias visuales; no altera el inventario.
+  useRealtimeTable('wms_putaway_ubicaciones', [['putaway_visual']]);
 
   // Form State
   const [form, setForm] = useState({
@@ -51,12 +48,10 @@ const Entry = () => {
     fecha_vencimiento: '',
     talla: '',
     color: '',
-    cantidad: '',
     descripcion: ''
   });
 
   const codigoInputRef = useRef(null);
-  const cantidadInputRef = useRef(null);
 
   // Initial Animation
   useGSAP(
@@ -103,7 +98,19 @@ const Entry = () => {
     const saved = localStorage.getItem('wms_entry_queue');
     if (saved) {
       try {
-        setQueue(JSON.parse(saved));
+        const savedItems = JSON.parse(saved);
+        setQueue(
+          savedItems.map((item) => ({
+            ...item,
+            id:
+              typeof item.id === 'string' &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                item.id
+              )
+                ? item.id
+                : globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`
+          }))
+        );
       } catch (_) {
         console.error('Entry data load error:', _);
       }
@@ -251,70 +258,6 @@ const Entry = () => {
     }
   };
 
-  // Escaneo por cámara - Ubicación
-  const scanUbicacion = () => {
-    startScan({
-      onScan: (value) => {
-        const val = value.toUpperCase().slice(0, 12);
-        setForm((prev) => ({ ...prev, ubicacion: val }));
-        toast.success(`Ubicación escaneada: ${val}`);
-        // Trigger blur validation
-        setTimeout(handleUbicacionBlur, 200);
-      },
-      onError: (msg) => toast.error(msg)
-    });
-  };
-
-  // Escaneo por cámara - Código
-  const scanCodigo = () => {
-    startScan({
-      onScan: (value) => {
-        const val = value.toUpperCase().slice(0, 20);
-        setForm((prev) => ({ ...prev, codigo: val }));
-        toast.success(`Código escaneado: ${val}`);
-      },
-      onError: (msg) => toast.error(msg)
-    });
-  };
-
-  // Escaneo por cámara - Serie
-  const scanSerie = () => {
-    if (isSupportedDevice) {
-      startScan({
-        onScan: (value) => {
-          setForm((prev) => ({ ...prev, serie: value.trim() }));
-          toast.success(`Serie escaneada: ${value.trim()}`);
-        },
-        onError: (msg) => toast.error(msg)
-      });
-    } else {
-      const val = window.prompt('Ingrese o pegue la Serie / S.N.:');
-      if (val) {
-        setForm((prev) => ({ ...prev, serie: val.trim() }));
-        toast.success(`Serie ingresada: ${val.trim()}`);
-      }
-    }
-  };
-
-  // Escaneo por cámara - Partida/Lote
-  const scanPartida = () => {
-    if (isSupportedDevice) {
-      startScan({
-        onScan: (value) => {
-          setForm((prev) => ({ ...prev, partida: value.trim() }));
-          toast.success(`Partida escaneada: ${value.trim()}`);
-        },
-        onError: (msg) => toast.error(msg)
-      });
-    } else {
-      const val = window.prompt('Ingrese o pegue la Partida / Lote:');
-      if (val) {
-        setForm((prev) => ({ ...prev, partida: val.trim() }));
-        toast.success(`Partida ingresada: ${val.trim()}`);
-      }
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let finalValue = value;
@@ -330,20 +273,14 @@ const Entry = () => {
 
   const addToQueue = (e) => {
     e.preventDefault();
-    if (!form.ubicacion || !form.codigo || !form.cantidad) {
-      setError('Faltan campos obligatorios (Ubicación, Código, Cantidad)');
-      gsap.to(formRef.current, { x: [-10, 10, -10, 10, 0], duration: 0.4 });
-      return;
-    }
-
-    if (parseFloat(form.cantidad) <= 0) {
-      setError('La cantidad debe ser mayor a 0');
+    if (!form.ubicacion || !form.codigo) {
+      setError('Faltan campos obligatorios (Ubicación y Código)');
       gsap.to(formRef.current, { x: [-10, 10, -10, 10, 0], duration: 0.4 });
       return;
     }
 
     const newItem = {
-      id: Date.now(),
+      id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
       ...form,
       timestamp: new Date().toISOString()
     };
@@ -361,7 +298,6 @@ const Entry = () => {
       fecha_vencimiento: '',
       talla: '',
       color: '',
-      cantidad: '',
       descripcion: ''
     }));
     setError(null);
@@ -395,31 +331,29 @@ const Entry = () => {
     }
   };
 
+  const buildVisualLocationRows = (items) =>
+    items.map((item) => ({
+      id: item.id,
+      ubicacion: item.ubicacion,
+      codigo: item.codigo,
+      descripcion: item.descripcion || null,
+      serie: item.serie || null,
+      partida: item.partida || null,
+      pieza: item.pieza || null,
+      fecha_vencimiento: item.fecha_vencimiento || null,
+      talla: item.talla || null,
+      color: item.color || null,
+      creado_por: user?.id || null,
+      creado_por_nombre: user?.nombre || user?.email || null
+    }));
+
   const syncMutation = useMutation({
     mutationFn: async () => {
-      const rowsToInsert = queue.map((item) => ({
-        ubicacion: item.ubicacion,
-        codigo: item.codigo,
-        descripcion: item.descripcion,
-        cantidad: parseFloat(item.cantidad),
-        serie: item.serie || null,
-        partida: item.partida || null,
-        pieza: item.pieza || null,
-        fecha_vencimiento: item.fecha_vencimiento || null,
-        talla: item.talla || null,
-        color: item.color || null
-      }));
+      const rowsToInsert = buildVisualLocationRows(queue);
 
-      const { data: upsertedData, error } = await supabase
-        .from('wms_ubicaciones')
-        .upsert(rowsToInsert, { onConflict: 'ubicacion,codigo' })
-        .select('id');
+      const { error } = await supabase.from('wms_putaway_ubicaciones').insert(rowsToInsert);
 
       if (error) throw error;
-
-      // Count new vs updated based on response
-      const registrosNuevos = upsertedData ? upsertedData.length : 0;
-      const registrosActualizados = queue.length - registrosNuevos;
 
       if (user) {
         try {
@@ -427,11 +361,11 @@ const Entry = () => {
             {
               usuario_id: user.id,
               usuario_nombre: user.nombre || user.email || 'Usuario Desconocido',
-              modulo: 'Ingreso Manual WMS',
-              tabla_destino: 'wms_ubicaciones',
+              modulo: 'Put Away visual',
+              tabla_destino: 'wms_putaway_ubicaciones',
               registros_totales: queue.length,
-              registros_nuevos: registrosNuevos,
-              registros_actualizados: registrosActualizados >= 0 ? registrosActualizados : 0,
+              registros_nuevos: queue.length,
+              registros_actualizados: 0,
               registros_error: 0
             }
           ]);
@@ -441,10 +375,10 @@ const Entry = () => {
       }
     },
     onSuccess: () => {
-      toast.success(`✅ ${queue.length} registros guardados correctamente.`);
+      toast.success(`✅ ${queue.length} ubicaciones visuales guardadas. El inventario no cambió.`);
       gsap.to(listRef.current, { y: 10, duration: 0.1, yoyo: true, repeat: 1 });
       setQueue([]);
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['putaway_visual'] });
     },
     onError: async (err) => {
       // Si estamos offline o es error de red, encolar en Dexie para sync automático
@@ -457,23 +391,12 @@ const Entry = () => {
 
       if (isOfflineError) {
         try {
-          const rowsToInsert = queue.map((item) => ({
-            ubicacion: item.ubicacion,
-            codigo: item.codigo,
-            descripcion: item.descripcion,
-            cantidad: parseFloat(item.cantidad),
-            serie: item.serie || null,
-            partida: item.partida || null,
-            pieza: item.pieza || null,
-            fecha_vencimiento: item.fecha_vencimiento || null,
-            talla: item.talla || null,
-            color: item.color || null
-          }));
+          const rowsToInsert = buildVisualLocationRows(queue);
 
           const enqueued = await enqueueUpsert({
-            tableName: 'wms_ubicaciones',
+            tableName: 'wms_putaway_ubicaciones',
             data: rowsToInsert,
-            onConflict: 'ubicacion,codigo',
+            onConflict: 'id',
             userId: user?.id || null
           });
 
@@ -500,28 +423,22 @@ const Entry = () => {
 
   const handleSync = async () => {
     if (queue.length === 0) return;
-    if (!window.confirm(`¿Guardar ${queue.length} registros en ubicaciones?`)) return;
+    if (
+      !window.confirm(
+        `¿Guardar ${queue.length} ubicaciones visuales? El inventario no se modificará.`
+      )
+    )
+      return;
 
     // Si estamos offline, encolar directamente sin intentar Supabase
     if (!navigator.onLine) {
       try {
-        const rowsToInsert = queue.map((item) => ({
-          ubicacion: item.ubicacion,
-          codigo: item.codigo,
-          descripcion: item.descripcion,
-          cantidad: parseFloat(item.cantidad),
-          serie: item.serie || null,
-          partida: item.partida || null,
-          pieza: item.pieza || null,
-          fecha_vencimiento: item.fecha_vencimiento || null,
-          talla: item.talla || null,
-          color: item.color || null
-        }));
+        const rowsToInsert = buildVisualLocationRows(queue);
 
         const enqueued = await enqueueUpsert({
-          tableName: 'wms_ubicaciones',
+          tableName: 'wms_putaway_ubicaciones',
           data: rowsToInsert,
-          onConflict: 'ubicacion,codigo',
+          onConflict: 'id',
           userId: user?.id || null
         });
 
@@ -546,10 +463,7 @@ const Entry = () => {
     syncMutation.mutate();
   };
 
-  const requiredReady = Boolean(
-    form.ubicacion && form.codigo && form.cantidad && parseFloat(form.cantidad) > 0
-  );
-  const queueTotalUnits = queue.reduce((acc, item) => acc + (parseFloat(item.cantidad) || 0), 0);
+  const requiredReady = Boolean(form.ubicacion && form.codigo);
   const optionalFieldsFilled = [
     'serie',
     'partida',
@@ -652,7 +566,7 @@ const Entry = () => {
                 </div>
                 <p className="mt-3 text-xs text-slate-500">
                   {isOnline
-                    ? 'Los movimientos se enviarán a Supabase al guardar.'
+                    ? 'Las asignaciones visuales se enviarán a Supabase al guardar.'
                     : 'Se usará la cola offline y se sincronizará al recuperar conexión.'}
                 </p>
               </div>
@@ -669,7 +583,7 @@ const Entry = () => {
                 </div>
                 <p className="mt-3 text-xs text-slate-500">
                   {queue.length > 0
-                    ? `${queueTotalUnits.toFixed(2)} unidades acumuladas listas para guardar.`
+                    ? 'Asignaciones visuales listas para guardar sin cambiar el inventario.'
                     : 'La cola está limpia y lista para una nueva captura.'}
                 </p>
               </div>
@@ -718,8 +632,8 @@ const Entry = () => {
                     Datos del producto
                   </h3>
                   <p className="mt-1 text-sm" style={{ color: BRAND.slate }}>
-                    Captura ubicación, SKU y cantidad con una interfaz corporativa más limpia y
-                    enfocada.
+                    Asigna una ubicación visual al SKU. Este flujo no descuenta ni modifica
+                    cantidades de inventario.
                   </p>
                 </div>
                 <div
@@ -740,7 +654,7 @@ const Entry = () => {
 
               <form ref={formRef} onSubmit={addToQueue} className="space-y-5">
                 <div
-                  className="grid grid-cols-3 gap-3 rounded-2xl p-3"
+                  className="grid grid-cols-2 gap-3 rounded-2xl p-3"
                   style={{ border: `1px solid ${BRAND.soft}`, background: `${BRAND.blue}06` }}
                 >
                   <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
@@ -763,17 +677,6 @@ const Entry = () => {
                     </div>
                     <div className="mt-2 truncate text-sm font-black" style={{ color: BRAND.navy }}>
                       {form.codigo || 'Pendiente'}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                    <div
-                      className="text-[10px] font-bold uppercase tracking-[0.18em]"
-                      style={{ color: BRAND.slate }}
-                    >
-                      Cantidad
-                    </div>
-                    <div className="mt-2 truncate text-sm font-black text-emerald-700">
-                      {form.cantidad || '0'}
                     </div>
                   </div>
                 </div>
@@ -804,22 +707,6 @@ const Entry = () => {
                         size={20}
                       />
                     </div>
-                    {isSupportedDevice && (
-                      <button
-                        type="button"
-                        onClick={scanUbicacion}
-                        disabled={isScanning}
-                        className="flex items-center justify-center rounded-2xl border px-3.5 transition-colors hover:text-white disabled:opacity-50"
-                        style={{
-                          borderColor: `${BRAND.orange}50`,
-                          background: `${BRAND.orange}10`,
-                          color: BRAND.orange
-                        }}
-                        title="Escanear con cámara"
-                      >
-                        <Camera size={20} />
-                      </button>
-                    )}
                   </div>
                   {ubicacionWarning && (
                     <div className="mt-1.5 p-2 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2 text-xs text-amber-700 font-medium">
@@ -862,22 +749,6 @@ const Entry = () => {
                         />
                       )}
                     </div>
-                    {isSupportedDevice && (
-                      <button
-                        type="button"
-                        onClick={scanCodigo}
-                        disabled={isScanning}
-                        className="flex items-center justify-center rounded-2xl border px-3.5 transition-colors hover:text-white disabled:opacity-50"
-                        style={{
-                          borderColor: `${BRAND.orange}50`,
-                          background: `${BRAND.orange}10`,
-                          color: BRAND.orange
-                        }}
-                        title="Escanear con cámara"
-                      >
-                        <Camera size={20} />
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -898,25 +769,6 @@ const Entry = () => {
                   />
                 </div>
 
-                {/* CANTIDAD */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 tracking-wider">
-                    Cantidad Contada <span className="text-wms-danger">*</span>
-                  </label>
-                  <input
-                    ref={cantidadInputRef}
-                    type="number"
-                    name="cantidad"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xl font-black text-emerald-700 outline-none transition-all focus:bg-white"
-                    placeholder="0"
-                    min="0.01"
-                    step="0.01"
-                    value={form.cantidad}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
                 {/* CAMPOS OPCIONALES */}
                 <div
                   className="rounded-[1.5rem] p-4"
@@ -928,62 +780,30 @@ const Entry = () => {
                       <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                         Serie
                       </label>
-                      <div className="flex gap-1.5">
-                        <input
-                          type="text"
-                          name="serie"
-                          value={form.serie}
-                          onChange={handleInputChange}
-                          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                          style={{ color: BRAND.navy }}
-                          placeholder="S/N..."
-                        />
-                        <button
-                          type="button"
-                          onClick={scanSerie}
-                          disabled={isScanning}
-                          className="flex shrink-0 items-center justify-center rounded-xl border px-2.5 transition-colors hover:text-white disabled:opacity-50"
-                          style={{
-                            borderColor: `${BRAND.orange}40`,
-                            background: `${BRAND.orange}10`,
-                            color: BRAND.orange
-                          }}
-                          title="Escanear Serie"
-                        >
-                          <Camera size={16} />
-                        </button>
-                      </div>
+                      <input
+                        type="text"
+                        name="serie"
+                        value={form.serie}
+                        onChange={handleInputChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
+                        style={{ color: BRAND.navy }}
+                        placeholder="S/N..."
+                      />
                     </div>
                     {/* PARTIDA */}
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                         Partida
                       </label>
-                      <div className="flex gap-1.5">
-                        <input
-                          type="text"
-                          name="partida"
-                          value={form.partida}
-                          onChange={handleInputChange}
-                          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
-                          style={{ color: BRAND.navy }}
-                          placeholder="Lote..."
-                        />
-                        <button
-                          type="button"
-                          onClick={scanPartida}
-                          disabled={isScanning}
-                          className="flex shrink-0 items-center justify-center rounded-xl border px-2.5 transition-colors hover:text-white disabled:opacity-50"
-                          style={{
-                            borderColor: `${BRAND.orange}40`,
-                            background: `${BRAND.orange}10`,
-                            color: BRAND.orange
-                          }}
-                          title="Escanear Partida"
-                        >
-                          <Camera size={16} />
-                        </button>
-                      </div>
+                      <input
+                        type="text"
+                        name="partida"
+                        value={form.partida}
+                        onChange={handleInputChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none placeholder:text-slate-400"
+                        style={{ color: BRAND.navy }}
+                        placeholder="Lote..."
+                      />
                     </div>
                     {/* PIEZA */}
                     <div>
@@ -1094,24 +914,16 @@ const Entry = () => {
                       Cola de procesamiento
                     </h3>
                     <p className="mt-1 text-sm" style={{ color: BRAND.slate }}>
-                      Revisa los movimientos antes de consolidarlos en ubicaciones.
+                      Revisa las asignaciones visuales antes de guardarlas. El stock no cambia.
                     </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                         Registros
                       </div>
                       <div className="mt-1 text-2xl font-black text-slate-900">{queue.length}</div>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                        Unidades
-                      </div>
-                      <div className="mt-1 text-2xl font-black text-emerald-700">
-                        {queueTotalUnits.toFixed(2)}
-                      </div>
                     </div>
                     <button
                       onClick={clearQueue}
@@ -1133,8 +945,8 @@ const Entry = () => {
                     </div>
                     <p className="text-xl font-black text-slate-900">La cola está vacía</p>
                     <p className="mt-2 max-w-md text-sm">
-                      Agrega productos desde el formulario para construir el lote que enviarás a
-                      ubicaciones.
+                      Agrega productos desde el formulario para asignar una ubicación visual. El
+                      stock no cambia.
                     </p>
                   </div>
                 ) : (
@@ -1163,7 +975,7 @@ const Entry = () => {
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                   <div className="min-w-0">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                                       Ubicación
@@ -1187,14 +999,6 @@ const Entry = () => {
                                         {item.descripcion}
                                       </p>
                                     )}
-                                  </div>
-                                  <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                                      Cantidad
-                                    </p>
-                                    <p className="mt-1 text-lg font-black text-emerald-700">
-                                      {item.cantidad}
-                                    </p>
                                   </div>
                                   <div>
                                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
@@ -1287,14 +1091,14 @@ const Entry = () => {
                     </>
                   ) : (
                     <>
-                      <Save size={24} /> GUARDAR EN UBICACIONES ({queue.length})
+                      <Save size={24} /> GUARDAR UBICACIONES VISUALES ({queue.length})
                     </>
                   )}
                 </button>
                 <p className="mt-3 text-center text-xs text-slate-400">
                   {isOnline
-                    ? 'Se aplicará upsert directo sobre `wms_ubicaciones`.'
-                    : 'Se guardará en la cola offline para sincronización posterior.'}
+                    ? 'Se guardará una referencia visual. No se descuenta ni modifica stock.'
+                    : 'Se guardará en la cola offline como referencia visual para sincronización posterior.'}
                 </p>
               </div>
             </div>

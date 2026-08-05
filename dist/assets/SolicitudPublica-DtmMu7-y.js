@@ -1,0 +1,340 @@
+import { j as e } from './query-vendor-BNjBrM5A.js';
+import { r as n } from './react-vendor-6aw4XXjH.js';
+import { s as y } from './index-C8hdJ7IR.js';
+import { c as _, P as E, a as q, b as k, d as I } from './comunasChile-Dz1MsXCi.js';
+import { a3 as O, af as L, ag as P, _ as R } from './ui-vendor-naG2PYVT.js';
+import './supabase-vendor-4Fjsfb0a.js';
+import './animation-vendor-JfdD7EdN.js';
+const f = {
+  cliente: '',
+  contacto: '',
+  equipo_modelo: '',
+  numero_serie: '',
+  tipo_solicitud: '',
+  prioridad: 'Media',
+  region: '',
+  comuna: '',
+  cotizar: 'No',
+  descripcion: '',
+  observaciones: '',
+  website: ''
+};
+function i({ label: s, req: d, children: m, hint: u }) {
+  return e.jsxs('div', {
+    children: [
+      e.jsxs('label', {
+        className: 'text-[11px] font-bold text-slate-500 uppercase tracking-wide',
+        children: [s, d && e.jsx('span', { className: 'text-orange-500', children: ' *' })]
+      }),
+      m,
+      u && e.jsx('p', { className: 'text-[11px] text-slate-400 mt-0.5', children: u })
+    ]
+  });
+}
+const r =
+  'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition';
+function F() {
+  const [s, d] = n.useState(f),
+    [m, u] = n.useState(!1),
+    [h, g] = n.useState(''),
+    [p, b] = n.useState(null),
+    j = n.useRef(Date.now()),
+    t = (a) => (l) => d((x) => ({ ...x, [a]: l != null && l.target ? l.target.value : l })),
+    N = (a) => d((l) => ({ ...l, region: a.target.value, comuna: '' })),
+    w = n.useMemo(() => _(s.region) || [], [s.region]),
+    v = n.useMemo(
+      () =>
+        ['cliente', 'contacto', 'equipo_modelo', 'descripcion'].every((a) => String(s[a]).trim()),
+      [s]
+    ),
+    C = async (a) => {
+      var l;
+      if (((l = a == null ? void 0 : a.preventDefault) == null || l.call(a), !(!v || m))) {
+        (u(!0), g(''));
+        try {
+          const x = { ...s, t_ms: Date.now() - j.current },
+            { data: S, error: c } = await y.functions.invoke('postventa-publico', { body: x }),
+            o = S || (c != null && c.context ? await c.context.json().catch(() => null) : null);
+          if (c && !(o != null && o.ok))
+            throw new Error(
+              (o == null ? void 0 : o.error) || c.message || 'No se pudo enviar la solicitud.'
+            );
+          if (!(o != null && o.ok))
+            throw new Error((o == null ? void 0 : o.error) || 'No se pudo enviar la solicitud.');
+          b({ numero: o.numero });
+        } catch (x) {
+          g(x.message || 'No se pudo enviar la solicitud. Intenta nuevamente.');
+        } finally {
+          u(!1);
+        }
+      }
+    };
+  return p
+    ? e.jsx('div', {
+        className: 'min-h-screen bg-slate-50 flex items-center justify-center p-4',
+        children: e.jsxs('div', {
+          className:
+            'w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center',
+          children: [
+            e.jsx('div', {
+              className:
+                'w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4',
+              children: e.jsx(O, { className: 'text-emerald-500', size: 40 })
+            }),
+            e.jsx('h1', {
+              className: 'text-xl font-black text-slate-900 mb-1',
+              children: '¡Solicitud recibida!'
+            }),
+            e.jsx('p', {
+              className: 'text-sm text-slate-500 mb-4',
+              children:
+                'Hemos registrado tu solicitud de servicio. Nuestro equipo técnico la revisará y se pondrá en contacto contigo.'
+            }),
+            p.numero &&
+              e.jsxs('div', {
+                className: 'bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-5',
+                children: [
+                  e.jsx('p', {
+                    className: 'text-[11px] font-bold text-orange-600 uppercase tracking-wide',
+                    children: 'Número de folio'
+                  }),
+                  e.jsx('p', {
+                    className: 'text-2xl font-black text-orange-600 tracking-tight',
+                    children: p.numero
+                  }),
+                  e.jsx('p', {
+                    className: 'text-[11px] text-orange-500/80 mt-1',
+                    children: 'Guarda este número para dar seguimiento.'
+                  })
+                ]
+              }),
+            e.jsx('button', {
+              onClick: () => {
+                (b(null), d(f), (j.current = Date.now()));
+              },
+              className:
+                'w-full px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition',
+              children: 'Crear otra solicitud'
+            })
+          ]
+        })
+      })
+    : e.jsx('div', {
+        className: 'min-h-screen bg-slate-50 py-8 px-4',
+        children: e.jsxs('div', {
+          className: 'w-full max-w-2xl mx-auto',
+          children: [
+            e.jsxs('div', {
+              className: 'text-center mb-6',
+              children: [
+                e.jsx('img', {
+                  src: '/logo-ptm.png',
+                  alt: 'PTM Health Care',
+                  className: 'h-14 mx-auto mb-3 object-contain'
+                }),
+                e.jsxs('div', {
+                  className: 'inline-flex items-center gap-2 text-orange-600 font-black text-lg',
+                  children: [e.jsx(L, { size: 20 }), ' Solicitud de Servicio Técnico']
+                }),
+                e.jsx('p', {
+                  className: 'text-sm text-slate-500 mt-1 max-w-lg mx-auto',
+                  children:
+                    'Completa este formulario para solicitar servicio, mantención o reportar una falla. Recibirás un número de folio para dar seguimiento.'
+                })
+              ]
+            }),
+            e.jsxs('form', {
+              onSubmit: C,
+              className: 'bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-4',
+              children: [
+                e.jsx('input', {
+                  type: 'text',
+                  name: 'website',
+                  tabIndex: -1,
+                  autoComplete: 'off',
+                  value: s.website,
+                  onChange: t('website'),
+                  className: 'hidden',
+                  'aria-hidden': 'true'
+                }),
+                e.jsxs('div', {
+                  className: 'grid grid-cols-1 sm:grid-cols-2 gap-4',
+                  children: [
+                    e.jsx(i, {
+                      label: 'Empresa / Cliente',
+                      req: !0,
+                      children: e.jsx('input', {
+                        className: r,
+                        value: s.cliente,
+                        onChange: t('cliente'),
+                        placeholder: 'Nombre de la empresa o cliente',
+                        maxLength: 300
+                      })
+                    }),
+                    e.jsx(i, {
+                      label: 'Contacto',
+                      req: !0,
+                      hint: 'Nombre, teléfono o correo para ubicarte.',
+                      children: e.jsx('input', {
+                        className: r,
+                        value: s.contacto,
+                        onChange: t('contacto'),
+                        placeholder: 'Nombre y teléfono / correo',
+                        maxLength: 300
+                      })
+                    })
+                  ]
+                }),
+                e.jsxs('div', {
+                  className: 'grid grid-cols-1 sm:grid-cols-2 gap-4',
+                  children: [
+                    e.jsx(i, {
+                      label: 'Equipo / Modelo',
+                      req: !0,
+                      hint: 'Si no conoces el modelo exacto, describe el equipo.',
+                      children: e.jsx('input', {
+                        className: r,
+                        value: s.equipo_modelo,
+                        onChange: t('equipo_modelo'),
+                        placeholder: 'Ej: Monitor multiparámetro, Cardiomax…',
+                        maxLength: 300
+                      })
+                    }),
+                    e.jsx(i, {
+                      label: 'N° de serie',
+                      hint: 'Opcional.',
+                      children: e.jsx('input', {
+                        className: r,
+                        value: s.numero_serie,
+                        onChange: t('numero_serie'),
+                        placeholder: 'Opcional',
+                        maxLength: 120
+                      })
+                    })
+                  ]
+                }),
+                e.jsxs('div', {
+                  className: 'grid grid-cols-1 sm:grid-cols-3 gap-4',
+                  children: [
+                    e.jsx(i, {
+                      label: 'Tipo de solicitud',
+                      children: e.jsxs('select', {
+                        className: r,
+                        value: s.tipo_solicitud,
+                        onChange: t('tipo_solicitud'),
+                        children: [
+                          e.jsx('option', { value: '', children: 'Selecciona…' }),
+                          E.map((a) => e.jsx('option', { value: a, children: a }, a))
+                        ]
+                      })
+                    }),
+                    e.jsx(i, {
+                      label: 'Prioridad',
+                      children: e.jsx('select', {
+                        className: r,
+                        value: s.prioridad,
+                        onChange: t('prioridad'),
+                        children: q.map((a) => e.jsx('option', { value: a, children: a }, a))
+                      })
+                    }),
+                    e.jsx(i, {
+                      label: '¿Cotizar?',
+                      children: e.jsx('select', {
+                        className: r,
+                        value: s.cotizar,
+                        onChange: t('cotizar'),
+                        children: k.map((a) => e.jsx('option', { value: a, children: a }, a))
+                      })
+                    })
+                  ]
+                }),
+                e.jsxs('div', {
+                  className: 'grid grid-cols-1 sm:grid-cols-2 gap-4',
+                  children: [
+                    e.jsx(i, {
+                      label: 'Región',
+                      children: e.jsxs('select', {
+                        className: r,
+                        value: s.region,
+                        onChange: N,
+                        children: [
+                          e.jsx('option', { value: '', children: 'Selecciona…' }),
+                          I.map((a) => e.jsx('option', { value: a, children: a }, a))
+                        ]
+                      })
+                    }),
+                    e.jsxs(i, {
+                      label: 'Comuna',
+                      hint: s.region
+                        ? 'Escribe o elige de la lista.'
+                        : 'Selecciona primero la región.',
+                      children: [
+                        e.jsx('input', {
+                          className: r,
+                          list: 'dl-comunas',
+                          value: s.comuna,
+                          onChange: t('comuna'),
+                          disabled: !s.region,
+                          placeholder: s.region ? 'Comuna' : 'Opcional',
+                          maxLength: 120
+                        }),
+                        e.jsx('datalist', {
+                          id: 'dl-comunas',
+                          children: w.map((a) => e.jsx('option', { value: a }, a))
+                        })
+                      ]
+                    })
+                  ]
+                }),
+                e.jsx(i, {
+                  label: 'Descripción del problema o solicitud',
+                  req: !0,
+                  children: e.jsx('textarea', {
+                    className: `${r} min-h-[120px] resize-y`,
+                    value: s.descripcion,
+                    onChange: t('descripcion'),
+                    placeholder:
+                      'Describe la falla, el servicio requerido o el motivo de la solicitud con el mayor detalle posible.',
+                    maxLength: 5e3
+                  })
+                }),
+                e.jsx(i, {
+                  label: 'Observaciones',
+                  hint: 'Opcional — cualquier dato adicional que quieras agregar.',
+                  children: e.jsx('textarea', {
+                    className: `${r} min-h-[80px] resize-y`,
+                    value: s.observaciones,
+                    onChange: t('observaciones'),
+                    placeholder:
+                      'Información complementaria (horarios de atención, referencias, etc.)',
+                    maxLength: 5e3
+                  })
+                }),
+                h &&
+                  e.jsxs('div', {
+                    className:
+                      'flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700',
+                    children: [
+                      e.jsx(P, { size: 18, className: 'shrink-0 mt-0.5' }),
+                      e.jsx('span', { children: h })
+                    ]
+                  }),
+                e.jsxs('button', {
+                  type: 'submit',
+                  disabled: !v || m,
+                  className:
+                    'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition',
+                  children: [e.jsx(R, { size: 16 }), ' ', m ? 'Enviando…' : 'Enviar solicitud']
+                }),
+                e.jsx('p', {
+                  className: 'text-[11px] text-center text-slate-400',
+                  children:
+                    'PTM Health Care · Los datos enviados se usan únicamente para gestionar tu solicitud de servicio.'
+                })
+              ]
+            })
+          ]
+        })
+      });
+}
+export { F as default };
