@@ -1985,9 +1985,29 @@ const Monitoreo = () => {
   const [tab, setTab] = useState('hito1');
   const [danosPrefill, setDanosPrefill] = useState(null); // pre-carga del Informe de Daños desde un checklist NC
   const [asigPrefill, setAsigPrefill] = useState(null); // pre-carga del informe desde una asignación (hito 2)
+  const [busquedaEstancia, setBusquedaEstancia] = useState('');
   const pendCount = useTareasPendientesCount();
   const asigPendCount = useAsignacionesPendientesCount();
   const salidaPendCount = useSalidaPendientesCount();
+  const informesFiltrados = useMemo(() => {
+    const q = busquedaEstancia.trim().toLocaleLowerCase('es-CL');
+    if (!q) return informes;
+    return informes.filter((inf) =>
+      [
+        inf.numero,
+        inf.bodega,
+        inf.analista_nombre,
+        inf.estado,
+        inf.tipo_informe,
+        // Informes de daños conservan los antecedentes de OC/proveedor en reporte.
+        JSON.stringify(inf.reporte || {})
+      ].some((v) =>
+        String(v || '')
+          .toLocaleLowerCase('es-CL')
+          .includes(q)
+      )
+    );
+  }, [busquedaEstancia, informes]);
 
   // Realtime en las colas de checklist (hito 1) y asignaciones (hito 2): una
   // recepción o una asignación nueva refresca la cola y el badge de inmediato.
@@ -2208,9 +2228,38 @@ const Monitoreo = () => {
 
       {mode === 'list' && tab === 'hito2' && (
         <>
-          <h3 className="text-sm font-black text-slate-700 flex items-center gap-2 mb-3">
-            <FileSearch size={16} className="text-emerald-500" /> Informes y dictámenes de estancia
-          </h3>
+          <div className="mb-3 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-600">
+                  Hito 2 · Estancia
+                </p>
+                <h3 className="mt-0.5 text-base font-black text-slate-800 flex items-center gap-2">
+                  <FileSearch size={16} className="text-emerald-500" /> Informes y dictámenes
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Busca por OC, proveedor, número de informe, bodega o analista.
+                </p>
+              </div>
+              {!isLoading && (
+                <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-500 border border-slate-200">
+                  {informesFiltrados.length} / {informes.length}
+                </span>
+              )}
+            </div>
+            <label className="relative mt-3 block">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                value={busquedaEstancia}
+                onChange={(e) => setBusquedaEstancia(e.target.value)}
+                placeholder="Buscar OC, proveedor, informe, bodega o analista…"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm font-medium outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              />
+            </label>
+          </div>
           {isLoading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="animate-spin text-emerald-500" size={36} />
@@ -2225,14 +2274,25 @@ const Monitoreo = () => {
                   : 'Aún no hay informes generados.'}
               </p>
             </div>
+          ) : informesFiltrados.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center">
+              <Search size={34} className="mx-auto mb-3 text-slate-300" />
+              <h3 className="font-bold text-slate-500">No hay informes que coincidan</h3>
+              <button
+                onClick={() => setBusquedaEstancia('')}
+                className="mt-2 text-xs font-black text-sky-600 hover:text-sky-700"
+              >
+                Limpiar búsqueda
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {informes.map((inf) => {
+              {informesFiltrados.map((inf) => {
                 const esDanos = inf.tipo_informe === 'DANOS';
                 return (
                   <div
                     key={inf.id}
-                    className="text-left bg-white rounded-2xl border border-slate-200 p-5 hover:border-emerald-300 hover:shadow-lg transition-all"
+                    className="text-left bg-white rounded-2xl border border-slate-200 p-5 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg transition-all"
                   >
                     <div className="flex items-center justify-between mb-3 gap-2">
                       <button

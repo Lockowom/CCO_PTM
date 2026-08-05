@@ -1262,6 +1262,8 @@ const SalidaCertificacion = () => {
   const eliminar = useEliminarTareaCalidad();
   const [sel, setSel] = useState(null);
   const [modalManual, setModalManual] = useState(false); // creación manual
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('TODOS');
 
   const borrar = async (t, e) => {
     e.stopPropagation();
@@ -1279,39 +1281,93 @@ const SalidaCertificacion = () => {
     }
   };
 
+  const pendientes = tareas.filter(
+    (t) => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO'
+  ).length;
+  const tareasFiltradas = useMemo(() => {
+    const q = busqueda.trim().toLocaleLowerCase('es-CL');
+    return tareas.filter((t) => {
+      const ctx = t.contexto || {};
+      const coincideTexto =
+        !q ||
+        [t.oc, t.proveedor, t.folio, ctx.cliente, ctx.guia, ctx.transportista].some((v) =>
+          String(v || '')
+            .toLocaleLowerCase('es-CL')
+            .includes(q)
+        );
+      return coincideTexto && (filtroEstado === 'TODOS' || t.estado === filtroEstado);
+    });
+  }, [busqueda, filtroEstado, tareas]);
+
   const selFresh = sel ? tareas.find((t) => t.id === sel) || null : null;
   if (selFresh)
     return <SalidaForm tarea={selFresh} onBack={() => setSel(null)} canManage={canManage} />;
 
-  const pendientes = tareas.filter(
-    (t) => t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO'
-  ).length;
-
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 gap-3">
-        <p className="text-sm font-bold text-slate-500">
-          {isLoading
-            ? 'Cargando…'
-            : `${tareas.length} certificación(es) · ${pendientes} pendiente(s)`}
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50"
-          >
-            <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} /> Actualizar
-          </button>
-          {canManage && (
+      <div className="mb-4 rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 via-white to-emerald-50 p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-teal-600">
+              Hito 3 · Salida
+            </p>
+            <h2 className="mt-0.5 text-lg font-black text-slate-900">
+              Certificación antes de despacho
+            </h2>
+            <p className="text-xs text-slate-500">
+              Busca por N.V., OC, cliente, proveedor, guía o folio.
+            </p>
+          </div>
+          <div className="flex gap-2">
             <button
-              onClick={() => setModalManual(true)}
-              className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-black flex items-center gap-1.5 hover:bg-slate-50"
             >
-              <PencilLine size={14} /> Certificar salida (N.V. + SKU)
+              <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} /> Actualizar
             </button>
-          )}
+            {canManage && (
+              <button
+                onClick={() => setModalManual(true)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700"
+              >
+                <PencilLine size={14} /> Certificar salida (N.V. + SKU)
+              </button>
+            )}
+          </div>
         </div>
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <SalidaMetric label="Total" value={tareas.length} tone="slate" />
+          <SalidaMetric label="Por certificar" value={pendientes} tone="amber" />
+          <SalidaMetric label="Emitidas" value={tareas.length - pendientes} tone="emerald" />
+        </div>
+        <div className="mt-4 flex flex-col lg:flex-row gap-2">
+          <label className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar N.V., OC, proveedor, cliente o folio…"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm font-medium outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+            />
+          </label>
+          <div className="flex gap-1 overflow-x-auto pb-0.5">
+            {['TODOS', 'PENDIENTE', 'EN_PROCESO', 'CONFORME', 'NO_CONFORME'].map((estado) => (
+              <button
+                key={estado}
+                onClick={() => setFiltroEstado(estado)}
+                className={`whitespace-nowrap rounded-lg px-3 py-2 text-[10px] font-black tracking-wide transition ${filtroEstado === estado ? 'bg-teal-600 text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200 hover:border-teal-200'}`}
+              >
+                {estado === 'TODOS' ? 'Todos' : ESTADO_TAREA_META[estado]?.label || estado}
+              </button>
+            ))}
+          </div>
+        </div>
+        {!isLoading && (
+          <p className="mt-2 text-[11px] font-bold text-slate-400">
+            Mostrando {tareasFiltradas.length} de {tareas.length} certificaciones.
+          </p>
+        )}
       </div>
 
       {isLoading ? (
@@ -1327,9 +1383,23 @@ const SalidaCertificacion = () => {
             elegir uno existente.
           </p>
         </div>
+      ) : tareasFiltradas.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center">
+          <Search size={34} className="mx-auto mb-3 text-slate-300" />
+          <h3 className="font-bold text-slate-500">No hay certificaciones que coincidan</h3>
+          <button
+            onClick={() => {
+              setBusqueda('');
+              setFiltroEstado('TODOS');
+            }}
+            className="mt-2 text-xs font-black text-teal-600 hover:text-teal-700"
+          >
+            Limpiar filtros
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tareas.map((t) => {
+          {tareasFiltradas.map((t) => {
             const meta = ESTADO_TAREA_META[t.estado] || {};
             const ctx = t.contexto || {};
             const pend = t.estado === 'PENDIENTE' || t.estado === 'EN_PROCESO';
@@ -1339,7 +1409,7 @@ const SalidaCertificacion = () => {
                 role="button"
                 tabIndex={0}
                 onClick={() => setSel(t.id)}
-                className={`cursor-pointer text-left bg-white rounded-2xl border p-5 transition-all hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}
+                className={`cursor-pointer text-left bg-white rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}
               >
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <span className="flex items-center gap-1.5 font-black text-slate-900 truncate">
@@ -1408,6 +1478,20 @@ const SalidaCertificacion = () => {
           }}
         />
       )}
+    </div>
+  );
+};
+
+const SalidaMetric = ({ label, value, tone }) => {
+  const tones = {
+    slate: 'bg-white text-slate-800 border-slate-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  };
+  return (
+    <div className={`rounded-xl border px-3 py-2 ${tones[tone] || tones.slate}`}>
+      <p className="text-lg font-black leading-none">{value}</p>
+      <p className="mt-1 text-[9px] font-black uppercase tracking-widest opacity-70">{label}</p>
     </div>
   );
 };
