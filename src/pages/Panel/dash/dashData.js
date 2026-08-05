@@ -1366,6 +1366,66 @@ export async function fetchDashboardData(dateFrom, dateTo) {
   );
 }
 
+// Detalle completo para el informe PDF. Usa exactamente el mismo filtro de
+// aprobacion efectiva (real > sistema) que alimenta el Dashboard.
+export async function fetchDashboardExportRows(dateFrom, dateTo) {
+  return runDashboardRead(
+    'fetch_dashboard_export_rows',
+    async () => {
+      const rows = await retryDashboardRead(() => fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo));
+      return rows
+        .map((row) => ({
+          nv:
+            (row.nv_ptm && String(row.nv_ptm)) ||
+            row.nv_orange ||
+            row.nv_farmapack ||
+            row.varios ||
+            '—',
+          canal: row.nv_ptm
+            ? 'PTM'
+            : row.nv_orange
+              ? 'Orange'
+              : row.nv_farmapack
+                ? 'Farmapack'
+                : 'Varios',
+          cliente: row.cliente || '—',
+          vendedor: row.vendedor || '—',
+          transportista: row.transportista || '—',
+          estado: normalizaEstado(row.estado) || 'Sin estado',
+          division: row.division || '—',
+          tipo_despacho: row.tipo_despacho || '—',
+          fecha_registro_nv: row.fecha_registro_nv || null,
+          fecha_aprobacion: fechaAprobEfectiva(row),
+          fecha_compromiso:
+            row.fecha_compromiso ||
+            calcFechaCompromiso(row.fecha_aprobacion, row.fecha_aprobacion_real) ||
+            null,
+          fecha_shipping: row.fecha_shipping || null,
+          fecha_en_ruta: row.fecha_en_ruta || null,
+          fecha_despacho: row.fecha_despacho || null,
+          fecha_entregado: row.fecha_entregado || null,
+          guia: row.guia || '—',
+          factura: row.factura || '—',
+          urgente: row.urgente === true || String(row.urgente) === 'true',
+          reabierta: row.reabierta === true,
+          motivo_reapertura: row.motivo_reapertura || '',
+          fecha_reapertura: row.fecha_reapertura || null,
+          incidencia: row.incidencia || '',
+          estado_incidencia: row.estado_incidencia || '',
+          observaciones_incidencia: row.observaciones_incidencia || ''
+        }))
+        .sort((a, b) =>
+          String(b.fecha_aprobacion || '').localeCompare(String(a.fecha_aprobacion || ''))
+        );
+    },
+    {
+      payload: { dateFrom: dateFrom || null, dateTo: dateTo || null },
+      slowMs: 1600,
+      message: 'Carga de detalle para exportación PDF del dashboard'
+    }
+  );
+}
+
 export async function getIncidenciasActivas(dateFrom, dateTo) {
   return runDashboardRead(
     'get_incidencias_activas',

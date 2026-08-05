@@ -22,11 +22,17 @@ import OperadoresSection from './components/OperadoresSection';
 import DivisionsSection from './components/DivisionsSection';
 import TendenciaSection from './components/TendenciaSection';
 import {
-  fetchDashboardData, getOperacionesPorEstado, getIncidenciasActivas,
-  fetchAuditStats, fetchTendenciaHistorica,
+  fetchDashboardData,
+  getOperacionesPorEstado,
+  getIncidenciasActivas,
+  fetchAuditStats,
+  fetchDashboardExportRows,
+  fetchTendenciaHistorica
 } from './dashData';
 import { supabase } from '../../../supabase';
 import { hoyChile } from './dashHelpers';
+import { exportPanelDashboardPDF } from '../../../lib/exportPanelDashboard';
+import { toast } from 'sonner';
 import './dash.css';
 
 const defaultFrom = '2026-01-01';
@@ -36,7 +42,7 @@ function getInitialFilter() {
   if (typeof window === 'undefined') return { from: defaultFrom, to: defaultTo };
   return {
     from: localStorage.getItem('panel_filter_from') || defaultFrom,
-    to: localStorage.getItem('panel_filter_to') || defaultTo,
+    to: localStorage.getItem('panel_filter_to') || defaultTo
   };
 }
 
@@ -60,6 +66,7 @@ export default function DashboardReal() {
   const [fetchError, setFetchError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState('');
   const [range, setRange] = useState(getInitialFilter);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const [detalleEstado, setDetalleEstado] = useState(null);
   const [detalleData, setDetalleData] = useState([]);
@@ -70,23 +77,32 @@ export default function DashboardReal() {
   const [incidenciasLoading, setIncidenciasLoading] = useState(false);
 
   const [alertasOpen, setAlertasOpen] = useState(false);
-  const [alertasData, setAlertasData] = useState({ vencidos: 0, hoy: 0, manana: 0, total: 0, detalle: [] });
+  const [alertasData, setAlertasData] = useState({
+    vencidos: 0,
+    hoy: 0,
+    manana: 0,
+    total: 0,
+    detalle: []
+  });
 
   const [calidadOpen, setCalidadOpen] = useState(false);
   const [calidadData, setCalidadData] = useState({ total: 0, porTipo: {}, detalle: [] });
 
-  const abrirDetalle = useCallback(async (estado) => {
-    setDetalleEstado(estado);
-    setDetalleLoading(true);
-    try {
-      const rows = await getOperacionesPorEstado(estado, range.from, range.to);
-      setDetalleData(rows);
-    } catch (err) {
-      console.error('Error cargando detalle:', err);
-      setDetalleData([]);
-    }
-    setDetalleLoading(false);
-  }, [range]);
+  const abrirDetalle = useCallback(
+    async (estado) => {
+      setDetalleEstado(estado);
+      setDetalleLoading(true);
+      try {
+        const rows = await getOperacionesPorEstado(estado, range.from, range.to);
+        setDetalleData(rows);
+      } catch (err) {
+        console.error('Error cargando detalle:', err);
+        setDetalleData([]);
+      }
+      setDetalleLoading(false);
+    },
+    [range]
+  );
 
   const abrirIncidencias = useCallback(async () => {
     setIncidenciasOpen(true);
@@ -130,15 +146,72 @@ export default function DashboardReal() {
     setLoading(false);
   }, []);
 
+  const downloadPdf = useCallback(async () => {
+    if (!kpis || exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      // El detalle se consulta con el mismo rango vigente del Dashboard, sin
+      // límites de paginación, para que el PDF refleje todas las N.V. filtradas.
+      const operaciones = await fetchDashboardExportRows(range.from, range.to);
+      await exportPanelDashboardPDF({
+        range,
+        kpis,
+        estadoTable,
+        weekly,
+        leadTime,
+        tiemposCiclo,
+        otif,
+        divisions,
+        transportistas,
+        rankTransp,
+        rankVend,
+        alertas: alertasData,
+        alertasOperacionales: alertasOp,
+        calidad: calidadData,
+        operaciones
+      });
+      toast.success(`PDF descargado con ${operaciones.length} N.V. del período filtrado.`);
+    } catch (error) {
+      console.error('Error exportando PDF del panel:', error);
+      toast.error('No se pudo generar el PDF. Intenta nuevamente.');
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [
+    alertasData,
+    alertasOp,
+    calidadData,
+    divisions,
+    estadoTable,
+    exportingPdf,
+    kpis,
+    leadTime,
+    otif,
+    range,
+    rankTransp,
+    rankVend,
+    tiemposCiclo,
+    transportistas,
+    weekly
+  ]);
+
   useEffect(() => {
     const init = getInitialFilter();
     loadData(init.from, init.to);
-    fetchAuditStats().then((d) => { if (d.operadores.length > 0) setAuditKpis(d.operadores); }).catch(() => {});
-    fetchTendenciaHistorica(6).then((d) => setTendencia(d)).catch(() => {});
+    fetchAuditStats()
+      .then((d) => {
+        if (d.operadores.length > 0) setAuditKpis(d.operadores);
+      })
+      .catch(() => {});
+    fetchTendenciaHistorica(6)
+      .then((d) => setTendencia(d))
+      .catch(() => {});
   }, [loadData]);
 
   const rangeRef = useRef(range);
-  useEffect(() => { rangeRef.current = range; }, [range]);
+  useEffect(() => {
+    rangeRef.current = range;
+  }, [range]);
 
   // Realtime: refresca al instante cuando cambia una N.V. (ingreso/edición en
   // `tms_operaciones`) o al terminar un sync cron/import (`tms_operaciones_sync`).
@@ -154,9 +227,16 @@ export default function DashboardReal() {
     const canal = supabase
       .channel('tms-oper-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones' }, refrescar)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones_sync' }, refrescar)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tms_operaciones_sync' },
+        refrescar
+      )
       .subscribe();
-    return () => { if (t) clearTimeout(t); supabase.removeChannel(canal); };
+    return () => {
+      if (t) clearTimeout(t);
+      supabase.removeChannel(canal);
+    };
   }, [loadData]);
 
   const [countdown, setCountdown] = useState(120);
@@ -206,8 +286,10 @@ export default function DashboardReal() {
         <div className="text-center max-w-md">
           <p className="text-red-600 text-lg font-semibold mb-2">Error de carga</p>
           <p className="text-gray-500 mb-4">{fetchError}</p>
-          <button onClick={() => loadData(range.from, range.to)}
-            className="px-5 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors">
+          <button
+            onClick={() => loadData(range.from, range.to)}
+            className="px-5 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+          >
             Reintentar
           </button>
         </div>
@@ -221,8 +303,10 @@ export default function DashboardReal() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-              style={{ background: 'linear-gradient(135deg, #f57c00, #e65100)' }}>
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              style={{ background: 'linear-gradient(135deg, #f57c00, #e65100)' }}
+            >
               PTM
             </div>
             <div>
@@ -233,16 +317,56 @@ export default function DashboardReal() {
           <div className="flex items-center gap-4">
             <DateFilter onFilter={loadData} defaultFrom={defaultFrom} defaultTo={defaultTo} />
             <button
-              onClick={() => { countdownRef.current = 120; setCountdown(120); loadData(range.from, range.to); }}
+              onClick={downloadPdf}
+              disabled={loading || exportingPdf || !kpis}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors disabled:opacity-50"
+              title="Descargar informe PDF del período filtrado"
+            >
+              <svg
+                className={`w-3.5 h-3.5 ${exportingPdf ? 'animate-bounce' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3v12m0 0 4-4m-4 4-4-4m-5 6v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"
+                />
+              </svg>
+              <span>{exportingPdf ? 'Generando...' : 'Descargar PDF'}</span>
+            </button>
+            <button
+              onClick={() => {
+                countdownRef.current = 120;
+                setCountdown(120);
+                loadData(range.from, range.to);
+              }}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 hover:bg-orange-100 text-gray-600 hover:text-orange-700 transition-colors disabled:opacity-50"
-              title="Actualizar ahora">
-              <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              title="Actualizar ahora"
+            >
+              <svg
+                className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
-              <span>{Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}</span>
+              <span>
+                {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
+              </span>
             </button>
-            {lastUpdate && <span className="text-[10px] text-gray-400 hidden sm:inline">{lastUpdate}</span>}
+            {lastUpdate && (
+              <span className="text-[10px] text-gray-400 hidden sm:inline">{lastUpdate}</span>
+            )}
           </div>
         </div>
       </header>
@@ -263,10 +387,19 @@ export default function DashboardReal() {
             <EstadoTable data={estadoTable} onSelectEstado={abrirDetalle} />
             <div className="table-container">
               <table>
-                <thead><tr><th className="text-left">Estado</th><th>Cantidad</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th className="text-left">Estado</th>
+                    <th>Cantidad</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {resumen.map((r) => (
-                    <tr key={r.estado} onClick={() => abrirDetalle(r.estado)} className="cursor-pointer hover:bg-orange-50">
+                    <tr
+                      key={r.estado}
+                      onClick={() => abrirDetalle(r.estado)}
+                      className="cursor-pointer hover:bg-orange-50"
+                    >
                       <td className="font-medium text-left">{r.estado}</td>
                       <td className="font-bold">{r.count}</td>
                     </tr>
@@ -283,7 +416,10 @@ export default function DashboardReal() {
 
         <TiemposCicloSection tiemposCiclo={tiemposCiclo} />
         <AlertasOperacionalesSection alertasOp={alertasOp} />
-        <IncidenciasPorVendedorSection data={incidenciasPorVendedor} onOpenIncidencias={abrirIncidencias} />
+        <IncidenciasPorVendedorSection
+          data={incidenciasPorVendedor}
+          onOpenIncidencias={abrirIncidencias}
+        />
         <RankingsSection rankTransp={rankTransp} rankVend={rankVend} />
         <OperadoresSection auditKpis={auditKpis} />
         <DivisionsSection divisions={divisions} />
@@ -295,16 +431,34 @@ export default function DashboardReal() {
       </main>
 
       {detalleEstado && (
-        <EstadoDetalleModal estado={detalleEstado} data={detalleData} loading={detalleLoading} onClose={() => setDetalleEstado(null)} />
+        <EstadoDetalleModal
+          estado={detalleEstado}
+          data={detalleData}
+          loading={detalleLoading}
+          onClose={() => setDetalleEstado(null)}
+        />
       )}
       {incidenciasOpen && (
-        <IncidenciasModal open={incidenciasOpen} data={incidenciasData} loading={incidenciasLoading} onClose={() => setIncidenciasOpen(false)} />
+        <IncidenciasModal
+          open={incidenciasOpen}
+          data={incidenciasData}
+          loading={incidenciasLoading}
+          onClose={() => setIncidenciasOpen(false)}
+        />
       )}
       {alertasOpen && (
-        <AlertasRiesgoModal open={alertasOpen} data={alertasData} onClose={() => setAlertasOpen(false)} />
+        <AlertasRiesgoModal
+          open={alertasOpen}
+          data={alertasData}
+          onClose={() => setAlertasOpen(false)}
+        />
       )}
       {calidadOpen && (
-        <CalidadDatosModal open={calidadOpen} data={calidadData} onClose={() => setCalidadOpen(false)} />
+        <CalidadDatosModal
+          open={calidadOpen}
+          data={calidadData}
+          onClose={() => setCalidadOpen(false)}
+        />
       )}
     </div>
   );
