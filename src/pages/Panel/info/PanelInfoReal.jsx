@@ -1,10 +1,12 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../../supabase';
 
-const OPERACIONES_READ_VIEW = "tms_operaciones_vigentes";
+const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 import { normEstado, ESTADO_COLOR } from '../dash/dashHelpers';
 import { soloFecha } from '../dash/dashHelpers';
 import NvDetalle from './NvDetalle';
+import CertificadosSalida from './CertificadosSalida';
 
 // ============================================================
 //  /info — Buscador universal de NVs  (v1.3)
@@ -13,36 +15,66 @@ import NvDetalle from './NvDetalle';
 const PAGE_SIZE = 50;
 
 const SEARCH_COLUMNS = [
-  "id", "nv_ptm", "nv_orange", "nv_farmapack", "varios", "factura", "guia",
-  "numero_envio", "cliente", "vendedor", "division", "centro_costo",
-  "transportista", "tipo_despacho", "estado",
-  "fecha_aprobacion", "fecha_aprobacion_real", "fecha_compromiso",
-  "fecha_facturacion", "fecha_despacho", "fecha_registro_nv",
-  "fecha_en_proceso", "fecha_shipping", "fecha_en_ruta", "fecha_entregado",
-  "fecha_estado", "valor_factura", "bultos",
-  "incidencia", "estado_incidencia", "observaciones_incidencia",
-  "dias_incidencia", "urgente", "costo_flete", "valor_nv", "fillrate",
-  "empresa_transporte",
+  'id',
+  'nv_ptm',
+  'nv_orange',
+  'nv_farmapack',
+  'varios',
+  'factura',
+  'guia',
+  'numero_envio',
+  'cliente',
+  'vendedor',
+  'division',
+  'centro_costo',
+  'transportista',
+  'tipo_despacho',
+  'estado',
+  'fecha_aprobacion',
+  'fecha_aprobacion_real',
+  'fecha_compromiso',
+  'fecha_facturacion',
+  'fecha_despacho',
+  'fecha_registro_nv',
+  'fecha_en_proceso',
+  'fecha_shipping',
+  'fecha_en_ruta',
+  'fecha_entregado',
+  'fecha_estado',
+  'valor_factura',
+  'bultos',
+  'incidencia',
+  'estado_incidencia',
+  'observaciones_incidencia',
+  'dias_incidencia',
+  'urgente',
+  'costo_flete',
+  'valor_nv',
+  'fillrate',
+  'empresa_transporte'
 ];
 
 /** Escapa el término del usuario para `.ilike` y `.or()`:
  *  - quita comas/paréntesis (rompen la sintaxis de PostgREST or()),
  *  - escapa los comodines LIKE % y _ para que no actúen como wildcard. */
 function sanitizarBusqueda(q) {
-  return q.replace(/[(),]/g, " ").replace(/[%_\\]/g, (m) => "\\" + m).trim();
+  return q
+    .replace(/[(),]/g, ' ')
+    .replace(/[%_\\]/g, (m) => '\\' + m)
+    .trim();
 }
 
 const CAMPOS_BUSQUEDA = [
-  { label: "NV PTM", col: "nv_ptm", numeric: true },
-  { label: "NV Orange", col: "nv_orange" },
-  { label: "NV Farmapack", col: "nv_farmapack" },
-  { label: "Factura", col: "factura" },
-  { label: "Guía", col: "guia" },
-  { label: "Varios", col: "varios" },
-  { label: "N° Envío", col: "numero_envio" },
+  { label: 'NV PTM', col: 'nv_ptm', numeric: true },
+  { label: 'NV Orange', col: 'nv_orange' },
+  { label: 'NV Farmapack', col: 'nv_farmapack' },
+  { label: 'Factura', col: 'factura' },
+  { label: 'Guía', col: 'guia' },
+  { label: 'Varios', col: 'varios' },
+  { label: 'N° Envío', col: 'numero_envio' }
 ];
 
-const HISTORIAL_KEY = "ptm_info_historial";
+const HISTORIAL_KEY = 'ptm_info_historial';
 const HISTORIAL_MAX = 6;
 
 function leerHistorial() {
@@ -50,31 +82,37 @@ function leerHistorial() {
     const raw = localStorage.getItem(HISTORIAL_KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, HISTORIAL_MAX) : [];
+    return Array.isArray(arr)
+      ? arr.filter((x) => typeof x === 'string').slice(0, HISTORIAL_MAX)
+      : [];
   } catch {
     return [];
   }
 }
 
-const sfecha = (v) => soloFecha(v, "—");
+const sfecha = (v) => soloFecha(v, '—');
 
 const fmtValor = (v) => {
-  if (v == null || v === "") return "—";
+  if (v == null || v === '') return '—';
   const n = Number(v);
   if (isNaN(n)) return String(v);
-  return n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+  return n.toLocaleString('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0
+  });
 };
 
 function detectarCanal(r) {
-  if (r.nv_ptm) return "PTM";
-  if (r.nv_orange) return "Orange";
-  if (r.nv_farmapack) return "Farmapack";
-  if (r.varios) return "Varios";
-  return "—";
+  if (r.nv_ptm) return 'PTM';
+  if (r.nv_orange) return 'Orange';
+  if (r.nv_farmapack) return 'Farmapack';
+  if (r.varios) return 'Varios';
+  return '—';
 }
 
 function detectarNV(r) {
-  return String(r.nv_ptm || r.nv_orange || r.nv_farmapack || r.varios || "—");
+  return String(r.nv_ptm || r.nv_orange || r.nv_farmapack || r.varios || '—');
 }
 
 // ============================================================
@@ -82,13 +120,14 @@ function detectarNV(r) {
 // ============================================================
 
 export default function PanelInfoReal() {
-  const [query, setQuery] = useState("");
-  const [fechaDesde, setFechaDesde] = useState("");
-  const [fechaHasta, setFechaHasta] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState('');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [limite, setLimite] = useState(PAGE_SIZE);
@@ -101,110 +140,140 @@ export default function PanelInfoReal() {
     setHistorial(leerHistorial());
   }, []);
 
+  // Las notificaciones de Hito 3 abren directamente la N.V. correspondiente.
+  useEffect(() => {
+    const nv = searchParams.get('nv')?.trim();
+    if (nv && nv !== query) setQuery(nv);
+  }, [query, searchParams]);
+
   const guardarHistorial = useCallback((term) => {
     const t = term.trim();
     if (t.length < 2) return;
     setHistorial((prev) => {
-      const next = [t, ...prev.filter((x) => x.toLowerCase() !== t.toLowerCase())].slice(0, HISTORIAL_MAX);
-      try { localStorage.setItem(HISTORIAL_KEY, JSON.stringify(next)); } catch {}
+      const next = [t, ...prev.filter((x) => x.toLowerCase() !== t.toLowerCase())].slice(
+        0,
+        HISTORIAL_MAX
+      );
+      try {
+        localStorage.setItem(HISTORIAL_KEY, JSON.stringify(next));
+      } catch {}
       return next;
     });
   }, []);
 
   const borrarHistorial = useCallback(() => {
     setHistorial([]);
-    try { localStorage.removeItem(HISTORIAL_KEY); } catch {}
+    try {
+      localStorage.removeItem(HISTORIAL_KEY);
+    } catch {}
   }, []);
 
   // `lim` = cuántas filas traer (paginación por "Cargar más" re-consultando).
-  const buscar = useCallback(async (lim = PAGE_SIZE) => {
-    const q = query.trim();
-    if (!q && !fechaDesde && !fechaHasta) {
-      setError("Ingresa un término de búsqueda o un rango de fechas.");
-      return;
-    }
-    if (!supabase) {
-      setError("Supabase no configurado.");
-      return;
-    }
-    const append = lim > PAGE_SIZE;
-    if (append) setLoadingMore(true); else { setLoading(true); setExpandedId(null); }
-    setError("");
-    setSearched(true);
-    setLimite(lim);
+  const buscar = useCallback(
+    async (lim = PAGE_SIZE) => {
+      const q = query.trim();
+      if (!q && !fechaDesde && !fechaHasta) {
+        setError('Ingresa un término de búsqueda o un rango de fechas.');
+        return;
+      }
+      if (!supabase) {
+        setError('Supabase no configurado.');
+        return;
+      }
+      const append = lim > PAGE_SIZE;
+      if (append) setLoadingMore(true);
+      else {
+        setLoading(true);
+        setExpandedId(null);
+      }
+      setError('');
+      setSearched(true);
+      setLimite(lim);
 
-    try {
-      let sb = supabase.from(OPERACIONES_READ_VIEW).select(SEARCH_COLUMNS.join(","));
+      try {
+        let sb = supabase.from(OPERACIONES_READ_VIEW).select(SEARCH_COLUMNS.join(','));
 
-      if (fechaDesde) sb = sb.gte("fecha_registro_nv", fechaDesde + "T00:00:00");
-      if (fechaHasta) sb = sb.lte("fecha_registro_nv", fechaHasta + "T23:59:59");
+        if (fechaDesde) sb = sb.gte('fecha_registro_nv', fechaDesde + 'T00:00:00');
+        if (fechaHasta) sb = sb.lte('fecha_registro_nv', fechaHasta + 'T23:59:59');
 
-      if (q) {
-        const qs = sanitizarBusqueda(q);          // escapa wildcards y comas/paréntesis
-        const esNumero = /^\d+$/.test(q);
-        const orFilters = [];
-        for (const campo of CAMPOS_BUSQUEDA) {
-          if (campo.numeric) {
-            if (esNumero) orFilters.push(`${campo.col}.eq.${q}`);   // q solo dígitos → seguro
-          } else if (qs) {
-            orFilters.push(`${campo.col}.ilike.%${qs}%`);
+        if (q) {
+          const qs = sanitizarBusqueda(q); // escapa wildcards y comas/paréntesis
+          const esNumero = /^\d+$/.test(q);
+          const orFilters = [];
+          for (const campo of CAMPOS_BUSQUEDA) {
+            if (campo.numeric) {
+              if (esNumero) orFilters.push(`${campo.col}.eq.${q}`); // q solo dígitos → seguro
+            } else if (qs) {
+              orFilters.push(`${campo.col}.ilike.%${qs}%`);
+            }
           }
+          if (orFilters.length > 0) sb = sb.or(orFilters.join(','));
         }
-        if (orFilters.length > 0) sb = sb.or(orFilters.join(","));
-      }
 
-      sb = sb.order("fecha_registro_nv", { ascending: false }).limit(lim);
-      const { data, error: err } = await sb;
+        sb = sb.order('fecha_registro_nv', { ascending: false }).limit(lim);
+        const { data, error: err } = await sb;
 
-      if (err) {
-        setError("Error en la búsqueda: " + err.message);
+        if (err) {
+          setError('Error en la búsqueda: ' + err.message);
+          setResultados([]);
+        } else {
+          setResultados(data || []);
+          if (q && (data?.length ?? 0) > 0) guardarHistorial(q);
+        }
+      } catch (e) {
+        setError('Error: ' + (e instanceof Error ? e.message : 'desconocido'));
         setResultados([]);
-      } else {
-        setResultados(data || []);
-        if (q && (data?.length ?? 0) > 0) guardarHistorial(q);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-    } catch (e) {
-      setError("Error: " + (e instanceof Error ? e.message : "desconocido"));
-      setResultados([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [query, fechaDesde, fechaHasta, guardarHistorial]);
+    },
+    [query, fechaDesde, fechaHasta, guardarHistorial]
+  );
 
   // Búsqueda instantánea (debounce 300ms) — tipo Google. Reinicia paginación.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2 && !fechaDesde && !fechaHasta) return;
-    const t = setTimeout(() => { buscar(PAGE_SIZE); }, 300);
+    const t = setTimeout(() => {
+      buscar(PAGE_SIZE);
+    }, 300);
     return () => clearTimeout(t);
   }, [query, fechaDesde, fechaHasta, buscar]);
 
-  const verMas = useCallback(() => { buscar(limite + PAGE_SIZE); }, [buscar, limite]);
+  const verMas = useCallback(() => {
+    buscar(limite + PAGE_SIZE);
+  }, [buscar, limite]);
   const hayMas = resultados.length >= limite;
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === "Enter") buscar(PAGE_SIZE);
-  }, [buscar]);
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Enter') buscar(PAGE_SIZE);
+    },
+    [buscar]
+  );
 
   const usarHistorial = useCallback((term) => {
     setQuery(term);
   }, []);
 
-  const handleQueryChange = useCallback((val) => {
-    setQuery(val);
-    if (val.trim() === "" && !fechaDesde && !fechaHasta) {
-      setResultados([]);
-      setSearched(false);
-      setError("");
-      setExpandedId(null);
-    }
-  }, [fechaDesde, fechaHasta]);
+  const handleQueryChange = useCallback(
+    (val) => {
+      setQuery(val);
+      if (val.trim() === '' && !fechaDesde && !fechaHasta) {
+        setResultados([]);
+        setSearched(false);
+        setError('');
+        setExpandedId(null);
+      }
+    },
+    [fechaDesde, fechaHasta]
+  );
 
   const conteoEstados = useMemo(() => {
     const m = {};
-    resultados.forEach(r => {
-      const est = normEstado(r.estado) || "Sin estado";
+    resultados.forEach((r) => {
+      const est = normEstado(r.estado) || 'Sin estado';
       m[est] = (m[est] || 0) + 1;
     });
     return m;
@@ -230,7 +299,14 @@ export default function PanelInfoReal() {
                 href="/ingresar"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 border border-blue-200 transition-colors"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
                 Volver
               </a>
             )}
@@ -245,13 +321,23 @@ export default function PanelInfoReal() {
           <div className="flex flex-col md:flex-row gap-3">
             {/* Input principal */}
             <div className="flex-1 relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 type="text"
                 value={query}
-                onChange={e => handleQueryChange(e.target.value)}
+                onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Buscar por NV PTM, Orange, Farmapack, Factura, Guía, Varios, N° Envío..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm outline-none transition"
@@ -266,7 +352,7 @@ export default function PanelInfoReal() {
                   type="date"
                   aria-label="Fecha desde (registro de NV)"
                   value={fechaDesde}
-                  onChange={e => setFechaDesde(e.target.value)}
+                  onChange={(e) => setFechaDesde(e.target.value)}
                   className="px-2 py-2 rounded-lg border border-slate-300 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>
@@ -276,7 +362,7 @@ export default function PanelInfoReal() {
                   type="date"
                   aria-label="Fecha hasta (registro de NV)"
                   value={fechaHasta}
-                  onChange={e => setFechaHasta(e.target.value)}
+                  onChange={(e) => setFechaHasta(e.target.value)}
                   className="px-2 py-2 rounded-lg border border-slate-300 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>
@@ -290,9 +376,32 @@ export default function PanelInfoReal() {
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
               >
                 {loading ? (
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="opacity-75" /></svg>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      className="opacity-25"
+                    />
+                    <path
+                      d="M4 12a8 8 0 018-8"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      className="opacity-75"
+                    />
+                  </svg>
                 ) : (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
                 )}
                 Buscar
               </button>
@@ -301,14 +410,22 @@ export default function PanelInfoReal() {
 
           {/* Campos de búsqueda info */}
           <p className="mt-2 text-xs text-slate-400">
-            Busca por: NV PTM, NV Orange, NV Farmapack, Factura, Guía, Varios o N° de Envío. La búsqueda es instantánea mientras escribes.
+            Busca por: NV PTM, NV Orange, NV Farmapack, Factura, Guía, Varios o N° de Envío. La
+            búsqueda es instantánea mientras escribes.
           </p>
 
           {/* Historial de búsquedas */}
           {historial.length > 0 && (
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className="text-xs font-medium text-slate-400 inline-flex items-center gap-1">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 Recientes:
               </span>
               {historial.map((h) => (
@@ -342,14 +459,14 @@ export default function PanelInfoReal() {
         {resultados.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-slate-600">
-              {resultados.length} resultado{resultados.length !== 1 ? "s" : ""}
+              {resultados.length} resultado{resultados.length !== 1 ? 's' : ''}
             </span>
             <span className="text-slate-300">|</span>
             {Object.entries(conteoEstados).map(([est, cnt]) => (
               <span
                 key={est}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                style={{ backgroundColor: ESTADO_COLOR[est] || "#6b7280" }}
+                style={{ backgroundColor: ESTADO_COLOR[est] || '#6b7280' }}
               >
                 {est} ({cnt})
               </span>
@@ -360,44 +477,74 @@ export default function PanelInfoReal() {
         {/* Sin resultados */}
         {searched && !loading && resultados.length === 0 && !error && (
           <div className="text-center py-16">
-            <svg className="mx-auto w-16 h-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg
+              className="mx-auto w-16 h-16 text-slate-300 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
             <p className="text-slate-500 text-sm">No se encontraron resultados</p>
-            <p className="text-slate-400 text-xs mt-1">Intenta con otro término o ajusta las fechas</p>
+            <p className="text-slate-400 text-xs mt-1">
+              Intenta con otro término o ajusta las fechas
+            </p>
           </div>
         )}
 
         {/* Estado inicial */}
         {!searched && !loading && (
           <div className="text-center py-20">
-            <svg className="mx-auto w-20 h-20 text-blue-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <p className="text-slate-500">Ingresa un término para buscar información de notas de venta</p>
-            <p className="text-slate-400 text-xs mt-1">Puedes buscar por cualquier número de NV, factura, guía o N° de envío</p>
+            <svg
+              className="mx-auto w-20 h-20 text-blue-200 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <p className="text-slate-500">
+              Ingresa un término para buscar información de notas de venta
+            </p>
+            <p className="text-slate-400 text-xs mt-1">
+              Puedes buscar por cualquier número de NV, factura, guía o N° de envío
+            </p>
           </div>
         )}
 
         {/* Resultados */}
         {resultados.length > 0 && (
           <div className="space-y-3">
-            {resultados.map(r => {
-              const est = normEstado(r.estado) || "Sin estado";
+            {resultados.map((r) => {
+              const est = normEstado(r.estado) || 'Sin estado';
               const canal = detectarCanal(r);
               const nv = detectarNV(r);
               const isExpanded = expandedId === r.id;
-              const color = ESTADO_COLOR[est] || "#6b7280";
+              const color = ESTADO_COLOR[est] || '#6b7280';
 
-              const esUrgente = r.urgente === true || String(r.urgente) === "true";
+              const esUrgente = r.urgente === true || String(r.urgente) === 'true';
 
               return (
                 <div
                   key={r.id}
-                  className={`bg-white rounded-xl border shadow-sm overflow-hidden transition hover:shadow-md ${esUrgente ? "border-red-300 ring-1 ring-red-100" : "border-slate-200"}`}
+                  className={`bg-white rounded-xl border shadow-sm overflow-hidden transition hover:shadow-md ${esUrgente ? 'border-red-300 ring-1 ring-red-100' : 'border-slate-200'}`}
                   style={{ borderLeft: `4px solid ${color}` }}
                 >
                   {/* Fila resumen (siempre visible) */}
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : r.id)}
                     aria-expanded={isExpanded}
-                    aria-label={`NV ${nv} — ${est}. ${isExpanded ? "Contraer" : "Expandir"} detalle`}
+                    aria-label={`NV ${nv} — ${est}. ${isExpanded ? 'Contraer' : 'Expandir'} detalle`}
                     className="w-full text-left px-4 py-3 flex items-center gap-3 cursor-pointer"
                   >
                     {/* Estado badge */}
@@ -417,10 +564,11 @@ export default function PanelInfoReal() {
                     {/* Cliente + vendedor/transportista */}
                     <div className="hidden sm:flex flex-col min-w-0 flex-1">
                       <span className="text-sm text-slate-700 font-medium truncate">
-                        {r.cliente || "—"}
+                        {r.cliente || '—'}
                       </span>
                       <span className="text-xs text-slate-400 truncate">
-                        {[r.vendedor, r.transportista].filter((x) => x && x !== "—").join(" · ") || " "}
+                        {[r.vendedor, r.transportista].filter((x) => x && x !== '—').join(' · ') ||
+                          ' '}
                       </span>
                     </div>
 
@@ -438,16 +586,30 @@ export default function PanelInfoReal() {
 
                     {/* Chevron */}
                     <svg
-                      className={`w-5 h-5 text-slate-400 transition-transform shrink-0 ${isExpanded ? "rotate-180" : ""}`}
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      className={`w-5 h-5 text-slate-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
 
                   {/* Detalle expandido — vista rica (Hero + KPIs + Timeline + Activity) */}
                   {isExpanded && (
-                    <NvDetalle r={r} est={est} color={color} nv={nv} canal={canal}>
+                    <NvDetalle
+                      r={r}
+                      est={est}
+                      color={color}
+                      nv={nv}
+                      canal={canal}
+                      certificados={<CertificadosSalida operacionId={r.id} />}
+                    >
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
                         <InfoSection titulo="Identificación">
                           <InfoRow label="Canal" value={canal} />
@@ -480,7 +642,10 @@ export default function PanelInfoReal() {
 
                         <InfoSection titulo="Estado">
                           <InfoRow label="Estado" value={est} highlight color={color} />
-                          <InfoRow label="Urgente" value={r.urgente === true || String(r.urgente) === "true" ? "Sí" : "No"} />
+                          <InfoRow
+                            label="Urgente"
+                            value={r.urgente === true || String(r.urgente) === 'true' ? 'Sí' : 'No'}
+                          />
                           <InfoRow label="Incidencia" value={r.incidencia} />
                           <InfoRow label="Estado Incidencia" value={r.estado_incidencia} />
                           <InfoRow label="Obs. Incidencia" value={r.observaciones_incidencia} />
@@ -489,7 +654,10 @@ export default function PanelInfoReal() {
 
                         <InfoSection titulo="Fechas Clave">
                           <InfoRow label="Registro NV" value={sfecha(r.fecha_registro_nv)} />
-                          <InfoRow label="Fecha de Creación de N.V" value={sfecha(r.fecha_aprobacion)} />
+                          <InfoRow
+                            label="Fecha de Creación de N.V"
+                            value={sfecha(r.fecha_aprobacion)}
+                          />
                           <InfoRow label="Aprob. Real" value={sfecha(r.fecha_aprobacion_real)} />
                           <InfoRow label="Compromiso" value={sfecha(r.fecha_compromiso)} />
                           <InfoRow label="Facturación" value={sfecha(r.fecha_facturacion)} />
@@ -518,7 +686,7 @@ export default function PanelInfoReal() {
                   disabled={loadingMore}
                   className="px-4 py-2 text-[13px] rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                 >
-                  {loadingMore ? "Cargando…" : `Cargar más (${resultados.length})`}
+                  {loadingMore ? 'Cargando…' : `Cargar más (${resultados.length})`}
                 </button>
               </div>
             )}
@@ -545,14 +713,17 @@ function InfoSection({ titulo, children }) {
 }
 
 function InfoRow({ label, value, highlight, color }) {
-  const display = value == null || value === "" ? "—" : String(value);
-  if (display === "—") return null;
+  const display = value == null || value === '' ? '—' : String(value);
+  if (display === '—') return null;
 
   return (
     <div className="flex items-baseline gap-2 text-sm">
       <span className="text-slate-400 text-xs w-28 shrink-0">{label}</span>
       {highlight ? (
-        <span className="font-semibold px-1.5 py-0.5 rounded text-white text-xs" style={{ backgroundColor: color }}>
+        <span
+          className="font-semibold px-1.5 py-0.5 rounded text-white text-xs"
+          style={{ backgroundColor: color }}
+        >
           {display}
         </span>
       ) : (

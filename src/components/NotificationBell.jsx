@@ -73,6 +73,14 @@ export default function NotificationBell() {
     await marcarTodasLeidas();
     setItems([]);
   };
+  const abrir = async (notificacion) => {
+    await leer(notificacion.id);
+    const ruta = notificacion.payload?.route;
+    if (ruta) {
+      setOpen(false);
+      nav(ruta);
+    }
+  };
 
   return (
     <div className="relative">
@@ -115,7 +123,11 @@ export default function NotificationBell() {
             ) : (
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                 {items.map((n) => (
-                  <div key={n.id} className="flex items-start gap-2 px-3 py-2.5 hover:bg-slate-50">
+                  <div
+                    key={n.id}
+                    onClick={() => abrir(n)}
+                    className={`flex items-start gap-2 px-3 py-2.5 hover:bg-slate-50 ${n.payload?.route ? 'cursor-pointer' : ''}`}
+                  >
                     <span className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="font-bold text-[13px] text-slate-800">{n.titulo}</div>
@@ -123,7 +135,10 @@ export default function NotificationBell() {
                       <div className="text-[10px] text-slate-400 mt-0.5">{fmt(n.creado_en)}</div>
                     </div>
                     <button
-                      onClick={() => leer(n.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        leer(n.id);
+                      }}
                       title="Marcar leída"
                       className="text-slate-300 hover:text-emerald-500 shrink-0 mt-0.5"
                     >

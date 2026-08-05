@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import { evaluateFormula } from '../formulaEngine';
 import { calcFechaCompromiso, soloFecha } from '../dash/dashHelpers';
 import { fetchAuditByNv } from '../dash/dashData';
@@ -9,51 +9,60 @@ import { fetchAuditByNv } from '../dash/dashData';
 // ============================================================
 
 const HITOS = [
-  { key: "fecha_aprobacion", label: "N.V Creada en Sistema" },
-  { key: "fecha_registro_nv", label: "Registrada en Base de Datos" },
-  { key: "fecha_en_proceso", label: "En Proceso" },
-  { key: "fecha_shipping", label: "Shipping" },
-  { key: "fecha_en_ruta", label: "En Ruta" },
-  { key: "fecha_entregado", label: "Entregado" },
+  { key: 'fecha_aprobacion', label: 'N.V Creada en Sistema' },
+  { key: 'fecha_registro_nv', label: 'Registrada en Base de Datos' },
+  { key: 'fecha_en_proceso', label: 'En Proceso' },
+  { key: 'fecha_shipping', label: 'Shipping' },
+  { key: 'fecha_en_ruta', label: 'En Ruta' },
+  { key: 'fecha_entregado', label: 'Entregado' }
 ];
 
 function fmtFechaHora(v) {
-  if (!v) return "—";
-  const d = new Date(typeof v === "string" && v.length === 10 ? v + "T12:00:00" : v);
+  if (!v) return '—';
+  const d = new Date(typeof v === 'string' && v.length === 10 ? v + 'T12:00:00' : v);
   if (isNaN(d.getTime())) return String(v);
-  return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }).replace(".", "");
+  return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).replace('.', '');
 }
 function fmtValor(v) {
-  if (v == null || v === "") return "—";
+  if (v == null || v === '') return '—';
   const n = Number(v);
-  return isNaN(n) ? String(v) : "$" + n.toLocaleString("es-CL");
+  return isNaN(n) ? String(v) : '$' + n.toLocaleString('es-CL');
 }
 
 // Colores de badge por valor (semáforo) — consistente con el Builder.
 function badgeColors(v) {
   const s = String(v).toUpperCase();
-  if (["CRITICA", "FAIL", "TRUE", "RIESGO", "RISK", "VENCIDA"].includes(s)) return { bg: "#fef2f2", fg: "#b91c1c", dot: "#ef4444" };
-  if (["ALTA", "PEND", "MEDIA"].includes(s)) return { bg: "#fffbeb", fg: "#b45309", dot: "#f59e0b" };
-  if (["OK", "NORMAL", "FALSE", "FINALIZADA"].includes(s)) return { bg: "#f0fdf4", fg: "#15803d", dot: "#22c55e" };
-  return { bg: "#eff6ff", fg: "#1d4ed8", dot: "#3b82f6" };
+  if (['CRITICA', 'FAIL', 'TRUE', 'RIESGO', 'RISK', 'VENCIDA'].includes(s))
+    return { bg: '#fef2f2', fg: '#b91c1c', dot: '#ef4444' };
+  if (['ALTA', 'PEND', 'MEDIA'].includes(s))
+    return { bg: '#fffbeb', fg: '#b45309', dot: '#f59e0b' };
+  if (['OK', 'NORMAL', 'FALSE', 'FINALIZADA'].includes(s))
+    return { bg: '#f0fdf4', fg: '#15803d', dot: '#22c55e' };
+  return { bg: '#eff6ff', fg: '#1d4ed8', dot: '#3b82f6' };
 }
 
 function Badge({ texto, big }) {
   const c = badgeColors(texto);
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-bold ${big ? "px-3 py-1 text-[13px]" : "px-2 py-0.5 text-[11px]"}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-bold ${big ? 'px-3 py-1 text-[13px]' : 'px-2 py-0.5 text-[11px]'}`}
       style={{ background: c.bg, color: c.fg }}
     >
-      <span className="rounded-full" style={{ background: c.dot, width: big ? 8 : 6, height: big ? 8 : 6 }} />
+      <span
+        className="rounded-full"
+        style={{ background: c.dot, width: big ? 8 : 6, height: big ? 8 : 6 }}
+      />
       {texto}
     </span>
   );
 }
 
-function Kpi({ valor, label, tono = "slate" }) {
+function Kpi({ valor, label, tono = 'slate' }) {
   const tonos = {
-    slate: "text-slate-800", red: "text-red-600", amber: "text-amber-600", green: "text-emerald-600",
+    slate: 'text-slate-800',
+    red: 'text-red-600',
+    amber: 'text-amber-600',
+    green: 'text-emerald-600'
   };
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center">
@@ -63,48 +72,65 @@ function Kpi({ valor, label, tono = "slate" }) {
   );
 }
 
-export default function NvDetalle({ r, est, color, nv, canal, children }) {
+export default function NvDetalle({ r, est, color, nv, canal, certificados, children }) {
   const [audit, setAudit] = useState([]);
   const [verCampos, setVerCampos] = useState(false);
   const [auditCargado, setAuditCargado] = useState(false);
 
   // Fila para el motor: alias + fecha_compromiso derivada si falta.
   const evalRow = useMemo(() => {
-    const fc = soloFecha(r.fecha_compromiso) || calcFechaCompromiso(soloFecha(r.fecha_aprobacion), soloFecha(r.fecha_aprobacion_real));
-    return { ...r, fecha_compromiso: fc || null, fecha_entrega: r.fecha_entregado, fecha_creacion: r.fecha_registro_nv };
+    const fc =
+      soloFecha(r.fecha_compromiso) ||
+      calcFechaCompromiso(soloFecha(r.fecha_aprobacion), soloFecha(r.fecha_aprobacion_real));
+    return {
+      ...r,
+      fecha_compromiso: fc || null,
+      fecha_entrega: r.fecha_entregado,
+      fecha_creacion: r.fecha_registro_nv
+    };
   }, [r]);
 
   const ev = (f) => evaluateFormula(f, evalRow).value;
   // ¿NV finalizada? (entregada / recibida) → las métricas "restantes/vencida"
   // NO aplican; en su lugar mostramos si llegó a tiempo (OTIF).
   const estLower = String(est).toLowerCase();
-  const finalizada = estLower.includes("recibido") || estLower.includes("entregad");
-  const prioridad = ev("PRIORIDAD_OPERACIONAL(fecha_compromiso, estado)");
-  const lead = ev("DATEDIFF(fecha_aprobacion, fecha_entrega)");
-  const esUrgente = r.urgente === true || String(r.urgente) === "true";
+  const finalizada = estLower.includes('recibido') || estLower.includes('entregad');
+  const prioridad = ev('PRIORIDAD_OPERACIONAL(fecha_compromiso, estado)');
+  const lead = ev('DATEDIFF(fecha_aprobacion, fecha_entrega)');
+  const esUrgente = r.urgente === true || String(r.urgente) === 'true';
 
   // --- Métricas ACTIVAS (solo si NO finalizada) ---
-  const horas = finalizada ? null : ev("HOURS_DIFF(NOW(), fecha_compromiso)");
-  const dias = finalizada ? null : ev("DATEDIFF(NOW(), fecha_compromiso)");
-  const enRiesgo = !finalizada && ev("RIESGO_OTIF(fecha_compromiso, estado)") === true;
-  const vencida = !finalizada && typeof horas === "number" && horas < 0;
+  const horas = finalizada ? null : ev('HOURS_DIFF(NOW(), fecha_compromiso)');
+  const dias = finalizada ? null : ev('DATEDIFF(NOW(), fecha_compromiso)');
+  const enRiesgo = !finalizada && ev('RIESGO_OTIF(fecha_compromiso, estado)') === true;
+  const vencida = !finalizada && typeof horas === 'number' && horas < 0;
 
   // --- Métricas FINALIZADA (OTIF / desfase) ---
   // entrega efectiva: entregado → en ruta → despacho (lo que haya).
   const entregaEf = r.fecha_entregado || r.fecha_en_ruta || r.fecha_despacho || null;
-  const desfase = finalizada && entregaEf && evalRow.fecha_compromiso
-    ? evaluateFormula("DATEDIFF(fecha_compromiso, entrega)", { ...evalRow, entrega: entregaEf }).value
-    : null; // >0 = entregó tarde
+  const desfase =
+    finalizada && entregaEf && evalRow.fecha_compromiso
+      ? evaluateFormula('DATEDIFF(fecha_compromiso, entrega)', { ...evalRow, entrega: entregaEf })
+          .value
+      : null; // >0 = entregó tarde
   const aTiempo = desfase == null ? null : desfase <= 0;
 
   useEffect(() => {
     let alive = true;
     setAuditCargado(false);
     fetchAuditByNv(nv, canal)
-      .then((a) => { if (alive) setAudit(a); })
-      .catch(() => { if (alive) setAudit([]); })
-      .finally(() => { if (alive) setAuditCargado(true); });
-    return () => { alive = false; };
+      .then((a) => {
+        if (alive) setAudit(a);
+      })
+      .catch(() => {
+        if (alive) setAudit([]);
+      })
+      .finally(() => {
+        if (alive) setAuditCargado(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [nv, canal]);
 
   // Timeline: último hito con fecha = "actual"; los siguientes, pendientes.
@@ -123,14 +149,19 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
               <span className="text-[11px] font-medium text-slate-400 uppercase">{canal}</span>
               <h2 className="text-lg font-bold text-slate-900">NV {nv}</h2>
             </div>
-            <p className="text-sm text-slate-600 mt-0.5 truncate">{r.cliente || "—"}</p>
+            <p className="text-sm text-slate-600 mt-0.5 truncate">{r.cliente || '—'}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold text-white" style={{ background: color }}>
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold text-white"
+              style={{ background: color }}
+            >
               {est}
             </span>
             {/* Activas: prioridad / vencida / riesgo. Finalizadas: resultado OTIF. */}
-            {!finalizada && prioridad && prioridad !== "FINALIZADA" && prioridad !== "NORMAL" && <Badge texto={prioridad} big />}
+            {!finalizada && prioridad && prioridad !== 'FINALIZADA' && prioridad !== 'NORMAL' && (
+              <Badge texto={prioridad} big />
+            )}
             {!finalizada && vencida && <Badge texto="VENCIDA" big />}
             {!finalizada && enRiesgo && !vencida && <Badge texto="RIESGO OTIF" big />}
             {finalizada && aTiempo === true && <Badge texto="A TIEMPO" big />}
@@ -141,8 +172,8 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
 
         {/* Datos clave */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 mt-4 text-[13px]">
-          <Dato icon="🚚" label="Transportista" value={r.transportista || "—"} />
-          <Dato icon="📦" label="Bultos" value={r.bultos ?? "—"} />
+          <Dato icon="🚚" label="Transportista" value={r.transportista || '—'} />
+          <Dato icon="📦" label="Bultos" value={r.bultos ?? '—'} />
           <Dato icon="💰" label="Valor factura" value={fmtValor(r.valor_factura)} />
           <Dato icon="📅" label="Compromiso" value={fmtFechaHora(evalRow.fecha_compromiso)} />
         </div>
@@ -153,31 +184,41 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
         {finalizada ? (
           <>
             <Kpi
-              valor={aTiempo == null ? "—" : aTiempo ? "A tiempo" : "Tarde"}
+              valor={aTiempo == null ? '—' : aTiempo ? 'A tiempo' : 'Tarde'}
               label="OTIF (puntualidad)"
-              tono={aTiempo == null ? "slate" : aTiempo ? "green" : "red"}
+              tono={aTiempo == null ? 'slate' : aTiempo ? 'green' : 'red'}
             />
             <Kpi
-              valor={desfase == null ? "—" : desfase <= 0 ? `${desfase}d` : `+${desfase}d`}
+              valor={desfase == null ? '—' : desfase <= 0 ? `${desfase}d` : `+${desfase}d`}
               label="Desfase vs compromiso"
-              tono={desfase != null && desfase > 0 ? "red" : "green"}
+              tono={desfase != null && desfase > 0 ? 'red' : 'green'}
             />
-            <Kpi valor={lead == null ? "—" : `${lead}d`} label="Lead time" />
+            <Kpi valor={lead == null ? '—' : `${lead}d`} label="Lead time" />
             <Kpi valor="FINALIZADA" label="Estado" tono="green" />
           </>
         ) : (
           <>
             <Kpi
-              valor={horas == null ? "—" : `${Math.round(Math.abs(horas))}h`}
-              label={vencida ? "Vencida hace" : "Restantes"}
-              tono={vencida ? "red" : typeof horas === "number" && horas < 24 ? "amber" : "green"}
+              valor={horas == null ? '—' : `${Math.round(Math.abs(horas))}h`}
+              label={vencida ? 'Vencida hace' : 'Restantes'}
+              tono={vencida ? 'red' : typeof horas === 'number' && horas < 24 ? 'amber' : 'green'}
             />
-            <Kpi valor={dias == null ? "—" : `${dias}d`} label="Días compromiso" tono={typeof dias === "number" && dias < 0 ? "red" : "slate"} />
-            <Kpi valor={lead == null ? "—" : `${lead}d`} label="Lead time" />
-            <Kpi valor={prioridad || "—"} label="Prioridad" tono={prioridad === "CRITICA" ? "red" : prioridad === "ALTA" ? "amber" : "slate"} />
+            <Kpi
+              valor={dias == null ? '—' : `${dias}d`}
+              label="Días compromiso"
+              tono={typeof dias === 'number' && dias < 0 ? 'red' : 'slate'}
+            />
+            <Kpi valor={lead == null ? '—' : `${lead}d`} label="Lead time" />
+            <Kpi
+              valor={prioridad || '—'}
+              label="Prioridad"
+              tono={prioridad === 'CRITICA' ? 'red' : prioridad === 'ALTA' ? 'amber' : 'slate'}
+            />
           </>
         )}
       </div>
+
+      {certificados}
 
       {/* ===== Timeline horizontal ===== */}
       <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 overflow-x-auto">
@@ -188,17 +229,34 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
             // falten timestamps intermedios), sin "actual" ámbar.
             const done = finalizada || !!fecha;
             const current = !finalizada && i === ultimoConFecha;
-            const dotColor = current ? "#f59e0b" : done ? "#22c55e" : "#cbd5e1";
+            const dotColor = current ? '#f59e0b' : done ? '#22c55e' : '#cbd5e1';
             const lineDone = finalizada || i < ultimoConFecha;
             return (
               <div key={h.key} className="flex-1 flex flex-col items-center relative">
                 {/* línea hacia el siguiente */}
                 {i < HITOS.length - 1 && (
-                  <span className="absolute top-[7px] left-1/2 w-full h-0.5" style={{ background: lineDone ? "#22c55e" : "#e2e8f0" }} />
+                  <span
+                    className="absolute top-[7px] left-1/2 w-full h-0.5"
+                    style={{ background: lineDone ? '#22c55e' : '#e2e8f0' }}
+                  />
                 )}
-                <span className="relative z-10 rounded-full" style={{ width: 14, height: 14, background: dotColor, boxShadow: current ? "0 0 0 4px #f59e0b22" : "none" }} />
-                <span className={`text-[10px] mt-1.5 font-medium ${done ? "text-slate-700" : "text-slate-300"}`}>{h.label}</span>
-                <span className="text-[9px] text-slate-400">{fecha ? fmtFechaHora(fecha) : ""}</span>
+                <span
+                  className="relative z-10 rounded-full"
+                  style={{
+                    width: 14,
+                    height: 14,
+                    background: dotColor,
+                    boxShadow: current ? '0 0 0 4px #f59e0b22' : 'none'
+                  }}
+                />
+                <span
+                  className={`text-[10px] mt-1.5 font-medium ${done ? 'text-slate-700' : 'text-slate-300'}`}
+                >
+                  {h.label}
+                </span>
+                <span className="text-[9px] text-slate-400">
+                  {fecha ? fmtFechaHora(fecha) : ''}
+                </span>
               </div>
             );
           })}
@@ -207,7 +265,9 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
 
       {/* ===== Activity Feed ===== */}
       <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Actividad</h3>
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+          Actividad
+        </h3>
         {!auditCargado ? (
           <p className="text-[12px] text-slate-300">Cargando…</p>
         ) : audit.length === 0 ? (
@@ -215,16 +275,38 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
         ) : (
           <ul className="space-y-2" role="list" aria-label="Historial de actividad de la NV">
             {audit.map((e) => {
-              const verbo = e.accion === "create" ? "creó la N.V." : e.accion === "estado" ? "cambió estado" : e.accion === "update" ? "editó" : e.accion === "bulkUpdate" ? "actualizó" : e.accion;
-              const hora = new Date(e.timestamp).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+              const verbo =
+                e.accion === 'create'
+                  ? 'creó la N.V.'
+                  : e.accion === 'estado'
+                    ? 'cambió estado'
+                    : e.accion === 'update'
+                      ? 'editó'
+                      : e.accion === 'bulkUpdate'
+                        ? 'actualizó'
+                        : e.accion;
+              const hora = new Date(e.timestamp).toLocaleString('es-CL', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
               return (
                 <li key={e.id} className="flex items-start gap-2.5 text-[12px]">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold shrink-0 mt-0.5">
-                    {String(e.operador || "?").charAt(0).toUpperCase()}
+                    {String(e.operador || '?')
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
                   <div className="min-w-0">
-                    <span className="text-slate-700"><b>{e.operador}</b> {verbo}{e.campos ? <span className="text-slate-400"> · {e.campos}</span> : ""}</span>
-                    <div className="text-[10px] text-slate-400">{hora}{e.exito === false ? " · falló" : ""}</div>
+                    <span className="text-slate-700">
+                      <b>{e.operador}</b> {verbo}
+                      {e.campos ? <span className="text-slate-400"> · {e.campos}</span> : ''}
+                    </span>
+                    <div className="text-[10px] text-slate-400">
+                      {hora}
+                      {e.exito === false ? ' · falló' : ''}
+                    </div>
                   </div>
                 </li>
               );
@@ -240,7 +322,7 @@ export default function NvDetalle({ r, est, color, nv, canal, children }) {
             onClick={() => setVerCampos((v) => !v)}
             className="mt-3 text-[12px] text-blue-600 hover:text-blue-800 font-medium"
           >
-            {verCampos ? "▲ Ocultar todos los campos" : "▼ Ver todos los campos"}
+            {verCampos ? '▲ Ocultar todos los campos' : '▼ Ver todos los campos'}
           </button>
           {verCampos && <div className="mt-3 anim-fade-up">{children}</div>}
         </>
