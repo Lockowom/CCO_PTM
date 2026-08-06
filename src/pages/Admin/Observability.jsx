@@ -2,17 +2,22 @@ import { useMemo, useRef, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
+  CheckCircle2,
   Clock3,
+  CircleDot,
   Filter,
   Gauge,
   RefreshCw,
   Search,
   ShieldAlert,
-  User
+  User,
+  Wrench,
+  X
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { toast } from 'sonner';
 import { supabase } from '../../supabase';
 import QueryErrorState from '../../components/ui/QueryErrorState';
 
@@ -103,7 +108,14 @@ function extractTop(items, pickKey, limit = 5) {
     .slice(0, limit);
 }
 
-async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter, search }) {
+async function fetchObservabilitySnapshot({
+  lookback,
+  level,
+  kind,
+  moduleFilter,
+  search,
+  alertStatus
+}) {
   const since = getSinceIso(lookback);
   let query = supabase
     .from('system_logs')
@@ -146,11 +158,13 @@ async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter,
   const alertsQuery = supabase
     .from('system_alerts')
     .select(
-      'id, created_at, status, severity, rule_code, scope_key, titulo, mensaje, payload, occurrences, first_seen_at, last_seen_at, notified_at'
+      'id, created_at, status, severity, rule_code, scope_key, titulo, mensaje, payload, occurrences, first_seen_at, last_seen_at, notified_at, acknowledged_at, acknowledged_by, resolved_at, resolved_by, resolution_note'
     )
     .gte('created_at', since)
     .order('created_at', { ascending: false })
     .limit(20);
+
+  if (alertStatus !== 'all') alertsQuery.eq('status', alertStatus);
 
   const [{ data, error, count }, errorRes, slowRes, warnRes, alertsRes] = await Promise.all([
     query,
@@ -168,6 +182,7 @@ async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter,
 
   const logs = data || [];
   const alerts = alertsRes.data || [];
+  const liveAlerts = alerts.filter((item) => isLiveAlert(item));
   const errorLogs = logs.filter((item) => item.level === 'error');
   const usersAffected = new Set(
     logs.map((item) => item.usuario_email || item.usuario_nombre || item.rol).filter(Boolean)
@@ -188,6 +203,9 @@ async function fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter,
       warns: warnRes.count || 0,
       slow: slowRes.count || 0,
       openAlerts: alerts.filter((item) => item.status === 'open').length,
+      liveAlerts: liveAlerts.length,
+      historicalOpenAlerts: alerts.filter((item) => item.status === 'open' && !isLiveAlert(item))
+        .length,
       usersAffected,
       avgDuration
     },
@@ -228,14 +246,34 @@ function alertChipClass(severity) {
   return ALERT_STYLES[severity] || 'bg-slate-100 text-slate-700 border-slate-200';
 }
 
+function isLiveAlert(alert) {
+  if (!alert || alert.status === 'resolved') return false;
+  const seenAt = new Date(alert.last_seen_at || alert.created_at).getTime();
+  return Number.isFinite(seenAt) && Date.now() - seenAt < 45 * 60 * 1000;
+}
+
+function alertNextStep(alert) {
+  const action = alert?.payload?.action || '';
+  if (alert?.rule_code === 'OBS_ERROR_BURST_GLOBAL')
+    return `Abrir los eventos de ${action || 'la acción afectada'} y revisar el primer error, no la ráfaga.`;
+  if (alert?.rule_code === 'OBS_REPEAT_FINGERPRINT')
+    return 'Revisar el fingerprint y confirmar si el último evento aún se reproduce.';
+  if (alert?.rule_code === 'OBS_SLOW_ACTION_MODULE')
+    return `Revisar duración, usuario y ruta de ${action || 'la operación'} antes de escalar.`;
+  return 'Abrir evidencia, confirmar impacto y reconocer o resolver el incidente.';
+}
+
 export default function Observability() {
   const containerRef = useRef(null);
   const [lookback, setLookback] = useState('24h');
   const [level, setLevel] = useState('all');
   const [kind, setKind] = useState('all');
   const [moduleFilter, setModuleFilter] = useState('all');
+  const [alertStatus, setAlertStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [resolutionNote, setResolutionNote] = useState('');
 
   useGSAP(
     () => {
@@ -251,9 +289,35 @@ export default function Observability() {
   );
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['observability_snapshot', lookback, level, kind, moduleFilter, search],
-    queryFn: () => fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter, search }),
+    queryKey: ['observability_snapshot', lookback, level, kind, moduleFilter, search, alertStatus],
+    queryFn: () =>
+      fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter, search, alertStatus }),
     refetchInterval: 15000
+  });
+
+  const alertStatusMutation = useMutation({
+    mutationFn: async ({ alertId, status, note }) => {
+      const { data: updated, error: updateError } = await supabase.rpc(
+        'update_system_alert_status',
+        {
+          p_alert_id: alertId,
+          p_status: status,
+          p_note: note || null
+        }
+      );
+      if (updateError) throw updateError;
+      return updated;
+    },
+    onSuccess: (_updated, variables) => {
+      toast.success(
+        variables.status === 'resolved' ? 'Incidente resuelto y auditado.' : 'Incidente reconocido.'
+      );
+      setSelectedAlert(null);
+      setResolutionNote('');
+      refetch();
+    },
+    onError: (mutationError) =>
+      toast.error(mutationError?.message || 'No se pudo actualizar el incidente.')
   });
 
   const logs = data?.logs || [];
@@ -293,7 +357,7 @@ export default function Observability() {
           <Filter size={16} />
           <span className="text-sm font-black uppercase tracking-wide">Filtros</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">
               Ventana
@@ -308,6 +372,21 @@ export default function Observability() {
                   {option.label}
                 </option>
               ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              Estado incidente
+            </label>
+            <select
+              value={alertStatus}
+              onChange={(e) => setAlertStatus(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white outline-none focus:border-orange-400"
+            >
+              <option value="all">Todos</option>
+              <option value="open">Pendientes</option>
+              <option value="ack">En revisión</option>
+              <option value="resolved">Resueltos</option>
             </select>
           </div>
           <div>
@@ -395,11 +474,11 @@ export default function Observability() {
               helper={`Vista ${LOOKBACK_OPTIONS.find((x) => x.value === lookback)?.label || lookback}`}
             />
             <StatCard
-              icon={<ShieldAlert size={20} />}
-              label="Errores"
-              value={data?.totals.errors ?? (isLoading ? '…' : 0)}
+              icon={<CircleDot size={20} />}
+              label="Incidentes vigentes"
+              value={data?.totals.liveAlerts ?? (isLoading ? '…' : 0)}
               tone="rose"
-              helper="Severidad crítica detectada"
+              helper={`${data?.totals.historicalOpenAlerts ?? 0} históricos pendientes de cerrar`}
             />
             <StatCard
               icon={<AlertTriangle size={20} />}
@@ -421,6 +500,36 @@ export default function Observability() {
               value={data?.totals.usersAffected ?? (isLoading ? '…' : 0)}
               helper={`Promedio: ${fmtDuration(data?.totals.avgDuration)}`}
             />
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-950 text-white overflow-hidden shadow-sm">
+            <div className="px-4 sm:px-5 py-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300">
+                  Triage inmediato
+                </p>
+                <h2 className="text-lg font-black mt-1">
+                  {data?.totals.liveAlerts
+                    ? `${data.totals.liveAlerts} incidente(s) requieren revisión ahora`
+                    : 'Sin incidentes activos en este momento'}
+                </h2>
+                <p className="text-sm text-slate-300 mt-1">
+                  Las alertas sin actividad por más de 45 min se muestran como históricas: revísalas
+                  y ciérralas con evidencia.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAlertStatus('open');
+                  setLevel('error');
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-400 px-4 py-2.5 text-sm font-black text-white"
+              >
+                <Wrench size={16} />
+                Ver pendientes
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -501,7 +610,7 @@ export default function Observability() {
                   Alertas automáticas
                 </h3>
                 <p className="text-[12px] text-slate-400 mt-1">
-                  Alertas materializadas desde `system_logs` con cooldown anti-spam.
+                  Haz clic para ver la evidencia, reconocer el incidente o cerrarlo con una nota.
                 </p>
               </div>
               <span className="text-[11px] font-black text-slate-500 uppercase tracking-wide">
@@ -516,7 +625,15 @@ export default function Observability() {
             ) : (
               <div className="divide-y divide-slate-100">
                 {alerts.map((alert) => (
-                  <div key={alert.id} className="px-4 py-3">
+                  <button
+                    key={alert.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAlert(alert);
+                      setResolutionNote(alert.resolution_note || '');
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors"
+                  >
                     <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                       <div className="flex items-center gap-2 min-w-0">
                         <span
@@ -533,6 +650,7 @@ export default function Observability() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-bold text-slate-800 truncate">
+                          {isLiveAlert(alert) ? '● Activa · ' : '○ Histórica · '}
                           {alert.titulo}
                         </p>
                         <p className="text-[12px] text-slate-500 truncate mt-0.5">
@@ -545,7 +663,7 @@ export default function Observability() {
                         <span>{fmtAgo(alert.last_seen_at || alert.created_at)}</span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -628,6 +746,134 @@ export default function Observability() {
             )}
           </div>
         </>
+      )}
+
+      {selectedAlert && (
+        <div className="fixed inset-0 z-[125] bg-slate-950/55 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`text-[10px] font-black uppercase rounded-lg border px-2 py-1 ${alertChipClass(selectedAlert.severity)}`}
+                  >
+                    {selectedAlert.severity}
+                  </span>
+                  <span className="text-[10px] font-black uppercase rounded-lg border px-2 py-1 bg-slate-100 text-slate-600 border-slate-200">
+                    {selectedAlert.status}
+                  </span>
+                  <span
+                    className={`text-[10px] font-black uppercase ${isLiveAlert(selectedAlert) ? 'text-emerald-600' : 'text-slate-400'}`}
+                  >
+                    {isLiveAlert(selectedAlert) ? 'Actividad vigente' : 'Incidente histórico'}
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 mt-2">{selectedAlert.titulo}</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Última evidencia:{' '}
+                  {fmtDateTime(selectedAlert.last_seen_at || selectedAlert.created_at)}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAlert(null)}
+                className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
+                aria-label="Cerrar incidente"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <section className="rounded-2xl border border-orange-100 bg-orange-50 p-4">
+                <p className="text-[10px] font-black uppercase tracking-wide text-orange-700">
+                  Qué revisar primero
+                </p>
+                <p className="text-sm font-semibold text-slate-800 mt-1">
+                  {alertNextStep(selectedAlert)}
+                </p>
+              </section>
+              <section className="rounded-2xl border border-slate-200 p-4">
+                <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                  Evidencia
+                </p>
+                <p className="text-sm text-slate-700 mt-2 whitespace-pre-wrap">
+                  {selectedAlert.mensaje}
+                </p>
+                <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Regla
+                    </span>
+                    {selectedAlert.rule_code}
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Repeticiones
+                    </span>
+                    {selectedAlert.occurrences} evento(s)
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Primero visto
+                    </span>
+                    {fmtDateTime(selectedAlert.first_seen_at)}
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Último visto
+                    </span>
+                    {fmtDateTime(selectedAlert.last_seen_at)}
+                  </div>
+                </div>
+              </section>
+              <section className="rounded-2xl border border-slate-200 p-4">
+                <label className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                  Nota de resolución
+                </label>
+                <textarea
+                  value={resolutionNote}
+                  onChange={(e) => setResolutionNote(e.target.value)}
+                  maxLength={1000}
+                  placeholder="Qué ocurrió, qué se corrigió y cómo se verificó."
+                  className="mt-2 w-full min-h-24 rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-orange-400"
+                />
+              </section>
+              <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                {selectedAlert.status === 'open' && (
+                  <button
+                    type="button"
+                    disabled={alertStatusMutation.isPending}
+                    onClick={() =>
+                      alertStatusMutation.mutate({
+                        alertId: selectedAlert.id,
+                        status: 'ack',
+                        note: resolutionNote
+                      })
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    <CircleDot size={16} /> Reconocer
+                  </button>
+                )}
+                {selectedAlert.status !== 'resolved' && (
+                  <button
+                    type="button"
+                    disabled={alertStatusMutation.isPending}
+                    onClick={() =>
+                      alertStatusMutation.mutate({
+                        alertId: selectedAlert.id,
+                        status: 'resolved',
+                        note: resolutionNote
+                      })
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    <CheckCircle2 size={16} /> Resolver incidente
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedLog && (
