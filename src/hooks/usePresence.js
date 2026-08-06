@@ -92,7 +92,7 @@ export const usePresenceTracker = () => {
   const lastPathRef = useRef('');
 
   const updatePresence = async (pathname) => {
-    if (!user?.id) return;
+    if (!user?.id || document.visibilityState === 'hidden') return;
     const moduleName = PATH_TO_MODULE[pathname] || pathname;
     try {
       const {
@@ -121,11 +121,11 @@ export const usePresenceTracker = () => {
     lastPathRef.current = pathname;
     updatePresence(pathname);
 
-    // Heartbeat every 30s
+    // Heartbeat cada 90 s: suficiente para presencia sin saturar escrituras.
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       updatePresence(lastPathRef.current);
-    }, 30000);
+    }, 90000);
   };
 
   const updatePath = (pathname) => {

@@ -59,8 +59,8 @@ async function hardRefreshToBuild(targetBuildId) {
 }
 
 // VersionGuard — "al actualizar, obliga a re-loguear" (igual que el Panel).
-// Consulta /api/version (la versión DESPLEGADA en el servidor) al montar, cada
-// 60 s y al volver el foco. Si difiere de la versión de este bundle, significa
+// Consulta /version.json (emitido por Vite para el sitio estático) al montar,
+// cada 120 s y al volver el foco. Si difiere del build de este bundle, significa
 // que hay un deploy nuevo → cierra la sesión (si hay) y recarga para traer el
 // bundle nuevo, dejando al usuario en el login.
 export default function VersionGuard() {
@@ -73,11 +73,16 @@ export default function VersionGuard() {
 
   useEffect(() => {
     let alive = true;
+    let lastCheckAt = 0;
     const check = async () => {
-      if (firing.current || !CURRENT_BUILD_ID) return;
+      if (firing.current || !CURRENT_BUILD_ID || document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      // focus y visibilitychange suelen llegar juntos; una consulta es suficiente.
+      if (now - lastCheckAt < 30000) return;
+      lastCheckAt = now;
       try {
         const [versionRes, controlResult] = await Promise.all([
-          fetch('/api/version', { cache: 'no-store' }),
+          fetch('/version.json', { cache: 'no-store' }),
           // This table exposes only a random token and timestamp, never user data.
           supabase.from('app_runtime_control').select('force_token').eq('id', true).maybeSingle()
         ]);
@@ -126,7 +131,7 @@ export default function VersionGuard() {
       }
     };
     check();
-    const t = setInterval(check, 20000);
+    const t = setInterval(check, 120000);
     const onVis = () => {
       if (document.visibilityState === 'visible') check();
     };

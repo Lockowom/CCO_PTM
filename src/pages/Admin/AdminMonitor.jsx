@@ -50,7 +50,8 @@ const AdminMonitor = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 10000 // Auto-refresh every 10s
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false
   });
 
   const now = new Date();
@@ -58,13 +59,13 @@ const AdminMonitor = () => {
   const isOnline = (lastSeen) => {
     if (!lastSeen) return false;
     const diff = (now - new Date(lastSeen)) / 1000;
-    return diff < 60; // Online if seen in last 60s
+    return diff < 180; // Compatible con heartbeat de 90 s
   };
 
   const isIdle = (lastSeen) => {
     if (!lastSeen) return false;
     const diff = (now - new Date(lastSeen)) / 1000;
-    return diff >= 60 && diff < 300; // Idle between 1-5 min
+    return diff >= 180 && diff < 300; // Inactivo entre 3-5 min
   };
 
   const getSessionDuration = (sessionStart) => {

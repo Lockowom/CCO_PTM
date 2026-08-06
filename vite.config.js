@@ -24,6 +24,19 @@ function resolveBuildId() {
 
 const buildId = resolveBuildId();
 
+function versionManifestPlugin() {
+  return {
+    name: 'cco-version-manifest',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ version: pkg.version, buildId })
+      });
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -37,6 +50,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    versionManifestPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],

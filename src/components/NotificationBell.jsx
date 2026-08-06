@@ -46,7 +46,8 @@ export default function NotificationBell() {
       setItems([]);
       return undefined;
     }
-    load();
+    // No bloquear la entrada al modulo con una lectura secundaria.
+    const initialLoad = window.setTimeout(load, 3000);
     const runIfVisible = () => {
       if (typeof document !== 'undefined' && document.hidden) return;
       load();
@@ -59,6 +60,7 @@ export default function NotificationBell() {
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('focus', onFocus);
     return () => {
+      clearTimeout(initialLoad);
       clearInterval(t);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onFocus);

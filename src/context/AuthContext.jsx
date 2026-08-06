@@ -417,7 +417,7 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener('online', handleOnline);
 
     const updateHeartbeat = async () => {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine || document.visibilityState === 'hidden') return;
 
       try {
         const {
@@ -451,7 +451,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     updateHeartbeat();
-    const interval = setInterval(updateHeartbeat, 30000);
+    const interval = setInterval(updateHeartbeat, 90000);
 
     return () => {
       clearInterval(interval);
