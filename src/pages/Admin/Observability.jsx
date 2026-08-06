@@ -320,6 +320,19 @@ export default function Observability() {
       toast.error(mutationError?.message || 'No se pudo actualizar el incidente.')
   });
 
+  const forceRefreshMutation = useMutation({
+    mutationFn: async () => {
+      const { error: refreshError } = await supabase.rpc('force_app_refresh', {
+        p_reason: 'Actualización global solicitada desde Observabilidad'
+      });
+      if (refreshError) throw refreshError;
+    },
+    onSuccess: () =>
+      toast.success('Actualización global activada. Los usuarios recargarán en hasta 20 segundos.'),
+    onError: (refreshError) =>
+      toast.error(refreshError?.message || 'No se pudo activar la actualización global.')
+  });
+
   const logs = data?.logs || [];
   const alerts = data?.alerts || [];
   const modules = useMemo(() => data?.modules || [], [data]);
@@ -342,14 +355,25 @@ export default function Observability() {
             Errores, lentitud y trazabilidad técnica del CCO en una sola vista.
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:border-slate-300"
-        >
-          <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
-          Actualizar
-        </button>
+        <div className="flex flex-wrap gap-2 justify-end">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:border-slate-300"
+          >
+            <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
+            Actualizar
+          </button>
+          <button
+            type="button"
+            onClick={() => forceRefreshMutation.mutate()}
+            disabled={forceRefreshMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-black hover:bg-slate-700 disabled:opacity-60"
+          >
+            <RefreshCw size={16} className={forceRefreshMutation.isPending ? 'animate-spin' : ''} />
+            Forzar actualización global
+          </button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">

@@ -70,6 +70,13 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/traspasos\//],
         runtimeCaching: [
           {
+            // El token de actualización global siempre debe venir de red.
+            // Nunca reutilizar una respuesta del Service Worker para decidir
+            // si hay que cerrar sesión y recargar el cliente.
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i,
+            handler: 'NetworkOnly'
+          },
+          {
             // Estrategia StaleWhileRevalidate para datos de referencia (GET)
             urlPattern:
               /^https:\/\/.*\.supabase\.co\/rest\/v1\/(tms_skus|tms_ubicaciones|tms_conductores|tms_vehiculos).*/i,
