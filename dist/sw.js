@@ -1,1 +1,169 @@
-if(!self.define){let s,e={};const l=(l,n)=>(l=new URL(l+".js",n).href,e[l]||new Promise(e=>{if("document"in self){const s=document.createElement("script");s.src=l,s.onload=e,document.head.appendChild(s)}else s=l,importScripts(l),e()}).then(()=>{let s=e[l];if(!s)throw new Error(`Module ${l} didn’t register its module`);return s}));self.define=(n,i)=>{const r=s||("document"in self?document.currentScript.src:"")||location.href;if(e[r])return;let u={};const a=s=>l(s,r),o={module:{uri:r},exports:u,require:a};e[r]=Promise.all(n.map(s=>o[s]||a(s))).then(s=>(i(...s),u))}}define(["./workbox-8925e955"],function(s){"use strict";self.skipWaiting(),s.clientsClaim(),s.precacheAndRoute([{url:"registerSW.js",revision:"1872c500de691dce40960bb85481de07"},{url:"logo-ptm.png",revision:"85d35b22e6bfb4eba6d9c61152c883c3"},{url:"index.html",revision:"b37ec7bbfeb939360a6c4bf2bc63bec4"},{url:"assets/xlsx-B2eTCt_Q.js",revision:null},{url:"assets/Workflows-DWHaHWGo.js",revision:null},{url:"assets/WmsLocations-xJoQU1tH.js",revision:null},{url:"assets/web-IddqO8bs.js",revision:null},{url:"assets/web-Dpw-2oc2.js",revision:null},{url:"assets/web-CaNBGlYe.js",revision:null},{url:"assets/warehouseStore-DgEuCW6R.js",revision:null},{url:"assets/WarehousePDA-RTcDDEOE.js",revision:null},{url:"assets/Views-Bx9PIqd4.js",revision:null},{url:"assets/vfs_fonts-CfcbzCvn.js",revision:null},{url:"assets/VerificarCertificado-BXneQgLy.js",revision:null},{url:"assets/useRealtimeTable-tjb45g3S.js",revision:null},{url:"assets/useBarcodeScanner-DC79EQOo.js",revision:null},{url:"assets/UploadHistory-CJ1-Po5A.js",revision:null},{url:"assets/ui-vendor-CTbhg6u_.js",revision:null},{url:"assets/TrazabilidadModal-DTIIoCTB.js",revision:null},{url:"assets/Traspasos-Db4AxpJ2.js",revision:null},{url:"assets/Transporte-B-NvEYLm.js",revision:null},{url:"assets/Tickets-BlaQjV3x.js",revision:null},{url:"assets/supabase-vendor-4Fjsfb0a.js",revision:null},{url:"assets/storageUrl-CjMJhKpY.js",revision:null},{url:"assets/SolicitudPublica-CWHsfKrz.js",revision:null},{url:"assets/Seguridad-DWgBjRq5.js",revision:null},{url:"assets/securityService-U96GBUt7.js",revision:null},{url:"assets/SalesStatus-R7WZRhdh.js",revision:null},{url:"assets/ReceptionNacional-DuVfCciN.js",revision:null},{url:"assets/Reception-CwunVdKI.js",revision:null},{url:"assets/react-vendor-6aw4XXjH.js",revision:null},{url:"assets/QueryErrorState-Ct5YgOln.js",revision:null},{url:"assets/query-vendor-BNjBrM5A.js",revision:null},{url:"assets/ProductDatasheet-DMUcYj1Z.js",revision:null},{url:"assets/Postventa-CSettxsa.js",revision:null},{url:"assets/PodCapture-B-Jlo58m.js",revision:null},{url:"assets/pickingStore-C4p-StM8.js",revision:null},{url:"assets/pdfmake-pNuCVKVo.js",revision:null},{url:"assets/PanelTVReal-BG_KaS-y.js",revision:null},{url:"assets/panelPtm-DcMx4yLg.js",revision:null},{url:"assets/PanelLayout-vrFRyWhm.css",revision:null},{url:"assets/PanelLayout-CEyQP8aU.js",revision:null},{url:"assets/PanelIngresar-YnHaQZsq.js",revision:null},{url:"assets/PanelIngresar-CnJhtRV5.css",revision:null},{url:"assets/PanelInfoReal-x8glDyHu.js",revision:null},{url:"assets/PanelConfigReal-eKW5NlAK.js",revision:null},{url:"assets/PanelBuilderReal-UJF6dfd6.js",revision:null},{url:"assets/PanelBuilderReal-ChDF2ngo.css",revision:null},{url:"assets/Observability-ChrjBN0A.js",revision:null},{url:"assets/NotFound-IdZ5KrLI.js",revision:null},{url:"assets/Monitoreo-1BE40pz4.js",revision:null},{url:"assets/MiRuta-o5fI64Pj.js",revision:null},{url:"assets/MiBandeja-BOPhctQ1.js",revision:null},{url:"assets/logUpload-CWombnN8.js",revision:null},{url:"assets/Login-CIfhKBSH.js",revision:null},{url:"assets/LocationManager-CNF8v8po.js",revision:null},{url:"assets/Insumos-6tmeX_iL.js",revision:null},{url:"assets/index-Nao8ayeV.js",revision:null},{url:"assets/index-DH2X3u_W.js",revision:null},{url:"assets/index-Cg-6XdaK.css",revision:null},{url:"assets/index-BmpJy8SR.js",revision:null},{url:"assets/index-BkDowypX.js",revision:null},{url:"assets/iamService-ByDe_k4G.js",revision:null},{url:"assets/HistorialNV-Dv9MMXQJ.js",revision:null},{url:"assets/Heatmap-BBOSJ_zk.js",revision:null},{url:"assets/formulaEngine-CFaRJv6o.js",revision:null},{url:"assets/FlujoMaestro-B4fZcy4F.js",revision:null},{url:"assets/exportExcel-D85v870c.js",revision:null},{url:"assets/Eventos-DAItYnFI.js",revision:null},{url:"assets/Entry-B-mC9vON.js",revision:null},{url:"assets/DispatchControl-DHsG5Dvs.js",revision:null},{url:"assets/DataImport-kklk_TM9.js",revision:null},{url:"assets/dashData-BqqAjdy-.js",revision:null},{url:"assets/DashboardReal-DlTC_ZMX.css",revision:null},{url:"assets/DashboardReal-DkZ0KTZE.js",revision:null},{url:"assets/CubingRegistry-D4oR5v9u.js",revision:null},{url:"assets/conteoService-BP1_kWFo.js",revision:null},{url:"assets/ConteoCiclico-D68Q7jKN.js",revision:null},{url:"assets/ConsultaNV-DQljX3yr.js",revision:null},{url:"assets/ConsultaGrupo-Cvk_LzuQ.js",revision:null},{url:"assets/configService-z1bEXo3U.js",revision:null},{url:"assets/comunasChile-zaSV4oZ6.js",revision:null},{url:"assets/Cleanup-Dx4MHSHJ.js",revision:null},{url:"assets/ClasificacionProductos-BqTtslmF.js",revision:null},{url:"assets/charts-vendor-7leLLwOT.js",revision:null},{url:"assets/Carteles-DieBl1g9.js",revision:null},{url:"assets/calidadService-aaBR_wyL.js",revision:null},{url:"assets/CalidadBadge-CJ2SaBG-.js",revision:null},{url:"assets/BodegasSoftland-BHzUNfV4.js",revision:null},{url:"assets/BloqueDetalle-pHfwRMcr.js",revision:null},{url:"assets/Batches-BX24-EG2.js",revision:null},{url:"assets/ApiKeys-BF_nSrMq.js",revision:null},{url:"assets/animation-vendor-JfdD7EdN.js",revision:null},{url:"assets/AnalisisCodigos-BqyHjswf.js",revision:null},{url:"assets/AdminMonitor-DchCUBbe.js",revision:null},{url:"assets/Addresses-CLWTxwR-.js",revision:null},{url:"assets/AccionIntegracion-EfCmy1oH.js",revision:null},{url:"assets/AccionesCalidad-C_8TE3N_.js",revision:null},{url:"assets/AccessControl-qpcUWglZ.js",revision:null},{url:"manifest.webmanifest",revision:"344a1b27417ccd5be28709f2f5b53f37"}],{}),s.cleanupOutdatedCaches(),s.registerRoute(new s.NavigationRoute(s.createHandlerBoundToURL("index.html"),{denylist:[/^\/traspasos\//]})),s.registerRoute(/^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i,new s.NetworkOnly,"GET"),s.registerRoute(/^https:\/\/.*\.supabase\.co\/rest\/v1\/(tms_skus|tms_ubicaciones|tms_conductores|tms_vehiculos).*/i,new s.StaleWhileRevalidate({cacheName:"supabase-reference-data",plugins:[new s.ExpirationPlugin({maxEntries:200,maxAgeSeconds:604800}),new s.CacheableResponsePlugin({statuses:[0,200]})]}),"GET"),s.registerRoute(/^https:\/\/.*\.supabase\.co\/.*/i,new s.NetworkFirst({cacheName:"supabase-api-cache",plugins:[new s.ExpirationPlugin({maxEntries:100,maxAgeSeconds:86400}),new s.CacheableResponsePlugin({statuses:[0,200]})]}),"GET")});
+if (!self.define) {
+  let s,
+    e = {};
+  const l = (l, n) => (
+    (l = new URL(l + '.js', n).href),
+    e[l] ||
+      new Promise((e) => {
+        if ('document' in self) {
+          const s = document.createElement('script');
+          ((s.src = l), (s.onload = e), document.head.appendChild(s));
+        } else ((s = l), importScripts(l), e());
+      }).then(() => {
+        let s = e[l];
+        if (!s) throw new Error(`Module ${l} didn’t register its module`);
+        return s;
+      })
+  );
+  self.define = (n, i) => {
+    const r = s || ('document' in self ? document.currentScript.src : '') || location.href;
+    if (e[r]) return;
+    let u = {};
+    const a = (s) => l(s, r),
+      o = { module: { uri: r }, exports: u, require: a };
+    e[r] = Promise.all(n.map((s) => o[s] || a(s))).then((s) => (i(...s), u));
+  };
+}
+define(['./workbox-8925e955'], function (s) {
+  'use strict';
+  (self.skipWaiting(),
+    s.clientsClaim(),
+    s.precacheAndRoute(
+      [
+        { url: 'registerSW.js', revision: '1872c500de691dce40960bb85481de07' },
+        { url: 'logo-ptm.png', revision: '85d35b22e6bfb4eba6d9c61152c883c3' },
+        { url: 'index.html', revision: 'e7316a380829af7b83cead7e9c586bb4' },
+        { url: 'assets/xlsx-B2eTCt_Q.js', revision: null },
+        { url: 'assets/Workflows-CnVx1cln.js', revision: null },
+        { url: 'assets/WmsLocations-Dk5kHUHv.js', revision: null },
+        { url: 'assets/web-dsOUyT9T.js', revision: null },
+        { url: 'assets/web-DoVagASW.js', revision: null },
+        { url: 'assets/web-C8fxUfys.js', revision: null },
+        { url: 'assets/warehouseStore-CnP7pFRu.js', revision: null },
+        { url: 'assets/WarehousePDA-5hzmFLgt.js', revision: null },
+        { url: 'assets/Views-Dh5cuKC0.js', revision: null },
+        { url: 'assets/vfs_fonts-CfcbzCvn.js', revision: null },
+        { url: 'assets/VerificarCertificado-CFeG4gZe.js', revision: null },
+        { url: 'assets/useRealtimeTable-BUhXLVSA.js', revision: null },
+        { url: 'assets/useBarcodeScanner-C6Fp_FeG.js', revision: null },
+        { url: 'assets/UploadHistory-CHoX69sq.js', revision: null },
+        { url: 'assets/ui-vendor-CTbhg6u_.js', revision: null },
+        { url: 'assets/TrazabilidadModal-B84gmVPx.js', revision: null },
+        { url: 'assets/Traspasos-9vm_ZG_U.js', revision: null },
+        { url: 'assets/Transporte-BA_AKI68.js', revision: null },
+        { url: 'assets/Tickets-Bv5vNFta.js', revision: null },
+        { url: 'assets/supabase-vendor-4Fjsfb0a.js', revision: null },
+        { url: 'assets/storageUrl-Bzvs5Ps_.js', revision: null },
+        { url: 'assets/SolicitudPublica-D9q62jXU.js', revision: null },
+        { url: 'assets/Seguridad-C_nK610H.js', revision: null },
+        { url: 'assets/securityService-BihpyPf5.js', revision: null },
+        { url: 'assets/SalesStatus-BMcEyo59.js', revision: null },
+        { url: 'assets/ReceptionNacional-Bhv_NdUm.js', revision: null },
+        { url: 'assets/Reception-tIlWiHL0.js', revision: null },
+        { url: 'assets/react-vendor-6aw4XXjH.js', revision: null },
+        { url: 'assets/QueryErrorState-Ct5YgOln.js', revision: null },
+        { url: 'assets/query-vendor-BNjBrM5A.js', revision: null },
+        { url: 'assets/ProductDatasheet-CxEnPKIM.js', revision: null },
+        { url: 'assets/Postventa--BRQnBqw.js', revision: null },
+        { url: 'assets/PodCapture-f1RMKfjf.js', revision: null },
+        { url: 'assets/pickingStore-C4p-StM8.js', revision: null },
+        { url: 'assets/pdfmake-pNuCVKVo.js', revision: null },
+        { url: 'assets/PanelTVReal-k9YvE7cd.js', revision: null },
+        { url: 'assets/panelPtm-Bl5U8lI3.js', revision: null },
+        { url: 'assets/PanelLayout-vrFRyWhm.css', revision: null },
+        { url: 'assets/PanelLayout-CEyQP8aU.js', revision: null },
+        { url: 'assets/PanelIngresar-D6Fb-qwc.js', revision: null },
+        { url: 'assets/PanelIngresar-CnJhtRV5.css', revision: null },
+        { url: 'assets/PanelInfoReal-D64-cA61.js', revision: null },
+        { url: 'assets/PanelConfigReal-BLD7Ky9u.js', revision: null },
+        { url: 'assets/PanelBuilderReal-ChDF2ngo.css', revision: null },
+        { url: 'assets/PanelBuilderReal-bsZYhG7l.js', revision: null },
+        { url: 'assets/Observability-Dt5oNcSA.js', revision: null },
+        { url: 'assets/NotFound-IdZ5KrLI.js', revision: null },
+        { url: 'assets/Monitoreo-Ej7Lx3tZ.js', revision: null },
+        { url: 'assets/MiRuta-CXvFiu1F.js', revision: null },
+        { url: 'assets/MiBandeja-DpOdrCmC.js', revision: null },
+        { url: 'assets/logUpload-D-ZS9JO-.js', revision: null },
+        { url: 'assets/Login-CX-FuIaM.js', revision: null },
+        { url: 'assets/LocationManager-BoOePkk8.js', revision: null },
+        { url: 'assets/Insumos-CEUFO_g6.js', revision: null },
+        { url: 'assets/index-p00P9Vd6.js', revision: null },
+        { url: 'assets/index-DH2X3u_W.js', revision: null },
+        { url: 'assets/index-Cg-6XdaK.css', revision: null },
+        { url: 'assets/index-BVkgVG0h.js', revision: null },
+        { url: 'assets/index-BmpJy8SR.js', revision: null },
+        { url: 'assets/iamService-BhWpQSqI.js', revision: null },
+        { url: 'assets/HistorialNV-D-Mjv4IA.js', revision: null },
+        { url: 'assets/Heatmap-Do1oTRfM.js', revision: null },
+        { url: 'assets/formulaEngine-CFaRJv6o.js', revision: null },
+        { url: 'assets/FlujoMaestro-Dg8pHHo2.js', revision: null },
+        { url: 'assets/exportExcel-D85v870c.js', revision: null },
+        { url: 'assets/Eventos-CXGsf8Yp.js', revision: null },
+        { url: 'assets/Entry-BurQNyD3.js', revision: null },
+        { url: 'assets/DispatchControl-C526cTAx.js', revision: null },
+        { url: 'assets/DataImport-BQIFa4RN.js', revision: null },
+        { url: 'assets/dashData-Cmw4RZX6.js', revision: null },
+        { url: 'assets/DashboardReal-DlTC_ZMX.css', revision: null },
+        { url: 'assets/DashboardReal-CJ9kDMZV.js', revision: null },
+        { url: 'assets/CubingRegistry-BCgpBkWQ.js', revision: null },
+        { url: 'assets/conteoService-C1eLkuwA.js', revision: null },
+        { url: 'assets/ConteoCiclico-CqQAQIJ4.js', revision: null },
+        { url: 'assets/ConsultaNV-BFTnAt6Z.js', revision: null },
+        { url: 'assets/ConsultaGrupo-CGQVxNOE.js', revision: null },
+        { url: 'assets/configService-FCkxrbZH.js', revision: null },
+        { url: 'assets/comunasChile-BDO-6gps.js', revision: null },
+        { url: 'assets/Cleanup-CU6GBM7s.js', revision: null },
+        { url: 'assets/ClasificacionProductos-Bnd6kWHw.js', revision: null },
+        { url: 'assets/charts-vendor-7leLLwOT.js', revision: null },
+        { url: 'assets/Carteles-CRgHfYbF.js', revision: null },
+        { url: 'assets/calidadService-CmehGl8F.js', revision: null },
+        { url: 'assets/CalidadBadge-CEy3vZj1.js', revision: null },
+        { url: 'assets/BodegasSoftland-BJAyqVDq.js', revision: null },
+        { url: 'assets/BloqueDetalle-DJHRwxcQ.js', revision: null },
+        { url: 'assets/Batches-_wYx2JBt.js', revision: null },
+        { url: 'assets/ApiKeys-dXh3uFa-.js', revision: null },
+        { url: 'assets/animation-vendor-JfdD7EdN.js', revision: null },
+        { url: 'assets/AnalisisCodigos-bJjt7OT_.js', revision: null },
+        { url: 'assets/AdminMonitor-MK5QcOhf.js', revision: null },
+        { url: 'assets/Addresses-D6gQS4Jz.js', revision: null },
+        { url: 'assets/AccionIntegracion-CARTJjw5.js', revision: null },
+        { url: 'assets/AccionesCalidad-DoM6mVSj.js', revision: null },
+        { url: 'assets/AccessControl-Bhv6F4MP.js', revision: null },
+        { url: 'manifest.webmanifest', revision: '344a1b27417ccd5be28709f2f5b53f37' }
+      ],
+      {}
+    ),
+    s.cleanupOutdatedCaches(),
+    s.registerRoute(
+      new s.NavigationRoute(s.createHandlerBoundToURL('index.html'), {
+        denylist: [/^\/traspasos\//]
+      })
+    ),
+    s.registerRoute(
+      /^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i,
+      new s.NetworkOnly(),
+      'GET'
+    ),
+    s.registerRoute(
+      /^https:\/\/.*\.supabase\.co\/rest\/v1\/(tms_skus|tms_ubicaciones|tms_conductores|tms_vehiculos).*/i,
+      new s.StaleWhileRevalidate({
+        cacheName: 'supabase-reference-data',
+        plugins: [
+          new s.ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 604800 }),
+          new s.CacheableResponsePlugin({ statuses: [0, 200] })
+        ]
+      }),
+      'GET'
+    ),
+    s.registerRoute(
+      /^https:\/\/.*\.supabase\.co\/.*/i,
+      new s.NetworkFirst({
+        cacheName: 'supabase-api-cache',
+        plugins: [
+          new s.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 86400 }),
+          new s.CacheableResponsePlugin({ statuses: [0, 200] })
+        ]
+      }),
+      'GET'
+    ));
+});

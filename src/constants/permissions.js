@@ -40,15 +40,14 @@ export const ROUTE_PERMISSIONS = {
     'view_batches',
     'view_reception'
   ],
-  // Panel PTM — dashboard externo (Next.js/Vercel) embebido en iframe. Permiso propio.
-  // Panel PTM nativo (estructura portada). Control POR PANTALLA: cada pantalla
-  // tiene su permiso propio (casilla en Roles) Y acepta `view_panel` como umbral
-  // (quien tiene view_panel ve todo el módulo → no se rompe ningún rol existente).
-  '/panel': ['view_panel'], // Dashboard = acceso base
-  '/panel/ingresar': ['panel_ingresar', 'view_panel'],
-  '/panel/info': ['panel_info', 'view_panel'],
-  '/panel/tv': ['panel_tv', 'view_panel'],
-  '/panel/builder': ['panel_builder', 'view_panel'],
+  // Panel PTM nativo. `view_panel` autoriza exclusivamente el Dashboard; cada
+  // pantalla restante exige su permiso propio. `manage_panel` mantiene el acceso
+  // operativo completo para los responsables del módulo.
+  '/panel': ['view_panel', 'manage_panel'], // Dashboard
+  '/panel/ingresar': ['panel_ingresar', 'manage_panel'],
+  '/panel/info': ['panel_info', 'manage_panel'],
+  '/panel/tv': ['panel_tv', 'manage_panel'],
+  '/panel/builder': ['panel_builder', 'manage_panel'],
   // Configuración (incluye Auditoría): SOLO admin. Se exige un permiso de nivel
   // admin (manage_roles); ADMIN/es_admin_delegado pasan siempre. Los usuarios con
   // solo view_panel NO ven ni acceden esta pantalla.
