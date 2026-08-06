@@ -34,6 +34,7 @@ import { supabase } from '../../supabase';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
+import { normalizeBulkUpsertResult } from '../../lib/bulkUpsertResult';
 
 // ── CONFIGURACIÓN DE TABS ──
 const IMPORT_TABS = [
@@ -1175,11 +1176,12 @@ const DataImport = () => {
             })
             .abortSignal(ctrl.signal);
           if (error) throw error;
-          inserted += data?.inserted || 0;
-          errors += data?.errors || 0;
-          if (data?.error) errorDetails.push(`Lote ${chunkNum}: ${data.error}`);
-          else if (data?.errors > 0)
-            errorDetails.push(`Lote ${chunkNum}: ${data.errors} errores server-side`);
+          const result = normalizeBulkUpsertResult(data, chunk.length);
+          inserted += result.accepted;
+          errors += result.skipped;
+          if (result.error) errorDetails.push(`Lote ${chunkNum}: ${result.error}`);
+          else if (result.skipped > 0)
+            errorDetails.push(`Lote ${chunkNum}: ${result.skipped} filas omitidas por el servidor`);
         } catch (e) {
           errors += chunk.length;
           const msg =
