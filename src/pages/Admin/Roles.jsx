@@ -4,7 +4,7 @@ import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { APP_PERMISSIONS, APP_ROUTES } from '../../config/modules';
-import { accesosConPermisos } from '../../constants/permissions';
+import { accesosConPermisos, resolverRutaInicial } from '../../constants/permissions';
 import { getRoleBlueprint } from '../../config/iamBlueprints.js';
 import {
   Shield,
@@ -81,24 +81,29 @@ const RolesPage = ({ embedded = false }) => {
     mutationFn: async (roleData) => {
       const roleId = isCreating ? roleData.nombre.toUpperCase().replace(/\s+/g, '_') : roleData.id;
       const roleName = roleData.id === 'ADMIN' ? 'Administrador' : roleData.nombre;
+      const resolvedLanding = resolverRutaInicial(
+        roleData.permisos || [],
+        roleData.landing_page
+      );
 
       const { error } = await supabase.from('tms_roles').upsert(
         {
           id: roleId,
           nombre: roleName,
           descripcion: roleData.descripcion,
-          landing_page: roleData.landing_page || null,
+          landing_page: resolvedLanding,
           permisos_json: roleData.permisos || []
         },
         { onConflict: 'id' }
       );
 
       if (error) throw error;
-      return roleData;
+      return { ...roleData, id: roleId, nombre: roleName, landing_page: resolvedLanding };
     },
-    onSuccess: async () => {
+    onSuccess: async (savedRole) => {
       await queryClient.invalidateQueries({ queryKey: ['admin_roles'] });
       await refreshPermissions();
+      setSelectedRole(savedRole);
       toast.success('Rol guardado exitosamente');
       setIsEditing(false);
       setIsCreating(false);
@@ -167,6 +172,10 @@ const RolesPage = ({ embedded = false }) => {
   };
 
   const handleSaveRole = () => {
+    if (selectedRole?.id !== 'ADMIN' && !resolverRutaInicial(selectedRole?.permisos || [])) {
+      toast.error('El rol debe tener al menos una pantalla habilitada antes de guardarlo.');
+      return;
+    }
     saveRoleMutation.mutate(selectedRole);
   };
 
@@ -402,7 +411,7 @@ const RolesPage = ({ embedded = false }) => {
                           className="w-full text-sm font-bold text-slate-700 bg-white border-2 border-slate-200 focus:border-emerald-500 outline-none rounded-xl px-3 py-2.5 transition-all"
                         >
                           <option value="">— Por defecto —</option>
-                          {APP_ROUTES.map((r) => (
+                          {accesosConPermisos(selectedRole.permisos || []).rutas.map((r) => (
                             <option key={r.value} value={r.value}>
                               {r.label}
                             </option>

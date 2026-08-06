@@ -262,3 +262,23 @@ export function accesosConPermisos(permisos = []) {
   }));
   return { rutas, modulos };
 }
+
+// Resuelve una página inicial válida usando el catálogo completo de pantallas.
+// Al agregar una ruta a APP_ROUTES, cualquier rol nuevo puede aterrizar allí
+// automáticamente sin mantener otra lista manual en el router.
+export function resolverRutaInicial(permisos = [], preferida = '') {
+  const { rutas } = accesosConPermisos(permisos);
+  if (rutas.length === 0) return null;
+
+  const preferred = String(preferida || '');
+  if (preferred) {
+    const preferredPath = preferred.split('?')[0];
+    const permitted = rutas.some((route) => {
+      const routePath = String(route.value || '').split('?')[0];
+      return route.value === preferred || routePath === preferredPath;
+    });
+    if (permitted) return preferred;
+  }
+
+  return rutas[0].value;
+}

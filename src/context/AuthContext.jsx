@@ -150,6 +150,7 @@ export const AuthProvider = ({ children }) => {
 
           if (changedRoleId === user.rol || !changedRoleId) {
             await loadRoleConfig(user.rol);
+            window.location.replace('/');
           }
         }
       )
@@ -637,7 +638,7 @@ export const AuthProvider = ({ children }) => {
           table: 'tms_usuarios',
           filter: `id=eq.${user.id}`
         },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === 'DELETE') {
             alert('Tu cuenta ha sido eliminada por un administrador.');
             logout();
@@ -672,8 +673,11 @@ export const AuthProvider = ({ children }) => {
                       ? newUser.es_admin_delegado
                       : user.es_admin_delegado
                 };
+                // Cargar primero el rol nuevo evita un render transitorio con el
+                // usuario actualizado y los permisos del rol anterior.
+                if (rolCambio) await loadRoleConfig(newUser.rol);
                 setUser(updatedUser);
-                if (rolCambio) loadRoleConfig(newUser.rol);
+                if (rolCambio || delegadoCambio) window.location.replace('/');
               }
             }
           }

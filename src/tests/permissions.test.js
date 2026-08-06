@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { accesosConPermisos, puedeAccederRuta } from '../constants/permissions';
+import {
+  accesosConPermisos,
+  puedeAccederRuta,
+  resolverRutaInicial
+} from '../constants/permissions';
 
 const user = { rol: 'CEO_PTM', es_admin_delegado: false };
 const onlyPanelInfo = (permission) => permission === 'panel_info';
@@ -22,5 +26,19 @@ describe('resumen visual de accesos', () => {
     expect(modulos).toHaveLength(1);
     expect(modulos[0].label).toBe('Panel PTM');
     expect(modulos[0].rutas.map((route) => route.value)).toEqual(['/panel/info']);
+  });
+});
+
+describe('página inicial de roles dinámicos', () => {
+  it('resuelve la primera pantalla de cualquier módulo', () => {
+    expect(resolverRutaInicial(['panel_info'])).toBe('/panel/info');
+    expect(resolverRutaInicial(['view_postventa'])).toBe('/postventa/tickets');
+    expect(resolverRutaInicial(['manage_quality'])).toBe('/quality/monitoreo');
+    expect(resolverRutaInicial([])).toBeNull();
+  });
+
+  it('descarta una landing incompatible y conserva una autorizada', () => {
+    expect(resolverRutaInicial(['panel_info'], '/queries/batches')).toBe('/panel/info');
+    expect(resolverRutaInicial(['panel_info'], '/panel/info')).toBe('/panel/info');
   });
 });

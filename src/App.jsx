@@ -13,7 +13,7 @@ import CommandPalette from './components/ui/CommandPalette';
 import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
-import { ROUTE_PERMISSIONS, permisosDeRuta, puedeAccederRuta } from './constants/permissions';
+import { permisosDeRuta, puedeAccederRuta, resolverRutaInicial } from './constants/permissions';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
@@ -100,25 +100,6 @@ const ApiKeys = React.lazy(() => import('./pages/Admin/ApiKeys')); // API de Ope
 
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
-
-// Orden de prioridad para la primera ruta disponible
-const ROUTE_PRIORITY = [
-  '/panel',
-  '/panel/ingresar',
-  '/panel/info',
-  '/panel/tv',
-  '/panel/builder',
-  '/inbound/entry',
-  '/queries/batches',
-  '/queries/sales-status',
-  '/queries/historial-nv',
-  '/queries/dispatch-control',
-  '/queries/addresses',
-  '/queries/locations',
-  '/admin/users',
-  '/admin/roles',
-  '/admin/views'
-];
 
 // Global Suspense Loader Cyber-Logístico (con escape de seguridad a los 15s)
 const SuspenseLoader = () => <SuspenseLoaderTimeout />;
@@ -231,7 +212,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
 
 // Componente que determina la primera ruta disponible para el usuario
 const SmartRedirect = () => {
-  const { user, hasPermission, loading, landingPage } = useAuth();
+  const { user, permissions, hasPermission, loading, landingPage } = useAuth();
 
   if (loading) {
     return (
@@ -255,17 +236,10 @@ const SmartRedirect = () => {
     return <Navigate to="/panel" replace />;
   }
 
-  // 3. FALLBACK: buscar la primera ruta a la que tienen acceso según ROUTE_PRIORITY
-  for (const route of ROUTE_PRIORITY) {
-    const requiredPerms = ROUTE_PERMISSIONS[route] || [];
-    if (requiredPerms.length === 0) {
-      return <Navigate to={route} replace />;
-    }
-    const hasAccess = requiredPerms.some((perm) => hasPermission(perm));
-    if (hasAccess) {
-      return <Navigate to={route} replace />;
-    }
-  }
+  // 3. FALLBACK: usar todo el catálogo central. Así también funcionan roles
+  // nuevos de Calidad, Inventario, Postventa o cualquier módulo futuro.
+  const firstAllowedRoute = resolverRutaInicial(permissions);
+  if (firstAllowedRoute) return <Navigate to={firstAllowedRoute} replace />;
 
   // Si no tiene acceso a nada, ir al Panel (mostrará acceso denegado)
   return <Navigate to="/panel" replace />;

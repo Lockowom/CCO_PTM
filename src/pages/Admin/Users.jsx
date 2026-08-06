@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accesosConPermisos } from '../../constants/permissions';
+import { accesosConPermisos, resolverRutaInicial } from '../../constants/permissions';
 import { APP_ROUTES } from '../../config/modules';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -238,7 +238,7 @@ const UsersPage = ({ embedded = false }) => {
       });
       if (accessMeta.needsReloginNotice) {
         toast(
-          'IAM sincronizado. El usuario debe cerrar sesión y volver a ingresar para tomar los permisos nuevos. Si su operación será acotada, configúrala en Ámbitos.',
+          'IAM sincronizado. Si el usuario está conectado, su acceso se actualizará automáticamente. Si su operación será acotada, configúrala en Ámbitos.',
           { style: INFO_STYLE, duration: 7000 }
         );
       }
@@ -283,7 +283,7 @@ const UsersPage = ({ embedded = false }) => {
       toast.success(`${data?.n ?? vars.ids.length} usuario(s) ${verbo}`, { style: OK_STYLE });
       if (vars.accion === 'rol' || vars.accion === 'activar' || vars.accion === 'desactivar') {
         toast(
-          'Permisos efectivos refrescados. Los usuarios impactados deben volver a iniciar sesión; si operan por centro de costo, revisa también la pestaña Ámbitos.',
+          'Permisos efectivos refrescados. Las sesiones conectadas se actualizarán automáticamente; si operan por centro de costo, revisa también la pestaña Ámbitos.',
           { style: INFO_STYLE, duration: 7000 }
         );
       }
@@ -313,6 +313,14 @@ const UsersPage = ({ embedded = false }) => {
     e.preventDefault();
     if (!formData.nombre || !formData.email || !formData.rol) {
       toast.error('Completa los campos requeridos');
+      return;
+    }
+    const selectedRoleConfig = rolesById[formData.rol];
+    if (
+      formData.rol !== 'ADMIN' &&
+      !resolverRutaInicial(selectedRoleConfig?.permisos_json || [])
+    ) {
+      toast.error('Ese rol no tiene ninguna pantalla habilitada. Configura sus permisos primero.');
       return;
     }
     saveMutation.mutate(formData);
@@ -375,6 +383,13 @@ const UsersPage = ({ embedded = false }) => {
   const doBulk = (accion, valor = null) => {
     const ids = [...selected];
     if (ids.length === 0) return;
+    if (accion === 'rol' && valor !== 'ADMIN') {
+      const selectedRoleConfig = rolesById[valor];
+      if (!resolverRutaInicial(selectedRoleConfig?.permisos_json || [])) {
+        toast.error('Ese rol no tiene ninguna pantalla habilitada. Configura sus permisos primero.');
+        return;
+      }
+    }
     if (
       accion === 'eliminar' &&
       !window.confirm(
