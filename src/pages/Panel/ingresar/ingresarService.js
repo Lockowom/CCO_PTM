@@ -67,6 +67,15 @@ function panelDuration(startedAt) {
   return Math.round(Math.max(0, performance.now() - startedAt));
 }
 
+function isRequestCancellation(error) {
+  const text = String(error?.message || error?.details || error || '').toLowerCase();
+  return (
+    error?.name === 'AbortError' ||
+    text.includes('request was aborted') ||
+    text.includes('signal is aborted')
+  );
+}
+
 function summarizeOperacionPayload(payload = {}) {
   return {
     id: payload?.id ?? null,
@@ -103,6 +112,7 @@ async function runPanelRead(
     }
     return result;
   } catch (error) {
+    if (isRequestCancellation(error)) throw error;
     Logger.error(error, {
       module: 'panel',
       screen,
@@ -122,10 +132,10 @@ function isPoolAcquireTimeout(error) {
   );
 }
 
-async function readWithPoolRetry(makeQuery, { ms, label, attempts = 3 } = {}) {
+async function readWithPoolRetry(makeQuery, { ms, label, attempts = 3, signal } = {}) {
   let result;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
-    result = await withTimeout(makeQuery(), { ms, label });
+    result = await withTimeout(makeQuery(), { ms, label, signal });
     if (!isPoolAcquireTimeout(result?.error) || attempt === attempts - 1) return result;
     const delayMs = 180 * 2 ** attempt + Math.floor(Math.random() * 70);
     Logger.warn(result.error, {
@@ -484,7 +494,7 @@ export async function listaActivas({ force = false, full = true, limit = 400 } =
 // nº de N.V., cliente, vendedor, guía, factura o transportista. Sirve para que
 // en Buscar se pueda encontrar y abrir una N.V. ya entregada o cerrada, que la
 // lista de "activas" no muestra. Devuelve el mismo shape que listaActivas.
-export async function buscarOperaciones(term, { limit = 300 } = {}) {
+export async function buscarOperaciones(term, { limit = 300, signal } = {}) {
   return runPanelRead(
     'buscar_operaciones',
     async () => {
@@ -510,7 +520,7 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
                 .order('fecha_estado', { ascending: false, nullsFirst: false })
                 .order('id', { ascending: false })
                 .limit(4),
-            { ms: 2500, label: 'Busqueda exacta de N.V. del Panel' }
+            { ms: 2500, label: 'Busqueda exacta de N.V. del Panel', signal }
           );
           if (exactResult?.error) throw exactResult.error;
           const exactMapped = dedupeRankedItems(
@@ -535,7 +545,7 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
                 .order('fecha_estado', { ascending: false, nullsFirst: false })
                 .order('id', { ascending: false })
                 .limit(softLimit),
-            { ms: 3000, label: 'Busqueda numerica del Panel' }
+            { ms: 3000, label: 'Busqueda numerica del Panel', signal }
           );
           if (numericResult?.error) throw numericResult.error;
           const numericRanked = dedupeRankedItems(
@@ -567,72 +577,36 @@ export async function buscarOperaciones(term, { limit = 300 } = {}) {
             .or(ors.join(','))
             .order('fecha_estado', { ascending: false, nullsFirst: false })
             .limit(limit),
-          { ms: 4000, label: 'Busqueda remota amplia del Panel' }
+          { ms: 4000, label: 'Busqueda remota amplia del Panel', signal }
         ));
         if (error) {
           const softLimit = Math.min(limit, 60);
           const prefix = `${safe}*`;
-          const candidates = await Promise.allSettled([
-            withTimeout(
-              supabase
-                .from(OPERACIONES_READ_VIEW)
-                .select(LISTA_COLS)
-                .ilike('nv_orange', prefix)
-                .limit(softLimit),
-              { ms: 2500, label: 'Fallback nv_orange Panel' }
-            ),
-            withTimeout(
-              supabase
-                .from(OPERACIONES_READ_VIEW)
-                .select(LISTA_COLS)
-                .ilike('nv_farmapack', prefix)
-                .limit(softLimit),
-              { ms: 2500, label: 'Fallback nv_farmapack Panel' }
-            ),
-            withTimeout(
-              supabase
-                .from(OPERACIONES_READ_VIEW)
-                .select(LISTA_COLS)
-                .ilike('varios', prefix)
-                .limit(softLimit),
-              { ms: 2500, label: 'Fallback varios Panel' }
-            ),
-            withTimeout(
-              supabase
-                .from(OPERACIONES_READ_VIEW)
-                .select(LISTA_COLS)
-                .ilike('guia', prefix)
-                .limit(softLimit),
-              { ms: 2500, label: 'Fallback guia Panel' }
-            ),
-            withTimeout(
-              supabase
-                .from(OPERACIONES_READ_VIEW)
-                .select(LISTA_COLS)
-                .ilike('factura', prefix)
-                .limit(softLimit),
-              { ms: 2500, label: 'Fallback factura Panel' }
-            ),
+          // El fallback anterior lanzaba hasta seis consultas simultáneas por
+          // cada tecla. Se reemplaza por una única consulta acotada: conserva
+          // la búsqueda útil y no vuelve a agotar conexiones de la API.
+          const fallback =
             safe.length >= 4
-              ? withTimeout(
-                  supabase
-                    .from(OPERACIONES_READ_VIEW)
-                    .select(LISTA_COLS)
-                    .ilike('cliente', prefix)
-                    .limit(softLimit),
-                  { ms: 2500, label: 'Fallback cliente Panel' }
-                )
-              : Promise.resolve({ data: [] })
-          ]);
-          const fallbackRows = candidates
-            .filter((entry) => entry.status === 'fulfilled' && Array.isArray(entry.value?.data))
-            .flatMap((entry) => entry.value.data || []);
-          if (fallbackRows.length) {
-            data = fallbackRows;
-            error = null;
-          } else {
-            throw error;
-          }
+              ? supabase
+                  .from(OPERACIONES_READ_VIEW)
+                  .select(LISTA_COLS)
+                  .ilike('cliente', prefix)
+                  .limit(softLimit)
+              : supabase
+                  .from(OPERACIONES_READ_VIEW)
+                  .select(LISTA_COLS)
+                  .or(
+                    `nv_orange.ilike.${prefix},nv_farmapack.ilike.${prefix},varios.ilike.${prefix}`
+                  )
+                  .limit(softLimit);
+          const fallbackResult = await withTimeout(fallback, {
+            ms: 2500,
+            label: 'Fallback acotado de busqueda del Panel',
+            signal
+          });
+          if (fallbackResult?.error) throw error;
+          data = fallbackResult.data || [];
+          error = null;
         }
         const dedup = new Map();
         (data || []).forEach((r) => {

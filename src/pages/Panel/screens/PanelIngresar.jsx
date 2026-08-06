@@ -1085,8 +1085,9 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
     setBuscando(true);
     const reqId = remoteReqRef.current + 1;
     remoteReqRef.current = reqId;
+    const controller = new AbortController();
     const h = setTimeout(() => {
-      buscarOperaciones(term, { limit: 120 })
+      buscarOperaciones(term, { limit: 120, signal: controller.signal })
         .then((rows) => {
           if (remoteReqRef.current === reqId) setRemoto(rows);
         })
@@ -1096,8 +1097,11 @@ function TabBuscar({ puedeEscribir, puedeEliminar, puedeAprobarReapertura }) {
         .finally(() => {
           if (remoteReqRef.current === reqId) setBuscando(false);
         });
-    }, 220);
-    return () => clearTimeout(h);
+    }, 450);
+    return () => {
+      clearTimeout(h);
+      controller.abort();
+    };
   }, [q]);
 
   // Descarga TODA la tabla de operaciones (todas las columnas y datos) a Excel.

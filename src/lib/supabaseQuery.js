@@ -16,8 +16,7 @@ const timeoutMessage = (ms, label) =>
 // Detecta un query builder de supabase-js por su capacidad de adjuntar una
 // AbortSignal. Es un "thenable" reutilizable solo una vez, así que hay que
 // llamar `.abortSignal()` ANTES de await.
-const isAbortableBuilder = (x) =>
-  x != null && typeof x.abortSignal === 'function';
+const isAbortableBuilder = (x) => x != null && typeof x.abortSignal === 'function';
 
 /**
  * Envuelve un query builder de supabase-js o una promesa cruda con un timeout.
@@ -31,19 +30,35 @@ const isAbortableBuilder = (x) =>
  * @param {{ ms?: number, label?: string }} [opts]
  * @returns {Promise<any>} el resultado original (p. ej. `{ data, error }`).
  */
-export async function withTimeout(builderOrPromise, { ms = DEFAULT_TIMEOUT_MS, label } = {}) {
+export async function withTimeout(
+  builderOrPromise,
+  { ms = DEFAULT_TIMEOUT_MS, label, signal } = {}
+) {
   if (isAbortableBuilder(builderOrPromise)) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ms);
+    const abortFromCaller = () => controller.abort();
+    if (signal?.aborted) controller.abort();
+    signal?.addEventListener?.('abort', abortFromCaller, { once: true });
+    let didTimeout = false;
+    const timer = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, ms);
     try {
       return await builderOrPromise.abortSignal(controller.signal);
     } catch (e) {
+      if (!didTimeout && signal?.aborted) {
+        const abortError = new Error('Request was aborted by a newer request');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
       if (e?.name === 'AbortError' || controller.signal.aborted) {
         throw new Error(timeoutMessage(ms, label));
       }
       throw e;
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener?.('abort', abortFromCaller);
     }
   }
 

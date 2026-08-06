@@ -23,9 +23,22 @@ setLoggerAppContext({
   commitSha: typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : ''
 });
 
+// React Query cancela peticiones al desmontar una pantalla o reemplazarlas por
+// una más reciente. No es un fallo de negocio ni debe materializar una alerta.
+const isExpectedQueryCancellation = (error) => {
+  const text = String(error?.message || error?.details || error || '').toLowerCase();
+  return (
+    error?.name === 'AbortError' ||
+    text.includes('request was aborted') ||
+    text.includes('signal is aborted') ||
+    text.includes('aborterror')
+  );
+};
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
+      if (isExpectedQueryCancellation(error)) return;
       Logger.error(error, {
         kind: 'query',
         module: 'react-query',
