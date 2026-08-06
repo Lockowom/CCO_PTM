@@ -118,7 +118,7 @@ const Cleanup = () => {
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Partidas</span>
               <span className="block text-xs text-slate-500">
-                Elimina el detalle de partidas/líneas de venta.
+                Borra TODOS los registros de la tabla de partidas; no aplica filtros.
               </span>
             </div>
           </label>
@@ -134,7 +134,7 @@ const Cleanup = () => {
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Series</span>
               <span className="block text-xs text-slate-500">
-                Elimina el registro de series de productos.
+                Borra TODOS los registros de series; no aplica filtros.
               </span>
             </div>
           </label>
@@ -150,11 +150,16 @@ const Cleanup = () => {
             <div className="ml-3">
               <span className="block text-sm font-bold text-slate-700">Farmapack</span>
               <span className="block text-xs text-slate-500">
-                Elimina datos de integración Farmapack.
+                Borra TODOS los registros de Farmapack; no aplica filtros.
               </span>
             </div>
           </label>
         </div>
+
+        <p className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+          La limpieza es global para cada opción seleccionada. Si PostgreSQL rechaza un borrado, la
+          operación completa se revierte y se muestra el error real.
+        </p>
 
         <button
           onClick={handleCleanup}
