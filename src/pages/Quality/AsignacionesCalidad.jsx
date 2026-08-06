@@ -4,7 +4,6 @@ import {
   ClipboardList,
   Search,
   Loader2,
-  Plus,
   X,
   Trash2,
   AlertTriangle,
@@ -46,29 +45,51 @@ const AsignarModal = ({ onClose }) => {
   }, [query]);
 
   const keyOf = (c) => `${c.codigo_producto}|${c.partida || ''}|${c.ubicacion || ''}`;
+  const toSelection = (c) => ({
+    _key: keyOf(c),
+    codigo_producto: c.codigo_producto,
+    producto: c.producto || '',
+    ubicacion: c.ubicacion || '',
+    partida: c.partida || '',
+    cantidad: Number(c.disponible) || 0,
+    unidad_medida: c.unidad_medida || 'UN',
+    tipo: c.tipo || 'NO_PERECIBLE',
+    fecha_vencimiento: c.fecha_vencimiento || null,
+    semaforo: c.semaforo || 'NA'
+  });
   const add = (c) => {
     const k = keyOf(c);
     if (sel.some((s) => s._key === k)) {
       toast.info('Ese SKU ya está en la asignación');
       return;
     }
-    setSel((prev) => [
-      ...prev,
-      {
-        _key: k,
-        codigo_producto: c.codigo_producto,
-        producto: c.producto || '',
-        ubicacion: c.ubicacion || '',
-        partida: c.partida || '',
-        cantidad: Number(c.disponible) || 0,
-        unidad_medida: c.unidad_medida || 'UN',
-        tipo: c.tipo || 'NO_PERECIBLE',
-        fecha_vencimiento: c.fecha_vencimiento || null,
-        semaforo: c.semaforo || 'NA'
-      }
-    ]);
+    setSel((prev) => [...prev, toSelection(c)]);
   };
   const remove = (k) => setSel((prev) => prev.filter((s) => s._key !== k));
+  const toggle = (c) => {
+    const key = keyOf(c);
+    if (sel.some((item) => item._key === key)) remove(key);
+    else add(c);
+  };
+  const selectAllResults = () => {
+    const allSelected = candidatos.every((candidate) =>
+      sel.some((item) => item._key === keyOf(candidate))
+    );
+    if (allSelected) {
+      const resultKeys = new Set(candidatos.map(keyOf));
+      setSel((prev) => prev.filter((item) => !resultKeys.has(item._key)));
+      return;
+    }
+    setSel((prev) => {
+      const known = new Set(prev.map((item) => item._key));
+      const missing = candidatos.map(toSelection).filter((item) => {
+        if (known.has(item._key)) return false;
+        known.add(item._key);
+        return true;
+      });
+      return [...prev, ...missing];
+    });
+  };
 
   const enviar = async () => {
     if (sel.length === 0) {
@@ -128,13 +149,29 @@ const AsignarModal = ({ onClose }) => {
 
           {/* Resultados */}
           {candidatos.length > 0 && (
-            <div className="border border-slate-100 rounded-xl divide-y divide-slate-50 max-h-52 overflow-y-auto">
+            <div className="border border-slate-100 rounded-xl max-h-60 overflow-y-auto">
+              <label className="sticky top-0 z-10 flex cursor-pointer items-center gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2 text-xs font-black text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={candidatos.every((candidate) =>
+                    sel.some((item) => item._key === keyOf(candidate))
+                  )}
+                  onChange={selectAllResults}
+                  className="h-4 w-4 accent-emerald-600"
+                />
+                Seleccionar todos los resultados ({candidatos.length})
+              </label>
               {candidatos.map((c, i) => (
-                <button
+                <label
                   key={i}
-                  onClick={() => add(c)}
-                  className="w-full text-left px-3 py-2 hover:bg-emerald-50/50 flex items-center justify-between gap-2"
+                  className="flex w-full cursor-pointer items-center gap-3 border-b border-slate-50 px-3 py-2 text-left hover:bg-emerald-50/50"
                 >
+                  <input
+                    type="checkbox"
+                    checked={sel.some((item) => item._key === keyOf(c))}
+                    onChange={() => toggle(c)}
+                    className="h-4 w-4 shrink-0 accent-emerald-600"
+                  />
                   <span className="min-w-0">
                     <span className="font-bold text-sm text-slate-800 truncate block">
                       {c.codigo_producto} · {c.producto}
@@ -144,8 +181,7 @@ const AsignarModal = ({ onClose }) => {
                       {c.unidad_medida}
                     </span>
                   </span>
-                  <Plus size={16} className="text-emerald-500 shrink-0" />
-                </button>
+                </label>
               ))}
             </div>
           )}
@@ -316,6 +352,12 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
             const meta = ESTADO_ASIGNACION_META[a.estado] || {};
             const skus = Array.isArray(a.skus) ? a.skus : [];
             const abierta = a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO';
+            const lockActive =
+              abierta &&
+              a.locked_by &&
+              a.locked_at &&
+              Date.now() - new Date(a.locked_at).getTime() < 15 * 60 * 1000;
+            const lockedByOther = lockActive && a.locked_by !== user?.id;
             return (
               <div
                 key={a.id}
@@ -357,13 +399,28 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
                   {a.asignado_nombre ? `Por ${a.asignado_nombre}` : 'Inventario'} ·{' '}
                   {a.created_at ? new Date(a.created_at).toLocaleDateString('es-CL') : ''}
                 </p>
+                {lockActive && (
+                  <div
+                    className={`mt-2 rounded-lg border px-2.5 py-2 text-[11px] font-bold ${lockedByOther ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}
+                  >
+                    🔒 {lockedByOther ? 'En proceso por' : 'Tarea tomada por'}{' '}
+                    {a.locked_by_name || 'otro usuario'} desde las{' '}
+                    {new Date(a.locked_at).toLocaleTimeString('es-CL', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                )}
 
                 {abierta && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {canManageQuality && (
                       <button
                         onClick={() => onGenerarInforme(a)}
-                        className="flex-1 px-3 py-2 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-700"
+                        title={
+                          lockedByOther ? 'El sistema verificará el bloqueo antes de abrir' : ''
+                        }
+                        className={`flex-1 px-3 py-2 rounded-xl text-white font-black text-xs flex items-center justify-center gap-1.5 ${lockedByOther ? 'bg-slate-500 hover:bg-slate-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                       >
                         <FileText size={14} /> Generar informe / dictamen <ArrowRight size={14} />
                       </button>

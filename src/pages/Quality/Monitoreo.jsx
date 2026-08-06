@@ -58,7 +58,10 @@ import {
   TIPOS_ACCION,
   useCrearAccion,
   useAreasCalidad,
-  useBodegasDestino
+  useBodegasDestino,
+  tomarAsignacionCalidad,
+  guardarProgresoAsignacionCalidad,
+  liberarAsignacionCalidad
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import PhotoUploader from '../../components/PhotoUploader';
@@ -68,7 +71,6 @@ import SalidaCertificacion from './SalidaCertificacion';
 import {
   useTareasPendientesCount,
   useAsignacionesPendientesCount,
-  useResolverAsignacion,
   useSalidaPendientesCount
 } from '../../services/calidadService';
 import useRealtimeTable from '../../hooks/useRealtimeTable';
@@ -93,7 +95,7 @@ const TIPO_CLS = {
 // ── Selector de Lote (P) / Serie (S) de un producto ────────────────────────
 // Muestra la lista desplegable con filtro rápido; permite ingreso manual si la
 // partida/serie no se encuentra (para continuar mientras Inventario ajusta).
-const LoteSerieSelector = ({ codigo, value, onSelect }) => {
+const SystemBatchSelector = ({ codigo, value, onSelect }) => {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [list, setList] = useState([]);
@@ -133,15 +135,6 @@ const LoteSerieSelector = ({ codigo, value, onSelect }) => {
     setOpen(false);
     setQ('');
   };
-  const usarManual = () => {
-    if (q.trim()) {
-      onSelect(q.trim().toUpperCase(), '');
-      setOpen(false);
-      setQ('');
-    }
-  };
-  const exacto = list.some((r) => (r.valor || '').toUpperCase() === q.trim().toUpperCase());
-
   return (
     <div className="relative" ref={boxRef}>
       <button
@@ -204,30 +197,99 @@ const LoteSerieSelector = ({ codigo, value, onSelect }) => {
               ))
             )}
           </div>
-          {q.trim() && !exacto && (
-            <button
-              type="button"
-              onClick={usarManual}
-              className="w-full px-3 py-2.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border-t border-amber-100 flex items-center gap-2"
-            >
-              <Plus size={13} /> No está en la lista — usar «{q.trim().toUpperCase()}» manualmente
-            </button>
-          )}
         </div>
       )}
     </div>
   );
 };
 
+const BATCH_NOT_FOUND_NOTE = 'Lote no encontrado en el sistema al momento de la inspección';
+const BATCH_MODES = [
+  { id: 'system', label: 'Sistema' },
+  { id: 'manual', label: 'Manual' },
+  { id: 'none', label: 'Sin lote/partida' },
+  { id: 'not_found', label: 'No corresponde a los mostrados' }
+];
+
+const BatchModeSelector = ({ item, onChange }) => {
+  const source = item.batch_source || (item.partida ? 'system' : 'none');
+  const value = item.batch_value ?? item.partida ?? '';
+
+  const changeMode = (nextSource) => {
+    const patch = {
+      batch_source: nextSource,
+      batch_value: ['none', 'not_found'].includes(nextSource) ? null : '',
+      partida: ''
+    };
+    if (
+      nextSource === 'not_found' &&
+      !String(item.observaciones || '').includes(BATCH_NOT_FOUND_NOTE)
+    ) {
+      patch.observaciones = [item.observaciones?.trim(), BATCH_NOT_FOUND_NOTE]
+        .filter(Boolean)
+        .join(' · ');
+    }
+    onChange(patch);
+  };
+
+  const changeValue = (nextValue, ubicacion = '') =>
+    onChange({
+      batch_value: nextValue || null,
+      partida: nextValue || '',
+      ...(ubicacion ? { ubicacion } : {})
+    });
+
+  return (
+    <div className="mt-1 rounded-xl border border-slate-200 p-3 bg-slate-50/50">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+        {BATCH_MODES.map((mode) => (
+          <label
+            key={mode.id}
+            className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] font-bold cursor-pointer ${source === mode.id ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500'}`}
+          >
+            <input
+              type="radio"
+              name={`batch-${item._key}`}
+              checked={source === mode.id}
+              onChange={() => changeMode(mode.id)}
+            />
+            {mode.label}
+          </label>
+        ))}
+      </div>
+
+      {source === 'system' && (
+        <SystemBatchSelector codigo={item.codigo_producto} value={value} onSelect={changeValue} />
+      )}
+      {source === 'manual' && (
+        <input
+          value={value}
+          onChange={(e) => changeValue(e.target.value.toUpperCase())}
+          placeholder="Escribe el lote/partida no registrado"
+          className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-white text-sm font-mono font-bold outline-none focus:border-amber-500"
+        />
+      )}
+      {source === 'none' && (
+        <p className="text-[11px] text-slate-500">Se guardará sin lote o partida.</p>
+      )}
+      {source === 'not_found' && (
+        <p className="text-[11px] text-amber-700">
+          Se guardará sin lote y se añadirá automáticamente la observación estándar.
+        </p>
+      )}
+    </div>
+  );
+};
+
 // ── Constructor / editor de informe de MONITOREO rutinario ─────────────────
-const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved }) => {
+const InformeBuilder = ({ informe, prefillItems, asignacion, asignacionId, onCancel, onSaved }) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const editMode = !!informe;
   const crear = useCrearInforme();
   const actualizar = useActualizarInforme();
-  const resolverAsig = useResolverAsignacion();
   const { data: itemsExistentes } = useInformeItems(editMode ? informe.id : null);
+  const taskId = asignacion?.id || asignacionId || null;
 
   const [bodega, setBodega] = useState(informe?.bodega || '');
   const [periodicidad, setPeriodicidad] = useState(informe?.periodicidad || 'SEMANAL');
@@ -238,6 +300,17 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
   const [buscando, setBuscando] = useState(false);
   const [items, setItems] = useState([]);
   const [manual, setManual] = useState(null); // alta manual (SKU no registrado)
+  const [selectedSkuIds, setSelectedSkuIds] = useState([]);
+  const [progressHydrated, setProgressHydrated] = useState(!taskId);
+  const [autoSave, setAutoSave] = useState({ status: 'idle', savedAt: null, error: '' });
+  const [lockInfo, setLockInfo] = useState(
+    taskId
+      ? {
+          name: asignacion?.locked_by_name || user?.nombre || 'Usuario actual',
+          at: asignacion?.locked_at || new Date().toISOString()
+        }
+      : null
+  );
 
   // Precargar ítems en modo edición — solo una vez, para no pisar el trabajo en
   // curso si el usuario empieza a editar antes de que resuelva la query.
@@ -262,7 +335,10 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
           cantidad_afectada: Number(it.cantidad_afectada) || 0,
           no_registrado: !!it.no_registrado,
           motivo: it.motivo || 'Rutina',
-          observaciones: it.observaciones || ''
+          observaciones: it.observaciones || '',
+          batch_source: it.batch_source || (it.partida ? 'system' : 'none'),
+          batch_value: it.batch_value ?? it.partida ?? null,
+          revision_estado: it.revision_estado || 'PENDIENTE'
         }))
       );
     }
@@ -272,10 +348,38 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
   // revisión) — solo en informe nuevo, una vez.
   const prefilledRef = useRef(false);
   useEffect(() => {
-    if (!editMode && Array.isArray(prefillItems) && prefillItems.length && !prefilledRef.current) {
+    if (!editMode && taskId && !prefilledRef.current) {
       prefilledRef.current = true;
+      const saved = asignacion?.progress_data;
+      const savedItems = Array.isArray(saved?.items) ? saved.items : null;
+      if (savedItems?.length) {
+        setBodega(saved?.header?.bodega || '');
+        setPeriodicidad(saved?.header?.periodicidad || 'SEMANAL');
+        setObservaciones(saved?.header?.observaciones || '');
+        setSelectedSkuIds(Array.isArray(saved?.selected_sku_ids) ? saved.selected_sku_ids : []);
+        setItems(
+          savedItems.map((item, index) => ({
+            ...item,
+            _key:
+              item._key ||
+              `${item.codigo_producto}|${item.batch_value || item.partida || ''}|${item.ubicacion || ''}|${index}`,
+            revision_estado: item.revision_estado || 'PENDIENTE',
+            batch_source: item.batch_source || (item.partida ? 'system' : 'none'),
+            batch_value: item.batch_value ?? item.partida ?? null
+          }))
+        );
+        setAutoSave({
+          status: 'saved',
+          savedAt: asignacion?.progress_updated_at || saved?.saved_at || null,
+          error: ''
+        });
+        setProgressHydrated(true);
+        return;
+      }
+
+      const sourceItems = Array.isArray(prefillItems) ? prefillItems : asignacion?.skus || [];
       setItems(
-        prefillItems.map((c) => ({
+        sourceItems.map((c) => ({
           _key: `${c.codigo_producto}|${c.partida || ''}|${c.ubicacion || ''}`,
           codigo_producto: c.codigo_producto,
           partida: c.partida || '',
@@ -291,11 +395,15 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
           cantidad_afectada: 0,
           no_registrado: false,
           motivo: 'Hallazgo',
-          observaciones: ''
+          observaciones: '',
+          batch_source: c.batch_source || (c.partida ? 'system' : 'none'),
+          batch_value: c.batch_value ?? c.partida ?? null,
+          revision_estado: 'PENDIENTE'
         }))
       );
+      setProgressHydrated(true);
     }
-  }, [editMode, prefillItems]);
+  }, [asignacion, editMode, prefillItems, taskId]);
 
   const buscar = useCallback(async () => {
     setBuscando(true);
@@ -333,7 +441,10 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
         cantidad_afectada: 0,
         no_registrado: false,
         motivo: 'Rutina',
-        observaciones: ''
+        observaciones: '',
+        batch_source: c.partida ? 'system' : 'none',
+        batch_value: c.partida || null,
+        revision_estado: 'PENDIENTE'
       }
     ]);
   };
@@ -373,7 +484,10 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
         cantidad_afectada: Number(manual.cantidad) || 0,
         no_registrado: true,
         motivo: 'Hallazgo',
-        observaciones: ''
+        observaciones: '',
+        batch_source: manual.partida ? 'manual' : 'none',
+        batch_value: manual.partida || null,
+        revision_estado: 'RECHAZADO'
       }
     ]);
     setManual(null);
@@ -383,6 +497,9 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
   const updateItem = (key, field, value) => {
     setItems((prev) => prev.map((it) => (it._key === key ? { ...it, [field]: value } : it)));
   };
+  const updateItemPatch = (key, patch) => {
+    setItems((prev) => prev.map((it) => (it._key === key ? { ...it, ...patch } : it)));
+  };
   // Al volver la condición a "OK" el input de "Uds afectadas" se desmonta; hay que
   // limpiar el valor o quedaría persistido (condición OK con N afectadas → falsea
   // Excel/resumen/informes Word-PDF).
@@ -390,11 +507,105 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
     setItems((prev) =>
       prev.map((it) =>
         it._key === key
-          ? { ...it, condicion_observada: c, ...(c === 'OK' ? { cantidad_afectada: 0 } : {}) }
+          ? {
+              ...it,
+              condicion_observada: c,
+              revision_estado: c === 'OK' ? 'APROBADO' : 'RECHAZADO',
+              ...(c === 'OK' ? { cantidad_afectada: 0 } : {})
+            }
           : it
       )
     );
-  const removeItem = (key) => setItems((prev) => prev.filter((it) => it._key !== key));
+  const removeItem = (key) => {
+    setItems((prev) => prev.filter((it) => it._key !== key));
+    setSelectedSkuIds((prev) => prev.filter((id) => id !== key));
+  };
+
+  const toggleSku = (key) =>
+    setSelectedSkuIds((prev) =>
+      prev.includes(key) ? prev.filter((id) => id !== key) : [...prev, key]
+    );
+  const seleccionarTodos = () =>
+    setSelectedSkuIds((prev) =>
+      prev.length === items.length ? [] : items.map((item) => item._key)
+    );
+  const aplicarRevisionMasiva = (estadoRevision) => {
+    if (selectedSkuIds.length === 0) {
+      toast.info('Selecciona uno o más SKUs');
+      return;
+    }
+    setItems((prev) =>
+      prev.map((item) => {
+        if (!selectedSkuIds.includes(item._key)) return item;
+        if (estadoRevision === 'APROBADO') {
+          return {
+            ...item,
+            revision_estado: 'APROBADO',
+            condicion_observada: 'OK',
+            cantidad_afectada: 0
+          };
+        }
+        return {
+          ...item,
+          revision_estado: 'RECHAZADO',
+          condicion_observada:
+            item.condicion_observada === 'OK' ? 'Daño de producto' : item.condicion_observada
+        };
+      })
+    );
+  };
+
+  const progressPayload = useMemo(
+    () => ({
+      version: 1,
+      saved_at: new Date().toISOString(),
+      header: { bodega, periodicidad, observaciones },
+      items,
+      selected_sku_ids: selectedSkuIds
+    }),
+    [bodega, items, observaciones, periodicidad, selectedSkuIds]
+  );
+
+  useEffect(() => {
+    if (!taskId || !progressHydrated || autoSave.status === 'conflict') return undefined;
+    setAutoSave((prev) => ({ ...prev, status: 'pending', error: '' }));
+    const timer = window.setTimeout(async () => {
+      setAutoSave((prev) => ({ ...prev, status: 'saving', error: '' }));
+      try {
+        const result = await guardarProgresoAsignacionCalidad(taskId, progressPayload);
+        setAutoSave({
+          status: 'saved',
+          savedAt: result?.saved_at || new Date().toISOString(),
+          error: ''
+        });
+        setLockInfo({
+          name: result?.locked_by_name || lockInfo?.name || user?.nombre || 'Usuario actual',
+          at: result?.locked_at || new Date().toISOString()
+        });
+      } catch (error) {
+        const conflict = error?.code === 'QUALITY_TASK_LOCKED' || error?.status === 409;
+        setAutoSave({
+          status: conflict ? 'conflict' : 'error',
+          savedAt: null,
+          error: error?.message || 'No se pudo guardar el progreso'
+        });
+      }
+    }, 1500);
+    return () => window.clearTimeout(timer);
+    // lockInfo cambia como respuesta del mismo guardado y no debe iniciar otro autosave.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressHydrated, progressPayload, taskId, user?.nombre]);
+
+  const handleCancel = async () => {
+    if (taskId && autoSave.status !== 'conflict') {
+      try {
+        await liberarAsignacionCalidad(taskId);
+      } catch (error) {
+        console.warn('No se pudo liberar el bloqueo de Calidad', error);
+      }
+    }
+    onCancel();
+  };
 
   const guardar = async (estado) => {
     if (items.length === 0) {
@@ -410,9 +621,30 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
         );
         return;
       }
+      const sinLoteValido = items.filter(
+        (it) =>
+          ['system', 'manual'].includes(it.batch_source) &&
+          !(it.batch_value || it.partida || '').trim()
+      );
+      if (sinLoteValido.length > 0) {
+        toast.error(`${sinLoteValido.length} ítem(s) requieren elegir o escribir el lote.`);
+        return;
+      }
+      const pendientes = items.filter((it) => it.revision_estado === 'PENDIENTE');
+      if (taskId && pendientes.length > 0) {
+        toast.error(`Aún faltan ${pendientes.length} SKU(s) por aprobar o rechazar.`);
+        return;
+      }
     }
     const cleanItems = items.map(({ _key, ...rest }) => rest);
     try {
+      if (taskId) {
+        const renewed = await tomarAsignacionCalidad(taskId);
+        setLockInfo({
+          name: renewed?.locked_by_name || user?.nombre || 'Usuario actual',
+          at: renewed?.locked_at || new Date().toISOString()
+        });
+      }
       let informeId = editMode ? informe.id : null;
       if (editMode) {
         const cabecera = {
@@ -433,21 +665,18 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
           estado,
           observaciones: observaciones || null
         };
-        const nuevo = await crear.mutateAsync({ cabecera, items: cleanItems });
+        const nuevo = await crear.mutateAsync({
+          cabecera,
+          items: cleanItems,
+          asignacionId: estado === 'ENVIADO_CALIDAD' ? taskId : null
+        });
         informeId = nuevo?.id || null;
         toast.success(
           estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado'
         );
 
-        // Si el informe nace de una asignación del hito 2, enlazarla y resolverla.
-        if (asignacionId && informeId) {
-          try {
-            await resolverAsig.mutateAsync({ asignacionId, informeId, estado: 'RESUELTA' });
-            toast.success('Asignación de estancia resuelta');
-          } catch (e) {
-            console.error('resolver asignación', e);
-            toast.error(`No se pudo enlazar la asignación: ${e.message}`);
-          }
+        if (taskId && nuevo?.asignacion_estado === 'RESUELTA') {
+          toast.success('Asignación de estancia resuelta');
         }
       }
 
@@ -474,6 +703,8 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
   };
 
   const itemsSinUbic = items.filter((it) => !(it.ubicacion || '').trim()).length;
+  const itemsRevisados = items.filter((it) => it.revision_estado !== 'PENDIENTE').length;
+  const progreso = items.length > 0 ? Math.round((itemsRevisados / items.length) * 100) : 0;
   const condCls = (c, active) =>
     !active
       ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -483,11 +714,32 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
 
   const saving = crear.isPending || actualizar.isPending;
 
+  if (autoSave.status === 'conflict') {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={handleCancel}
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700"
+        >
+          <ArrowLeft size={17} /> Volver a las tareas
+        </button>
+        <div className="rounded-2xl border border-rose-300 bg-rose-50 p-6 text-rose-900">
+          <h2 className="text-lg font-black">Edición bloqueada</h2>
+          <p className="mt-2 text-sm font-bold">{autoSave.error}</p>
+          <p className="mt-2 text-xs">
+            No se enviarán más cambios desde esta pantalla. El bloqueo protege el avance guardado
+            por la otra persona.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
         <button
-          onClick={onCancel}
+          onClick={handleCancel}
           className="p-3 bg-white hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-900 border border-slate-200 shadow-sm"
         >
           <ArrowLeft size={22} />
@@ -496,6 +748,36 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
           {editMode ? `Editar Informe ${informe.numero}` : 'Nuevo Informe de Monitoreo'}
         </h2>
       </div>
+
+      {taskId && lockInfo && (
+        <div className="sticky top-2 z-20 rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 shadow-sm backdrop-blur flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-black text-emerald-800">
+            🔒 Tarea en proceso por: {lockInfo.name} - Desde:{' '}
+            {new Date(lockInfo.at).toLocaleTimeString('es-CL', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+          <span className="text-xs font-bold text-emerald-700">Lease renovable · 15 minutos</span>
+        </div>
+      )}
+
+      {taskId && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="font-black text-slate-700">Progreso de revisión</span>
+            <span className="font-black text-emerald-700">
+              {itemsRevisados}/{items.length} SKUs · {progreso}%
+            </span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+              style={{ width: `${progreso}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {editMode && informe.estado === 'DICTAMINADO' && (
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-sm">
@@ -638,6 +920,34 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
           </div>
         </div>
 
+        {items.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <label className="mr-auto flex cursor-pointer items-center gap-2 text-xs font-black text-slate-700">
+              <input
+                type="checkbox"
+                checked={selectedSkuIds.length === items.length}
+                onChange={seleccionarTodos}
+                className="h-4 w-4 rounded border-slate-300 accent-emerald-600"
+              />
+              Seleccionar todos ({selectedSkuIds.length}/{items.length})
+            </label>
+            <button
+              type="button"
+              onClick={() => aplicarRevisionMasiva('APROBADO')}
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700"
+            >
+              Aprobar seleccionados
+            </button>
+            <button
+              type="button"
+              onClick={() => aplicarRevisionMasiva('RECHAZADO')}
+              className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-black text-white hover:bg-rose-700"
+            >
+              Rechazar seleccionados
+            </button>
+          </div>
+        )}
+
         {/* Alta manual: SKU/ubicación no registrado en sistema */}
         {manual && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
@@ -747,26 +1057,34 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
                 >
                   {/* Cabecera del ítem */}
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`w-2 h-2 rounded-full ${SEMAFORO_CLS[it.semaforo] || 'bg-slate-300'}`}
-                        />
-                        <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-xs border border-emerald-100">
-                          {it.codigo_producto}
-                        </span>
-                        {it.no_registrado && (
-                          <span className="text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                            No registrado
+                    <label className="mt-0.5 flex cursor-pointer items-start gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedSkuIds.includes(it._key)}
+                        onChange={() => toggleSku(it._key)}
+                        className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 accent-emerald-600"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`w-2 h-2 rounded-full ${SEMAFORO_CLS[it.semaforo] || 'bg-slate-300'}`}
+                          />
+                          <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-xs border border-emerald-100">
+                            {it.codigo_producto}
                           </span>
-                        )}
-                        <span className="text-sm text-slate-600 truncate">{it.producto}</span>
+                          {it.no_registrado && (
+                            <span className="text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                              No registrado
+                            </span>
+                          )}
+                          <span className="text-sm text-slate-600 truncate">{it.producto}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">
+                          {it.unidad_medida || 'UN'}
+                          {it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-slate-400">
-                        {it.unidad_medida || 'UN'}
-                        {it.fecha_vencimiento ? ` · vence ${it.fecha_vencimiento}` : ''}
-                      </span>
-                    </div>
+                    </label>
                     <button
                       onClick={() => removeItem(it._key)}
                       className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0"
@@ -778,16 +1096,9 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
                   {/* Lote/Serie + Ubicación (obligatoria) + cantidad + uds afectadas */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                     <div className="col-span-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        Lote / Serie
-                      </label>
-                      <LoteSerieSelector
-                        codigo={it.codigo_producto}
-                        value={it.partida}
-                        onSelect={(valor, ubic) => {
-                          updateItem(it._key, 'partida', valor);
-                          if (ubic) updateItem(it._key, 'ubicacion', ubic);
-                        }}
+                      <BatchModeSelector
+                        item={it}
+                        onChange={(patch) => updateItemPatch(it._key, patch)}
                       />
                     </div>
                     <div className="col-span-2">
@@ -881,13 +1192,15 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
         )}
 
         <div className="flex justify-end gap-3 mt-5">
-          <button
-            onClick={() => guardar(editMode ? informe.estado : 'BORRADOR')}
-            disabled={saving}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50 disabled:opacity-50"
-          >
-            {editMode ? 'Guardar cambios' : 'Guardar borrador'}
-          </button>
+          {!taskId && (
+            <button
+              onClick={() => guardar(editMode ? informe.estado : 'BORRADOR')}
+              disabled={saving}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50 disabled:opacity-50"
+            >
+              {editMode ? 'Guardar cambios' : 'Guardar borrador'}
+            </button>
+          )}
           {!editMode && (
             <button
               onClick={() => guardar('ENVIADO_CALIDAD')}
@@ -899,6 +1212,19 @@ const InformeBuilder = ({ informe, prefillItems, asignacionId, onCancel, onSaved
             </button>
           )}
         </div>
+        {taskId && (
+          <div
+            className={`mt-4 text-right text-xs font-bold ${autoSave.status === 'error' ? 'text-rose-600' : 'text-slate-500'}`}
+          >
+            {autoSave.status === 'saving' || autoSave.status === 'pending'
+              ? '⏳ Guardando...'
+              : autoSave.status === 'error'
+                ? `🔴 No se pudo autoguardar: ${autoSave.error}`
+                : autoSave.savedAt
+                  ? `🟢 Todos los cambios guardados - ${new Date(autoSave.savedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Autoguardado listo'}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2070,11 +2396,16 @@ const Monitoreo = () => {
 
   // Hito 2: desde una asignación de Inventario, abre el Informe de Monitoreo
   // pre-cargado con los SKUs; al guardarlo, la asignación queda resuelta.
-  const generarInformeDesdeAsignacion = (asig) => {
-    setSelected(null);
-    setAsigPrefill(asig);
-    setTab('hito2');
-    setMode('new');
+  const generarInformeDesdeAsignacion = async (asig) => {
+    try {
+      const locked = await tomarAsignacionCalidad(asig.id);
+      setSelected(null);
+      setAsigPrefill({ ...asig, ...locked });
+      setTab('hito2');
+      setMode('new');
+    } catch (error) {
+      toast.error(error?.message || 'No se pudo abrir la tarea de Calidad');
+    }
   };
 
   return (
@@ -2194,7 +2525,7 @@ const Monitoreo = () => {
       {mode === 'new' && (
         <InformeBuilder
           prefillItems={asigPrefill?.skus}
-          asignacionId={asigPrefill?.id}
+          asignacion={asigPrefill}
           onCancel={volver}
           onSaved={volver}
         />

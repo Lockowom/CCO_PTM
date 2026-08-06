@@ -242,12 +242,17 @@ export async function marcarPreliminarCalidad(informeId) {
 export function useCrearInforme() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ cabecera, items }) => {
-      const { data, error } = await supabase.rpc('crear_informe_monitoreo', {
+    mutationFn: async ({ cabecera, items, asignacionId = null }) => {
+      const rpcName = asignacionId
+        ? 'crear_informe_monitoreo_asignacion'
+        : 'crear_informe_monitoreo';
+      const args = {
+        ...(asignacionId ? { p_asignacion_id: asignacionId } : {}),
         p_cabecera: sanitizeInformeCabecera(cabecera),
         p_items: items
-      });
-      if (error) throw error;
+      };
+      const { data, error } = await supabase.rpc(rpcName, args);
+      if (error) throw normalizeQualityTaskError(error);
       return data; // fila del informe (jsonb)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['monitoreo_informes'] })
@@ -759,6 +764,53 @@ export function useCrearAsignacion() {
   });
 }
 
+function normalizeQualityTaskError(error) {
+  const candidates = [error?.message, error?.details, error?.hint];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed?.message) {
+        const normalized = new Error(parsed.message);
+        normalized.code = parsed.code || error?.code;
+        normalized.status = Number(error?.status || 409);
+        normalized.lockedByName = parsed.locked_by_name || null;
+        normalized.lockedAt = parsed.locked_at || null;
+        return normalized;
+      }
+    } catch {
+      // El error no venía como JSON enriquecido; usar el original.
+    }
+  }
+  return error instanceof Error ? error : new Error('No se pudo procesar la tarea de Calidad');
+}
+
+export async function tomarAsignacionCalidad(asignacionId) {
+  const { data, error } = await supabase.rpc('tomar_asignacion_calidad', {
+    p_asignacion_id: asignacionId
+  });
+  if (error) throw normalizeQualityTaskError(error);
+  return data;
+}
+
+export async function guardarProgresoAsignacionCalidad(asignacionId, progressData) {
+  const { data, error } = await supabase.rpc('guardar_progreso_asignacion_calidad', {
+    p_asignacion_id: asignacionId,
+    p_progress_data: progressData || {}
+  });
+  if (error) throw normalizeQualityTaskError(error);
+  return data;
+}
+
+export async function liberarAsignacionCalidad(asignacionId) {
+  if (!asignacionId) return null;
+  const { data, error } = await supabase.rpc('liberar_asignacion_calidad', {
+    p_asignacion_id: asignacionId
+  });
+  if (error) throw normalizeQualityTaskError(error);
+  return data;
+}
+
 // Resolver asignación enlazando el informe/dictamen generado.
 export function useResolverAsignacion() {
   const qc = useQueryClient();
@@ -769,7 +821,7 @@ export function useResolverAsignacion() {
         p_informe_id: informeId ?? null,
         p_estado: estado || 'RESUELTA'
       });
-      if (error) throw error;
+      if (error) throw normalizeQualityTaskError(error);
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] })
