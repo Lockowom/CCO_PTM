@@ -4,7 +4,7 @@ export const ROUTE_PERMISSIONS = {
 
   // TMS (Transporte) — reconstruido desde 0
   '/tms/control': ['view_tms', 'manage_tms', 'supervise_tms', 'manage_panel'],
-  '/tms/pda': ['view_tms', 'manage_tms', 'manage_panel'],   // app del chofer
+  '/tms/pda': ['view_tms', 'manage_tms', 'manage_panel'], // app del chofer
 
   // Inbound
   '/inbound/reception': ['view_reception', 'process_reception'],
@@ -22,17 +22,29 @@ export const ROUTE_PERMISSIONS = {
   '/queries/historial-nv': ['view_historial_nv'],
   '/queries/dispatch-control': ['view_dispatch_control'],
   '/queries/datasheet': ['view_fichas'],
-  '/queries/grupo': ['view_batches', 'view_fichas', 'view_stock', 'manage_inventory', 'view_sales_status'],
+  '/queries/grupo': [
+    'view_batches',
+    'view_fichas',
+    'view_stock',
+    'manage_inventory',
+    'view_sales_status'
+  ],
 
   // Inventario — Traspasos/Ajustes (módulo integrado). Visible para bodega/inventario.
   // `view_traspasos` es el permiso PROPIO (casilla en Roles); los de bodega siguen
   // dando acceso (aditivo) para no romper roles existentes.
-  '/inventory/traspasos': ['view_traspasos', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  '/inventory/traspasos': [
+    'view_traspasos',
+    'manage_inventory',
+    'view_stock',
+    'view_batches',
+    'view_reception'
+  ],
   // Panel PTM — dashboard externo (Next.js/Vercel) embebido en iframe. Permiso propio.
   // Panel PTM nativo (estructura portada). Control POR PANTALLA: cada pantalla
   // tiene su permiso propio (casilla en Roles) Y acepta `view_panel` como umbral
   // (quien tiene view_panel ve todo el módulo → no se rompe ningún rol existente).
-  '/panel': ['view_panel'],                              // Dashboard = acceso base
+  '/panel': ['view_panel'], // Dashboard = acceso base
   '/panel/ingresar': ['panel_ingresar', 'view_panel'],
   '/panel/info': ['panel_info', 'view_panel'],
   '/panel/tv': ['panel_tv', 'view_panel'],
@@ -42,17 +54,50 @@ export const ROUTE_PERMISSIONS = {
   // solo view_panel NO ven ni acceden esta pantalla.
   '/panel/configuracion': ['manage_roles'],
   // Inventario — Conteo Cíclico (módulo integrado desde t-o-inventario).
-  '/inventory/conteo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory',
-    'conteo_tab_contar', 'conteo_tab_sesiones', 'conteo_tab_conciliacion', 'conteo_tab_ajuste', 'conteo_tab_bloques', 'conteo_tab_proyeccion'],
+  '/inventory/conteo': [
+    'view_conteo',
+    'manage_conteo',
+    'supervise_conteo',
+    'manage_inventory',
+    'conteo_tab_contar',
+    'conteo_tab_sesiones',
+    'conteo_tab_conciliacion',
+    'conteo_tab_ajuste',
+    'conteo_tab_bloques',
+    'conteo_tab_proyeccion'
+  ],
   // Detalle de bloque (destino del QR impreso). Ruta con parámetro: el guard
   // la resuelve con matchPath (ver ProtectedRoute en App.jsx).
-  '/inventory/bloque/:codigo': ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
+  '/inventory/bloque/:codigo': [
+    'view_conteo',
+    'manage_conteo',
+    'supervise_conteo',
+    'manage_inventory'
+  ],
   // Análisis de Códigos (port del Excel de actualización P/S). Mismos permisos
   // de bodega/stock; la RPC re-verifica server-side (mig 067).
-  '/inventory/analisis': ['view_analisis', 'manage_inventory', 'view_stock', 'view_batches', 'manage_data_import',
-    'analisis_tab_resumen', 'analisis_tab_antiguos', 'analisis_tab_antiguos_disp', 'analisis_tab_no_activos', 'analisis_tab_duplicados', 'analisis_tab_anomalias', 'analisis_tab_detalle'],
+  '/inventory/analisis': [
+    'view_analisis',
+    'manage_inventory',
+    'view_stock',
+    'view_batches',
+    'manage_data_import',
+    'analisis_tab_resumen',
+    'analisis_tab_antiguos',
+    'analisis_tab_antiguos_disp',
+    'analisis_tab_no_activos',
+    'analisis_tab_duplicados',
+    'analisis_tab_anomalias',
+    'analisis_tab_detalle'
+  ],
   // Carteles de bodega (impresión único/doble/cuádruple con CODE128).
-  '/inventory/carteles': ['view_carteles', 'manage_inventory', 'view_stock', 'view_batches', 'view_reception'],
+  '/inventory/carteles': [
+    'view_carteles',
+    'manage_inventory',
+    'view_stock',
+    'view_batches',
+    'view_reception'
+  ],
   // Panel de Insumos — permiso propio `view_insumos`; los de bodega/stock siguen
   // dando acceso (aditivo) para no romper roles existentes.
   '/inventory/insumos': ['view_insumos', 'manage_insumos', 'manage_inventory', 'view_stock'],
@@ -67,8 +112,17 @@ export const ROUTE_PERMISSIONS = {
   '/quality/clasificacion': ['manage_quality', 'manage_monitoreo'],
 
   // Post-Venta / Servicio Técnico — visible para quien ve/gestiona/supervisa post-venta.
-  '/postventa/tickets': ['view_postventa', 'manage_postventa', 'supervise_postventa',
-    'pv_tab_tickets', 'pv_tab_bandeja', 'pv_tab_calendario', 'pv_tab_nuevo', 'pv_tab_dashboard', 'pv_tab_tecnicos'],
+  '/postventa/tickets': [
+    'view_postventa',
+    'manage_postventa',
+    'supervise_postventa',
+    'pv_tab_tickets',
+    'pv_tab_bandeja',
+    'pv_tab_calendario',
+    'pv_tab_nuevo',
+    'pv_tab_dashboard',
+    'pv_tab_tecnicos'
+  ],
 
   // Seguridad de la cuenta propia (MFA): cualquier usuario autenticado.
   // [] = sin permiso específico → el guard concede a todo usuario logueado.
@@ -88,7 +142,7 @@ export const ROUTE_PERMISSIONS = {
   '/admin/workflows': ['view_workflows', 'manage_workflows'],
   '/admin/flujo-maestro': ['view_workflows', 'manage_workflows'],
   '/admin/eventos': ['view_eventos', 'manage_eventos'],
-  '/admin/api': ['view_api', 'manage_api'],
+  '/admin/api': ['view_api', 'manage_api']
 };
 
 // ── Permisos por PESTAÑA (?tab=) ────────────────────────────────────────────
@@ -100,21 +154,36 @@ export const ROUTE_PERMISSIONS = {
 // declarado es visible por defecto.
 export const TAB_PERMISSIONS = {
   '/inventory/conteo': {
-    _amplios: ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'], _default: 'contar',
-    contar: 'conteo_tab_contar', sesiones: 'conteo_tab_sesiones', conciliacion: 'conteo_tab_conciliacion',
-    ajuste: 'conteo_tab_ajuste', bloques: 'conteo_tab_bloques', proyeccion: 'conteo_tab_proyeccion',
+    _amplios: ['view_conteo', 'manage_conteo', 'supervise_conteo', 'manage_inventory'],
+    _default: 'contar',
+    contar: 'conteo_tab_contar',
+    sesiones: 'conteo_tab_sesiones',
+    conciliacion: 'conteo_tab_conciliacion',
+    ajuste: 'conteo_tab_ajuste',
+    bloques: 'conteo_tab_bloques',
+    proyeccion: 'conteo_tab_proyeccion'
   },
   '/inventory/analisis': {
-    _amplios: ['view_analisis', 'manage_inventory'], _default: 'resumen',
-    resumen: 'analisis_tab_resumen', antiguos: 'analisis_tab_antiguos', antiguos_disp: 'analisis_tab_antiguos_disp',
-    no_activos_stock: 'analisis_tab_no_activos', duplicados: 'analisis_tab_duplicados',
-    anomalias: 'analisis_tab_anomalias', detalle: 'analisis_tab_detalle',
+    _amplios: ['view_analisis', 'manage_inventory'],
+    _default: 'resumen',
+    resumen: 'analisis_tab_resumen',
+    antiguos: 'analisis_tab_antiguos',
+    antiguos_disp: 'analisis_tab_antiguos_disp',
+    no_activos_stock: 'analisis_tab_no_activos',
+    duplicados: 'analisis_tab_duplicados',
+    anomalias: 'analisis_tab_anomalias',
+    detalle: 'analisis_tab_detalle'
   },
   '/postventa/tickets': {
-    _amplios: ['view_postventa', 'manage_postventa', 'supervise_postventa'], _default: 'tickets',
-    tickets: 'pv_tab_tickets', bandeja: 'pv_tab_bandeja', calendario: 'pv_tab_calendario',
-    nuevo: 'pv_tab_nuevo', dashboard: 'pv_tab_dashboard', tecnicos: 'pv_tab_tecnicos',
-  },
+    _amplios: ['view_postventa', 'manage_postventa', 'supervise_postventa'],
+    _default: 'tickets',
+    tickets: 'pv_tab_tickets',
+    bandeja: 'pv_tab_bandeja',
+    calendario: 'pv_tab_calendario',
+    nuevo: 'pv_tab_nuevo',
+    dashboard: 'pv_tab_dashboard',
+    tecnicos: 'pv_tab_tecnicos'
+  }
 };
 
 // ¿Puede ver una pestaña? `has` = fn(permId)->bool (hasPermission). true si tiene
@@ -141,12 +210,31 @@ export function puedeVerTab(has, base, tab) {
 import { matchPath } from 'react-router-dom';
 
 export function permisosDeRuta(pathname) {
-  const clean = (String(pathname || '').toLowerCase().replace(/\/+$/, '')) || '/';
-  if (Object.prototype.hasOwnProperty.call(ROUTE_PERMISSIONS, clean)) return ROUTE_PERMISSIONS[clean];
+  const clean =
+    String(pathname || '')
+      .toLowerCase()
+      .replace(/\/+$/, '') || '/';
+  if (Object.prototype.hasOwnProperty.call(ROUTE_PERMISSIONS, clean))
+    return ROUTE_PERMISSIONS[clean];
   for (const key of Object.keys(ROUTE_PERMISSIONS)) {
-    if (key.includes(':') && matchPath({ path: key, end: true }, clean)) return ROUTE_PERMISSIONS[key];
+    if (key.includes(':') && matchPath({ path: key, end: true }, clean))
+      return ROUTE_PERMISSIONS[key];
   }
   return undefined;
+}
+
+// Decisión compartida por el guard, el login y los enlaces de inicio. Evita que
+// un deep-link guardado antes de cambiar un rol devuelva al usuario a una ruta
+// que ya no tiene autorizada.
+export function puedeAccederRuta(pathname, user, hasPermission) {
+  const clean = String(pathname || '/').split('?')[0] || '/';
+  if (clean === '/') return true;
+  if (user?.rol === 'ADMIN' || user?.es_admin_delegado === true) return true;
+  const required = permisosDeRuta(clean);
+  return (
+    Array.isArray(required) &&
+    (required.length === 0 || required.some((permission) => hasPermission(permission)))
+  );
 }
 
 // ── Vista previa de accesos ─────────────────────────────────────────────────
@@ -163,9 +251,14 @@ export function accesosConPermisos(permisos = []) {
     return Array.isArray(req) && req.some((p) => set.has(p));
   });
   const porModulo = {};
-  rutas.forEach((r) => { (porModulo[r.module] ||= []).push(r); });
-  const modulos = APP_MODULES
-    .filter((m) => (porModulo[m.id] || []).length > 0)
-    .map((m) => ({ id: m.id, label: m.label, rutas: porModulo[m.id], soloAdmin: m.id === 'admin' }));
+  rutas.forEach((r) => {
+    (porModulo[r.module] ||= []).push(r);
+  });
+  const modulos = APP_MODULES.filter((m) => (porModulo[m.id] || []).length > 0).map((m) => ({
+    id: m.id,
+    label: m.label,
+    rutas: porModulo[m.id],
+    soloAdmin: m.id === 'admin'
+  }));
   return { rutas, modulos };
 }

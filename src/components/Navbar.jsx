@@ -61,7 +61,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const navRef = useRef(null);
 
-  const { user, logout, hasPermission, landingPage } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { isModuleEnabled } = useConfig();
   const syncQueueCount = useSyncQueueCount();
 
@@ -408,10 +408,7 @@ const Navbar = () => {
         }`}
       >
         {/* Left: Logo & Brand */}
-        <Link
-          to={landingPage || '/'}
-          className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2"
-        >
+        <Link to="/" className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
           <img
             src="/logo-ptm.png"
             alt="PTM Health Care"

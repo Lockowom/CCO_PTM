@@ -13,7 +13,7 @@ import CommandPalette from './components/ui/CommandPalette';
 import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
-import { ROUTE_PERMISSIONS, permisosDeRuta } from './constants/permissions';
+import { ROUTE_PERMISSIONS, permisosDeRuta, puedeAccederRuta } from './constants/permissions';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
@@ -104,6 +104,10 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 // Orden de prioridad para la primera ruta disponible
 const ROUTE_PRIORITY = [
   '/panel',
+  '/panel/ingresar',
+  '/panel/info',
+  '/panel/tv',
+  '/panel/builder',
   '/inbound/entry',
   '/queries/batches',
   '/queries/sales-status',
@@ -241,14 +245,7 @@ const SmartRedirect = () => {
   // Se recorta el query string (?tab=...) porque las landing de APP_ROUTES incluyen
   // deep-links de pestañas y el mapa de permisos se indexa por pathname puro.
   if (landingPage && landingPage !== '/') {
-    const requiredPerms = permisosDeRuta(String(landingPage).split('?')[0]);
-    const hasAccess =
-      user?.rol === 'ADMIN' ||
-      user?.es_admin_delegado ||
-      (Array.isArray(requiredPerms) &&
-        (requiredPerms.length === 0 || requiredPerms.some((perm) => hasPermission(perm))));
-
-    if (hasAccess) {
+    if (puedeAccederRuta(landingPage, user, hasPermission)) {
       return <Navigate to={landingPage} replace />;
     }
   }
@@ -320,13 +317,7 @@ const ProtectedRoute = () => {
   // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
   // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
   const requiredPermissions = permisosDeRuta(location.pathname);
-  const hasAccess =
-    location.pathname === '/' ||
-    user?.rol === 'ADMIN' ||
-    user?.es_admin_delegado ||
-    (Array.isArray(requiredPermissions) &&
-      (requiredPermissions.length === 0 ||
-        requiredPermissions.some((perm) => hasPermission(perm))));
+  const hasAccess = puedeAccederRuta(location.pathname, user, hasPermission);
 
   if (!hasAccess) {
     return (

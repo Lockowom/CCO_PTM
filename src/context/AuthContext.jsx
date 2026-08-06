@@ -261,12 +261,14 @@ export const AuthProvider = ({ children }) => {
         es_admin_delegado: profile.es_admin_delegado || false
       };
 
+      // Cargar permisos antes de publicar el usuario autenticado. Así el router
+      // nunca alcanza a evaluar una ruta con el usuario nuevo y permisos vacíos.
+      await loadRoleConfig(userData.rol);
       loadedEmailRef.current = (userData.email || '').toLowerCase();
       sessionStartRef.current = Date.now();
       setUser(userData);
       setUserForTracking(userData);
       setLoggerUserContext(userData);
-      await loadRoleConfig(userData.rol);
 
       if (Capacitor.isNativePlatform()) {
         initPushNotifications(userData.id);

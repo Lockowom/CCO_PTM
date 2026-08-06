@@ -10,7 +10,7 @@ export const APP_MODULES = [
   { id: 'inventario', label: 'Inventario (Traspasos + Conteo)', section: 'wms' },
   { id: 'queries', label: 'Consultas', section: 'intelligence' },
   { id: 'quality', label: 'Calidad', section: 'intelligence' },
-  { id: 'panel', label: 'Panel PTM (Dashboard)', section: 'intelligence' },
+  { id: 'panel', label: 'Panel PTM', section: 'intelligence' },
   { id: 'asistente', label: 'Asistente IA', section: 'intelligence' },
   { id: 'postventa', label: 'Post-Venta (Servicio Técnico)', section: 'postventa' },
   { id: 'admin', label: 'Configuración', section: 'system' }
@@ -25,11 +25,15 @@ export const APP_ROUTES = [
 
   // Inbound
   { value: '/inbound/reception', label: 'Inbound - Recepción', module: 'inbound' },
-  { value: '/inbound/reception-nacional', label: 'Inbound - Recepción Nacionales', module: 'inbound' },
+  {
+    value: '/inbound/reception-nacional',
+    label: 'Inbound - Recepción Nacionales',
+    module: 'inbound'
+  },
   { value: '/inbound/entry', label: 'Inbound - Putaway', module: 'inbound' },
   { value: '/inbound/cubing', label: 'Inbound - Cubicaje', module: 'inbound' },
   { value: '/inbound/data-import', label: 'Inbound - Carga Masiva', module: 'inbound' },
-  
+
   // Intelligence
   { value: '/queries/batches', label: 'Consultas - Lotes/Series', module: 'queries' },
   { value: '/queries/sales-status', label: 'Consultas - Estado N.V.', module: 'queries' },
@@ -49,23 +53,71 @@ export const APP_ROUTES = [
   { value: '/panel/configuracion', label: 'Panel PTM - Configuración (admin)', module: 'panel' },
 
   // Inventario
-  { value: '/inventory/traspasos', label: 'Inventario - Traspasos y Ajustes', module: 'inventario' },
+  {
+    value: '/inventory/traspasos',
+    label: 'Inventario - Traspasos y Ajustes',
+    module: 'inventario'
+  },
   // Reubicados al módulo Inventario (2026-07-10): conservan su URL histórica
   // para no romper accesos directos ni landing pages ya guardadas en roles.
   { value: '/queries/heatmap', label: 'Inventario - Mapa de Calor', module: 'inventario' },
   { value: '/admin/locations', label: 'Inventario - Gestión de Ubicaciones', module: 'inventario' },
-  { value: '/inventory/conteo', label: 'Inventario - Conteo Cíclico (Contar)', module: 'inventario' },
-  { value: '/inventory/conteo?tab=sesiones', label: 'Inventario - Conteo · Sesiones', module: 'inventario' },
-  { value: '/inventory/conteo?tab=conciliacion', label: 'Inventario - Conteo · Conciliación', module: 'inventario' },
-  { value: '/inventory/conteo?tab=ajuste', label: 'Inventario - Conteo · Ajuste ERP', module: 'inventario' },
-  { value: '/inventory/conteo?tab=bloques', label: 'Inventario - Conteo · Bloques/QR', module: 'inventario' },
-  { value: '/inventory/conteo?tab=proyeccion', label: 'Inventario - Conteo · Proyección', module: 'inventario' },
+  {
+    value: '/inventory/conteo',
+    label: 'Inventario - Conteo Cíclico (Contar)',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/conteo?tab=sesiones',
+    label: 'Inventario - Conteo · Sesiones',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/conteo?tab=conciliacion',
+    label: 'Inventario - Conteo · Conciliación',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/conteo?tab=ajuste',
+    label: 'Inventario - Conteo · Ajuste ERP',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/conteo?tab=bloques',
+    label: 'Inventario - Conteo · Bloques/QR',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/conteo?tab=proyeccion',
+    label: 'Inventario - Conteo · Proyección',
+    module: 'inventario'
+  },
   { value: '/inventory/analisis', label: 'Inventario - Análisis · Resumen', module: 'inventario' },
-  { value: '/inventory/analisis?tab=antiguos_disp', label: 'Inventario - Análisis · Antiguos c/Disponible', module: 'inventario' },
-  { value: '/inventory/analisis?tab=no_activos_stock', label: 'Inventario - Análisis · No Activos c/Stock', module: 'inventario' },
-  { value: '/inventory/analisis?tab=duplicados', label: 'Inventario - Análisis · Duplicados', module: 'inventario' },
-  { value: '/inventory/analisis?tab=anomalias', label: 'Inventario - Análisis · Anomalías', module: 'inventario' },
-  { value: '/inventory/analisis?tab=detalle', label: 'Inventario - Análisis · Detalle', module: 'inventario' },
+  {
+    value: '/inventory/analisis?tab=antiguos_disp',
+    label: 'Inventario - Análisis · Antiguos c/Disponible',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/analisis?tab=no_activos_stock',
+    label: 'Inventario - Análisis · No Activos c/Stock',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/analisis?tab=duplicados',
+    label: 'Inventario - Análisis · Duplicados',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/analisis?tab=anomalias',
+    label: 'Inventario - Análisis · Anomalías',
+    module: 'inventario'
+  },
+  {
+    value: '/inventory/analisis?tab=detalle',
+    label: 'Inventario - Análisis · Detalle',
+    module: 'inventario'
+  },
   { value: '/inventory/carteles', label: 'Inventario - Carteles de Bodega', module: 'inventario' },
   { value: '/inventory/insumos', label: 'Inventario - Panel de Insumos', module: 'inventario' },
 
@@ -73,14 +125,34 @@ export const APP_ROUTES = [
   { value: '/quality/monitoreo', label: 'Calidad - Monitoreo', module: 'quality' },
   { value: '/quality/acciones', label: 'Calidad - Acciones', module: 'quality' },
   { value: '/quality/bandeja', label: 'Calidad - Mi Bandeja', module: 'quality' },
-  { value: '/quality/clasificacion', label: 'Calidad - Clasificación de Productos', module: 'quality' },
+  {
+    value: '/quality/clasificacion',
+    label: 'Calidad - Clasificación de Productos',
+    module: 'quality'
+  },
 
   // Post-Venta
   { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },
-  { value: '/postventa/tickets?tab=bandeja', label: 'Post-Venta - Bandeja Correos', module: 'postventa' },
-  { value: '/postventa/tickets?tab=calendario', label: 'Post-Venta - Calendario', module: 'postventa' },
-  { value: '/postventa/tickets?tab=nuevo', label: 'Post-Venta - Nuevo Ticket', module: 'postventa' },
-  { value: '/postventa/tickets?tab=dashboard', label: 'Post-Venta - Dashboard', module: 'postventa' },
+  {
+    value: '/postventa/tickets?tab=bandeja',
+    label: 'Post-Venta - Bandeja Correos',
+    module: 'postventa'
+  },
+  {
+    value: '/postventa/tickets?tab=calendario',
+    label: 'Post-Venta - Calendario',
+    module: 'postventa'
+  },
+  {
+    value: '/postventa/tickets?tab=nuevo',
+    label: 'Post-Venta - Nuevo Ticket',
+    module: 'postventa'
+  },
+  {
+    value: '/postventa/tickets?tab=dashboard',
+    label: 'Post-Venta - Dashboard',
+    module: 'postventa'
+  },
   { value: '/postventa/tickets?tab=tecnicos', label: 'Post-Venta - Técnicos', module: 'postventa' },
 
   // System
@@ -182,11 +254,14 @@ export const APP_PERMISSIONS = [
   },
   {
     id: 'panel',
-    label: 'Panel PTM (Dashboard)',
+    label: 'Panel PTM',
     permissions: [
       { id: 'view_panel', label: 'Ver Panel PTM (Dashboard + acceso base a todo el módulo)' },
       { id: 'manage_panel', label: 'Gestionar Panel PTM (crear/editar N.V. y estados)' },
-      { id: 'approve_panel_reopen_nv', label: 'Panel · aprobar/rechazar reaperturas de N.V. entregadas' },
+      {
+        id: 'approve_panel_reopen_nv',
+        label: 'Panel · aprobar/rechazar reaperturas de N.V. entregadas'
+      },
       // Control por pantalla (además del umbral view_panel, que da acceso a todo):
       { id: 'panel_ingresar', label: 'Panel · pantalla Ingresar N.V.' },
       { id: 'panel_info', label: 'Panel · pantalla Info N.V. (consulta)' },

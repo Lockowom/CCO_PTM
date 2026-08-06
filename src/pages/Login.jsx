@@ -13,6 +13,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { nivelAAL, factoresVerificados, verificarTOTP } from '../services/securityService';
+import { puedeAccederRuta } from '../constants/permissions';
 
 // Versión real de la app (inyectada por Vite desde package.json). Se muestra en el
 // login para que cualquier PDA sepa qué build corre sin abrir el menú.
@@ -38,7 +39,7 @@ const Login = () => {
   const location = useLocation();
   const containerRef = useRef(null);
 
-  const { login, isAuthenticated, logout } = useAuth();
+  const { login, isAuthenticated, logout, user, hasPermission } = useAuth();
 
   // Si el guard nos mandó aquí desde un deep-link (p.ej. el QR de un bloque de
   // conteo), volver a esa URL tras autenticarse en vez de a la landing del rol.
@@ -47,18 +48,20 @@ const Login = () => {
     : '/';
 
   useEffect(() => {
-    // No redirigir mientras se exige el segundo factor (MFA).
-    if (isAuthenticated && !mfaRequired) {
-      navigate(from, { replace: true });
+    // No redirigir mientras se autentica o se exige el segundo factor (MFA).
+    // Un destino antiguo sin permiso se descarta y la raíz elige el inicio real
+    // del rol (por ejemplo /panel/info para un perfil de consulta N.V.).
+    if (isAuthenticated && !mfaRequired && !loading) {
+      const target = puedeAccederRuta(from, user, hasPermission) ? from : '/';
+      navigate(target, { replace: true });
     }
-  }, [isAuthenticated, navigate, from, mfaRequired]);
+  }, [isAuthenticated, navigate, from, mfaRequired, loading, user, hasPermission]);
 
   const finalizarIngreso = async () => {
     setLoadingPhase(2);
     await new Promise((r) => setTimeout(r, 120));
     setLoadingPhase(3);
     await new Promise((r) => setTimeout(r, 80));
-    navigate(from, { replace: true });
   };
 
   const confirmarMfa = async () => {
