@@ -4,7 +4,9 @@
 export function printPanelDashboard(node, range) {
   if (!node) throw new Error('No se encontró el contenido del Dashboard para imprimir.');
 
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1440,height=900');
+  // `noopener` hace que Chrome devuelva null para la referencia de la ventana:
+  // la pestaña se abre, pero queda en blanco porque no podemos escribir en ella.
+  const printWindow = window.open('', '_blank', 'width=1440,height=900');
   if (!printWindow) {
     throw new Error(
       'El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'
