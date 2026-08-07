@@ -174,6 +174,32 @@ export async function fetchCandidatos(query, soloVencimiento = false) {
   }
 }
 
+// Candidatos exclusivos de Hito 3 / Salida. A diferencia del monitoreo de
+// inventario, incluye SKUs históricos aunque ya no tengan stock WMS positivo.
+export async function fetchCandidatosSalida(query, limit = 100) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const { data, error } = await supabase
+      .rpc('calidad_salida_candidatos', {
+        p_query: query || '',
+        p_limit: Math.min(Math.max(Number(limit) || 100, 1), 200)
+      })
+      .abortSignal(controller.signal);
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    if (e?.name === 'AbortError' || controller.signal.aborted) {
+      throw new Error(
+        'La búsqueda de SKU tardó demasiado (timeout 15s). Revisa tu conexión e inténtalo de nuevo.'
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Lotes y series de un producto (para elegir en la toma) ─────────────────
 export async function fetchLotesSeries(codigo, query = '') {
   const { data, error } = await supabase.rpc('calidad_lotes_series', {

@@ -36,7 +36,7 @@ import {
   useCrearTareaSalidaManual,
   useGuardarChecklist,
   useFirmarCertificado,
-  fetchCandidatos,
+  fetchCandidatosSalida,
   useEliminarTareaCalidad,
   RIESGOS_SALIDA,
   EVIDENCIAS_SALIDA_TIPOS,
@@ -113,7 +113,7 @@ const ManualModal = ({ onClose, onCreated }) => {
   const buscar = useCallback(async () => {
     setBuscando(true);
     try {
-      setCand(agruparPorSku(await fetchCandidatos(query, false)));
+      setCand(agruparPorSku(await fetchCandidatosSalida(query)));
     } catch (e) {
       toast.error(`Error buscando stock: ${e.message}`);
     } finally {
@@ -136,7 +136,9 @@ const ManualModal = ({ onClose, onCreated }) => {
         producto: c.producto || '',
         ubicacion: '',
         partida: c.partida || '',
-        cantidad: Number(c.disponible) || 0,
+        // Los SKU históricos no tienen stock WMS: se inicia en 1 y el usuario
+        // puede indicar la cantidad real del despacho antes de crear la tarea.
+        cantidad: Number(c.disponible) > 0 ? Number(c.disponible) : 1,
         unidad_medida: c.unidad_medida || 'UN'
       }
     ]);
@@ -330,7 +332,7 @@ const ManualModal = ({ onClose, onCreated }) => {
             </div>
           )}
 
-          {/* Buscador de SKUs (por SKU, descripción o ubicación) */}
+          {/* Buscador de SKUs en stock actual y catálogo histórico */}
           <div className="flex gap-2">
             <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 focus-within:border-emerald-400">
               <Search size={16} className="text-slate-400" />
@@ -338,7 +340,7 @@ const ManualModal = ({ onClose, onCreated }) => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && buscar()}
-                placeholder="Buscar SKU por código, descripción o ubicación…"
+                placeholder="Buscar SKU actual o antiguo por código o descripción…"
                 className="flex-1 text-sm outline-none bg-transparent"
               />
             </div>
@@ -363,8 +365,15 @@ const ManualModal = ({ onClose, onCreated }) => {
                     <span className="font-bold text-sm text-slate-800 truncate block">
                       {c.codigo_producto} · {c.producto}
                     </span>
-                    <span className="text-xs text-slate-400">
-                      {c.partida || 's/partida'} · {c.disponible} {c.unidad_medida} disponibles
+                    <span className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
+                      <span>
+                        {c.partida || 's/partida'} · {c.disponible} {c.unidad_medida} disponibles
+                      </span>
+                      {c.es_historico && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold">
+                          SKU histórico
+                        </span>
+                      )}
                     </span>
                   </span>
                   <Plus size={16} className="text-emerald-500 shrink-0" />
@@ -397,6 +406,24 @@ const ManualModal = ({ onClose, onCreated }) => {
                         {s.partida || 's/partida'} · {s.cantidad} {s.unidad_medida}
                       </span>
                     </span>
+                    <label className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase shrink-0">
+                      Cant.
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={s.cantidad}
+                        onChange={(e) => {
+                          const cantidad = Math.max(1, Number(e.target.value) || 1);
+                          setSel((prev) =>
+                            prev.map((item) =>
+                              item._key === s._key ? { ...item, cantidad } : item
+                            )
+                          );
+                        }}
+                        className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 outline-none focus:border-emerald-400"
+                      />
+                    </label>
                     <button
                       onClick={() => remove(s._key)}
                       className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 shrink-0"
