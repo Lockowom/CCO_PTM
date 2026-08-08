@@ -255,19 +255,19 @@ const ManualModal = ({ onClose, onCreated }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-2 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-2 backdrop-blur-sm sm:p-4 xl:p-5"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_32px_90px_rgba(15,23,42,0.35)]"
+        className="flex max-h-[calc(100dvh-24px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-[0_32px_90px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-32px)] min-[1800px]:max-w-4xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="relative overflow-hidden border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-indigo-50 px-5 py-5 sm:px-7">
+        <header className="relative overflow-hidden border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-indigo-50 px-4 py-4 sm:px-6">
           <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-emerald-200/30 blur-3xl" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200">
-                <ClipboardCheck size={23} />
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200">
+                <ClipboardCheck size={21} />
               </div>
               <div>
                 <div className="mb-1 flex items-center gap-2">
@@ -275,7 +275,7 @@ const ManualModal = ({ onClose, onCreated }) => {
                     Calidad · Hito 3
                   </span>
                 </div>
-                <h3 className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+                <h3 className="text-lg font-black tracking-tight text-slate-950">
                   Nueva certificación de salida
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -293,9 +293,9 @@ const ManualModal = ({ onClose, onCreated }) => {
           </div>
         </header>
 
-        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/80 p-4 sm:p-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="mb-4 flex items-center gap-3">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/80 p-3.5 sm:p-4">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-3">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-950 text-xs font-black text-white">
                 01
               </span>
@@ -396,7 +396,7 @@ const ManualModal = ({ onClose, onCreated }) => {
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-3">
+            <div className="mt-3 grid gap-3 border-t border-slate-100 pt-3 md:grid-cols-3">
               <div>
                 <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
                   Guía
@@ -444,7 +444,7 @@ const ManualModal = ({ onClose, onCreated }) => {
             </div>
 
             {panelInfo && (
-              <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-slate-50 p-3.5">
+              <div className="mt-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-slate-50 p-3">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-indigo-700">
                     <BadgeCheck size={15} /> Datos sincronizados con Panel PTM
@@ -495,8 +495,8 @@ const ManualModal = ({ onClose, onCreated }) => {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-950 text-xs font-black text-white">
                   02
@@ -582,7 +582,7 @@ const ManualModal = ({ onClose, onCreated }) => {
 
             <div className="mt-4 border-t border-slate-100 pt-4">
               {sel.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-7 text-center">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-5 text-center">
                   <Boxes size={25} className="mx-auto mb-2 text-slate-300" />
                   <p className="text-xs font-black text-slate-600">Aún no hay SKU en el despacho</p>
                   <p className="mt-1 text-[10px] text-slate-400">
@@ -640,7 +640,7 @@ const ManualModal = ({ onClose, onCreated }) => {
           </section>
         </div>
 
-        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold">
             <span
               className={`rounded-full px-2.5 py-1 ${panelInfo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}
