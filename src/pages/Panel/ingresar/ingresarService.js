@@ -207,12 +207,21 @@ export const CANALES = [
   { value: 'varios', label: 'Varios', color: '#4f46e5' }
 ];
 export const VARIOS_TIPOS = ['N.V ANTICIPADA', 'DEMO', 'REGALO', 'BOLETA', 'GUÍA SALIDA'];
-export const INCIDENCIAS_NV = ['PROBLEMAS DE DIRECCIÓN', 'PROBLEMAS DE TRANSPORTE', 'OTRO'];
+export const INCIDENCIAS_NV = [
+  'PROBLEMAS DE DIRECCIÓN',
+  'PROBLEMAS DE TRANSPORTE',
+  'PROBLEMA DE ARMADO',
+  'OTRO'
+];
 export const ESTADOS_INCIDENCIA = ['ABIERTA', 'EN GESTIÓN', 'RESUELTA'];
 // Estados seleccionables EXACTAMENTE como el proyecto original (Sheet/Panel):
 // En Proceso · Shipping · Currier · En Ruta · Entregado.
-export const ESTADOS_SELECCIONABLES = ['En Proceso', 'Shipping', 'Currier', 'En Ruta', 'Entregado'];
-export const ESTADOS_ACTIVOS = ['En Proceso', 'Shipping', 'Currier', 'En Ruta'];
+export const ESTADOS_SELECCIONABLES = ['En Proceso', 'Shipping', 'En Ruta', 'Entregado'];
+export const ESTADOS_ACTIVOS = ['En Proceso', 'Shipping', 'En Ruta'];
+export const SHIPPING_SUBESTADOS = [
+  { value: 'REZAGADA_COMERCIAL', label: 'Rezagada comercial' },
+  { value: 'RETIRO_CLIENTE', label: 'Retiro de cliente' }
+];
 export const TIPOS_DESPACHO = ['Courier - Inyección', 'Directo', 'Courier (Retiro / Pick-up)'];
 export const ESTADO_COLOR = {
   'En Proceso': '#f59e0b',
@@ -271,7 +280,7 @@ export const esClienteOrange = (cliente) => {
 
 // ── Lista de N.V. activas (pestaña Buscar) ──────────────────────────────────
 const LISTA_COLS =
-  'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado,reabierta,motivo_reapertura';
+  'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,estado,transportista,fecha_compromiso,guia,factura,fecha_aprobacion,fecha_aprobacion_real,urgente,fecha_estado,reabierta,motivo_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_motivo,shipping_pausa_elegible_sla';
 
 // Mapea una fila de tms_operaciones al item que consume la lista/drawer de Buscar.
 function mapOperacionRow(r) {
@@ -294,7 +303,11 @@ function mapOperacionRow(r) {
     urgente: r.urgente === true,
     _estado: r.estado,
     reabierta: r.reabierta === true,
-    motivoReapertura: r.motivo_reapertura || ''
+    motivoReapertura: r.motivo_reapertura || '',
+    shippingSubestado: r.shipping_subestado || '',
+    shippingPausaDesde: r.shipping_pausa_desde || '',
+    shippingPausaMotivo: r.shipping_pausa_motivo || '',
+    shippingPausaElegibleSla: r.shipping_pausa_elegible_sla === true
   };
 }
 
@@ -716,7 +729,7 @@ export async function opciones({ force = false, includeHistoricos = false } = {}
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
 const PREVIEW =
-  'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia,reabierta,fecha_reapertura,motivo_reapertura';
+  'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia,reabierta,fecha_reapertura,motivo_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_hasta,shipping_pausa_motivo,shipping_pausa_total_segundos,shipping_pausa_elegible_sla,incidencia_area,incidencia_origen,incidencia_reportada_at';
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
   const t = normNV(nv);
@@ -1164,6 +1177,45 @@ export async function cambiarEstado(id, estado, urgente = null) {
   );
 }
 // Edición inline por columnas: mapea nombres de columna → claves del RPC guardar_nv.
+export async function gestionarPausaShipping(id, subestado = null, motivo = '') {
+  return runPanelMutation(
+    subestado ? 'pausar_shipping_nv' : 'reactivar_shipping_nv',
+    async () => {
+      const { data, error } = await supabase.rpc('gestionar_pausa_shipping_nv', {
+        p_id: id,
+        p_subestado: subestado || null,
+        p_motivo: motivo || null
+      });
+      const result = rpcResult(data, error);
+      if (result?.ok !== false) resetIngresarCaches();
+      return result;
+    },
+    {
+      payload: { id, subestado, motivoLength: String(motivo || '').trim().length },
+      message: subestado ? 'Pausa operativa de Shipping' : 'Reactivacion de N.V. en Shipping'
+    }
+  );
+}
+
+export async function reportarIncidenciaArmado(id, observacion) {
+  return runPanelMutation(
+    'reportar_incidencia_armado_nv',
+    async () => {
+      const { data, error } = await supabase.rpc('reportar_incidencia_armado_nv', {
+        p_id: id,
+        p_observacion: observacion
+      });
+      const result = rpcResult(data, error);
+      if (result?.ok !== false) resetIngresarCaches();
+      return result;
+    },
+    {
+      payload: { id, observacionLength: String(observacion || '').trim().length },
+      message: 'Incidencia post-entrega asignada a Bodega'
+    }
+  );
+}
+
 const COL_A_FORM = {
   estado: 'estado',
   urgente: 'urgente',

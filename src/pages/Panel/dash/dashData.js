@@ -1,5 +1,5 @@
 import { supabase } from '../../../supabase';
-import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha } from './dashHelpers';
+import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha, sumaDias } from './dashHelpers';
 import { Logger } from '../../../lib/logger';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
@@ -220,27 +220,11 @@ function normalizaEstado(estado) {
   return ESTADO_MIGRACION[estado] || estado;
 }
 
-const ESTADOS_PENDIENTES = [ESTADOS.P_VENDEDOR, ESTADOS.P_STOCK, ESTADOS.P_RETIRO];
-const ESTADOS_PRE_SHIPPING = [ESTADOS.EN_PROCESO, ...ESTADOS_PENDIENTES];
-const ESTADOS_ACTIVOS = [
-  ESTADOS.EN_PROCESO,
-  ...ESTADOS_PENDIENTES,
-  ESTADOS.SHIPPING,
-  ESTADOS.CURRIER,
-  ESTADOS.EN_RUTA
-];
-const ESTADOS_DESPACHADOS = [ESTADOS.CURRIER, ESTADOS.EN_RUTA, ESTADOS.ENTREGADO];
+const ESTADOS_PRE_SHIPPING = [ESTADOS.EN_PROCESO];
+const ESTADOS_ACTIVOS = [ESTADOS.EN_PROCESO, ESTADOS.SHIPPING, ESTADOS.EN_RUTA];
+const ESTADOS_DESPACHADOS = [ESTADOS.EN_RUTA, ESTADOS.ENTREGADO];
 const ESTADOS_ENTREGADOS = [ESTADOS.ENTREGADO];
-const ESTADOS_FLUJO = [
-  ESTADOS.EN_PROCESO,
-  ESTADOS.P_VENDEDOR,
-  ESTADOS.P_STOCK,
-  ESTADOS.P_RETIRO,
-  ESTADOS.SHIPPING,
-  ESTADOS.CURRIER,
-  ESTADOS.EN_RUTA,
-  ESTADOS.ENTREGADO
-];
+const ESTADOS_FLUJO = [ESTADOS.EN_PROCESO, ESTADOS.SHIPPING, ESTADOS.EN_RUTA, ESTADOS.ENTREGADO];
 
 const ESTADOS_VALIDOS = [...ESTADOS_FLUJO, 'NULA', 'REFACTURADO', 'RECHAZADO'];
 
@@ -255,18 +239,26 @@ function fechaPromesaEfectiva(r) {
     r.fecha_compromiso || calcFechaCompromiso(r.fecha_aprobacion, r.fecha_aprobacion_real);
   if (!comp) return null;
   const aprob = fechaAprobEfectiva(r);
-  if (!aprob) return { fecha: comp, diasAtraso: 0 };
+  const pausaDias = Math.ceil(Math.max(0, Number(r.shipping_pausa_total_segundos) || 0) / 86400);
+  const ajustarPausa = (fecha) =>
+    pausaDias > 0 ? sumaDias(String(fecha).slice(0, 10), pausaDias) : String(fecha).slice(0, 10);
+  if (!aprob) return { fecha: ajustarPausa(comp), diasAtraso: 0, pausaDias };
   const compMs = new Date(comp).getTime();
   const aprobMs = new Date(aprob).getTime();
   if (aprobMs > compMs) {
     const diasAtraso = Math.round((aprobMs - compMs) / (1000 * 60 * 60 * 24));
-    return { fecha: aprob.split('T')[0], diasAtraso };
+    return { fecha: ajustarPausa(aprob.split('T')[0]), diasAtraso, pausaDias };
   }
-  return { fecha: comp, diasAtraso: 0 };
+  return { fecha: ajustarPausa(comp), diasAtraso: 0, pausaDias };
+}
+
+function esPausaSlaActiva(r) {
+  return Boolean(r?.shipping_subestado) && r?.shipping_pausa_elegible_sla === true;
 }
 
 function evaluaFillRate(r, hoyMs) {
   if (ESTADOS_DESCARTADOS.includes(r.estado || '')) return null;
+  if (esPausaSlaActiva(r)) return null;
   const promesa = fechaPromesaEfectiva(r);
   if (!promesa) return null;
   const comp = new Date(promesa.fecha + 'T23:59:59').getTime();
@@ -317,7 +309,7 @@ function clasificarIncidencia(texto, observaciones = '') {
 }
 
 const DASHBOARD_COLUMNS =
-  'nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente,reabierta,motivo_reapertura,fecha_reapertura';
+  'nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente,reabierta,motivo_reapertura,fecha_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_motivo,shipping_pausa_total_segundos,shipping_pausa_elegible_sla,incidencia_area,incidencia_origen';
 
 async function fetchAll(columns, dateFrom, dateTo) {
   const allRows = [];
@@ -359,13 +351,13 @@ async function fetchAll(columns, dateFrom, dateTo) {
 const ESTADOS_DB_ACTIVOS = [
   ESTADOS.EN_PROCESO,
   'EN PROCESO',
-  ESTADOS.P_VENDEDOR,
-  ESTADOS.P_STOCK,
-  ESTADOS.P_RETIRO,
+  'P / VENDEDOR',
+  'P / STOCK',
+  'P / RETIRO',
   ESTADOS.SHIPPING,
   'SHIPPING',
   'EN SHIPPING',
-  ESTADOS.CURRIER,
+  'Currier',
   'CURRIER',
   ESTADOS.EN_RUTA,
   'EN RUTA'
@@ -433,13 +425,13 @@ async function fetchActivas(columns) {
 const ESTADOS_DB_LISTA = [
   ESTADOS.EN_PROCESO,
   'EN PROCESO',
-  ESTADOS.P_VENDEDOR,
-  ESTADOS.P_STOCK,
-  ESTADOS.P_RETIRO,
+  'P / VENDEDOR',
+  'P / STOCK',
+  'P / RETIRO',
   ESTADOS.SHIPPING,
   'SHIPPING',
   'EN SHIPPING',
-  ESTADOS.CURRIER,
+  'Currier',
   'CURRIER',
   ESTADOS.EN_RUTA,
   'EN RUTA'
@@ -662,7 +654,9 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         const refacturados = estadoCounts['REFACTURADO'] || 0;
         const rechazados = estadoCounts['RECHAZADO'] || 0;
         // KPI "NVs Activas": snapshot en vivo (TV), NO depende del rango.
-        const activas = activasSnapshot.length;
+        // Las pausas SLA vigentes se muestran en su KPI dedicado, pero no
+        // contaminan la carga activa ni los indicadores contractuales.
+        const activas = activasSnapshot.filter((row) => !esPausaSlaActiva(row)).length;
 
         const despachosReales = total - nulas - refacturados - rechazados;
         const tasaEntrega =
@@ -738,6 +732,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         let nvCumple = 0;
         let nvNoCumple = 0;
         nvsSemana.forEach((r) => {
+          if (esPausaSlaActiva(r)) return;
           const promesa = fechaPromesaEfectiva(r);
           if (!promesa) return;
           const compromisoMs = new Date(promesa.fecha + 'T23:59:59').getTime();
@@ -759,9 +754,10 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           cumple: nvCumple,
           noCumple: nvNoCumple,
           evaluables: nvEvaluables,
-          totalSemana: nvsSemana.length
+          totalSemana: nvsSemana.filter((row) => !esPausaSlaActiva(row)).length
         };
 
+        const shippingPausadas = activasM.filter((r) => Boolean(r.shipping_subestado));
         const kpis = {
           total,
           countNvPtm,
@@ -776,7 +772,16 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           pctAtiempo,
           incidencias,
           fillRateShipping,
-          cumplimientoNV
+          cumplimientoNV,
+          shippingPausadas: {
+            total: shippingPausadas.length,
+            excluidasSla: shippingPausadas.filter(esPausaSlaActiva).length,
+            rezagadaComercial: shippingPausadas.filter(
+              (r) => r.shipping_subestado === 'REZAGADA_COMERCIAL'
+            ).length,
+            retiroCliente: shippingPausadas.filter((r) => r.shipping_subestado === 'RETIRO_CLIENTE')
+              .length
+          }
         };
 
         // === Estado Table ===
@@ -956,6 +961,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         // Riesgo sobre el backlog ACTIVO EN VIVO (activasM), no sobre las filas del
         // rango: una NV activa vencida importa aunque se haya aprobado antes de la ventana.
         activasM.forEach((r) => {
+          if (esPausaSlaActiva(r)) return;
           if (!estadosActivos.includes(r.estado || '')) return;
           const promesa = fechaPromesaEfectiva(r);
           if (!promesa) return;
@@ -1246,11 +1252,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         // === Alertas Operacionales (NVs estancadas por estado) ===
         const UMBRAL_DIAS = {
           [ESTADOS.EN_PROCESO]: 3,
-          [ESTADOS.P_VENDEDOR]: 3,
-          [ESTADOS.P_STOCK]: 3,
-          [ESTADOS.P_RETIRO]: 3,
           [ESTADOS.SHIPPING]: 2,
-          [ESTADOS.CURRIER]: 2,
           [ESTADOS.EN_RUTA]: 3,
           [ESTADOS.ENTREGADO]: 5
         };
@@ -1262,6 +1264,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           activasRows.forEach((r) => {
             if (r.estado !== est) return;
             if (r._consolidado) return; // consolidados no se miden por estancamiento de 48hrs
+            if (esPausaSlaActiva(r)) return;
             const fechaRef = r.fecha_estado || r.fecha_registro_nv;
             if (!fechaRef) return;
             const dias = (hoyAlertMs - new Date(fechaRef).getTime()) / (1000 * 60 * 60 * 24);
@@ -1285,17 +1288,11 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         const FUNNEL_ETAPAS = [
           {
             etapa: ESTADOS.EN_PROCESO,
-            incluye: [
-              ...ESTADOS_PRE_SHIPPING,
-              ESTADOS.SHIPPING,
-              ESTADOS.CURRIER,
-              ESTADOS.EN_RUTA,
-              ESTADOS.ENTREGADO
-            ]
+            incluye: [...ESTADOS_PRE_SHIPPING, ESTADOS.SHIPPING, ESTADOS.EN_RUTA, ESTADOS.ENTREGADO]
           },
           {
             etapa: ESTADOS.SHIPPING,
-            incluye: [ESTADOS.SHIPPING, ESTADOS.CURRIER, ESTADOS.EN_RUTA, ESTADOS.ENTREGADO]
+            incluye: [ESTADOS.SHIPPING, ESTADOS.EN_RUTA, ESTADOS.ENTREGADO]
           },
           { etapa: ESTADOS.EN_RUTA, incluye: [ESTADOS.EN_RUTA, ESTADOS.ENTREGADO] },
           { etapa: ESTADOS.ENTREGADO, incluye: [ESTADOS.ENTREGADO] }
@@ -1436,7 +1433,7 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
 
       const run = async () => {
         const cols =
-          'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, incidencia, estado_incidencia, observaciones_incidencia, dias_incidencia, fecha_aprobacion, fecha_aprobacion_real';
+          'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, incidencia, estado_incidencia, observaciones_incidencia, dias_incidencia, fecha_aprobacion, fecha_aprobacion_real, incidencia_area, incidencia_origen, incidencia_reportada_at';
         if (!supabase) return [];
         const allRows = [];
         let from = 0;
@@ -1471,7 +1468,8 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
             .map((r) => ({
               nv:
                 (r.nv_ptm && String(r.nv_ptm)) || r.nv_orange || r.nv_farmapack || r.varios || '—',
-              fecha: r.fecha_aprobacion_real || r.fecha_aprobacion || null,
+              fecha:
+                r.incidencia_reportada_at || r.fecha_aprobacion_real || r.fecha_aprobacion || null,
               cliente: r.cliente || '—',
               vendedor: r.vendedor || '—',
               transportista: r.transportista || '—',
@@ -1479,6 +1477,9 @@ export async function getIncidenciasActivas(dateFrom, dateTo) {
               incidencia: r.incidencia || '—',
               estado_incidencia: r.estado_incidencia || '—',
               observaciones: r.observaciones_incidencia || '—',
+              area: r.incidencia_area || 'OPERACIONES',
+              origen: r.incidencia_origen || 'OPERACION',
+              reportada_at: r.incidencia_reportada_at || null,
               dias: r.dias_incidencia || 0
             }))
             .sort((a, b) => b.dias - a.dias)
@@ -1504,7 +1505,7 @@ export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
     'get_operaciones_por_estado',
     async () => {
       const cols =
-        'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura';
+        'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura, shipping_subestado, shipping_pausa_desde, shipping_pausa_motivo, shipping_pausa_total_segundos, shipping_pausa_elegible_sla';
       const esActivasKpi = estado === 'ACTIVAS';
       const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
       const dataRaw = esEstadoActivo
@@ -1637,7 +1638,7 @@ export async function fetchTendenciaHistorica(meses = 6) {
   const desdeStr = desde.toISOString().split('T')[0];
 
   const TENDENCIA_COLS =
-    'estado,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_entregado,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,nv_ptm,nv_orange,nv_farmapack,varios';
+    'estado,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_entregado,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,nv_ptm,nv_orange,nv_farmapack,varios,shipping_subestado,shipping_pausa_total_segundos,shipping_pausa_elegible_sla';
   const rows = await fetchAll(TENDENCIA_COLS, desdeStr);
   rows.forEach((r) => {
     r.estado = normalizaEstado(r.estado);
@@ -1849,7 +1850,7 @@ export async function fetchTVEstados() {
 
       const run = async () => {
         const rows = await fetchActivas(
-          'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_compromiso, fecha_estado, fecha_despacho, fecha_entregado, fecha_aprobacion, fecha_aprobacion_real, urgente'
+          'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_compromiso, fecha_estado, fecha_despacho, fecha_entregado, fecha_aprobacion, fecha_aprobacion_real, urgente, shipping_subestado, shipping_pausa_desde, shipping_pausa_motivo, shipping_pausa_elegible_sla'
         );
         const hoyMs = Date.now();
         const msPerDay = 1000 * 60 * 60 * 24;
@@ -1896,6 +1897,10 @@ export async function fetchTVEstados() {
             fecha_aprob_efectiva: fechaAprobEfectivaVal,
             diasEnEstado: diasDesde(fechaEst),
             diasDesdeAprobacion: diasDesde(fechaAprobEfectivaVal),
+            shippingSubestado: r.shipping_subestado || '',
+            shippingPausaDesde: r.shipping_pausa_desde || '',
+            shippingPausaMotivo: r.shipping_pausa_motivo || '',
+            shippingPausaElegibleSla: r.shipping_pausa_elegible_sla === true,
             urgente: esUrgente
           };
           if (!grupos[est]) grupos[est] = [];

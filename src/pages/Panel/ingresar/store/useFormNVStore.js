@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { ESTADOS } from "../estados";
-import { calcFechaCompromiso } from "../helpers";
+import { create } from 'zustand';
+import { ESTADOS } from '../estados';
+import { calcFechaCompromiso } from '../helpers';
 
 // ============================================================
 //  Estado global: formulario "Ingresar NV" de /ingresar
@@ -13,47 +13,49 @@ import { calcFechaCompromiso } from "../helpers";
 
 // Estado en blanco de los campos del formulario (sin acciones).
 const BLANK = {
-  nv: "",
+  nv: '',
   lookupResult: null,
   lookupLoading: false,
-  mode: "idle",
+  mode: 'idle',
   orangeAssociationRequired: false,
-  orangeAssociationNv: "",
+  orangeAssociationNv: '',
   orangeAssociationData: null,
   orangeAssociationLoading: false,
-  orangeAssociationError: "",
+  orangeAssociationError: '',
   estado: ESTADOS.EN_PROCESO,
-  tipoDespacho: "",
-  transportista: "",
-  fechaCompromiso: "",
-  fechaAprobacion: "",
-  fechaAprobacionReal: "",
-  fechaFacturacion: "",
-  fechaDespacho: "",
-  factura: "",
-  guia: "",
-  bultos: "",
-  valorFactura: "",
-  numeroEnvio: "",
+  shippingSubestado: '',
+  shippingPausaMotivo: '',
+  tipoDespacho: '',
+  transportista: '',
+  fechaCompromiso: '',
+  fechaAprobacion: '',
+  fechaAprobacionReal: '',
+  fechaFacturacion: '',
+  fechaDespacho: '',
+  factura: '',
+  guia: '',
+  bultos: '',
+  valorFactura: '',
+  numeroEnvio: '',
   urgente: false,
-  variosTipo: "",
-  variosCliente: "",
-  variosVendedor: "",
-  variosDivision: "",
-  variosCcosto: "",
-  incidencia: "",
-  estadoIncidencia: "ABIERTA",
-  observacionesIncidencia: "",
+  variosTipo: '',
+  variosCliente: '',
+  variosVendedor: '',
+  variosDivision: '',
+  variosCcosto: '',
+  incidencia: '',
+  estadoIncidencia: 'ABIERTA',
+  observacionesIncidencia: '',
   submitting: false,
   submitResult: null,
   errors: [],
   autoFilledDates: new Set(),
   estadoOpen: false,
-  estadoQuery: "",
+  estadoQuery: ''
 };
 
 export const useFormNVStore = create((set) => ({
-  canal: "ptm",
+  canal: 'ptm',
   ...BLANK,
 
   patch: (p) => set(p),
@@ -77,78 +79,84 @@ export const useFormNVStore = create((set) => ({
   reset: () =>
     set({
       ...BLANK,
-      variosTipo: "",
-      variosCliente: "",
-      variosVendedor: "",
-      variosDivision: "",
-      variosCcosto: "",
+      variosTipo: '',
+      variosCliente: '',
+      variosVendedor: '',
+      variosDivision: '',
+      variosCcosto: ''
     }),
 
   applyFound: (data) =>
     set(() => {
-      const fc = data.fecha_compromiso || calcFechaCompromiso(data.fecha_aprobacion, data.fecha_aprobacion_real);
+      const fc =
+        data.fecha_compromiso ||
+        calcFechaCompromiso(data.fecha_aprobacion, data.fecha_aprobacion_real);
       const wasAuto = !data.fecha_compromiso && !!fc;
       return {
-        mode: "update",
+        mode: 'update',
         estado: data.estado || ESTADOS.EN_PROCESO,
-        tipoDespacho: data.tipo_despacho || "",
-        transportista: data.transportista || "",
+        shippingSubestado: data.shipping_subestado || '',
+        shippingPausaMotivo: data.shipping_pausa_motivo || '',
+        tipoDespacho: data.tipo_despacho || '',
+        transportista: data.transportista || '',
         fechaCompromiso: fc,
-        fechaAprobacion: data.fecha_aprobacion || "",
-        fechaAprobacionReal: data.fecha_aprobacion_real || "",
-        fechaFacturacion: data.fecha_facturacion || "",
-        fechaDespacho: data.fecha_despacho || "",
-        factura: data.factura || "",
-        guia: data.guia || "",
-        bultos: data.bultos ? String(data.bultos) : "",
-        valorFactura: data.valor_factura ? String(data.valor_factura) : "",
-        numeroEnvio: data.numero_envio || "",
-        urgente: String(data.urgente) === "true" || data.urgente === true,
-        incidencia: data.incidencia || "",
-        estadoIncidencia: data.estado_incidencia || "ABIERTA",
-        observacionesIncidencia: data.observaciones_incidencia || "",
-        orangeAssociationNv: data.nv_orange || "",
-        autoFilledDates: wasAuto ? new Set(["fechaCompromiso"]) : new Set(),
+        fechaAprobacion: data.fecha_aprobacion || '',
+        fechaAprobacionReal: data.fecha_aprobacion_real || '',
+        fechaFacturacion: data.fecha_facturacion || '',
+        fechaDespacho: data.fecha_despacho || '',
+        factura: data.factura || '',
+        guia: data.guia || '',
+        bultos: data.bultos ? String(data.bultos) : '',
+        valorFactura: data.valor_factura ? String(data.valor_factura) : '',
+        numeroEnvio: data.numero_envio || '',
+        urgente: String(data.urgente) === 'true' || data.urgente === true,
+        incidencia: data.incidencia || '',
+        estadoIncidencia: data.estado_incidencia || 'ABIERTA',
+        observacionesIncidencia: data.observaciones_incidencia || '',
+        orangeAssociationNv: data.nv_orange || '',
+        autoFilledDates: wasAuto ? new Set(['fechaCompromiso']) : new Set()
       };
     }),
 
   applyNew: (autoFill) =>
     set(() => {
-      const autoFC = (autoFill && autoFill.fecha_compromiso) || "";
+      const autoFC = (autoFill && autoFill.fecha_compromiso) || '';
       return {
-        mode: "create",
+        mode: 'create',
         estado: ESTADOS.EN_PROCESO,
-        tipoDespacho: "",
-        transportista: "",
+        shippingSubestado: '',
+        shippingPausaMotivo: '',
+        tipoDespacho: '',
+        transportista: '',
         fechaCompromiso: autoFC,
-        fechaAprobacion: "",
-        fechaAprobacionReal: "",
-        fechaFacturacion: "",
-        fechaDespacho: "",
-        factura: "",
-        guia: "",
-        bultos: "",
-        valorFactura: "",
-        numeroEnvio: "",
+        fechaAprobacion: '',
+        fechaAprobacionReal: '',
+        fechaFacturacion: '',
+        fechaDespacho: '',
+        factura: '',
+        guia: '',
+        bultos: '',
+        valorFactura: '',
+        numeroEnvio: '',
         urgente: false,
-        incidencia: "",
-        estadoIncidencia: "ABIERTA",
-        observacionesIncidencia: "",
-        orangeAssociationNv: "",
+        incidencia: '',
+        estadoIncidencia: 'ABIERTA',
+        observacionesIncidencia: '',
+        orangeAssociationNv: '',
         orangeAssociationData: null,
-        orangeAssociationError: "",
+        orangeAssociationError: '',
         orangeAssociationLoading: false,
-        autoFilledDates: autoFC ? new Set(["fechaCompromiso"]) : new Set(),
+        autoFilledDates: autoFC ? new Set(['fechaCompromiso']) : new Set()
       };
     }),
 
   recalcCompromiso: () =>
     set((s) => {
-      if (s.mode === "idle") return s;
+      if (s.mode === 'idle') return s;
       const fc = calcFechaCompromiso(s.fechaAprobacion, s.fechaAprobacionReal);
       if (!fc || fc === s.fechaCompromiso) return s;
       const next = new Set(s.autoFilledDates);
-      next.add("fechaCompromiso");
+      next.add('fechaCompromiso');
       return { fechaCompromiso: fc, autoFilledDates: next };
-    }),
+    })
 }));

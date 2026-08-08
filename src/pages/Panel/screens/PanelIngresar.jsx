@@ -21,7 +21,6 @@ import { useAuth } from '../../../context/AuthContext';
 import PanelModal from '../PanelModal';
 import {
   CANALES,
-  ESTADOS_SELECCIONABLES,
   ESTADOS_ACTIVOS,
   TIPOS_DESPACHO,
   ACCENT,
@@ -38,14 +37,18 @@ import {
   lookupOrangeAssociation,
   INCIDENCIAS_NV,
   ESTADOS_INCIDENCIA,
+  SHIPPING_SUBESTADOS,
   buscarOperacionesUltraLocal,
   fusionarResultadosBusqueda,
   listarSolicitudesReapertura,
   solicitarReapertura,
   resolverReapertura,
+  gestionarPausaShipping,
+  reportarIncidenciaArmado,
   puedeEditarOperacion,
   puedeCambiarEstadoOperacion
 } from '../ingresar/ingresarService';
+import { estadosDisponibles, siguienteEstadoPermitido } from '../ingresar/estados';
 import { fetchVendedores } from '../config/configService';
 import { exportToExcel } from '../../../lib/exportExcel';
 import FormNV from '../ingresar/components/FormNV';
@@ -56,7 +59,7 @@ import { useFormNVStore } from '../ingresar/store/useFormNVStore';
 import '../ingresar/components/PillNavCanal.css';
 
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
-const ESTADOS_DUPLICADO = ['Entregado', 'En Proceso', 'Shipping', 'Currier', 'En Ruta'];
+const ESTADOS_DUPLICADO = ['Entregado', 'En Proceso', 'Shipping', 'En Ruta'];
 const INITIAL_VISIBLE_ROWS = 60;
 const VISIBLE_ROWS_STEP = 80;
 
@@ -202,6 +205,11 @@ function DetalleDrawer({
   const [resolveNote, setResolveNote] = useState('');
   const [requestingReopen, setRequestingReopen] = useState(false);
   const [resolvingReopen, setResolvingReopen] = useState(false);
+  const [pauseChoice, setPauseChoice] = useState('');
+  const [pauseReason, setPauseReason] = useState('');
+  const [savingPause, setSavingPause] = useState(false);
+  const [warehouseIncident, setWarehouseIncident] = useState('');
+  const [reportingWarehouseIncident, setReportingWarehouseIncident] = useState(false);
 
   const snapshotFromItem = useMemo(
     () => ({
@@ -237,7 +245,11 @@ function DetalleDrawer({
       observaciones_incidencia: '',
       reabierta: item?.reabierta === true,
       fecha_reapertura: '',
-      motivo_reapertura: item?.motivoReapertura || ''
+      motivo_reapertura: item?.motivoReapertura || '',
+      shipping_subestado: item?.shippingSubestado || '',
+      shipping_pausa_desde: item?.shippingPausaDesde || '',
+      shipping_pausa_motivo: item?.shippingPausaMotivo || '',
+      shipping_pausa_elegible_sla: item?.shippingPausaElegibleSla === true
     }),
     [item]
   );
@@ -356,6 +368,69 @@ function DetalleDrawer({
     ESTADOS_ACTIVOS.includes(detailVal('estado')) || !!detailVal('incidencia');
   const solicitudPendiente = solicitudes.find((req) => req.estado === 'PENDIENTE') || null;
   const isLocked = data?.estado === 'Entregado';
+  const estadosDetalle = estadosDisponibles(data?.estado, {
+    pausada: Boolean(data?.shipping_subestado)
+  });
+  const siguienteDetalle = siguienteEstadoPermitido(data?.estado);
+
+  const onGestionarPausa = async (subestado) => {
+    const motivo = String(pauseReason || '').trim();
+    if (subestado && !motivo) {
+      setResult({ success: false, message: 'Debes indicar el motivo de la pausa Shipping.' });
+      return;
+    }
+    setSavingPause(true);
+    const res = await gestionarPausaShipping(item.id, subestado, motivo);
+    setSavingPause(false);
+    if (!res.ok) {
+      setResult({
+        success: false,
+        message: res.message || res.error || 'No se pudo actualizar Shipping.'
+      });
+      return;
+    }
+    setData((current) => ({
+      ...current,
+      shipping_subestado: res.shipping_subestado || '',
+      shipping_pausa_desde: res.shipping_pausa_desde || '',
+      shipping_pausa_motivo: subestado ? motivo : current?.shipping_pausa_motivo || motivo,
+      shipping_pausa_elegible_sla: res.shipping_pausa_elegible_sla === true,
+      shipping_pausa_total_segundos:
+        res.shipping_pausa_total_segundos ?? current?.shipping_pausa_total_segundos
+    }));
+    setPauseChoice('');
+    setPauseReason('');
+    setResult({ success: true, message: res.message });
+    onSaved?.({ ...item, estado: 'Shipping', shippingSubestado: res.shipping_subestado || '' });
+  };
+
+  const onReportarIncidenciaBodega = async () => {
+    const observacion = String(warehouseIncident || '').trim();
+    if (!observacion) {
+      setResult({ success: false, message: 'Describe el problema detectado en el armado.' });
+      return;
+    }
+    setReportingWarehouseIncident(true);
+    const res = await reportarIncidenciaArmado(item.id, observacion);
+    setReportingWarehouseIncident(false);
+    if (!res.ok) {
+      setResult({
+        success: false,
+        message: res.message || res.error || 'No se pudo reportar la incidencia.'
+      });
+      return;
+    }
+    setData((current) => ({
+      ...current,
+      incidencia: 'PROBLEMA DE ARMADO',
+      estado_incidencia: 'ABIERTA',
+      observaciones_incidencia: observacion,
+      incidencia_area: 'BODEGA',
+      incidencia_origen: 'POST_ENTREGA'
+    }));
+    setWarehouseIncident('');
+    setResult({ success: true, message: res.message });
+  };
 
   const onSolicitarReapertura = async () => {
     const motivo = String(reopenReason || '').trim();
@@ -533,6 +608,51 @@ function DetalleDrawer({
                     </div>
                   </section>
 
+                  <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                        <AlertTriangle size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-800">
+                          Problema de armado · Bodega
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-600">
+                          Registra un error detectado después de la entrega sin reabrir ni modificar
+                          el estado de la N.V.
+                        </p>
+                      </div>
+                    </div>
+                    {data?.incidencia_origen === 'POST_ENTREGA' && (
+                      <div className="mt-3 rounded-xl border border-amber-200 bg-white px-3 py-3 text-xs text-slate-700">
+                        <div className="font-bold text-amber-800">
+                          Incidencia abierta asignada a Bodega
+                        </div>
+                        <div className="mt-1">{data.observaciones_incidencia}</div>
+                      </div>
+                    )}
+                    {puedeEscribir && (
+                      <div className="mt-3 space-y-2">
+                        <textarea
+                          value={warehouseIncident}
+                          onChange={(e) => setWarehouseIncident(e.target.value)}
+                          className="field-input min-h-[84px] resize-y"
+                          placeholder="Describe qué producto se armó mal y cómo fue detectado..."
+                        />
+                        <button
+                          type="button"
+                          onClick={onReportarIncidenciaBodega}
+                          disabled={reportingWarehouseIncident}
+                          className="w-full rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+                        >
+                          {reportingWarehouseIncident
+                            ? 'Reportando...'
+                            : 'Reportar incidencia a Bodega'}
+                        </button>
+                      </div>
+                    )}
+                  </section>
+
                   <section>
                     <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
                       Solicitud de reapertura
@@ -633,7 +753,7 @@ function DetalleDrawer({
                     <label className="field-label">Estado</label>
                     <div className="mb-3">
                       <PillNavEstado
-                        items={ESTADOS_SELECCIONABLES.map((c) => ({
+                        items={estadosDetalle.map((c) => ({
                           value: c,
                           label: c,
                           color: colorFor(c)
@@ -642,6 +762,81 @@ function DetalleDrawer({
                         onSelect={(c) => setDetailField('estado', c)}
                       />
                     </div>
+                    <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs text-slate-600">
+                      {data?.shipping_subestado
+                        ? 'Esta N.V. está pausada en Shipping. Reactívala antes de avanzar.'
+                        : siguienteDetalle
+                          ? `Secuencia obligatoria: desde ${data?.estado} solo se permite avanzar a ${siguienteDetalle}.`
+                          : 'Estado final bloqueado. Usa reapertura o incidencia post-entrega según corresponda.'}
+                    </div>
+
+                    {data?.estado === 'Shipping' && (
+                      <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
+                          Control de Shipping
+                        </div>
+                        {data.shipping_subestado ? (
+                          <div className="mt-3 space-y-3">
+                            <div className="rounded-xl border border-violet-200 bg-white px-3 py-3">
+                              <div className="text-sm font-bold text-slate-800">
+                                {SHIPPING_SUBESTADOS.find(
+                                  (item) => item.value === data.shipping_subestado
+                                )?.label || data.shipping_subestado}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500">
+                                {data.shipping_pausa_motivo || 'Sin detalle.'}
+                              </div>
+                              <div className="mt-2 text-[11px] font-semibold text-violet-700">
+                                {data.shipping_pausa_elegible_sla
+                                  ? 'Pausa válida: temporalmente fuera de SLA/OTIF.'
+                                  : 'El atraso previo se mantiene en los indicadores.'}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onGestionarPausa(null)}
+                              disabled={savingPause}
+                              className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+                            >
+                              {savingPause ? 'Reactivando...' : 'Reactivar N.V. para despacho'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              {SHIPPING_SUBESTADOS.map((option) => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => setPauseChoice(option.value)}
+                                  className={`rounded-xl border px-3 py-3 text-xs font-bold ${pauseChoice === option.value ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                            {pauseChoice && (
+                              <>
+                                <textarea
+                                  value={pauseReason}
+                                  onChange={(e) => setPauseReason(e.target.value)}
+                                  className="field-input min-h-[76px] resize-y"
+                                  placeholder="Motivo obligatorio y responsable de resolverlo..."
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => onGestionarPausa(pauseChoice)}
+                                  disabled={savingPause}
+                                  className="w-full rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+                                >
+                                  {savingPause ? 'Guardando...' : 'Pausar Shipping'}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="field-label">Tipo Despacho</label>
@@ -1017,6 +1212,13 @@ const NvRow = memo(function NvRow({ i, onOpen }) {
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: colorFor(i.estado) }} />
           <span className="text-gray-600">{i.estado}</span>
         </span>
+        {i.shippingSubestado && (
+          <span className="inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-bold text-violet-700">
+            ⏸{' '}
+            {SHIPPING_SUBESTADOS.find((item) => item.value === i.shippingSubestado)?.label ||
+              i.shippingSubestado}
+          </span>
+        )}
       </span>
       <svg
         className="w-4 h-4 text-gray-300 shrink-0"
@@ -1744,6 +1946,29 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
       st.patch({ submitResult: { success: false, message: 'Falta el Estado' } });
       return;
     }
+    const originalShippingSubestado = currentLookup?.data?.shipping_subestado || '';
+    const shippingPauseChanged =
+      st.mode === 'update' &&
+      String(st.shippingSubestado || '') !== String(originalShippingSubestado);
+    if (
+      shippingPauseChanged &&
+      st.shippingSubestado &&
+      !String(st.shippingPausaMotivo || '').trim()
+    ) {
+      st.patch({
+        submitResult: { success: false, message: 'Debes indicar el motivo de la pausa Shipping.' }
+      });
+      return;
+    }
+    if (originalShippingSubestado && st.estado !== 'Shipping') {
+      st.patch({
+        submitResult: {
+          success: false,
+          message: 'Reactiva la N.V. en Shipping y guarda antes de avanzar a En Ruta.'
+        }
+      });
+      return;
+    }
     if (
       st.mode === 'update' &&
       currentLookup?.row &&
@@ -1832,6 +2057,24 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
     const res = await guardar(payload);
     useFormNVStore.getState().patch({ submitting: false });
     if (res.ok) {
+      if (shippingPauseChanged && payload.id) {
+        const pauseResult = await gestionarPausaShipping(
+          payload.id,
+          st.shippingSubestado || null,
+          st.shippingPausaMotivo || ''
+        );
+        if (!pauseResult.ok) {
+          const pauseMessage =
+            pauseResult.message ||
+            pauseResult.error ||
+            'Los datos se guardaron, pero no se pudo actualizar la pausa Shipping.';
+          useFormNVStore.getState().patch({
+            submitResult: { success: false, message: pauseMessage }
+          });
+          setToastMsg({ type: 'error', message: pauseMessage });
+          return;
+        }
+      }
       setExistingModal(null);
       setReopenRequests([]);
       setToastMsg({

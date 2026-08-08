@@ -13,22 +13,14 @@ const PAUSE_AFTER_CLICK_MS = 15_000;
 
 const COLORES = {
   [ESTADOS.EN_PROCESO]: '#f59e0b',
-  [ESTADOS.P_VENDEDOR]: '#d97706',
-  [ESTADOS.P_STOCK]: '#b45309',
-  [ESTADOS.P_RETIRO]: '#92400e',
   [ESTADOS.SHIPPING]: '#8b5cf6',
-  [ESTADOS.CURRIER]: '#7c3aed',
   [ESTADOS.EN_RUTA]: '#06b6d4',
   [ESTADOS.ENTREGADO]: '#22c55e'
 };
 
 const ICONOS = {
   [ESTADOS.EN_PROCESO]: '⚙',
-  [ESTADOS.P_VENDEDOR]: '👤',
-  [ESTADOS.P_STOCK]: '📦',
-  [ESTADOS.P_RETIRO]: '🔄',
   [ESTADOS.SHIPPING]: '📋',
-  [ESTADOS.CURRIER]: '🚛',
   [ESTADOS.EN_RUTA]: '🛣',
   [ESTADOS.ENTREGADO]: '✓'
 };
@@ -52,7 +44,7 @@ function NvCard({ n, estado }) {
   const color = COLORES[estado] || '#6b7280';
 
   const contextInfo = () => {
-    if (estado === ESTADOS.EN_RUTA || estado === ESTADOS.CURRIER) {
+    if (estado === ESTADOS.EN_RUTA) {
       return (
         <div className="flex items-center gap-1.5">
           <span className="text-cyan-400 text-xs font-bold">
@@ -74,10 +66,18 @@ function NvCard({ n, estado }) {
         </div>
       );
     }
-    if (estado === ESTADOS.SHIPPING || estado === ESTADOS.EN_PROCESO || estado.startsWith('P /')) {
+    if (estado === ESTADOS.SHIPPING || estado === ESTADOS.EN_PROCESO) {
       const aprobReal = !!n.fecha_aprobacion_real;
       return (
         <div className="flex flex-col items-end gap-1">
+          {estado === ESTADOS.SHIPPING && n.shippingSubestado && (
+            <span className="rounded bg-violet-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-300">
+              ⏸{' '}
+              {n.shippingSubestado === 'REZAGADA_COMERCIAL'
+                ? 'Rezagada comercial'
+                : 'Retiro cliente'}
+            </span>
+          )}
           <div className="flex items-center gap-1.5">
             <span className="text-gray-500 text-[9px] uppercase tracking-wide">
               {aprobReal ? 'Aprob. real' : 'Aprob.'}
@@ -444,13 +444,13 @@ export default function TVDashboard() {
                 <div className="flex items-center gap-3">
                   {sel !== 'URGENTES' && (
                     <span className="text-gray-500 text-xs">
-                      {sel === ESTADOS.EN_RUTA || sel === ESTADOS.CURRIER
+                      {sel === ESTADOS.EN_RUTA
                         ? 'Destacado: transportista'
                         : sel === ESTADOS.ENTREGADO
                           ? 'Destacado: fecha entrega'
                           : sel === ESTADOS.SHIPPING
                             ? 'Días desde aprobación'
-                            : sel === ESTADOS.EN_PROCESO || sel?.startsWith('P /')
+                            : sel === ESTADOS.EN_PROCESO
                               ? 'Días desde aprobación'
                               : ''}
                     </span>

@@ -1,20 +1,20 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 import { fmtFechaCL } from '../dashHelpers';
 
-const fmtFecha = (f) => fmtFechaCL(f, "—");
+const fmtFecha = (f) => fmtFechaCL(f, '—');
 
 export default function IncidenciasModal({ open, data, loading, onClose }) {
   useEffect(() => {
     function onKey(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     }
     if (open) {
-      document.addEventListener("keydown", onKey);
-      document.body.style.overflow = "hidden";
+      document.addEventListener('keydown', onKey);
+      document.body.style.overflow = 'hidden';
     }
     return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
     };
   }, [open, onClose]);
 
@@ -32,11 +32,9 @@ export default function IncidenciasModal({ open, data, loading, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div>
-            <h3 className="text-base font-bold text-gray-800">
-              Incidencias Activas
-            </h3>
+            <h3 className="text-base font-bold text-gray-800">Incidencias Activas</h3>
             <p className="text-xs text-gray-400">
-              {loading ? "Cargando..." : `${data.length} incidencia(s) no resuelta(s)`}
+              {loading ? 'Cargando...' : `${data.length} incidencia(s) no resuelta(s)`}
             </p>
           </div>
           <button
@@ -65,6 +63,7 @@ export default function IncidenciasModal({ open, data, loading, onClose }) {
                   <th className="px-3 py-2">Cliente</th>
                   <th className="px-3 py-2">Incidencia</th>
                   <th className="px-3 py-2">Estado Inc.</th>
+                  <th className="px-3 py-2">Área</th>
                   <th className="px-3 py-2">Días</th>
                   <th className="px-3 py-2">Vendedor</th>
                   <th className="px-3 py-2">Transportista</th>
@@ -74,7 +73,7 @@ export default function IncidenciasModal({ open, data, loading, onClose }) {
               <tbody>
                 {data.map((r, i) => (
                   <tr key={i} className="border-t border-gray-100 hover:bg-red-50">
-                    <td className="px-3 py-2 font-semibold" style={{ color: "#c62828" }}>
+                    <td className="px-3 py-2 font-semibold" style={{ color: '#c62828' }}>
                       {r.nv}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{fmtFecha(r.fecha)}</td>
@@ -85,7 +84,17 @@ export default function IncidenciasModal({ open, data, loading, onClose }) {
                         {r.estado_incidencia}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-center font-bold" style={{ color: r.dias > 5 ? "#c62828" : "#333" }}>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${r.area === 'BODEGA' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}
+                      >
+                        {r.area}
+                      </span>
+                    </td>
+                    <td
+                      className="px-3 py-2 text-center font-bold"
+                      style={{ color: r.dias > 5 ? '#c62828' : '#333' }}
+                    >
                       {r.dias}
                     </td>
                     <td className="px-3 py-2">{r.vendedor}</td>
