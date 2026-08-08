@@ -24,7 +24,10 @@ import {
   Scale,
   Camera,
   Boxes,
-  ImagePlus
+  ImagePlus,
+  Building2,
+  ClipboardCheck,
+  Hash
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -67,10 +70,14 @@ const ManualModal = ({ onClose, onCreated }) => {
   const [bultos, setBultos] = useState('');
   const [query, setQuery] = useState('');
   const [buscando, setBuscando] = useState(false);
+  const [busquedaRealizada, setBusquedaRealizada] = useState(false);
   const [cand, setCand] = useState([]);
   const [sel, setSel] = useState([]);
   const [panelInfo, setPanelInfo] = useState(null);
   const [buscandoNv, setBuscandoNv] = useState(false);
+  const [nvLookupError, setNvLookupError] = useState('');
+  const nvLookupIdRef = useRef(0);
+  const lastNvLookupRef = useRef('');
 
   // Comparte la fuente y la caché del formulario Ingresar N.V. para que
   // ambos módulos trabajen siempre con el mismo catálogo maestro activo.
@@ -102,31 +109,70 @@ const ManualModal = ({ onClose, onCreated }) => {
 
   // Trae los datos de la N.V desde el Panel Dashboard PTM y autollena el
   // formulario (cliente, guía, transportista, bultos) + tarjeta informativa.
-  const traerDelPanel = useCallback(async () => {
-    if (!nv.trim()) {
-      toast.error('Escribe primero el número de N.V.');
-      return;
-    }
-    setBuscandoNv(true);
-    try {
-      const info = await fetchNvPanel(nv);
-      if (!info) {
-        setPanelInfo(null);
-        toast.info(`La N.V ${nv.trim()} no está en el Panel PTM (puedes seguir a mano).`);
+  const traerDelPanel = useCallback(
+    async ({ silent = false, force = false } = {}) => {
+      if (!nv.trim()) {
+        if (!silent) toast.error('Escribe primero el número de N.V.');
         return;
       }
-      setPanelInfo(info);
-      if (info.cliente) setCliente(info.cliente);
-      if (info.guia) setGuia(info.guia);
-      if (info.transportista) setTransportista(info.transportista);
-      if (info.bultos) setBultos(info.bultos);
-      toast.success(`N.V ${info.nv} encontrada en el Panel: datos cargados`);
-    } catch (e) {
-      toast.error(`No se pudo consultar el Panel PTM: ${e.message}`);
-    } finally {
-      setBuscandoNv(false);
-    }
-  }, [nv]);
+      const nvActual = nv.trim();
+      if (!force && lastNvLookupRef.current === nvActual) return;
+      const requestId = ++nvLookupIdRef.current;
+      setBuscandoNv(true);
+      setNvLookupError('');
+      try {
+        const info = await fetchNvPanel(nvActual);
+        if (requestId !== nvLookupIdRef.current) return;
+        lastNvLookupRef.current = nvActual;
+        if (!info) {
+          setPanelInfo(null);
+          setCliente('');
+          setNvLookupError(`La N.V. ${nvActual} no existe en el Panel PTM.`);
+          if (!silent) toast.error(`La N.V. ${nvActual} no fue encontrada.`);
+          return;
+        }
+        setPanelInfo(info);
+        setCliente(info.cliente || '');
+        setGuia(info.guia || '');
+        setTransportista(info.transportista || '');
+        setBultos(info.bultos || '');
+        if (!info.cliente) setNvLookupError(`La N.V. ${info.nv} no tiene un cliente asociado.`);
+        if (!silent) toast.success(`N.V ${info.nv} encontrada: cliente cargado automáticamente`);
+      } catch (e) {
+        if (requestId !== nvLookupIdRef.current) return;
+        setPanelInfo(null);
+        setCliente('');
+        setNvLookupError(`No se pudo consultar la N.V.: ${e.message}`);
+        if (!silent) toast.error(`No se pudo consultar el Panel PTM: ${e.message}`);
+      } finally {
+        if (requestId === nvLookupIdRef.current) setBuscandoNv(false);
+      }
+    },
+    [nv]
+  );
+
+  // El cliente se obtiene automáticamente al terminar de escribir la N.V.; no
+  // existe entrada manual para evitar diferencias con la fuente oficial.
+  useEffect(() => {
+    if (nv.length < 3) return undefined;
+    const timer = window.setTimeout(() => traerDelPanel({ silent: true }), 650);
+    return () => window.clearTimeout(timer);
+  }, [nv, traerDelPanel]);
+
+  const cambiarNv = (value) => {
+    const normalizada = String(value || '').replace(/[^0-9]/g, '');
+    if (normalizada === nv) return;
+    nvLookupIdRef.current += 1;
+    lastNvLookupRef.current = '';
+    setNv(normalizada);
+    setPanelInfo(null);
+    setCliente('');
+    setGuia('');
+    setTransportista('');
+    setBultos('');
+    setNvLookupError('');
+    setBuscandoNv(false);
+  };
 
   // Para el despacho la ubicación no aporta: se agrupa el stock por SKU+partida
   // (sumando el disponible de todas las ubicaciones) y no se muestra ubicación.
@@ -148,6 +194,7 @@ const ManualModal = ({ onClose, onCreated }) => {
     } catch (e) {
       toast.error(`Error buscando stock: ${e.message}`);
     } finally {
+      setBusquedaRealizada(true);
       setBuscando(false);
     }
   }, [query]);
@@ -181,6 +228,10 @@ const ManualModal = ({ onClose, onCreated }) => {
       toast.error('Escribe la N.V.');
       return;
     }
+    if (!panelInfo || !cliente.trim()) {
+      toast.error('Primero valida la N.V. para cargar el cliente desde el Panel PTM.');
+      return;
+    }
     if (sel.length === 0) {
       toast.error('Agrega al menos un SKU');
       return;
@@ -204,301 +255,430 @@ const ManualModal = ({ onClose, onCreated }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-3"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-2 backdrop-blur-sm sm:p-6"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col"
+        className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_32px_90px_rgba(15,23,42,0.35)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h3 className="font-black text-slate-900 flex items-center gap-2">
-            <PencilLine size={18} className="text-emerald-600" /> Certificar salida (manual)
-          </h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400">
-            <X size={18} />
-          </button>
-        </div>
-        <div className="p-5 overflow-y-auto space-y-4">
-          {/* Datos del despacho a mano */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                N.V. *
-              </label>
-              <div className="flex gap-1.5 mt-1">
-                <input
-                  value={nv}
-                  onChange={(e) => setNv(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && traerDelPanel()}
-                  placeholder="Ej. 95811"
-                  className="w-full px-3 py-2 rounded-xl border border-emerald-300 text-sm font-bold outline-none focus:border-emerald-500"
-                />
-                <button
-                  onClick={traerDelPanel}
-                  disabled={buscandoNv || !nv.trim()}
-                  title="Traer datos de la N.V desde el Panel PTM"
-                  className="px-3 py-2 rounded-xl bg-indigo-600 text-white shrink-0 hover:bg-indigo-700 disabled:opacity-40"
-                >
-                  {buscandoNv ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Search size={15} />
-                  )}
-                </button>
+        <header className="relative overflow-hidden border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-indigo-50 px-5 py-5 sm:px-7">
+          <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-emerald-200/30 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200">
+                <ClipboardCheck size={23} />
               </div>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Guía
-              </label>
-              <input
-                value={guia}
-                onChange={(e) => setGuia(e.target.value)}
-                placeholder="Opcional"
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Bultos
-              </label>
-              <input
-                value={bultos}
-                onChange={(e) => setBultos(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="0"
-                inputMode="numeric"
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400"
-              />
-            </div>
-            <div className="col-span-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Cliente
-              </label>
-              <input
-                value={cliente}
-                onChange={(e) => setCliente(e.target.value)}
-                placeholder="Opcional"
-                title={cliente}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400"
-              />
-            </div>
-            <div className="col-span-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Transportista
-              </label>
-              <select
-                value={transportista}
-                onChange={(e) => setTransportista(e.target.value)}
-                disabled={cargandoTransportistas}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-emerald-400 disabled:bg-slate-50 disabled:text-slate-400"
-              >
-                <option value="">
-                  {cargandoTransportistas ? 'Cargando transportistas…' : '— Seleccionar —'}
-                </option>
-                {transportistasDisponibles.map((nombre) => (
-                  <option key={nombre} value={nombre}>
-                    {nombre}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-[10px] text-slate-400">
-                Catálogo compartido con Ingresar N.V.
-              </p>
-            </div>
-          </div>
-
-          {/* Info de la N.V traída del Panel Dashboard PTM */}
-          {panelInfo && (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 text-xs space-y-1.5">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="font-black text-indigo-700 uppercase tracking-widest text-[10px]">
-                  N.V {panelInfo.nv} · Panel Dashboard PTM
-                </span>
-                <span className="flex items-center gap-1.5">
-                  {panelInfo.urgente && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black">
-                      URGENTE
-                    </span>
-                  )}
-                  {panelInfo.estado && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-white text-indigo-700 border border-indigo-200 text-[10px] font-black">
-                      {panelInfo.estado}
-                    </span>
-                  )}
-                </span>
+              <div>
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                    Calidad · Hito 3
+                  </span>
+                </div>
+                <h3 className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+                  Nueva certificación de salida
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Valida la N.V., confirma el despacho y agrega sus productos.
+                </p>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-slate-600">
-                {panelInfo.vendedor && (
-                  <span>
-                    <b className="text-slate-400">Vendedor:</b> {panelInfo.vendedor}
-                  </span>
-                )}
-                {panelInfo.factura && (
-                  <span>
-                    <b className="text-slate-400">Factura:</b> {panelInfo.factura}
-                  </span>
-                )}
-                {panelInfo.numeroEnvio && (
-                  <span>
-                    <b className="text-slate-400">N° envío:</b> {panelInfo.numeroEnvio}
-                  </span>
-                )}
-                {panelInfo.tipoDespacho && (
-                  <span>
-                    <b className="text-slate-400">Tipo despacho:</b> {panelInfo.tipoDespacho}
-                  </span>
-                )}
-                {panelInfo.fechaCompromiso && (
-                  <span>
-                    <b className="text-slate-400">Compromiso:</b>{' '}
-                    {panelInfo.fechaCompromiso.split('-').reverse().join('-')}
-                  </span>
-                )}
-                {panelInfo.fechaDespacho && (
-                  <span>
-                    <b className="text-slate-400">Despacho:</b>{' '}
-                    {panelInfo.fechaDespacho.split('-').reverse().join('-')}
-                  </span>
-                )}
-                {panelInfo.division && (
-                  <span>
-                    <b className="text-slate-400">División:</b> {panelInfo.division}
-                  </span>
-                )}
-                {panelInfo.centroCosto && (
-                  <span>
-                    <b className="text-slate-400">Centro costo:</b> {panelInfo.centroCosto}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Buscador de SKUs en stock actual y catálogo histórico */}
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 focus-within:border-emerald-400">
-              <Search size={16} className="text-slate-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && buscar()}
-                placeholder="Buscar SKU actual o antiguo por código o descripción…"
-                className="flex-1 text-sm outline-none bg-transparent"
-              />
             </div>
             <button
-              onClick={buscar}
-              disabled={buscando}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center gap-2 disabled:opacity-50"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white/80 text-slate-400 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
             >
-              {buscando ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}{' '}
-              Buscar
+              <X size={18} />
             </button>
           </div>
-          {cand.length > 0 && (
-            <div className="border border-slate-100 rounded-xl divide-y divide-slate-50 max-h-44 overflow-y-auto">
-              {cand.map((c, i) => (
-                <button
-                  key={i}
-                  onClick={() => add(c)}
-                  className="w-full text-left px-3 py-2 hover:bg-emerald-50/50 flex items-center justify-between gap-2"
-                >
-                  <span className="min-w-0">
-                    <span className="font-bold text-sm text-slate-800 truncate block">
-                      {c.codigo_producto} · {c.producto}
-                    </span>
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
-                      <span>
-                        {c.partida || 's/partida'} · {c.disponible} {c.unidad_medida} disponibles
-                      </span>
-                      {c.es_historico && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold">
-                          SKU histórico
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  <Plus size={16} className="text-emerald-500 shrink-0" />
-                </button>
-              ))}
-            </div>
-          )}
+        </header>
 
-          {/* SKUs elegidos */}
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-              SKUs del despacho ({sel.length})
-            </p>
-            {sel.length === 0 ? (
-              <p className="text-xs text-slate-400">
-                Agrega los SKUs que se están despachando en esta N.V.
-              </p>
-            ) : (
-              <div className="space-y-1.5">
-                {sel.map((s) => (
-                  <div
-                    key={s._key}
-                    className="flex items-center justify-between gap-2 bg-slate-50 rounded-lg px-3 py-2"
+        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/80 p-4 sm:p-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-950 text-xs font-black text-white">
+                01
+              </span>
+              <div>
+                <h4 className="text-sm font-black text-slate-900">Identificación del despacho</h4>
+                <p className="text-[11px] text-slate-400">
+                  El cliente se obtiene exclusivamente desde el Panel PTM.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-12">
+              <div className="lg:col-span-5">
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                  Número de N.V. <span className="text-rose-500">*</span>
+                </label>
+                <div
+                  className={`flex h-12 items-center overflow-hidden rounded-xl border bg-white transition ${
+                    nvLookupError
+                      ? 'border-rose-300 ring-4 ring-rose-50'
+                      : panelInfo
+                        ? 'border-emerald-300 ring-4 ring-emerald-50'
+                        : 'border-slate-200 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50'
+                  }`}
+                >
+                  <Hash size={17} className="ml-3 shrink-0 text-slate-400" />
+                  <input
+                    value={nv}
+                    onChange={(e) => cambiarNv(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === 'Enter' && traerDelPanel({ silent: false, force: true })
+                    }
+                    inputMode="numeric"
+                    placeholder="Ej. 97621"
+                    className="min-w-0 flex-1 bg-transparent px-2 text-base font-black text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-300"
+                  />
+                  <button
+                    onClick={() => traerDelPanel({ silent: false, force: true })}
+                    disabled={buscandoNv || !nv.trim()}
+                    title="Validar N.V. en el Panel PTM"
+                    className="mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-indigo-600 text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {buscandoNv ? (
+                      <Loader2 size={17} className="animate-spin" />
+                    ) : panelInfo ? (
+                      <Check size={17} />
+                    ) : (
+                      <Search size={17} />
+                    )}
+                  </button>
+                </div>
+                <div className="mt-1.5 min-h-4 text-[10px] font-semibold">
+                  {buscandoNv ? (
+                    <span className="text-indigo-600">Buscando N.V. y cargando cliente…</span>
+                  ) : nvLookupError ? (
+                    <span className="text-rose-600">{nvLookupError}</span>
+                  ) : panelInfo ? (
+                    <span className="text-emerald-600">N.V. validada correctamente</span>
+                  ) : (
+                    <span className="text-slate-400">La consulta se realiza automáticamente.</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="lg:col-span-7">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Cliente
+                  </label>
+                  <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-indigo-500">
+                    <ShieldCheck size={11} /> Automático · no editable
+                  </span>
+                </div>
+                <div
+                  className={`flex h-12 items-center gap-3 rounded-xl border px-3.5 ${
+                    cliente
+                      ? 'border-emerald-200 bg-emerald-50/70'
+                      : 'border-slate-200 bg-slate-100/70'
+                  }`}
+                  title={cliente || 'Se cargará al validar la N.V.'}
+                >
+                  <Building2
+                    size={18}
+                    className={cliente ? 'shrink-0 text-emerald-600' : 'shrink-0 text-slate-400'}
+                  />
+                  <span
+                    className={`truncate text-sm font-bold ${cliente ? 'text-slate-800' : 'text-slate-400'}`}
+                  >
+                    {cliente || 'Se cargará desde la N.V. seleccionada'}
+                  </span>
+                  {cliente && (
+                    <BadgeCheck size={17} className="ml-auto shrink-0 text-emerald-600" />
+                  )}
+                </div>
+                <p className="mt-1.5 text-[10px] text-slate-400">
+                  Fuente oficial: Panel PTM. No admite ingreso manual.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                  Guía
+                </label>
+                <input
+                  value={guia}
+                  onChange={(e) => setGuia(e.target.value)}
+                  placeholder="Sin guía"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                  Bultos
+                </label>
+                <input
+                  value={bultos}
+                  onChange={(e) => setBultos(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  inputMode="numeric"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                  Transportista
+                </label>
+                <select
+                  value={transportista}
+                  onChange={(e) => setTransportista(e.target.value)}
+                  disabled={cargandoTransportistas}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <option value="">
+                    {cargandoTransportistas ? 'Cargando…' : '— Seleccionar —'}
+                  </option>
+                  {transportistasDisponibles.map((nombre) => (
+                    <option key={nombre} value={nombre}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[9px] text-slate-400">Mismo catálogo de Ingresar N.V.</p>
+              </div>
+            </div>
+
+            {panelInfo && (
+              <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-slate-50 p-3.5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-indigo-700">
+                    <BadgeCheck size={15} /> Datos sincronizados con Panel PTM
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    {panelInfo.urgente && (
+                      <span className="rounded-md border border-rose-200 bg-rose-100 px-2 py-1 text-[9px] font-black text-rose-700">
+                        URGENTE
+                      </span>
+                    )}
+                    {panelInfo.estado && (
+                      <span className="rounded-md border border-indigo-200 bg-white px-2 py-1 text-[9px] font-black text-indigo-700">
+                        {panelInfo.estado}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
+                  {[
+                    ['Vendedor', panelInfo.vendedor],
+                    ['Compromiso', panelInfo.fechaCompromiso?.split('-').reverse().join('-')],
+                    ['División', panelInfo.division],
+                    ['Centro de costo', panelInfo.centroCosto],
+                    ['Factura', panelInfo.factura],
+                    ['N° envío', panelInfo.numeroEnvio],
+                    ['Tipo despacho', panelInfo.tipoDespacho],
+                    ['Fecha despacho', panelInfo.fechaDespacho?.split('-').reverse().join('-')]
+                  ]
+                    .filter(([, value]) => value)
+                    .map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="min-w-0 rounded-xl border border-white bg-white/70 px-2.5 py-2"
+                      >
+                        <span className="block text-[9px] font-black uppercase tracking-wide text-slate-400">
+                          {label}
+                        </span>
+                        <span
+                          className="mt-0.5 block truncate font-bold text-slate-700"
+                          title={value}
+                        >
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-950 text-xs font-black text-white">
+                  02
+                </span>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">Productos del despacho</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Busca por código o descripción, incluso SKU antiguos.
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+                {sel.length} seleccionado{sel.length === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-indigo-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-50">
+                <Search size={17} className="shrink-0 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && buscar()}
+                  placeholder="SKU actual o antiguo…"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                />
+              </div>
+              <button
+                onClick={buscar}
+                disabled={buscando}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-black text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {buscando ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                Buscar producto
+              </button>
+            </div>
+
+            {cand.length > 0 && (
+              <div className="mt-3 max-h-52 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+                {cand.map((c, i) => (
+                  <button
+                    key={`${c.codigo_producto}-${c.partida || ''}-${i}`}
+                    onClick={() => add(c)}
+                    className="group flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition hover:bg-emerald-50/70"
                   >
                     <span className="min-w-0">
-                      <span className="font-bold text-sm text-slate-800 truncate block">
-                        {s.codigo_producto} · {s.producto}
+                      <span className="block truncate text-sm font-black text-slate-800">
+                        {c.codigo_producto}
                       </span>
-                      <span className="text-xs text-slate-400">
-                        {s.partida || 's/partida'} · {s.cantidad} {s.unidad_medida}
+                      <span className="block truncate text-xs text-slate-500">{c.producto}</span>
+                      <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400">
+                        <span>{c.partida || 'Sin partida'}</span>
+                        <span>·</span>
+                        <span>
+                          {c.disponible} {c.unidad_medida} disponibles
+                        </span>
+                        {c.es_historico && (
+                          <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 font-bold text-amber-700">
+                            Histórico
+                          </span>
+                        )}
                       </span>
                     </span>
-                    <label className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase shrink-0">
-                      Cant.
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={s.cantidad}
-                        onChange={(e) => {
-                          const cantidad = Math.max(1, Number(e.target.value) || 1);
-                          setSel((prev) =>
-                            prev.map((item) =>
-                              item._key === s._key ? { ...item, cantidad } : item
-                            )
-                          );
-                        }}
-                        className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 outline-none focus:border-emerald-400"
-                      />
-                    </label>
-                    <button
-                      onClick={() => remove(s._key)}
-                      className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 shrink-0"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white">
+                      <Plus size={16} />
+                    </span>
+                  </button>
                 ))}
               </div>
             )}
+
+            {busquedaRealizada && !buscando && cand.length === 0 && (
+              <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
+                <Package size={21} className="mx-auto mb-1.5 text-slate-300" />
+                <p className="text-xs font-bold text-slate-500">
+                  No encontramos productos para esa búsqueda.
+                </p>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Verifica el código o prueba con parte de la descripción.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              {sel.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-7 text-center">
+                  <Boxes size={25} className="mx-auto mb-2 text-slate-300" />
+                  <p className="text-xs font-black text-slate-600">Aún no hay SKU en el despacho</p>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Busca un producto y presiona + para agregarlo.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sel.map((s, index) => (
+                    <div
+                      key={s._key}
+                      className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:flex-row sm:items-center"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-[11px] font-black text-slate-500 shadow-sm">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-black text-slate-800">
+                          {s.codigo_producto} · {s.producto}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {s.partida || 'Sin partida'} · {s.unidad_medida}
+                        </span>
+                      </span>
+                      <label className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wide text-slate-500">
+                        Cantidad
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={s.cantidad}
+                          onChange={(e) => {
+                            const cantidad = Math.max(1, Number(e.target.value) || 1);
+                            setSel((prev) =>
+                              prev.map((item) =>
+                                item._key === s._key ? { ...item, cantidad } : item
+                              )
+                            );
+                          }}
+                          className="h-9 w-20 rounded-lg border border-slate-200 bg-white px-2 text-center text-sm font-bold text-slate-800 outline-none focus:border-emerald-400"
+                        />
+                      </label>
+                      <button
+                        onClick={() => remove(s._key)}
+                        aria-label={`Quitar ${s.codigo_producto}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-rose-100 bg-rose-50 text-rose-500 transition hover:bg-rose-100"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold">
+            <span
+              className={`rounded-full px-2.5 py-1 ${panelInfo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}
+            >
+              {panelInfo ? '✓' : '1'} N.V. validada
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 ${cliente ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}
+            >
+              {cliente ? '✓' : '2'} Cliente cargado
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 ${sel.length ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}
+            >
+              {sel.length ? '✓' : '3'} {sel.length} SKU
+            </span>
           </div>
-        </div>
-        <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={crearCert}
-            disabled={crear.isPending || !nv.trim() || sel.length === 0}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center gap-2 hover:bg-emerald-700 disabled:opacity-40"
-          >
-            {crear.isPending ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <ShieldCheck size={16} />
-            )}{' '}
-            Crear certificación
-          </button>
-        </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="h-11 rounded-xl border border-slate-200 px-4 text-sm font-black text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crearCert}
+              disabled={crear.isPending || !panelInfo || !cliente.trim() || sel.length === 0}
+              className="flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-200 disabled:shadow-none"
+            >
+              {crear.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <ShieldCheck size={16} />
+              )}
+              Crear certificación
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );
