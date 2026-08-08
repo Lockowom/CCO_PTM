@@ -49,6 +49,7 @@ import {
   EVIDENCIA_OPCIONES
 } from '../../services/calidadService';
 import { fetchNvPanel } from '../../services/panelPtm';
+import { opciones as fetchPanelOptions } from '../Panel/ingresar/ingresarService';
 import { compressImage } from '../../lib/imageCompress';
 import { signedUrl, signedUrls } from '../../lib/storageUrl';
 import CameraCapture from '../../components/CameraCapture';
@@ -61,6 +62,8 @@ const ManualModal = ({ onClose, onCreated }) => {
   const [cliente, setCliente] = useState('');
   const [guia, setGuia] = useState('');
   const [transportista, setTransportista] = useState('');
+  const [transportistasOpts, setTransportistasOpts] = useState([]);
+  const [cargandoTransportistas, setCargandoTransportistas] = useState(true);
   const [bultos, setBultos] = useState('');
   const [query, setQuery] = useState('');
   const [buscando, setBuscando] = useState(false);
@@ -68,6 +71,34 @@ const ManualModal = ({ onClose, onCreated }) => {
   const [sel, setSel] = useState([]);
   const [panelInfo, setPanelInfo] = useState(null);
   const [buscandoNv, setBuscandoNv] = useState(false);
+
+  // Comparte la fuente y la caché del formulario Ingresar N.V. para que
+  // ambos módulos trabajen siempre con el mismo catálogo maestro activo.
+  useEffect(() => {
+    let mounted = true;
+    setCargandoTransportistas(true);
+    fetchPanelOptions()
+      .then((options) => {
+        if (mounted) setTransportistasOpts(options?.transportistas || []);
+      })
+      .catch((error) => {
+        if (mounted)
+          toast.error(`No se pudo cargar el catálogo de transportistas: ${error.message}`);
+      })
+      .finally(() => {
+        if (mounted) setCargandoTransportistas(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const transportistasDisponibles = useMemo(() => {
+    if (transportista && !transportistasOpts.includes(transportista)) {
+      return [transportista, ...transportistasOpts];
+    }
+    return transportistasOpts;
+  }, [transportista, transportistasOpts]);
 
   // Trae los datos de la N.V desde el Panel Dashboard PTM y autollena el
   // formulario (cliente, guía, transportista, bultos) + tarjeta informativa.
@@ -256,12 +287,24 @@ const ManualModal = ({ onClose, onCreated }) => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Transportista
               </label>
-              <input
+              <select
                 value={transportista}
                 onChange={(e) => setTransportista(e.target.value)}
-                placeholder="Opcional"
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-400"
-              />
+                disabled={cargandoTransportistas}
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-emerald-400 disabled:bg-slate-50 disabled:text-slate-400"
+              >
+                <option value="">
+                  {cargandoTransportistas ? 'Cargando transportistas…' : '— Seleccionar —'}
+                </option>
+                {transportistasDisponibles.map((nombre) => (
+                  <option key={nombre} value={nombre}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-slate-400">
+                Catálogo compartido con Ingresar N.V.
+              </p>
             </div>
           </div>
 
