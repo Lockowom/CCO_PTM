@@ -1,0 +1,2192 @@
+import { j as e } from './query-vendor-BNjBrM5A.js';
+import { r as i } from './react-vendor-6aw4XXjH.js';
+import { u as Ft, s as V } from './index-puW0B3h7.js';
+import {
+  n as pt,
+  q as Ve,
+  ah as Ot,
+  u as Fe,
+  g as xt,
+  a9 as Ke,
+  bR as Nt,
+  aG as Kt,
+  am as Bt,
+  a7 as oe,
+  ag as X,
+  J as kt,
+  R as _e,
+  aI as Gt,
+  bS as mt,
+  aF as bt,
+  U as gt,
+  ac as ft,
+  v as Ht,
+  at as Qt,
+  P as Wt,
+  aA as Yt,
+  V as Ue,
+  bT as ht,
+  Q as yt,
+  bU as vt,
+  X as Zt,
+  c as Ct,
+  an as Xt,
+  t as Jt
+} from './ui-vendor-Da7ysJ4B.js';
+import { u as es } from './useBarcodeScanner-iVQFoB83.js';
+import './supabase-vendor-4Fjsfb0a.js';
+import './animation-vendor-JfdD7EdN.js';
+function be(l) {
+  const C = Number(l);
+  return Number.isFinite(C) && C > 0 ? Math.trunc(C) : 0;
+}
+function ts(l, C = 0) {
+  const F = l && ('accepted' in l || 'skipped' in l),
+    Y = l && ('inserted' in l || 'errors' in l);
+  if (!F && !Y) {
+    const O = be(C);
+    return {
+      accepted: 0,
+      skipped: O,
+      total: O,
+      error: 'Respuesta inesperada de bulk_upsert: faltan los contadores de resultado.'
+    };
+  }
+  const B = be(l.accepted ?? l.inserted),
+    U = be(l.skipped ?? l.errors),
+    z = be(l.total) || B + U || be(C);
+  return { accepted: B, skipped: U, total: z, error: l.error || null };
+}
+const ge = [
+    {
+      id: 'inventario_general',
+      label: 'Consolidado',
+      category: 'inventario',
+      icon: pt,
+      table: 'tms_inventario_general',
+      uniqueKey: 'bodega,codigo_producto',
+      columns: [
+        { key: 'bodega', label: 'Bodega', required: !0, type: 'text' },
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' },
+        { key: 'disponible', label: 'Disponible', required: !1, type: 'number' },
+        { key: 'reserva', label: 'Reserva', required: !1, type: 'number' },
+        { key: 'transitoria', label: 'Transitoria', required: !1, type: 'number' },
+        { key: 'consignacion', label: 'Consignación', required: !1, type: 'number' },
+        { key: 'stock_total', label: 'Stock Total', required: !1, type: 'number' }
+      ],
+      helpText:
+        'Ingresa el inventario consolidado. Incluye la columna "Bodega" (ej. BD 21). Si el registro ya existe, se actualizará.',
+      smartDedup: !1
+    },
+    ...['BD 21', 'BD 5', 'BD 24', 'BD 3', 'BD 7', 'BD 99', 'BD 22'].map((l) => ({
+      id: `inv_${l.replace(' ', '').toLowerCase()}`,
+      label: `${l}`,
+      category: 'inventario',
+      icon: xt,
+      table: 'tms_inventario_general',
+      uniqueKey: 'bodega,codigo_producto',
+      defaultValues: { bodega: l },
+      columns: [
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' },
+        { key: 'disponible', label: 'Disponible', required: !1, type: 'number' },
+        { key: 'reserva', label: 'Reserva', required: !1, type: 'number' },
+        { key: 'transitoria', label: 'Transitoria', required: !1, type: 'number' },
+        { key: 'consignacion', label: 'Consignación', required: !1, type: 'number' },
+        { key: 'stock_total', label: 'Stock Total', required: !1, type: 'number' }
+      ],
+      helpText: `Inventario de ${l}. La bodega se asigna automáticamente. Si el producto ya existe, se actualizará.`,
+      smartDedup: !1
+    })),
+    {
+      id: 'nv',
+      label: 'N.V Diarias',
+      category: 'ventas',
+      icon: Ve,
+      table: 'tms_nv_diarias',
+      uniqueKey: 'nv,codigo_producto',
+      defaultValues: { estado: 'Pendiente' },
+      columns: [
+        { key: 'fecha_emision', label: 'Fecha Entrega', required: !1, type: 'date', optional: !0 },
+        { key: 'nv', label: 'N.Venta', required: !0, type: 'text' },
+        { key: 'estado_erp', label: 'Estado ERP', required: !1, type: 'text' },
+        { key: 'cod_cliente', label: 'Cod.Cliente', required: !1, type: 'text' },
+        { key: 'cliente', label: 'Nombre Cliente', required: !0, type: 'text' },
+        { key: 'cod_vendedor', label: 'Cod.Vendedor', required: !1, type: 'text' },
+        { key: 'vendedor', label: 'Nombre Vendedor', required: !1, type: 'text' },
+        { key: 'zona', label: 'Zona', required: !1, type: 'text' },
+        { key: 'codigo_producto', label: 'Cod.Producto', required: !0, type: 'text' },
+        { key: 'descripcion_producto', label: 'Descripción', required: !1, type: 'text' },
+        { key: 'unidad', label: 'Unidad Medida', required: !1, type: 'text' },
+        { key: 'cantidad', label: 'Pedido', required: !0, type: 'number' }
+      ],
+      helpText:
+        'Pega TODAS las N.V. El sistema detecta cuáles son nuevas. Las eliminadas manualmente no se recargan.',
+      smartDedup: !0,
+      allowUpdate: !0
+    },
+    ...['ptm', 'orange', 'farmapack'].map((l) => ({
+      id: `nvcat_${l}`,
+      label: l === 'ptm' ? 'N.V PTM' : l === 'orange' ? 'N.V ORANGE' : 'N.V FARMAPACK',
+      category: 'ventas',
+      icon: Ve,
+      table: 'tms_nv_catalogo',
+      uniqueKey: 'nv,canal',
+      defaultValues: { canal: l },
+      columns: [
+        { key: 'fecha_aprobacion', label: 'Fecha', required: !1, type: 'date', optional: !0 },
+        { key: 'nv', label: 'N.Venta', required: !0, type: 'text' },
+        { key: 'cliente', label: 'Nombre Cliente', required: !1, type: 'text' },
+        { key: 'vendedor', label: 'Nombre Vendedor', required: !1, type: 'text' },
+        { key: 'monto_neto', label: 'Monto Neto', required: !1, type: 'number' }
+      ],
+      helpText: `Catálogo NV → Cliente/Vendedor del canal ${l.toUpperCase()}. Columnas: Fecha, N.Venta, Nombre Cliente, Nombre Vendedor, Monto Neto. Solo entran las N.V. NUEVAS; las que ya existen se detectan y se OMITEN (no se duplican al re-subir). Para corregir/actualizar datos existentes, marcá "Reemplazar canal".`,
+      smartDedup: !0,
+      allowUpdate: !1
+    })),
+    {
+      id: 'control_despacho',
+      label: 'Control Despacho',
+      category: 'ventas',
+      icon: Ot,
+      table: 'tms_control_despacho',
+      uniqueKey: null,
+      columns: [
+        { key: 'fecha_docto', label: 'FECHA DOCTO', required: !1, type: 'date' },
+        { key: 'cliente', label: 'CLIENTE', required: !0, type: 'text' },
+        { key: 'facturas', label: 'FACTURAS', required: !1, type: 'text' },
+        { key: 'guia', label: 'GUIA', required: !0, type: 'text' },
+        { key: 'bultos', label: 'BULTOS', required: !1, type: 'number' },
+        { key: 'empresa_transporte', label: 'EMPRESA TRANSPORTE', required: !1, type: 'text' },
+        { key: 'transportista', label: 'TRANSPORTISTA', required: !1, type: 'text' },
+        { key: 'nv', label: 'N° NV', required: !1, type: 'text' },
+        { key: 'division', label: 'DIVISION', required: !1, type: 'text' },
+        { key: 'vendedor', label: 'VENDEDOR', required: !1, type: 'text' },
+        { key: 'fecha_despacho', label: 'FECHA DESPACHO', required: !1, type: 'date' },
+        { key: 'valor_flete', label: 'VALOR FLETE', required: !1, type: 'number' },
+        { key: 'numero_envio', label: 'N° DE ENVIO', required: !1, type: 'text' }
+      ],
+      helpText:
+        'Pega la planilla de Control de Despacho. Se insertan todos los registros sin validar duplicados.',
+      smartDedup: !1
+    },
+    {
+      id: 'partidas',
+      label: 'Partidas',
+      category: 'trazabilidad',
+      icon: pt,
+      table: 'tms_partidas',
+      uniqueKey: 'codigo_producto, partida',
+      columns: [
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' },
+        { key: 'partida', label: 'Partida / Talla', required: !0, type: 'text' },
+        { key: 'fecha_vencimiento', label: 'Fecha Venc', required: !1, type: 'date' },
+        { key: 'disponible', label: 'Disponible', required: !1, type: 'number' },
+        { key: 'reserva', label: 'Reserva', required: !1, type: 'number' },
+        { key: 'transitoria', label: 'Transitoria', required: !1, type: 'number' },
+        { key: 'consignacion', label: 'Consignación', required: !1, type: 'number' },
+        { key: 'stock_total', label: 'Stock Total', required: !1, type: 'number' }
+      ],
+      helpText: 'Pega las columnas en el orden indicado para actualizar el stock por lote/talla.',
+      smartDedup: !1
+    },
+    {
+      id: 'series',
+      label: 'Series',
+      category: 'trazabilidad',
+      icon: Fe,
+      table: 'tms_series',
+      uniqueKey: 'codigo_producto, serie',
+      columns: [
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' },
+        { key: 'serie', label: 'Serie', required: !0, type: 'text' },
+        { key: 'disponible', label: 'Disponible', required: !1, type: 'number' },
+        { key: 'reserva', label: 'Reserva', required: !1, type: 'number' },
+        { key: 'transitoria', label: 'Transitoria', required: !1, type: 'number' },
+        { key: 'consignacion', label: 'Consignación', required: !1, type: 'number' },
+        { key: 'stock_total', label: 'Stock Total', required: !1, type: 'number' }
+      ],
+      helpText:
+        'La serie es única POR PRODUCTO: la clave es Cod. Producto + Serie (un mismo número de serie puede repetirse en productos distintos).',
+      smartDedup: !1
+    },
+    {
+      id: 'farmapack',
+      label: 'Farmapack',
+      category: 'trazabilidad',
+      icon: xt,
+      table: 'tms_farmapack',
+      uniqueKey: 'codigo_producto, lote',
+      columns: [
+        { key: 'codigo_producto', label: 'Código Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'U. Medida', required: !1, type: 'text' },
+        { key: 'lote', label: 'Lote', required: !0, type: 'text' },
+        { key: 'fecha_vencimiento', label: 'Fecha Venc.', required: !1, type: 'date' },
+        { key: 'disponible', label: 'Disponible', required: !1, type: 'number' },
+        { key: 'reserva', label: 'Reserva', required: !1, type: 'number' },
+        { key: 'transitoria', label: 'Transitoria', required: !1, type: 'number' },
+        { key: 'consignacion', label: 'Consignación', required: !1, type: 'number' },
+        { key: 'stock_total', label: 'Stock Total', required: !1, type: 'number' },
+        { key: 'estado', label: 'Estado', required: !1, type: 'text' }
+      ],
+      helpText: 'Registros con el mismo código y lote serán actualizados.',
+      smartDedup: !1
+    },
+    {
+      id: 'inventario',
+      label: 'Inventario WMS',
+      category: 'wms',
+      icon: Ke,
+      table: 'wms_ubicaciones',
+      uniqueKey: null,
+      defaultValues: { cantidad: 1 },
+      columns: [
+        { key: 'ubicacion', label: 'UBICACION', required: !0, type: 'text' },
+        { key: 'codigo', label: 'CODIGO', required: !0, type: 'text' },
+        { key: 'descripcion', label: 'DESCRIPCION', required: !1, type: 'text' }
+      ],
+      helpText:
+        'Orden: UBICACION | CODIGO | DESCRIPCION. Cantidad se asigna como 1 automáticamente.',
+      smartDedup: !1
+    },
+    {
+      id: 'matriz_codigos',
+      label: 'Matriz Códigos',
+      category: 'maestros',
+      icon: Fe,
+      table: 'tms_matriz_codigos',
+      uniqueKey: 'codigo_producto',
+      columns: [
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !0, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' }
+      ],
+      helpText: 'Maestro de códigos. Si el código ya existe, se actualiza la información.',
+      smartDedup: !1
+    },
+    {
+      id: 'sku_grupo',
+      label: 'Grupos de SKU',
+      category: 'maestros',
+      icon: Nt,
+      table: 'tms_producto_grupo',
+      uniqueKey: 'codigo_producto',
+      columns: [
+        { key: 'grupo', label: 'Grupo', required: !0, type: 'text' },
+        { key: 'codigo_producto', label: 'Cod. Producto', required: !0, type: 'text' },
+        { key: 'producto', label: 'Producto', required: !1, type: 'text' },
+        { key: 'unidad_medida', label: 'Cod. U. Medida', required: !1, type: 'text' }
+      ],
+      helpText:
+        'Grupo comercial por código (SKU). Columnas: Grupo, Cod. Producto, Producto. Si el SKU ya existe se ACTUALIZA su grupo (no se duplica); los SKU nuevos se detectan y se agregan solos. Alimenta el buscador de grupos (Consultas → Grupo por SKU).',
+      smartDedup: !1
+    }
+  ],
+  Oe = [
+    { id: 'inventario', label: 'Inventario', icon: Kt, color: 'blue' },
+    { id: 'ventas', label: 'Ventas / Despacho', icon: Bt, color: 'emerald' },
+    { id: 'trazabilidad', label: 'Trazabilidad', icon: Fe, color: 'violet' },
+    { id: 'wms', label: 'WMS', icon: Ke, color: 'orange' },
+    { id: 'maestros', label: 'Maestros', icon: Nt, color: 'slate' }
+  ],
+  jt = {
+    blue: { active: 'bg-blue-50 border-blue-200 text-blue-700', dot: 'bg-blue-500' },
+    emerald: { active: 'bg-emerald-50 border-emerald-200 text-emerald-700', dot: 'bg-emerald-500' },
+    violet: { active: 'bg-violet-50 border-violet-200 text-violet-700', dot: 'bg-violet-500' },
+    orange: { active: 'bg-orange-50 border-orange-200 text-orange-700', dot: 'bg-orange-500' },
+    slate: { active: 'bg-slate-100 border-slate-300 text-slate-700', dot: 'bg-slate-500' }
+  },
+  ss = {
+    inventario_general: 'codigo_producto',
+    nv: 'codigo_producto',
+    control_despacho: 'guia',
+    partidas: 'codigo_producto',
+    series: 'serie',
+    farmapack: 'codigo_producto',
+    inventario: 'codigo',
+    matriz_codigos: 'codigo_producto'
+  },
+  wt = ['ADMIN', 'ADMIN_DEV'],
+  Le = ge.map((l) => l.id),
+  as = ({ onClose: l }) => {
+    const [C, F] = i.useState([]),
+      [Y, B] = i.useState(!0),
+      [U, z] = i.useState(null),
+      [O, fe] = i.useState(null);
+    i.useEffect(() => {
+      (async () => {
+        const { data: c } = await V.from('tms_roles')
+          .select('id, nombre, import_tabs')
+          .order('nombre');
+        (F((c || []).filter((f) => !wt.includes(f.id))), B(!1));
+      })();
+    }, []);
+    const Se = (c, f) => {
+        F((D) =>
+          D.map((n) => {
+            if (n.id !== c) return n;
+            const R = Array.isArray(n.import_tabs) ? n.import_tabs : [],
+              w = R.includes(f) ? R.filter((H) => H !== f) : [...R, f];
+            return { ...n, import_tabs: w };
+          })
+        );
+      },
+      G = (c) => {
+        F((f) =>
+          f.map((D) => {
+            if (D.id !== c) return D;
+            const R =
+              (Array.isArray(D.import_tabs) ? D.import_tabs : []).length === Le.length
+                ? []
+                : [...Le];
+            return { ...D, import_tabs: R };
+          })
+        );
+      },
+      he = async (c) => {
+        z(c.id);
+        const { error: f } = await V.from('tms_roles')
+          .update({ import_tabs: c.import_tabs })
+          .eq('id', c.id);
+        (z(null), f || (fe(c.id), setTimeout(() => fe(null), 2e3)));
+      },
+      J = i.useMemo(
+        () => Oe.map((c) => ({ ...c, tabs: ge.filter((f) => f.category === c.id) })),
+        []
+      );
+    return e.jsx('div', {
+      className: 'fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4',
+      onClick: l,
+      children: e.jsxs('div', {
+        className:
+          'bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col',
+        onClick: (c) => c.stopPropagation(),
+        children: [
+          e.jsxs('div', {
+            className:
+              'flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 shrink-0',
+            children: [
+              e.jsxs('div', {
+                className: 'flex items-center gap-3',
+                children: [
+                  e.jsx('div', {
+                    className:
+                      'w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center',
+                    children: e.jsx(kt, { size: 18 })
+                  }),
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('h2', {
+                        className: 'text-base font-extrabold text-slate-900',
+                        children: 'Acceso por Rol'
+                      }),
+                      e.jsx('p', {
+                        className: 'text-[10px] text-slate-400 font-medium',
+                        children: 'Configura qué módulos de carga puede usar cada rol'
+                      })
+                    ]
+                  })
+                ]
+              }),
+              e.jsx('button', {
+                onClick: l,
+                className:
+                  'w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 transition-colors',
+                children: e.jsx(Zt, { size: 16 })
+              })
+            ]
+          }),
+          e.jsx('div', {
+            className: 'flex-1 overflow-auto p-3 sm:p-6',
+            children: Y
+              ? e.jsx('div', {
+                  className: 'flex items-center justify-center py-16',
+                  children: e.jsx(oe, { size: 24, className: 'animate-spin text-slate-400' })
+                })
+              : e.jsx('div', {
+                  className: 'space-y-4',
+                  children: C.map((c) => {
+                    const f = Array.isArray(c.import_tabs) ? c.import_tabs : [],
+                      D = f.length === Le.length;
+                    return e.jsxs(
+                      'div',
+                      {
+                        className: 'border border-slate-200 rounded-xl p-4',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'flex items-center justify-between mb-3',
+                            children: [
+                              e.jsxs('div', {
+                                className: 'flex items-center gap-2',
+                                children: [
+                                  e.jsx('span', {
+                                    className: 'text-sm font-bold text-slate-900',
+                                    children: c.nombre
+                                  }),
+                                  e.jsx('span', {
+                                    className:
+                                      'text-[10px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded',
+                                    children: c.id
+                                  }),
+                                  f.length > 0 &&
+                                    e.jsxs('span', {
+                                      className:
+                                        'text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full',
+                                      children: [f.length, ' tabs']
+                                    }),
+                                  f.length === 0 &&
+                                    e.jsx('span', {
+                                      className:
+                                        'text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full',
+                                      children: 'Sin acceso'
+                                    })
+                                ]
+                              }),
+                              e.jsxs('div', {
+                                className: 'flex items-center gap-2',
+                                children: [
+                                  e.jsx('button', {
+                                    onClick: () => G(c.id),
+                                    className:
+                                      'text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors',
+                                    children: D ? 'Quitar todo' : 'Seleccionar todo'
+                                  }),
+                                  e.jsxs('button', {
+                                    onClick: () => he(c),
+                                    disabled: U === c.id,
+                                    className: `flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${O === c.id ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-800 text-white hover:bg-slate-700'} disabled:opacity-50`,
+                                    children: [
+                                      U === c.id
+                                        ? e.jsx(oe, { size: 12, className: 'animate-spin' })
+                                        : O === c.id
+                                          ? e.jsx(Ct, { size: 12 })
+                                          : e.jsx(Xt, { size: 12 }),
+                                      O === c.id ? 'Guardado' : 'Guardar'
+                                    ]
+                                  })
+                                ]
+                              })
+                            ]
+                          }),
+                          e.jsx('div', {
+                            className: 'space-y-2',
+                            children: J.map((n) =>
+                              e.jsxs(
+                                'div',
+                                {
+                                  className: 'flex items-start gap-3',
+                                  children: [
+                                    e.jsx('span', {
+                                      className:
+                                        'text-[10px] font-bold text-slate-400 uppercase tracking-wider w-24 pt-1 shrink-0',
+                                      children: n.label
+                                    }),
+                                    e.jsx('div', {
+                                      className: 'flex flex-wrap gap-1.5',
+                                      children: n.tabs.map((R) => {
+                                        const w = f.includes(R.id);
+                                        return e.jsx(
+                                          'button',
+                                          {
+                                            onClick: () => Se(c.id, R.id),
+                                            className: `px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${w ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'}`,
+                                            children: R.label
+                                          },
+                                          R.id
+                                        );
+                                      })
+                                    })
+                                  ]
+                                },
+                                n.id
+                              )
+                            )
+                          })
+                        ]
+                      },
+                      c.id
+                    );
+                  })
+                })
+          })
+        ]
+      })
+    });
+  },
+  us = () => {
+    var lt, ot, nt, it, dt, ct;
+    const { user: l } = Ft(),
+      [C, F] = i.useState(null),
+      [Y, B] = i.useState(!1),
+      U = wt.includes(l == null ? void 0 : l.rol);
+    i.useEffect(() => {
+      if (l != null && l.rol) {
+        if (U) {
+          F('*');
+          return;
+        }
+        (async () => {
+          const { data: t } = await V.from('tms_roles')
+            .select('import_tabs')
+            .eq('id', l.rol)
+            .single();
+          F((t == null ? void 0 : t.import_tabs) ?? []);
+        })();
+      }
+    }, [l == null ? void 0 : l.rol, U]);
+    const z = i.useMemo(
+        () =>
+          C === null
+            ? []
+            : C === '*' || U
+              ? ge
+              : Array.isArray(C)
+                ? ge.filter((t) => C.includes(t.id))
+                : [],
+        [C, U]
+      ),
+      O = i.useMemo(() => {
+        const t = new Set(z.map((s) => s.category));
+        return Oe.filter((s) => t.has(s.id));
+      }, [z]),
+      fe = ((lt = O[0]) == null ? void 0 : lt.id) || 'ventas',
+      Se = ((ot = z[0]) == null ? void 0 : ot.id) || 'nv',
+      [G, he] = i.useState(Se),
+      [J, c] = i.useState(fe),
+      [f, D] = i.useState(''),
+      [n, R] = i.useState([]),
+      [w, H] = i.useState([]),
+      [Be, Ge] = i.useState(0),
+      [He, qe] = i.useState(!1),
+      [ne, Ee] = i.useState(!1),
+      [$, ie] = i.useState(null),
+      [ee, de] = i.useState('paste'),
+      [ze, Qe] = i.useState(!1),
+      [We, Ye] = i.useState(!1),
+      [_, ye] = i.useState(null),
+      [te, ce] = i.useState(null),
+      [se, Ze] = i.useState(!1),
+      Xe = i.useRef(null),
+      Ae = i.useRef(null),
+      [ue, De] = i.useState('paste'),
+      [Q, ve] = i.useState([]),
+      [Je, je] = i.useState(''),
+      [pe, Pe] = i.useState(''),
+      { startScan: et, isScanning: tt, isSupportedDevice: _t } = es();
+    i.useEffect(() => {
+      var t, s;
+      if (z.length > 0 && !z.find((a) => a.id === G)) {
+        const a = (t = O[0]) == null ? void 0 : t.id,
+          d = (s = z[0]) == null ? void 0 : s.id;
+        (a && c(a), d && he(d));
+      }
+    }, [z]);
+    const o = ge.find((t) => t.id === G),
+      I = !!((nt = o == null ? void 0 : o.id) != null && nt.startsWith('nvcat_')),
+      P = ((it = o == null ? void 0 : o.defaultValues) == null ? void 0 : it.canal) || '',
+      Ne = (t) => {
+        const s = String(t ?? '').trim();
+        return /^\d+\.0+$/.test(s) ? s.split('.')[0] : s;
+      },
+      st = i.useCallback(async (t) => {
+        const s = new Set();
+        for (const a of t) {
+          let d = 0;
+          const g = 1e3;
+          for (;;) {
+            const { data: p, error: m } = await V.from('tms_nv_catalogo')
+              .select('nv')
+              .eq('canal', a)
+              .range(d, d + g - 1);
+            if (m || !p || p.length === 0 || (p.forEach((S) => s.add(Ne(S.nv))), p.length < g))
+              break;
+            d += g;
+          }
+        }
+        return s;
+      }, []);
+    i.useEffect(() => {
+      if (!I || ee !== 'preview' || n.length === 0) {
+        (ye(null), ce(null));
+        return;
+      }
+      let t = !0;
+      return (
+        (async () => {
+          const s = P === 'ptm' ? ['orange', 'farmapack'] : ['ptm'],
+            [a, d] = await Promise.all([st(s), st([P])]);
+          if (!t) return;
+          const g = [];
+          let p = 0;
+          for (const m of n) {
+            const S = Ne(m.nv);
+            S && a.has(S) && (p++, g.length < 6 && g.push(S));
+          }
+          if (
+            (ye({ count: p, canalOtro: s.join('/').toUpperCase(), actual: d.size, ejemplos: g }),
+            d.size >= 20)
+          ) {
+            const m = {};
+            d.forEach((T) => {
+              const v = Ne(T).length;
+              v && (m[v] = (m[v] || 0) + 1);
+            });
+            const S = Math.max(2, d.size * 0.01),
+              M = Object.keys(m)
+                .map(Number)
+                .filter((T) => m[T] >= S)
+                .sort((T, v) => T - v);
+            if (M.length) {
+              const T = Math.max(...M);
+              M.includes(T + 1) || M.push(T + 1);
+              const v = Object.keys(m)
+                .map(Number)
+                .reduce((u, j) => (m[j] > (m[u] || 0) ? j : u), M[0]);
+              ce({ allowed: M, principal: v, muestra: d.size });
+            } else ce(null);
+          } else ce(null);
+        })().catch(() => {
+          t && (ye(null), ce(null));
+        }),
+        () => {
+          t = !1;
+        }
+      );
+    }, [I, ee, n, P]);
+    const St = (t) => {
+        const s = String(t ?? '').trim();
+        return s !== '' && /\d/.test(s) && !/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(s);
+      },
+      xe = i.useMemo(() => {
+        if (!I || n.length === 0) return { count: 0, ejemplos: [] };
+        let t = 0;
+        const s = [];
+        for (const a of n)
+          St(a.cliente) &&
+            (t++, s.length < 5 && s.push(`N.V ${a.nv}: “${String(a.cliente).slice(0, 20)}”`));
+        return { count: t, ejemplos: s };
+      }, [I, n]),
+      me = i.useMemo(() => {
+        if (!I || !te || n.length === 0) return { count: 0, ejemplos: [] };
+        const t = new Set(te.allowed);
+        let s = 0;
+        const a = [];
+        for (const d of n) {
+          const p = Ne(d.nv).length;
+          p && !t.has(p) && (s++, a.length < 5 && a.push(`N.V ${d.nv} (${p} díg.)`));
+        }
+        return { count: s, ejemplos: a };
+      }, [I, te, n]),
+      qt = n.length ? xe.count / n.length : 0,
+      Et = _ && n.length ? _.count / n.length : 0,
+      zt = n.length ? me.count / n.length : 0,
+      L =
+        I &&
+        ((xe.count >= 15 && qt >= 0.15) ||
+          (Et >= 0.5 && ((_ == null ? void 0 : _.count) || 0) >= 15) ||
+          (me.count >= 15 && zt >= 0.15)),
+      At = i.useMemo(() => z.filter((t) => t.category === J), [z, J]),
+      ke = i.useCallback(
+        async (t) => {
+          if (!t.trim()) return;
+          qe(!0);
+          const s = t
+            .trim()
+            .split(
+              `
+`
+            )
+            .map((u) => u.trim())
+            .filter((u) => u.length > 0);
+          if (s.length === 0) {
+            qe(!1);
+            return;
+          }
+          const a = s[0],
+            d = a.includes('	') ? '	' : a.includes(';') ? ';' : ',',
+            g = a.split(d).map((u) => u.trim()),
+            S = (
+              o.columns.some((u) =>
+                g.some(
+                  (j) =>
+                    j.toLowerCase().replace(/[^a-z0-9]/g, '') ===
+                      u.label.toLowerCase().replace(/[^a-z0-9]/g, '') ||
+                    j.toLowerCase().replace(/[^a-z0-9]/g, '') ===
+                      u.key.toLowerCase().replace(/[^a-z0-9]/g, '')
+                )
+              )
+                ? s.slice(1)
+                : s
+            ).map((u) => {
+              const j = u.split(d).map((N) => N.trim()),
+                K = {};
+              let Z = 0;
+              return (
+                o.columns.forEach((N) => {
+                  let r = '';
+                  if (
+                    (G === 'nv' && ze && N.key === 'fecha_emision'
+                      ? (r = null)
+                      : ((r = j[Z] || ''), Z++),
+                    N.type === 'number')
+                  )
+                    ((r = r.replace(/[^\d.,-]/g, '').replace(',', '.')), (r = parseFloat(r) || 0));
+                  else if (N.type === 'date')
+                    if (r && r.trim() !== '')
+                      if (r.length < 6 || !/\d/.test(r)) r = null;
+                      else {
+                        r = r.split(' ')[0];
+                        const x = r.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+                        if (x) {
+                          const [q, y, b, k] = x,
+                            E = k.length === 2 ? `20${k}` : k,
+                            Me = `${E}-${b.padStart(2, '0')}-${y.padStart(2, '0')}`,
+                            h = new Date(E, parseInt(b) - 1, y);
+                          h.getFullYear() == E &&
+                          h.getMonth() == parseInt(b) - 1 &&
+                          h.getDate() == y
+                            ? (r = Me)
+                            : (r = null);
+                        } else {
+                          const q = Date.parse(r);
+                          if (isNaN(q)) r = null;
+                          else {
+                            const y = new Date(q),
+                              b = y.getFullYear();
+                            b > 1900 && b < 2100 ? (r = y.toISOString().split('T')[0]) : (r = null);
+                          }
+                        }
+                      }
+                    else r = null;
+                  else r = r.toString().trim();
+                  K[N.key] = r;
+                }),
+                o.defaultValues &&
+                  Object.entries(o.defaultValues).forEach(([N, r]) => {
+                    K[N] || (K[N] = r);
+                  }),
+                K
+              );
+            }),
+            M = (u) => u != null && String(u).trim() !== '',
+            T = o.columns.filter((u) => u.required),
+            v = S.filter((u) => T.every((j) => M(u[j.key])));
+          if ((Ge(S.length - v.length), R(v), o.smartDedup && o.uniqueKey && v.length > 0))
+            try {
+              const u = o.uniqueKey.split(',').map((h) => h.trim()),
+                j = u[0],
+                K = [...new Set(v.map((h) => h[j]).filter(Boolean))],
+                Z = u.join(','),
+                N = 500,
+                r = [];
+              for (let h = 0; h < K.length; h += N) r.push(K.slice(h, h + N));
+              const x = r.map((h) => V.from(o.table).select(Z).in(j, h).limit(h.length)),
+                q =
+                  o.id === 'nv' ? r.map((h) => V.from('tms_nv_eliminadas').select(j).in(j, h)) : [],
+                [y, b] = await Promise.all([
+                  Promise.all(x),
+                  q.length > 0 ? Promise.all(q) : Promise.resolve([])
+                ]),
+                k = new Set();
+              y.forEach((h) => {
+                (h.data || []).forEach((ae) => {
+                  k.add(
+                    u
+                      .map((re) => {
+                        var W;
+                        return (W = ae[re]) == null ? void 0 : W.toString().trim().toUpperCase();
+                      })
+                      .join('|')
+                  );
+                });
+              });
+              const E = new Set();
+              b.forEach((h) => {
+                (h.data || []).forEach((ae) => {
+                  var W;
+                  const re = (W = ae[j]) == null ? void 0 : W.toString().trim().toUpperCase();
+                  re && E.add(re);
+                });
+              });
+              const Me = v.map((h) => {
+                var W;
+                const ae = (W = h[j]) == null ? void 0 : W.toString().trim().toUpperCase();
+                if (!ae) return 'error';
+                if (E.has(ae)) return 'deleted';
+                const re = u
+                  .map((Vt) => {
+                    var ut;
+                    return (ut = h[Vt]) == null ? void 0 : ut.toString().trim().toUpperCase();
+                  })
+                  .join('|');
+                return k.has(re) ? (o.allowUpdate ? 'update' : 'existing') : 'new';
+              });
+              H(Me);
+            } catch (u) {
+              (console.error('Row status check error:', u), H(v.map(() => 'new')));
+            }
+          else H(v.map(() => 'new'));
+          (de('preview'), qe(!1));
+        },
+        [o, ze, G]
+      ),
+      Dt = (t) => {
+        var a;
+        const s = ((a = t.clipboardData) == null ? void 0 : a.getData('text/plain')) || '';
+        s && (D(s), ke(s));
+      },
+      Pt = (t) => {
+        var d;
+        const s = (d = t.target.files) == null ? void 0 : d[0];
+        if (!s) return;
+        const a = new FileReader();
+        ((a.onload = (g) => {
+          const p = g.target.result;
+          (D(p), ke(p));
+        }),
+          a.readAsText(s));
+      },
+      Te = () => {
+        var s, a;
+        if (!o) return 'codigo_producto';
+        const t = o.id.startsWith('inv_') ? 'inventario_general' : o.id;
+        return (
+          ss[t] ||
+          ((s = o.columns.find((d) => d.required)) == null ? void 0 : s.key) ||
+          ((a = o.columns[0]) == null ? void 0 : a.key)
+        );
+      },
+      Tt = async (t) => {
+        try {
+          const { data: s } = await V.from('tms_matriz_codigos')
+            .select('codigo_producto, producto, unidad_medida')
+            .eq('codigo_producto', t)
+            .maybeSingle();
+          return s || null;
+        } catch {
+          return null;
+        }
+      },
+      Ce = i.useCallback(
+        async (t) => {
+          if (!t || !o) return;
+          je('');
+          const s = Te(),
+            a = {};
+          if (
+            (o.defaultValues &&
+              Object.entries(o.defaultValues).forEach(([p, m]) => {
+                a[p] = m;
+              }),
+            t.includes('	') || t.includes('|') || t.includes(';'))
+          ) {
+            const p = t.includes('	') ? '	' : t.includes('|') ? '|' : ';',
+              m = t.split(p).map((S) => S.trim());
+            o.columns.forEach((S, M) => {
+              m[M] && (a[S.key] = m[M]);
+            });
+          } else a[s] = t.trim();
+          const g = a.codigo_producto || a.codigo;
+          if (g && !a.producto) {
+            const p = await Tt(g);
+            p &&
+              (a.producto || (a.producto = p.producto),
+              a.unidad_medida || (a.unidad_medida = p.unidad_medida));
+          }
+          ve((p) => [...p, { ...a, _scannedAt: Date.now(), _rawValue: t }]);
+        },
+        [o]
+      ),
+      Rt = i.useCallback(async () => {
+        je('');
+        const t = await et({ onError: (s) => je(s) });
+        t && (await Ce(t));
+      }, [et, Ce]),
+      at = i.useCallback(async () => {
+        pe.trim() && (await Ce(pe.trim()), Pe(''));
+      }, [pe, Ce]),
+      $t = (t) => {
+        ve((s) => s.filter((a, d) => d !== t));
+      },
+      It = i.useCallback(() => {
+        if (Q.length === 0) return;
+        const t = Q.map((s) => {
+          const a = { ...s };
+          return (delete a._scannedAt, delete a._rawValue, a);
+        });
+        (R(t), H(t.map(() => 'new')), de('preview'));
+      }, [Q]),
+      [Re, we] = i.useState({ current: 0, total: 0 }),
+      Mt = async () => {
+        if (n.length !== 0) {
+          if (L) {
+            Jt.error(
+              'Carga bloqueada: el archivo N.V. parece incorrecto (columnas descuadradas o de otro canal). Corrígelo y vuelve a intentar.'
+            );
+            return;
+          }
+          if (!(
+            I &&
+            se &&
+            !window.confirm(`REEMPLAZAR canal ${P.toUpperCase()}:
+
+Se borrarán las ${(_ == null ? void 0 : _.actual) ?? '—'} N.V. actuales de ${P.toUpperCase()} y quedarán solo las ${n.length} de este archivo.
+
+¿Continuar?`)
+          )) {
+            (Ee(!0), ie(null), we({ current: 0, total: 0 }));
+            try {
+              if (I && se) {
+                const { error: r } = await V.rpc('nv_catalogo_purgar_canal', { p_canal: P });
+                if (r) throw new Error(`No se pudo reemplazar el canal: ${r.message}`);
+              }
+              let t = I && se ? n.slice() : n.filter((r, x) => w[x] === 'new' || w[x] === 'update');
+              if (t.length === 0) {
+                (ie({
+                  success: !0,
+                  total: n.length,
+                  inserted: 0,
+                  skipped: n.length,
+                  errors: 0,
+                  deduplicated: 0,
+                  message: 'No hay registros nuevos. Todos ya existen.'
+                }),
+                  de('done'),
+                  Ee(!1));
+                return;
+              }
+              const s = [];
+              if (o.id === 'nv' && t.length > 0)
+                try {
+                  const r = t.map((y) => {
+                      var b, k;
+                      return {
+                        nv: (b = y.nv) == null ? void 0 : b.toString(),
+                        codigo_producto: (k = y.codigo_producto) == null ? void 0 : k.toString(),
+                        cantidad: y.cantidad,
+                        cliente: y.cliente
+                      };
+                    }),
+                    { data: x, error: q } = await V.rpc('prepare_nv_import', {
+                      payload: r,
+                      sync_deleted: We
+                    });
+                  q
+                    ? s.push(`Advertencia: ${q.message}`)
+                    : x &&
+                      (x.reseteadas > 0 &&
+                        s.push(`Se reiniciaron ${x.reseteadas} N.V. en proceso.`),
+                      x.items_cancelados > 0 &&
+                        s.push(`Se cancelaron ${x.items_cancelados} ítems faltantes.`));
+                } catch (r) {
+                  console.error('Record upsert error:', r);
+                }
+              let a = 0;
+              if (o.uniqueKey) {
+                const r = o.uniqueKey.split(',').map((b) => b.trim()),
+                  x = new Map(),
+                  q = [];
+                t.forEach((b) => {
+                  const k = r.map((E) => (b[E] || '').toString().trim());
+                  k.some((E) => E !== '') ? x.set(k.join('|'), b) : q.push(b);
+                });
+                const y = t.length;
+                ((t = [...x.values(), ...q]),
+                  (a = y - t.length),
+                  a > 0 &&
+                    s.push(`${a} filas duplicadas consolidadas (misma clave: ${o.uniqueKey})`));
+              }
+              n.length > 5e3 && D('');
+              let d = 0,
+                g = 0;
+              const p = !o.uniqueKey || o.id === 'control_despacho' ? null : o.uniqueKey,
+                m = 1e3,
+                S = 2,
+                M = 6e4,
+                T = [];
+              for (let r = 0; r < t.length; r += m) T.push(t.slice(r, r + m));
+              const v = T.length;
+              let u = 0;
+              we({ current: 0, total: v });
+              const j = async (r, x) => {
+                const q = new AbortController(),
+                  y = setTimeout(() => q.abort(), M);
+                try {
+                  const { data: b, error: k } = await V.rpc('bulk_upsert', {
+                    p_table: o.table,
+                    p_data: r,
+                    p_conflict_keys: p
+                  }).abortSignal(q.signal);
+                  if (k) throw k;
+                  const E = ts(b, r.length);
+                  ((d += E.accepted),
+                    (g += E.skipped),
+                    E.error
+                      ? s.push(`Lote ${x}: ${E.error}`)
+                      : E.skipped > 0 &&
+                        s.push(`Lote ${x}: ${E.skipped} filas omitidas por el servidor`));
+                } catch (b) {
+                  g += r.length;
+                  const k =
+                    (b == null ? void 0 : b.name) === 'AbortError'
+                      ? 'tiempo de espera agotado (60s)'
+                      : (b == null ? void 0 : b.message) || 'error desconocido';
+                  (s.push(`Lote ${x}: ${k}`), console.error(`Chunk ${x} error:`, k));
+                } finally {
+                  (clearTimeout(y), u++, we({ current: u, total: v }));
+                }
+              };
+              for (let r = 0; r < T.length; r += S) {
+                const x = T.slice(r, r + S);
+                await Promise.all(x.map((q, y) => j(q, r + y + 1)));
+              }
+              const K = [...w];
+              let Z = 0;
+              (n.forEach((r, x) => {
+                (w[x] === 'new' || w[x] === 'update') && ((K[x] = Z < d ? 'loaded' : 'error'), Z++);
+              }),
+                H(K));
+              const N = n.length - t.length - a;
+              (V.from('tms_historial_cargas')
+                .insert([
+                  {
+                    usuario_id: l == null ? void 0 : l.id,
+                    usuario_nombre:
+                      (l == null ? void 0 : l.nombre) ||
+                      (l == null ? void 0 : l.email) ||
+                      'Desconocido',
+                    modulo: o.label,
+                    tabla_destino: o.table,
+                    registros_totales: n.length,
+                    registros_nuevos: d,
+                    registros_actualizados: w.filter((r) => r === 'update').length,
+                    registros_error: g
+                  }
+                ])
+                .then(({ error: r }) => {
+                  r && console.error('[DataImport] No se pudo registrar el historial de carga:', r);
+                }),
+                ie({
+                  success: g === 0,
+                  total: n.length,
+                  inserted: d,
+                  skipped: N,
+                  errors: g,
+                  deduplicated: a,
+                  errorDetails: s,
+                  message:
+                    g === 0
+                      ? `${d} registros cargados${a > 0 ? ` · ${a} duplicados consolidados` : ''}${N > 0 ? ` · ${N} ignorados` : ''}`
+                      : `${d} cargados · ${g} con error${a > 0 ? ` · ${a} duplicados` : ''}${N > 0 ? ` · ${N} ignorados` : ''}`
+                }),
+                de('done'));
+            } catch (t) {
+              ie({
+                success: !1,
+                total: n.length,
+                inserted: 0,
+                skipped: 0,
+                errors: n.length,
+                deduplicated: 0,
+                message: `Error: ${t.message}`
+              });
+            } finally {
+              (Ee(!1), we({ current: 0, total: 0 }));
+            }
+          }
+        }
+      },
+      $e = () => {
+        (D(''),
+          R([]),
+          H([]),
+          ie(null),
+          Ge(0),
+          de('paste'),
+          Qe(!1),
+          Ye(!1),
+          ye(null),
+          Ze(!1),
+          ve([]),
+          je(''),
+          Pe(''),
+          De('paste'),
+          Ae.current && (Ae.current.value = ''));
+      },
+      rt = (t) => {
+        (he(t), $e());
+      },
+      Ut = (t) => {
+        c(t);
+        const s = z.find((a) => a.category === t);
+        s && rt(s.id);
+      },
+      A = {
+        total: n.length,
+        new: w.filter((t) => t === 'new').length,
+        update: w.filter((t) => t === 'update').length,
+        existing: w.filter((t) => t === 'existing').length,
+        deleted: w.filter((t) => t === 'deleted').length,
+        loaded: w.filter((t) => t === 'loaded').length,
+        error: w.filter((t) => t === 'error').length
+      },
+      Ie = Oe.find((t) => t.id === J),
+      Lt = jt[(Ie == null ? void 0 : Ie.color) || 'slate'];
+    return C === null
+      ? e.jsx('div', {
+          className: 'h-full flex items-center justify-center bg-[#F8F9FB]',
+          children: e.jsx(oe, { size: 24, className: 'animate-spin text-slate-400' })
+        })
+      : z.length === 0
+        ? e.jsx('div', {
+            className: 'h-full flex items-center justify-center bg-[#F8F9FB]',
+            children: e.jsxs('div', {
+              className: 'text-center bg-white border border-slate-200 rounded-2xl p-10 max-w-sm',
+              children: [
+                e.jsx('div', {
+                  className:
+                    'w-14 h-14 mx-auto rounded-2xl bg-red-50 text-red-400 flex items-center justify-center mb-4',
+                  children: e.jsx(X, { size: 28 })
+                }),
+                e.jsx('h2', {
+                  className: 'text-lg font-extrabold text-slate-900 mb-2',
+                  children: 'Sin acceso'
+                }),
+                e.jsx('p', {
+                  className: 'text-sm text-slate-400',
+                  children:
+                    'Tu rol no tiene permisos para cargar datos en este módulo. Contacta al administrador.'
+                })
+              ]
+            })
+          })
+        : e.jsxs('div', {
+            className: 'h-full flex flex-col bg-[#F8F9FB] overflow-hidden',
+            children: [
+              Y && e.jsx(as, { onClose: () => B(!1) }),
+              e.jsxs('header', {
+                className:
+                  'shrink-0 bg-white border-b border-slate-200 px-3 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4',
+                children: [
+                  e.jsxs('div', {
+                    className: 'flex items-center justify-between mb-4',
+                    children: [
+                      e.jsxs('div', {
+                        children: [
+                          e.jsx('h1', {
+                            className: 'text-xl font-extrabold text-slate-900 tracking-tight',
+                            children: 'Carga Masiva'
+                          }),
+                          e.jsxs('p', {
+                            className: 'text-xs text-slate-400 mt-0.5 font-medium',
+                            children: [
+                              o == null ? void 0 : o.label,
+                              ' · Tabla:',
+                              ' ',
+                              e.jsx('span', {
+                                className: 'font-mono text-slate-500',
+                                children: o == null ? void 0 : o.table
+                              })
+                            ]
+                          })
+                        ]
+                      }),
+                      e.jsxs('div', {
+                        className: 'flex items-center gap-2',
+                        children: [
+                          U &&
+                            e.jsxs('button', {
+                              onClick: () => B(!0),
+                              className:
+                                'flex items-center gap-2 px-3 py-2 text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-xl transition-colors border border-violet-200',
+                              title: 'Configurar acceso por rol',
+                              children: [e.jsx(kt, { size: 14 }), ' Accesos']
+                            }),
+                          ee !== 'paste' &&
+                            e.jsxs('button', {
+                              onClick: $e,
+                              className:
+                                'flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors',
+                              children: [e.jsx(_e, { size: 14 }), ' Nueva carga']
+                            })
+                        ]
+                      })
+                    ]
+                  }),
+                  e.jsx('div', {
+                    className: 'flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar pb-1',
+                    children: O.map((t) => {
+                      const s = t.icon,
+                        a = J === t.id,
+                        d = jt[t.color];
+                      return e.jsxs(
+                        'button',
+                        {
+                          onClick: () => Ut(t.id),
+                          disabled: ne,
+                          className: `flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex-shrink-0 ${a ? d.active : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'} disabled:opacity-50`,
+                          children: [e.jsx(s, { size: 14 }), t.label]
+                        },
+                        t.id
+                      );
+                    })
+                  }),
+                  e.jsx('div', {
+                    className:
+                      'flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 overflow-x-auto no-scrollbar',
+                    children: At.map((t) => {
+                      const s = G === t.id;
+                      return e.jsx(
+                        'button',
+                        {
+                          onClick: () => rt(t.id),
+                          disabled: ne,
+                          className: `px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'} disabled:opacity-50`,
+                          children: t.label
+                        },
+                        t.id
+                      );
+                    })
+                  })
+                ]
+              }),
+              e.jsxs('div', {
+                className: 'flex-1 overflow-y-auto p-2 sm:p-4',
+                children: [
+                  ee === 'paste' &&
+                    e.jsxs('div', {
+                      className: 'max-w-5xl mx-auto',
+                      children: [
+                        e.jsxs('div', {
+                          className: 'bg-white border border-slate-200 rounded-2xl p-5 mb-4',
+                          children: [
+                            e.jsxs('div', {
+                              className: 'flex items-start gap-3 mb-4',
+                              children: [
+                                e.jsx('div', {
+                                  className: `w-8 h-8 rounded-lg ${Lt.active} flex items-center justify-center shrink-0`,
+                                  children: e.jsx(Gt, { size: 16 })
+                                }),
+                                e.jsxs('div', {
+                                  children: [
+                                    e.jsx('h3', {
+                                      className: 'text-sm font-bold text-slate-800 mb-1',
+                                      children: o.label
+                                    }),
+                                    e.jsx('p', {
+                                      className: 'text-xs text-slate-500 leading-relaxed',
+                                      children: o.helpText
+                                    })
+                                  ]
+                                })
+                              ]
+                            }),
+                            e.jsx('div', {
+                              className: 'flex flex-wrap gap-1.5',
+                              children: o.columns.map((t) =>
+                                e.jsxs(
+                                  'span',
+                                  {
+                                    className: `text-[10px] px-2.5 py-1 rounded-md font-mono ${t.required ? 'bg-orange-50 text-orange-700 font-bold border border-orange-200' : 'bg-slate-50 text-slate-500 border border-slate-200'}`,
+                                    children: [
+                                      t.label,
+                                      t.required &&
+                                        e.jsx('span', {
+                                          className: 'text-orange-400 ml-0.5',
+                                          children: '*'
+                                        })
+                                    ]
+                                  },
+                                  t.key
+                                )
+                              )
+                            })
+                          ]
+                        }),
+                        e.jsx('div', {
+                          className: 'flex items-center gap-2 mb-4',
+                          children: e.jsxs('div', {
+                            className: 'flex items-center bg-slate-100 rounded-lg p-0.5',
+                            children: [
+                              e.jsxs('button', {
+                                onClick: () => De('paste'),
+                                className: `flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${ue === 'paste' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`,
+                                children: [e.jsx(mt, { size: 14 }), ' Pegar datos']
+                              }),
+                              e.jsxs('button', {
+                                onClick: () => De('scan'),
+                                className: `flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${ue === 'scan' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`,
+                                children: [e.jsx(bt, { size: 14 }), ' Escanear QR / Código']
+                              })
+                            ]
+                          })
+                        }),
+                        G === 'nv' &&
+                          ue === 'paste' &&
+                          e.jsxs('div', {
+                            className: 'flex items-center gap-3 mb-4',
+                            children: [
+                              e.jsxs('label', {
+                                className:
+                                  'flex items-center gap-2 text-xs text-slate-600 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 cursor-pointer select-none font-bold hover:border-slate-300 transition-colors',
+                                children: [
+                                  e.jsx('input', {
+                                    type: 'checkbox',
+                                    checked: ze,
+                                    onChange: (t) => {
+                                      (Qe(t.target.checked), f && setTimeout(() => ke(f), 50));
+                                    },
+                                    className:
+                                      'w-3.5 h-3.5 text-blue-500 rounded focus:ring-blue-500 border-slate-300'
+                                  }),
+                                  'Sin fecha'
+                                ]
+                              }),
+                              e.jsxs('label', {
+                                className:
+                                  'flex items-center gap-2 text-xs text-slate-600 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 cursor-pointer select-none font-bold hover:border-slate-300 transition-colors',
+                                title: 'Cancela ítems que no estén en la selección',
+                                children: [
+                                  e.jsx('input', {
+                                    type: 'checkbox',
+                                    checked: We,
+                                    onChange: (t) => Ye(t.target.checked),
+                                    className:
+                                      'w-3.5 h-3.5 text-rose-500 rounded focus:ring-rose-500 border-slate-300'
+                                  }),
+                                  'Autocancelar faltantes'
+                                ]
+                              })
+                            ]
+                          }),
+                        ue === 'paste' &&
+                          e.jsxs(e.Fragment, {
+                            children: [
+                              e.jsxs('div', {
+                                className:
+                                  'relative bg-white border-2 border-dashed border-slate-200 hover:border-blue-300 rounded-2xl min-h-[360px] transition-all cursor-text group flex flex-col overflow-hidden',
+                                onClick: () => {
+                                  var t;
+                                  return (t = Xe.current) == null ? void 0 : t.focus();
+                                },
+                                children: [
+                                  !f &&
+                                    e.jsxs('div', {
+                                      className:
+                                        'absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center',
+                                      children: [
+                                        e.jsx('div', {
+                                          className:
+                                            'w-14 h-14 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-50 group-hover:border-blue-200 group-hover:text-blue-500 transition-all text-slate-400',
+                                          children: e.jsx(mt, { size: 26 })
+                                        }),
+                                        e.jsx('h3', {
+                                          className: 'text-sm font-bold text-slate-700 mb-1',
+                                          children: 'Pega tus datos aquí'
+                                        }),
+                                        e.jsxs('p', {
+                                          className: 'text-xs text-slate-400 mb-5',
+                                          children: [
+                                            e.jsx('kbd', {
+                                              className:
+                                                'bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 mx-0.5',
+                                              children: 'Ctrl+V'
+                                            }),
+                                            ' ',
+                                            'desde Excel o Google Sheets'
+                                          ]
+                                        }),
+                                        e.jsxs('label', {
+                                          className:
+                                            'flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-xl text-slate-500 font-bold text-xs cursor-pointer transition-all pointer-events-auto',
+                                          children: [
+                                            e.jsx(gt, { size: 14 }),
+                                            ' Subir CSV',
+                                            e.jsx('input', {
+                                              ref: Ae,
+                                              type: 'file',
+                                              accept: '.csv,.tsv,.txt',
+                                              onChange: Pt,
+                                              className: 'hidden'
+                                            })
+                                          ]
+                                        })
+                                      ]
+                                    }),
+                                  e.jsx('textarea', {
+                                    ref: Xe,
+                                    value: f,
+                                    onChange: (t) => D(t.target.value),
+                                    onPaste: Dt,
+                                    className:
+                                      'w-full flex-1 bg-transparent p-5 resize-none outline-none font-mono text-xs text-slate-700 placeholder:text-transparent min-h-[360px] z-10',
+                                    placeholder: 'Pega datos aquí...'
+                                  })
+                                ]
+                              }),
+                              f &&
+                                e.jsx('div', {
+                                  className: 'flex items-center justify-end mt-3',
+                                  children: e.jsxs('button', {
+                                    onClick: () => ke(f),
+                                    disabled: He,
+                                    className:
+                                      'flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50',
+                                    children: [
+                                      He
+                                        ? e.jsx(oe, { size: 16, className: 'animate-spin' })
+                                        : e.jsx(ft, { size: 16 }),
+                                      'Analizar datos'
+                                    ]
+                                  })
+                                })
+                            ]
+                          }),
+                        ue === 'scan' &&
+                          e.jsxs('div', {
+                            className: 'space-y-4',
+                            children: [
+                              e.jsxs('div', {
+                                className: 'bg-white border border-slate-200 rounded-2xl p-6',
+                                children: [
+                                  e.jsxs('div', {
+                                    className: 'flex flex-col items-center text-center mb-5',
+                                    children: [
+                                      e.jsx('div', {
+                                        className:
+                                          'w-16 h-16 bg-violet-50 border border-violet-200 rounded-2xl flex items-center justify-center mb-3 text-violet-500',
+                                        children: e.jsx(Ht, { size: 30 })
+                                      }),
+                                      e.jsx('h3', {
+                                        className: 'text-sm font-bold text-slate-800 mb-1',
+                                        children: 'Escanear QR o Código de Barras'
+                                      }),
+                                      e.jsxs('p', {
+                                        className: 'text-xs text-slate-400',
+                                        children: [
+                                          'Escanea con la cámara o ingresa el código manualmente. Campo destino:',
+                                          ' ',
+                                          e.jsx('span', {
+                                            className: 'font-bold text-violet-600',
+                                            children:
+                                              ((dt = o.columns.find((t) => t.key === Te())) == null
+                                                ? void 0
+                                                : dt.label) || Te()
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  }),
+                                  _t &&
+                                    e.jsx('button', {
+                                      onClick: Rt,
+                                      disabled: tt,
+                                      className:
+                                        'w-full flex items-center justify-center gap-3 px-6 py-4 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-300 text-white rounded-xl font-bold text-sm transition-colors mb-4',
+                                      children: tt
+                                        ? e.jsxs(e.Fragment, {
+                                            children: [
+                                              e.jsx(oe, { size: 20, className: 'animate-spin' }),
+                                              ' Escaneando...'
+                                            ]
+                                          })
+                                        : e.jsxs(e.Fragment, {
+                                            children: [e.jsx(Qt, { size: 20 }), ' Abrir Cámara']
+                                          })
+                                    }),
+                                  e.jsxs('div', {
+                                    className: 'flex items-center gap-2',
+                                    children: [
+                                      e.jsx('input', {
+                                        type: 'text',
+                                        value: pe,
+                                        onChange: (t) => Pe(t.target.value),
+                                        onKeyDown: (t) => {
+                                          t.key === 'Enter' && at();
+                                        },
+                                        placeholder: 'Ingresa código manualmente...',
+                                        className:
+                                          'flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100'
+                                      }),
+                                      e.jsx('button', {
+                                        onClick: at,
+                                        disabled: !pe.trim(),
+                                        className:
+                                          'px-5 py-3 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors',
+                                        children: e.jsx(Wt, { size: 16 })
+                                      })
+                                    ]
+                                  }),
+                                  Je &&
+                                    e.jsxs('div', {
+                                      className:
+                                        'mt-3 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2',
+                                      children: [e.jsx(X, { size: 14 }), Je]
+                                    })
+                                ]
+                              }),
+                              Q.length > 0 &&
+                                e.jsxs('div', {
+                                  className:
+                                    'bg-white border border-slate-200 rounded-2xl overflow-hidden',
+                                  children: [
+                                    e.jsxs('div', {
+                                      className:
+                                        'flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50',
+                                      children: [
+                                        e.jsxs('div', {
+                                          className: 'flex items-center gap-2',
+                                          children: [
+                                            e.jsx(bt, { size: 14, className: 'text-violet-500' }),
+                                            e.jsx('span', {
+                                              className: 'text-xs font-bold text-slate-700',
+                                              children: 'Escaneados'
+                                            }),
+                                            e.jsx('span', {
+                                              className:
+                                                'text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full',
+                                              children: Q.length
+                                            })
+                                          ]
+                                        }),
+                                        e.jsx('button', {
+                                          onClick: () => ve([]),
+                                          className:
+                                            'text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors',
+                                          children: 'Limpiar todo'
+                                        })
+                                      ]
+                                    }),
+                                    e.jsx('div', {
+                                      className:
+                                        'max-h-[300px] overflow-y-auto divide-y divide-slate-100',
+                                      children: Q.map((t, s) =>
+                                        e.jsxs(
+                                          'div',
+                                          {
+                                            className:
+                                              'flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors',
+                                            children: [
+                                              e.jsx('span', {
+                                                className:
+                                                  'text-[10px] font-mono text-slate-400 w-6 text-right shrink-0',
+                                                children: s + 1
+                                              }),
+                                              e.jsxs('div', {
+                                                className: 'flex-1 min-w-0',
+                                                children: [
+                                                  e.jsx('div', {
+                                                    className: 'flex items-center gap-2 mb-0.5',
+                                                    children: e.jsx('span', {
+                                                      className:
+                                                        'text-xs font-bold font-mono text-slate-800 truncate',
+                                                      children: t._rawValue
+                                                    })
+                                                  }),
+                                                  t.producto &&
+                                                    e.jsx('p', {
+                                                      className:
+                                                        'text-[10px] text-slate-400 truncate',
+                                                      children: t.producto
+                                                    })
+                                                ]
+                                              }),
+                                              e.jsx('button', {
+                                                onClick: () => $t(s),
+                                                className:
+                                                  'w-7 h-7 rounded-lg bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all shrink-0',
+                                                children: e.jsx(Yt, { size: 12 })
+                                              })
+                                            ]
+                                          },
+                                          t._scannedAt + s
+                                        )
+                                      )
+                                    }),
+                                    e.jsx('div', {
+                                      className: 'px-5 py-3 border-t border-slate-100 bg-slate-50',
+                                      children: e.jsxs('button', {
+                                        onClick: It,
+                                        className:
+                                          'w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm transition-colors',
+                                        children: [
+                                          e.jsx(ft, { size: 16 }),
+                                          'Procesar ',
+                                          Q.length,
+                                          ' escaneado',
+                                          Q.length !== 1 ? 's' : ''
+                                        ]
+                                      })
+                                    })
+                                  ]
+                                })
+                            ]
+                          })
+                      ]
+                    }),
+                  ee === 'preview' &&
+                    n.length > 0 &&
+                    e.jsxs('div', {
+                      className: 'flex flex-col gap-4',
+                      children: [
+                        Be > 0 &&
+                          e.jsxs('div', {
+                            className:
+                              'flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800',
+                            children: [
+                              e.jsx(X, { size: 18, className: 'shrink-0 mt-0.5' }),
+                              e.jsxs('span', {
+                                children: [
+                                  e.jsx('b', { children: Be.toLocaleString() }),
+                                  ' fila(s) se ignoraron por faltar campos obligatorios (',
+                                  o.columns
+                                    .filter((t) => t.required)
+                                    .map((t) => t.label)
+                                    .join(', '),
+                                  '). Se cargarán solo las ',
+                                  n.length.toLocaleString(),
+                                  ' filas válidas. Corrige esas filas en el archivo si necesitas incluirlas.'
+                                ]
+                              })
+                            ]
+                          }),
+                        I &&
+                          e.jsxs('div', {
+                            className: 'flex flex-col gap-3',
+                            children: [
+                              e.jsxs('div', {
+                                className:
+                                  'flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3',
+                                children: [
+                                  e.jsx(Ve, { size: 18, className: 'text-orange-600 shrink-0' }),
+                                  e.jsxs('span', {
+                                    className: 'text-sm text-orange-900',
+                                    children: [
+                                      'Destino: catálogo del canal ',
+                                      e.jsx('b', { className: 'uppercase', children: P }),
+                                      _
+                                        ? e.jsxs(e.Fragment, {
+                                            children: [
+                                              ' ',
+                                              '· actualmente hay ',
+                                              e.jsx('b', { children: _.actual.toLocaleString() }),
+                                              ' N.V. en',
+                                              ' ',
+                                              P.toUpperCase(),
+                                              '.'
+                                            ]
+                                          })
+                                        : ' · verificando…'
+                                    ]
+                                  })
+                                ]
+                              }),
+                              _ &&
+                                _.count > 0 &&
+                                e.jsxs('div', {
+                                  className:
+                                    'flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800',
+                                  children: [
+                                    e.jsx(X, {
+                                      size: 18,
+                                      className: 'shrink-0 mt-0.5 text-red-500'
+                                    }),
+                                    e.jsxs('span', {
+                                      children: [
+                                        e.jsx('b', { children: _.count.toLocaleString() }),
+                                        ' N.V. de este archivo ya existen en el canal ',
+                                        e.jsx('b', { children: _.canalOtro }),
+                                        P !== 'ptm' &&
+                                          e.jsxs(e.Fragment, {
+                                            children: [
+                                              ' ',
+                                              '— y PTM no comparte numeración con Orange/Farmapack, así que esto suele indicar que el archivo es de ',
+                                              e.jsx('b', { children: 'otro canal' })
+                                            ]
+                                          }),
+                                        '. Ej: ',
+                                        _.ejemplos.join(', '),
+                                        '.',
+                                        ' ',
+                                        e.jsxs('b', {
+                                          children: [
+                                            'Revisá que el archivo corresponda a ',
+                                            P.toUpperCase()
+                                          ]
+                                        }),
+                                        ' antes de confirmar.'
+                                      ]
+                                    })
+                                  ]
+                                }),
+                              xe.count > 0 &&
+                                e.jsxs('div', {
+                                  className: `flex items-start gap-2 rounded-xl px-4 py-3 text-sm ${L ? 'bg-red-100 border-2 border-red-400 text-red-900' : 'bg-amber-50 border border-amber-200 text-amber-900'}`,
+                                  children: [
+                                    e.jsx(X, {
+                                      size: 18,
+                                      className: `shrink-0 mt-0.5 ${L ? 'text-red-600' : 'text-amber-500'}`
+                                    }),
+                                    e.jsxs('span', {
+                                      children: [
+                                        L
+                                          ? e.jsx('b', {
+                                              children: '⛔ Archivo descuadrado — carga bloqueada. '
+                                            })
+                                          : e.jsx('b', { children: 'Revisa el archivo. ' }),
+                                        e.jsx('b', { children: xe.count.toLocaleString() }),
+                                        ' fila(s) traen el',
+                                        ' ',
+                                        e.jsx('b', { children: 'Nombre Cliente' }),
+                                        ' con un monto o número en vez de un nombre (columnas corridas o archivo de otro tipo). Ej: ',
+                                        xe.ejemplos.join(' · '),
+                                        '.',
+                                        L &&
+                                          e.jsxs(e.Fragment, {
+                                            children: [
+                                              ' ',
+                                              'Corrige el Excel (que la columna Cliente sea el nombre) y vuelve a pegarlo.'
+                                            ]
+                                          })
+                                      ]
+                                    })
+                                  ]
+                                }),
+                              me.count > 0 &&
+                                e.jsxs('div', {
+                                  className: `flex items-start gap-2 rounded-xl px-4 py-3 text-sm ${L ? 'bg-red-100 border-2 border-red-400 text-red-900' : 'bg-amber-50 border border-amber-200 text-amber-900'}`,
+                                  children: [
+                                    e.jsx(X, {
+                                      size: 18,
+                                      className: `shrink-0 mt-0.5 ${L ? 'text-red-600' : 'text-amber-500'}`
+                                    }),
+                                    e.jsxs('span', {
+                                      children: [
+                                        L
+                                          ? e.jsx('b', {
+                                              children:
+                                                '⛔ Largo de N.V. incorrecto — carga bloqueada. '
+                                            })
+                                          : e.jsx('b', { children: 'Revisa el largo de N.V. ' }),
+                                        'En ',
+                                        e.jsx('b', { children: P.toUpperCase() }),
+                                        ' las N.V. suelen tener',
+                                        ' ',
+                                        e.jsx('b', {
+                                          children: te == null ? void 0 : te.principal
+                                        }),
+                                        ' dígitos, pero',
+                                        ' ',
+                                        e.jsx('b', { children: me.count.toLocaleString() }),
+                                        ' fila(s) traen otro largo (posible archivo de otro canal o dato mal pegado). Ej: ',
+                                        me.ejemplos.join(' · '),
+                                        '.',
+                                        L &&
+                                          e.jsxs(e.Fragment, {
+                                            children: [
+                                              ' Revisa que el archivo sea de ',
+                                              P.toUpperCase(),
+                                              '.'
+                                            ]
+                                          })
+                                      ]
+                                    })
+                                  ]
+                                }),
+                              e.jsxs('label', {
+                                className:
+                                  'flex items-start gap-2.5 bg-white border border-slate-200 rounded-xl px-4 py-3 cursor-pointer',
+                                children: [
+                                  e.jsx('input', {
+                                    type: 'checkbox',
+                                    checked: se,
+                                    onChange: (t) => Ze(t.target.checked),
+                                    className: 'mt-0.5 w-4 h-4 accent-emerald-600'
+                                  }),
+                                  e.jsxs('span', {
+                                    className: 'text-sm text-slate-700',
+                                    children: [
+                                      e.jsxs('b', {
+                                        children: ['Reemplazar todo el canal ', P.toUpperCase()]
+                                      }),
+                                      ' con este archivo',
+                                      e.jsxs('span', {
+                                        className: 'block text-xs text-slate-400 mt-0.5',
+                                        children: [
+                                          'Borra las ',
+                                          _ ? _.actual.toLocaleString() : '—',
+                                          ' N.V. actuales de',
+                                          ' ',
+                                          P.toUpperCase(),
+                                          ' y deja EXACTAMENTE las de este archivo. Úsalo para corregir cargas mezcladas o dejar el canal limpio (sin residuos ni duplicados).'
+                                        ]
+                                      })
+                                    ]
+                                  })
+                                ]
+                              })
+                            ]
+                          }),
+                        e.jsxs('div', {
+                          className:
+                            'flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white p-2 sm:p-3 rounded-xl border border-slate-200',
+                          children: [
+                            e.jsx(le, { icon: Ke, label: 'Total', value: A.total, color: 'slate' }),
+                            e.jsx(le, {
+                              icon: Ue,
+                              label: 'Nuevas',
+                              value: A.new,
+                              color: 'emerald'
+                            }),
+                            A.update > 0 &&
+                              e.jsx(le, {
+                                icon: _e,
+                                label: 'Actualizar',
+                                value: A.update,
+                                color: 'blue'
+                              }),
+                            A.existing > 0 &&
+                              e.jsx(le, {
+                                icon: ht,
+                                label: 'Existen',
+                                value: A.existing,
+                                color: 'amber'
+                              }),
+                            A.deleted > 0 &&
+                              e.jsx(le, {
+                                icon: yt,
+                                label: 'Eliminadas',
+                                value: A.deleted,
+                                color: 'rose'
+                              }),
+                            A.error > 0 &&
+                              e.jsx(le, {
+                                icon: vt,
+                                label: 'Errores',
+                                value: A.error,
+                                color: 'red'
+                              }),
+                            e.jsx('div', { className: 'flex-1' }),
+                            e.jsxs('button', {
+                              onClick: Mt,
+                              disabled: ne || L || (A.new === 0 && A.update === 0 && !(I && se)),
+                              title: L
+                                ? 'El archivo parece incorrecto (columnas descuadradas o de otro canal). Corrígelo antes de cargar.'
+                                : void 0,
+                              className:
+                                'flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 text-white rounded-xl font-bold text-sm transition-colors disabled:cursor-not-allowed',
+                              children: [
+                                ne
+                                  ? e.jsx(oe, { size: 16, className: 'animate-spin' })
+                                  : e.jsx(gt, { size: 16 }),
+                                ne
+                                  ? Re.total > 0
+                                    ? `Lote ${Re.current}/${Re.total}...`
+                                    : 'Preparando...'
+                                  : I && se
+                                    ? `Reemplazar ${P.toUpperCase()} (${A.new + A.update})`
+                                    : `Confirmar (${A.new + A.update})`
+                              ]
+                            })
+                          ]
+                        }),
+                        e.jsx('div', {
+                          className:
+                            'bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col',
+                          style: { maxHeight: 'calc(100vh - 340px)' },
+                          children: e.jsx('div', {
+                            className: 'overflow-auto flex-1',
+                            children: e.jsxs('table', {
+                              className: 'w-full text-sm text-left border-collapse',
+                              children: [
+                                e.jsx('thead', {
+                                  className:
+                                    'bg-slate-50 text-slate-400 uppercase text-[10px] font-bold tracking-wider sticky top-0 z-10',
+                                  children: e.jsxs('tr', {
+                                    children: [
+                                      e.jsx('th', { className: 'px-3 py-3 w-10', children: '#' }),
+                                      e.jsx('th', {
+                                        className: 'px-3 py-3 w-20',
+                                        children: 'Estado'
+                                      }),
+                                      o.columns.map((t) =>
+                                        e.jsx(
+                                          'th',
+                                          {
+                                            className: 'px-3 py-3 whitespace-nowrap',
+                                            children: t.label
+                                          },
+                                          t.key
+                                        )
+                                      )
+                                    ]
+                                  })
+                                }),
+                                e.jsxs('tbody', {
+                                  className: 'divide-y divide-slate-100',
+                                  children: [
+                                    n.slice(0, 500).map((t, s) => {
+                                      const a = w[s] || 'new',
+                                        d = {
+                                          new: '',
+                                          update: 'bg-blue-50/30',
+                                          existing: 'bg-amber-50/30',
+                                          deleted: 'bg-rose-50/20',
+                                          loaded: 'bg-blue-50/30',
+                                          error: 'bg-red-50/30'
+                                        },
+                                        g = {
+                                          new: e.jsx(Ue, {
+                                            size: 13,
+                                            className: 'text-emerald-500'
+                                          }),
+                                          update: e.jsx(_e, {
+                                            size: 13,
+                                            className: 'text-blue-500'
+                                          }),
+                                          existing: e.jsx(ht, {
+                                            size: 13,
+                                            className: 'text-amber-500'
+                                          }),
+                                          deleted: e.jsx(yt, {
+                                            size: 13,
+                                            className: 'text-rose-400'
+                                          }),
+                                          loaded: e.jsx(Ct, {
+                                            size: 13,
+                                            className: 'text-blue-500'
+                                          }),
+                                          error: e.jsx(vt, { size: 13, className: 'text-red-500' })
+                                        },
+                                        p = {
+                                          new: 'Nueva',
+                                          update: 'Actualiza',
+                                          existing: 'Existe',
+                                          deleted: 'Eliminada',
+                                          loaded: 'OK',
+                                          error: 'Error'
+                                        };
+                                      return e.jsxs(
+                                        'tr',
+                                        {
+                                          className: `${d[a]} hover:bg-slate-50/50 transition-colors`,
+                                          children: [
+                                            e.jsx('td', {
+                                              className:
+                                                'px-3 py-2.5 text-slate-400 font-mono text-[10px]',
+                                              children: s + 1
+                                            }),
+                                            e.jsx('td', {
+                                              className: 'px-3 py-2.5',
+                                              children: e.jsxs('div', {
+                                                className: 'flex items-center gap-1',
+                                                title: p[a],
+                                                children: [
+                                                  g[a],
+                                                  e.jsx('span', {
+                                                    className:
+                                                      'text-[10px] font-bold text-slate-500',
+                                                    children: p[a]
+                                                  })
+                                                ]
+                                              })
+                                            }),
+                                            o.columns.map((m) =>
+                                              e.jsx(
+                                                'td',
+                                                {
+                                                  className:
+                                                    'px-3 py-2.5 text-slate-600 whitespace-nowrap max-w-[180px] truncate text-xs',
+                                                  title: String(t[m.key] || ''),
+                                                  children:
+                                                    m.type === 'number'
+                                                      ? e.jsx('span', {
+                                                          className:
+                                                            'font-mono font-bold text-slate-800',
+                                                          children: t[m.key]
+                                                        })
+                                                      : e.jsx('span', {
+                                                          children:
+                                                            t[m.key] ||
+                                                            e.jsx('span', {
+                                                              className: 'text-slate-300',
+                                                              children: '-'
+                                                            })
+                                                        })
+                                                },
+                                                m.key
+                                              )
+                                            )
+                                          ]
+                                        },
+                                        s
+                                      );
+                                    }),
+                                    n.length > 500 &&
+                                      e.jsx('tr', {
+                                        children: e.jsxs('td', {
+                                          colSpan: o.columns.length + 2,
+                                          className:
+                                            'px-4 py-6 bg-slate-50 text-center text-xs text-slate-400 font-bold',
+                                          children: [
+                                            'Vista previa: 500 de ',
+                                            n.length.toLocaleString(),
+                                            ' filas · Se procesarán todas al confirmar'
+                                          ]
+                                        })
+                                      })
+                                  ]
+                                })
+                              ]
+                            })
+                          })
+                        })
+                      ]
+                    }),
+                  ee === 'done' &&
+                    $ &&
+                    e.jsx('div', {
+                      className: 'max-w-lg mx-auto mt-8',
+                      children: e.jsxs('div', {
+                        className: 'bg-white border border-slate-200 rounded-2xl p-8 text-center',
+                        children: [
+                          e.jsx('div', {
+                            className: `w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-5 ${$.success ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`,
+                            children: $.success ? e.jsx(Ue, { size: 32 }) : e.jsx(X, { size: 32 })
+                          }),
+                          e.jsx('h2', {
+                            className: 'text-lg font-extrabold text-slate-900 mb-2',
+                            children: $.success ? 'Carga completada' : 'Error en la carga'
+                          }),
+                          e.jsx('p', {
+                            className: 'text-sm text-slate-500 mb-6',
+                            children: $.message
+                          }),
+                          e.jsxs('div', {
+                            className: `grid ${$.deduplicated > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-3 mb-6`,
+                            children: [
+                              e.jsxs('div', {
+                                className: 'bg-emerald-50 border border-emerald-100 rounded-xl p-4',
+                                children: [
+                                  e.jsx('p', {
+                                    className: 'text-2xl font-extrabold text-emerald-600',
+                                    children: $.inserted
+                                  }),
+                                  e.jsx('p', {
+                                    className:
+                                      'text-[10px] font-bold text-emerald-700 uppercase tracking-wider',
+                                    children: 'Cargados'
+                                  })
+                                ]
+                              }),
+                              $.deduplicated > 0 &&
+                                e.jsxs('div', {
+                                  className: 'bg-violet-50 border border-violet-100 rounded-xl p-4',
+                                  children: [
+                                    e.jsx('p', {
+                                      className: 'text-2xl font-extrabold text-violet-600',
+                                      children: $.deduplicated
+                                    }),
+                                    e.jsx('p', {
+                                      className:
+                                        'text-[10px] font-bold text-violet-700 uppercase tracking-wider',
+                                      children: 'Duplicados'
+                                    })
+                                  ]
+                                }),
+                              e.jsxs('div', {
+                                className: 'bg-amber-50 border border-amber-100 rounded-xl p-4',
+                                children: [
+                                  e.jsx('p', {
+                                    className: 'text-2xl font-extrabold text-amber-600',
+                                    children: $.skipped
+                                  }),
+                                  e.jsx('p', {
+                                    className:
+                                      'text-[10px] font-bold text-amber-700 uppercase tracking-wider',
+                                    children: 'Ignorados'
+                                  })
+                                ]
+                              }),
+                              e.jsxs('div', {
+                                className: 'bg-red-50 border border-red-100 rounded-xl p-4',
+                                children: [
+                                  e.jsx('p', {
+                                    className: 'text-2xl font-extrabold text-red-600',
+                                    children: $.errors
+                                  }),
+                                  e.jsx('p', {
+                                    className:
+                                      'text-[10px] font-bold text-red-700 uppercase tracking-wider',
+                                    children: 'Errores'
+                                  })
+                                ]
+                              })
+                            ]
+                          }),
+                          ((ct = $.errorDetails) == null ? void 0 : ct.length) > 0 &&
+                            e.jsxs('div', {
+                              className:
+                                'bg-red-50 border border-red-200 rounded-xl p-4 text-left mb-6 max-h-36 overflow-y-auto',
+                              children: [
+                                e.jsx('p', {
+                                  className:
+                                    'text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2',
+                                  children: 'Detalle:'
+                                }),
+                                $.errorDetails.map((t, s) =>
+                                  e.jsx(
+                                    'p',
+                                    {
+                                      className: 'text-xs text-red-600 font-mono mb-1',
+                                      children: t
+                                    },
+                                    s
+                                  )
+                                )
+                              ]
+                            }),
+                          e.jsxs('button', {
+                            onClick: $e,
+                            className:
+                              'px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm transition-colors',
+                            children: [
+                              e.jsx(_e, { size: 14, className: 'inline mr-2' }),
+                              'Nueva carga'
+                            ]
+                          })
+                        ]
+                      })
+                    })
+                ]
+              })
+            ]
+          });
+  },
+  le = ({ icon: l, label: C, value: F, color: Y }) => {
+    const B = {
+      slate: 'bg-slate-50 border-slate-200 text-slate-600',
+      emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+      blue: 'bg-blue-50 border-blue-200 text-blue-700',
+      amber: 'bg-amber-50 border-amber-200 text-amber-700',
+      rose: 'bg-rose-50 border-rose-200 text-rose-700',
+      red: 'bg-red-50 border-red-200 text-red-700'
+    };
+    return e.jsxs('div', {
+      className: `flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold ${B[Y]}`,
+      children: [
+        e.jsx(l, { size: 13 }),
+        e.jsxs('span', { children: [C, ':'] }),
+        e.jsx('strong', { className: 'text-sm', children: F })
+      ]
+    });
+  };
+export { us as default };

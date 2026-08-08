@@ -33,6 +33,7 @@ import d3 from '../../data/diagramas/3-operaciones.json';
 import d4 from '../../data/diagramas/4-tms.json';
 import d5 from '../../data/diagramas/5-postventa.json';
 import { obtenerFlujo, guardarFlujo } from '../../services/flujoService';
+import ArchitectureExplorer from './ArchitectureExplorer';
 
 // Forma/dimensiones por tipo (independiente del tema).
 const SHAPE = {
@@ -122,6 +123,35 @@ const DOMAIN = {
 };
 
 export default function FlujoMaestro() {
+  const [mode, setMode] = useState('architecture');
+
+  if (mode === 'architecture') {
+    return <ArchitectureExplorer onOpenFlow={() => setMode('operational')} />;
+  }
+
+  return (
+    <>
+      <div className="mx-[calc(50%-50vw)] mb-3 flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:px-6 lg:px-8">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-orange-600">
+            Vista secundaria
+          </p>
+          <p className="text-xs font-bold text-slate-700">Editor manual de flujos operativos</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMode('architecture')}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2 text-[11px] font-black text-white hover:bg-orange-500"
+        >
+          <WorkflowIcon size={14} /> Volver a Arquitectura CCO
+        </button>
+      </div>
+      <FlujoOperativo />
+    </>
+  );
+}
+
+function FlujoOperativo() {
   const nav = useNavigate();
   const { hasPermission, user } = useAuth();
   const puedeEditar =
