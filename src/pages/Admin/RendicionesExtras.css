@@ -45,3 +45,203 @@
   border-color: #f97316;
   color: #c2410c;
 }
+
+.ra-public-access {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 20px;
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  background: linear-gradient(115deg, #fff7ed 0%, #ffffff 55%, #f0fdf4 100%);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+}
+
+.ra-public-access-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #f97316, #ea580c);
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgb(249 115 22 / 22%);
+}
+
+.ra-public-access h2,
+.ra-public-access p {
+  margin: 0;
+}
+
+.ra-public-access > div > span {
+  color: #c2410c;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.ra-public-access h2 {
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.ra-public-access p {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.ra-public-access code {
+  display: inline-block;
+  margin-top: 8px;
+  color: #0f766e;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ra-public-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ra-public-actions button,
+.ra-public-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ra-public-actions button {
+  color: #fff;
+  background: #f97316;
+}
+
+.ra-public-actions a {
+  color: #334155;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+}
+
+.ra-catalog-panel {
+  margin-bottom: 14px;
+}
+
+.ra-catalog-fields .ra-record-selector {
+  flex: 1.7;
+}
+
+.ra-catalog-fields select,
+.ra-catalog-fields input {
+  height: 40px;
+  background: #fff;
+}
+
+.ra-advanced {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ra-advanced > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.ra-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ra-advanced > summary svg {
+  color: #f97316;
+}
+
+.ra-advanced > summary h2,
+.ra-advanced > summary p {
+  margin: 0;
+}
+
+.ra-advanced > summary h2 {
+  font-size: 14px;
+}
+
+.ra-advanced > summary p {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.ra-advanced > summary > span {
+  margin-left: auto;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.ra-advanced[open] > summary {
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.ra-advanced-form,
+.ra-advanced .ra-links {
+  margin: 0 18px 16px;
+}
+
+.ra-empty-compact {
+  width: 100%;
+  padding: 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .ra-public-access {
+    grid-template-columns: auto 1fr;
+  }
+
+  .ra-public-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 560px) {
+  .ra-public-access {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .ra-public-access-icon {
+    margin: 0 auto;
+  }
+
+  .ra-public-access code {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ra-public-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ra-catalog-fields .ra-record-selector {
+    flex-basis: 100%;
+  }
+}

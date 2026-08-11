@@ -5,6 +5,7 @@ import {
   Download,
   ExternalLink,
   FileSpreadsheet,
+  Globe2,
   Link2,
   Plus,
   RefreshCw,
@@ -143,6 +144,28 @@ export default function Rendiciones() {
     }
   };
 
+  const selectCatalogItem = (id) => {
+    const items = catalog.tipo === 'centro' ? data.centros : data.colaboradores;
+    const item = items.find((candidate) => candidate.id === id);
+    setCatalog({
+      id: item?.id || '',
+      tipo: catalog.tipo,
+      codigo: item?.codigo || '',
+      nombre: item?.nombre || '',
+      activo: item?.activo ?? true
+    });
+  };
+
+  const copyTechnicianLink = async () => {
+    const url = publicUrl('/rendiciones');
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Enlace público copiado. Ya puedes enviarlo a los técnicos.');
+    } catch {
+      toast.info(url, { description: 'Copia este enlace para compartirlo.' });
+    }
+  };
+
   const usedMb = Number(data.storage?.bytes || 0) / 1024 / 1024;
   const percent = Math.min(100, (usedMb / 1024) * 100);
   return (
@@ -195,72 +218,36 @@ export default function Rendiciones() {
       </section>
 
       {canManage && (
-        <section className="ra-admin-grid">
-          <form className="ra-panel" onSubmit={createLink}>
-            <div className="ra-title">
-              <Link2 />
-              <div>
-                <h2>Crear enlace público</h2>
-                <p>El secreto se entrega y copia una sola vez.</p>
-              </div>
+        <>
+          <section className="ra-public-access">
+            <div className="ra-public-access-icon">
+              <Globe2 />
             </div>
-            <div className="ra-fields">
-              <label>
-                Nombre
-                <input
-                  maxLength="120"
-                  value={newLink.nombre}
-                  onChange={(e) => setNewLink({ ...newLink, nombre: e.target.value })}
-                  placeholder="Ej.: Rendiciones agosto"
-                />
-              </label>
-              <label>
-                Expira (opcional)
-                <input
-                  type="datetime-local"
-                  value={newLink.expires}
-                  onChange={(e) => setNewLink({ ...newLink, expires: e.target.value })}
-                />
-              </label>
-              <label>
-                Máx. envíos
-                <input
-                  type="number"
-                  min="1"
-                  max="10000"
-                  value={newLink.max}
-                  onChange={(e) => setNewLink({ ...newLink, max: e.target.value })}
-                  placeholder="Sin límite"
-                />
-              </label>
-              <button>
-                <Plus size={17} /> Crear y copiar
+            <div>
+              <span>ACCESO PARA TÉCNICOS</span>
+              <h2>Formulario público de rendiciones</h2>
+              <p>Enlace único y permanente, sin inicio de sesión. Las fotos permanecen privadas.</p>
+              <code>{publicUrl('/rendiciones')}</code>
+            </div>
+            <div className="ra-public-actions">
+              <button type="button" onClick={copyTechnicianLink}>
+                <Copy size={17} /> Copiar enlace
               </button>
+              <a href={publicUrl('/rendiciones')} target="_blank" rel="noreferrer">
+                <ExternalLink size={17} /> Abrir formulario
+              </a>
             </div>
-            {createdUrl && (
-              <div className="ra-created-link">
-                <span>{createdUrl}</span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(createdUrl);
-                    toast.success('Enlace copiado.');
-                  }}
-                >
-                  <Copy size={15} /> Copiar
-                </button>
-              </div>
-            )}
-          </form>
-          <form className="ra-panel" onSubmit={saveCatalog}>
+          </section>
+
+          <form className="ra-panel ra-catalog-panel" onSubmit={saveCatalog}>
             <div className="ra-title">
               <Users />
               <div>
                 <h2>Catálogos del formulario</h2>
-                <p>Selecciona un registro para editar su nombre oficial.</p>
+                <p>Selecciona un registro desde las listas desplegables para editarlo.</p>
               </div>
             </div>
-            <div className="ra-fields">
+            <div className="ra-fields ra-catalog-fields">
               <label>
                 Tipo
                 <select
@@ -277,6 +264,19 @@ export default function Rendiciones() {
                 >
                   <option value="centro">Centro de costo</option>
                   <option value="colaborador">Colaborador</option>
+                </select>
+              </label>
+              <label className="ra-record-selector">
+                Registro
+                <select value={catalog.id} onChange={(e) => selectCatalogItem(e.target.value)}>
+                  <option value="">+ Agregar registro nuevo</option>
+                  {(catalog.tipo === 'centro' ? data.centros : data.colaboradores).map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.codigo ? `${item.codigo} · ` : ''}
+                      {item.nombre}
+                      {item.activo ? '' : ' (inactivo)'}
+                    </option>
+                  ))}
                 </select>
               </label>
               {catalog.tipo === 'centro' && (
@@ -303,28 +303,8 @@ export default function Rendiciones() {
                 <Plus size={17} /> {catalog.id ? 'Guardar' : 'Agregar'}
               </button>
             </div>
-            <div className="ra-catalog-list">
-              {(catalog.tipo === 'centro' ? data.centros : data.colaboradores).map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  onClick={() =>
-                    setCatalog({
-                      id: item.id,
-                      tipo: catalog.tipo,
-                      codigo: item.codigo || '',
-                      nombre: item.nombre,
-                      activo: item.activo
-                    })
-                  }
-                >
-                  {item.codigo ? `${item.codigo} · ` : ''}
-                  {item.nombre}
-                </button>
-              ))}
-            </div>
           </form>
-        </section>
+        </>
       )}
 
       <section className="ra-panel">
@@ -386,40 +366,100 @@ export default function Rendiciones() {
       </section>
 
       {canManage && (
-        <section className="ra-panel">
-          <div className="ra-title">
+        <details className="ra-panel ra-advanced">
+          <summary>
             <Link2 />
             <div>
-              <h2>Enlaces emitidos</h2>
-              <p>Por seguridad, un enlace no puede volver a revelar su token después de crearlo.</p>
+              <h2>Enlaces privados o temporales</h2>
+              <p>Opción avanzada para campañas con fecha de vencimiento o límite de envíos.</p>
             </div>
-          </div>
-          <div className="ra-links">
-            {data.links.map((link) => (
-              <article key={link.id}>
-                <div>
-                  <b>{link.nombre}</b>
-                  <span>
-                    {link.submissions_count} envíos ·{' '}
-                    {link.expires_at
-                      ? `expira ${new Date(link.expires_at).toLocaleString('es-CL')}`
-                      : 'sin expiración'}
-                  </span>
-                </div>
+            <span>Configurar</span>
+          </summary>
+          <form className="ra-advanced-form" onSubmit={createLink}>
+            <div className="ra-fields">
+              <label>
+                Nombre del enlace
+                <input
+                  maxLength="120"
+                  value={newLink.nombre}
+                  onChange={(e) => setNewLink({ ...newLink, nombre: e.target.value })}
+                  placeholder="Ej.: Rendiciones agosto"
+                />
+              </label>
+              <label>
+                Expira (opcional)
+                <input
+                  type="datetime-local"
+                  value={newLink.expires}
+                  onChange={(e) => setNewLink({ ...newLink, expires: e.target.value })}
+                />
+              </label>
+              <label>
+                Máx. envíos
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  value={newLink.max}
+                  onChange={(e) => setNewLink({ ...newLink, max: e.target.value })}
+                  placeholder="Sin límite"
+                />
+              </label>
+              <button>
+                <Plus size={17} /> Crear y copiar
+              </button>
+            </div>
+            {createdUrl && (
+              <div className="ra-created-link">
+                <span>{createdUrl}</span>
                 <button
-                  className={link.activo ? 'danger' : ''}
+                  type="button"
                   onClick={async () => {
-                    await rendicionesAdmin.toggleLink(link.id, !link.activo);
-                    toast.success(link.activo ? 'Enlace desactivado.' : 'Enlace reactivado.');
-                    load();
+                    await navigator.clipboard.writeText(createdUrl);
+                    toast.success('Enlace copiado.');
                   }}
                 >
-                  {link.activo ? 'Desactivar' : 'Reactivar'}
+                  <Copy size={15} /> Copiar
                 </button>
-              </article>
-            ))}
+              </div>
+            )}
+          </form>
+          <div className="ra-links">
+            {data.links
+              .filter((link) => !link.es_public_default)
+              .map((link) => (
+                <article key={link.id}>
+                  <div>
+                    <b>{link.nombre}</b>
+                    <span>
+                      {link.submissions_count} envíos ·{' '}
+                      {link.expires_at
+                        ? `expira ${new Date(link.expires_at).toLocaleString('es-CL')}`
+                        : 'sin expiración'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={link.activo ? 'danger' : ''}
+                    onClick={async () => {
+                      try {
+                        await rendicionesAdmin.toggleLink(link.id, !link.activo);
+                        toast.success(link.activo ? 'Enlace desactivado.' : 'Enlace reactivado.');
+                        load();
+                      } catch (error) {
+                        toast.error(error.message);
+                      }
+                    }}
+                  >
+                    {link.activo ? 'Desactivar' : 'Reactivar'}
+                  </button>
+                </article>
+              ))}
+            {data.links.filter((link) => !link.es_public_default).length === 0 && (
+              <div className="ra-empty ra-empty-compact">No hay enlaces temporales creados.</div>
+            )}
           </div>
-        </section>
+        </details>
       )}
 
       {detail && (

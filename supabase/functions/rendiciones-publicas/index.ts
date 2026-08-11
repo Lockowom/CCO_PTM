@@ -86,6 +86,22 @@ async function parseJson(req: Request) {
   return await req.json();
 }
 
+async function resolvePublicLink(db: ReturnType<typeof createClient>, rawToken: unknown) {
+  const token = String(rawToken || '').toLowerCase();
+  if (token && !TOKEN_RE.test(token)) return null;
+
+  const query = db
+    .from('rendicion_public_links')
+    .select(
+      'id,nombre,token_hash,activo,expires_at,max_submissions,submissions_count,es_public_default'
+    );
+  const { data: link } = token
+    ? await query.eq('token_hash', await sha256(token)).maybeSingle()
+    : await query.eq('es_public_default', true).maybeSingle();
+
+  return link ? { link, linkHash: link.token_hash as string } : null;
+}
+
 serve(async (req) => {
   const origin = allowedOrigin(req);
   const headers = responseHeaders(origin);
@@ -122,7 +138,7 @@ serve(async (req) => {
       const itemId = String(form.get('item_id') || '');
       const file = form.get('file');
       if (
-        !TOKEN_RE.test(token) ||
+        (token && !TOKEN_RE.test(token)) ||
         !TOKEN_RE.test(viewToken) ||
         !UUID_RE.test(reportId) ||
         !UUID_RE.test(itemId)
@@ -141,26 +157,24 @@ serve(async (req) => {
         );
       }
 
-      const [linkHash, viewHash] = await Promise.all([sha256(token), sha256(viewToken)]);
+      const resolved = await resolvePublicLink(db, token);
+      if (!resolved) return json({ ok: false, error: 'Enlace no disponible.' }, 403);
+      const { link } = resolved;
+      if (!link.activo || (link.expires_at && new Date(link.expires_at) <= new Date())) {
+        return json({ ok: false, error: 'El enlace expiró o fue desactivado.' }, 403);
+      }
+
+      const viewHash = await sha256(viewToken);
       const { data: report } = await db
         .from('rendiciones')
         .select('id,public_link_id,view_token_hash,rendicion_items!inner(id)')
         .eq('id', reportId)
         .eq('view_token_hash', viewHash)
+        .eq('public_link_id', link.id)
         .eq('rendicion_items.id', itemId)
         .maybeSingle();
       if (!report)
         return json({ ok: false, error: 'La rendición o el gasto no son válidos.' }, 403);
-      const { data: link } = await db
-        .from('rendicion_public_links')
-        .select('id,activo,expires_at')
-        .eq('id', report.public_link_id)
-        .eq('token_hash', linkHash)
-        .maybeSingle();
-      if (!link?.activo || (link.expires_at && new Date(link.expires_at) <= new Date())) {
-        return json({ ok: false, error: 'El enlace expiró o fue desactivado.' }, 403);
-      }
-
       const [{ count: reportFiles }, { count: itemFiles }] = await Promise.all([
         db
           .from('rendicion_fotos')
@@ -219,17 +233,12 @@ serve(async (req) => {
 
     const body = await parseJson(req);
     const action = String(body?.action || '');
-    const token = String(body?.token || '').toLowerCase();
-    if (!TOKEN_RE.test(token)) return json({ ok: false, error: 'Enlace inválido.' }, 403);
-    const linkHash = await sha256(token);
-
-    const { data: link } = await db
-      .from('rendicion_public_links')
-      .select('id,nombre,activo,expires_at,max_submissions,submissions_count')
-      .eq('token_hash', linkHash)
-      .maybeSingle();
+    const resolved = await resolvePublicLink(db, body?.token);
+    const link = resolved?.link;
+    const linkHash = resolved?.linkHash;
     if (
       !link ||
+      !linkHash ||
       (action !== 'view' &&
         (!link.activo ||
           (link.expires_at && new Date(link.expires_at) <= new Date()) ||
@@ -320,14 +329,12 @@ serve(async (req) => {
       );
       delete report.view_token_hash;
       delete report.created_ip;
-      await db
-        .from('rendicion_public_log')
-        .insert({
-          link_id: link.id,
-          rendicion_id: reportId,
-          ip: clientIp(req).slice(0, 120) || null,
-          accion: 'view'
-        });
+      await db.from('rendicion_public_log').insert({
+        link_id: link.id,
+        rendicion_id: reportId,
+        ip: clientIp(req).slice(0, 120) || null,
+        accion: 'view'
+      });
       return json({
         ok: true,
         data: {

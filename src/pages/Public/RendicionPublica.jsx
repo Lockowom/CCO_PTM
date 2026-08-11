@@ -290,7 +290,8 @@ export default function RendicionPublica() {
       }
       if (failed)
         toast.warning(`La rendición fue creada, pero ${failed} foto(s) no pudieron subirse.`);
-      navigate(`/rendiciones/${token}/ver/${result.report.id}/${result.view_token}`, {
+      const basePath = token ? `/rendiciones/${token}` : '/rendiciones';
+      navigate(`${basePath}/ver/${result.report.id}/${result.view_token}`, {
         replace: true
       });
     } catch (e) {

@@ -112,7 +112,7 @@ function inferRouteArea(pathname = '') {
     pathname.startsWith('/consulta') ||
     pathname.startsWith('/verificar') ||
     pathname.startsWith('/soporte') ||
-    pathname.startsWith('/rendiciones/')
+    pathname.startsWith('/rendiciones')
   ) {
     return 'public';
   }
@@ -437,7 +437,23 @@ function AppContent() {
             }
           />
           <Route
+            path="/rendiciones"
+            element={
+              <ErrorBoundary>
+                <RendicionPublica />
+              </ErrorBoundary>
+            }
+          />
+          <Route
             path="/rendiciones/:token"
+            element={
+              <ErrorBoundary>
+                <RendicionPublica />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/rendiciones/ver/:reportId/:viewToken"
             element={
               <ErrorBoundary>
                 <RendicionPublica />

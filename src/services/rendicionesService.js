@@ -28,7 +28,7 @@ export const rendicionesPublicas = {
   async upload(token, viewToken, reportId, itemId, file) {
     const form = new FormData();
     form.append('action', 'upload');
-    form.append('token', token);
+    if (token) form.append('token', token);
     form.append('view_token', viewToken);
     form.append('report_id', reportId);
     form.append('item_id', itemId);
