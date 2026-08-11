@@ -283,6 +283,108 @@ function inicioSemana(fechaStr) {
   return monday.toISOString().split('T')[0];
 }
 
+function etiquetaSemana(week) {
+  const monday = new Date(`${week}T12:00:00`);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const months = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic'
+  ];
+  const from = String(monday.getDate()).padStart(2, '0');
+  const to = String(sunday.getDate()).padStart(2, '0');
+  const fromMonth = months[monday.getMonth()];
+  const toMonth = months[sunday.getMonth()];
+  return fromMonth === toMonth
+    ? `${from}–${to} ${fromMonth}`
+    : `${from} ${fromMonth}–${to} ${toMonth}`;
+}
+
+// Dos cohortes distintas y deliberadas:
+//  - aprobadasRows: entradas agrupadas por fecha de aprobación efectiva.
+//  - entregadasRows: salidas agrupadas por fecha real de entrega.
+// De este modo una semana puede entregar más de lo aprobado y evidenciar que
+// se redujo la cola acumulada de semanas anteriores.
+export function construirTendenciaSemanal(aprobadasRows, entregadasRows, ahoraMs = Date.now()) {
+  const weeks = {};
+  const ensureWeek = (weekKey) => {
+    if (!weeks[weekKey]) {
+      weeks[weekKey] = {
+        aprobadas: 0,
+        entregadas: 0,
+        tardanza: [],
+        fillrateOk: 0,
+        fillrateTotal: 0
+      };
+    }
+    return weeks[weekKey];
+  };
+
+  aprobadasRows.forEach((r) => {
+    const fechaAprob = fechaAprobEfectiva(r);
+    if (!fechaAprob) return;
+    const weekKey = inicioSemana(String(fechaAprob).slice(0, 10));
+    if (!weekKey) return;
+    const week = ensureWeek(weekKey);
+    week.aprobadas += 1;
+    const fr = evaluaFillRate(r, ahoraMs);
+    if (fr !== null) {
+      week.fillrateTotal += 1;
+      if (fr) week.fillrateOk += 1;
+    }
+    if (r.fecha_despacho) {
+      const promesa = fechaPromesaEfectiva(r);
+      if (promesa) {
+        const tardDays =
+          (new Date(r.fecha_despacho).getTime() - new Date(promesa.fecha).getTime()) /
+          (1000 * 60 * 60 * 24);
+        if (tardDays > 0 && tardDays <= 30) week.tardanza.push(tardDays);
+      }
+    }
+  });
+
+  entregadasRows.forEach((r) => {
+    if (!r.fecha_entregado) return;
+    const weekKey = inicioSemana(String(r.fecha_entregado).slice(0, 10));
+    if (!weekKey) return;
+    ensureWeek(weekKey).entregadas += 1;
+  });
+
+  return Object.entries(weeks)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([week, data]) => {
+      const tardanza =
+        data.tardanza.length > 0
+          ? +(data.tardanza.reduce((sum, value) => sum + value, 0) / data.tardanza.length).toFixed(
+              1
+            )
+          : 0;
+      const fillRate =
+        data.fillrateTotal > 0 ? +((data.fillrateOk / data.fillrateTotal) * 100).toFixed(1) : 0;
+      return {
+        semana: etiquetaSemana(week),
+        semanaInicio: week,
+        aprobadas: data.aprobadas,
+        entregadas: data.entregadas,
+        aprobadasDia: +(data.aprobadas / 5).toFixed(1),
+        entregadasDia: +(data.entregadas / 5).toFixed(1),
+        balanceCola: data.entregadas - data.aprobadas,
+        tardanza,
+        fillRate
+      };
+    });
+}
+
 function horasDesde(fechaStr) {
   if (!fechaStr) return 0;
   const ms = Date.now() - new Date(fechaStr).getTime();
@@ -310,6 +412,7 @@ function clasificarIncidencia(texto, observaciones = '') {
 
 const DASHBOARD_COLUMNS =
   'nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,transportista,estado,division,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_despacho,fecha_facturacion,fecha_estado,fecha_registro_nv,fecha_shipping,fecha_en_ruta,fecha_entregado,fecha_en_proceso,incidencia,estado_incidencia,observaciones_incidencia,dias_incidencia,guia,factura,urgente,reabierta,motivo_reapertura,fecha_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_motivo,shipping_pausa_total_segundos,shipping_pausa_elegible_sla,incidencia_area,incidencia_origen';
+const DELIVERY_EVENT_COLUMNS = 'nv_ptm,nv_orange,nv_farmapack,varios,fecha_entregado';
 
 async function fetchAll(columns, dateFrom, dateTo) {
   const allRows = [];
@@ -337,6 +440,35 @@ async function fetchAll(columns, dateFrom, dateTo) {
           `and(fecha_aprobacion_real.is.null,fecha_aprobacion.lte.${dateTo})`
       );
     }
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    allRows.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return allRows;
+}
+
+// Lee eventos por su propia fecha. Es importante para indicadores de flujo:
+// una entrega pertenece a la semana en que realmente se entregó, no a la
+// semana en que la N.V. fue aprobada.
+async function fetchAllByDate(columns, dateColumn, dateFrom, dateTo) {
+  const allowedColumns = new Set(['fecha_entregado']);
+  if (!allowedColumns.has(dateColumn)) throw new Error('Columna de evento no permitida.');
+  const allRows = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    let query = supabase
+      .from(OPERACIONES_READ_VIEW)
+      .select(columns)
+      .not(dateColumn, 'is', null)
+      .order(dateColumn, { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (dateFrom) query = query.gte(dateColumn, dateFrom);
+    if (dateTo) query = query.lte(dateColumn, dateTo);
     const { data, error } = await query;
     if (error) throw error;
     if (!data || data.length === 0) break;
@@ -583,23 +715,28 @@ export async function fetchConsolidadoKeys() {
   );
 }
 
-export async function fetchDashboardData(dateFrom, dateTo) {
+export async function fetchDashboardData(dateFrom, dateTo, { force = false } = {}) {
   return runDashboardRead(
     'fetch_dashboard_data',
     async () => {
       const cacheKey = `${dateFrom || ''}:${dateTo || ''}`;
-      const cached = getDashMapCache(dashboardCache, cacheKey, DASHBOARD_CACHE_TTL_MS);
-      if (cached) return cached;
-      const sessionCached = readDashboardSessionCache(cacheKey);
-      if (sessionCached) {
-        dashboardCache.set(cacheKey, { ts: Date.now(), value: sessionCached });
-        return sessionCached;
+      if (force) {
+        dashboardCache.delete(cacheKey);
+      } else {
+        const cached = getDashMapCache(dashboardCache, cacheKey, DASHBOARD_CACHE_TTL_MS);
+        if (cached) return cached;
+        const sessionCached = readDashboardSessionCache(cacheKey);
+        if (sessionCached) {
+          dashboardCache.set(cacheKey, { ts: Date.now(), value: sessionCached });
+          return sessionCached;
+        }
       }
 
       const run = async () => {
-        const [rows, activasRows, consolidadoKeys] = await Promise.all([
+        const [rows, activasRows, entregasEventoRows, consolidadoKeys] = await Promise.all([
           fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo),
           fetchActivas(DASHBOARD_COLUMNS),
+          fetchAllByDate(DELIVERY_EVENT_COLUMNS, 'fecha_entregado', dateFrom, dateTo),
           fetchConsolidadoKeys()
         ]);
 
@@ -613,6 +750,9 @@ export async function fetchDashboardData(dateFrom, dateTo) {
         };
         activasRows.forEach(enrichRow);
         rows.forEach(enrichRow);
+        entregasEventoRows.forEach((row) => {
+          row._consolidado = consolidadoKeys.has(nvKey(row));
+        });
 
         // Dos vistas del backlog activo, a propósito:
         //  • activasSnapshot = TODAS las activas EN VIVO (idéntico al Modo TV). Alimenta
@@ -628,6 +768,7 @@ export async function fetchDashboardData(dateFrom, dateTo) {
 
         const rowsM = rows.filter((r) => !r._consolidado);
         const activasM = activasSnapshot.filter((r) => !r._consolidado);
+        const entregasEventoM = entregasEventoRows.filter((r) => !r._consolidado);
 
         // === KPIs ===
         const total = rows.length;
@@ -828,72 +969,9 @@ export async function fetchDashboardData(dateFrom, dateTo) {
           .map(([transportista, cantidad]) => ({ transportista, cantidad }))
           .sort((a, b) => b.cantidad - a.cantidad);
 
-        // === Weekly Trend === (indicador → excluye consolidados)
-        const weeks = {};
-        rowsM.forEach((r) => {
-          const fechaAprob = fechaAprobEfectiva(r);
-          if (!fechaAprob) return;
-          const weekKey = inicioSemana(fechaAprob);
-          if (!weekKey) return;
-          if (!weeks[weekKey])
-            weeks[weekKey] = {
-              aprobadas: 0,
-              entregadas: 0,
-              tardanza: [],
-              fillrateOk: 0,
-              fillrateTotal: 0
-            };
-          weeks[weekKey].aprobadas++;
-          if (ESTADOS_ENTREGADOS.includes(r.estado)) weeks[weekKey].entregadas++;
-          const fr = evaluaFillRate(r, ahoraMs);
-          if (fr !== null) {
-            weeks[weekKey].fillrateTotal++;
-            if (fr) weeks[weekKey].fillrateOk++;
-          }
-          if (r.fecha_despacho) {
-            const promesa = fechaPromesaEfectiva(r);
-            if (promesa) {
-              const desp = new Date(r.fecha_despacho);
-              const comp = new Date(promesa.fecha);
-              const tardDays = (desp.getTime() - comp.getTime()) / (1000 * 60 * 60 * 24);
-              if (tardDays > 0 && tardDays <= 30) weeks[weekKey].tardanza.push(tardDays);
-            }
-          }
-        });
-        const weeklyTrend = Object.entries(weeks)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([week, d]) => {
-            const date = new Date(week + 'T12:00:00');
-            const dayNum = date.getDate();
-            const months = [
-              'Ene',
-              'Feb',
-              'Mar',
-              'Abr',
-              'May',
-              'Jun',
-              'Jul',
-              'Ago',
-              'Sep',
-              'Oct',
-              'Nov',
-              'Dic'
-            ];
-            const label = `${String(dayNum).padStart(2, '0')}-${months[date.getMonth()]}`;
-            const avgTard =
-              d.tardanza.length > 0
-                ? +(d.tardanza.reduce((s, v) => s + v, 0) / d.tardanza.length).toFixed(1)
-                : 0;
-            const fillRate =
-              d.fillrateTotal > 0 ? +((d.fillrateOk / d.fillrateTotal) * 100).toFixed(1) : 0;
-            return {
-              semana: label,
-              entregadas: d.entregadas,
-              aprobadas: d.aprobadas,
-              tardanza: avgTard,
-              fillRate
-            };
-          });
+        // === Tendencia semanal de flujo real ===
+        // Entradas por fecha de aprobación y salidas por fecha de entrega.
+        const weeklyTrend = construirTendenciaSemanal(rowsM, entregasEventoM, ahoraMs);
 
         // === Estado Resumen (active states only) ===
         const resumenCounts = {};
@@ -1409,7 +1487,11 @@ export async function fetchDashboardExportRows(dateFrom, dateTo) {
           fecha_reapertura: row.fecha_reapertura || null,
           incidencia: row.incidencia || '',
           estado_incidencia: row.estado_incidencia || '',
-          observaciones_incidencia: row.observaciones_incidencia || ''
+          observaciones_incidencia: row.observaciones_incidencia || '',
+          shipping_subestado: row.shipping_subestado || '',
+          shipping_pausa_desde: row.shipping_pausa_desde || null,
+          shipping_pausa_motivo: row.shipping_pausa_motivo || '',
+          shipping_pausa_elegible_sla: row.shipping_pausa_elegible_sla === true
         }))
         .sort((a, b) =>
           String(b.fecha_aprobacion || '').localeCompare(String(a.fecha_aprobacion || ''))
@@ -1505,16 +1587,21 @@ export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
     'get_operaciones_por_estado',
     async () => {
       const cols =
-        'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura, shipping_subestado, shipping_pausa_desde, shipping_pausa_motivo, shipping_pausa_total_segundos, shipping_pausa_elegible_sla';
+        'nv_ptm, nv_orange, nv_farmapack, varios, cliente, vendedor, transportista, estado, fecha_despacho, fecha_compromiso, division, fecha_aprobacion, fecha_aprobacion_real, fecha_registro_nv, fecha_shipping, fecha_en_ruta, fecha_entregado, tipo_despacho, fecha_estado, reabierta, motivo_reapertura, fecha_reapertura, shipping_subestado, shipping_pausa_desde, shipping_pausa_hasta, shipping_pausa_motivo, shipping_pausa_total_segundos, shipping_pausa_elegible_sla';
       const esActivasKpi = estado === 'ACTIVAS';
-      const esEstadoActivo = esActivasKpi || ESTADOS_ACTIVOS.includes(estado);
+      const esPausaShipping = estado === 'SHIPPING_PAUSADAS';
+      const esEstadoActivo = esActivasKpi || esPausaShipping || ESTADOS_ACTIVOS.includes(estado);
       const dataRaw = esEstadoActivo
         ? await fetchActivas(cols)
         : await fetchAll(cols, dateFrom, dateTo);
+      const consolidadoKeys = esPausaShipping ? await fetchConsolidadoKeys() : null;
+      const dataBase = esPausaShipping
+        ? dataRaw.filter((row) => !consolidadoKeys.has(nvKey(row)))
+        : dataRaw;
       const data =
-        esEstadoActivo && !esActivasKpi
-          ? dataRaw.filter((r) => dentroRangoAprob(r, dateFrom, dateTo))
-          : dataRaw;
+        esEstadoActivo && !esActivasKpi && !esPausaShipping
+          ? dataBase.filter((r) => dentroRangoAprob(r, dateFrom, dateTo))
+          : dataBase;
 
       data.forEach((r) => {
         r.estado = normalizaEstado(r.estado);
@@ -1522,6 +1609,9 @@ export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
 
       const filtered = data.filter((r) => {
         if (estado === 'ACTIVAS') return ESTADOS_ACTIVOS.includes(r.estado || '');
+        if (estado === 'SHIPPING_PAUSADAS') {
+          return r.estado === ESTADOS.SHIPPING && Boolean(r.shipping_subestado);
+        }
         if (estado === 'TARDIAS') {
           if (!ESTADOS_ENTREGADOS.includes(r.estado) || !r.fecha_despacho || !r.fecha_compromiso)
             return false;
@@ -1610,7 +1700,14 @@ export async function getOperacionesPorEstado(estado, dateFrom, dateTo) {
             tipo_despacho: r.tipo_despacho || null,
             reabierta: r.reabierta === true,
             motivo_reapertura: r.motivo_reapertura || '',
-            fecha_reapertura: r.fecha_reapertura || null
+            fecha_reapertura: r.fecha_reapertura || null,
+            estado: r.estado || '',
+            shipping_subestado: r.shipping_subestado || '',
+            shipping_pausa_desde: r.shipping_pausa_desde || null,
+            shipping_pausa_hasta: r.shipping_pausa_hasta || null,
+            shipping_pausa_motivo: r.shipping_pausa_motivo || '',
+            shipping_pausa_total_segundos: Number(r.shipping_pausa_total_segundos) || 0,
+            shipping_pausa_elegible_sla: r.shipping_pausa_elegible_sla === true
           };
         })
         .sort((a, b) => (b.fecha_aprobacion || '').localeCompare(a.fecha_aprobacion || ''));
@@ -1628,7 +1725,7 @@ export async function fetchAuditStats() {
   return { operadores: [], total: 0 };
 }
 
-export async function fetchAuditRecent(limit = 20) {
+export async function fetchAuditRecent() {
   return [];
 }
 

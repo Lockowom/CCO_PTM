@@ -3,6 +3,12 @@ const text = (value) =>
   value === null || value === undefined || value === '' ? NA : String(value);
 const pct = (value) => (value === null || value === undefined ? NA : `${value}%`);
 const days = (value) => (value === null || value === undefined ? NA : `${value} días`);
+const shippingLabel = (value) =>
+  value === 'REZAGADA_COMERCIAL'
+    ? 'Rezagada comercial'
+    : value === 'RETIRO_CLIENTE'
+      ? 'Retiro de cliente'
+      : value || '';
 
 const orange = '#f57c00';
 const navy = '#0d1b2a';
@@ -65,7 +71,8 @@ export async function downloadPanelDashboardPDF({
   rankTransp = [],
   rankVend = [],
   divisions = [],
-  operaciones = []
+  operaciones = [],
+  shippingPausadas = []
 }) {
   const pdfMakeMod = await import('pdfmake/build/pdfmake');
   const pdfFontsMod = await import('pdfmake/build/vfs_fonts');
@@ -171,6 +178,12 @@ export async function downloadPanelDashboardPDF({
           pct(kpis?.fillRateShipping?.pct),
           'Salida de En Proceso según compromiso',
           orange
+        ),
+        card(
+          'Shipping pausadas',
+          kpis?.shippingPausadas?.total || 0,
+          `${kpis?.shippingPausadas?.rezagadaComercial || 0} comercial · ${kpis?.shippingPausadas?.retiroCliente || 0} retiro · ${kpis?.shippingPausadas?.excluidasSla || 0} excluidas de SLA`,
+          '#7c3aed'
         )
       ],
       columnGap: 7,
@@ -199,17 +212,35 @@ export async function downloadPanelDashboardPDF({
       ]),
       ['*', 'auto', 'auto', 'auto', 'auto', 'auto']
     ),
-    { text: 'TENDENCIA SEMANAL', style: 'section' },
+    { text: 'ENTRADAS VS SALIDAS REALES POR SEMANA', style: 'section' },
+    {
+      text: 'Aprobadas por fecha de aprobación. Entregadas por fecha real de entrega. Promedio diario calculado sobre 5 días hábiles.',
+      fontSize: 6.5,
+      color: '#64748b',
+      margin: [0, 0, 0, 4]
+    },
     table(
-      ['Semana', 'N.V. aprobadas', 'N.V. entregadas', 'Tardanza prom.', 'Fill rate'],
+      [
+        'Semana',
+        'Aprobadas',
+        'Prom./día',
+        'Entregadas',
+        'Prom./día',
+        'Balance cola',
+        'Tardanza',
+        'Fill rate'
+      ],
       weekly.map((item) => [
         item.semana,
         item.aprobadas,
+        item.aprobadasDia,
         item.entregadas,
+        item.entregadasDia,
+        item.balanceCola >= 0 ? `-${item.balanceCola}` : `+${Math.abs(item.balanceCola)}`,
         days(item.tardanza),
         pct(item.fillRate)
       ]),
-      ['*', 'auto', 'auto', 'auto', 'auto']
+      ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto']
     ),
     { text: 'TARDANZA PROMEDIO POR SEMANA', style: 'section' },
     table(
@@ -250,6 +281,27 @@ export async function downloadPanelDashboardPDF({
       )
     );
   }
+  content.push({ text: 'SHIPPING PAUSADAS — BACKLOG EN VIVO', style: 'section' });
+  content.push({
+    text: 'Este bloque es una fotografía operacional al momento de descargar y no depende del rango de aprobación seleccionado.',
+    fontSize: 6.5,
+    color: '#64748b',
+    margin: [0, 0, 0, 4]
+  });
+  content.push(
+    table(
+      ['N.V.', 'Cliente', 'Subestado', 'Pausa desde', 'Motivo', 'Medición SLA'],
+      shippingPausadas.map((item) => [
+        item.nv,
+        item.cliente,
+        shippingLabel(item.shipping_subestado),
+        item.shipping_pausa_desde ? String(item.shipping_pausa_desde).slice(0, 10) : NA,
+        item.shipping_pausa_motivo || NA,
+        item.shipping_pausa_elegible_sla ? 'Excluida temporalmente' : 'Contabiliza'
+      ]),
+      [45, 120, 80, 60, '*', 85]
+    )
+  );
   content.push({ text: 'RANKINGS Y DISTRIBUCIÓN', style: 'section' });
   content.push(
     table(
@@ -314,7 +366,9 @@ export async function downloadPanelDashboardPDF({
         item.canal,
         item.cliente,
         item.vendedor,
-        item.estado,
+        item.shipping_subestado
+          ? `${item.estado} · ${shippingLabel(item.shipping_subestado)}`
+          : item.estado,
         item.transportista,
         item.fecha_aprobacion ? String(item.fecha_aprobacion).slice(0, 10) : NA,
         item.fecha_compromiso ? String(item.fecha_compromiso).slice(0, 10) : NA,

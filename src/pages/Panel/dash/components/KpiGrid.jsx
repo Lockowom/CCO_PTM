@@ -48,9 +48,10 @@ export default function KpiGrid({ kpis, onDetalle }) {
       <KPICard
         title="Shipping pausadas"
         value={kpis?.shippingPausadas?.total || 0}
-        subtitle={`${kpis?.shippingPausadas?.rezagadaComercial || 0} comercial · ${kpis?.shippingPausadas?.retiroCliente || 0} retiro · ${kpis?.shippingPausadas?.excluidasSla || 0} fuera de SLA`}
+        subtitle={`${kpis?.shippingPausadas?.rezagadaComercial || 0} comercial · ${kpis?.shippingPausadas?.retiroCliente || 0} retiro · ${kpis?.shippingPausadas?.excluidasSla || 0} excluidas de SLA`}
         color="#7c3aed"
         icon="⏸"
+        onClick={() => onDetalle('SHIPPING_PAUSADAS')}
       />
     </div>
   );

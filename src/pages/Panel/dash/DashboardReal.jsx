@@ -86,6 +86,23 @@ export default function DashboardReal() {
   const [calidadOpen, setCalidadOpen] = useState(false);
   const [calidadData, setCalidadData] = useState({ total: 0, porTipo: {}, detalle: [] });
 
+  const applyDashboardResult = useCallback((result) => {
+    setKpis(result.kpis);
+    setEstadoTable(result.estadoTable);
+    setDivisions(result.divisions);
+    setWeekly(result.weeklyTrend);
+    setResumen(result.estadoResumen);
+    setLeadTime(result.leadTimeSemanal);
+    setTiemposCiclo(result.tiemposCiclo);
+    setRankTransp(result.rankingTransportistas);
+    setRankVend(result.rankingVendedores);
+    setIncidenciasPorVendedor(result.incidenciasPorVendedor || []);
+    setAlertasOp(result.alertasOperacionales);
+    setAlertasData(result.alertas);
+    setCalidadData(result.calidad);
+    setLastUpdate(new Date().toLocaleString('es-CL'));
+  }, []);
+
   const abrirDetalle = useCallback(
     async (estado) => {
       setDetalleEstado(estado);
@@ -115,53 +132,49 @@ export default function DashboardReal() {
     setIncidenciasLoading(false);
   }, [range]);
 
-  const loadData = useCallback(async (from, to) => {
-    setLoading(true);
-    setFetchError(null);
-    setRange({ from, to });
-    try {
-      const result = await fetchDashboardData(from, to);
-      setKpis(result.kpis);
-      setEstadoTable(result.estadoTable);
-      setDivisions(result.divisions);
-      setWeekly(result.weeklyTrend);
-      setResumen(result.estadoResumen);
-      setLeadTime(result.leadTimeSemanal);
-      setTiemposCiclo(result.tiemposCiclo);
-      setRankTransp(result.rankingTransportistas);
-      setRankVend(result.rankingVendedores);
-      setIncidenciasPorVendedor(result.incidenciasPorVendedor || []);
-      setAlertasOp(result.alertasOperacionales);
-      setAlertasData(result.alertas);
-      setCalidadData(result.calidad);
-      setLastUpdate(new Date().toLocaleString('es-CL'));
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setFetchError('Error al cargar los datos. Verifica tu conexión e intenta de nuevo.');
-    }
-    setLoading(false);
-  }, []);
+  const loadData = useCallback(
+    async (from, to) => {
+      setLoading(true);
+      setFetchError(null);
+      setRange({ from, to });
+      try {
+        const result = await fetchDashboardData(from, to);
+        applyDashboardResult(result);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setFetchError('Error al cargar los datos. Verifica tu conexión e intenta de nuevo.');
+      }
+      setLoading(false);
+    },
+    [applyDashboardResult]
+  );
 
   const downloadPdf = useCallback(async () => {
     if (!kpis || exportingPdf) return;
     setExportingPdf(true);
     try {
-      const operaciones = await fetchDashboardExportRows(range.from, range.to);
+      const [fresh, operaciones, shippingPausadas] = await Promise.all([
+        fetchDashboardData(range.from, range.to, { force: true }),
+        fetchDashboardExportRows(range.from, range.to),
+        getOperacionesPorEstado('SHIPPING_PAUSADAS', range.from, range.to)
+      ]);
+      applyDashboardResult(fresh);
       await downloadPanelDashboardPDF({
         range,
-        kpis,
-        estadoTable,
-        resumen,
-        weekly,
-        leadTime,
-        tiemposCiclo,
-        alertas: alertasData,
-        calidad: calidadData,
-        alertasOperacionales: alertasOp,
-        rankTransp,
-        rankVend,
-        divisions,
-        operaciones
+        kpis: fresh.kpis,
+        estadoTable: fresh.estadoTable,
+        resumen: fresh.estadoResumen,
+        weekly: fresh.weeklyTrend,
+        leadTime: fresh.leadTimeSemanal,
+        tiemposCiclo: fresh.tiemposCiclo,
+        alertas: fresh.alertas,
+        calidad: fresh.calidad,
+        alertasOperacionales: fresh.alertasOperacionales,
+        rankTransp: fresh.rankingTransportistas,
+        rankVend: fresh.rankingVendedores,
+        divisions: fresh.divisions,
+        operaciones,
+        shippingPausadas
       });
       toast.success('PDF descargado correctamente.');
     } catch (error) {
@@ -170,22 +183,7 @@ export default function DashboardReal() {
     } finally {
       setExportingPdf(false);
     }
-  }, [
-    alertasData,
-    alertasOp,
-    calidadData,
-    divisions,
-    estadoTable,
-    exportingPdf,
-    kpis,
-    leadTime,
-    range,
-    rankTransp,
-    rankVend,
-    resumen,
-    tiemposCiclo,
-    weekly
-  ]);
+  }, [applyDashboardResult, exportingPdf, kpis, range]);
 
   useEffect(() => {
     const init = getInitialFilter();
