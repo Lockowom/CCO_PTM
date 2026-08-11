@@ -16,6 +16,7 @@ describe('workflow secuencial de N.V.', () => {
 
     expect(esTransicionPermitida(ESTADOS.EN_PROCESO, ESTADOS.EN_RUTA)).toBe(false);
     expect(esTransicionPermitida(ESTADOS.SHIPPING, ESTADOS.ENTREGADO)).toBe(false);
+    expect(esTransicionPermitida(ESTADOS.EN_RUTA, ESTADOS.SHIPPING)).toBe(false);
     expect(esTransicionPermitida(ESTADOS.EN_PROCESO, ESTADOS.SHIPPING)).toBe(true);
   });
 

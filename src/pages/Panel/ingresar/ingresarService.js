@@ -1177,6 +1177,25 @@ export async function cambiarEstado(id, estado, urgente = null) {
   );
 }
 // Edición inline por columnas: mapea nombres de columna → claves del RPC guardar_nv.
+export async function corregirEstadoAShipping(id, motivo) {
+  return runPanelMutation(
+    'corregir_estado_nv_a_shipping',
+    async () => {
+      const { data, error } = await supabase.rpc('corregir_estado_nv_a_shipping', {
+        p_id: id,
+        p_motivo: motivo
+      });
+      const result = rpcResult(data, error);
+      if (result?.ok !== false) resetIngresarCaches();
+      return result;
+    },
+    {
+      payload: { id, motivoLength: String(motivo || '').trim().length },
+      message: 'Correccion auditada de estado N.V. a Shipping'
+    }
+  );
+}
+
 export async function gestionarPausaShipping(id, subestado = null, motivo = '') {
   return runPanelMutation(
     subestado ? 'pausar_shipping_nv' : 'reactivar_shipping_nv',

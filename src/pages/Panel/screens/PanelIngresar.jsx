@@ -45,6 +45,7 @@ import {
   resolverReapertura,
   gestionarPausaShipping,
   reportarIncidenciaArmado,
+  corregirEstadoAShipping,
   puedeEditarOperacion,
   puedeCambiarEstadoOperacion
 } from '../ingresar/ingresarService';
@@ -208,6 +209,9 @@ function DetalleDrawer({
   const [pauseChoice, setPauseChoice] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [savingPause, setSavingPause] = useState(false);
+  const [showStateCorrection, setShowStateCorrection] = useState(false);
+  const [correctionReason, setCorrectionReason] = useState('');
+  const [correctingState, setCorrectingState] = useState(false);
   const [warehouseIncident, setWarehouseIncident] = useState('');
   const [reportingWarehouseIncident, setReportingWarehouseIncident] = useState(false);
 
@@ -402,6 +406,51 @@ function DetalleDrawer({
     setPauseReason('');
     setResult({ success: true, message: res.message });
     onSaved?.({ ...item, estado: 'Shipping', shippingSubestado: res.shipping_subestado || '' });
+  };
+
+  const onCorregirEstadoAShipping = async () => {
+    const motivo = String(correctionReason || '').trim();
+    if (motivo.length < 10 || !/[a-záéíóúüñ]/i.test(motivo)) {
+      setResult({
+        success: false,
+        message: 'Escribe un motivo real de al menos 10 caracteres.'
+      });
+      return;
+    }
+
+    setCorrectingState(true);
+    const res = await corregirEstadoAShipping(item.id, motivo);
+    setCorrectingState(false);
+    if (!res.ok) {
+      setResult({
+        success: false,
+        message: res.message || res.error || 'No se pudo corregir el estado.'
+      });
+      return;
+    }
+
+    const fresh = await lookup(item.canal, item.nv);
+    const nextData = fresh.found
+      ? fresh.data
+      : {
+          ...data,
+          estado: 'Shipping',
+          fecha_estado: res.fecha_estado || data?.fecha_estado,
+          fecha_en_ruta: '',
+          fecha_despacho: '',
+          shipping_subestado: ''
+        };
+    setData(nextData);
+    setEdit({});
+    setShowStateCorrection(false);
+    setCorrectionReason('');
+    setResult({ success: true, message: res.message });
+    onSaved?.({
+      ...item,
+      estado: 'Shipping',
+      shippingSubestado: '',
+      fechaDespacho: ''
+    });
   };
 
   const onReportarIncidenciaBodega = async () => {
@@ -769,6 +818,66 @@ function DetalleDrawer({
                           ? `Secuencia obligatoria: desde ${data?.estado} solo se permite avanzar a ${siguienteDetalle}.`
                           : 'Estado final bloqueado. Usa reapertura o incidencia post-entrega según corresponda.'}
                     </div>
+
+                    {data?.estado === 'En Ruta' && (
+                      <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                            <Undo2 size={16} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
+                              Corrección de estado
+                            </div>
+                            <p className="mt-1 text-xs text-slate-600">
+                              Úsala solo si la N.V. fue enviada a En Ruta por error. Volverá a
+                              Shipping y la acción quedará registrada.
+                            </p>
+                          </div>
+                        </div>
+
+                        {!showStateCorrection ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowStateCorrection(true)}
+                            className="mt-3 w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100"
+                          >
+                            Corregir y volver a Shipping
+                          </button>
+                        ) : (
+                          <div className="mt-3 space-y-2">
+                            <textarea
+                              value={correctionReason}
+                              onChange={(e) => setCorrectionReason(e.target.value)}
+                              maxLength={500}
+                              className="field-input min-h-[84px] resize-y"
+                              placeholder="Motivo obligatorio: explica por qué se debe devolver a Shipping..."
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowStateCorrection(false);
+                                  setCorrectionReason('');
+                                }}
+                                disabled={correctingState}
+                                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-600 disabled:opacity-50"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={onCorregirEstadoAShipping}
+                                disabled={correctingState}
+                                className="rounded-xl bg-amber-600 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                              >
+                                {correctingState ? 'Corrigiendo...' : 'Confirmar corrección'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {data?.estado === 'Shipping' && (
                       <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4">
