@@ -28,6 +28,7 @@ const Login = React.lazy(() => import('./pages/Login'));
 const VerificarCertificado = React.lazy(() => import('./pages/VerificarCertificado'));
 const SolicitudPublica = React.lazy(() => import('./pages/Postventa/SolicitudPublica')); // Formulario público de servicio (sin login)
 const ConsultaNV = React.lazy(() => import('./pages/Public/ConsultaNV')); // Consulta pública de N.V. (sin login)
+const RendicionPublica = React.lazy(() => import('./pages/Public/RendicionPublica'));
 import VersionGuard from './lib/versionGuard'; // fuerza re-login al detectar nueva versión desplegada
 import { initGoogleAnalytics, trackPageView } from './lib/googleAnalytics';
 import { Logger } from './lib/logger';
@@ -97,6 +98,7 @@ const Workflows = React.lazy(() => import('./pages/Admin/Workflows')); // Workfl
 const FlujoMaestro = React.lazy(() => import('./pages/Tools/FlujoMaestro')); // Mapa de Procesos (vista ejecutiva, solo lectura)
 const Eventos = React.lazy(() => import('./pages/Admin/Eventos')); // Motor de Eventos + Centro de Notificaciones
 const ApiKeys = React.lazy(() => import('./pages/Admin/ApiKeys')); // API de Operaciones v1 (claves)
+const Rendiciones = React.lazy(() => import('./pages/Admin/Rendiciones'));
 
 // Fallback 404
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -109,7 +111,8 @@ function inferRouteArea(pathname = '') {
     pathname === '/login' ||
     pathname.startsWith('/consulta') ||
     pathname.startsWith('/verificar') ||
-    pathname.startsWith('/soporte')
+    pathname.startsWith('/soporte') ||
+    pathname.startsWith('/rendiciones/')
   ) {
     return 'public';
   }
@@ -430,6 +433,22 @@ function AppContent() {
             element={
               <ErrorBoundary>
                 <ConsultaNV />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/rendiciones/:token"
+            element={
+              <ErrorBoundary>
+                <RendicionPublica />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/rendiciones/:token/ver/:reportId/:viewToken"
+            element={
+              <ErrorBoundary>
+                <RendicionPublica />
               </ErrorBoundary>
             }
           />
@@ -813,6 +832,14 @@ function AppContent() {
               element={
                 <ErrorBoundary>
                   <ApiKeys />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/rendiciones"
+              element={
+                <ErrorBoundary>
+                  <Rendiciones />
                 </ErrorBoundary>
               }
             />

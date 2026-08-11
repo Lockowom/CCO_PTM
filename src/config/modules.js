@@ -168,7 +168,8 @@ export const APP_ROUTES = [
   { value: '/admin/workflows', label: 'Admin - Workflows (procesos)', module: 'admin' },
   { value: '/admin/flujo-maestro', label: 'Admin - Mapa de Procesos', module: 'admin' },
   { value: '/admin/eventos', label: 'Admin - Eventos y Notificaciones', module: 'admin' },
-  { value: '/admin/api', label: 'Admin - API de Operaciones', module: 'admin' }
+  { value: '/admin/api', label: 'Admin - API de Operaciones', module: 'admin' },
+  { value: '/admin/rendiciones', label: 'Admin - Rendiciones', module: 'admin' }
 ];
 
 export const APP_PERMISSIONS = [
@@ -312,6 +313,8 @@ export const APP_PERMISSIONS = [
       { id: 'manage_eventos', label: 'Eventos/Notificaciones · Editar reglas y despachar' },
       { id: 'view_api', label: 'API · Ver claves y llamadas' },
       { id: 'manage_api', label: 'API · Crear/revocar claves' },
+      { id: 'view_rendiciones', label: 'Rendiciones · Ver y exportar' },
+      { id: 'manage_rendiciones', label: 'Rendiciones · Administrar enlaces y catálogos' },
       { id: 'manage_cleanup', label: 'Limpieza de Datos' }
     ]
   }

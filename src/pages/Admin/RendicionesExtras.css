@@ -1,0 +1,47 @@
+.ra-created-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 9px;
+}
+
+.ra-created-link span {
+  font-size: 10px;
+  color: #047857;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ra-created-link button {
+  margin-left: auto;
+  flex: none;
+}
+
+.ra-catalog-list {
+  display: flex;
+  gap: 6px;
+  overflow: auto;
+  margin-top: 11px;
+  padding-bottom: 3px;
+}
+
+.ra-catalog-list button {
+  border: 1px solid #dbe3ed;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ra-catalog-list button:hover {
+  border-color: #f97316;
+  color: #c2410c;
+}

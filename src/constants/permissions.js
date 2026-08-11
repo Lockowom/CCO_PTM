@@ -141,7 +141,8 @@ export const ROUTE_PERMISSIONS = {
   '/admin/workflows': ['view_workflows', 'manage_workflows'],
   '/admin/flujo-maestro': ['view_workflows', 'manage_workflows'],
   '/admin/eventos': ['view_eventos', 'manage_eventos'],
-  '/admin/api': ['view_api', 'manage_api']
+  '/admin/api': ['view_api', 'manage_api'],
+  '/admin/rendiciones': ['view_rendiciones', 'manage_rendiciones']
 };
 
 // ── Permisos por PESTAÑA (?tab=) ────────────────────────────────────────────

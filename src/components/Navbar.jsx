@@ -45,7 +45,8 @@ import {
   Share2,
   Zap,
   KeyRound,
-  Tags
+  Tags,
+  WalletCards
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -372,6 +373,7 @@ const Navbar = () => {
             { label: 'Mapa de Procesos', path: '/admin/flujo-maestro', icon: <Share2 size={16} /> },
             { label: 'Eventos y Notificaciones', path: '/admin/eventos', icon: <Zap size={16} /> },
             { label: 'API de Operaciones', path: '/admin/api', icon: <KeyRound size={16} /> },
+            { label: 'Rendiciones', path: '/admin/rendiciones', icon: <WalletCards size={16} /> },
             { label: 'Limpieza', path: '/admin/cleanup', icon: <Trash2 size={16} /> }
           ]
         }

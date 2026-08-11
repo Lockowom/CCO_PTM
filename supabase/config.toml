@@ -5,3 +5,8 @@ verify_jwt = true
 
 [functions.notify-ticket-update]
 verify_jwt = true
+
+# Endpoint publico con autenticacion propia: token aleatorio SHA-256, segundo
+# token de consulta, rate-limit, honeypot, CORS estricto y bucket privado.
+[functions.rendiciones-publicas]
+verify_jwt = false
