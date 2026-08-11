@@ -75,6 +75,7 @@ const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
 // Panel PTM nativo (port de lockowom/panel-) — estructura con datos de ejemplo
 const PanelLayout = React.lazy(() => import('./pages/Panel/PanelLayout'));
 const DashboardReal = React.lazy(() => import('./pages/Panel/dash/DashboardReal')); // dashboard fiel (copia del original)
+const CoordinacionRutas = React.lazy(() => import('./pages/Panel/rutas/CoordinacionRutas'));
 const ConteoCiclico = React.lazy(() => import('./pages/Inventory/ConteoCiclico'));
 const AnalisisCodigos = React.lazy(() => import('./pages/Inventory/AnalisisCodigos'));
 const Carteles = React.lazy(() => import('./pages/Inventory/Carteles'));
@@ -682,6 +683,7 @@ function AppContent() {
             >
               <Route index element={<DashboardReal />} />
               <Route path="ingresar" element={<PanelIngresar />} />
+              <Route path="rutas" element={<CoordinacionRutas />} />
               <Route path="info" element={<PanelInfo />} />
               <Route path="tv" element={<PanelTV />} />
               <Route path="builder" element={<PanelBuilder />} />

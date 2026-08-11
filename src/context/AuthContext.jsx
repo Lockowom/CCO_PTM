@@ -255,6 +255,7 @@ export const AuthProvider = ({ children }) => {
 
       const userData = {
         id: profile.id,
+        auth_uid: profile.auth_uid,
         nombre: profile.nombre,
         email: profile.email,
         rol: profile.rol,

@@ -46,11 +46,17 @@ import {
   Zap,
   KeyRound,
   Tags,
-  WalletCards
+  WalletCards,
+  Navigation
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { ROUTE_PERMISSIONS, puedeVerTab, TAB_PERMISSIONS } from '../constants/permissions';
+import {
+  ROUTE_PERMISSIONS,
+  puedeVerTab,
+  TAB_PERMISSIONS,
+  puedeVerCoordinacionRutas
+} from '../constants/permissions';
 import { mostrarNovedades } from './NovedadesModal';
 import NotificationBell from './NotificationBell';
 
@@ -92,9 +98,10 @@ const Navbar = () => {
   // ambas fuentes de verdad.
   const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const canAccessRoute = (path, sectionId) => {
+    const [base, query] = String(path).split('?');
+    if (base === '/panel/rutas') return puedeVerCoordinacionRutas(user);
     if (esAdmin) return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
-    const [base, query] = String(path).split('?');
     const perms = ROUTE_PERMISSIONS[base];
     // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
     if (!perms || perms.length === 0) return false;
@@ -298,6 +305,11 @@ const Navbar = () => {
           modules: [
             { label: 'Dashboard', path: '/panel', icon: <LayoutDashboard size={16} /> },
             { label: 'Ingresar N.V.', path: '/panel/ingresar', icon: <FileText size={16} /> },
+            {
+              label: 'Coordinación Rutas',
+              path: '/panel/rutas',
+              icon: <Navigation size={16} />
+            },
             { label: 'Info N.V.', path: '/panel/info', icon: <FileSearch size={16} /> },
             { label: 'Modo TV', path: '/panel/tv', icon: <Monitor size={16} /> },
             { label: 'Builder', path: '/panel/builder', icon: <Layers size={16} /> },

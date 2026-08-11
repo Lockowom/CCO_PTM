@@ -68,6 +68,7 @@ const PATH_TO_MODULE = {
   '/queries/heatmap': 'Mapa de Calor',
   '/queries/historial-nv': 'Historial N.V.',
   '/queries/dispatch-control': 'Control Despacho',
+  '/panel/rutas': 'Coordinación Rutas',
   '/admin/users': 'Usuarios',
   '/admin/roles': 'Roles',
   '/admin/views': 'Vistas',

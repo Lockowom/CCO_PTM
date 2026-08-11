@@ -48,6 +48,7 @@ export const ROUTE_PERMISSIONS = {
   '/panel/info': ['panel_info', 'manage_panel'],
   '/panel/tv': ['panel_tv', 'manage_panel'],
   '/panel/builder': ['panel_builder', 'manage_panel'],
+  '/panel/rutas': ['manage_panel'],
   // Configuración (incluye Auditoría): SOLO admin. Se exige un permiso de nivel
   // admin (manage_roles); ADMIN/es_admin_delegado pasan siempre. Los usuarios con
   // solo view_panel NO ven ni acceden esta pantalla.
@@ -145,6 +146,12 @@ export const ROUTE_PERMISSIONS = {
   '/admin/rendiciones': ['view_rendiciones', 'manage_rendiciones']
 };
 
+// Piloto privado. No es un permiso asignable a roles: aunque otro usuario sea
+// ADMIN, esta pantalla permanece bloqueada hasta que el dueño decida publicarla.
+export const PRIVATE_ROUTE_COORDINATOR_AUTH_UID = 'c12e2286-9619-445e-afe4-e9aefc51996c';
+export const puedeVerCoordinacionRutas = (user) =>
+  user?.auth_uid === PRIVATE_ROUTE_COORDINATOR_AUTH_UID;
+
 // ── Permisos por PESTAÑA (?tab=) ────────────────────────────────────────────
 // Los módulos con pestañas comparten una sola ruta; el guard de ruta ignora el
 // ?tab. Este mapa permite control fino POR PESTAÑA: cada tab tiene su permiso
@@ -229,6 +236,8 @@ export function permisosDeRuta(pathname) {
 export function puedeAccederRuta(pathname, user, hasPermission) {
   const clean = String(pathname || '/').split('?')[0] || '/';
   if (clean === '/') return true;
+  if (clean.toLowerCase().replace(/\/+$/, '') === '/panel/rutas')
+    return puedeVerCoordinacionRutas(user);
   if (user?.rol === 'ADMIN' || user?.es_admin_delegado === true) return true;
   const required = permisosDeRuta(clean);
   return (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   accesosConPermisos,
+  PRIVATE_ROUTE_COORDINATOR_AUTH_UID,
   puedeAccederRuta,
   resolverRutaInicial
 } from '../constants/permissions';
@@ -36,6 +37,13 @@ describe('autorización por ruta', () => {
     expect(puedeAccederRuta('/panel/info', user, managePanel)).toBe(true);
     expect(puedeAccederRuta('/panel/tv', user, managePanel)).toBe(true);
     expect(puedeAccederRuta('/panel/builder', user, managePanel)).toBe(true);
+  });
+
+  it('mantiene Coordinación Rutas privada incluso frente a otros administradores', () => {
+    const anotherAdmin = { rol: 'ADMIN', auth_uid: '00000000-0000-0000-0000-000000000001' };
+    const owner = { rol: 'ADMIN', auth_uid: PRIVATE_ROUTE_COORDINATOR_AUTH_UID };
+    expect(puedeAccederRuta('/panel/rutas', anotherAdmin, () => true)).toBe(false);
+    expect(puedeAccederRuta('/panel/rutas', owner, () => false)).toBe(true);
   });
 });
 
