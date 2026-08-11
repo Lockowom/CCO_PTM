@@ -158,6 +158,31 @@
 .rp-full {
   grid-column: 1/-1;
 }
+.rp-responsible-preview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+.rp-responsible-preview div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rp-responsible-preview b {
+  color: #64748b;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rp-responsible-preview span {
+  color: #1e3a8a;
+  font-size: 12px;
+  font-weight: 800;
+}
 .rp-field-error {
   color: #dc2626 !important;
   font-size: 11px !important;
@@ -455,6 +480,9 @@
   .rp-grid,
   .rp-grid-item {
     grid-template-columns: 1fr;
+  }
+  .rp-responsible-preview {
+    grid-template-columns: 1fr 1fr;
   }
   .rp-photo-input {
     grid-column: auto;

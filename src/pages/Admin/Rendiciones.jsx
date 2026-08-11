@@ -48,13 +48,21 @@ export default function Rendiciones() {
     tipo: 'centro',
     codigo: '',
     nombre: '',
+    rut: '',
+    direccion_area: '',
+    unidad: '',
+    tecnico: '',
     activo: true
   });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setData(await rendicionesAdmin.dashboard(300));
+      const [dashboard, colaboradores] = await Promise.all([
+        rendicionesAdmin.dashboard(300),
+        rendicionesAdmin.colaboradoresDetalle()
+      ]);
+      setData({ ...dashboard, colaboradores });
     } catch (error) {
       toast.error(error.message || 'No se pudieron cargar las rendiciones.');
     } finally {
@@ -130,14 +138,31 @@ export default function Rendiciones() {
     if (!hasRealLetters(catalog.nombre))
       return toast.error('El nombre debe contener letras reales.');
     try {
-      await rendicionesAdmin.guardarCatalogo(catalog.tipo, {
+      const payload = {
+        ...catalog,
         id: catalog.id || null,
         codigo: cleanHumanText(catalog.codigo),
         nombre: cleanHumanText(catalog.nombre),
+        rut: cleanHumanText(catalog.rut),
+        direccion_area: cleanHumanText(catalog.direccion_area),
+        unidad: cleanHumanText(catalog.unidad),
+        tecnico: cleanHumanText(catalog.tecnico),
         activo: catalog.activo
-      });
+      };
+      if (catalog.tipo === 'colaborador') await rendicionesAdmin.guardarColaboradorDetalle(payload);
+      else await rendicionesAdmin.guardarCatalogo(catalog.tipo, payload);
       toast.success('Catálogo actualizado.');
-      setCatalog({ id: '', tipo: catalog.tipo, codigo: '', nombre: '', activo: true });
+      setCatalog({
+        id: '',
+        tipo: catalog.tipo,
+        codigo: '',
+        nombre: '',
+        rut: '',
+        direccion_area: '',
+        unidad: '',
+        tecnico: '',
+        activo: true
+      });
       load();
     } catch (error) {
       toast.error(error.message);
@@ -152,6 +177,10 @@ export default function Rendiciones() {
       tipo: catalog.tipo,
       codigo: item?.codigo || '',
       nombre: item?.nombre || '',
+      rut: item?.rut || '',
+      direccion_area: item?.direccion_area || '',
+      unidad: item?.unidad || '',
+      tecnico: item?.tecnico || '',
       activo: item?.activo ?? true
     });
   };
@@ -258,6 +287,10 @@ export default function Rendiciones() {
                       tipo: e.target.value,
                       codigo: '',
                       nombre: '',
+                      rut: '',
+                      direccion_area: '',
+                      unidad: '',
+                      tecnico: '',
                       activo: true
                     })
                   }
@@ -299,6 +332,46 @@ export default function Rendiciones() {
                   placeholder="Nombre visible"
                 />
               </label>
+              {catalog.tipo === 'colaborador' && (
+                <>
+                  <label>
+                    RUT
+                    <input
+                      maxLength="15"
+                      value={catalog.rut}
+                      onChange={(e) => setCatalog({ ...catalog, rut: e.target.value })}
+                      placeholder="12.345.678-9"
+                    />
+                  </label>
+                  <label>
+                    Dirección / área
+                    <input
+                      maxLength="120"
+                      value={catalog.direccion_area}
+                      onChange={(e) => setCatalog({ ...catalog, direccion_area: e.target.value })}
+                      placeholder="Operaciones"
+                    />
+                  </label>
+                  <label>
+                    Unidad
+                    <input
+                      maxLength="80"
+                      value={catalog.unidad}
+                      onChange={(e) => setCatalog({ ...catalog, unidad: e.target.value })}
+                      placeholder="PV - ST"
+                    />
+                  </label>
+                  <label>
+                    Técnico
+                    <input
+                      maxLength="120"
+                      value={catalog.tecnico}
+                      onChange={(e) => setCatalog({ ...catalog, tecnico: e.target.value })}
+                      placeholder="Nombre del técnico"
+                    />
+                  </label>
+                </>
+              )}
               <button>
                 <Plus size={17} /> {catalog.id ? 'Guardar' : 'Agregar'}
               </button>

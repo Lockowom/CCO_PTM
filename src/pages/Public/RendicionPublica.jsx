@@ -22,6 +22,8 @@ import {
 import { downloadRendicionExcel, downloadRendicionPDF } from '../../lib/exportRendicion';
 import './RendicionPublica.css';
 
+const money = (value) => `$ ${Number(value || 0).toLocaleString('es-CL')}`;
+
 function LoadingCard({ text = 'Cargando formulario seguro…' }) {
   return (
     <main className="rp-shell">
@@ -75,37 +77,46 @@ function ReportView({ token, reportId, viewToken }) {
         <h2>PLANILLA DE RENDICIÓN DE GASTOS</h2>
         <div className="rp-summary">
           <div>
-            <b>Responsable</b>
+            <b>Responsable rendición</b>
             <span>{r.responsable_nombre}</span>
           </div>
           <div>
-            <b>Fecha</b>
+            <b>Fecha de la rendición</b>
             <span>{new Date(`${r.fecha_rendicion}T12:00:00`).toLocaleDateString('es-CL')}</span>
           </div>
           <div>
-            <b>Centro de costo</b>
-            <span>
-              {r.centro_costo_codigo} · {r.centro_costo_nombre}
-            </span>
+            <b>RUT del responsable</b>
+            <span>{r.responsable_rut || '—'}</span>
           </div>
           <div>
-            <b>Folio</b>
+            <b>Nº folio solicitud</b>
             <span>{r.folio_texto}</span>
           </div>
           <div>
-            <b>Tipo de fondo</b>
-            <span>{r.tipo_fondo}</span>
+            <b>Dirección - área</b>
+            <span>{r.direccion_area || '—'}</span>
           </div>
           <div>
-            <b>Estado</b>
-            <span>{r.estado}</span>
+            <b>Fondo por rendir</b>
+            <span>{r.tipo_fondo === 'Fondo por rendir' ? money(r.total) : '—'}</span>
+          </div>
+          <div>
+            <b>Unidad</b>
+            <span>{r.unidad || '—'}</span>
+          </div>
+          <div>
+            <b>Centro de costo</b>
+            <span>{r.centro_costo_nombre || '—'}</span>
+          </div>
+          <div>
+            <b>Técnico</b>
+            <span>{r.tecnico || '—'}</span>
+          </div>
+          <div>
+            <b>Detalle</b>
+            <span>{r.detalle || '—'}</span>
           </div>
         </div>
-        {r.detalle && (
-          <p className="rp-detail">
-            <b>Detalle:</b> {r.detalle}
-          </p>
-        )}
         <div className="rp-table-wrap">
           <table className="rp-table">
             <thead>
@@ -204,6 +215,10 @@ export default function RendicionPublica() {
       return acc;
     }, {});
   }, [catalogs]);
+  const selectedResponsible = useMemo(
+    () => catalogs?.colaboradores?.find((person) => person.id === form.responsable_id) || null,
+    [catalogs, form.responsable_id]
+  );
 
   if (reportId && viewToken)
     return <ReportView token={token} reportId={reportId} viewToken={viewToken} />;
@@ -375,6 +390,26 @@ export default function RendicionPublica() {
               </select>
               {fieldError('responsable_id')}
             </label>
+            {selectedResponsible && (
+              <div className="rp-responsible-preview rp-full">
+                <div>
+                  <b>RUT</b>
+                  <span>{selectedResponsible.rut || 'Pendiente de configurar'}</span>
+                </div>
+                <div>
+                  <b>Dirección - área</b>
+                  <span>{selectedResponsible.direccion_area || 'Pendiente de configurar'}</span>
+                </div>
+                <div>
+                  <b>Unidad</b>
+                  <span>{selectedResponsible.unidad || 'Pendiente de configurar'}</span>
+                </div>
+                <div>
+                  <b>Técnico</b>
+                  <span>{selectedResponsible.tecnico || 'Pendiente de configurar'}</span>
+                </div>
+              </div>
+            )}
             <label>
               Tipo de fondo *
               <select

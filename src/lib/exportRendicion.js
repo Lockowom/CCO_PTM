@@ -1,4 +1,4 @@
-import { excelSafe } from './rendicionValidation';
+import { cleanHumanText, excelSafe } from './rendicionValidation.js';
 
 const money = (value) => `$ ${Math.round(Number(value || 0)).toLocaleString('es-CL')}`;
 const dateCL = (value) =>
@@ -18,13 +18,40 @@ async function imageDataUrl(url) {
   }
 }
 
-export async function downloadRendicionPDF(data) {
-  const pdfMakeMod = await import('pdfmake/build/pdfmake');
-  const pdfFontsMod = await import('pdfmake/build/vfs_fonts');
-  const pdfMake = pdfMakeMod.default || pdfMakeMod;
-  const fonts = pdfFontsMod.default || pdfFontsMod;
-  pdfMake.vfs = fonts.pdfMake?.vfs || fonts.vfs || pdfMake.vfs;
-  const logo = await imageDataUrl('/logo-ptm.png');
+const printable = (value) => cleanHumanText(value) || '-';
+const fieldRows = (rows, labelWidth = 110) => ({
+  table: {
+    widths: [labelWidth, '*'],
+    body: rows.map(([label, value]) => [
+      {
+        text: label,
+        bold: true,
+        fontSize: 7,
+        border: [false, false, false, false],
+        margin: [0, 1.3, 4, 0]
+      },
+      {
+        text: printable(value),
+        fontSize: 8.4,
+        border: [false, false, false, true],
+        borderColor: ['#111111', '#111111', '#111111', '#111111'],
+        margin: [0, 1.3, 0, 0]
+      }
+    ])
+  },
+  layout: {
+    hLineWidth: () => 0,
+    vLineWidth: () => 0,
+    paddingLeft: () => 0,
+    paddingRight: () => 0,
+    paddingTop: () => 1,
+    paddingBottom: () => 1
+  }
+});
+
+export function buildRendicionPdfDefinition(data, options = {}) {
+  const logo = options.logo || '';
+  const evidenceImages = options.evidenceImages || [];
   const r = data.rendicion;
   const rows = [...(data.items || [])];
   while (rows.length < 15) rows.push(null);
@@ -46,12 +73,6 @@ export async function downloadRendicionPDF(data) {
         : [String(index + 1), '', '', '', '', '', '']
     )
   ];
-  const evidence = await Promise.all(
-    (data.fotos || [])
-      .slice(0, 10)
-      .map(async (photo) => ({ ...photo, image: await imageDataUrl(photo.url) }))
-  );
-  const evidenceImages = evidence.filter((photo) => photo.image);
   const evidenceRows = [];
   for (let index = 0; index < evidenceImages.length; index += 4) {
     evidenceRows.push({
@@ -70,24 +91,61 @@ export async function downloadRendicionPDF(data) {
       margin: [0, 0, 0, 12]
     });
   }
-  const doc = {
+  return {
     pageSize: 'A4',
-    pageMargins: [24, 24, 24, 28],
+    pageMargins: [20, 18, 20, 28],
     defaultStyle: { fontSize: 8, color: '#111827' },
+    background: (page, pageSize) =>
+      page === 1
+        ? {
+            canvas: [
+              {
+                type: 'rect',
+                x: 8,
+                y: 8,
+                w: pageSize.width - 16,
+                h: pageSize.height - 22,
+                lineWidth: 1,
+                lineColor: '#111111'
+              }
+            ]
+          }
+        : null,
     content: [
       {
         table: {
-          widths: [120, '*'],
+          widths: [135, '*'],
           body: [
             [
               logo
-                ? { image: logo, width: 105 }
-                : { text: 'ptm', fontSize: 30, bold: true, color: '#f05a16' },
+                ? { image: logo, width: 120, margin: [4, 0, 0, 2] }
+                : { text: 'ptm health care', fontSize: 24, bold: true, color: '#f05a16' },
               {
-                text: 'PLANILLA DE RENDICIÓN DE GASTOS',
-                bold: true,
-                alignment: 'center',
-                margin: [0, 15]
+                table: {
+                  widths: ['*'],
+                  body: [
+                    [
+                      {
+                        text: 'PLANILLA DE RENDICIÓN DE GASTOS',
+                        bold: true,
+                        alignment: 'center',
+                        fontSize: 9,
+                        margin: [0, 2]
+                      }
+                    ]
+                  ]
+                },
+                layout: {
+                  hLineWidth: () => 0.8,
+                  vLineWidth: () => 0.8,
+                  hLineColor: () => '#111111',
+                  vLineColor: () => '#111111',
+                  paddingLeft: () => 4,
+                  paddingRight: () => 4,
+                  paddingTop: () => 0,
+                  paddingBottom: () => 0
+                },
+                margin: [20, 3, 54, 0]
               }
             ]
           ]
@@ -95,30 +153,40 @@ export async function downloadRendicionPDF(data) {
         layout: 'noBorders'
       },
       {
-        margin: [0, 12, 0, 10],
+        margin: [0, 6, 0, 10],
         columns: [
           {
             width: '*',
             stack: [
-              { text: `RESPONSABLE RENDICIÓN     ${r.responsable_nombre}` },
-              {
-                text: `CENTRO DE COSTO                 ${r.centro_costo_codigo} · ${r.centro_costo_nombre}`
-              },
-              { text: `TIPO DE FONDO                       ${r.tipo_fondo}` },
-              { text: `DETALLE                                  ${r.detalle || '—'}` }
-            ],
-            lineHeight: 1.45
+              fieldRows(
+                [
+                  ['RESPONSABLE RENDICIÓN', r.responsable_nombre],
+                  ['RUT DEL RESPONSABLE', r.responsable_rut],
+                  ['DIRECCIÓN - ÁREA', r.direccion_area],
+                  ['UNIDAD', r.unidad],
+                  ['CENTRO DE COSTO', r.centro_costo_nombre],
+                  ['TÉCNICO', r.tecnico],
+                  ['DETALLE', r.detalle]
+                ],
+                112
+              )
+            ]
           },
           {
-            width: 185,
+            width: 190,
             stack: [
-              { text: `FECHA DE LA RENDICIÓN     ${dateCL(r.fecha_rendicion)}` },
-              { text: `Nº FOLIO SOLICITUD          ${r.folio_texto || r.folio}` },
-              { text: `TOTAL                                 ${money(r.total)}` }
-            ],
-            lineHeight: 1.45
+              fieldRows(
+                [
+                  ['FECHA DE LA RENDICIÓN', dateCL(r.fecha_rendicion)],
+                  ['Nº FOLIO SOLICITUD', r.folio_texto || r.folio],
+                  ['FONDO POR RENDIR', r.tipo_fondo === 'Fondo por rendir' ? money(r.total) : '-']
+                ],
+                98
+              )
+            ]
           }
-        ]
+        ],
+        columnGap: 22
       },
       {
         table: { headerRows: 1, widths: [18, 52, 62, '*', 34, 65, 58], body },
@@ -166,6 +234,25 @@ export async function downloadRendicionPDF(data) {
       color: '#64748b'
     })
   };
+}
+
+export async function downloadRendicionPDF(data) {
+  const pdfMakeMod = await import('pdfmake/build/pdfmake');
+  const pdfFontsMod = await import('pdfmake/build/vfs_fonts');
+  const pdfMake = pdfMakeMod.default || pdfMakeMod;
+  const fonts = pdfFontsMod.default || pdfFontsMod;
+  const r = data.rendicion;
+  pdfMake.vfs = fonts.pdfMake?.vfs || fonts.vfs || pdfMake.vfs;
+  const logo = await imageDataUrl('/logo-ptm.png');
+  const evidence = await Promise.all(
+    (data.fotos || [])
+      .slice(0, 10)
+      .map(async (photo) => ({ ...photo, image: await imageDataUrl(photo.url) }))
+  );
+  const doc = buildRendicionPdfDefinition(data, {
+    logo,
+    evidenceImages: evidence.filter((photo) => photo.image)
+  });
   pdfMake.createPdf(doc).download(`${r.folio_texto || 'Rendicion'}.pdf`);
 }
 
@@ -185,14 +272,24 @@ export async function downloadRendicionExcel(data) {
       dateCL(r.fecha_rendicion)
     ],
     [
-      'CENTRO DE COSTO',
-      excelSafe(`${r.centro_costo_codigo} · ${r.centro_costo_nombre}`),
+      'RUT DEL RESPONSABLE',
+      excelSafe(r.responsable_rut || ''),
       '',
       '',
       'Nº FOLIO SOLICITUD',
       excelSafe(r.folio_texto || r.folio)
     ],
-    ['TIPO DE FONDO', excelSafe(r.tipo_fondo)],
+    [
+      'DIRECCIÓN - ÁREA',
+      excelSafe(r.direccion_area || ''),
+      '',
+      '',
+      'FONDO POR RENDIR',
+      r.tipo_fondo === 'Fondo por rendir' ? Number(r.total) : ''
+    ],
+    ['UNIDAD', excelSafe(r.unidad || '')],
+    ['CENTRO DE COSTO', excelSafe(r.centro_costo_nombre || '')],
+    ['TÉCNICO', excelSafe(r.tecnico || '')],
     ['DETALLE', excelSafe(r.detalle || '')],
     [],
     ['Nº', 'FECHA', 'Nº BOL/FAC', 'Detalle Descripción de gasto', 'CC', 'Categoría', 'Total']
@@ -208,8 +305,18 @@ export async function downloadRendicionExcel(data) {
       Number(item.monto)
     ])
   );
-  while (aoa.length < 23) aoa.push([aoa.length - 7, '', '', '', '', '', '']);
-  aoa.push(['', '', '', '', '', 'Total General', { f: `SUM(G9:G${aoa.length})` }]);
+  const firstItemRow = 12;
+  while (aoa.length < firstItemRow - 1 + 15)
+    aoa.push([aoa.length - (firstItemRow - 2), '', '', '', '', '', '']);
+  aoa.push([
+    '',
+    '',
+    '',
+    '',
+    '',
+    'Total General',
+    { f: `SUM(G${firstItemRow}:G${firstItemRow + 14})` }
+  ]);
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
     { wch: 7 },
@@ -220,9 +327,9 @@ export async function downloadRendicionExcel(data) {
     { wch: 20 },
     { wch: 16 }
   ];
-  ws['!merges'] = [XLSX.utils.decode_range('C1:G1'), XLSX.utils.decode_range('B6:G6')];
+  ws['!merges'] = [XLSX.utils.decode_range('C1:G1'), XLSX.utils.decode_range('B9:G9')];
   for (let col = 0; col < 7; col += 1) {
-    const cell = ws[XLSX.utils.encode_cell({ r: 7, c: col })];
+    const cell = ws[XLSX.utils.encode_cell({ r: firstItemRow - 2, c: col })];
     if (cell)
       cell.s = {
         font: { bold: true },
@@ -236,7 +343,7 @@ export async function downloadRendicionExcel(data) {
         }
       };
   }
-  for (let row = 8; row < aoa.length; row += 1) {
+  for (let row = firstItemRow - 1; row < aoa.length; row += 1) {
     const amount = ws[XLSX.utils.encode_cell({ r: row, c: 6 })];
     if (amount) amount.z = '$ #,##0';
   }

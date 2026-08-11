@@ -142,6 +142,20 @@
   flex: 1.7;
 }
 
+.ra-catalog-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+}
+
+.ra-catalog-fields .ra-record-selector {
+  grid-column: span 2;
+}
+
+.ra-catalog-fields > button {
+  min-height: 40px;
+  justify-content: center;
+}
+
 .ra-catalog-fields select,
 .ra-catalog-fields input {
   height: 40px;
@@ -217,6 +231,10 @@
     grid-column: 1 / -1;
     justify-content: flex-end;
   }
+
+  .ra-catalog-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -242,6 +260,10 @@
   }
 
   .ra-catalog-fields .ra-record-selector {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .ra-catalog-fields {
+    grid-template-columns: 1fr;
   }
 }

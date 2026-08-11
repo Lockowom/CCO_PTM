@@ -45,6 +45,7 @@ async function rpc(name, params = {}) {
 
 export const rendicionesAdmin = {
   dashboard: (limit = 200) => rpc('rendicion_admin_dashboard', { p_limit: limit }),
+  colaboradoresDetalle: () => rpc('rendicion_admin_colaboradores_detalle'),
   detalle: (id) => rpc('rendicion_admin_detalle', { p_id: id }),
   crearLink: (nombre, expiresAt, maxSubmissions) =>
     rpc('rendicion_admin_crear_link', {
@@ -59,6 +60,16 @@ export const rendicionesAdmin = {
       p_id: item.id || null,
       p_codigo: item.codigo || null,
       p_nombre: item.nombre,
+      p_activo: item.activo ?? true
+    }),
+  guardarColaboradorDetalle: (item) =>
+    rpc('rendicion_admin_guardar_colaborador_detalle', {
+      p_id: item.id || null,
+      p_nombre: item.nombre,
+      p_rut: item.rut || null,
+      p_direccion_area: item.direccion_area || null,
+      p_unidad: item.unidad || null,
+      p_tecnico: item.tecnico || null,
       p_activo: item.activo ?? true
     })
 };

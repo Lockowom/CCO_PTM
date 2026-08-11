@@ -254,7 +254,11 @@ serve(async (req) => {
           .select('id,codigo,nombre')
           .eq('activo', true)
           .order('codigo'),
-        db.from('rendicion_colaboradores').select('id,nombre').eq('activo', true).order('nombre'),
+        db
+          .from('rendicion_colaboradores')
+          .select('id,nombre,rut,direccion_area,unidad,tecnico')
+          .eq('activo', true)
+          .order('nombre'),
         db.from('rendicion_categorias').select('codigo,nombre').eq('activo', true).order('nombre'),
         db
           .from('rendicion_subcategorias')
