@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { WEEKLY_TREND_RELIABLE_FROM, WEEKLY_TREND_RELIABLE_LABEL } from '../weeklyTrendConfig';
 
 function WeeklyChart({ data }) {
   const TooltipFlujo = ({ active, payload, label }) => {
@@ -41,31 +42,44 @@ function WeeklyChart({ data }) {
         Aprobadas por fecha de aprobación · Entregadas por fecha real de entrega · promedio sobre 5
         días hábiles
       </p>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="semana" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-          <YAxis tick={{ fontSize: 10 }} />
-          <Tooltip content={<TooltipFlujo />} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Line
-            type="monotone"
-            dataKey="aprobadas"
-            stroke="#f57c00"
-            strokeWidth={2}
-            name="NVs Aprobadas"
-            dot={{ r: 3 }}
-          />
-          <Line
-            type="monotone"
-            dataKey="entregadas"
-            stroke="#2e7d32"
-            strokeWidth={2}
-            name="NVs Entregadas"
-            dot={{ r: 3 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-800">
+        Cobertura confiable desde el <strong>{WEEKLY_TREND_RELIABLE_LABEL}</strong>. El historial
+        anterior no se grafica porque no cuenta con fechas de entrega completas.
+      </div>
+      {data?.length ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="semana" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 10 }} />
+            <Tooltip content={<TooltipFlujo />} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Line
+              type="monotone"
+              dataKey="aprobadas"
+              stroke="#f57c00"
+              strokeWidth={2}
+              name="NVs Aprobadas"
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="entregadas"
+              stroke="#2e7d32"
+              strokeWidth={2}
+              name="NVs Entregadas"
+              dot={{ r: 3 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <div
+          className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 px-6 text-center text-xs text-gray-500"
+          data-reliable-from={WEEKLY_TREND_RELIABLE_FROM}
+        >
+          El rango seleccionado no contiene semanas con trazabilidad confiable de entregas.
+        </div>
+      )}
     </div>
   );
 }

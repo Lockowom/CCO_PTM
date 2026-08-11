@@ -1,3 +1,5 @@
+import { WEEKLY_TREND_RELIABLE_LABEL } from '../pages/Panel/dash/weeklyTrendConfig';
+
 const NA = '—';
 const text = (value) =>
   value === null || value === undefined || value === '' ? NA : String(value);
@@ -214,7 +216,7 @@ export async function downloadPanelDashboardPDF({
     ),
     { text: 'ENTRADAS VS SALIDAS REALES POR SEMANA', style: 'section' },
     {
-      text: 'Aprobadas por fecha de aprobación. Entregadas por fecha real de entrega. Promedio diario calculado sobre 5 días hábiles.',
+      text: `Aprobadas por fecha de aprobación. Entregadas por fecha real de entrega. Promedio diario calculado sobre 5 días hábiles. Cobertura confiable desde ${WEEKLY_TREND_RELIABLE_LABEL}; el historial anterior se excluye por falta de fechas de entrega completas.`,
       fontSize: 6.5,
       color: '#64748b',
       margin: [0, 0, 0, 4]

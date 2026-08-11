@@ -1,12 +1,13 @@
 import { supabase } from '../../../supabase';
 import { ESTADOS, ESTADO_MIGRACION, calcFechaCompromiso, soloFecha, sumaDias } from './dashHelpers';
 import { Logger } from '../../../lib/logger';
+import { WEEKLY_TREND_RELIABLE_FROM } from './weeklyTrendConfig';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const CONSOLIDADO_KEYS_CACHE_TTL_MS = 60 * 1000;
 const DASHBOARD_CACHE_TTL_MS = 45 * 1000;
 const DASHBOARD_SESSION_CACHE_TTL_MS = 2 * 60 * 1000;
-const DASHBOARD_SESSION_CACHE_PREFIX = 'cco:panel-dashboard:';
+const DASHBOARD_SESSION_CACHE_PREFIX = 'cco:panel-dashboard:v2:';
 const INCIDENCIAS_CACHE_TTL_MS = 15 * 1000;
 const TV_ESTADOS_CACHE_TTL_MS = 10 * 1000;
 let consolidadoKeysCache = { ts: 0, data: null, promise: null };
@@ -333,7 +334,9 @@ export function construirTendenciaSemanal(aprobadasRows, entregadasRows, ahoraMs
   aprobadasRows.forEach((r) => {
     const fechaAprob = fechaAprobEfectiva(r);
     if (!fechaAprob) return;
-    const weekKey = inicioSemana(String(fechaAprob).slice(0, 10));
+    const fechaAprobDia = String(fechaAprob).slice(0, 10);
+    if (fechaAprobDia < WEEKLY_TREND_RELIABLE_FROM) return;
+    const weekKey = inicioSemana(fechaAprobDia);
     if (!weekKey) return;
     const week = ensureWeek(weekKey);
     week.aprobadas += 1;
@@ -355,7 +358,9 @@ export function construirTendenciaSemanal(aprobadasRows, entregadasRows, ahoraMs
 
   entregadasRows.forEach((r) => {
     if (!r.fecha_entregado) return;
-    const weekKey = inicioSemana(String(r.fecha_entregado).slice(0, 10));
+    const fechaEntregaDia = String(r.fecha_entregado).slice(0, 10);
+    if (fechaEntregaDia < WEEKLY_TREND_RELIABLE_FROM) return;
+    const weekKey = inicioSemana(fechaEntregaDia);
     if (!weekKey) return;
     ensureWeek(weekKey).entregadas += 1;
   });
@@ -733,10 +738,17 @@ export async function fetchDashboardData(dateFrom, dateTo, { force = false } = {
       }
 
       const run = async () => {
+        const deliveryDateFrom =
+          !dateFrom || dateFrom < WEEKLY_TREND_RELIABLE_FROM
+            ? WEEKLY_TREND_RELIABLE_FROM
+            : dateFrom;
+        const deliveryRangeHasCoverage = !dateTo || dateTo >= WEEKLY_TREND_RELIABLE_FROM;
         const [rows, activasRows, entregasEventoRows, consolidadoKeys] = await Promise.all([
           fetchAll(DASHBOARD_COLUMNS, dateFrom, dateTo),
           fetchActivas(DASHBOARD_COLUMNS),
-          fetchAllByDate(DELIVERY_EVENT_COLUMNS, 'fecha_entregado', dateFrom, dateTo),
+          deliveryRangeHasCoverage
+            ? fetchAllByDate(DELIVERY_EVENT_COLUMNS, 'fecha_entregado', deliveryDateFrom, dateTo)
+            : Promise.resolve([]),
           fetchConsolidadoKeys()
         ]);
 
