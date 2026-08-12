@@ -45,6 +45,7 @@ export const ROUTE_PERMISSIONS = {
   // operativo completo para los responsables del módulo.
   '/panel': ['view_panel', 'manage_panel'], // Dashboard
   '/panel/ingresar': ['panel_ingresar', 'manage_panel'],
+  '/panel/reaperturas': ['approve_panel_reopen_nv', 'manage_roles'],
   '/panel/info': ['panel_info', 'manage_panel'],
   '/panel/tv': ['panel_tv', 'manage_panel'],
   '/panel/builder': ['panel_builder', 'manage_panel'],

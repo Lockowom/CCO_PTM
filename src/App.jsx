@@ -39,6 +39,7 @@ const PanelInfo = React.lazy(() => import('./pages/Panel/info/PanelInfoReal'));
 const PanelTV = React.lazy(() => import('./pages/Panel/tv/PanelTVReal'));
 const PanelBuilder = React.lazy(() => import('./pages/Panel/builder/PanelBuilderReal'));
 const PanelConfig = React.lazy(() => import('./pages/Panel/config/PanelConfigReal'));
+const BandejaReaperturas = React.lazy(() => import('./pages/Panel/reaperturas/BandejaReaperturas'));
 
 // Mobile — PDA Operativa de Bodega
 const WarehousePDA = React.lazy(() => import('./pages/Mobile/WarehousePDA'));
@@ -683,6 +684,7 @@ function AppContent() {
             >
               <Route index element={<DashboardReal />} />
               <Route path="ingresar" element={<PanelIngresar />} />
+              <Route path="reaperturas" element={<BandejaReaperturas />} />
               <Route path="rutas" element={<CoordinacionRutas />} />
               <Route path="info" element={<PanelInfo />} />
               <Route path="tv" element={<PanelTV />} />

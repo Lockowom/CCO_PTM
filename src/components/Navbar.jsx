@@ -47,7 +47,8 @@ import {
   KeyRound,
   Tags,
   WalletCards,
-  Navigation
+  Navigation,
+  Inbox
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -305,6 +306,11 @@ const Navbar = () => {
           modules: [
             { label: 'Dashboard', path: '/panel', icon: <LayoutDashboard size={16} /> },
             { label: 'Ingresar N.V.', path: '/panel/ingresar', icon: <FileText size={16} /> },
+            {
+              label: 'Solicitudes reapertura',
+              path: '/panel/reaperturas',
+              icon: <Inbox size={16} />
+            },
             {
               label: 'Coordinación Rutas',
               path: '/panel/rutas',

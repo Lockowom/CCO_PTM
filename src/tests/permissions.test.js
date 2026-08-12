@@ -37,6 +37,13 @@ describe('autorización por ruta', () => {
     expect(puedeAccederRuta('/panel/info', user, managePanel)).toBe(true);
     expect(puedeAccederRuta('/panel/tv', user, managePanel)).toBe(true);
     expect(puedeAccederRuta('/panel/builder', user, managePanel)).toBe(true);
+    expect(puedeAccederRuta('/panel/reaperturas', user, managePanel)).toBe(false);
+  });
+
+  it('separa la bandeja de reaperturas del permiso operativo general', () => {
+    const approver = (permission) => permission === 'approve_panel_reopen_nv';
+    expect(puedeAccederRuta('/panel/reaperturas', user, approver)).toBe(true);
+    expect(puedeAccederRuta('/panel/ingresar', user, approver)).toBe(false);
   });
 
   it('mantiene Coordinación Rutas privada incluso frente a otros administradores', () => {

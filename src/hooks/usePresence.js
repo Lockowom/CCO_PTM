@@ -69,6 +69,7 @@ const PATH_TO_MODULE = {
   '/queries/historial-nv': 'Historial N.V.',
   '/queries/dispatch-control': 'Control Despacho',
   '/panel/rutas': 'Coordinación Rutas',
+  '/panel/reaperturas': 'Solicitudes Reapertura',
   '/admin/users': 'Usuarios',
   '/admin/roles': 'Roles',
   '/admin/views': 'Vistas',

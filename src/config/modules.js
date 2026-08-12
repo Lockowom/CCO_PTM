@@ -47,6 +47,11 @@ export const APP_ROUTES = [
   // Panel PTM (nativo en CCO; el iframe de Vercel se retiró tras la migración)
   { value: '/panel', label: 'Panel PTM - Dashboard', module: 'panel' },
   { value: '/panel/ingresar', label: 'Panel PTM - Ingresar N.V.', module: 'panel' },
+  {
+    value: '/panel/reaperturas',
+    label: 'Panel PTM - Solicitudes de reapertura',
+    module: 'panel'
+  },
   { value: '/panel/info', label: 'Panel PTM - Info N.V.', module: 'panel' },
   { value: '/panel/tv', label: 'Panel PTM - Modo TV', module: 'panel' },
   { value: '/panel/builder', label: 'Panel PTM - Builder', module: 'panel' },

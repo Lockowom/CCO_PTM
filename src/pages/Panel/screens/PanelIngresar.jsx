@@ -42,7 +42,6 @@ import {
   fusionarResultadosBusqueda,
   listarSolicitudesReapertura,
   solicitarReapertura,
-  resolverReapertura,
   gestionarPausaShipping,
   reportarIncidenciaArmado,
   corregirEstadoAShipping,
@@ -193,6 +192,7 @@ function DetalleDrawer({
   onSaved,
   onDeleted
 }) {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState({}); // valores editados
@@ -203,9 +203,7 @@ function DetalleDrawer({
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesLoading, setSolicitudesLoading] = useState(false);
   const [reopenReason, setReopenReason] = useState('');
-  const [resolveNote, setResolveNote] = useState('');
   const [requestingReopen, setRequestingReopen] = useState(false);
-  const [resolvingReopen, setResolvingReopen] = useState(false);
   const [pauseChoice, setPauseChoice] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [savingPause, setSavingPause] = useState(false);
@@ -502,36 +500,6 @@ function DetalleDrawer({
     }
   };
 
-  const onResolverReapertura = async (aprobar) => {
-    if (!solicitudPendiente?.id) return;
-    setResolvingReopen(true);
-    const res = await resolverReapertura(solicitudPendiente.id, aprobar, resolveNote);
-    setResolvingReopen(false);
-    if (!res.ok) {
-      setResult({
-        success: false,
-        message: res.message || res.error || 'No se pudo resolver la solicitud.'
-      });
-      return;
-    }
-    const fresh = await lookup(item.canal, item.nv);
-    if (fresh.found) {
-      setData(fresh.data);
-      setEdit({});
-      onSaved?.({
-        ...item,
-        estado: fresh.data.estado || item.estado,
-        transportista: fresh.data.transportista || item.transportista,
-        urgente: String(fresh.data.urgente) === 'true' || fresh.data.urgente === true,
-        reabierta: fresh.data.reabierta === true,
-        motivoReapertura: fresh.data.motivo_reapertura || ''
-      });
-    }
-    setResolveNote('');
-    await cargarSolicitudes();
-    setResult({ success: true, message: res.message || 'Solicitud resuelta correctamente.' });
-  };
-
   return createPortal(
     <div className="panel-portal fixed inset-0 z-[120] flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
@@ -734,34 +702,24 @@ function DetalleDrawer({
                         </div>
 
                         {puedeAprobarReapertura && (
-                          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-4 space-y-3">
-                            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">
-                              Aprobación de reapertura
+                          <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-4">
+                            <div className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
+                              Resolución centralizada
                             </div>
-                            <textarea
-                              value={resolveNote}
-                              onChange={(e) => setResolveNote(e.target.value)}
-                              className="field-input min-h-[84px] resize-y"
-                              placeholder="Observación de aprobación o rechazo..."
-                            />
-                            <div className="grid grid-cols-2 gap-2">
-                              <button
-                                type="button"
-                                onClick={() => onResolverReapertura(true)}
-                                disabled={resolvingReopen}
-                                className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-                              >
-                                {resolvingReopen ? 'Procesando...' : 'Aprobar y reabrir'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onResolverReapertura(false)}
-                                disabled={resolvingReopen}
-                                className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 disabled:opacity-50"
-                              >
-                                {resolvingReopen ? 'Procesando...' : 'Rechazar'}
-                              </button>
-                            </div>
+                            <p className="mt-1 text-xs leading-5 text-blue-700">
+                              Esta solicitud se aprueba o rechaza desde la nueva bandeja, junto a
+                              todas las solicitudes pendientes.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                navigate('/panel/reaperturas');
+                              }}
+                              className="mt-3 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
+                            >
+                              Abrir bandeja de reaperturas
+                            </button>
                           </div>
                         )}
                       </div>
