@@ -190,7 +190,7 @@ const MoveModal = ({ item, onClose, onConfirm }) => {
 };
 
 // ─── Delete Confirm Modal ─────────────────────────────
-const DeleteModal = ({ item, onClose, onConfirm }) => {
+const DeleteModal = ({ item, onClose, onConfirm, isPutaway }) => {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -225,9 +225,11 @@ const DeleteModal = ({ item, onClose, onConfirm }) => {
           <p>
             <span className="font-semibold text-red-800">Ubicación:</span> {item.ubicacion}
           </p>
-          <p>
-            <span className="font-semibold text-red-800">Cantidad:</span> {item.cantidad}
-          </p>
+          {!isPutaway && (
+            <p>
+              <span className="font-semibold text-red-800">Cantidad:</span> {item.cantidad}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -253,6 +255,7 @@ const DeleteModal = ({ item, onClose, onConfirm }) => {
 
 // ─── Main Component ──────────────────────────────────
 export default function LocationManager() {
+  const [source, setSource] = useState('putaway');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -264,6 +267,8 @@ export default function LocationManager() {
   const [moveItem, setMoveItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const isPutaway = source === 'putaway';
+  const sourceTable = isPutaway ? 'wms_putaway_ubicaciones' : 'wms_ubicaciones';
 
   const RACKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
@@ -271,7 +276,7 @@ export default function LocationManager() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase.from('wms_ubicaciones').select('*', { count: 'exact' });
+      let query = supabase.from(sourceTable).select('*', { count: 'exact' });
 
       // Search filter
       if (search.trim()) {
@@ -301,7 +306,7 @@ export default function LocationManager() {
     } finally {
       setLoading(false);
     }
-  }, [search, rackFilter, sortField, sortDir, page]);
+  }, [search, rackFilter, sortField, sortDir, page, sourceTable]);
 
   useEffect(() => {
     fetchData();
@@ -310,7 +315,12 @@ export default function LocationManager() {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [search, rackFilter]);
+  }, [search, rackFilter, source]);
+
+  useEffect(() => {
+    setSortField('ubicacion');
+    setSortDir('asc');
+  }, [source]);
 
   // ─── Actions ────────────────────────────────────────
   const handleInlineSave = async (rowId, field, value) => {
@@ -322,16 +332,30 @@ export default function LocationManager() {
         updateData.ubicacion = normalizeLoc(value);
       }
 
-      const { error } = await supabase.from('wms_ubicaciones').update(updateData).eq('id', rowId);
+      if (field === 'ubicacion' && !updateData.ubicacion) {
+        throw new Error('La ubicación no puede quedar vacía');
+      }
+
+      const { data: saved, error } = await supabase
+        .from(sourceTable)
+        .update(updateData)
+        .eq('id', rowId)
+        .select('*')
+        .single();
 
       if (error) throw error;
+      if (!saved) throw new Error('Supabase no confirmó la actualización');
 
-      // Update local state
-      setData((prev) => prev.map((row) => (row.id === rowId ? { ...row, ...updateData } : row)));
-      toast.success('Actualizado correctamente');
+      // La interfaz solo confirma aquello que Supabase devolvió como persistido.
+      setData((prev) => prev.map((row) => (row.id === rowId ? saved : row)));
+      toast.success(
+        field === 'ubicacion'
+          ? `Ubicación guardada: ${saved.ubicacion}`
+          : 'Actualizado y verificado en Supabase'
+      );
       logUpload({
-        modulo: 'Gestión Ubicaciones',
-        tablaDestino: 'wms_ubicaciones',
+        modulo: isPutaway ? 'Put Away visual' : 'Gestión Ubicaciones WMS',
+        tablaDestino: sourceTable,
         totalRegistros: 1,
         actualizados: 1
       });
@@ -344,6 +368,29 @@ export default function LocationManager() {
 
   const handleMove = async (item, newUbicacion) => {
     try {
+      if (isPutaway) {
+        const { data: saved, error } = await supabase
+          .from('wms_putaway_ubicaciones')
+          .update({ ubicacion: newUbicacion })
+          .eq('id', item.id)
+          .select('*')
+          .single();
+
+        if (error) throw error;
+        if (!saved) throw new Error('Supabase no confirmó el cambio de ubicación');
+
+        setData((prev) => prev.map((row) => (row.id === item.id ? saved : row)));
+        setMoveItem(null);
+        toast.success(`Ubicación visual guardada y verificada: ${saved.ubicacion}`);
+        logUpload({
+          modulo: 'Put Away visual',
+          tablaDestino: 'wms_putaway_ubicaciones',
+          totalRegistros: 1,
+          actualizados: 1
+        });
+        return;
+      }
+
       // Check if same product already exists at target location
       const { data: existing } = await supabase
         .from('wms_ubicaciones')
@@ -399,9 +446,15 @@ export default function LocationManager() {
 
   const handleDelete = async (item) => {
     try {
-      const { error } = await supabase.from('wms_ubicaciones').delete().eq('id', item.id);
+      const { data: deleted, error } = await supabase
+        .from(sourceTable)
+        .delete()
+        .eq('id', item.id)
+        .select('id')
+        .single();
 
       if (error) throw error;
+      if (!deleted) throw new Error('Supabase no confirmó la eliminación');
 
       toast.success('Registro eliminado');
       setDeleteItem(null);
@@ -427,7 +480,7 @@ export default function LocationManager() {
         Ubicación: r.ubicacion,
         Código: r.codigo,
         Descripción: r.descripcion,
-        Cantidad: r.cantidad,
+        ...(isPutaway ? {} : { Cantidad: r.cantidad }),
         Serie: r.serie || '',
         Partida: r.partida || '',
         Pieza: r.pieza || '',
@@ -457,12 +510,43 @@ export default function LocationManager() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Gestión Ubicaciones
+              Modificar ubicaciones
             </h1>
-            <p className="text-sm text-slate-500">Mover, editar y eliminar productos del WMS</p>
+            <p className="text-sm text-slate-500">
+              Put Away visual separado del inventario físico y sus cantidades
+            </p>
           </div>
         </div>
       </div>
+
+      <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 mb-4 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setSource('putaway')}
+          className={`px-4 py-2 rounded-lg text-xs font-black transition-colors ${
+            isPutaway ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          Put Away visual
+        </button>
+        <button
+          type="button"
+          onClick={() => setSource('wms')}
+          className={`px-4 py-2 rounded-lg text-xs font-black transition-colors ${
+            !isPutaway ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          Inventario WMS
+        </button>
+      </div>
+
+      {isPutaway && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
+          Estas son las ubicaciones guardadas desde Put Away. Modificarlas no altera stock ni
+          cantidades. Cada cambio queda auditado y se valida contra Supabase antes de mostrarse como
+          guardado.
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 mb-4">
@@ -557,7 +641,7 @@ export default function LocationManager() {
                   { key: 'ubicacion', label: 'Ubicación', w: 'w-32' },
                   { key: 'codigo', label: 'Código', w: 'w-36' },
                   { key: 'descripcion', label: 'Descripción', w: 'w-64' },
-                  { key: 'cantidad', label: 'Cant.', w: 'w-20' },
+                  ...(!isPutaway ? [{ key: 'cantidad', label: 'Cant.', w: 'w-20' }] : []),
                   { key: 'serie', label: 'Serie', w: 'w-28' },
                   { key: 'partida', label: 'Partida/Lote', w: 'w-28' }
                 ].map((col) => (
@@ -580,14 +664,14 @@ export default function LocationManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={isPutaway ? 6 : 7} className="text-center py-12">
                     <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">Cargando...</p>
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={isPutaway ? 6 : 7} className="text-center py-12">
                     <Package size={32} className="text-slate-200 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">No se encontraron registros</p>
                   </td>
@@ -619,15 +703,17 @@ export default function LocationManager() {
                         onSave={handleInlineSave}
                       />
                     </td>
-                    <td className="px-3 py-1">
-                      <EditableCell
-                        value={row.cantidad}
-                        field="cantidad"
-                        rowId={row.id}
-                        onSave={handleInlineSave}
-                        type="number"
-                      />
-                    </td>
+                    {!isPutaway && (
+                      <td className="px-3 py-1">
+                        <EditableCell
+                          value={row.cantidad}
+                          field="cantidad"
+                          rowId={row.id}
+                          onSave={handleInlineSave}
+                          type="number"
+                        />
+                      </td>
+                    )}
                     <td className="px-3 py-1">
                       <EditableCell
                         value={row.serie}
@@ -711,6 +797,7 @@ export default function LocationManager() {
           item={deleteItem}
           onClose={() => setDeleteItem(null)}
           onConfirm={handleDelete}
+          isPutaway={isPutaway}
         />
       )}
     </div>
