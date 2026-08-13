@@ -1,0 +1,105 @@
+name: OTA GRATIS → BETA (GitHub + Supabase)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: free-ota-beta
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - name: Detectar cambio de versión
+        id: version
+        shell: bash
+        run: |
+          NEW=$(node -p "require('./package.json').version")
+          git show HEAD~1:package.json > /tmp/old.json 2>/dev/null || echo '{}' > /tmp/old.json
+          OLD=$(node -p "(require('/tmp/old.json').version)||''")
+          echo "value=$NEW" >> "$GITHUB_OUTPUT"
+          if [ "$NEW" = "$OLD" ]; then echo "changed=no" >> "$GITHUB_OUTPUT"; else echo "changed=yes" >> "$GITHUB_OUTPUT"; fi
+          echo "Versión: $OLD → $NEW"
+
+      - uses: actions/setup-node@v5
+        if: steps.version.outputs.changed == 'yes'
+        with:
+          node-version: 24.12.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar y construir
+        if: steps.version.outputs.changed == 'yes'
+        env:
+          VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Empaquetar bundle reproducible
+        if: steps.version.outputs.changed == 'yes'
+        id: bundle
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          ASSET="cco-ota-${VERSION}.zip"
+          find dist -exec touch -t 198001010000 {} +
+          (cd dist && zip -X -q -r "../${ASSET}" .)
+          CHECKSUM=$(sha256sum "$ASSET" | awk '{print $1}')
+          SIZE=$(stat -c%s "$ASSET")
+          echo "asset=$ASSET" >> "$GITHUB_OUTPUT"
+          echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "size=$SIZE" >> "$GITHUB_OUTPUT"
+
+      - name: Crear GitHub Release inmutable
+        if: steps.version.outputs.changed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+          ASSET: ${{ steps.bundle.outputs.asset }}
+        shell: bash
+        run: |
+          TAG="ota-v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::La versión $VERSION ya existe. Incrementa package.json; los bundles son inmutables."
+            exit 1
+          fi
+          gh release create "$TAG" "$ASSET" --title "CCO OTA v${VERSION}" \
+            --notes "Bundle web CCO. Commit ${GITHUB_SHA}. Publicado primero en canal beta."
+
+      - name: Registrar en Supabase y activar BETA
+        if: steps.version.outputs.changed == 'yes'
+        env:
+          OTA_DEPLOY_TOKEN: ${{ secrets.OTA_DEPLOY_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+          CHECKSUM: ${{ steps.bundle.outputs.checksum }}
+          SIZE: ${{ steps.bundle.outputs.size }}
+          ASSET: ${{ steps.bundle.outputs.asset }}
+        shell: bash
+        run: |
+          test -n "$OTA_DEPLOY_TOKEN" || { echo "::error::Falta OTA_DEPLOY_TOKEN"; exit 1; }
+          URL="https://github.com/Lockowom/CCO_PTM/releases/download/ota-v${VERSION}/${ASSET}"
+          BODY=$(jq -n --arg token "$OTA_DEPLOY_TOKEN" --arg version "$VERSION" --arg url "$URL" \
+            --arg checksum "$CHECKSUM" --arg sha "$GITHUB_SHA" --argjson size "$SIZE" \
+            '{token:$token,version:$version,download_url:$url,checksum_sha256:$checksum,size_bytes:$size,git_sha:$sha,notes:("GitHub Actions " + $sha)}')
+          RESPONSE=$(curl --fail-with-body --silent --show-error \
+            "https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-publish" \
+            -H "Content-Type: application/json" --data "$BODY")
+          echo "$RESPONSE" | jq -e '.ok == true and .channel == "beta"' >/dev/null
+          echo "::notice::OTA $VERSION publicada en BETA con SHA-256 $CHECKSUM"
+
+      - name: Sin cambio de versión
+        if: steps.version.outputs.changed != 'yes'
+        run: echo "Sin cambio de versión; no se genera un bundle OTA."

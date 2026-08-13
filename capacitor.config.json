@@ -4,8 +4,13 @@
   "webDir": "dist",
   "plugins": {
     "CapacitorUpdater": {
-      "autoUpdate": true,
-      "appId": "com.cco.wms"
+      "autoUpdate": false,
+      "appId": "com.cco.wms",
+      "defaultChannel": "production",
+      "allowSetDefaultChannel": true,
+      "updateUrl": "https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates",
+      "statsUrl": "https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates",
+      "channelUrl": "https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates"
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]

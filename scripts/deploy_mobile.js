@@ -7,7 +7,10 @@ console.log('🚀 Iniciando despliegue OTA para móviles...');
 // 0. GUARDA DE SEGURIDAD: no compilar/subir un bundle OTA sin las variables de
 // Supabase. Sin ellas el bundle queda SIN backend y dejaría la app Android rota
 // para TODOS los dispositivos. Abortar antes de construir.
-if (!process.env.VITE_SUPABASE_URL || !(process.env.VITE_SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY)) {
+if (
+  !process.env.VITE_SUPABASE_URL ||
+  !(process.env.VITE_SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY)
+) {
   console.error('\n❌ ABORTADO: faltan VITE_SUPABASE_URL / VITE_SUPABASE_KEY en el entorno.');
   console.error('   Compilar sin ellas produce un bundle OTA SIN conexión a Supabase.');
   console.error('   Corre este deploy en una máquina/CI con el .env correcto.\n');
@@ -18,13 +21,13 @@ if (!process.env.VITE_SUPABASE_URL || !(process.env.VITE_SUPABASE_KEY || process
 let versionWasUpdated = false;
 try {
   console.log('📦 Actualizando versión en package.json...');
-  
+
   const pkgPath = path.resolve('package.json');
-  
+
   // Usamos un bloque try-catch interno con reintentos para evadir bloqueos de antivirus/Vite
   let pkgData = null;
   let attempts = 0;
-  
+
   while (!pkgData && attempts < 3) {
     try {
       pkgData = fs.readFileSync(pkgPath, 'utf8');
@@ -39,15 +42,15 @@ try {
       }
     }
   }
-  
+
   if (!pkgData) throw new Error('No se pudo leer package.json después de varios intentos.');
 
   const pkg = JSON.parse(pkgData);
-  
+
   const versionParts = pkg.version.split('.');
   versionParts[2] = parseInt(versionParts[2], 10) + 1;
   pkg.version = versionParts.join('.');
-  
+
   // Escribir con un pequeño delay para asegurar que otros procesos hayan soltado el archivo
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   console.log(`✅ Versión actualizada exitosamente a ${pkg.version}`);
@@ -73,14 +76,7 @@ execSync('npm run build', { stdio: 'inherit' });
 console.log('🔄 Sincronizando assets con Capacitor...');
 execSync('npx cap sync android', { stdio: 'inherit' });
 
-// 4. Subida a Capgo — por defecto al canal BETA (seguro). Para ir directo a
-//    producción: `npm run deploy:mobile -- production` (NO recomendado; usa el
-//    flujo beta → validar → promover). Ver docs/DESPLIEGUE_MOVIL.md.
-const canal = process.argv.includes('production') ? 'production' : 'beta';
-console.log(`☁️ Subiendo el bundle a Capgo Cloud (canal ${canal})...`);
-execSync(`npx @capgo/cli bundle upload com.cco.wms --channel ${canal}`, { stdio: 'inherit' });
-
-console.log(`✅ Despliegue móvil finalizado (canal ${canal}).`);
-if (canal === 'beta') {
-  console.log('👉 Valida en un PDA de prueba (canal beta) y luego promueve a producción.');
-}
+// 4. La publicación gratuita ocurre al subir el cambio a main. GitHub Actions
+// genera un ZIP inmutable, calcula SHA-256, crea el Release y activa beta.
+console.log('✅ Bundle y proyecto Android preparados.');
+console.log('👉 Sube el cambio a main; GitHub publicará la versión en el canal beta gratuito.');

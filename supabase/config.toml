@@ -10,3 +10,16 @@ verify_jwt = true
 # token de consulta, rate-limit, honeypot, CORS estricto y bucket privado.
 [functions.rendiciones-publicas]
 verify_jwt = false
+
+# Protocolo nativo del actualizador: se invoca antes del inicio de sesión.
+# La función valida app_id/device_id/canal, limita payloads y solo devuelve
+# URLs inmutables del repositorio oficial con checksum SHA-256.
+[functions.ota-updates]
+verify_jwt = false
+
+[functions.ota-deploy]
+verify_jwt = true
+
+# GitHub Actions usa un token dedicado validado dentro de la función.
+[functions.ota-publish]
+verify_jwt = false

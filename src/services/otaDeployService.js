@@ -1,34 +1,33 @@
 import { supabase } from '../supabase';
 
-// Cliente del despliegue OTA (Edge Function `capgo-deploy`). La API key de Capgo
-// NO está aquí — vive solo en la función; estas llamadas van con el JWT de la
-// sesión (Supabase lo adjunta) y la función verifica el permiso `deploy_ota`.
+// Cliente OTA propio: Supabase administra canales/auditoría y GitHub Releases
+// aloja bundles inmutables. No contiene claves privadas ni depende de Capgo.
 
-// Lista los bundles subidos a Capgo + qué versión sirve cada canal (beta/prod).
+// Lista bundles y la versión servida por cada canal.
 export async function listarDespliegueOTA() {
-  const { data, error } = await supabase.functions.invoke('capgo-deploy', {
-    body: { action: 'list' },
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: { action: 'list' }
   });
-  if (error) throw new Error(error.message || 'No se pudo consultar Capgo');
-  if (!data?.ok) throw new Error(data?.error || 'No se pudo consultar Capgo');
+  if (error) throw new Error(error.message || 'No se pudo consultar OTA');
+  if (!data?.ok) throw new Error(data?.error || 'No se pudo consultar OTA');
   return data; // { bundles:[{version,created_at}], channels:[{name,version}] }
 }
 
 // Promueve (enlaza) una versión ya existente al canal indicado (por defecto
 // production = toda la bodega). No recompila; solo apunta el canal al bundle.
 export async function promoverOTA(version, channel = 'production') {
-  const { data, error } = await supabase.functions.invoke('capgo-deploy', {
-    body: { action: 'promote', version, channel },
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: { action: 'promote', version, channel }
   });
   if (error) throw new Error(error.message || 'No se pudo promover');
   if (!data?.ok) throw new Error(data?.error || 'No se pudo promover');
   return data; // { version, channel }
 }
 
-// Elimina un bundle viejo de Capgo (limpieza). No toca canales activos.
+// Archiva un bundle viejo. No toca canales activos ni borra evidencia histórica.
 export async function eliminarBundleOTA(version) {
-  const { data, error } = await supabase.functions.invoke('capgo-deploy', {
-    body: { action: 'delete', version },
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: { action: 'delete', version }
   });
   if (error) throw new Error(error.message || 'No se pudo eliminar');
   if (!data?.ok) throw new Error(data?.error || 'No se pudo eliminar');
@@ -48,8 +47,8 @@ export async function guardarGobernanzaOTA(p) {
 
 // ── Inventario: qué versión aplicó cada dispositivo (desde nuestro log) ──────
 export async function resumenDispositivosOTA() {
-  const { data } = await supabase.rpc('ota_dispositivos_resumen');
-  return data || [];
+  const data = await listarDespliegueOTA();
+  return data.devices || [];
 }
 
 // ── Historial de despliegues (promociones / aplicados / eliminados) ──────────
@@ -58,10 +57,15 @@ export async function historialOTA() {
   return data || [];
 }
 
-// ── Aviso por push (Capgo/FCM) de una nueva versión ──────────────────────────
+// ── Aviso por push FCM de una nueva versión ──────────────────────────────────
 export async function avisarNuevaVersionPush(version, rol = 'ADMIN') {
   const { error } = await supabase.functions.invoke('notify-inventario', {
-    body: { titulo: '🚀 Nueva versión disponible', mensaje: `Versión ${version} publicada. Abre la app para actualizar.`, rol, payload: { tipo: 'ota', version } },
+    body: {
+      titulo: '🚀 Nueva versión disponible',
+      mensaje: `Versión ${version} publicada. Abre la app para actualizar.`,
+      rol,
+      payload: { tipo: 'ota', version }
+    }
   });
   if (error) throw new Error(error.message);
   return { ok: true };
@@ -73,7 +77,12 @@ export async function limpiarBundlesViejos(bundles, canalVersiones, keep = 10) {
   const aBorrar = bundles.slice(keep).filter((b) => !protegidos.has(b.version));
   let borrados = 0;
   for (const b of aBorrar) {
-    try { await eliminarBundleOTA(b.version); borrados++; } catch { /* sigue */ }
+    try {
+      await eliminarBundleOTA(b.version);
+      borrados++;
+    } catch {
+      /* sigue */
+    }
   }
   return { ok: true, borrados, total: aBorrar.length };
 }

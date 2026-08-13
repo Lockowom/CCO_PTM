@@ -25,7 +25,6 @@ import {
   eliminarBundleOTA,
   obtenerGobernanzaOTA,
   guardarGobernanzaOTA,
-  resumenDispositivosOTA,
   historialOTA,
   avisarNuevaVersionPush,
   limpiarBundlesViejos
@@ -33,10 +32,10 @@ import {
 
 /**
  * Despliegue OTA a producción DESDE la app (solo admin / permiso `deploy_ota`).
- * Lista los bundles subidos a Capgo, muestra qué versión sirve cada canal
+ * Lista los bundles alojados en GitHub Releases y muestra qué versión sirve cada canal
  * (beta/producción) y permite ELEGIR una versión y promoverla a `production`
- * (toda la bodega) con confirmación. La API key de Capgo vive en la Edge
- * Function `capgo-deploy`, no en el cliente. Sirve en web y en la app Android.
+ * (toda la bodega) con confirmación. La administración vive en la Edge
+ * Function `ota-deploy`, no en el cliente. Sirve en web y en la app Android.
  */
 const DespliegueOTA = () => {
   const { hasPermission } = useAuth();
@@ -65,16 +64,12 @@ const DespliegueOTA = () => {
         return String(b.version).localeCompare(String(a.version), undefined, { numeric: true });
       });
       setData({ ...r, bundles });
+      setDispos(r.devices || []);
     } catch (e) {
-      toast.error(`No se pudo consultar Capgo: ${e.message}`);
+      toast.error(`No se pudo consultar OTA: ${e.message}`);
       setData({ bundles: [], channels: [] });
     } finally {
       setLoading(false);
-    }
-    try {
-      setDispos(await resumenDispositivosOTA());
-    } catch {
-      /* opcional */
     }
     try {
       setHist(await historialOTA());
@@ -102,7 +97,7 @@ const DespliegueOTA = () => {
     setDelVer(version);
     try {
       await eliminarBundleOTA(version);
-      toast.success(`Bundle ${version} eliminado de Capgo.`);
+      toast.success(`Bundle ${version} archivado del catálogo OTA.`);
       await cargar();
     } catch (e) {
       toast.error(`No se pudo eliminar: ${e.message}`);
@@ -250,7 +245,7 @@ const DespliegueOTA = () => {
         <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
           {(data?.bundles || []).length === 0 && (
             <div className="p-4 text-center text-sm text-slate-400 flex flex-col items-center gap-1">
-              <Package size={22} /> Sin bundles en Capgo
+              <Package size={22} /> Sin bundles publicados
             </div>
           )}
           {(data?.bundles || []).map((b) => {
@@ -294,13 +289,13 @@ const DespliegueOTA = () => {
                 {!esProd && !esBeta && (
                   <button
                     type="button"
-                    title="Eliminar bundle de Capgo"
+                    title="Archivar bundle OTA"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       if (
                         window.confirm(
-                          `¿Eliminar el bundle ${b.version} de Capgo? No afecta a los canales activos.`
+                          `¿Archivar el bundle ${b.version}? No afecta a los canales activos.`
                         )
                       )
                         delBundle(b.version);
@@ -510,8 +505,8 @@ const DespliegueOTA = () => {
                 checked={avisar}
                 onChange={(e) => setAvisar(e.target.checked)}
               />
-              <Bell size={14} className="text-indigo-500" /> Avisar por push (Capgo/FCM) que hay
-              nueva versión
+              <Bell size={14} className="text-indigo-500" /> Avisar por push FCM que hay nueva
+              versión
             </label>
             <div className="flex gap-2 mt-5">
               <button

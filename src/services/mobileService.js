@@ -6,13 +6,17 @@ import { toast } from 'sonner';
 
 // ── Estado global del update para que el componente UI pueda reaccionar ──
 let updateCallback = null;
-export const onUpdateAvailable = (cb) => { updateCallback = cb; };
+export const onUpdateAvailable = (cb) => {
+  updateCallback = cb;
+};
 
-// ── Canal OTA de ESTE dispositivo (Capgo) ──────────────────────────────────
+// ── Canal OTA de ESTE dispositivo (Supabase + GitHub Releases) ─────────────
 // Producción recibe solo bundles promovidos; los PDA de PRUEBA se asignan al
 // canal 'beta' para validar una versión antes de soltarla a toda la bodega.
 // Guardado por dispositivo (no es una preferencia de usuario/servidor).
 export const CANALES_OTA = ['production', 'beta'];
+const OTA_URL = 'https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates';
+let otaDownloadInFlight = false;
 
 export const getOTAChannel = async () => {
   if (!Capacitor.isNativePlatform()) return null;
@@ -25,8 +29,7 @@ export const getOTAChannel = async () => {
   }
 };
 
-// Asigna este dispositivo a un canal (requiere que el canal permita
-// "self-assign" en el panel de Capgo). Al volver a 'production' se deshace.
+// Asigna este dispositivo a beta o vuelve al canal production.
 export const setOTAChannel = async (channel) => {
   if (!Capacitor.isNativePlatform()) throw new Error('Solo disponible en la app Android.');
   if (!CANALES_OTA.includes(channel)) throw new Error(`Canal inválido: ${channel}`);
@@ -49,7 +52,7 @@ export const initOTAUpdates = async () => {
         updateCallback({
           phase: 'downloading',
           version: event?.bundle?.version || event?.version || 'nueva',
-          percent: Math.max(0, Math.min(100, Math.round(event?.percent ?? 0))),
+          percent: Math.max(0, Math.min(100, Math.round(event?.percent ?? 0)))
         });
       }
     });
@@ -70,12 +73,19 @@ export const initOTAUpdates = async () => {
         updateCallback({
           phase: 'ready',
           version: bundleInfo?.version || 'nueva',
-          bundleId,
+          bundleId
         });
       }
 
       // Auditar la versión que el dispositivo va a aplicar (inventario OTA).
-      try { await supabase.rpc('registrar_ota_aplicado', { p_version: bundleInfo?.version || '?', p_detalle: 'auto-update' }); } catch { /* no romper */ }
+      try {
+        await supabase.rpc('registrar_ota_aplicado', {
+          p_version: bundleInfo?.version || '?',
+          p_detalle: 'auto-update'
+        });
+      } catch {
+        /* no romper */
+      }
 
       // Aplicar automáticamente después de 4 segundos
       // El overlay ya está visible, el usuario sabe qué pasa
@@ -89,7 +99,7 @@ export const initOTAUpdates = async () => {
       if (updateCallback) updateCallback({ phase: 'error' }); // oculta la píldora
       toast.error('Error al descargar actualización', {
         description: 'Se reintentará automáticamente.',
-        duration: 4000,
+        duration: 4000
       });
     });
 
@@ -97,10 +107,15 @@ export const initOTAUpdates = async () => {
       console.error('OTA update failed, rolling back:', event);
       toast.error('Error al aplicar actualización', {
         description: 'Se restauró la versión anterior.',
-        duration: 5000,
+        duration: 5000
       });
     });
 
+    // Puente de migración: funciona también en APK antiguos cuyo updateUrl
+    // nativo todavía apunta a Capgo.
+    setTimeout(() => {
+      descargarActualizacionPropia('auto').catch((err) => console.error('OTA check error:', err));
+    }, 2500);
   } catch (err) {
     console.error('OTA init error:', err);
   }
@@ -131,23 +146,79 @@ export const versionOTA = async () => {
   try {
     const cur = await CapacitorUpdater.current();
     let channel = null;
-    try { const c = await CapacitorUpdater.getChannel(); channel = c?.channel; } catch { /* sin canal */ }
+    try {
+      const c = await CapacitorUpdater.getChannel();
+      channel = c?.channel;
+    } catch {
+      /* sin canal */
+    }
     return { bundle: cur?.bundle?.version || null, native: cur?.native || null, channel };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
+};
+
+const consultarActualizacionPropia = async () => {
+  const [current, device] = await Promise.all([
+    CapacitorUpdater.current(),
+    CapacitorUpdater.getDeviceId()
+  ]);
+  let channel = 'production';
+  try {
+    const result = await CapacitorUpdater.getChannel();
+    if (CANALES_OTA.includes(result?.channel)) channel = result.channel;
+  } catch {
+    /* APK antiguo o canal no disponible: producción segura */
+  }
+
+  const response = await fetch(OTA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      app_id: 'com.cco.wms',
+      device_id: device?.deviceId,
+      platform: Capacitor.getPlatform(),
+      version_name: current?.bundle?.version || current?.native || 'builtin',
+      version_build: current?.native || null,
+      plugin_version: '8.50.2',
+      defaultChannel: channel
+    })
+  });
+  if (!response.ok) throw new Error(`Servidor OTA ${response.status}`);
+  return response.json();
+};
+
+const descargarActualizacionPropia = async (origen = 'manual') => {
+  if (otaDownloadInFlight) return { estado: 'descargando' };
+  const latest = await consultarActualizacionPropia();
+  if (latest?.error) return { estado: 'error', detalle: latest.message || latest.error };
+  if (!latest?.url) return { estado: 'al-dia', version: latest?.version };
+  otaDownloadInFlight = true;
+  try {
+    const bundle = await CapacitorUpdater.download({
+      version: latest.version,
+      url: latest.url,
+      checksum: latest.checksum
+    });
+    try {
+      await supabase.rpc('registrar_ota_aplicado', {
+        p_version: latest.version,
+        p_detalle: `${origen}:github-supabase`
+      });
+    } catch {
+      /* no impedir actualización por auditoría */
+    }
+    return { estado: 'descargando', version: latest.version, bundleId: bundle?.id };
+  } finally {
+    otaDownloadInFlight = false;
+  }
 };
 
 // Busca e instala una actualización OTA a demanda (botón "Buscar actualización").
 export const buscarActualizacion = async () => {
   if (!Capacitor.isNativePlatform()) return { estado: 'no-nativo' };
   try {
-    const latest = await CapacitorUpdater.getLatest();
-    if (latest?.error) return { estado: 'error', detalle: latest.error };
-    if (!latest?.url) return { estado: 'al-dia', version: latest?.version };
-    const bundle = await CapacitorUpdater.download({ version: latest.version, url: latest.url });
-    if (updateCallback) updateCallback({ phase: 'ready', version: latest.version, bundleId: bundle?.id });
-    try { await supabase.rpc('registrar_ota_aplicado', { p_version: latest.version, p_detalle: 'manual' }); } catch { /* no romper */ }
-    await CapacitorUpdater.set({ id: bundle.id });
-    return { estado: 'aplicando', version: latest.version };
+    return await descargarActualizacionPropia('manual');
   } catch (e) {
     return { estado: 'error', detalle: String(e?.message || e) };
   }
@@ -173,7 +244,11 @@ export const initPushNotifications = async (userId) => {
     // Evita acumular listeners: initPushNotifications se invoca en cada
     // restauración de sesión / SIGNED_IN. Sin esto, cada login añade 4
     // listeners nuevos → toasts duplicados y fuga de memoria.
-    try { await PushNotifications.removeAllListeners(); } catch (_) { /* noop */ }
+    try {
+      await PushNotifications.removeAllListeners();
+    } catch (_) {
+      /* noop */
+    }
 
     // Canales Android (requerido Android 8+)
     try {
@@ -185,7 +260,7 @@ export const initPushNotifications = async (userId) => {
         visibility: 1,
         sound: 'default',
         vibration: true,
-        lights: true,
+        lights: true
       });
 
       await PushNotifications.createChannel({
@@ -195,7 +270,7 @@ export const initPushNotifications = async (userId) => {
         importance: 4,
         visibility: 1,
         sound: 'default',
-        vibration: true,
+        vibration: true
       });
     } catch (channelErr) {
       console.warn('Channel creation skipped:', channelErr);
@@ -206,11 +281,10 @@ export const initPushNotifications = async (userId) => {
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Token:', token.value?.slice(0, 20) + '...');
       try {
-        await supabase
-          .from('tms_usuarios')
-          .update({ push_token: token.value })
-          .eq('id', userId);
-      } catch (_) { console.error('Push token save error:', _); }
+        await supabase.from('tms_usuarios').update({ push_token: token.value }).eq('id', userId);
+      } catch (_) {
+        console.error('Push token save error:', _);
+      }
     });
 
     PushNotifications.addListener('registrationError', (err) => {
@@ -220,7 +294,7 @@ export const initPushNotifications = async (userId) => {
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       toast.info(notification.title || 'Notificación', {
         description: notification.body,
-        duration: 8000,
+        duration: 8000
       });
     });
 
@@ -238,6 +312,7 @@ export const initPushNotifications = async (userId) => {
         window.location.href = '/admin/eventos';
       }
     });
-
-  } catch (_) { console.error('Push notifications init error:', _); }
+  } catch (_) {
+    console.error('Push notifications init error:', _);
+  }
 };

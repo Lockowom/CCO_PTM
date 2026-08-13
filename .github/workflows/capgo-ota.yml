@@ -1,4 +1,4 @@
-name: Capgo OTA → BETA (móvil)
+name: PUENTE ÚNICO Capgo → OTA libre (1.55.145)
 
 # Sube automáticamente un bundle OTA a Capgo al canal "beta" (app com.cco.wms)
 # en cada push a main, SOLO cuando cambia la versión de package.json (Capgo rechaza
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 2   # para comparar la versión con el commit anterior
+          fetch-depth: 2 # para comparar la versión con el commit anterior
 
       - name: ¿Cambió la versión?
         id: ver
@@ -44,7 +44,7 @@ jobs:
         if: steps.ver.outputs.changed == 'yes'
         uses: actions/setup-node@v5
         with:
-          node-version: 24.12.0   # npm ci pasa estable con Node 24 / npm 11 en este repo
+          node-version: 24.12.0 # npm ci pasa estable con Node 24 / npm 11 en este repo
           cache: npm
           cache-dependency-path: package-lock.json
 
@@ -61,14 +61,14 @@ jobs:
       - name: Build web (con Supabase)
         if: steps.ver.outputs.changed == 'yes'
         env:
-          # Públicas: URL + clave anónima (ya embebidas en el dist commiteado).
+          # Públicas: URL + clave anónima, administrada como secreto de Actions.
           VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
-          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
-          VITE_SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0cnR5emJncHN2cXdiZm91ZGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzMwMDQsImV4cCI6MjA4NjMwOTAwNH0.NijuPeeOMwLyM8H_AiagKXEut1TMr2qkQZ6CHLn4RSM
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Subir bundle a Capgo (canal BETA)
-        if: steps.ver.outputs.changed == 'yes'
+        if: steps.ver.outputs.changed == 'yes' && steps.ver.outputs.new == '1.55.145'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
@@ -83,7 +83,7 @@ jobs:
             --bundle "${{ steps.ver.outputs.new }}" \
             --version-exists-ok \
             --comment "GitHub Actions ${GITHUB_SHA}"
-          echo "::notice::Bundle ${{ steps.ver.outputs.new }} subido a BETA. Valida en un PDA de prueba y luego ejecuta 'Capgo PROMOVER a producción'."
+          echo "::notice::Puente 1.55.145 subido a Capgo BETA. Es la última versión que usa Capgo Cloud."
 
       - name: Sin cambio de versión
         if: steps.ver.outputs.changed != 'yes'

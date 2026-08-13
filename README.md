@@ -14,7 +14,7 @@ inventario, calidad ISO 13485 y servicio técnico — en una sola SPA.
 - **Backend:** Supabase (PostgreSQL 17 + RLS + Realtime + Storage privado + Edge Functions)
   - `server.js` (Express) sirviendo el build en Render con proxys (`/api/geocode`, `/api/route`,
     `/api/traspasos-ai`) y CSP estricta
-- **Móvil:** Capacitor 8 (Android) — escáner ML Kit, Haptics, Push FCM y **OTA con Capgo**
+- **Móvil:** Capacitor 8 (Android) — escáner ML Kit, Haptics, Push FCM y **OTA gratuito con GitHub Releases + Supabase**
 - **Offline:** Dexie (cola de sincronización en PDA)
 - **Mapas/Rutas:** Leaflet + OSM/OSRM (vía proxy propio) · **Gráficos:** Recharts · **Tests:** Vitest
 
@@ -83,7 +83,7 @@ Vistas por perfil · Monitor de actividad · Consulta Maestra e Historial N.V.
 - **Panel Dashboard PTM** (Supabase externo): info de la Nota de Venta en Calidad · Salida.
 - **em-il** (`lockowom/em-il`): módulo Traspasos/Ajustes vendorizado (`npm run update:traspasos`).
 - **Microsoft Graph**: extractor de correos de post-venta (Edge Function).
-- **Capgo**: actualizaciones OTA de la app Android (`npm run deploy:mobile`).
+- **OTA propio**: GitHub Releases aloja bundles y Supabase administra beta/producción (`npm run deploy:mobile`).
 - **Anthropic API**: asistente "Mejorar con IA" en Traspasos (clave solo en el servidor).
 
 ## 🔐 Seguridad
@@ -112,7 +112,7 @@ VITE_GA_ENABLE_DEV=false
 npm run dev              # desarrollo (Vite)
 npm test                 # tests (Vitest)
 npm run build            # build producción → dist/
-npm run deploy:mobile    # bundle OTA a Capgo (canal production)
+npm run deploy:mobile    # build + sync; al subir a main publica en beta gratuito
 npm run update:traspasos # re-sincroniza el módulo Traspasos (em-il)
 ```
 
@@ -123,7 +123,7 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (em-il)
 
 - **Web (Render):** push a `main` → Render sirve el **`dist/` commiteado** con `server.js`
   (regenerar con `npm run build` y commitear al desplegar). Ver [`DEPLOY_RENDER.md`](DEPLOY_RENDER.md).
-- **Android:** `npm run deploy:mobile` sube el bundle OTA a Capgo (app `com.cco.wms`);
+- **Android:** `npm run deploy:mobile` prepara el bundle; GitHub Actions lo publica en beta (app `com.cco.wms`);
   los equipos se actualizan solos al abrir la app.
 
 ## 📚 Documentación

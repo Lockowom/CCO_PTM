@@ -1,4 +1,4 @@
-name: Capgo PROMOVER a producción (móvil)
+name: PUENTE FINAL Capgo 1.55.145 → producción
 
 # Promueve un bundle YA subido al canal "beta" hacia "production" (toda la
 # bodega). Es MANUAL a propósito: solo lo ejecutas cuando validaste la versión
@@ -36,6 +36,10 @@ jobs:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
           VERSION: ${{ inputs.version }}
         run: |
+          if [ "$VERSION" != "1.55.145" ]; then
+            echo "::error::Este workflow solo permite el puente final 1.55.145. Las versiones nuevas se promueven desde Monitor OTA."
+            exit 1
+          fi
           if [ -z "$CAPGO_TOKEN" ]; then
             echo "::error::Falta el secreto CAPGO_TOKEN."
             exit 1
