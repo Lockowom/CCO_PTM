@@ -136,7 +136,20 @@ describe('syncManager', () => {
       expect(addedItem.type).toBe('upsert');
       expect(addedItem.data).toHaveLength(2);
       expect(addedItem.userId).toBe('user-123');
+      expect(addedItem.ignoreDuplicates).toBe(false);
       expect(addedItem.recordId).toMatch(/^batch_\d+$/);
+    });
+
+    it('conserva ignoreDuplicates para reintentos idempotentes', async () => {
+      await enqueueUpsert({
+        tableName: 'wms_putaway_ubicaciones',
+        data: [{ ubicacion: 'A-01-1', codigo: 'SKU001' }],
+        onConflict: 'ubicacion_normalizada,codigo_normalizado',
+        ignoreDuplicates: true
+      });
+
+      const addedItem = mockSyncQueue.add.mock.calls[0][0];
+      expect(addedItem.ignoreDuplicates).toBe(true);
     });
 
     it('rechaza cuando la cola está llena', async () => {
@@ -238,6 +251,32 @@ describe('syncManager', () => {
         to: 'B-02-3'
       });
       expect(mockSyncQueue.delete).toHaveBeenCalledWith(2);
+    });
+
+    it('sincroniza un upsert idempotente sin actualizar el conflicto', async () => {
+      const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+      mockSupabase.from.mockReturnValue({ upsert: mockUpsert });
+      mockSyncQueue.toArray.mockResolvedValue([
+        {
+          id: 22,
+          type: 'upsert',
+          tableName: 'wms_putaway_ubicaciones',
+          data: [{ ubicacion: 'A-01-1', codigo: 'SKU001' }],
+          onConflict: 'ubicacion_normalizada,codigo_normalizado',
+          ignoreDuplicates: true,
+          status: 'pending',
+          timestamp: Date.now(),
+          retryCount: 0
+        }
+      ]);
+
+      await syncOfflineData();
+
+      expect(mockUpsert).toHaveBeenCalledWith([{ ubicacion: 'A-01-1', codigo: 'SKU001' }], {
+        onConflict: 'ubicacion_normalizada,codigo_normalizado',
+        ignoreDuplicates: true
+      });
+      expect(mockSyncQueue.delete).toHaveBeenCalledWith(22);
     });
 
     it('marca item como failed en error y respeta backoff exponencial', async () => {

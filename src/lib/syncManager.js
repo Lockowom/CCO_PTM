@@ -14,13 +14,24 @@ export const emitQueueUpdate = () => {
 };
 
 // ── ENQUEUE ──
-export const enqueueSyncItem = async ({ type, tableName, recordId, data, onConflict, conflictResolution = 'client_wins' }) => {
+export const enqueueSyncItem = async ({
+  type,
+  tableName,
+  recordId,
+  data,
+  onConflict,
+  conflictResolution = 'client_wins'
+}) => {
   // Protección contra cola infinita
   const currentCount = await db.syncQueue.count();
   if (currentCount >= MAX_QUEUE_SIZE) {
-    toast.error(`Cola offline llena (${MAX_QUEUE_SIZE} items). Conecta a internet para sincronizar.`, {
-      id: 'queue-full', duration: 10000,
-    });
+    toast.error(
+      `Cola offline llena (${MAX_QUEUE_SIZE} items). Conecta a internet para sincronizar.`,
+      {
+        id: 'queue-full',
+        duration: 10000
+      }
+    );
     return false;
   }
 
@@ -36,14 +47,14 @@ export const enqueueSyncItem = async ({ type, tableName, recordId, data, onConfl
     conflictResolution,
     lastAttempt: null,
     lastError: null,
-    userId: null, // se puede setear al encolar
+    userId: null // se puede setear al encolar
   });
 
   emitQueueUpdate();
 
   toast.warning('Operación guardada offline', {
     description: `Se sincronizará al recuperar conexión. Cola: ${currentCount + 1} pendientes.`,
-    duration: 4000,
+    duration: 4000
   });
 
   return true;
@@ -66,10 +77,19 @@ export const enqueueOfflineAction = async (action, payload) => {
 };
 
 // ── Encolar un UPSERT (para Entry, DataImport, etc.) ──
-export const enqueueUpsert = async ({ tableName, data, onConflict, userId }) => {
+export const enqueueUpsert = async ({
+  tableName,
+  data,
+  onConflict,
+  ignoreDuplicates = false,
+  userId
+}) => {
   const currentCount = await db.syncQueue.count();
   if (currentCount >= MAX_QUEUE_SIZE) {
-    toast.error(`Cola offline llena (${MAX_QUEUE_SIZE} items).`, { id: 'queue-full', duration: 10000 });
+    toast.error(`Cola offline llena (${MAX_QUEUE_SIZE} items).`, {
+      id: 'queue-full',
+      duration: 10000
+    });
     return false;
   }
 
@@ -79,13 +99,14 @@ export const enqueueUpsert = async ({ tableName, data, onConflict, userId }) => 
     recordId: `batch_${Date.now()}`,
     data,
     onConflict: onConflict || null,
+    ignoreDuplicates,
     status: 'pending',
     timestamp: Date.now(),
     retryCount: 0,
     conflictResolution: 'client_wins',
     lastAttempt: null,
     lastError: null,
-    userId: userId || null,
+    userId: userId || null
   });
 
   emitQueueUpdate();
@@ -107,16 +128,23 @@ export const syncOfflineData = async () => {
     // a mitad (cierre de app/WebView, recarga, crash) quedarían atascados para
     // siempre — el filtro de reintento solo reincluye 'pending'/'failed' y el
     // cleanup los excluye. Los devolvemos a 'pending' para no perder la operación.
-    const stuck = allItems.filter(it => it.status === 'syncing');
+    const stuck = allItems.filter((it) => it.status === 'syncing');
     if (stuck.length > 0) {
-      await Promise.all(stuck.map(it =>
-        db.syncQueue.update(it.id, { status: 'pending', lastError: 'Reintento tras corte a mitad de sync' })
-      ));
+      await Promise.all(
+        stuck.map((it) =>
+          db.syncQueue.update(it.id, {
+            status: 'pending',
+            lastError: 'Reintento tras corte a mitad de sync'
+          })
+        )
+      );
       // Reflejar el cambio en el array local para que el filtro los reincluya ya.
-      stuck.forEach(it => { it.status = 'pending'; });
+      stuck.forEach((it) => {
+        it.status = 'pending';
+      });
     }
 
-    const pendingItems = allItems.filter(item => {
+    const pendingItems = allItems.filter((item) => {
       if (item.status === 'pending') return true;
       if (item.status === 'failed' && item.retryCount < MAX_RETRIES) {
         // Backoff exponencial con jitter para evitar thundering herd
@@ -131,7 +159,8 @@ export const syncOfflineData = async () => {
     if (pendingItems.length === 0) return;
 
     toast.info(`Sincronizando ${pendingItems.length} operaciones...`, {
-      id: 'offline-sync', duration: 3000,
+      id: 'offline-sync',
+      duration: 3000
     });
 
     let successCount = 0;
@@ -145,23 +174,23 @@ export const syncOfflineData = async () => {
           const rpcName = item.tableName === 'move_stock' ? 'wms_move_stock' : item.tableName;
           const { error } = await supabase.rpc(rpcName, item.data || item.payload);
           if (error) throw error;
-
         } else if (item.type === 'upsert') {
           // Soporte para upsert batch (Entry, DataImport)
           const rows = Array.isArray(item.data) ? item.data : [item.data];
           const upsertOptions = item.onConflict ? { onConflict: item.onConflict } : {};
+          if (item.ignoreDuplicates) upsertOptions.ignoreDuplicates = true;
           const { error } = await supabase.from(item.tableName).upsert(rows, upsertOptions);
           if (error) throw error;
-
         } else if (item.type === 'update') {
-          const { error } = await supabase.from(item.tableName).update(item.data).eq('id', item.recordId);
+          const { error } = await supabase
+            .from(item.tableName)
+            .update(item.data)
+            .eq('id', item.recordId);
           if (error) throw error;
-
         } else if (item.type === 'create' || item.type === 'insert') {
           const rows = Array.isArray(item.data) ? item.data : [item.data];
           const { error } = await supabase.from(item.tableName).insert(rows);
           if (error) throw error;
-
         } else if (item.type === 'delete') {
           const { error } = await supabase.from(item.tableName).delete().eq('id', item.recordId);
           if (error) throw error;
@@ -178,7 +207,7 @@ export const syncOfflineData = async () => {
           status: isMaxRetries ? 'dead' : 'failed',
           retryCount: newRetryCount,
           lastAttempt: Date.now(),
-          lastError: error.message || 'Error desconocido',
+          lastError: error.message || 'Error desconocido'
         });
 
         failCount++;
@@ -186,7 +215,9 @@ export const syncOfflineData = async () => {
         // Si agotó reintentos, notificar al usuario
         if (isMaxRetries) {
           console.error(`[SyncManager] Item ${item.id} agotó reintentos:`, {
-            type: item.type, table: item.tableName, error: error.message,
+            type: item.type,
+            table: item.tableName,
+            error: error.message
           });
         }
       }
@@ -195,15 +226,21 @@ export const syncOfflineData = async () => {
     emitQueueUpdate();
 
     if (successCount > 0) {
-      toast.success(`${successCount} operacion${successCount > 1 ? 'es' : ''} sincronizada${successCount > 1 ? 's' : ''}.`, {
-        id: 'offline-sync',
-      });
+      toast.success(
+        `${successCount} operacion${successCount > 1 ? 'es' : ''} sincronizada${successCount > 1 ? 's' : ''}.`,
+        {
+          id: 'offline-sync'
+        }
+      );
     }
 
     if (failCount > 0) {
-      toast.error(`${failCount} operacion${failCount > 1 ? 'es' : ''} fallaron. Se reintentará${failCount > 1 ? 'n' : ''}.`, {
-        id: 'offline-sync-error',
-      });
+      toast.error(
+        `${failCount} operacion${failCount > 1 ? 'es' : ''} fallaron. Se reintentará${failCount > 1 ? 'n' : ''}.`,
+        {
+          id: 'offline-sync-error'
+        }
+      );
     }
   } catch (err) {
     console.error('[SyncManager] Error general de sincronización:', err);
@@ -227,9 +264,12 @@ const cleanupStaleItems = async () => {
         if (age > MAX_AGE) {
           // Loguear antes de eliminar
           console.warn('[SyncManager] Eliminando item muerto por antigüedad:', {
-            id: item.id, type: item.type, table: item.tableName,
-            error: item.lastError, retries: item.retryCount,
-            age: Math.round(age / 3600000) + 'h',
+            id: item.id,
+            type: item.type,
+            table: item.tableName,
+            error: item.lastError,
+            retries: item.retryCount,
+            age: Math.round(age / 3600000) + 'h'
           });
           await db.syncQueue.delete(item.id);
           expiredCount++;
@@ -237,10 +277,16 @@ const cleanupStaleItems = async () => {
       } else if (age > MAX_AGE && item.status !== 'syncing') {
         // Items pendientes/fallidos que llevan > 72h sin resolverse
         console.warn('[SyncManager] Item expirado:', {
-          id: item.id, type: item.type, table: item.tableName,
-          status: item.status, age: Math.round(age / 3600000) + 'h',
+          id: item.id,
+          type: item.type,
+          table: item.tableName,
+          status: item.status,
+          age: Math.round(age / 3600000) + 'h'
         });
-        await db.syncQueue.update(item.id, { status: 'dead', lastError: 'Expirado por antigüedad (72h)' });
+        await db.syncQueue.update(item.id, {
+          status: 'dead',
+          lastError: 'Expirado por antigüedad (72h)'
+        });
         expiredCount++;
       }
     }
@@ -250,7 +296,7 @@ const cleanupStaleItems = async () => {
       toast.warning(`${expiredCount} operaciones offline expiraron sin sincronizar.`, {
         description: 'Revisa la cola de sincronización.',
         duration: 10000,
-        id: 'sync-expired',
+        id: 'sync-expired'
       });
     }
   } catch (err) {
@@ -264,8 +310,10 @@ const cleanupStaleItems = async () => {
 export const getFailedItems = async () => {
   try {
     const allItems = await db.syncQueue.toArray();
-    return allItems.filter(item => item.status === 'dead' || item.status === 'failed');
-  } catch { return []; }
+    return allItems.filter((item) => item.status === 'dead' || item.status === 'failed');
+  } catch {
+    return [];
+  }
 };
 
 // Reintentar un item específico manualmente
@@ -275,7 +323,9 @@ export const retryItem = async (itemId) => {
     emitQueueUpdate();
     syncOfflineData();
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 };
 
 // Eliminar un item manualmente (con confirmación)
@@ -284,7 +334,9 @@ export const removeItem = async (itemId) => {
     await db.syncQueue.delete(itemId);
     emitQueueUpdate();
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 };
 
 // ── LISTENERS ──
@@ -300,7 +352,10 @@ window.addEventListener('online', () => {
 });
 
 window.addEventListener('offline', () => {
-  toast.warning('Sin conexión. Las operaciones se guardarán localmente.', { id: 'online-status', duration: 5000 });
+  toast.warning('Sin conexión. Las operaciones se guardarán localmente.', {
+    id: 'online-status',
+    duration: 5000
+  });
 });
 
 // Cleanup cada 10 minutos (antes 5 min)

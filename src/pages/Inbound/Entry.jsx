@@ -354,12 +354,13 @@ const Entry = () => {
         .from('wms_putaway_ubicaciones')
         .upsert(rowsToInsert, {
           onConflict:
-            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada'
+            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
+          ignoreDuplicates: true
         })
         .select('id,codigo,ubicacion');
 
       if (error) throw error;
-      if (!saved || saved.length !== rowsToInsert.length) {
+      if (!saved) {
         throw new Error('Supabase no confirmó todos los registros de Put Away');
       }
 
@@ -381,7 +382,7 @@ const Entry = () => {
           console.error('Entry operation error:', _);
         }
       }
-      return { saved: saved.length };
+      return { saved: rowsToInsert.length };
     },
     onSuccess: ({ saved }) => {
       toast.success(
@@ -409,6 +410,7 @@ const Entry = () => {
             data: rowsToInsert,
             onConflict:
               'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
+            ignoreDuplicates: true,
             userId: user?.id || null
           });
 
@@ -452,6 +454,7 @@ const Entry = () => {
           data: rowsToInsert,
           onConflict:
             'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
+          ignoreDuplicates: true,
           userId: user?.id || null
         });
 
