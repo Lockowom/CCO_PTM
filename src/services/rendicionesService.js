@@ -47,6 +47,8 @@ export const rendicionesAdmin = {
   dashboard: (limit = 200) => rpc('rendicion_admin_dashboard', { p_limit: limit }),
   colaboradoresDetalle: () => rpc('rendicion_admin_colaboradores_detalle'),
   detalle: (id) => rpc('rendicion_admin_detalle', { p_id: id }),
+  completarCabecera: (id, payload) =>
+    rpc('rendicion_admin_completar_cabecera', { p_id: id, p_payload: payload }),
   async eliminar(id) {
     const result = await rpc('rendicion_admin_eliminar', { p_id: id });
     const paths = Array.isArray(result?.storage_paths) ? result.storage_paths : [];

@@ -330,3 +330,111 @@
 .ra-delete-report:hover {
   background: #ffe4e6;
 }
+.ra-modal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.ra-completion-alert {
+  display: flex;
+  gap: 8px;
+  margin: 16px 20px 0;
+  padding: 12px 15px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+}
+.ra-header-editor {
+  margin: 18px 20px;
+  padding: 20px;
+  border: 1px solid #c7d2fe;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #f8faff, #fff);
+}
+.ra-editor-title,
+.ra-section-label {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.ra-editor-title > span,
+.ra-section-label > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: #111827;
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+}
+.ra-editor-title h3,
+.ra-editor-title p {
+  margin: 0;
+}
+.ra-editor-title p {
+  color: #64748b;
+  font-size: 11px;
+}
+.ra-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.ra-editor-grid label {
+  color: #475569;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ra-editor-grid input,
+.ra-editor-grid select,
+.ra-editor-grid textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: white;
+  color: #172033;
+  font: inherit;
+  text-transform: none;
+}
+.ra-editor-grid textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+.ra-editor-full {
+  grid-column: 1 / -1;
+}
+.ra-save-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 11px;
+  background: #059669;
+  color: white;
+  font-weight: 900;
+}
+.ra-section-label {
+  margin: 18px 20px 8px;
+}
+@media (max-width: 760px) {
+  .ra-editor-grid {
+    grid-template-columns: 1fr;
+  }
+  .ra-editor-full {
+    grid-column: auto;
+  }
+  .ra-completion-alert {
+    flex-direction: column;
+  }
+}

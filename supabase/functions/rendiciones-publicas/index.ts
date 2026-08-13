@@ -358,6 +358,16 @@ serve(async (req) => {
       );
       delete report.view_token_hash;
       delete report.created_ip;
+      const headerComplete = Boolean(
+        report.centro_costo_id &&
+        report.tipo_fondo &&
+        String(report.responsable_rut || '').trim() &&
+        String(report.direccion_area || '').trim() &&
+        String(report.unidad || '').trim() &&
+        String(report.tecnico || '').trim() &&
+        String(report.detalle || '').trim() &&
+        (report.tipo_fondo !== 'Fondo por rendir' || Number(report.fondo_por_rendir) > 0)
+      );
       await db.from('rendicion_public_log').insert({
         link_id: link.id,
         rendicion_id: reportId,
@@ -369,6 +379,7 @@ serve(async (req) => {
         data: {
           rendicion: {
             ...report,
+            cabecera_completa: headerComplete,
             folio_texto: `REN-${String(report.fecha_rendicion).slice(0, 4)}-${String(report.folio).padStart(6, '0')}`
           },
           items,

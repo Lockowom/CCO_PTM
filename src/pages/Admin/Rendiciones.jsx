@@ -9,6 +9,7 @@ import {
   Link2,
   Plus,
   RefreshCw,
+  Save,
   Search,
   ShieldCheck,
   Users,
@@ -21,7 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { publicUrl } from '../../lib/publicUrl';
 import { signedUrls } from '../../lib/storageUrl';
 import { downloadRendicionExcel, downloadRendicionPDF } from '../../lib/exportRendicion';
-import { cleanHumanText, hasRealLetters } from '../../lib/rendicionValidation';
+import { cleanHumanText, hasRealLetters, TIPOS_FONDO } from '../../lib/rendicionValidation';
 import { rendicionesAdmin } from '../../services/rendicionesService';
 import './Rendiciones.css';
 import './RendicionesExtras.css';
@@ -32,6 +33,7 @@ export default function Rendiciones() {
   const { user, hasPermission } = useAuth();
   const canManage =
     hasPermission('manage_rendiciones') || user?.rol === 'ADMIN' || user?.es_admin_delegado;
+  const canComplete = canManage || hasPermission('complete_rendiciones');
   const [data, setData] = useState({
     rendiciones: [],
     links: [],
@@ -43,6 +45,8 @@ export default function Rendiciones() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [detail, setDetail] = useState(null);
+  const [headerDraft, setHeaderDraft] = useState(null);
+  const [savingHeader, setSavingHeader] = useState(false);
   const [newLink, setNewLink] = useState({ nombre: '', expires: '', max: '' });
   const [createdUrl, setCreatedUrl] = useState('');
   const [catalog, setCatalog] = useState({
@@ -104,8 +108,52 @@ export default function Rendiciones() {
       );
       found.fotos = found.fotos.map((photo) => ({ ...photo, url: urls[photo.storage_path] || '' }));
       setDetail(found);
+      setHeaderDraft({
+        fecha_rendicion: found.rendicion.fecha_rendicion || '',
+        centro_costo_id: found.rendicion.centro_costo_id || '',
+        responsable_rut: found.rendicion.responsable_rut || '',
+        direccion_area: found.rendicion.direccion_area || '',
+        unidad: found.rendicion.unidad || '',
+        tecnico: found.rendicion.tecnico || found.rendicion.solicitante_tecnico_nombre || '',
+        tipo_fondo: found.rendicion.tipo_fondo || '',
+        fondo_por_rendir: found.rendicion.fondo_por_rendir || '',
+        detalle: found.rendicion.detalle || ''
+      });
     } catch (error) {
       toast.error(error.message);
+    }
+  };
+
+  const saveHeader = async (event) => {
+    event.preventDefault();
+    if (!canComplete || !detail || !headerDraft) return;
+    const payload = {
+      ...headerDraft,
+      responsable_rut: cleanHumanText(headerDraft.responsable_rut),
+      direccion_area: cleanHumanText(headerDraft.direccion_area),
+      unidad: cleanHumanText(headerDraft.unidad),
+      tecnico: cleanHumanText(headerDraft.tecnico),
+      detalle: cleanHumanText(headerDraft.detalle),
+      fondo_por_rendir: headerDraft.fondo_por_rendir || null
+    };
+    if (!payload.centro_costo_id || !payload.fecha_rendicion || !payload.tipo_fondo)
+      return toast.error('Completa fecha, centro de costo y tipo de fondo.');
+    if (
+      ![payload.direccion_area, payload.unidad, payload.tecnico, payload.detalle].every(
+        hasRealLetters
+      )
+    )
+      return toast.error('Los campos de texto deben contener información real.');
+    setSavingHeader(true);
+    try {
+      await rendicionesAdmin.completarCabecera(detail.rendicion.id, payload);
+      toast.success('Datos de la rendición completados. El PDF ya está habilitado.');
+      await openDetail(detail.rendicion.id);
+      await load();
+    } catch (error) {
+      toast.error(error.message || 'No fue posible guardar los datos de la rendición.');
+    } finally {
+      setSavingHeader(false);
     }
   };
 
@@ -627,10 +675,26 @@ export default function Rendiciones() {
                 </p>
               </div>
               <div className="ra-modal-actions">
-                <button onClick={() => downloadRendicionPDF(detail)}>
+                <button
+                  disabled={!detail.rendicion.cabecera_completa}
+                  title={
+                    detail.rendicion.cabecera_completa
+                      ? 'Descargar PDF'
+                      : 'Completa primero el bloque 01'
+                  }
+                  onClick={() => downloadRendicionPDF(detail)}
+                >
                   <Download size={16} /> PDF
                 </button>
-                <button onClick={() => downloadRendicionExcel(detail)}>
+                <button
+                  disabled={!detail.rendicion.cabecera_completa}
+                  title={
+                    detail.rendicion.cabecera_completa
+                      ? 'Descargar Excel'
+                      : 'Completa primero el bloque 01'
+                  }
+                  onClick={() => downloadRendicionExcel(detail)}
+                >
                   <FileSpreadsheet size={16} /> Excel
                 </button>
                 <button className="close" onClick={() => setDetail(null)}>
@@ -638,6 +702,136 @@ export default function Rendiciones() {
                 </button>
               </div>
             </header>
+            {!detail.rendicion.cabecera_completa && (
+              <div className="ra-completion-alert">
+                <b>Pendiente de completar</b>
+                Oscar debe guardar el bloque 01 antes de descargar el PDF o Excel.
+              </div>
+            )}
+            {canComplete && headerDraft && (
+              <form className="ra-header-editor" onSubmit={saveHeader}>
+                <div className="ra-editor-title">
+                  <span>01</span>
+                  <div>
+                    <h3>Datos de la rendición</h3>
+                    <p>Completa y corrige la cabecera administrativa antes de exportar.</p>
+                  </div>
+                </div>
+                <div className="ra-editor-grid">
+                  <label>
+                    Responsable
+                    <input value="Oscar Leiva" disabled />
+                  </label>
+                  <label>
+                    RUT responsable *
+                    <input
+                      value={headerDraft.responsable_rut}
+                      onChange={(e) =>
+                        setHeaderDraft({ ...headerDraft, responsable_rut: e.target.value })
+                      }
+                      placeholder="16.068.403-8"
+                    />
+                  </label>
+                  <label>
+                    Fecha de rendición *
+                    <input
+                      type="date"
+                      max={new Date().toLocaleDateString('en-CA')}
+                      value={headerDraft.fecha_rendicion}
+                      onChange={(e) =>
+                        setHeaderDraft({ ...headerDraft, fecha_rendicion: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Centro de costo *
+                    <select
+                      value={headerDraft.centro_costo_id}
+                      onChange={(e) =>
+                        setHeaderDraft({ ...headerDraft, centro_costo_id: e.target.value })
+                      }
+                    >
+                      <option value="">Seleccionar…</option>
+                      {(data.centros || []).map((center) => (
+                        <option key={center.id} value={center.id}>
+                          {center.codigo} · {center.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Dirección / área *
+                    <input
+                      value={headerDraft.direccion_area}
+                      onChange={(e) =>
+                        setHeaderDraft({ ...headerDraft, direccion_area: e.target.value })
+                      }
+                      placeholder="Operaciones"
+                    />
+                  </label>
+                  <label>
+                    Unidad *
+                    <input
+                      value={headerDraft.unidad}
+                      onChange={(e) => setHeaderDraft({ ...headerDraft, unidad: e.target.value })}
+                      placeholder="PV - ST"
+                    />
+                  </label>
+                  <label>
+                    Técnico *
+                    <input
+                      value={headerDraft.tecnico}
+                      onChange={(e) => setHeaderDraft({ ...headerDraft, tecnico: e.target.value })}
+                      placeholder="Nombre del técnico"
+                    />
+                  </label>
+                  <label>
+                    Tipo de fondo *
+                    <select
+                      value={headerDraft.tipo_fondo}
+                      onChange={(e) =>
+                        setHeaderDraft({ ...headerDraft, tipo_fondo: e.target.value })
+                      }
+                    >
+                      <option value="">Seleccionar…</option>
+                      {TIPOS_FONDO.map((type) => (
+                        <option key={type}>{type}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {headerDraft.tipo_fondo === 'Fondo por rendir' && (
+                    <label>
+                      Monto fondo por rendir *
+                      <input
+                        type="number"
+                        min="1"
+                        max="999999999"
+                        value={headerDraft.fondo_por_rendir}
+                        onChange={(e) =>
+                          setHeaderDraft({ ...headerDraft, fondo_por_rendir: e.target.value })
+                        }
+                      />
+                    </label>
+                  )}
+                  <label className="ra-editor-full">
+                    Detalle general *
+                    <textarea
+                      maxLength="500"
+                      value={headerDraft.detalle}
+                      onChange={(e) => setHeaderDraft({ ...headerDraft, detalle: e.target.value })}
+                      placeholder="Detalle administrativo de la rendición…"
+                    />
+                  </label>
+                </div>
+                <button className="ra-save-header" disabled={savingHeader}>
+                  <Save size={17} /> {savingHeader ? 'Guardando…' : 'Guardar y habilitar descarga'}
+                </button>
+              </form>
+            )}
+            <div className="ra-section-label">
+              <span>02</span>
+              <b>Detalle de gastos enviado</b>
+            </div>
             <div className="ra-detail-grid">
               <div>
                 <b>Fecha</b>

@@ -2,12 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cleanHumanText, hasRealLetters, validateRendicion } from '../lib/rendicionValidation';
 
 const valid = () => ({
-  centro_costo_id: 'cc',
   solicitante_tecnico_id: 'tecnico-postventa',
-  solicitante_rut: '12.345.678-9',
-  solicitante_direccion_area: 'Servicio Técnico Santiago',
-  tipo_fondo: 'Rendición de gastos',
-  detalle: '',
   items: [
     {
       fecha: '2026-08-11',
@@ -37,7 +32,7 @@ describe('rendiciones públicas seguras', () => {
     expect(errors['items.0.monto']).toBeTruthy();
   });
 
-  it('acepta un gasto completo de catálogo', () => {
+  it('acepta el detalle sin exigir la cabecera administrativa', () => {
     expect(validateRendicion(valid())).toEqual({});
   });
 });

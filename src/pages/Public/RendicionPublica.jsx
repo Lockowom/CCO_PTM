@@ -16,7 +16,6 @@ import {
   cleanHumanText,
   emptyRendicionItem,
   TIPOS_DOCUMENTO,
-  TIPOS_FONDO,
   validateRendicion
 } from '../../lib/rendicionValidation';
 import { downloadRendicionExcel, downloadRendicionPDF } from '../../lib/exportRendicion';
@@ -65,14 +64,35 @@ function ReportView({ token, reportId, viewToken }) {
           <h1>{r.folio_texto}</h1>
         </div>
         <div className="rp-actions">
-          <button onClick={() => downloadRendicionPDF(data)}>
+          <button
+            disabled={!r.cabecera_completa}
+            title={
+              !r.cabecera_completa ? 'Oscar debe completar la rendición antes de exportar' : ''
+            }
+            onClick={() => downloadRendicionPDF(data)}
+          >
             <Download size={17} /> Descargar PDF
           </button>
-          <button className="secondary" onClick={() => downloadRendicionExcel(data)}>
+          <button
+            className="secondary"
+            disabled={!r.cabecera_completa}
+            onClick={() => downloadRendicionExcel(data)}
+          >
             <FileSpreadsheet size={17} /> Excel
           </button>
         </div>
       </header>
+      {!r.cabecera_completa && (
+        <section className="rp-pending-admin">
+          <ShieldCheck size={20} />
+          <div>
+            <b>Detalle recibido correctamente</b>
+            <span>
+              Oscar completará los datos administrativos. La descarga se habilitará después.
+            </span>
+          </div>
+        </section>
+      )}
       <section className="rp-paper">
         <h2>PLANILLA DE RENDICIÓN DE GASTOS</h2>
         <div className="rp-summary">
@@ -188,14 +208,7 @@ export default function RendicionPublica() {
   const [success, setSuccess] = useState(null);
   const [website, setWebsite] = useState('');
   const [form, setForm] = useState({
-    fecha_rendicion: new Date().toLocaleDateString('en-CA'),
-    centro_costo_id: '',
     solicitante_tecnico_id: '',
-    solicitante_rut: '',
-    solicitante_direccion_area: '',
-    tipo_fondo: '',
-    fondo_por_rendir: '',
-    detalle: '',
     items: [emptyRendicionItem()]
   });
 
@@ -219,7 +232,6 @@ export default function RendicionPublica() {
       return acc;
     }, {});
   }, [catalogs]);
-  const selectedResponsible = catalogs?.responsable || null;
   const selectedTechnician = useMemo(
     () => catalogs?.tecnicos?.find((person) => person.id === form.solicitante_tecnico_id) || null,
     [catalogs, form.solicitante_tecnico_id]
@@ -272,10 +284,6 @@ export default function RendicionPublica() {
     event.preventDefault();
     const payload = {
       ...form,
-      detalle: cleanHumanText(form.detalle),
-      solicitante_rut: cleanHumanText(form.solicitante_rut),
-      solicitante_direccion_area: cleanHumanText(form.solicitante_direccion_area),
-      fondo_por_rendir: form.fondo_por_rendir ? Number(form.fondo_por_rendir) : null,
       items: form.items.map(({ photos: _photos, ...item }) => ({
         ...item,
         descripcion: cleanHumanText(item.descripcion),
@@ -321,14 +329,7 @@ export default function RendicionPublica() {
         failed
       });
       setForm({
-        fecha_rendicion: new Date().toLocaleDateString('en-CA'),
-        centro_costo_id: '',
         solicitante_tecnico_id: form.solicitante_tecnico_id,
-        solicitante_rut: form.solicitante_rut,
-        solicitante_direccion_area: form.solicitante_direccion_area,
-        tipo_fondo: '',
-        fondo_por_rendir: '',
-        detalle: '',
         items: [emptyRendicionItem()]
       });
       setErrors({});
@@ -366,142 +367,32 @@ export default function RendicionPublica() {
           onChange={(e) => setWebsite(e.target.value)}
           name="website"
         />
-        <section className="rp-card">
-          <div className="rp-card-title">
-            <span>01</span>
-            <div>
-              <h2>Datos de la rendición</h2>
-              <p>Los catálogos evitan errores de escritura y mantienen los datos sincronizados.</p>
-            </div>
+        <section className="rp-identity-strip">
+          <div>
+            <ShieldCheck size={20} />
+            <span>
+              <b>Identifica quién envía</b>
+              Solo se aceptan técnicos registrados en Postventa.
+            </span>
           </div>
-          <div className="rp-grid">
-            <label>
-              Fecha de la rendición *
-              <input
-                type="date"
-                max={new Date().toLocaleDateString('en-CA')}
-                value={form.fecha_rendicion}
-                onChange={(e) => setForm({ ...form, fecha_rendicion: e.target.value })}
-              />
-            </label>
-            <label>
-              Centro de costo *
-              <select
-                value={form.centro_costo_id}
-                onChange={(e) => setForm({ ...form, centro_costo_id: e.target.value })}
-              >
-                <option value="">Seleccionar código y nombre…</option>
-                {catalogs.centros.map((cc) => (
-                  <option key={cc.id} value={cc.id}>
-                    {cc.codigo} · {cc.nombre}
-                  </option>
-                ))}
-              </select>
-              {fieldError('centro_costo_id')}
-            </label>
-            <div className="rp-fixed-responsible">
-              <span>Responsable de aprobación</span>
-              <strong>{selectedResponsible?.nombre || 'Oscar Leiva'}</strong>
-              <small>Asignado automáticamente · no editable</small>
-            </div>
-            {selectedResponsible && (
-              <div className="rp-responsible-preview rp-full">
-                <div>
-                  <b>RUT</b>
-                  <span>{selectedResponsible.rut || 'Pendiente de configurar'}</span>
-                </div>
-                <div>
-                  <b>Dirección - área</b>
-                  <span>{selectedResponsible.direccion_area || 'Pendiente de configurar'}</span>
-                </div>
-                <div>
-                  <b>Unidad</b>
-                  <span>{selectedResponsible.unidad || 'Pendiente de configurar'}</span>
-                </div>
-              </div>
-            )}
-            <label>
-              Tu nombre · Técnico Postventa *
-              <select
-                value={form.solicitante_tecnico_id}
-                onChange={(e) => setForm({ ...form, solicitante_tecnico_id: e.target.value })}
-              >
-                <option value="">Validar identidad en catálogo…</option>
-                {(catalogs.tecnicos || []).map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.nombre}
-                  </option>
-                ))}
-              </select>
-              {fieldError('solicitante_tecnico_id')}
-            </label>
-            <label>
-              RUT del técnico *
-              <input
-                maxLength="15"
-                autoComplete="off"
-                placeholder="12.345.678-9"
-                value={form.solicitante_rut}
-                onChange={(e) => setForm({ ...form, solicitante_rut: e.target.value })}
-              />
-              {fieldError('solicitante_rut')}
-            </label>
-            <label className="rp-full">
-              Dirección / área del técnico *
-              <input
-                maxLength="120"
-                placeholder="Ej.: Servicio Técnico · Santiago"
-                value={form.solicitante_direccion_area}
-                onChange={(e) => setForm({ ...form, solicitante_direccion_area: e.target.value })}
-              />
-              {fieldError('solicitante_direccion_area')}
-            </label>
-            {selectedTechnician && (
-              <div className="rp-identity-ok rp-full">
-                <ShieldCheck size={18} /> Identidad seleccionada desde Postventa:{' '}
-                <b>{selectedTechnician.nombre}</b>
-              </div>
-            )}
-            <label>
-              Tipo de fondo *
-              <select
-                value={form.tipo_fondo}
-                onChange={(e) => setForm({ ...form, tipo_fondo: e.target.value })}
-              >
-                <option value="">Seleccionar…</option>
-                {TIPOS_FONDO.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-              {fieldError('tipo_fondo')}
-            </label>
-            {form.tipo_fondo === 'Fondo por rendir' && (
-              <label>
-                Monto fondo por rendir *
-                <input
-                  type="number"
-                  min="1"
-                  max="999999999"
-                  step="1"
-                  inputMode="numeric"
-                  placeholder="$ 0"
-                  value={form.fondo_por_rendir}
-                  onChange={(e) => setForm({ ...form, fondo_por_rendir: e.target.value })}
-                />
-                {fieldError('fondo_por_rendir')}
-              </label>
-            )}
-            <label className="rp-full">
-              Detalle general (opcional)
-              <textarea
-                maxLength="500"
-                placeholder="Escribe información útil de la rendición…"
-                value={form.detalle}
-                onChange={(e) => setForm({ ...form, detalle: e.target.value })}
-              />
-              {fieldError('detalle')}
-            </label>
-          </div>
+          <label>
+            Técnico Postventa *
+            <select
+              value={form.solicitante_tecnico_id}
+              onChange={(e) => setForm({ ...form, solicitante_tecnico_id: e.target.value })}
+            >
+              <option value="">Selecciona tu nombre…</option>
+              {(catalogs.tecnicos || []).map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.nombre}
+                </option>
+              ))}
+            </select>
+            {fieldError('solicitante_tecnico_id')}
+          </label>
+          {selectedTechnician && (
+            <b className="rp-identity-confirmed">✓ {selectedTechnician.nombre}</b>
+          )}
         </section>
         <section className="rp-card">
           <div className="rp-card-title">
