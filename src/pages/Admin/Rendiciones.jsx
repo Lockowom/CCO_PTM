@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   Users,
   WalletCards,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -36,6 +37,7 @@ export default function Rendiciones() {
     links: [],
     centros: [],
     colaboradores: [],
+    por_tecnico: [],
     storage: {}
   });
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,25 @@ export default function Rendiciones() {
       setDetail(found);
     } catch (error) {
       toast.error(error.message);
+    }
+  };
+
+  const deleteReport = async (report) => {
+    if (!canManage) return;
+    const confirmation = window.prompt(
+      `Esta acción elimina la rendición y sus evidencias. Escribe ${report.folio} para confirmar.`
+    );
+    if (confirmation !== report.folio) {
+      if (confirmation != null) toast.error('El folio no coincide. No se eliminó nada.');
+      return;
+    }
+    try {
+      await rendicionesAdmin.eliminar(report.id);
+      if (detail?.rendicion?.id === report.id) setDetail(null);
+      toast.success(`${report.folio} eliminada y registrada en auditoría.`);
+      await load();
+    } catch (error) {
+      toast.error(error.message || 'No se pudo eliminar la rendición.');
     }
   };
 
@@ -246,6 +267,38 @@ export default function Rendiciones() {
         </article>
       </section>
 
+      {data.por_tecnico?.length > 0 && (
+        <section className="ra-people-dashboard">
+          <div className="ra-title">
+            <Users />
+            <div>
+              <h2>Actividad por técnico</h2>
+              <p>Quién realizó la rendición, cantidad, total y última fecha registrada.</p>
+            </div>
+          </div>
+          <div className="ra-people-grid">
+            {data.por_tecnico.map((person) => (
+              <article key={person.nombre}>
+                <span>
+                  {String(person.nombre || '?')
+                    .slice(0, 1)
+                    .toUpperCase()}
+                </span>
+                <div>
+                  <b>{person.nombre}</b>
+                  <small>
+                    {person.cantidad} rendición(es) · {money(person.total)}
+                  </small>
+                  <time>
+                    {person.ultima ? new Date(person.ultima).toLocaleString('es-CL') : 'Sin fecha'}
+                  </time>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {canManage && (
         <>
           <section className="ra-public-access">
@@ -268,115 +321,117 @@ export default function Rendiciones() {
             </div>
           </section>
 
-          <form className="ra-panel ra-catalog-panel" onSubmit={saveCatalog}>
-            <div className="ra-title">
-              <Users />
-              <div>
-                <h2>Catálogos del formulario</h2>
-                <p>Selecciona un registro desde las listas desplegables para editarlo.</p>
+          {false && (
+            <form className="ra-panel ra-catalog-panel" onSubmit={saveCatalog}>
+              <div className="ra-title">
+                <Users />
+                <div>
+                  <h2>Catálogos del formulario</h2>
+                  <p>Selecciona un registro desde las listas desplegables para editarlo.</p>
+                </div>
               </div>
-            </div>
-            <div className="ra-fields ra-catalog-fields">
-              <label>
-                Tipo
-                <select
-                  value={catalog.tipo}
-                  onChange={(e) =>
-                    setCatalog({
-                      id: '',
-                      tipo: e.target.value,
-                      codigo: '',
-                      nombre: '',
-                      rut: '',
-                      direccion_area: '',
-                      unidad: '',
-                      tecnico: '',
-                      activo: true
-                    })
-                  }
-                >
-                  <option value="centro">Centro de costo</option>
-                  <option value="colaborador">Colaborador</option>
-                </select>
-              </label>
-              <label className="ra-record-selector">
-                Registro
-                <select value={catalog.id} onChange={(e) => selectCatalogItem(e.target.value)}>
-                  <option value="">+ Agregar registro nuevo</option>
-                  {(catalog.tipo === 'centro' ? data.centros : data.colaboradores).map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.codigo ? `${item.codigo} · ` : ''}
-                      {item.nombre}
-                      {item.activo ? '' : ' (inactivo)'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {catalog.tipo === 'centro' && (
+              <div className="ra-fields ra-catalog-fields">
                 <label>
-                  Código
+                  Tipo
+                  <select
+                    value={catalog.tipo}
+                    onChange={(e) =>
+                      setCatalog({
+                        id: '',
+                        tipo: e.target.value,
+                        codigo: '',
+                        nombre: '',
+                        rut: '',
+                        direccion_area: '',
+                        unidad: '',
+                        tecnico: '',
+                        activo: true
+                      })
+                    }
+                  >
+                    <option value="centro">Centro de costo</option>
+                    <option value="colaborador">Colaborador</option>
+                  </select>
+                </label>
+                <label className="ra-record-selector">
+                  Registro
+                  <select value={catalog.id} onChange={(e) => selectCatalogItem(e.target.value)}>
+                    <option value="">+ Agregar registro nuevo</option>
+                    {(catalog.tipo === 'centro' ? data.centros : data.colaboradores).map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.codigo ? `${item.codigo} · ` : ''}
+                        {item.nombre}
+                        {item.activo ? '' : ' (inactivo)'}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {catalog.tipo === 'centro' && (
+                  <label>
+                    Código
+                    <input
+                      maxLength="40"
+                      value={catalog.codigo}
+                      onChange={(e) => setCatalog({ ...catalog, codigo: e.target.value })}
+                      placeholder="Ej.: 1-09"
+                    />
+                  </label>
+                )}
+                <label>
+                  Nombre
                   <input
-                    maxLength="40"
-                    value={catalog.codigo}
-                    onChange={(e) => setCatalog({ ...catalog, codigo: e.target.value })}
-                    placeholder="Ej.: 1-09"
+                    maxLength="120"
+                    value={catalog.nombre}
+                    onChange={(e) => setCatalog({ ...catalog, nombre: e.target.value })}
+                    placeholder="Nombre visible"
                   />
                 </label>
-              )}
-              <label>
-                Nombre
-                <input
-                  maxLength="120"
-                  value={catalog.nombre}
-                  onChange={(e) => setCatalog({ ...catalog, nombre: e.target.value })}
-                  placeholder="Nombre visible"
-                />
-              </label>
-              {catalog.tipo === 'colaborador' && (
-                <>
-                  <label>
-                    RUT
-                    <input
-                      maxLength="15"
-                      value={catalog.rut}
-                      onChange={(e) => setCatalog({ ...catalog, rut: e.target.value })}
-                      placeholder="12.345.678-9"
-                    />
-                  </label>
-                  <label>
-                    Dirección / área
-                    <input
-                      maxLength="120"
-                      value={catalog.direccion_area}
-                      onChange={(e) => setCatalog({ ...catalog, direccion_area: e.target.value })}
-                      placeholder="Operaciones"
-                    />
-                  </label>
-                  <label>
-                    Unidad
-                    <input
-                      maxLength="80"
-                      value={catalog.unidad}
-                      onChange={(e) => setCatalog({ ...catalog, unidad: e.target.value })}
-                      placeholder="PV - ST"
-                    />
-                  </label>
-                  <label>
-                    Técnico
-                    <input
-                      maxLength="120"
-                      value={catalog.tecnico}
-                      onChange={(e) => setCatalog({ ...catalog, tecnico: e.target.value })}
-                      placeholder="Nombre del técnico"
-                    />
-                  </label>
-                </>
-              )}
-              <button>
-                <Plus size={17} /> {catalog.id ? 'Guardar' : 'Agregar'}
-              </button>
-            </div>
-          </form>
+                {catalog.tipo === 'colaborador' && (
+                  <>
+                    <label>
+                      RUT
+                      <input
+                        maxLength="15"
+                        value={catalog.rut}
+                        onChange={(e) => setCatalog({ ...catalog, rut: e.target.value })}
+                        placeholder="12.345.678-9"
+                      />
+                    </label>
+                    <label>
+                      Dirección / área
+                      <input
+                        maxLength="120"
+                        value={catalog.direccion_area}
+                        onChange={(e) => setCatalog({ ...catalog, direccion_area: e.target.value })}
+                        placeholder="Operaciones"
+                      />
+                    </label>
+                    <label>
+                      Unidad
+                      <input
+                        maxLength="80"
+                        value={catalog.unidad}
+                        onChange={(e) => setCatalog({ ...catalog, unidad: e.target.value })}
+                        placeholder="PV - ST"
+                      />
+                    </label>
+                    <label>
+                      Técnico
+                      <input
+                        maxLength="120"
+                        value={catalog.tecnico}
+                        onChange={(e) => setCatalog({ ...catalog, tecnico: e.target.value })}
+                        placeholder="Nombre del técnico"
+                      />
+                    </label>
+                  </>
+                )}
+                <button>
+                  <Plus size={17} /> {catalog.id ? 'Guardar' : 'Agregar'}
+                </button>
+              </div>
+            </form>
+          )}
         </>
       )}
 
@@ -402,11 +457,13 @@ export default function Rendiciones() {
                 <th>Folio</th>
                 <th>Fecha</th>
                 <th>Responsable</th>
+                <th>Realizada por</th>
                 <th>Centro de costo</th>
                 <th>Gastos</th>
                 <th>Fotos</th>
                 <th>Total</th>
                 <th>Estado</th>
+                {canManage && <th>Acción</th>}
               </tr>
             </thead>
             <tbody>
@@ -418,6 +475,9 @@ export default function Rendiciones() {
                   <td>{new Date(`${r.fecha_rendicion}T12:00:00`).toLocaleDateString('es-CL')}</td>
                   <td>{r.responsable_nombre}</td>
                   <td>
+                    <b>{r.solicitante_tecnico_nombre || 'Sin identificar'}</b>
+                  </td>
+                  <td>
                     {r.centro_costo_codigo} · {r.centro_costo_nombre}
                   </td>
                   <td>{r.items}</td>
@@ -428,6 +488,21 @@ export default function Rendiciones() {
                   <td>
                     <span className="ra-state">{r.estado}</span>
                   </td>
+                  {canManage && (
+                    <td>
+                      <button
+                        type="button"
+                        className="ra-delete-report"
+                        title={`Eliminar ${r.folio}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          deleteReport(r);
+                        }}
+                      >
+                        <Trash2 size={16} /> Eliminar
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -438,7 +513,7 @@ export default function Rendiciones() {
         </div>
       </section>
 
-      {canManage && (
+      {false && canManage && (
         <details className="ra-panel ra-advanced">
           <summary>
             <Link2 />
@@ -580,7 +655,23 @@ export default function Rendiciones() {
               </div>
               <div>
                 <b>Tipo de fondo</b>
-                <span>{detail.rendicion.tipo_fondo}</span>
+                <span>
+                  {detail.rendicion.tipo_fondo}
+                  {detail.rendicion.fondo_por_rendir
+                    ? ` · ${money(detail.rendicion.fondo_por_rendir)}`
+                    : ''}
+                </span>
+              </div>
+              <div>
+                <b>Realizada por</b>
+                <span>{detail.rendicion.solicitante_tecnico_nombre || 'Sin identificar'}</span>
+              </div>
+              <div>
+                <b>RUT / área</b>
+                <span>
+                  {detail.rendicion.solicitante_rut || '—'} ·{' '}
+                  {detail.rendicion.solicitante_direccion_area || '—'}
+                </span>
               </div>
               <div>
                 <b>Estado</b>

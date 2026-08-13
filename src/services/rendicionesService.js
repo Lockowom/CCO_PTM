@@ -47,6 +47,15 @@ export const rendicionesAdmin = {
   dashboard: (limit = 200) => rpc('rendicion_admin_dashboard', { p_limit: limit }),
   colaboradoresDetalle: () => rpc('rendicion_admin_colaboradores_detalle'),
   detalle: (id) => rpc('rendicion_admin_detalle', { p_id: id }),
+  async eliminar(id) {
+    const result = await rpc('rendicion_admin_eliminar', { p_id: id });
+    const paths = Array.isArray(result?.storage_paths) ? result.storage_paths : [];
+    if (paths.length) {
+      const { error } = await supabase.storage.from('rendicion-evidencias').remove(paths);
+      if (error) console.error('No se pudieron limpiar todas las evidencias:', error);
+    }
+    return result;
+  },
   crearLink: (nombre, expiresAt, maxSubmissions) =>
     rpc('rendicion_admin_crear_link', {
       p_nombre: nombre,

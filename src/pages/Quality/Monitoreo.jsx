@@ -1137,9 +1137,20 @@ const InformeBuilder = ({ informe, prefillItems, asignacion, asignacionId, onCan
                           type="number"
                           min="0"
                           max={it.cantidad}
-                          value={it.cantidad_afectada}
+                          value={String(Math.max(0, Math.trunc(Number(it.cantidad_afectada) || 0)))}
                           onChange={(e) =>
-                            updateItem(it._key, 'cantidad_afectada', Number(e.target.value) || 0)
+                            updateItem(
+                              it._key,
+                              'cantidad_afectada',
+                              Math.max(0, Math.trunc(Number(e.target.value) || 0))
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateItem(
+                              it._key,
+                              'cantidad_afectada',
+                              Math.max(0, Math.trunc(Number(e.target.value) || 0))
+                            )
                           }
                           className="w-full mt-1 px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/50 text-sm font-bold text-amber-800 outline-none focus:border-amber-400"
                         />
@@ -1584,8 +1595,14 @@ const InformeDanosBuilder = ({ informe, prefill, onCancel, onSaved }) => {
                     <label className={lbl}>Cantidad afectada</label>
                     <input
                       type="number"
-                      value={h.cantidad}
-                      onChange={(e) => updHallazgo(h._key, 'cantidad', e.target.value)}
+                      value={String(Math.max(0, Math.trunc(Number(h.cantidad) || 0)))}
+                      onChange={(e) =>
+                        updHallazgo(
+                          h._key,
+                          'cantidad',
+                          Math.max(0, Math.trunc(Number(e.target.value) || 0))
+                        )
+                      }
                       className={field}
                     />
                   </div>

@@ -3,7 +3,9 @@ import { cleanHumanText, hasRealLetters, validateRendicion } from '../lib/rendic
 
 const valid = () => ({
   centro_costo_id: 'cc',
-  responsable_id: 'persona',
+  solicitante_tecnico_id: 'tecnico-postventa',
+  solicitante_rut: '12.345.678-9',
+  solicitante_direccion_area: 'Servicio Técnico Santiago',
   tipo_fondo: 'Rendición de gastos',
   detalle: '',
   items: [

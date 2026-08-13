@@ -98,7 +98,7 @@ function ReportView({ token, reportId, viewToken }) {
           </div>
           <div>
             <b>Fondo por rendir</b>
-            <span>{r.tipo_fondo === 'Fondo por rendir' ? money(r.total) : '—'}</span>
+            <span>{r.tipo_fondo === 'Fondo por rendir' ? money(r.fondo_por_rendir) : '—'}</span>
           </div>
           <div>
             <b>Unidad</b>
@@ -110,7 +110,7 @@ function ReportView({ token, reportId, viewToken }) {
           </div>
           <div>
             <b>Técnico</b>
-            <span>{r.tecnico || '—'}</span>
+            <span>{r.solicitante_tecnico_nombre || r.tecnico || '—'}</span>
           </div>
           <div>
             <b>Detalle</b>
@@ -185,12 +185,16 @@ export default function RendicionPublica() {
   const [loadError, setLoadError] = useState('');
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  const [success, setSuccess] = useState(null);
   const [website, setWebsite] = useState('');
   const [form, setForm] = useState({
     fecha_rendicion: new Date().toLocaleDateString('en-CA'),
     centro_costo_id: '',
-    responsable_id: '',
+    solicitante_tecnico_id: '',
+    solicitante_rut: '',
+    solicitante_direccion_area: '',
     tipo_fondo: '',
+    fondo_por_rendir: '',
     detalle: '',
     items: [emptyRendicionItem()]
   });
@@ -215,9 +219,10 @@ export default function RendicionPublica() {
       return acc;
     }, {});
   }, [catalogs]);
-  const selectedResponsible = useMemo(
-    () => catalogs?.colaboradores?.find((person) => person.id === form.responsable_id) || null,
-    [catalogs, form.responsable_id]
+  const selectedResponsible = catalogs?.responsable || null;
+  const selectedTechnician = useMemo(
+    () => catalogs?.tecnicos?.find((person) => person.id === form.solicitante_tecnico_id) || null,
+    [catalogs, form.solicitante_tecnico_id]
   );
 
   if (reportId && viewToken)
@@ -268,6 +273,9 @@ export default function RendicionPublica() {
     const payload = {
       ...form,
       detalle: cleanHumanText(form.detalle),
+      solicitante_rut: cleanHumanText(form.solicitante_rut),
+      solicitante_direccion_area: cleanHumanText(form.solicitante_direccion_area),
+      fondo_por_rendir: form.fondo_por_rendir ? Number(form.fondo_por_rendir) : null,
       items: form.items.map(({ photos: _photos, ...item }) => ({
         ...item,
         descripcion: cleanHumanText(item.descripcion),
@@ -306,9 +314,25 @@ export default function RendicionPublica() {
       if (failed)
         toast.warning(`La rendición fue creada, pero ${failed} foto(s) no pudieron subirse.`);
       const basePath = token ? `/rendiciones/${token}` : '/rendiciones';
-      navigate(`${basePath}/ver/${result.report.id}/${result.view_token}`, {
-        replace: true
+      setSuccess({
+        folio: result.report.folio,
+        total: result.report.total,
+        viewPath: `${basePath}/ver/${result.report.id}/${result.view_token}`,
+        failed
       });
+      setForm({
+        fecha_rendicion: new Date().toLocaleDateString('en-CA'),
+        centro_costo_id: '',
+        solicitante_tecnico_id: form.solicitante_tecnico_id,
+        solicitante_rut: form.solicitante_rut,
+        solicitante_direccion_area: form.solicitante_direccion_area,
+        tipo_fondo: '',
+        fondo_por_rendir: '',
+        detalle: '',
+        items: [emptyRendicionItem()]
+      });
+      setErrors({});
+      startedAt.current = Date.now();
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -375,21 +399,11 @@ export default function RendicionPublica() {
               </select>
               {fieldError('centro_costo_id')}
             </label>
-            <label>
-              Responsable *
-              <select
-                value={form.responsable_id}
-                onChange={(e) => setForm({ ...form, responsable_id: e.target.value })}
-              >
-                <option value="">Seleccionar colaborador…</option>
-                {catalogs.colaboradores.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.nombre}
-                  </option>
-                ))}
-              </select>
-              {fieldError('responsable_id')}
-            </label>
+            <div className="rp-fixed-responsible">
+              <span>Responsable de aprobación</span>
+              <strong>{selectedResponsible?.nombre || 'Oscar Leiva'}</strong>
+              <small>Asignado automáticamente · no editable</small>
+            </div>
             {selectedResponsible && (
               <div className="rp-responsible-preview rp-full">
                 <div>
@@ -404,10 +418,48 @@ export default function RendicionPublica() {
                   <b>Unidad</b>
                   <span>{selectedResponsible.unidad || 'Pendiente de configurar'}</span>
                 </div>
-                <div>
-                  <b>Técnico</b>
-                  <span>{selectedResponsible.tecnico || 'Pendiente de configurar'}</span>
-                </div>
+              </div>
+            )}
+            <label>
+              Tu nombre · Técnico Postventa *
+              <select
+                value={form.solicitante_tecnico_id}
+                onChange={(e) => setForm({ ...form, solicitante_tecnico_id: e.target.value })}
+              >
+                <option value="">Validar identidad en catálogo…</option>
+                {(catalogs.tecnicos || []).map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.nombre}
+                  </option>
+                ))}
+              </select>
+              {fieldError('solicitante_tecnico_id')}
+            </label>
+            <label>
+              RUT del técnico *
+              <input
+                maxLength="15"
+                autoComplete="off"
+                placeholder="12.345.678-9"
+                value={form.solicitante_rut}
+                onChange={(e) => setForm({ ...form, solicitante_rut: e.target.value })}
+              />
+              {fieldError('solicitante_rut')}
+            </label>
+            <label className="rp-full">
+              Dirección / área del técnico *
+              <input
+                maxLength="120"
+                placeholder="Ej.: Servicio Técnico · Santiago"
+                value={form.solicitante_direccion_area}
+                onChange={(e) => setForm({ ...form, solicitante_direccion_area: e.target.value })}
+              />
+              {fieldError('solicitante_direccion_area')}
+            </label>
+            {selectedTechnician && (
+              <div className="rp-identity-ok rp-full">
+                <ShieldCheck size={18} /> Identidad seleccionada desde Postventa:{' '}
+                <b>{selectedTechnician.nombre}</b>
               </div>
             )}
             <label>
@@ -423,6 +475,22 @@ export default function RendicionPublica() {
               </select>
               {fieldError('tipo_fondo')}
             </label>
+            {form.tipo_fondo === 'Fondo por rendir' && (
+              <label>
+                Monto fondo por rendir *
+                <input
+                  type="number"
+                  min="1"
+                  max="999999999"
+                  step="1"
+                  inputMode="numeric"
+                  placeholder="$ 0"
+                  value={form.fondo_por_rendir}
+                  onChange={(e) => setForm({ ...form, fondo_por_rendir: e.target.value })}
+                />
+                {fieldError('fondo_por_rendir')}
+              </label>
+            )}
             <label className="rp-full">
               Detalle general (opcional)
               <textarea
@@ -549,7 +617,7 @@ export default function RendicionPublica() {
                   {fieldError(`items.${index}.numero_documento`)}
                 </label>
                 <label className="rp-photo-input">
-                  <span>Foto del comprobante</span>
+                  <span>Escáner de comprobante</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
@@ -561,9 +629,11 @@ export default function RendicionPublica() {
                     }}
                   />
                   <b>
-                    <Camera size={18} /> Tomar o agregar foto
+                    <Camera size={18} /> Escanear con cámara
                   </b>
-                  <small>{item.photos.length}/3 · Se optimiza antes de subir</small>
+                  <small>
+                    {item.photos.length}/3 · Captura trasera, recorte y optimización automática
+                  </small>
                 </label>
                 {item.photos.length > 0 && (
                   <div className="rp-previews">
@@ -621,6 +691,28 @@ export default function RendicionPublica() {
           </button>
         </footer>
       </form>
+      {success && (
+        <div className="rp-success-backdrop" role="dialog" aria-modal="true">
+          <section className="rp-success-card">
+            <span className="rp-success-check">✓</span>
+            <small>Rendición guardada correctamente</small>
+            <h2>{success.folio}</h2>
+            <p>
+              Se notificó a Oscar Leiva y el formulario ya quedó limpio para registrar una nueva
+              rendición.
+            </p>
+            <strong>{money(success.total)}</strong>
+            <div>
+              <button type="button" onClick={() => navigate(success.viewPath)}>
+                <Eye size={17} /> Ver comprobante
+              </button>
+              <button type="button" className="primary" onClick={() => setSuccess(null)}>
+                <Plus size={17} /> Nueva rendición
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

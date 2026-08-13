@@ -34,6 +34,15 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle, fl
   const conStock = stock > 0;
   const visuales = displayItems.filter((item) => item.fuente === 'putaway').length;
   const soloVisual = displayItems.length > 0 && visuales === displayItems.length;
+  const searchCode = searchQuery.trim().toUpperCase();
+  const hideRepeatedCode =
+    searchCode.length >= 3 &&
+    displayItems.length > 0 &&
+    displayItems.every((item) =>
+      String(item.codigo || '')
+        .toUpperCase()
+        .includes(searchCode)
+    );
 
   return (
     <div className="bg-white border border-slate-200/70 rounded-2xl hover:border-amber-200 hover:shadow-[0_4px_20px_-8px_rgba(245,158,11,0.25)] transition-all overflow-hidden">
@@ -103,9 +112,11 @@ const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle, fl
                 key={item.id || idx}
                 className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 text-sm ${idx > 0 ? 'border-t border-slate-50' : ''} hover:bg-amber-50/20 transition-colors`}
               >
-                <span className="text-xs font-bold font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 shrink-0">
-                  {item.codigo}
-                </span>
+                {!hideRepeatedCode && (
+                  <span className="text-xs font-bold font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 shrink-0">
+                    {item.codigo}
+                  </span>
+                )}
                 {item.fuente === 'putaway' && (
                   <span className="shrink-0 rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5 text-[9px] font-black uppercase text-violet-600">
                     Ubicación visual

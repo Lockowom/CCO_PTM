@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   ClipboardList,
@@ -285,6 +285,7 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
   const anular = useAnularAsignacion();
   const eliminar = useEliminarAsignacionCalidad();
   const [modal, setModal] = useState(false);
+  const [filtro, setFiltro] = useState('');
 
   const anularAsig = async (a) => {
     if (!confirm('¿Anular esta asignación? No se podrá revertir.')) return;
@@ -309,19 +310,82 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
   const pendientes = asignaciones.filter(
     (a) => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO'
   ).length;
+  const resueltas = asignaciones.filter((a) => a.estado === 'RESUELTA').length;
+  const visibles = useMemo(() => {
+    const term = filtro.trim().toLocaleLowerCase('es');
+    const priority = { EN_PROCESO: 0, PENDIENTE: 1, RESUELTA: 2, ANULADA: 3 };
+    return [...asignaciones]
+      .filter((a) => {
+        if (!term) return true;
+        const skus = Array.isArray(a.skus) ? a.skus : [];
+        return [
+          a.motivo,
+          a.asignado_nombre,
+          a.locked_by_name,
+          ...skus.map((s) => s.codigo_producto)
+        ]
+          .join(' ')
+          .toLocaleLowerCase('es')
+          .includes(term);
+      })
+      .sort(
+        (a, b) =>
+          (priority[a.estado] ?? 9) - (priority[b.estado] ?? 9) ||
+          new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      );
+  }, [asignaciones, filtro]);
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
-          <ClipboardList size={16} className="text-emerald-500" /> Revisiones asignadas por
-          Inventario
-          {pendientes > 0 && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-              {pendientes} pendiente(s)
+    <div className="mb-6 space-y-4">
+      <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white shadow-xl shadow-emerald-950/10">
+        <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <ClipboardList size={13} /> Hito 2 · Estancia
             </span>
+            <h3 className="mt-3 text-xl font-black tracking-tight sm:text-2xl">
+              Trazabilidad de revisiones
+            </h3>
+            <p className="mt-1 max-w-xl text-xs text-slate-300 sm:text-sm">
+              Cada tarjeta mantiene un identificador estable y muestra claramente si está asignada,
+              en proceso o con informe emitido.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ['Total', asignaciones.length],
+              ['En curso', pendientes],
+              ['Resueltas', resueltas]
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="min-w-20 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-center"
+              >
+                <strong className="block text-xl font-black tabular-nums">{value}</strong>
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-emerald-400 focus-within:bg-white">
+          <Search size={16} className="shrink-0 text-slate-400" />
+          <input
+            value={filtro}
+            onChange={(event) => setFiltro(event.target.value)}
+            placeholder="Buscar SKU, motivo o responsable…"
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+          />
+          {filtro && (
+            <button onClick={() => setFiltro('')}>
+              <X size={15} />
+            </button>
           )}
-        </h3>
+        </label>
         {canAssign && (
           <button
             onClick={() => setModal(true)}
@@ -347,8 +411,8 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {asignaciones.map((a) => {
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {visibles.map((a) => {
             const meta = ESTADO_ASIGNACION_META[a.estado] || {};
             const skus = Array.isArray(a.skus) ? a.skus : [];
             const abierta = a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO';
@@ -358,11 +422,21 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
               a.locked_at &&
               Date.now() - new Date(a.locked_at).getTime() < 15 * 60 * 1000;
             const lockedByOther = lockActive && a.locked_by !== user?.id;
+            const progress = a.estado === 'RESUELTA' ? 100 : a.estado === 'EN_PROCESO' ? 66 : 33;
+            const correlativo = `H2-${String(a.id || '')
+              .slice(0, 8)
+              .toUpperCase()}`;
             return (
               <div
                 key={a.id}
-                className={`bg-white rounded-2xl border p-4 ${abierta ? 'border-amber-200' : 'border-slate-200'}`}
+                className={`relative overflow-hidden rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${a.estado === 'EN_PROCESO' ? 'border-blue-200' : abierta ? 'border-amber-200' : 'border-emerald-200'}`}
               >
+                <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">
+                  <div
+                    className={`h-full transition-all ${a.estado === 'RESUELTA' ? 'bg-emerald-500' : a.estado === 'EN_PROCESO' ? 'bg-blue-500' : 'bg-amber-400'}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span
                     className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${meta.cls}`}
@@ -386,6 +460,14 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
                     )}
                   </div>
                 </div>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <span className="font-mono text-[11px] font-black tracking-wide text-slate-500">
+                    {correlativo}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {progress}% del flujo
+                  </span>
+                </div>
                 <p className="text-sm font-black text-slate-800">{skus.length} SKU(s)</p>
                 <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
                   {skus
@@ -399,6 +481,21 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
                   {a.asignado_nombre ? `Por ${a.asignado_nombre}` : 'Inventario'} ·{' '}
                   {a.created_at ? new Date(a.created_at).toLocaleDateString('es-CL') : ''}
                 </p>
+                <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-50 p-1.5 text-center text-[9px] font-black uppercase tracking-wide">
+                  <span className="rounded-lg bg-amber-100 px-1 py-1.5 text-amber-700">
+                    1 · Asignada
+                  </span>
+                  <span
+                    className={`rounded-lg px-1 py-1.5 ${progress >= 66 ? 'bg-blue-100 text-blue-700' : 'text-slate-300'}`}
+                  >
+                    2 · Revisión
+                  </span>
+                  <span
+                    className={`rounded-lg px-1 py-1.5 ${progress === 100 ? 'bg-emerald-100 text-emerald-700' : 'text-slate-300'}`}
+                  >
+                    3 · Informe
+                  </span>
+                </div>
                 {lockActive && (
                   <div
                     className={`mt-2 rounded-lg border px-2.5 py-2 text-[11px] font-bold ${lockedByOther ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}

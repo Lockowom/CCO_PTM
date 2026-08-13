@@ -267,6 +267,13 @@ export default function LocationManager() {
   const [moveItem, setMoveItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [putawayStats, setPutawayStats] = useState({
+    registros: 0,
+    skus: 0,
+    ubicaciones: 0,
+    hoy: 0,
+    ultimos: []
+  });
   const isPutaway = source === 'putaway';
   const sourceTable = isPutaway ? 'wms_putaway_ubicaciones' : 'wms_ubicaciones';
 
@@ -311,6 +318,33 @@ export default function LocationManager() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const fetchPutawayStats = useCallback(async () => {
+    if (!isPutaway) return;
+    const { data: summary, error } = await supabase.rpc('putaway_admin_resumen');
+    if (error) {
+      console.error('Put Away summary error:', error);
+      return;
+    }
+    setPutawayStats(summary || {});
+  }, [isPutaway]);
+
+  useEffect(() => {
+    fetchPutawayStats();
+  }, [fetchPutawayStats]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`location-manager-${sourceTable}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: sourceTable }, () => {
+        fetchData();
+        fetchPutawayStats();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData, fetchPutawayStats, sourceTable]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -541,11 +575,36 @@ export default function LocationManager() {
       </div>
 
       {isPutaway && (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
-          Estas son las ubicaciones guardadas desde Put Away. Modificarlas no altera stock ni
-          cantidades. Cada cambio queda auditado y se valida contra Supabase antes de mostrarse como
-          guardado.
-        </div>
+        <>
+          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              ['Registros Put Away', putawayStats.registros || 0, Package, 'text-indigo-600'],
+              ['SKU distintos', putawayStats.skus || 0, Search, 'text-blue-600'],
+              ['Ubicaciones usadas', putawayStats.ubicaciones || 0, MapPin, 'text-emerald-600'],
+              ['Guardados hoy', putawayStats.hoy || 0, Edit3, 'text-amber-600']
+            ].map(([label, value, Icon, tone]) => (
+              <article
+                key={label}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {label}
+                  </span>
+                  <Icon size={17} className={tone} />
+                </div>
+                <strong className="mt-2 block text-2xl font-black tabular-nums text-slate-900">
+                  {Number(value).toLocaleString('es-CL')}
+                </strong>
+              </article>
+            ))}
+          </div>
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
+            Fuente visual sincronizada con Ubicaciones. Los reintentos del mismo SKU, serie, lote y
+            ubicación actualizan el registro existente; no crean copias. Cada modificación queda
+            auditada y no altera cantidades físicas.
+          </div>
+        </>
       )}
 
       {/* Toolbar */}

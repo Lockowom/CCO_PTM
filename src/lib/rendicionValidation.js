@@ -34,8 +34,18 @@ export function hasRealLetters(value) {
 export function validateRendicion(payload) {
   const errors = {};
   if (!payload.centro_costo_id) errors.centro_costo_id = 'Selecciona un centro de costo.';
-  if (!payload.responsable_id) errors.responsable_id = 'Selecciona a la persona responsable.';
+  if (!payload.solicitante_tecnico_id)
+    errors.solicitante_tecnico_id = 'Selecciona tu nombre desde técnicos de Postventa.';
+  if (!/^[0-9]{1,2}(\.?[0-9]{3}){2}-[0-9Kk]$/.test(cleanHumanText(payload.solicitante_rut)))
+    errors.solicitante_rut = 'Ingresa un RUT válido, por ejemplo 12.345.678-9.';
+  if (!hasRealLetters(payload.solicitante_direccion_area))
+    errors.solicitante_direccion_area = 'Ingresa una dirección o área con texto real.';
   if (!TIPOS_FONDO.includes(payload.tipo_fondo)) errors.tipo_fondo = 'Selecciona un tipo de fondo.';
+  if (
+    payload.tipo_fondo === 'Fondo por rendir' &&
+    (!Number.isFinite(Number(payload.fondo_por_rendir)) || Number(payload.fondo_por_rendir) <= 0)
+  )
+    errors.fondo_por_rendir = 'Ingresa el monto positivo del fondo por rendir.';
   if (payload.detalle && !hasRealLetters(payload.detalle))
     errors.detalle = 'Escribe texto real; espacios o símbolos no son válidos.';
   if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 15) {

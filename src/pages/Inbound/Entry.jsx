@@ -333,7 +333,6 @@ const Entry = () => {
 
   const buildVisualLocationRows = (items) =>
     items.map((item) => ({
-      id: item.id,
       ubicacion: item.ubicacion,
       codigo: item.codigo,
       descripcion: item.descripcion || null,
@@ -351,9 +350,18 @@ const Entry = () => {
     mutationFn: async () => {
       const rowsToInsert = buildVisualLocationRows(queue);
 
-      const { error } = await supabase.from('wms_putaway_ubicaciones').insert(rowsToInsert);
+      const { data: saved, error } = await supabase
+        .from('wms_putaway_ubicaciones')
+        .upsert(rowsToInsert, {
+          onConflict:
+            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada'
+        })
+        .select('id,codigo,ubicacion');
 
       if (error) throw error;
+      if (!saved || saved.length !== rowsToInsert.length) {
+        throw new Error('Supabase no confirmó todos los registros de Put Away');
+      }
 
       if (user) {
         try {
@@ -373,9 +381,12 @@ const Entry = () => {
           console.error('Entry operation error:', _);
         }
       }
+      return { saved: saved.length };
     },
-    onSuccess: () => {
-      toast.success(`✅ ${queue.length} ubicaciones visuales guardadas. El inventario no cambió.`);
+    onSuccess: ({ saved }) => {
+      toast.success(
+        `✅ ${saved} ubicación(es) guardadas y verificadas. Ya están disponibles en Ubicaciones.`
+      );
       gsap.to(listRef.current, { y: 10, duration: 0.1, yoyo: true, repeat: 1 });
       setQueue([]);
       queryClient.invalidateQueries({ queryKey: ['putaway_visual'] });
@@ -396,7 +407,8 @@ const Entry = () => {
           const enqueued = await enqueueUpsert({
             tableName: 'wms_putaway_ubicaciones',
             data: rowsToInsert,
-            onConflict: 'id',
+            onConflict:
+              'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
             userId: user?.id || null
           });
 
@@ -438,7 +450,8 @@ const Entry = () => {
         const enqueued = await enqueueUpsert({
           tableName: 'wms_putaway_ubicaciones',
           data: rowsToInsert,
-          onConflict: 'id',
+          onConflict:
+            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
           userId: user?.id || null
         });
 

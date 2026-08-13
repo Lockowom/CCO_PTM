@@ -165,7 +165,7 @@ export function buildRendicionPdfDefinition(data, options = {}) {
                   ['DIRECCIÓN - ÁREA', r.direccion_area],
                   ['UNIDAD', r.unidad],
                   ['CENTRO DE COSTO', r.centro_costo_nombre],
-                  ['TÉCNICO', r.tecnico],
+                  ['TÉCNICO', r.solicitante_tecnico_nombre || r.tecnico],
                   ['DETALLE', r.detalle]
                 ],
                 112
@@ -179,7 +179,10 @@ export function buildRendicionPdfDefinition(data, options = {}) {
                 [
                   ['FECHA DE LA RENDICIÓN', dateCL(r.fecha_rendicion)],
                   ['Nº FOLIO SOLICITUD', r.folio_texto || r.folio],
-                  ['FONDO POR RENDIR', r.tipo_fondo === 'Fondo por rendir' ? money(r.total) : '-']
+                  [
+                    'FONDO POR RENDIR',
+                    r.tipo_fondo === 'Fondo por rendir' ? money(r.fondo_por_rendir) : '-'
+                  ]
                 ],
                 98
               )
@@ -285,11 +288,11 @@ export async function downloadRendicionExcel(data) {
       '',
       '',
       'FONDO POR RENDIR',
-      r.tipo_fondo === 'Fondo por rendir' ? Number(r.total) : ''
+      r.tipo_fondo === 'Fondo por rendir' ? Number(r.fondo_por_rendir) : ''
     ],
     ['UNIDAD', excelSafe(r.unidad || '')],
     ['CENTRO DE COSTO', excelSafe(r.centro_costo_nombre || '')],
-    ['TÉCNICO', excelSafe(r.tecnico || '')],
+    ['TÉCNICO', excelSafe(r.solicitante_tecnico_nombre || r.tecnico || '')],
     ['DETALLE', excelSafe(r.detalle || '')],
     [],
     ['Nº', 'FECHA', 'Nº BOL/FAC', 'Detalle Descripción de gasto', 'CC', 'Categoría', 'Total']

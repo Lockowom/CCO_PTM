@@ -63,6 +63,12 @@ function safeError(message: string) {
     'Demasiados envios',
     'Centro de costo invalido',
     'Responsable invalido',
+    'Responsable Oscar',
+    'Tecnico no registrado',
+    'RUT invalido',
+    'Direccion o area',
+    'El monto del fondo',
+    'Monto de fondo',
     'Tipo de fondo invalido',
     'Fecha de rendicion',
     'El detalle debe',
@@ -248,35 +254,54 @@ serve(async (req) => {
     }
 
     if (action === 'bootstrap') {
-      const [centros, colaboradores, categorias, subcategorias, relaciones] = await Promise.all([
-        db
-          .from('rendicion_centros_costo')
-          .select('id,codigo,nombre')
-          .eq('activo', true)
-          .order('codigo'),
-        db
-          .from('rendicion_colaboradores')
-          .select('id,nombre,rut,direccion_area,unidad,tecnico')
-          .eq('activo', true)
-          .order('nombre'),
-        db.from('rendicion_categorias').select('codigo,nombre').eq('activo', true).order('nombre'),
-        db
-          .from('rendicion_subcategorias')
-          .select('codigo,nombre')
-          .eq('activo', true)
-          .order('nombre'),
-        db.from('rendicion_categoria_subcategoria').select('categoria_codigo,subcategoria_codigo')
-      ]);
-      const firstError = [centros, colaboradores, categorias, subcategorias, relaciones].find(
-        (x) => x.error
-      )?.error;
+      const [centros, responsables, tecnicos, categorias, subcategorias, relaciones] =
+        await Promise.all([
+          db
+            .from('rendicion_centros_costo')
+            .select('id,codigo,nombre')
+            .eq('activo', true)
+            .order('codigo'),
+          db
+            .from('rendicion_colaboradores')
+            .select('id,nombre,rut,direccion_area,unidad,tecnico')
+            .eq('activo', true)
+            .ilike('nombre', 'Oscar Leiva')
+            .order('nombre'),
+          db
+            .from('tms_postventa_tecnicos')
+            .select('id,nombre')
+            .eq('activo', true)
+            .neq('nombre', 'Sin Asignar')
+            .order('orden')
+            .order('nombre'),
+          db
+            .from('rendicion_categorias')
+            .select('codigo,nombre')
+            .eq('activo', true)
+            .order('nombre'),
+          db
+            .from('rendicion_subcategorias')
+            .select('codigo,nombre')
+            .eq('activo', true)
+            .order('nombre'),
+          db.from('rendicion_categoria_subcategoria').select('categoria_codigo,subcategoria_codigo')
+        ]);
+      const firstError = [
+        centros,
+        responsables,
+        tecnicos,
+        categorias,
+        subcategorias,
+        relaciones
+      ].find((x) => x.error)?.error;
       if (firstError) throw firstError;
       return json({
         ok: true,
         link: { nombre: link.nombre, expires_at: link.expires_at },
         catalogs: {
           centros: centros.data,
-          colaboradores: colaboradores.data,
+          responsable: responsables.data?.[0] || null,
+          tecnicos: tecnicos.data,
           categorias: categorias.data,
           subcategorias: subcategorias.data,
           relaciones: relaciones.data
