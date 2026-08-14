@@ -27,6 +27,9 @@ const stateStyle = {
   RECHAZADA: 'border-rose-200 bg-rose-50 text-rose-700'
 };
 
+const requestTypeLabel = (type) =>
+  type === 'MOVIDO' ? 'TRANSFERENCIA' : 'UBICACIÓN NO CORRESPONDE';
+
 function ResolveModal({ request, approve, onClose, onResolved }) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -78,8 +81,8 @@ function ResolveModal({ request, approve, onClose, onResolved }) {
         >
           {approve
             ? request.tipo === 'MOVIDO'
-              ? `El producto será movido a ${request.nueva_ubicacion}. La cantidad se conserva y se fusiona si el SKU ya existe allí.`
-              : 'Se eliminará esta ubicación del producto. El registro quedará respaldado en la auditoría.'
+              ? `Se transferirá el producto a ${request.nueva_ubicacion}. La cantidad se conserva y se fusiona si el SKU ya existe allí.`
+              : 'Se retirará la ubicación que no corresponde. El registro quedará respaldado en la auditoría.'
             : 'No se modificará la ubicación. El solicitante podrá ver el rechazo y su motivo.'}
         </div>
         <label className="mt-4 block text-[11px] font-black uppercase tracking-wider text-slate-500">
@@ -289,7 +292,7 @@ export default function LocationRequests() {
                         {request.estado}
                       </span>
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black text-slate-500">
-                        {request.tipo}
+                        {requestTypeLabel(request.tipo)}
                       </span>
                     </div>
                     <p className="mt-1 truncate text-sm text-slate-600">

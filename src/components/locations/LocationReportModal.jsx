@@ -12,7 +12,7 @@ const normalizeLocation = (value) =>
 export default function LocationReportModal({ item, locations = [], onClose, onCreated }) {
   const [type, setType] = useState('AGOTADO');
   const [newLocation, setNewLocation] = useState('');
-  const [note, setNote] = useState('Producto no encontrado físicamente en la ubicación indicada.');
+  const [note, setNote] = useState('Producto no se encuentra dentro de la ubicación indicada.');
   const [saving, setSaving] = useState(false);
   const suggestions = useMemo(
     () => [...new Set(locations.filter(Boolean).map(normalizeLocation))].sort(),
@@ -94,9 +94,11 @@ export default function LocationReportModal({ item, locations = [], onClose, onC
                 size={20}
                 className={type === 'AGOTADO' ? 'text-rose-600' : 'text-slate-400'}
               />
-              <strong className="mt-2 block text-sm text-slate-900">Producto agotado</strong>
+              <strong className="mt-2 block text-sm text-slate-900">
+                Ubicación no corresponde
+              </strong>
               <span className="mt-1 block text-xs text-slate-500">
-                Solicitar quitar esta ubicación.
+                El producto no se encuentra dentro de esa ubicación.
               </span>
             </button>
             <button
@@ -108,9 +110,9 @@ export default function LocationReportModal({ item, locations = [], onClose, onC
                 size={20}
                 className={type === 'MOVIDO' ? 'text-blue-600' : 'text-slate-400'}
               />
-              <strong className="mt-2 block text-sm text-slate-900">Producto movido</strong>
+              <strong className="mt-2 block text-sm text-slate-900">Transferencia</strong>
               <span className="mt-1 block text-xs text-slate-500">
-                Proponer una nueva ubicación.
+                Cambio de ubicación del producto.
               </span>
             </button>
           </div>

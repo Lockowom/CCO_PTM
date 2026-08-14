@@ -3,7 +3,7 @@
     "name": "Arquitectura funcional CCO",
     "schemaVersion": 2,
     "generator": "scripts/generate_architecture_catalog.mjs",
-    "sourceVersion": "1.55.147",
+    "sourceVersion": "1.55.148",
     "fingerprint": "04bb0356d003",
     "totals": {
       "module": 10,
@@ -261,9 +261,7 @@
       "label": "Inicio de sesión",
       "description": "Pantalla disponible en /login.",
       "route": "/login",
-      "permissions": [
-        "público"
-      ],
+      "permissions": ["público"],
       "source": "src/pages/Login.jsx"
     },
     {
@@ -274,9 +272,7 @@
       "label": "Consulta pública N.V.",
       "description": "Pantalla disponible en /consulta.",
       "route": "/consulta",
-      "permissions": [
-        "público"
-      ],
+      "permissions": ["público"],
       "source": "src/pages/Public/ConsultaNV.jsx"
     },
     {
@@ -287,9 +283,7 @@
       "label": "Verificar certificado",
       "description": "Pantalla disponible en /verificar.",
       "route": "/verificar",
-      "permissions": [
-        "público"
-      ],
+      "permissions": ["público"],
       "source": "src/pages/VerificarCertificado.jsx"
     },
     {
@@ -300,9 +294,7 @@
       "label": "Solicitud pública de soporte",
       "description": "Pantalla disponible en /soporte.",
       "route": "/soporte",
-      "permissions": [
-        "público"
-      ],
+      "permissions": ["público"],
       "source": "src/pages/Postventa/SolicitudPublica.jsx"
     },
     {
@@ -324,12 +316,7 @@
       "label": "TMS · Torre de Control",
       "description": "Pantalla disponible en /tms/control.",
       "route": "/tms/control",
-      "permissions": [
-        "view_tms",
-        "manage_tms",
-        "supervise_tms",
-        "manage_panel"
-      ],
+      "permissions": ["view_tms", "manage_tms", "supervise_tms", "manage_panel"],
       "source": "src/pages/TMS/Transporte.jsx"
     },
     {
@@ -340,11 +327,7 @@
       "label": "TMS · Ruta del conductor",
       "description": "Pantalla disponible en /tms/pda.",
       "route": "/tms/pda",
-      "permissions": [
-        "view_tms",
-        "manage_tms",
-        "manage_panel"
-      ],
+      "permissions": ["view_tms", "manage_tms", "manage_panel"],
       "source": "src/pages/TMS/MiRuta.jsx"
     },
     {
@@ -355,10 +338,7 @@
       "label": "PDA Operativa (Bodega)",
       "description": "Pantalla disponible en /mobile/pda.",
       "route": "/mobile/pda",
-      "permissions": [
-        "view_stock",
-        "manage_inventory"
-      ],
+      "permissions": ["view_stock", "manage_inventory"],
       "source": "src/pages/Mobile/WarehousePDA.jsx"
     },
     {
@@ -369,10 +349,7 @@
       "label": "Inbound - Recepción",
       "description": "Pantalla disponible en /inbound/reception.",
       "route": "/inbound/reception",
-      "permissions": [
-        "view_reception",
-        "process_reception"
-      ],
+      "permissions": ["view_reception", "process_reception"],
       "source": "src/pages/Inbound/Reception.jsx"
     },
     {
@@ -383,10 +360,7 @@
       "label": "Inbound - Recepción Nacionales",
       "description": "Pantalla disponible en /inbound/reception-nacional.",
       "route": "/inbound/reception-nacional",
-      "permissions": [
-        "view_reception",
-        "process_reception"
-      ],
+      "permissions": ["view_reception", "process_reception"],
       "source": "src/pages/Inbound/ReceptionNacional.jsx"
     },
     {
@@ -397,10 +371,7 @@
       "label": "Inbound - Putaway",
       "description": "Pantalla disponible en /inbound/entry.",
       "route": "/inbound/entry",
-      "permissions": [
-        "view_entry",
-        "process_entry"
-      ],
+      "permissions": ["view_entry", "process_entry"],
       "source": "src/pages/Inbound/Entry.jsx"
     },
     {
@@ -411,10 +382,7 @@
       "label": "Inbound - Cubicaje",
       "description": "Pantalla disponible en /inbound/cubing.",
       "route": "/inbound/cubing",
-      "permissions": [
-        "view_reception",
-        "process_reception"
-      ],
+      "permissions": ["view_reception", "process_reception"],
       "source": "src/pages/Inbound/CubingRegistry.jsx"
     },
     {
@@ -425,9 +393,7 @@
       "label": "Inbound - Carga Masiva",
       "description": "Pantalla disponible en /inbound/data-import.",
       "route": "/inbound/data-import",
-      "permissions": [
-        "manage_data_import"
-      ],
+      "permissions": ["manage_data_import"],
       "source": "src/pages/Admin/DataImport.jsx"
     },
     {
@@ -438,9 +404,7 @@
       "label": "Consultas - Lotes/Series",
       "description": "Pantalla disponible en /queries/batches.",
       "route": "/queries/batches",
-      "permissions": [
-        "view_batches"
-      ],
+      "permissions": ["view_batches"],
       "source": "src/pages/Queries/Batches.jsx"
     },
     {
@@ -451,9 +415,7 @@
       "label": "Consultas - Estado N.V.",
       "description": "Pantalla disponible en /queries/sales-status.",
       "route": "/queries/sales-status",
-      "permissions": [
-        "view_sales_status"
-      ],
+      "permissions": ["view_sales_status"],
       "source": "src/pages/Queries/SalesStatus.jsx"
     },
     {
@@ -464,9 +426,7 @@
       "label": "Consultas - Direcciones",
       "description": "Pantalla disponible en /queries/addresses.",
       "route": "/queries/addresses",
-      "permissions": [
-        "view_addresses"
-      ],
+      "permissions": ["view_addresses"],
       "source": "src/pages/Queries/Addresses.jsx"
     },
     {
@@ -477,9 +437,7 @@
       "label": "Consultas - Ubicaciones",
       "description": "Pantalla disponible en /queries/locations.",
       "route": "/queries/locations",
-      "permissions": [
-        "view_locations"
-      ],
+      "permissions": ["view_locations"],
       "source": "src/pages/Queries/WmsLocations.jsx"
     },
     {
@@ -490,9 +448,7 @@
       "label": "Consultas - Historial N.V.",
       "description": "Pantalla disponible en /queries/historial-nv.",
       "route": "/queries/historial-nv",
-      "permissions": [
-        "view_historial_nv"
-      ],
+      "permissions": ["view_historial_nv"],
       "source": "src/pages/Queries/HistorialNV.jsx"
     },
     {
@@ -503,9 +459,7 @@
       "label": "Consultas - Control Despacho",
       "description": "Pantalla disponible en /queries/dispatch-control.",
       "route": "/queries/dispatch-control",
-      "permissions": [
-        "view_dispatch_control"
-      ],
+      "permissions": ["view_dispatch_control"],
       "source": "src/pages/Queries/DispatchControl.jsx"
     },
     {
@@ -516,9 +470,7 @@
       "label": "Consultas - Ficha Técnica",
       "description": "Pantalla disponible en /queries/datasheet.",
       "route": "/queries/datasheet",
-      "permissions": [
-        "view_fichas"
-      ],
+      "permissions": ["view_fichas"],
       "source": "src/pages/Queries/ProductDatasheet.jsx"
     },
     {
@@ -546,10 +498,7 @@
       "label": "Panel PTM - Dashboard",
       "description": "Pantalla disponible en /panel.",
       "route": "/panel",
-      "permissions": [
-        "view_panel",
-        "manage_panel"
-      ],
+      "permissions": ["view_panel", "manage_panel"],
       "source": "src/pages/Panel/PanelLayout.jsx"
     },
     {
@@ -560,10 +509,7 @@
       "label": "Panel PTM - Ingresar N.V.",
       "description": "Pantalla disponible en /panel/ingresar.",
       "route": "/panel/ingresar",
-      "permissions": [
-        "panel_ingresar",
-        "manage_panel"
-      ],
+      "permissions": ["panel_ingresar", "manage_panel"],
       "source": "src/pages/Panel/screens/PanelIngresar.jsx"
     },
     {
@@ -574,10 +520,7 @@
       "label": "Panel PTM - Solicitudes de reapertura",
       "description": "Pantalla disponible en /panel/reaperturas.",
       "route": "/panel/reaperturas",
-      "permissions": [
-        "approve_panel_reopen_nv",
-        "manage_roles"
-      ],
+      "permissions": ["approve_panel_reopen_nv", "manage_roles"],
       "source": null
     },
     {
@@ -588,10 +531,7 @@
       "label": "Panel PTM - Info N.V.",
       "description": "Pantalla disponible en /panel/info.",
       "route": "/panel/info",
-      "permissions": [
-        "panel_info",
-        "manage_panel"
-      ],
+      "permissions": ["panel_info", "manage_panel"],
       "source": "src/pages/Panel/info/PanelInfoReal.jsx"
     },
     {
@@ -602,10 +542,7 @@
       "label": "Panel PTM - Modo TV",
       "description": "Pantalla disponible en /panel/tv.",
       "route": "/panel/tv",
-      "permissions": [
-        "panel_tv",
-        "manage_panel"
-      ],
+      "permissions": ["panel_tv", "manage_panel"],
       "source": "src/pages/Panel/tv/PanelTVReal.jsx"
     },
     {
@@ -616,10 +553,7 @@
       "label": "Panel PTM - Builder",
       "description": "Pantalla disponible en /panel/builder.",
       "route": "/panel/builder",
-      "permissions": [
-        "panel_builder",
-        "manage_panel"
-      ],
+      "permissions": ["panel_builder", "manage_panel"],
       "source": "src/pages/Panel/builder/PanelBuilderReal.jsx"
     },
     {
@@ -630,9 +564,7 @@
       "label": "Panel PTM - Configuración (admin)",
       "description": "Pantalla disponible en /panel/configuracion.",
       "route": "/panel/configuracion",
-      "permissions": [
-        "manage_roles"
-      ],
+      "permissions": ["manage_roles"],
       "source": "src/pages/Panel/config/PanelConfigReal.jsx"
     },
     {
@@ -660,9 +592,7 @@
       "label": "Inventario - Mapa de Calor",
       "description": "Pantalla disponible en /queries/heatmap.",
       "route": "/queries/heatmap",
-      "permissions": [
-        "view_locations"
-      ],
+      "permissions": ["view_locations"],
       "source": "src/pages/Queries/Heatmap.jsx"
     },
     {
@@ -673,9 +603,7 @@
       "label": "Inventario - Gestión de Ubicaciones",
       "description": "Pantalla disponible en /admin/locations.",
       "route": "/admin/locations",
-      "permissions": [
-        "manage_locations"
-      ],
+      "permissions": ["manage_locations"],
       "source": "src/pages/Admin/LocationManager.jsx"
     },
     {
@@ -686,9 +614,7 @@
       "label": "Inventario - Solicitudes de Ubicación",
       "description": "Pantalla disponible en /admin/location-requests.",
       "route": "/admin/location-requests",
-      "permissions": [
-        "manage_locations"
-      ],
+      "permissions": ["manage_locations"],
       "source": "src/pages/Admin/LocationRequests.jsx"
     },
     {
@@ -992,12 +918,7 @@
       "label": "Inventario - Panel de Insumos",
       "description": "Pantalla disponible en /inventory/insumos.",
       "route": "/inventory/insumos",
-      "permissions": [
-        "view_insumos",
-        "manage_insumos",
-        "manage_inventory",
-        "view_stock"
-      ],
+      "permissions": ["view_insumos", "manage_insumos", "manage_inventory", "view_stock"],
       "source": "src/pages/Inventory/Insumos.jsx"
     },
     {
@@ -1008,11 +929,7 @@
       "label": "Calidad - Monitoreo",
       "description": "Pantalla disponible en /quality/monitoreo.",
       "route": "/quality/monitoreo",
-      "permissions": [
-        "manage_monitoreo",
-        "manage_quality",
-        "manage_inventory"
-      ],
+      "permissions": ["manage_monitoreo", "manage_quality", "manage_inventory"],
       "source": "src/pages/Quality/Monitoreo.jsx"
     },
     {
@@ -1023,11 +940,7 @@
       "label": "Calidad - Acciones",
       "description": "Pantalla disponible en /quality/acciones.",
       "route": "/quality/acciones",
-      "permissions": [
-        "view_acciones_calidad",
-        "manage_quality",
-        "manage_monitoreo"
-      ],
+      "permissions": ["view_acciones_calidad", "manage_quality", "manage_monitoreo"],
       "source": "src/pages/Quality/AccionesCalidad.jsx"
     },
     {
@@ -1038,11 +951,7 @@
       "label": "Calidad - Mi Bandeja",
       "description": "Pantalla disponible en /quality/bandeja.",
       "route": "/quality/bandeja",
-      "permissions": [
-        "view_acciones_calidad",
-        "manage_quality",
-        "manage_monitoreo"
-      ],
+      "permissions": ["view_acciones_calidad", "manage_quality", "manage_monitoreo"],
       "source": "src/pages/Quality/MiBandeja.jsx"
     },
     {
@@ -1053,10 +962,7 @@
       "label": "Calidad - Clasificación de Productos",
       "description": "Pantalla disponible en /quality/clasificacion.",
       "route": "/quality/clasificacion",
-      "permissions": [
-        "manage_quality",
-        "manage_monitoreo"
-      ],
+      "permissions": ["manage_quality", "manage_monitoreo"],
       "source": "src/pages/Quality/ClasificacionProductos.jsx"
     },
     {
@@ -1193,10 +1099,7 @@
       "label": "Admin - Usuarios y Roles",
       "description": "Pantalla disponible en /admin/users.",
       "route": "/admin/users",
-      "permissions": [
-        "manage_users",
-        "view_users"
-      ],
+      "permissions": ["manage_users", "view_users"],
       "source": "src/pages/Admin/AccessControl.jsx"
     },
     {
@@ -1207,10 +1110,7 @@
       "label": "Admin - Roles y Permisos",
       "description": "Pantalla disponible en /admin/roles.",
       "route": "/admin/roles",
-      "permissions": [
-        "manage_roles",
-        "view_roles"
-      ],
+      "permissions": ["manage_roles", "view_roles"],
       "source": "src/pages/Admin/AccessControl.jsx"
     },
     {
@@ -1221,10 +1121,7 @@
       "label": "Admin - Vistas",
       "description": "Pantalla disponible en /admin/views.",
       "route": "/admin/views",
-      "permissions": [
-        "manage_views",
-        "view_views"
-      ],
+      "permissions": ["manage_views", "view_views"],
       "source": "src/pages/Admin/Views.jsx"
     },
     {
@@ -1235,9 +1132,7 @@
       "label": "Admin - Limpieza",
       "description": "Pantalla disponible en /admin/cleanup.",
       "route": "/admin/cleanup",
-      "permissions": [
-        "manage_cleanup"
-      ],
+      "permissions": ["manage_cleanup"],
       "source": "src/pages/Admin/Cleanup.jsx"
     },
     {
@@ -1248,9 +1143,7 @@
       "label": "Admin - Tickets TI",
       "description": "Pantalla disponible en /admin/tickets.",
       "route": "/admin/tickets",
-      "permissions": [
-        "manage_tickets"
-      ],
+      "permissions": ["manage_tickets"],
       "source": "src/pages/Admin/Tickets.jsx"
     },
     {
@@ -1261,9 +1154,7 @@
       "label": "Admin - Historial de Cargas",
       "description": "Pantalla disponible en /admin/upload-history.",
       "route": "/admin/upload-history",
-      "permissions": [
-        "admin_upload_history"
-      ],
+      "permissions": ["admin_upload_history"],
       "source": "src/pages/Admin/UploadHistory.jsx"
     },
     {
@@ -1274,9 +1165,7 @@
       "label": "Admin - Bodegas Softland",
       "description": "Pantalla disponible en /admin/bodegas-softland.",
       "route": "/admin/bodegas-softland",
-      "permissions": [
-        "manage_locations"
-      ],
+      "permissions": ["manage_locations"],
       "source": "src/pages/Admin/BodegasSoftland.jsx"
     },
     {
@@ -1287,9 +1176,7 @@
       "label": "Admin - Monitor Tiempo Real",
       "description": "Pantalla disponible en /admin/monitor.",
       "route": "/admin/monitor",
-      "permissions": [
-        "admin_monitor"
-      ],
+      "permissions": ["admin_monitor"],
       "source": "src/pages/Admin/AdminMonitor.jsx"
     },
     {
@@ -1300,9 +1187,7 @@
       "label": "Admin - Centro de Observabilidad",
       "description": "Pantalla disponible en /admin/observability.",
       "route": "/admin/observability",
-      "permissions": [
-        "admin_monitor"
-      ],
+      "permissions": ["admin_monitor"],
       "source": "src/pages/Admin/Observability.jsx"
     },
     {
@@ -1313,10 +1198,7 @@
       "label": "Admin - Workflows (procesos)",
       "description": "Pantalla disponible en /admin/workflows.",
       "route": "/admin/workflows",
-      "permissions": [
-        "view_workflows",
-        "manage_workflows"
-      ],
+      "permissions": ["view_workflows", "manage_workflows"],
       "source": "src/pages/Admin/Workflows.jsx"
     },
     {
@@ -1327,10 +1209,7 @@
       "label": "Admin - Mapa de Procesos",
       "description": "Pantalla disponible en /admin/flujo-maestro.",
       "route": "/admin/flujo-maestro",
-      "permissions": [
-        "view_workflows",
-        "manage_workflows"
-      ],
+      "permissions": ["view_workflows", "manage_workflows"],
       "source": "src/pages/Tools/FlujoMaestro.jsx"
     },
     {
@@ -1341,10 +1220,7 @@
       "label": "Admin - Eventos y Notificaciones",
       "description": "Pantalla disponible en /admin/eventos.",
       "route": "/admin/eventos",
-      "permissions": [
-        "view_eventos",
-        "manage_eventos"
-      ],
+      "permissions": ["view_eventos", "manage_eventos"],
       "source": "src/pages/Admin/Eventos.jsx"
     },
     {
@@ -1355,10 +1231,7 @@
       "label": "Admin - API de Operaciones",
       "description": "Pantalla disponible en /admin/api.",
       "route": "/admin/api",
-      "permissions": [
-        "view_api",
-        "manage_api"
-      ],
+      "permissions": ["view_api", "manage_api"],
       "source": "src/pages/Admin/ApiKeys.jsx"
     },
     {
@@ -1369,10 +1242,7 @@
       "label": "Admin - Rendiciones",
       "description": "Pantalla disponible en /admin/rendiciones.",
       "route": "/admin/rendiciones",
-      "permissions": [
-        "view_rendiciones",
-        "manage_rendiciones"
-      ],
+      "permissions": ["view_rendiciones", "manage_rendiciones"],
       "source": "src/pages/Admin/Rendiciones.jsx"
     },
     {
@@ -1394,9 +1264,7 @@
       "description": "── Dashboards ───────────────────────────────────────────────────────────────",
       "signature": "fetchDashboards()",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -1414,9 +1282,7 @@
       "description": "Ejecuta save dashboard; participa en RPC sobre guardar_dashboard.",
       "signature": "saveDashboard(d)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1434,9 +1300,7 @@
       "description": "Ejecuta delete dashboard; participa en RPC sobre eliminar_dashboard.",
       "signature": "deleteDashboard(id)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1454,9 +1318,7 @@
       "description": "── Campos calculados ────────────────────────────────────────────────────────",
       "signature": "fetchCalculatedFields(incluirInactivos = false)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -1474,9 +1336,7 @@
       "description": "Ejecuta save calculated field; participa en RPC sobre guardar_campo_calculado.",
       "signature": "saveCalculatedField(f)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1494,9 +1354,7 @@
       "description": "Ejecuta delete calculated field; participa en RPC sobre eliminar_campo_calculado.",
       "signature": "deleteCalculatedField(id)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1627,9 +1485,7 @@
       "description": "── Auditoría (bitácora de cambios de operaciones) ──────────────────────────",
       "signature": "fetchAuditoria({ operador = '', accion = '', nv = '', limit = 150 } = {})",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -1647,9 +1503,7 @@
       "description": "Consulta fetch audit stats panel sobre tms_operaciones_log y entrega el resultado a la interfaz.",
       "signature": "fetchAuditStatsPanel()",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -1702,9 +1556,7 @@
       "description": "Ejecuta lista activas; participa en lectura.",
       "signature": "listaActivas({ force = false, full = true, limit = 400 } = {})",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": []
     },
     {
@@ -1717,10 +1569,7 @@
       "description": "Búsqueda en TODA la tabla (cualquier estado: incluye Entregado/NULA/etc.) por nº de N.V., cliente, vendedor, guía, factura o transportista. Sirve para que en Buscar se pueda encontrar y abrir una N.V. ya entregada o cerrada, que la lista de",
       "signature": "buscarOperaciones(term, { limit = 300, signal } = {})",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura",
-        "eliminación"
-      ],
+      "operations": ["lectura", "eliminación"],
       "resources": []
     },
     {
@@ -1759,9 +1608,7 @@
       "description": "── Opciones del formulario ─────────────────────────────────────────────────",
       "signature": "opciones({ force = false, includeHistoricos = false } = {})",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -1779,10 +1626,7 @@
       "description": "Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.",
       "signature": "buscarNvCatalogo(canal, nv)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura",
-        "eliminación"
-      ],
+      "operations": ["lectura", "eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -1817,10 +1661,7 @@
       "description": "Ejecuta lookup; participa en lectura, eliminación.",
       "signature": "lookup(canal, nv)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura",
-        "eliminación"
-      ],
+      "operations": ["lectura", "eliminación"],
       "resources": []
     },
     {
@@ -1833,9 +1674,7 @@
       "description": "Ejecuta lookup by id; participa en lectura.",
       "signature": "lookupById(id, { canal = null, nv = null } = {})",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": []
     },
     {
@@ -1861,9 +1700,7 @@
       "description": "Ejecuta exportar operaciones; participa en lectura.",
       "signature": "exportarOperaciones()",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": []
     },
     {
@@ -1876,9 +1713,7 @@
       "description": "Registra guardar sobre guardar_nv y devuelve el resultado de la operación.",
       "signature": "guardar(payload)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1896,9 +1731,7 @@
       "description": "Ejecuta puede editar operacion; participa en RPC sobre iam_puede_editar_nv.",
       "signature": "puedeEditarOperacion(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1916,9 +1749,7 @@
       "description": "Ejecuta puede cambiar estado operacion; participa en RPC sobre iam_puede_cambiar_estado_nv.",
       "signature": "puedeCambiarEstadoOperacion(id, estado = null)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1936,9 +1767,7 @@
       "description": "Actualiza cambiar estado sobre cambiar_estado_nv aplicando las validaciones del servicio.",
       "signature": "cambiarEstado(id, estado, urgente = null)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1956,9 +1785,7 @@
       "description": "Edición inline por columnas: mapea nombres de columna → claves del RPC guardar_nv.",
       "signature": "corregirEstadoAShipping(id, motivo)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1976,9 +1803,7 @@
       "description": "Ejecuta gestionar pausa shipping; participa en RPC sobre gestionar_pausa_shipping_nv.",
       "signature": "gestionarPausaShipping(id, subestado = null, motivo = '')",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -1996,9 +1821,7 @@
       "description": "Ejecuta reportar incidencia armado; participa en RPC sobre reportar_incidencia_armado_nv.",
       "signature": "reportarIncidenciaArmado(id, observacion)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2016,9 +1839,7 @@
       "description": "Actualiza actualizar campos sobre guardar_nv aplicando las validaciones del servicio.",
       "signature": "actualizarCampos(id, dirty)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2036,9 +1857,7 @@
       "description": "Consulta listar solicitudes reapertura sobre tms_nv_reaperturas y entrega el resultado a la interfaz.",
       "signature": "listarSolicitudesReapertura(operacionId)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -2056,9 +1875,7 @@
       "description": "Ejecuta solicitar reapertura; participa en RPC sobre solicitar_reapertura_nv.",
       "signature": "solicitarReapertura(id, motivo)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2076,9 +1893,7 @@
       "description": "Actualiza resolver reapertura sobre resolver_reapertura_nv aplicando las validaciones del servicio.",
       "signature": "resolverReapertura(requestId, aprobar, observacion = '')",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2096,9 +1911,7 @@
       "description": "Elimina o revoca eliminar sobre eliminar_nv según las reglas de acceso.",
       "signature": "eliminar(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2116,9 +1929,7 @@
       "description": "── Consolidados ─────────────────────────────────────────────────────────────",
       "signature": "listarConsolidados()",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -2140,9 +1951,7 @@
       "description": "Registra guardar consolidado sobre guardar_consolidado y devuelve el resultado de la operación.",
       "signature": "guardarConsolidado(p)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2160,9 +1969,7 @@
       "description": "Elimina o revoca eliminar consolidado sobre eliminar_consolidado según las reglas de acceso.",
       "signature": "eliminarConsolidado(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2180,9 +1987,7 @@
       "description": "Valida una N.V. (para armar consolidados): busca en los 4 canales.",
       "signature": "buscarNvBasico(nv)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": []
     },
     {
@@ -2204,9 +2009,7 @@
       "description": "Consulta fetch reopen inbox sobre listar_bandeja_reaperturas_nv y entrega el resultado a la interfaz.",
       "signature": "fetchReopenInbox({ status = '', search = '', limit = 200 } = {})",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2224,9 +2027,7 @@
       "description": "Actualiza resolve reopen request sobre resolver_reapertura_nv aplicando las validaciones del servicio.",
       "signature": "resolveReopenRequest(requestId, approve, observation = '')",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2244,9 +2045,7 @@
       "description": "Ejecuta subscribe to reopen requests; participa en Realtime.",
       "signature": "subscribeToReopenRequests(onChange)",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -2277,9 +2076,7 @@
       "description": "Consulta analisis resumen sobre analisis_codigos_resumen y entrega el resultado a la interfaz.",
       "signature": "useAnalisisResumen()",
       "source": "src/services/analisisService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2297,9 +2094,7 @@
       "description": "Consulta analisis codigos sobre analisis_codigos y entrega el resultado a la interfaz.",
       "signature": "useAnalisisCodigos(filtro = 'todos', q = '')",
       "source": "src/services/analisisService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2317,10 +2112,7 @@
       "description": "Registra enviar aemil sobre tms_emil_sync y devuelve el resultado de la operación.",
       "signature": "enviarAEmil({ tipo, rows, accion = 'DESCONTAR', obs = '', cantidadDe = 'disponible' })",
       "source": "src/services/analisisService.js",
-      "operations": [
-        "lectura",
-        "upsert"
-      ],
+      "operations": ["lectura", "upsert"],
       "resources": [
         {
           "kind": "table",
@@ -2351,9 +2143,7 @@
       "description": "Carga del catálogo ACTIVO (hoja del ERP con la marca Si/No) → upsert por código en tms_productos_activo (bulk_upsert, chunks para no exceder payload).",
       "signature": "useCargarActivo()",
       "source": "src/services/analisisService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2371,10 +2161,7 @@
       "description": "Consulta cargar stock sobre bulk_upsert, tms_inventario_general y entrega el resultado a la interfaz.",
       "signature": "useCargarStock()",
       "source": "src/services/analisisService.js",
-      "operations": [
-        "eliminación",
-        "RPC"
-      ],
+      "operations": ["eliminación", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2431,9 +2218,7 @@
       "description": "Consulta listar api keys sobre api_keys_listar y entrega el resultado a la interfaz.",
       "signature": "listarApiKeys()",
       "source": "src/services/apiService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2451,9 +2236,7 @@
       "description": "Registra crear api key sobre api_key_crear y devuelve el resultado de la operación.",
       "signature": "crearApiKey(nombre, scopes)",
       "source": "src/services/apiService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2471,9 +2254,7 @@
       "description": "Elimina o revoca revocar api key sobre api_key_revocar según las reglas de acceso.",
       "signature": "revocarApiKey(id)",
       "source": "src/services/apiService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2491,9 +2272,7 @@
       "description": "Consulta listar api log sobre api_log_listar y entrega el resultado a la interfaz.",
       "signature": "listarApiLog()",
       "source": "src/services/apiService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2542,9 +2321,7 @@
       "description": "── Lectura de informes ───────────────────────────────────────────────────",
       "signature": "useInformes()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -2562,9 +2339,7 @@
       "description": "Consulta informe items sobre tms_monitoreo_items y entrega el resultado a la interfaz.",
       "signature": "useInformeItems(informeId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -2582,9 +2357,7 @@
       "description": "── Candidatos a monitoreo (stock actual + ubicación + semáforo) ─────────── Guarda de timeout (15s): evita que el spinner quede \"cargando eternamente\" si la promesa de supabase-js no se resuelve (p. ej. bloqueo de auth-lock en WebView o con",
       "signature": "fetchCandidatos(query, soloVencimiento = false)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2602,9 +2375,7 @@
       "description": "Candidatos exclusivos de Hito 3 / Salida. A diferencia del monitoreo de inventario, incluye SKUs históricos aunque ya no tengan stock WMS positivo.",
       "signature": "fetchCandidatosSalida(query, limit = 100)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2622,9 +2393,7 @@
       "description": "── Lotes y series de un producto (para elegir en la toma) ─────────────────",
       "signature": "fetchLotesSeries(codigo, query = '')",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2642,9 +2411,7 @@
       "description": "── Push a móvil (ADMIN) — Edge Function notify-inventario (FCM v1) ───────── Genérico; no bloquea el flujo si falla.",
       "signature": "pushAdminInventario({ title, body, payload })",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -2688,9 +2455,7 @@
       "description": "── Reflejo preliminar en Ubicaciones al enviar a Calidad ────────────────── Genera flags EN_AUDITORIA en tms_calidad_flags para los ítems con condición problemática (≠ OK) y ubicación, para que se vean de inmediato en Ubicaciones.",
       "signature": "marcarPreliminarCalidad(informeId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2708,9 +2473,7 @@
       "description": "── Crear informe + ítems (RPC transaccional: cabecera + número + ítems en una sola transacción; el número se genera bajo lock → sin cabecera huérfana ni carrera del correlativo). ────────────────────────────────────────────────",
       "signature": "useCrearInforme()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": []
     },
     {
@@ -2723,9 +2486,7 @@
       "description": "── Cambiar estado de un informe (ej. enviar a Calidad) ────────────────────",
       "signature": "useActualizarEstadoInforme()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -2743,9 +2504,7 @@
       "description": "── Editar informe (cabecera + reemplazo de ítems) ───────────────────────── Usado por el informe de MONITOREO rutinario. RPC transaccional: si el INSERT de ítems falla, TODO revierte (incluido el DELETE) → nunca deja el informe sin ítems (a",
       "signature": "useActualizarInforme()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2763,9 +2522,7 @@
       "description": "── Eliminar informe (cascade borra ítems y evidencias) ────────────────────",
       "signature": "useEliminarInforme()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "eliminación"
-      ],
+      "operations": ["eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -2783,14 +2540,7 @@
       "description": "Guarda (crea o actualiza) un informe de daños conservando los IDs de los hallazgos (ítems) existentes, para no romper las evidencias asociadas.",
       "signature": "useGuardarInformeDanos()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura",
-        "creación",
-        "actualización",
-        "eliminación",
-        "RPC",
-        "archivo"
-      ],
+      "operations": ["lectura", "creación", "actualización", "eliminación", "RPC", "archivo"],
       "resources": [
         {
           "kind": "rpc",
@@ -2820,9 +2570,7 @@
       "description": "Consulta informe evidencias sobre tms_monitoreo_evidencias y entrega el resultado a la interfaz.",
       "signature": "useInformeEvidencias(informeId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -2840,11 +2588,7 @@
       "description": "Sube una imagen (blob ya comprimido) y registra la fila de evidencia.",
       "signature": "uploadEvidencia({ informeId, itemId, blob, descripcion, user })",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura",
-        "creación",
-        "archivo"
-      ],
+      "operations": ["lectura", "creación", "archivo"],
       "resources": [
         {
           "kind": "table",
@@ -2862,10 +2606,7 @@
       "description": "Ejecuta delete evidencia; participa en eliminación, archivo sobre tms_monitoreo_evidencias.",
       "signature": "deleteEvidencia(ev)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "eliminación",
-        "archivo"
-      ],
+      "operations": ["eliminación", "archivo"],
       "resources": [
         {
           "kind": "table",
@@ -2883,9 +2624,7 @@
       "description": "Ejecuta update evidencia descripcion; participa en actualización sobre tms_monitoreo_evidencias.",
       "signature": "updateEvidenciaDescripcion(id, descripcion)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -2903,9 +2642,7 @@
       "description": "── Dictamen de Calidad (RPC: persiste dictamen + flag + notificación) ─────",
       "signature": "useDictaminar()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2923,9 +2660,7 @@
       "description": "Familias de producto presentes en la recepción de una tarea (criterios de aceptación específicos + flags regulatorios). Alimenta el checklist por familia.",
       "signature": "useCategoriasTarea(tareaId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2943,9 +2678,7 @@
       "description": "Carga/actualización del mapeo producto→grupo (clasificación) y reclasificación.",
       "signature": "cargarClasificacionGrupos(rows)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2963,9 +2696,7 @@
       "description": "Actualiza reclasificar recepciones sobre calidad_reclasificar_recepciones aplicando las validaciones del servicio.",
       "signature": "reclasificarRecepciones()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -2983,9 +2714,7 @@
       "description": "Lista de tareas de checklist (cola). Pendientes/en proceso primero. staleTime 0 + refetchOnMount → al abrir la pestaña siempre trae lo último (una recepción recién registrada aparece de inmediato); realtime complementa.",
       "signature": "useTareasChecklist()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3016,9 +2745,7 @@
       "description": "Firma electrónica del certificado/acta (HMAC-SHA256 server-side).",
       "signature": "useFirmarCertificado()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3036,9 +2763,7 @@
       "description": "Verificación pública por folio (para el QR / página de verificación).",
       "signature": "verificarCertificado(folio)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3056,9 +2781,7 @@
       "description": "Cola de asignaciones del hito 2 (pendientes/en proceso primero).",
       "signature": "useAsignacionesCalidad()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3089,9 +2812,7 @@
       "description": "Crear asignación (Inventario asigna SKUs a Calidad).",
       "signature": "useCrearAsignacion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3109,9 +2830,7 @@
       "description": "Ejecuta tomar asignacion calidad; participa en RPC sobre tomar_asignacion_calidad.",
       "signature": "tomarAsignacionCalidad(asignacionId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3129,9 +2848,7 @@
       "description": "Registra guardar progreso asignacion calidad sobre guardar_progreso_asignacion_calidad y devuelve el resultado de la operación.",
       "signature": "guardarProgresoAsignacionCalidad(asignacionId, progressData)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3149,9 +2866,7 @@
       "description": "Ejecuta liberar asignacion calidad; participa en RPC sobre liberar_asignacion_calidad.",
       "signature": "liberarAsignacionCalidad(asignacionId)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3169,9 +2884,7 @@
       "description": "Resolver asignación enlazando el informe/dictamen generado.",
       "signature": "useResolverAsignacion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3189,9 +2902,7 @@
       "description": "Anular asignación (antes de resolver).",
       "signature": "useAnularAsignacion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3261,9 +2972,7 @@
       "description": "Evidencia fotográfica del certificado de salida: el archivo va al bucket privado de evidencias (salida/<tareaId>/…) y la referencia queda en checklist._extras.evidencias — asociada (y firmada) con el certificado.",
       "signature": "uploadEvidenciaSalida({ tareaId, tipo, blob })",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "archivo"
-      ],
+      "operations": ["archivo"],
       "resources": []
     },
     {
@@ -3276,9 +2985,7 @@
       "description": "Ejecuta delete evidencia salida; participa en archivo.",
       "signature": "deleteEvidenciaSalida(path)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "archivo"
-      ],
+      "operations": ["archivo"],
       "resources": []
     },
     {
@@ -3291,9 +2998,7 @@
       "description": "Ejecuta upload evidencia ingreso; participa en archivo.",
       "signature": "uploadEvidenciaIngreso({ tareaId, tipo, blob })",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "archivo"
-      ],
+      "operations": ["archivo"],
       "resources": []
     },
     {
@@ -3306,9 +3011,7 @@
       "description": "Cola de certificaciones de salida (tipo CERTIFICADO_SALIDA).",
       "signature": "useTareasSalida()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3339,9 +3042,7 @@
       "description": "Buscar despachos para certificar (por NV, cliente o guía).",
       "signature": "buscarDespachos(query)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3359,9 +3060,7 @@
       "description": "Crear la tarea de certificación de salida a partir de un despacho.",
       "signature": "useCrearTareaSalida()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3379,9 +3078,7 @@
       "description": "Crear la tarea de certificación de salida MANUAL (N.V. escrita a mano + SKUs).",
       "signature": "useCrearTareaSalidaManual()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3399,9 +3096,7 @@
       "description": "── Borrado por ADMIN (limpieza de pruebas) ──────────────────────────────── Elimina una tarea de calidad (hito 1 checklist de ingreso / hito 3 salida).",
       "signature": "useEliminarTareaCalidad()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3419,9 +3114,7 @@
       "description": "Elimina una asignación de estancia (hito 2).",
       "signature": "useEliminarAsignacionCalidad()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3439,9 +3132,7 @@
       "description": "── Bodegas Softland (catálogo para el destino del dictamen) ────────────────",
       "signature": "useBodegasSoftland()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3472,9 +3163,7 @@
       "description": "Consulta guardar bodega softland sobre guardar_bodega_softland y entrega el resultado a la interfaz.",
       "signature": "useGuardarBodegaSoftland()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3492,9 +3181,7 @@
       "description": "Consulta eliminar bodega softland sobre eliminar_bodega_softland y entrega el resultado a la interfaz.",
       "signature": "useEliminarBodegaSoftland()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3512,9 +3199,7 @@
       "description": "Consulta trazabilidad producto sobre trazabilidad_producto y entrega el resultado a la interfaz.",
       "signature": "useTrazabilidadProducto(codigo, partida, ubicacion)",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3532,9 +3217,7 @@
       "description": "Áreas responsables (con su mapeo de roles, para saber si el usuario puede cerrar).",
       "signature": "useAreasCalidad()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3552,9 +3235,7 @@
       "description": "Cola/tablero de acciones (pendientes primero).",
       "signature": "useAccionesCalidad()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3585,9 +3266,7 @@
       "description": "Crear (promulgar) una acción desde un ítem dictaminado.",
       "signature": "useCrearAccion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3605,9 +3284,7 @@
       "description": "Resolver (cerrar) una acción — la cierra el área responsable o admin.",
       "signature": "useResolverAccion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3625,9 +3302,7 @@
       "description": "Consulta anular accion sobre anular_accion_calidad y entrega el resultado a la interfaz.",
       "signature": "useAnularAccion()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3645,9 +3320,7 @@
       "description": "Acción → ticket de Servicio Técnico (Post-Venta) con el informe de calidad adjunto.",
       "signature": "useAccionATicketPv()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3665,9 +3338,7 @@
       "description": "\"Correo enviado\" desde Inventario (carpeta CALIDAD TRAZABILIDAD en Traspasos): resuelve la tarea de Calidad automáticamente según el dictamen (acuse auto \"Correo de traspaso enviado · Dictamen X · Acción Y → BD Z\").",
       "signature": "useAccionCorreoEnviado()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3685,9 +3356,7 @@
       "description": "Registrar la referencia de ejecución (traspaso/correo generado por Inventario) → la acción pasa a EN_PROCESO y queda en la trazabilidad.",
       "signature": "useAccionReferencia()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3705,9 +3374,7 @@
       "description": "Guardar (parcial) o finalizar (CONFORME/NO_CONFORME) el checklist.",
       "signature": "useGuardarChecklist()",
       "source": "src/services/calidadService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3747,9 +3414,7 @@
       "description": "Stock del sistema en vivo (prioridad serie > partida > total del SKU).",
       "signature": "conteoStockSistema(codigo, partida = '', serie = '')",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3767,9 +3432,7 @@
       "description": "── Sesiones de conteo ─────────────────────────────────────────────────────",
       "signature": "useSesionesConteo()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3787,9 +3450,7 @@
       "description": "Consulta crear sesion sobre crear_conteo_sesion y entrega el resultado a la interfaz.",
       "signature": "useCrearSesion()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3807,9 +3468,7 @@
       "description": "Consulta cerrar sesion sobre cerrar_conteo_sesion y entrega el resultado a la interfaz.",
       "signature": "useCerrarSesion()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3827,9 +3486,7 @@
       "description": "── Conteos (registros) ─────────────────────────────────────────────────────",
       "signature": "useConteos(sesionId, limit = 60)",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3847,9 +3504,7 @@
       "description": "Consulta registrar conteo sobre registrar_conteo y entrega el resultado a la interfaz.",
       "signature": "useRegistrarConteo()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3867,9 +3522,7 @@
       "description": "Consulta editar conteo sobre editar_conteo y entrega el resultado a la interfaz.",
       "signature": "useEditarConteo()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3887,9 +3540,7 @@
       "description": "Consulta eliminar conteo sobre eliminar_conteo y entrega el resultado a la interfaz.",
       "signature": "useEliminarConteo()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3907,9 +3558,7 @@
       "description": "── Reportes ────────────────────────────────────────────────────────────────",
       "signature": "useConciliacion(sesionId)",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3927,9 +3576,7 @@
       "description": "Consulta ajuste erp sobre conteo_ajuste_erp y entrega el resultado a la interfaz.",
       "signature": "useAjusteErp(sesionId)",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -3960,9 +3607,7 @@
       "description": "── Bloques + auditoría (QR) ─────────────────────────────────────────────────",
       "signature": "useBloques(q = '')",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -3980,9 +3625,7 @@
       "description": "Consulta bloque sobre tms_conteo_bloques, tms_conteo_bloque_items, tms_conteo_auditorias y entrega el resultado a la interfaz.",
       "signature": "useBloque(codigo)",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4008,9 +3651,7 @@
       "description": "Consulta crear bloque sobre crear_conteo_bloque y entrega el resultado a la interfaz.",
       "signature": "useCrearBloque()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4028,9 +3669,7 @@
       "description": "Consulta editar bloque sobre editar_conteo_bloque y entrega el resultado a la interfaz.",
       "signature": "useEditarBloque()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4048,9 +3687,7 @@
       "description": "Consulta agregar bloque item sobre agregar_conteo_bloque_item y entrega el resultado a la interfaz.",
       "signature": "useAgregarBloqueItem()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4068,9 +3705,7 @@
       "description": "Consulta eliminar bloque item sobre eliminar_conteo_bloque_item y entrega el resultado a la interfaz.",
       "signature": "useEliminarBloqueItem()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4088,9 +3723,7 @@
       "description": "Consulta registrar auditoria sobre registrar_conteo_auditoria y entrega el resultado a la interfaz.",
       "signature": "useRegistrarAuditoria()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4108,9 +3741,7 @@
       "description": "── Proyecciones (palletizado) ──────────────────────────────────────────────",
       "signature": "useProyecciones()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4128,9 +3759,7 @@
       "description": "Consulta guardar proyeccion sobre guardar_conteo_proyeccion y entrega el resultado a la interfaz.",
       "signature": "useGuardarProyeccion()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4148,9 +3777,7 @@
       "description": "Consulta eliminar proyeccion sobre eliminar_conteo_proyeccion y entrega el resultado a la interfaz.",
       "signature": "useEliminarProyeccion()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4168,9 +3795,7 @@
       "description": "Consulta guardar costo sobre guardar_conteo_costo y entrega el resultado a la interfaz.",
       "signature": "useGuardarCosto()",
       "source": "src/services/conteoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4197,9 +3822,7 @@
       "description": "Consulta listar eventos sobre dominio_eventos y entrega el resultado a la interfaz.",
       "signature": "listarEventos({ agregado, limit = 100 } = {})",
       "source": "src/services/eventosService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4217,9 +3840,7 @@
       "description": "Consulta listar reglas sobre notificacion_regla y entrega el resultado a la interfaz.",
       "signature": "listarReglas()",
       "source": "src/services/eventosService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4263,9 +3884,7 @@
       "description": "Consulta listar bandeja sobre notificacion y entrega el resultado a la interfaz.",
       "signature": "listarBandeja({ canal, estado, limit = 150 } = {})",
       "source": "src/services/eventosService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4335,11 +3954,7 @@
       "description": "Despacha las notificaciones push pendientes vía la Edge notify-inventario (FCM/Capgo).",
       "signature": "despacharPush()",
       "source": "src/services/eventosService.js",
-      "operations": [
-        "lectura",
-        "RPC",
-        "Edge Function"
-      ],
+      "operations": ["lectura", "RPC", "Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -4374,9 +3989,7 @@
       "description": "Consulta obtener flujo sobre tms_flujo_modelos y entrega el resultado a la interfaz.",
       "signature": "obtenerFlujo(codigo = 'maestro')",
       "source": "src/services/flujoService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4394,9 +4007,7 @@
       "description": "Registra guardar flujo sobre flujo_guardar y devuelve el resultado de la operación.",
       "signature": "guardarFlujo(codigo, titulo, modelo)",
       "source": "src/services/flujoService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -4965,9 +4576,7 @@
       "description": "Consulta listar insumos sobre tms_insumos y entrega el resultado a la interfaz.",
       "signature": "listarInsumos()",
       "source": "src/services/insumosService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -4985,9 +4594,7 @@
       "description": "Ejecuta set cantidad; participa en RPC sobre insumos_set_cantidad.",
       "signature": "setCantidad(id, cantidad)",
       "source": "src/services/insumosService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5005,9 +4612,7 @@
       "description": "Registra guardar insumo sobre insumos_guardar y devuelve el resultado de la operación.",
       "signature": "guardarInsumo(payload)",
       "source": "src/services/insumosService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5025,9 +4630,7 @@
       "description": "Elimina o revoca eliminar insumo sobre insumos_eliminar según las reglas de acceso.",
       "signature": "eliminarInsumo(id)",
       "source": "src/services/insumosService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5106,9 +4709,7 @@
       "description": "Ejecuta init otaupdates; participa en RPC sobre registrar_ota_aplicado.",
       "signature": "initOTAUpdates()",
       "source": "src/services/mobileService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5126,10 +4727,7 @@
       "description": "── Aplicar update manualmente (desde botón UI) ── Versión/canal OTA vigente en ESTE dispositivo (para mostrar en la app).",
       "signature": "versionOTA()",
       "source": "src/services/mobileService.js",
-      "operations": [
-        "RPC",
-        "archivo"
-      ],
+      "operations": ["RPC", "archivo"],
       "resources": [
         {
           "kind": "rpc",
@@ -5173,9 +4771,7 @@
       "description": "── Push Notifications ──",
       "signature": "initPushNotifications(userId)",
       "source": "src/services/mobileService.js",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -5202,9 +4798,7 @@
       "description": "Cliente OTA propio: Supabase administra canales/auditoría y GitHub Releases aloja bundles inmutables. No contiene claves privadas ni depende de Capgo. Lista bundles y la versión servida por cada canal.",
       "signature": "listarDespliegueOTA()",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -5222,9 +4816,7 @@
       "description": "Promueve (enlaza) una versión ya existente al canal indicado (por defecto production = toda la bodega). No recompila; solo apunta el canal al bundle.",
       "signature": "promoverOTA(version, channel = 'production')",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -5242,9 +4834,7 @@
       "description": "Archiva un bundle viejo. No toca canales activos ni borra evidencia histórica.",
       "signature": "eliminarBundleOTA(version)",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -5262,9 +4852,7 @@
       "description": "── Gobernanza de versión (versión mínima / obligatoria) ────────────────────",
       "signature": "obtenerGobernanzaOTA()",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -5282,9 +4870,7 @@
       "description": "Registra guardar gobernanza ota sobre ota_gobernanza_set y devuelve el resultado de la operación.",
       "signature": "guardarGobernanzaOTA(p)",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5315,9 +4901,7 @@
       "description": "── Historial de despliegues (promociones / aplicados / eliminados) ──────────",
       "signature": "historialOTA()",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5335,9 +4919,7 @@
       "description": "── Aviso por push FCM de una nueva versión ──────────────────────────────────",
       "signature": "avisarNuevaVersionPush(version, rol = 'ADMIN')",
       "source": "src/services/otaDeployService.js",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -5390,9 +4972,7 @@
       "description": "Busca una N.V (canal PTM) por número exacto en la operación viva. null si no existe.",
       "signature": "fetchNvPanel(nv)",
       "source": "src/services/panelPtm.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": []
     },
     {
@@ -5479,9 +5059,7 @@
       "description": "============================================================================ Técnicos (catálogo editable, tabla tms_postventa_tecnicos) ============================================================================",
       "signature": "useTecnicos(soloActivos = false)",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -5499,9 +5077,7 @@
       "description": "Consulta guardar tecnico sobre guardar_pv_tecnico y entrega el resultado a la interfaz.",
       "signature": "useGuardarTecnico()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5519,9 +5095,7 @@
       "description": "Consulta eliminar tecnico sobre eliminar_pv_tecnico y entrega el resultado a la interfaz.",
       "signature": "useEliminarTecnico()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5539,9 +5113,7 @@
       "description": "============================================================================ Tickets ============================================================================",
       "signature": "useTickets(filtros = {})",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -5559,9 +5131,7 @@
       "description": "Consulta crear ticket sobre crear_pv_ticket y entrega el resultado a la interfaz.",
       "signature": "useCrearTicket()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5579,9 +5149,7 @@
       "description": "Consulta actualizar ticket sobre actualizar_pv_ticket y entrega el resultado a la interfaz.",
       "signature": "useActualizarTicket()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5599,9 +5167,7 @@
       "description": "Eliminar un caso completo (descarta sus correos → no reingresan).",
       "signature": "useEliminarTicket()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5619,9 +5185,7 @@
       "description": "Eliminar un correo puntual del hilo (lo descarta → no reingresa).",
       "signature": "useEliminarCorreo()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5639,9 +5203,7 @@
       "description": "Reasociar un correo al ticket CORRECTO (mueve ticket_id/conversation_id).",
       "signature": "useReasociarCorreo()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5659,9 +5221,7 @@
       "description": "── Flujo de estados + trazabilidad ─────────────────────────────────────────",
       "signature": "useAvanzarTicket()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5679,9 +5239,7 @@
       "description": "Consulta cerrar ticket sobre cerrar_pv_ticket y entrega el resultado a la interfaz.",
       "signature": "useCerrarTicket()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5699,9 +5257,7 @@
       "description": "Consulta pv historial sobre pv_historial y entrega el resultado a la interfaz.",
       "signature": "usePvHistorial(numero)",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5732,9 +5288,7 @@
       "description": "Consulta correos ticket sobre pv_correos_ticket y entrega el resultado a la interfaz.",
       "signature": "useCorreosTicket(numero)",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5752,9 +5306,7 @@
       "description": "============================================================================ Informe de Calidad adjunto a un ticket (visor para Servicio Técnico) ============================================================================",
       "signature": "useInformeCalidadTicket(numero, enabled = true)",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5772,9 +5324,7 @@
       "description": "============================================================================ Familias de equipos (del stock de CCO: primeros 3 chars del código de producto) ============================================================================",
       "signature": "useFamiliasStock()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5792,9 +5342,7 @@
       "description": "============================================================================ Dashboard ============================================================================",
       "signature": "usePvDashboard()",
       "source": "src/services/postventaService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5843,9 +5391,7 @@
       "description": "Estado MFA del usuario (desde el espejo servidor: enabled + factores).",
       "signature": "estadoMFA()",
       "source": "src/services/securityService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5876,9 +5422,7 @@
       "description": "Verifica el código de 6 dígitos para completar el enrolamiento (o un challenge).",
       "signature": "verificarTOTP(factorId, code)",
       "source": "src/services/securityService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5896,9 +5440,7 @@
       "description": "Quita un factor (desactiva MFA de ese autenticador).",
       "signature": "quitarFactor(factorId)",
       "source": "src/services/securityService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -5951,9 +5493,7 @@
       "description": "Consulta listar ordenes sobre tms_transporte_ordenes y entrega el resultado a la interfaz.",
       "signature": "listarOrdenes()",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -5971,9 +5511,7 @@
       "description": "Consulta listar vehiculos sobre tms_vehiculos y entrega el resultado a la interfaz.",
       "signature": "listarVehiculos()",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -5991,9 +5529,7 @@
       "description": "Consulta listar conductores sobre tms_conductores y entrega el resultado a la interfaz.",
       "signature": "listarConductores()",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6011,9 +5547,7 @@
       "description": "Consulta listar incidencias sobre tms_transporte_incidencias y entrega el resultado a la interfaz.",
       "signature": "listarIncidencias(ordenId)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6031,10 +5565,7 @@
       "description": "Crea una orden desde una N.V.: busca la operación por número y llama la RPC.",
       "signature": "crearOrdenDesdeNV(nv)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura",
-        "RPC"
-      ],
+      "operations": ["lectura", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6052,9 +5583,7 @@
       "description": "Registra asignar orden sobre tms_orden_asignar y devuelve el resultado de la operación.",
       "signature": "asignarOrden(id, payload)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6072,9 +5601,7 @@
       "description": "Ejecuta transicion orden; participa en RPC sobre tms_orden_transicion.",
       "signature": "transicionOrden(id, estado)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6092,9 +5619,7 @@
       "description": "Registra registrar pod sobre tms_orden_pod y devuelve el resultado de la operación.",
       "signature": "registrarPOD(id, payload)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6112,9 +5637,7 @@
       "description": "Registra crear incidencia sobre tms_incidencia_crear y devuelve el resultado de la operación.",
       "signature": "crearIncidencia(ordenId, tipo, detalle)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6132,9 +5655,7 @@
       "description": "Actualiza resolver incidencia sobre tms_incidencia_resolver aplicando las validaciones del servicio.",
       "signature": "resolverIncidencia(id, resolucion)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -6152,9 +5673,7 @@
       "description": "Sube un File/Blob y devuelve su path (para guardar en la orden).",
       "signature": "subirEvidencia(ordenId, tipo, fileOrBlob, ext)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "archivo"
-      ],
+      "operations": ["archivo"],
       "resources": []
     },
     {
@@ -6167,9 +5686,7 @@
       "description": "URL firmada temporal para mostrar una evidencia.",
       "signature": "urlEvidencia(path, seg = 3600)",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "archivo"
-      ],
+      "operations": ["archivo"],
       "resources": []
     },
     {
@@ -6182,9 +5699,7 @@
       "description": "Id del conductor ligado al usuario actual (para \"Mi Ruta\"); null si no aplica. tms_conductores.user_id referencia tms_usuarios.id (no el auth_uid), así que se resuelve el puente auth.uid() → tms_usuarios.id → conductor.",
       "signature": "miConductorId()",
       "source": "src/services/tmsService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6215,9 +5730,7 @@
       "description": "Consulta listar definiciones sobre workflow_definition y entrega el resultado a la interfaz.",
       "signature": "listarDefiniciones()",
       "source": "src/services/workflowService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6235,9 +5748,7 @@
       "description": "Consulta listar estados sobre workflow_state y entrega el resultado a la interfaz.",
       "signature": "listarEstados(workflow)",
       "source": "src/services/workflowService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6255,9 +5766,7 @@
       "description": "Consulta listar transiciones sobre workflow_transition y entrega el resultado a la interfaz.",
       "signature": "listarTransiciones(workflow)",
       "source": "src/services/workflowService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6275,9 +5784,7 @@
       "description": "Consulta listar historial sobre workflow_history y entrega el resultado a la interfaz.",
       "signature": "listarHistorial(workflow, entidadId)",
       "source": "src/services/workflowService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -6295,9 +5802,7 @@
       "description": "Catálogo de permisos (para el selector de la transición).",
       "signature": "listarPermisos()",
       "source": "src/services/workflowService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -7949,9 +7454,7 @@
       "description": "Ejecuta admin monitor; participa en lectura sobre tms_usuarios.",
       "signature": "AdminMonitor()",
       "source": "src/pages/Admin/AdminMonitor.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -7969,9 +7472,7 @@
       "description": "Ejecuta handle cleanup; participa en RPC sobre clean_operational_data.",
       "signature": "handleCleanup()",
       "source": "src/pages/Admin/Cleanup.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -7998,9 +7499,7 @@
       "description": "── PANEL ADMIN: Configuración de acceso por rol ──",
       "signature": "AccessConfigPanel({ onClose })",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8027,9 +7526,7 @@
       "description": "Ejecuta save role; participa en actualización sobre tms_roles.",
       "signature": "saveRole(role)",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -8047,9 +7544,7 @@
       "description": "── COMPONENTE PRINCIPAL ──",
       "signature": "DataImport()",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8067,9 +7562,7 @@
       "description": "Ejecuta norm nv val; participa en lectura sobre tms_nv_catalogo.",
       "signature": "normNvVal(v)",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8087,9 +7580,7 @@
       "description": "Solo se conservan las filas que traen TODOS los campos obligatorios. (Antes era .some(): bastaba UN obligatorio no vacío, así que una fila con código pero SIN \"producto\" pasaba y luego reventaba el lote entero en el servidor por el not-null",
       "signature": "hasVal(v)",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8116,9 +7607,7 @@
       "description": "Ejecuta enrich with product info; participa en lectura sobre tms_matriz_codigos.",
       "signature": "enrichWithProductInfo(code)",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8145,9 +7634,7 @@
       "description": "Ejecuta handle upload; participa en RPC sobre nv_catalogo_purgar_canal, prepare_nv_import.",
       "signature": "handleUpload()",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8187,10 +7674,7 @@
       "description": "Procesa un lote con abort/timeout y actualiza progreso al terminar.",
       "signature": "runChunk(chunk, chunkNum)",
       "source": "src/pages/Admin/DataImport.jsx",
-      "operations": [
-        "creación",
-        "RPC"
-      ],
+      "operations": ["creación", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8221,11 +7705,7 @@
       "description": "─── Main Component ──────────────────────────────────",
       "signature": "LocationManager()",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": [
-        "lectura",
-        "RPC",
-        "Realtime"
-      ],
+      "operations": ["lectura", "RPC", "Realtime"],
       "resources": [
         {
           "kind": "rpc",
@@ -8252,11 +7732,7 @@
       "description": "─── Actions ────────────────────────────────────────",
       "signature": "handleInlineSave(rowId, field, value)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": [
-        "lectura",
-        "actualización",
-        "RPC"
-      ],
+      "operations": ["lectura", "actualización", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8283,9 +7759,7 @@
       "description": "Ejecuta handle move; participa en RPC sobre mover_ubicacion_wms.",
       "signature": "handleMove(item, newUbicacion)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8303,9 +7777,7 @@
       "description": "Ejecuta handle delete; participa en RPC sobre eliminar_ubicacion_wms.",
       "signature": "handleDelete(item)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8332,9 +7804,7 @@
       "description": "Ejecuta submit; participa en RPC sobre resolver_cambio_ubicacion.",
       "signature": "submit()",
       "source": "src/pages/Admin/LocationRequests.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8361,10 +7831,7 @@
       "description": "Ejecuta location requests; participa en lectura, Realtime sobre wms_ubicacion_solicitudes.",
       "signature": "LocationRequests()",
       "source": "src/pages/Admin/LocationRequests.jsx",
-      "operations": [
-        "lectura",
-        "Realtime"
-      ],
+      "operations": ["lectura", "Realtime"],
       "resources": [
         {
           "kind": "table",
@@ -8391,9 +7858,7 @@
       "description": "Consulta fetch observability snapshot sobre system_logs, system_alerts y entrega el resultado a la interfaz.",
       "signature": "fetchObservabilitySnapshot({ lookback, level, kind, moduleFilter, search, alertStatus })",
       "source": "src/pages/Admin/Observability.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8433,9 +7898,7 @@
       "description": "Ejecuta observability; participa en RPC sobre update_system_alert_status, force_app_refresh.",
       "signature": "Observability()",
       "source": "src/pages/Admin/Observability.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -8475,11 +7938,7 @@
       "description": "Ejecuta roles page; participa en lectura, upsert, eliminación sobre tms_roles, tms_usuarios.",
       "signature": "RolesPage({ embedded = false })",
       "source": "src/pages/Admin/Roles.jsx",
-      "operations": [
-        "lectura",
-        "upsert",
-        "eliminación"
-      ],
+      "operations": ["lectura", "upsert", "eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -8510,9 +7969,7 @@
       "description": "═══════════════════════════════════════════════════════ ─── MAIN COMPONENT ────────────────────────────────── ═══════════════════════════════════════════════════════",
       "signature": "Tickets()",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -8525,9 +7982,7 @@
       "description": "Consulta fetch tickets sobre tms_tickets y entrega el resultado a la interfaz.",
       "signature": "fetchTickets()",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8554,9 +8009,7 @@
       "description": "─── Actions ────────────────────────────────────────",
       "signature": "handleStatusChange(id, newStatus)",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -8574,9 +8027,7 @@
       "description": "Ejecuta handle respond; participa en actualización sobre tms_tickets.",
       "signature": "handleRespond(id, respuesta)",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -8594,9 +8045,7 @@
       "description": "Ejecuta handle create; participa en creación sobre tms_tickets.",
       "signature": "handleCreate(form)",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "creación"
-      ],
+      "operations": ["creación"],
       "resources": [
         {
           "kind": "table",
@@ -8614,9 +8063,7 @@
       "description": "Ejecuta handle delete; participa en eliminación sobre tms_tickets.",
       "signature": "handleDelete(id)",
       "source": "src/pages/Admin/Tickets.jsx",
-      "operations": [
-        "eliminación"
-      ],
+      "operations": ["eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -8634,9 +8081,7 @@
       "description": "═══════════════════════════════════════════════════════ ─── MAIN COMPONENT ────────────────────────────────── ═══════════════════════════════════════════════════════",
       "signature": "UploadHistory()",
       "source": "src/pages/Admin/UploadHistory.jsx",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -8649,9 +8094,7 @@
       "description": "Consulta fetch history sobre tms_historial_cargas y entrega el resultado a la interfaz.",
       "signature": "fetchHistory()",
       "source": "src/pages/Admin/UploadHistory.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8669,9 +8112,7 @@
       "description": "Consulta users page sobre tms_roles, tms_usuarios y entrega el resultado a la interfaz.",
       "signature": "UsersPage({ embedded = false })",
       "source": "src/pages/Admin/Users.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8693,10 +8134,7 @@
       "description": "Ejecuta debounced; participa en RPC, Realtime sobre guardar_usuario, eliminar_usuario_completo, usuarios_bulk.",
       "signature": "debounced(key)",
       "source": "src/pages/Admin/Users.jsx",
-      "operations": [
-        "RPC",
-        "Realtime"
-      ],
+      "operations": ["RPC", "Realtime"],
       "resources": [
         {
           "kind": "rpc",
@@ -8749,9 +8187,7 @@
       "description": "Consulta fetch data sobre tms_modules_config, tms_roles y entrega el resultado a la interfaz.",
       "signature": "fetchData()",
       "source": "src/pages/Admin/Views.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8782,9 +8218,7 @@
       "description": "⭐ Cambiar estado de módulo y actualizar menú instantáneamente",
       "signature": "handleToggleModule(id, currentStatus)",
       "source": "src/pages/Admin/Views.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -8802,9 +8236,7 @@
       "description": "Ejecuta handle update landing page; participa en actualización sobre tms_roles.",
       "signature": "handleUpdateLandingPage(roleId, newPath)",
       "source": "src/pages/Admin/Views.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -8849,9 +8281,7 @@
       "description": "Consulta fetch product sobre tms_matriz_codigos, tms_pesos y entrega el resultado a la interfaz.",
       "signature": "fetchProduct()",
       "source": "src/pages/Inbound/CubingRegistry.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8882,10 +8312,7 @@
       "description": "Ejecuta handle input change; participa en creación, upsert sobre tms_pesos, tms_cubicaje_historial.",
       "signature": "handleInputChange(e)",
       "source": "src/pages/Inbound/CubingRegistry.jsx",
-      "operations": [
-        "creación",
-        "upsert"
-      ],
+      "operations": ["creación", "upsert"],
       "resources": [
         {
           "kind": "table",
@@ -8916,9 +8343,7 @@
       "description": "Ejecuta go offline; participa en lectura sobre tms_matriz_codigos, wms_ubicaciones.",
       "signature": "goOffline()",
       "source": "src/pages/Inbound/Entry.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8949,9 +8374,7 @@
       "description": "Validate ubicacion exists on blur",
       "signature": "handleUbicacionBlur()",
       "source": "src/pages/Inbound/Entry.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -8969,10 +8392,7 @@
       "description": "Ejecuta build visual location rows; participa en creación, RPC sobre registrar_putaway_ubicaciones, tms_historial_cargas.",
       "signature": "buildVisualLocationRows(items)",
       "source": "src/pages/Inbound/Entry.jsx",
-      "operations": [
-        "creación",
-        "RPC"
-      ],
+      "operations": ["creación", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9003,9 +8423,7 @@
       "description": "Ejecuta insert recepcion items in chunks; participa en creación sobre tms_recepcion_items.",
       "signature": "insertRecepcionItemsInChunks(items, recepcionId)",
       "source": "src/pages/Inbound/Reception.jsx",
-      "operations": [
-        "creación"
-      ],
+      "operations": ["creación"],
       "resources": [
         {
           "kind": "table",
@@ -9032,9 +8450,7 @@
       "description": "Consulta fetch recepcion items all sobre tms_recepcion_items y entrega el resultado a la interfaz.",
       "signature": "fetchRecepcionItemsAll(recepcionId)",
       "source": "src/pages/Inbound/Reception.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9052,12 +8468,7 @@
       "description": "Detección de series duplicadas (una serie no debería repetirse en la recepción).",
       "signature": "normSerie(s)",
       "source": "src/pages/Inbound/Reception.jsx",
-      "operations": [
-        "lectura",
-        "creación",
-        "actualización",
-        "eliminación"
-      ],
+      "operations": ["lectura", "creación", "actualización", "eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -9088,9 +8499,7 @@
       "description": "Eliminar recepción completa",
       "signature": "deleteRecepcion(id, proveedor)",
       "source": "src/pages/Inbound/Reception.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9117,9 +8526,7 @@
       "description": "Ejecuta lookup description; participa en lectura sobre tms_matriz_codigos.",
       "signature": "lookupDescription(codigo)",
       "source": "src/pages/Inbound/Reception.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9137,9 +8544,7 @@
       "description": "Ejecuta insert recepcion items nacionales in chunks; participa en creación sobre tms_recepcion_items_nacionales.",
       "signature": "insertRecepcionItemsNacionalesInChunks(items, recepcionId)",
       "source": "src/pages/Inbound/ReceptionNacional.jsx",
-      "operations": [
-        "creación"
-      ],
+      "operations": ["creación"],
       "resources": [
         {
           "kind": "table",
@@ -9166,9 +8571,7 @@
       "description": "Consulta fetch recepcion items nacionales all sobre tms_recepcion_items_nacionales y entrega el resultado a la interfaz.",
       "signature": "fetchRecepcionItemsNacionalesAll(recepcionId)",
       "source": "src/pages/Inbound/ReceptionNacional.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9186,12 +8589,7 @@
       "description": "Detección de series duplicadas (una serie no debería repetirse en la recepción).",
       "signature": "normSerie(s)",
       "source": "src/pages/Inbound/ReceptionNacional.jsx",
-      "operations": [
-        "lectura",
-        "creación",
-        "actualización",
-        "eliminación"
-      ],
+      "operations": ["lectura", "creación", "actualización", "eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -9222,9 +8620,7 @@
       "description": "Eliminar recepción completa",
       "signature": "deleteRecepcion(id, proveedor)",
       "source": "src/pages/Inbound/ReceptionNacional.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9242,9 +8638,7 @@
       "description": "Ejecuta lookup description; participa en lectura sobre tms_matriz_codigos.",
       "signature": "lookupDescription(codigo)",
       "source": "src/pages/Inbound/ReceptionNacional.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9262,9 +8656,7 @@
       "description": "Ejecuta carteles; participa en lectura sobre tms_matriz_codigos.",
       "signature": "Carteles()",
       "source": "src/pages/Inventory/Carteles.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9282,9 +8674,7 @@
       "description": "Consulta buscar sobre wms_ubicaciones y entrega el resultado a la interfaz.",
       "signature": "buscar(termRaw)",
       "source": "src/pages/Mobile/ConsultaPDA.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9311,9 +8701,7 @@
       "description": "==================== PUTAWAY ====================",
       "signature": "processPutawayInput(val)",
       "source": "src/pages/Mobile/WarehousePDA.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9335,9 +8723,7 @@
       "description": "Guarda la operación en la cola local para subirla al reconectar.",
       "signature": "encolar()",
       "source": "src/pages/Mobile/WarehousePDA.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9355,9 +8741,7 @@
       "description": "Consulta fetch dashboards sobre tms_dashboard_layouts y entrega el resultado a la interfaz.",
       "signature": "fetchDashboards()",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9384,9 +8768,7 @@
       "description": "Ejecuta save dashboard; participa en RPC sobre guardar_dashboard.",
       "signature": "saveDashboard(d)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9404,9 +8786,7 @@
       "description": "Ejecuta delete dashboard; participa en RPC sobre eliminar_dashboard.",
       "signature": "deleteDashboard(id)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9424,9 +8804,7 @@
       "description": "Consulta fetch calculated fields sobre tms_builder_calculated_fields y entrega el resultado a la interfaz.",
       "signature": "fetchCalculatedFields(incluirInactivos = false)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9444,9 +8822,7 @@
       "description": "Ejecuta save calculated field; participa en RPC sobre guardar_campo_calculado.",
       "signature": "saveCalculatedField(f)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9464,9 +8840,7 @@
       "description": "Ejecuta delete calculated field; participa en RPC sobre eliminar_campo_calculado.",
       "signature": "deleteCalculatedField(id)",
       "source": "src/pages/Panel/builder/builderService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9484,9 +8858,7 @@
       "description": "Registra guardar catalogo sobre guardar_panel_catalogo y devuelve el resultado de la operación.",
       "signature": "guardarCatalogo(tipo, form)",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9522,9 +8894,7 @@
       "description": "Actualiza toggle catalogo sobre toggle_panel_catalogo aplicando las validaciones del servicio.",
       "signature": "toggleCatalogo(tipo, id, activo)",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9551,9 +8921,7 @@
       "description": "Elimina o revoca eliminar catalogo sobre eliminar_panel_catalogo según las reglas de acceso.",
       "signature": "eliminarCatalogo(tipo, id)",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9580,9 +8948,7 @@
       "description": "Consulta fetch auditoria sobre tms_operaciones_log y entrega el resultado a la interfaz.",
       "signature": "fetchAuditoria({ operador = '', accion = '', nv = '', limit = 150 } = {})",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9600,9 +8966,7 @@
       "description": "Consulta fetch audit stats panel sobre tms_operaciones_log y entrega el resultado a la interfaz.",
       "signature": "fetchAuditStatsPanel()",
       "source": "src/pages/Panel/config/configService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9620,9 +8984,7 @@
       "description": "Actualiza refrescar aplicando las validaciones del servicio.",
       "signature": "refrescar()",
       "source": "src/pages/Panel/dash/DashboardReal.jsx",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -9644,9 +9006,7 @@
       "description": "Consulta fetch consolidados sobre consolidados, consolidado_nvs y entrega el resultado a la interfaz.",
       "signature": "fetchConsolidados()",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9695,9 +9055,7 @@
       "description": "Ejecuta run; participa en lectura sobre consolidado_nvs.",
       "signature": "run()",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9715,9 +9073,7 @@
       "description": "Consulta fetch dashboards sobre dashboard_layouts y entrega el resultado a la interfaz.",
       "signature": "fetchDashboards()",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9744,9 +9100,7 @@
       "description": "Consulta fetch transportistas sobre transportistas y entrega el resultado a la interfaz.",
       "signature": "fetchTransportistas(incluirInactivos = false)",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9773,9 +9127,7 @@
       "description": "Consulta fetch vendedores sobre vendedores y entrega el resultado a la interfaz.",
       "signature": "fetchVendedores(incluirInactivos = false)",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9802,9 +9154,7 @@
       "description": "Consulta fetch calculated fields sobre builder_calculated_fields y entrega el resultado a la interfaz.",
       "signature": "fetchCalculatedFields(incluirInactivos = false)",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9831,9 +9181,7 @@
       "description": "Consulta fetch audit by nv sobre nv_bitacora y entrega el resultado a la interfaz.",
       "signature": "fetchAuditByNv(nv, canal = 'ptm', limit = 60)",
       "source": "src/pages/Panel/dash/dashData.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9860,9 +9208,7 @@
       "description": "Se consulta al expandir una N.V.; no añade tráfico a las búsquedas del Panel.",
       "signature": "CertificadosSalida({ operacionId })",
       "source": "src/pages/Panel/info/CertificadosSalida.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9898,9 +9244,7 @@
       "description": "Ejecuta run; participa en lectura sobre tms_panel_transportistas.",
       "signature": "run()",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -9927,9 +9271,7 @@
       "description": "Registra guardar sobre guardar_nv y devuelve el resultado de la operación.",
       "signature": "guardar(payload)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9947,9 +9289,7 @@
       "description": "Ejecuta puede editar operacion; participa en RPC sobre iam_puede_editar_nv.",
       "signature": "puedeEditarOperacion(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9967,9 +9307,7 @@
       "description": "Ejecuta puede cambiar estado operacion; participa en RPC sobre iam_puede_cambiar_estado_nv.",
       "signature": "puedeCambiarEstadoOperacion(id, estado = null)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -9987,9 +9325,7 @@
       "description": "Actualiza cambiar estado sobre cambiar_estado_nv aplicando las validaciones del servicio.",
       "signature": "cambiarEstado(id, estado, urgente = null)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10007,9 +9343,7 @@
       "description": "Ejecuta corregir estado ashipping; participa en RPC sobre corregir_estado_nv_a_shipping.",
       "signature": "corregirEstadoAShipping(id, motivo)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10027,9 +9361,7 @@
       "description": "Ejecuta gestionar pausa shipping; participa en RPC sobre gestionar_pausa_shipping_nv.",
       "signature": "gestionarPausaShipping(id, subestado = null, motivo = '')",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10047,9 +9379,7 @@
       "description": "Ejecuta reportar incidencia armado; participa en RPC sobre reportar_incidencia_armado_nv.",
       "signature": "reportarIncidenciaArmado(id, observacion)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10067,9 +9397,7 @@
       "description": "Actualiza actualizar campos sobre guardar_nv aplicando las validaciones del servicio.",
       "signature": "actualizarCampos(id, dirty)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10087,9 +9415,7 @@
       "description": "Consulta listar solicitudes reapertura sobre tms_nv_reaperturas y entrega el resultado a la interfaz.",
       "signature": "listarSolicitudesReapertura(operacionId)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10107,9 +9433,7 @@
       "description": "Ejecuta solicitar reapertura; participa en RPC sobre solicitar_reapertura_nv.",
       "signature": "solicitarReapertura(id, motivo)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10127,9 +9451,7 @@
       "description": "Actualiza resolver reapertura sobre resolver_reapertura_nv aplicando las validaciones del servicio.",
       "signature": "resolverReapertura(requestId, aprobar, observacion = '')",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10147,9 +9469,7 @@
       "description": "Elimina o revoca eliminar sobre eliminar_nv según las reglas de acceso.",
       "signature": "eliminar(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10167,9 +9487,7 @@
       "description": "Consulta listar consolidados sobre tms_consolidados, tms_consolidado_nvs y entrega el resultado a la interfaz.",
       "signature": "listarConsolidados()",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10191,9 +9509,7 @@
       "description": "Registra guardar consolidado sobre guardar_consolidado y devuelve el resultado de la operación.",
       "signature": "guardarConsolidado(p)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10211,9 +9527,7 @@
       "description": "Elimina o revoca eliminar consolidado sobre eliminar_consolidado según las reglas de acceso.",
       "signature": "eliminarConsolidado(id)",
       "source": "src/pages/Panel/ingresar/ingresarService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10231,9 +9545,7 @@
       "description": "Ejecuta centros permitidos; participa en RPC sobre iam_mis_scopes.",
       "signature": "centrosPermitidos()",
       "source": "src/pages/Panel/panelQueries.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10269,9 +9581,7 @@
       "description": "Consulta fetch reopen inbox sobre listar_bandeja_reaperturas_nv y entrega el resultado a la interfaz.",
       "signature": "fetchReopenInbox({ status = '', search = '', limit = 200 } = {})",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10298,9 +9608,7 @@
       "description": "Actualiza resolve reopen request sobre resolver_reapertura_nv aplicando las validaciones del servicio.",
       "signature": "resolveReopenRequest(requestId, approve, observation = '')",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10318,9 +9626,7 @@
       "description": "Ejecuta subscribe to reopen requests; participa en Realtime.",
       "signature": "subscribeToReopenRequests(onChange)",
       "source": "src/pages/Panel/reaperturas/reopenRequestsService.js",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -10333,10 +9639,7 @@
       "description": "Ejecuta rpc; participa en RPC, Realtime.",
       "signature": "rpc(name, params = {})",
       "source": "src/pages/Panel/rutas/routeCoordinationService.js",
-      "operations": [
-        "RPC",
-        "Realtime"
-      ],
+      "operations": ["RPC", "Realtime"],
       "resources": []
     },
     {
@@ -10358,9 +9661,7 @@
       "description": "Ejecuta tvdashboard; participa en Realtime.",
       "signature": "TVDashboard()",
       "source": "src/pages/Panel/tv/PanelTVReal.jsx",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
@@ -10373,9 +9674,7 @@
       "description": "Registra enviar sobre postventa-publico y devuelve el resultado de la operación.",
       "signature": "enviar(e)",
       "source": "src/pages/Postventa/SolicitudPublica.jsx",
-      "operations": [
-        "Edge Function"
-      ],
+      "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
@@ -10402,9 +9701,7 @@
       "description": "Ejecuta consulta nv; participa en RPC sobre buscar_nv_publico.",
       "signature": "ConsultaNV()",
       "source": "src/pages/Public/ConsultaNV.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10431,9 +9728,7 @@
       "description": "Clasificación de productos por GRUPO comercial (ERP) para el checklist de Calidad. Carga el mapeo producto→grupo (archivo público generado desde el Excel del ERP) vía RPC gateada, y reclasifica las recepciones existentes.",
       "signature": "ClasificacionProductos()",
       "source": "src/pages/Quality/ClasificacionProductos.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10473,9 +9768,7 @@
       "description": "Descarga TODA la tabla tms_direcciones a Excel, paginando de a 1000 (Supabase corta a ~1000 filas por request).",
       "signature": "descargarMatriz()",
       "source": "src/pages/Queries/Addresses.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10502,9 +9795,7 @@
       "description": "Ejecuta handle search; participa en RPC sobre buscar_direcciones.",
       "signature": "handleSearch()",
       "source": "src/pages/Queries/Addresses.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10531,9 +9822,7 @@
       "description": "Elimina un registro por id (lo usa tanto la fila como el modal).",
       "signature": "deleteRow(id)",
       "source": "src/pages/Queries/Addresses.jsx",
-      "operations": [
-        "eliminación"
-      ],
+      "operations": ["eliminación"],
       "resources": [
         {
           "kind": "table",
@@ -10551,9 +9840,7 @@
       "description": "Ejecuta save edit; participa en actualización sobre tms_direcciones.",
       "signature": "saveEdit()",
       "source": "src/pages/Queries/Addresses.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -10571,9 +9858,7 @@
       "description": "Ejecuta batches; participa en RPC sobre search_batches, .animate-header, .animate-search, .animate-decor.",
       "signature": "Batches()",
       "source": "src/pages/Queries/Batches.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10639,9 +9924,7 @@
       "description": "Consulta de GRUPO comercial por SKU (o nombre). Lee tms_producto_grupo, que se alimenta desde Carga Masiva → Grupos de SKU (Excel del ERP).",
       "signature": "ConsultaGrupo()",
       "source": "src/pages/Queries/ConsultaGrupo.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10668,9 +9951,7 @@
       "description": "Ejecuta dispatch control; participa en lectura sobre tms_control_despacho.",
       "signature": "DispatchControl()",
       "source": "src/pages/Queries/DispatchControl.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10728,9 +10009,7 @@
       "description": "Ejecuta historial nv; participa en lectura sobre tms_nv_diarias.",
       "signature": "HistorialNV()",
       "source": "src/pages/Queries/HistorialNV.jsx",
-      "operations": [
-        "lectura"
-      ],
+      "operations": ["lectura"],
       "resources": [
         {
           "kind": "table",
@@ -10757,9 +10036,7 @@
       "description": "Ejecuta product datasheet; participa en RPC sobre search_productos, get_ficha_producto.",
       "signature": "ProductDatasheet()",
       "source": "src/pages/Queries/ProductDatasheet.jsx",
-      "operations": [
-        "RPC"
-      ],
+      "operations": ["RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10799,10 +10076,7 @@
       "description": "── Subir foto (cámara o galería) ──",
       "signature": "handleFile(e)",
       "source": "src/pages/Queries/ProductDatasheet.jsx",
-      "operations": [
-        "creación",
-        "archivo"
-      ],
+      "operations": ["creación", "archivo"],
       "resources": [
         {
           "kind": "table",
@@ -10829,10 +10103,7 @@
       "description": "Ejecuta delete foto; participa en eliminación, archivo sobre tms_fichas_imagenes.",
       "signature": "deleteFoto(img)",
       "source": "src/pages/Queries/ProductDatasheet.jsx",
-      "operations": [
-        "eliminación",
-        "archivo"
-      ],
+      "operations": ["eliminación", "archivo"],
       "resources": [
         {
           "kind": "table",
@@ -10850,9 +10121,7 @@
       "description": "Ejecuta set principal; participa en actualización sobre tms_fichas_imagenes.",
       "signature": "setPrincipal(img)",
       "source": "src/pages/Queries/ProductDatasheet.jsx",
-      "operations": [
-        "actualización"
-      ],
+      "operations": ["actualización"],
       "resources": [
         {
           "kind": "table",
@@ -10870,10 +10139,7 @@
       "description": "Ejecuta sales status; participa en lectura, RPC sobre fuzzy_search, tms_nv_diarias, tms_entregas.",
       "signature": "SalesStatus()",
       "source": "src/pages/Queries/SalesStatus.jsx",
-      "operations": [
-        "lectura",
-        "RPC"
-      ],
+      "operations": ["lectura", "RPC"],
       "resources": [
         {
           "kind": "rpc",
@@ -10917,9 +10183,7 @@
       "description": "Ejecuta debounced invalidate search; participa en Realtime.",
       "signature": "debouncedInvalidateSearch()",
       "source": "src/pages/Queries/SalesStatus.jsx",
-      "operations": [
-        "Realtime"
-      ],
+      "operations": ["Realtime"],
       "resources": []
     },
     {
