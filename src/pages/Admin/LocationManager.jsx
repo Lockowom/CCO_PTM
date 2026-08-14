@@ -275,7 +275,7 @@ export default function LocationManager() {
     ultimos: []
   });
   const isPutaway = source === 'putaway';
-  const sourceTable = isPutaway ? 'wms_putaway_ubicaciones' : 'wms_ubicaciones';
+  const sourceTable = 'wms_ubicaciones';
 
   const RACKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
@@ -284,6 +284,7 @@ export default function LocationManager() {
     setLoading(true);
     try {
       let query = supabase.from(sourceTable).select('*', { count: 'exact' });
+      query = isPutaway ? query.eq('registrado_putaway', true) : query.gt('cantidad', 0);
 
       // Search filter
       if (search.trim()) {
@@ -313,7 +314,7 @@ export default function LocationManager() {
     } finally {
       setLoading(false);
     }
-  }, [search, rackFilter, sortField, sortDir, page, sourceTable]);
+  }, [search, rackFilter, sortField, sortDir, page, sourceTable, isPutaway]);
 
   useEffect(() => {
     fetchData();
@@ -370,12 +371,25 @@ export default function LocationManager() {
         throw new Error('La ubicación no puede quedar vacía');
       }
 
-      const { data: saved, error } = await supabase
-        .from(sourceTable)
-        .update(updateData)
-        .eq('id', rowId)
-        .select('*')
-        .single();
+      let saved;
+      let error;
+      if (field === 'ubicacion') {
+        const result = await supabase.rpc('mover_ubicacion_wms', {
+          p_id: rowId,
+          p_nueva_ubicacion: updateData.ubicacion
+        });
+        saved = result.data;
+        error = result.error;
+      } else {
+        const result = await supabase
+          .from(sourceTable)
+          .update(updateData)
+          .eq('id', rowId)
+          .select('*')
+          .single();
+        saved = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
       if (!saved) throw new Error('Supabase no confirmó la actualización');
@@ -402,74 +416,20 @@ export default function LocationManager() {
 
   const handleMove = async (item, newUbicacion) => {
     try {
-      if (isPutaway) {
-        const { data: saved, error } = await supabase
-          .from('wms_putaway_ubicaciones')
-          .update({ ubicacion: newUbicacion })
-          .eq('id', item.id)
-          .select('*')
-          .single();
+      const { data: saved, error } = await supabase.rpc('mover_ubicacion_wms', {
+        p_id: item.id,
+        p_nueva_ubicacion: newUbicacion
+      });
+      if (error) throw error;
+      if (!saved) throw new Error('Supabase no confirmó el cambio de ubicación');
 
-        if (error) throw error;
-        if (!saved) throw new Error('Supabase no confirmó el cambio de ubicación');
-
-        setData((prev) => prev.map((row) => (row.id === item.id ? saved : row)));
-        setMoveItem(null);
-        toast.success(`Ubicación visual guardada y verificada: ${saved.ubicacion}`);
-        logUpload({
-          modulo: 'Put Away visual',
-          tablaDestino: 'wms_putaway_ubicaciones',
-          totalRegistros: 1,
-          actualizados: 1
-        });
-        return;
-      }
-
-      // Check if same product already exists at target location
-      const { data: existing } = await supabase
-        .from('wms_ubicaciones')
-        .select('id, cantidad')
-        .eq('ubicacion', newUbicacion)
-        .eq('codigo', item.codigo)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        // Merge: add quantities
-        const { error: mergeErr } = await supabase
-          .from('wms_ubicaciones')
-          .update({ cantidad: (existing[0].cantidad || 0) + (item.cantidad || 0) })
-          .eq('id', existing[0].id);
-
-        if (mergeErr) throw mergeErr;
-
-        // Delete original
-        const { error: delErr } = await supabase.from('wms_ubicaciones').delete().eq('id', item.id);
-
-        if (delErr) throw delErr;
-
-        toast.success(`Producto fusionado en ${newUbicacion} (cantidad sumada)`);
-        logUpload({
-          modulo: 'Gestión Ubicaciones',
-          tablaDestino: 'wms_ubicaciones',
-          totalRegistros: 1,
-          actualizados: 1
-        });
-      } else {
-        // Simple move
-        const { error } = await supabase
-          .from('wms_ubicaciones')
-          .update({ ubicacion: newUbicacion })
-          .eq('id', item.id);
-
-        if (error) throw error;
-        toast.success(`Movido a ${newUbicacion}`);
-        logUpload({
-          modulo: 'Gestión Ubicaciones',
-          tablaDestino: 'wms_ubicaciones',
-          totalRegistros: 1,
-          actualizados: 1
-        });
-      }
+      toast.success(`Ubicación guardada y verificada: ${saved.ubicacion}`);
+      logUpload({
+        modulo: isPutaway ? 'Put Away visual' : 'Gestión Ubicaciones',
+        tablaDestino: 'wms_ubicaciones',
+        totalRegistros: 1,
+        actualizados: 1
+      });
 
       setMoveItem(null);
       fetchData();
@@ -480,12 +440,10 @@ export default function LocationManager() {
 
   const handleDelete = async (item) => {
     try {
-      const { data: deleted, error } = await supabase
-        .from(sourceTable)
-        .delete()
-        .eq('id', item.id)
-        .select('id')
-        .single();
+      const { data: deleted, error } = await supabase.rpc('eliminar_ubicacion_wms', {
+        p_id: item.id,
+        p_solo_putaway: isPutaway
+      });
 
       if (error) throw error;
       if (!deleted) throw new Error('Supabase no confirmó la eliminación');
@@ -547,7 +505,7 @@ export default function LocationManager() {
               Modificar ubicaciones
             </h1>
             <p className="text-sm text-slate-500">
-              Put Away visual separado del inventario físico y sus cantidades
+              Una sola fuente para Put Away, Calidad, Gestión e inventario físico
             </p>
           </div>
         </div>

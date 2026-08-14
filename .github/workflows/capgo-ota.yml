@@ -12,8 +12,9 @@ name: PUENTE ÚNICO Capgo → OTA libre (1.55.145)
 # Las variables de Supabase van embebidas porque son públicas (ya están en dist/).
 
 on:
-  push:
-    branches: [main]
+  # Capgo fue reemplazado por free-ota.yml. Se conserva manualmente solo como
+  # rollback histórico mientras se completa la retirada del proveedor.
+  workflow_dispatch:
 
 concurrency:
   group: capgo-ota

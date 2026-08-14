@@ -1,0 +1,21 @@
+const i = {},
+  c = 'https://cco-ptm-b05m.onrender.com';
+function r() {
+  const n = i == null ? void 0 : i.VITE_PUBLIC_URL;
+  if (n && String(n).trim()) return String(n).trim().replace(/\/+$/, '');
+  if (typeof window < 'u' && window.location) {
+    const t = window.location.origin || '',
+      o =
+        /^(capacitor|file|ionic):/i.test(t) ||
+        /\/\/(localhost|127\.0\.0\.1|10\.|192\.168\.|\[?::1\]?)/i.test(t) ||
+        /\.local(?::\d+)?$/i.test(t);
+    if (/^https?:/i.test(t) && !o) return t.replace(/\/+$/, '');
+  }
+  return c;
+}
+function s(n = '/') {
+  const t = r(),
+    o = n.startsWith('/') ? n : `/${n}`;
+  return t ? `${t}${o}` : o;
+}
+export { s as a, r as p };

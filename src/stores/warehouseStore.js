@@ -119,7 +119,11 @@ export const useWarehouseStore = create((set, get) => ({
         // 1. Inventario real (fuente de verdad de ocupación) — solo columnas necesarias
         // 2. Layout físico (metadata) — en paralelo con el inventario
         const [ubicacionesRows, layoutRows] = await Promise.all([
-          fetchAllParallel('wms_ubicaciones', 'id,ubicacion,codigo,descripcion,cantidad', 'id'),
+          fetchAllParallel(
+            'wms_ubicaciones',
+            'id,ubicacion,codigo,descripcion,cantidad,serie,partida,pieza,fecha_vencimiento,registrado_putaway,origen_registro',
+            'id'
+          ),
           fetchAllParallel('wms_layout', '*', 'ubicacion').catch(() => [])
         ]);
 
@@ -136,7 +140,9 @@ export const useWarehouseStore = create((set, get) => ({
 
           inventoryMap[normUbic].push({
             ...row,
-            ubicacion: normUbic
+            ubicacion: normUbic,
+            registradoPutaway: Boolean(row.registrado_putaway),
+            fuente: row.registrado_putaway && Number(row.cantidad || 0) <= 0 ? 'putaway' : 'wms'
           });
 
           // Validar si la ubicación es físicamente posible (formato: RACK-POS-NIVEL)

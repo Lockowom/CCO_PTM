@@ -15,7 +15,6 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../stores/warehouseStore';
 import { useCalidadFlags } from '../../hooks/useCalidadFlags';
 import CalidadBadge from '../../components/ui/CalidadBadge';
-import { supabase } from '../../supabase';
 
 // Estimaciones iniciales; la altura real la mide el virtualizer (measureElement).
 const COLLAPSED_HEIGHT = 92;
@@ -154,73 +153,12 @@ const WmsLocations = () => {
   const [stockFilter, setStockFilter] = useState('all');
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
-  const [putawayRows, setPutawayRows] = useState([]);
-  const [putawayLoading, setPutawayLoading] = useState(true);
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
-  const fetchPutawayLocations = useCallback(async () => {
-    setPutawayLoading(true);
-    try {
-      const rows = [];
-      const pageSize = 1000;
-      for (let from = 0; ; from += pageSize) {
-        const { data, error } = await supabase
-          .from('wms_putaway_ubicaciones')
-          .select('id,ubicacion,codigo,descripcion,serie,partida,creado_en,actualizado_en')
-          .order('creado_en', { ascending: true })
-          .range(from, from + pageSize - 1);
-        if (error) throw error;
-        rows.push(...(data || []));
-        if (!data || data.length < pageSize) break;
-      }
-
-      // Put Away puede contener reintentos del mismo SKU+ubicación. Para la
-      // consulta mostramos una sola asignación vigente, sin borrar el historial.
-      const unique = new Map();
-      rows.forEach((row) => {
-        const ubicacion = String(row.ubicacion || '')
-          .trim()
-          .toUpperCase();
-        const codigo = String(row.codigo || '')
-          .trim()
-          .toUpperCase();
-        if (!ubicacion || !codigo) return;
-        unique.set(`${ubicacion}::${codigo}`, {
-          ...row,
-          ubicacion,
-          codigo,
-          cantidad: null,
-          fuente: 'putaway'
-        });
-      });
-      setPutawayRows(Array.from(unique.values()));
-    } catch (error) {
-      console.error('Put Away locations fetch error:', error);
-      setPutawayRows([]);
-    } finally {
-      setPutawayLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchWarehouseData();
-    fetchPutawayLocations();
-  }, [fetchWarehouseData, fetchPutawayLocations]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('query-unified-locations-putaway')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'wms_putaway_ubicaciones' },
-        fetchPutawayLocations
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchPutawayLocations]);
+  }, [fetchWarehouseData]);
 
   // Búsqueda INSTANTÁNEA: el inventario ya está en memoria, así que filtramos
   // en cada tecla sin debounce → escribir/borrar refleja al instante.
@@ -239,30 +177,10 @@ const WmsLocations = () => {
     const groups = {};
     Object.entries(inventory).forEach(([ubicacion, items]) => {
       if (!groups[ubicacion]) groups[ubicacion] = { ubicacion, allItems: [], matchingItems: [] };
-      groups[ubicacion].allItems = items.map((item) => ({ ...item, fuente: 'wms' }));
-    });
-
-    putawayRows.forEach((item) => {
-      const ubicacion = item.ubicacion;
-      if (!groups[ubicacion]) groups[ubicacion] = { ubicacion, allItems: [], matchingItems: [] };
-      const physicalIndex = groups[ubicacion].allItems.findIndex(
-        (row) =>
-          String(row.codigo || '')
-            .trim()
-            .toUpperCase() === item.codigo
-      );
-      if (physicalIndex >= 0) {
-        // Si ya existe físicamente, no duplicamos; enriquecemos su procedencia.
-        groups[ubicacion].allItems[physicalIndex] = {
-          ...groups[ubicacion].allItems[physicalIndex],
-          registradoPutaway: true
-        };
-      } else {
-        groups[ubicacion].allItems.push(item);
-      }
+      groups[ubicacion].allItems = items;
     });
     return groups;
-  }, [inventory, putawayRows]);
+  }, [inventory]);
 
   const filteredGroups = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -472,14 +390,11 @@ const WmsLocations = () => {
               <Download size={13} /> <span className="hidden sm:inline">Exportar</span>
             </button>
             <button
-              onClick={() => {
-                fetchWarehouseData(true);
-                fetchPutawayLocations();
-              }}
+              onClick={() => fetchWarehouseData(true)}
               className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
               title="Actualizar"
             >
-              <RefreshCw size={14} className={loading || putawayLoading ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
@@ -496,7 +411,7 @@ const WmsLocations = () => {
                 Busca por ubicación, SKU o descripción para ver resultados
               </p>
             </div>
-          ) : (loading || putawayLoading) && filteredGroups.length === 0 ? (
+          ) : loading && filteredGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28">
               <div className="w-11 h-11 border-4 border-amber-100 border-t-amber-500 rounded-full animate-spin mb-5" />
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">

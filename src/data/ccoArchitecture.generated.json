@@ -3,8 +3,8 @@
     "name": "Arquitectura funcional CCO",
     "schemaVersion": 2,
     "generator": "scripts/generate_architecture_catalog.mjs",
-    "sourceVersion": "1.55.144",
-    "fingerprint": "8db2fffb4ed1",
+    "sourceVersion": "1.55.146",
+    "fingerprint": "580f35aa8e4d",
     "totals": {
       "module": 10,
       "screen": 69,
@@ -12,9 +12,9 @@
       "service": 22,
       "function": 279,
       "action": 110,
-      "table": 92,
-      "rpc": 131,
-      "edge-function": 10,
+      "table": 95,
+      "rpc": 134,
+      "edge-function": 13,
       "storage": 1
     }
   },
@@ -49,7 +49,7 @@
       "function": 0,
       "action": 16,
       "table": 8,
-      "rpc": 1,
+      "rpc": 2,
       "edge-function": 0,
       "storage": 0
     },
@@ -136,9 +136,9 @@
       "service": 9,
       "function": 93,
       "action": 30,
-      "table": 34,
-      "rpc": 26,
-      "edge-function": 10,
+      "table": 37,
+      "rpc": 28,
+      "edge-function": 13,
       "storage": 1
     }
   },
@@ -4682,7 +4682,7 @@
       "module": "admin",
       "label": "setOTAChannel",
       "displayLabel": "Set OTAChannel",
-      "description": "Asigna este dispositivo a un canal (requiere que el canal permita \"self-assign\" en el panel de Capgo). Al volver a 'production' se deshace.",
+      "description": "Asigna este dispositivo a beta o vuelve al canal production.",
       "signature": "setOTAChannel(channel)",
       "source": "src/services/mobileService.js",
       "operations": [],
@@ -4716,8 +4716,13 @@
       "description": "── Aplicar update manualmente (desde botón UI) ── Versión/canal OTA vigente en ESTE dispositivo (para mostrar en la app).",
       "signature": "versionOTA()",
       "source": "src/services/mobileService.js",
-      "operations": [],
-      "resources": []
+      "operations": ["RPC", "archivo"],
+      "resources": [
+        {
+          "kind": "rpc",
+          "name": "registrar_ota_aplicado"
+        }
+      ]
     },
     {
       "status": "activo",
@@ -4729,13 +4734,8 @@
       "description": "Busca e instala una actualización OTA a demanda (botón \"Buscar actualización\").",
       "signature": "buscarActualizacion()",
       "source": "src/services/mobileService.js",
-      "operations": ["RPC", "archivo"],
-      "resources": [
-        {
-          "kind": "rpc",
-          "name": "registrar_ota_aplicado"
-        }
-      ]
+      "operations": [],
+      "resources": []
     },
     {
       "status": "activo",
@@ -4784,14 +4784,14 @@
       "module": "admin",
       "label": "listarDespliegueOTA",
       "displayLabel": "Listar Despliegue OTA",
-      "description": "Cliente del despliegue OTA (Edge Function `capgo-deploy`). La API key de Capgo NO está aquí — vive solo en la función; estas llamadas van con el JWT de la sesión (Supabase lo adjunta) y la función verifica el permiso `deploy_ota`. Lista los",
+      "description": "Cliente OTA propio: Supabase administra canales/auditoría y GitHub Releases aloja bundles inmutables. No contiene claves privadas ni depende de Capgo. Lista bundles y la versión servida por cada canal.",
       "signature": "listarDespliegueOTA()",
       "source": "src/services/otaDeployService.js",
       "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
-          "name": "capgo-deploy"
+          "name": "ota-deploy"
         }
       ]
     },
@@ -4809,7 +4809,7 @@
       "resources": [
         {
           "kind": "edge-function",
-          "name": "capgo-deploy"
+          "name": "ota-deploy"
         }
       ]
     },
@@ -4820,14 +4820,14 @@
       "module": "admin",
       "label": "eliminarBundleOTA",
       "displayLabel": "Eliminar Bundle OTA",
-      "description": "Elimina un bundle viejo de Capgo (limpieza). No toca canales activos.",
+      "description": "Archiva un bundle viejo. No toca canales activos ni borra evidencia histórica.",
       "signature": "eliminarBundleOTA(version)",
       "source": "src/services/otaDeployService.js",
       "operations": ["Edge Function"],
       "resources": [
         {
           "kind": "edge-function",
-          "name": "capgo-deploy"
+          "name": "ota-deploy"
         }
       ]
     },
@@ -4877,13 +4877,8 @@
       "description": "── Inventario: qué versión aplicó cada dispositivo (desde nuestro log) ──────",
       "signature": "resumenDispositivosOTA()",
       "source": "src/services/otaDeployService.js",
-      "operations": ["RPC"],
-      "resources": [
-        {
-          "kind": "rpc",
-          "name": "ota_dispositivos_resumen"
-        }
-      ]
+      "operations": [],
+      "resources": []
     },
     {
       "status": "activo",
@@ -4910,7 +4905,7 @@
       "module": "admin",
       "label": "avisarNuevaVersionPush",
       "displayLabel": "Avisar Nueva Version Push",
-      "description": "── Aviso por push (Capgo/FCM) de una nueva versión ──────────────────────────",
+      "description": "── Aviso por push FCM de una nueva versión ──────────────────────────────────",
       "signature": "avisarNuevaVersionPush(version, rol = 'ADMIN')",
       "source": "src/services/otaDeployService.js",
       "operations": ["Edge Function"],
@@ -6909,12 +6904,12 @@
     },
     {
       "status": "activo",
-      "id": "edge:capgo-deploy",
+      "id": "edge:ota-deploy",
       "kind": "edge-function",
       "module": "admin",
-      "label": "capgo-deploy",
-      "description": "Orquesta despliegues OTA de la aplicación móvil.",
-      "source": "supabase/functions/capgo-deploy/index.ts"
+      "label": "ota-deploy",
+      "description": "Función Edge ota-deploy.",
+      "source": "supabase/functions/ota-deploy/index.ts"
     },
     {
       "status": "activo",
@@ -6931,15 +6926,6 @@
       "kind": "rpc",
       "module": "admin",
       "label": "ota_gobernanza_set",
-      "description": "RPC utilizada por la aplicación.",
-      "source": null
-    },
-    {
-      "status": "activo",
-      "id": "resource:rpc:ota-dispositivos-resumen",
-      "kind": "rpc",
-      "module": "admin",
-      "label": "ota_dispositivos_resumen",
       "description": "RPC utilizada por la aplicación.",
       "source": null
     },
@@ -7708,21 +7694,21 @@
       "description": "─── Main Component ──────────────────────────────────",
       "signature": "LocationManager()",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": ["lectura"],
+      "operations": ["lectura", "RPC", "Realtime"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_ubicaciones"
+          "kind": "rpc",
+          "name": "putaway_admin_resumen"
         }
       ]
     },
     {
       "status": "activo",
-      "id": "resource:table:wms-ubicaciones",
-      "kind": "table",
+      "id": "resource:rpc:putaway-admin-resumen",
+      "kind": "rpc",
       "module": "admin",
-      "label": "wms_ubicaciones",
-      "description": "Tabla utilizada por la aplicación.",
+      "label": "putaway_admin_resumen",
+      "description": "RPC utilizada por la aplicación.",
       "source": null
     },
     {
@@ -7735,13 +7721,22 @@
       "description": "─── Actions ────────────────────────────────────────",
       "signature": "handleInlineSave(rowId, field, value)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": ["actualización"],
+      "operations": ["lectura", "actualización", "RPC"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_ubicaciones"
+          "kind": "rpc",
+          "name": "mover_ubicacion_wms"
         }
       ]
+    },
+    {
+      "status": "activo",
+      "id": "resource:rpc:mover-ubicacion-wms",
+      "kind": "rpc",
+      "module": "admin",
+      "label": "mover_ubicacion_wms",
+      "description": "RPC utilizada por la aplicación.",
+      "source": null
     },
     {
       "status": "activo",
@@ -7750,14 +7745,14 @@
       "module": "admin",
       "label": "handleMove",
       "displayLabel": "Handle Move",
-      "description": "Ejecuta handle move; participa en lectura, actualización, eliminación sobre wms_ubicaciones.",
+      "description": "Ejecuta handle move; participa en RPC sobre mover_ubicacion_wms.",
       "signature": "handleMove(item, newUbicacion)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": ["lectura", "actualización", "eliminación"],
+      "operations": ["RPC"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_ubicaciones"
+          "kind": "rpc",
+          "name": "mover_ubicacion_wms"
         }
       ]
     },
@@ -7768,16 +7763,25 @@
       "module": "admin",
       "label": "handleDelete",
       "displayLabel": "Handle Delete",
-      "description": "Ejecuta handle delete; participa en eliminación sobre wms_ubicaciones.",
+      "description": "Ejecuta handle delete; participa en RPC sobre eliminar_ubicacion_wms.",
       "signature": "handleDelete(item)",
       "source": "src/pages/Admin/LocationManager.jsx",
-      "operations": ["eliminación"],
+      "operations": ["RPC"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_ubicaciones"
+          "kind": "rpc",
+          "name": "eliminar_ubicacion_wms"
         }
       ]
+    },
+    {
+      "status": "activo",
+      "id": "resource:rpc:eliminar-ubicacion-wms",
+      "kind": "rpc",
+      "module": "admin",
+      "label": "eliminar_ubicacion_wms",
+      "description": "RPC utilizada por la aplicación.",
+      "source": null
     },
     {
       "status": "activo",
@@ -8288,6 +8292,15 @@
     },
     {
       "status": "activo",
+      "id": "resource:table:wms-ubicaciones",
+      "kind": "table",
+      "module": "inbound",
+      "label": "wms_ubicaciones",
+      "description": "Tabla utilizada por la aplicación.",
+      "source": null
+    },
+    {
+      "status": "activo",
       "id": "action:src-pages-inbound-entry-jsx:handleUbicacionBlur",
       "kind": "action",
       "module": "inbound",
@@ -8311,14 +8324,14 @@
       "module": "inbound",
       "label": "buildVisualLocationRows",
       "displayLabel": "Build Visual Location Rows",
-      "description": "Ejecuta build visual location rows; participa en creación sobre wms_putaway_ubicaciones, tms_historial_cargas.",
+      "description": "Ejecuta build visual location rows; participa en creación, RPC sobre registrar_putaway_ubicaciones, tms_historial_cargas.",
       "signature": "buildVisualLocationRows(items)",
       "source": "src/pages/Inbound/Entry.jsx",
-      "operations": ["creación"],
+      "operations": ["creación", "RPC"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_putaway_ubicaciones"
+          "kind": "rpc",
+          "name": "registrar_putaway_ubicaciones"
         },
         {
           "kind": "table",
@@ -8328,11 +8341,11 @@
     },
     {
       "status": "activo",
-      "id": "resource:table:wms-putaway-ubicaciones",
-      "kind": "table",
+      "id": "resource:rpc:registrar-putaway-ubicaciones",
+      "kind": "rpc",
       "module": "inbound",
-      "label": "wms_putaway_ubicaciones",
-      "description": "Tabla utilizada por la aplicación.",
+      "label": "registrar_putaway_ubicaciones",
+      "description": "RPC utilizada por la aplicación.",
       "source": null
     },
     {
@@ -8645,11 +8658,11 @@
       "description": "Guarda la operación en la cola local para subirla al reconectar.",
       "signature": "encolar()",
       "source": "src/pages/Mobile/WarehousePDA.jsx",
-      "operations": ["creación"],
+      "operations": ["RPC"],
       "resources": [
         {
-          "kind": "table",
-          "name": "wms_ubicaciones"
+          "kind": "rpc",
+          "name": "registrar_putaway_ubicaciones"
         }
       ]
     },
@@ -10146,6 +10159,15 @@
     },
     {
       "status": "activo",
+      "id": "edge:capgo-deploy",
+      "kind": "edge-function",
+      "module": "admin",
+      "label": "capgo-deploy",
+      "description": "Orquesta despliegues OTA de la aplicación móvil.",
+      "source": "supabase/functions/capgo-deploy/index.ts"
+    },
+    {
+      "status": "activo",
       "id": "resource:rpc:puede-desplegar-ota",
       "kind": "rpc",
       "module": "admin",
@@ -10179,6 +10201,60 @@
       "label": "notify-ticket-update",
       "description": "Notifica cambios relevantes de tickets existentes.",
       "source": "supabase/functions/notify-ticket-update/index.ts"
+    },
+    {
+      "status": "activo",
+      "id": "resource:table:mobile-ota-bundles",
+      "kind": "table",
+      "module": "admin",
+      "label": "mobile_ota_bundles",
+      "description": "Tabla utilizada por la aplicación.",
+      "source": null
+    },
+    {
+      "status": "activo",
+      "id": "resource:table:mobile-ota-channels",
+      "kind": "table",
+      "module": "admin",
+      "label": "mobile_ota_channels",
+      "description": "Tabla utilizada por la aplicación.",
+      "source": null
+    },
+    {
+      "status": "activo",
+      "id": "resource:table:mobile-ota-devices",
+      "kind": "table",
+      "module": "admin",
+      "label": "mobile_ota_devices",
+      "description": "Tabla utilizada por la aplicación.",
+      "source": null
+    },
+    {
+      "status": "activo",
+      "id": "edge:ota-publish",
+      "kind": "edge-function",
+      "module": "admin",
+      "label": "ota-publish",
+      "description": "Función Edge ota-publish.",
+      "source": "supabase/functions/ota-publish/index.ts"
+    },
+    {
+      "status": "activo",
+      "id": "edge:ota-updates",
+      "kind": "edge-function",
+      "module": "admin",
+      "label": "ota-updates",
+      "description": "Función Edge ota-updates.",
+      "source": "supabase/functions/ota-updates/index.ts"
+    },
+    {
+      "status": "activo",
+      "id": "resource:table:mobile-ota-events",
+      "kind": "table",
+      "module": "admin",
+      "label": "mobile_ota_events",
+      "description": "Tabla utilizada por la aplicación.",
+      "source": null
     },
     {
       "status": "activo",
@@ -13941,7 +14017,7 @@
     },
     {
       "id": "connection:512",
-      "from": "function:src-services-mobileservice-js:buscarActualizacion",
+      "from": "function:src-services-mobileservice-js:versionOTA",
       "to": "resource:rpc:registrar-ota-aplicado",
       "relation": "ejecuta",
       "label": "ejecuta rpc"
@@ -13956,21 +14032,21 @@
     {
       "id": "connection:514",
       "from": "function:src-services-otadeployservice-js:listarDespliegueOTA",
-      "to": "edge:capgo-deploy",
+      "to": "edge:ota-deploy",
       "relation": "invoca",
       "label": "invoca edge-function"
     },
     {
       "id": "connection:515",
       "from": "function:src-services-otadeployservice-js:promoverOTA",
-      "to": "edge:capgo-deploy",
+      "to": "edge:ota-deploy",
       "relation": "invoca",
       "label": "invoca edge-function"
     },
     {
       "id": "connection:516",
       "from": "function:src-services-otadeployservice-js:eliminarBundleOTA",
-      "to": "edge:capgo-deploy",
+      "to": "edge:ota-deploy",
       "relation": "invoca",
       "label": "invoca edge-function"
     },
@@ -13991,9 +14067,9 @@
     {
       "id": "connection:519",
       "from": "function:src-services-otadeployservice-js:resumenDispositivosOTA",
-      "to": "resource:rpc:ota-dispositivos-resumen",
-      "relation": "ejecuta",
-      "label": "ejecuta rpc"
+      "to": "function:src-services-otadeployservice-js:listarDespliegueOTA",
+      "relation": "invoca",
+      "label": "invoca función"
     },
     {
       "id": "connection:520",
@@ -18296,9 +18372,9 @@
     {
       "id": "connection:1134",
       "from": "action:src-pages-admin-locationmanager-jsx:LocationManager",
-      "to": "resource:table:wms-ubicaciones",
-      "relation": "lee",
-      "label": "lee table"
+      "to": "resource:rpc:putaway-admin-resumen",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1135",
@@ -18310,9 +18386,9 @@
     {
       "id": "connection:1136",
       "from": "action:src-pages-admin-locationmanager-jsx:handleInlineSave",
-      "to": "resource:table:wms-ubicaciones",
-      "relation": "escribe",
-      "label": "escribe table"
+      "to": "resource:rpc:mover-ubicacion-wms",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1137",
@@ -18324,9 +18400,9 @@
     {
       "id": "connection:1138",
       "from": "action:src-pages-admin-locationmanager-jsx:handleMove",
-      "to": "resource:table:wms-ubicaciones",
-      "relation": "escribe",
-      "label": "escribe table"
+      "to": "resource:rpc:mover-ubicacion-wms",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1139",
@@ -18338,9 +18414,9 @@
     {
       "id": "connection:1140",
       "from": "action:src-pages-admin-locationmanager-jsx:handleDelete",
-      "to": "resource:table:wms-ubicaciones",
-      "relation": "escribe",
-      "label": "escribe table"
+      "to": "resource:rpc:eliminar-ubicacion-wms",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1141",
@@ -18779,9 +18855,9 @@
     {
       "id": "connection:1203",
       "from": "action:src-pages-inbound-entry-jsx:buildVisualLocationRows",
-      "to": "resource:table:wms-putaway-ubicaciones",
-      "relation": "escribe",
-      "label": "escribe table"
+      "to": "resource:rpc:registrar-putaway-ubicaciones",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1204",
@@ -19024,9 +19100,9 @@
     {
       "id": "connection:1238",
       "from": "action:src-pages-mobile-warehousepda-jsx:encolar",
-      "to": "resource:table:wms-ubicaciones",
-      "relation": "escribe",
-      "label": "escribe table"
+      "to": "resource:rpc:registrar-putaway-ubicaciones",
+      "relation": "ejecuta",
+      "label": "ejecuta rpc"
     },
     {
       "id": "connection:1239",
@@ -20080,125 +20156,209 @@
     },
     {
       "id": "connection:1389",
+      "from": "edge:ota-deploy",
+      "to": "resource:rpc:puede-desplegar-ota",
+      "relation": "ejecuta",
+      "label": "accede rpc"
+    },
+    {
+      "id": "connection:1390",
+      "from": "edge:ota-deploy",
+      "to": "resource:rpc:registrar-despliegue-ota",
+      "relation": "ejecuta",
+      "label": "accede rpc"
+    },
+    {
+      "id": "connection:1391",
+      "from": "edge:ota-deploy",
+      "to": "resource:table:mobile-ota-bundles",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1392",
+      "from": "edge:ota-deploy",
+      "to": "resource:table:mobile-ota-channels",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1393",
+      "from": "edge:ota-deploy",
+      "to": "resource:table:mobile-ota-devices",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1394",
+      "from": "edge:ota-publish",
+      "to": "resource:table:mobile-ota-bundles",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1395",
+      "from": "edge:ota-publish",
+      "to": "resource:table:mobile-ota-channels",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1396",
+      "from": "edge:ota-updates",
+      "to": "resource:table:mobile-ota-devices",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1397",
+      "from": "edge:ota-updates",
+      "to": "resource:table:mobile-ota-events",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1398",
+      "from": "edge:ota-updates",
+      "to": "resource:table:mobile-ota-channels",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1399",
+      "from": "edge:ota-updates",
+      "to": "resource:table:mobile-ota-bundles",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1400",
       "from": "edge:postventa-extractor",
       "to": "resource:rpc:ingesta-pv-correo",
       "relation": "ejecuta",
       "label": "accede rpc"
     },
     {
-      "id": "connection:1390",
+      "id": "connection:1401",
       "from": "edge:postventa-extractor",
       "to": "resource:table:tms-postventa-correos",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1391",
+      "id": "connection:1402",
       "from": "edge:postventa-inbox",
       "to": "resource:rpc:ingesta-pv-correo",
       "relation": "ejecuta",
       "label": "accede rpc"
     },
     {
-      "id": "connection:1392",
+      "id": "connection:1403",
       "from": "edge:postventa-publico",
       "to": "resource:rpc:crear-pv-ticket-publico",
       "relation": "ejecuta",
       "label": "accede rpc"
     },
     {
-      "id": "connection:1393",
+      "id": "connection:1404",
       "from": "edge:rendiciones-publicas",
       "to": "resource:rpc:crear-rendicion-publica",
       "relation": "ejecuta",
       "label": "accede rpc"
     },
     {
-      "id": "connection:1394",
+      "id": "connection:1405",
       "from": "edge:rendiciones-publicas",
       "to": "resource:storage:rendicion-evidencias",
       "relation": "accede",
       "label": "accede storage"
     },
     {
-      "id": "connection:1395",
+      "id": "connection:1406",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-public-links",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1396",
+      "id": "connection:1407",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendiciones",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1397",
+      "id": "connection:1408",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-fotos",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1398",
+      "id": "connection:1409",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-public-log",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1399",
+      "id": "connection:1410",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-centros-costo",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1400",
+      "id": "connection:1411",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-colaboradores",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1401",
+      "id": "connection:1412",
+      "from": "edge:rendiciones-publicas",
+      "to": "resource:table:tms-postventa-tecnicos",
+      "relation": "accede",
+      "label": "accede table"
+    },
+    {
+      "id": "connection:1413",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-categorias",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1402",
+      "id": "connection:1414",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-subcategorias",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1403",
+      "id": "connection:1415",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-categoria-subcategoria",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1404",
+      "id": "connection:1416",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-items",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1405",
+      "id": "connection:1417",
       "from": "edge:rendiciones-publicas",
       "to": "resource:table:rendicion-evidencias",
       "relation": "accede",
       "label": "accede table"
     },
     {
-      "id": "connection:1406",
+      "id": "connection:1418",
       "from": "edge:send-push",
       "to": "resource:table:tms-usuarios",
       "relation": "accede",

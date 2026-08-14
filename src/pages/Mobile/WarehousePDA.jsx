@@ -209,8 +209,7 @@ const WarehousePDA = () => {
     const registro = {
       ubicacion: putawayData.ubicacion,
       codigo: putawayData.codigo,
-      descripcion: putawayData.descripcion,
-      cantidad: putawayData.cantidad
+      descripcion: putawayData.descripcion
     };
 
     // Continúa al siguiente ítem (se guardó online o quedó en cola offline).
@@ -224,10 +223,10 @@ const WarehousePDA = () => {
     // Guarda la operación en la cola local para subirla al reconectar.
     const encolar = async () => {
       await enqueueSyncItem({
-        type: 'insert',
-        tableName: 'wms_ubicaciones',
+        type: 'rpc',
+        tableName: 'registrar_putaway_ubicaciones',
         recordId: `putaway_${registro.ubicacion}_${registro.codigo}_${Date.now()}`,
-        data: registro
+        data: { p_items: [registro] }
       });
       // enqueueSyncItem ya muestra "Operación guardada offline".
       avanzar();
@@ -241,9 +240,12 @@ const WarehousePDA = () => {
 
     try {
       toast.loading('Guardando...', { id: 'putaway-save' });
-      const { error } = await supabase.from('wms_ubicaciones').insert(registro);
+      const { data, error } = await supabase.rpc('registrar_putaway_ubicaciones', {
+        p_items: [registro]
+      });
       toast.dismiss('putaway-save');
       if (error) throw error;
+      if (Number(data?.guardados) !== 1) throw new Error('Supabase no confirmó la ubicación');
       toast.success('Producto ubicado correctamente');
       avanzar();
     } catch (err) {

@@ -14,7 +14,7 @@ import {
 import { supabase } from '../../supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { enqueueUpsert } from '../../lib/syncManager';
+import { enqueueSyncItem } from '../../lib/syncManager';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { toast } from 'sonner';
@@ -36,7 +36,7 @@ const Entry = () => {
   const queueItemsRef = useRef([]);
 
   // Put Away solo registra referencias visuales; no altera el inventario.
-  useRealtimeTable('wms_putaway_ubicaciones', [['putaway_visual']]);
+  useRealtimeTable('wms_ubicaciones', [['putaway_visual'], ['warehouse-data']]);
 
   // Form State
   const [form, setForm] = useState({
@@ -350,17 +350,12 @@ const Entry = () => {
     mutationFn: async () => {
       const rowsToInsert = buildVisualLocationRows(queue);
 
-      const { data: saved, error } = await supabase
-        .from('wms_putaway_ubicaciones')
-        .upsert(rowsToInsert, {
-          onConflict:
-            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
-          ignoreDuplicates: true
-        })
-        .select('id,codigo,ubicacion');
+      const { data: saved, error } = await supabase.rpc('registrar_putaway_ubicaciones', {
+        p_items: rowsToInsert
+      });
 
       if (error) throw error;
-      if (!saved) {
+      if (!saved || Number(saved.guardados) !== rowsToInsert.length) {
         throw new Error('Supabase no confirmó todos los registros de Put Away');
       }
 
@@ -371,7 +366,7 @@ const Entry = () => {
               usuario_id: user.id,
               usuario_nombre: user.nombre || user.email || 'Usuario Desconocido',
               modulo: 'Put Away visual',
-              tabla_destino: 'wms_putaway_ubicaciones',
+              tabla_destino: 'wms_ubicaciones',
               registros_totales: queue.length,
               registros_nuevos: queue.length,
               registros_actualizados: 0,
@@ -391,6 +386,7 @@ const Entry = () => {
       gsap.to(listRef.current, { y: 10, duration: 0.1, yoyo: true, repeat: 1 });
       setQueue([]);
       queryClient.invalidateQueries({ queryKey: ['putaway_visual'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse-data'] });
     },
     onError: async (err) => {
       // Si estamos offline o es error de red, encolar en Dexie para sync automático
@@ -405,13 +401,11 @@ const Entry = () => {
         try {
           const rowsToInsert = buildVisualLocationRows(queue);
 
-          const enqueued = await enqueueUpsert({
-            tableName: 'wms_putaway_ubicaciones',
-            data: rowsToInsert,
-            onConflict:
-              'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
-            ignoreDuplicates: true,
-            userId: user?.id || null
+          const enqueued = await enqueueSyncItem({
+            type: 'rpc',
+            tableName: 'registrar_putaway_ubicaciones',
+            recordId: `putaway_batch_${Date.now()}`,
+            data: { p_items: rowsToInsert }
           });
 
           if (enqueued) {
@@ -449,13 +443,11 @@ const Entry = () => {
       try {
         const rowsToInsert = buildVisualLocationRows(queue);
 
-        const enqueued = await enqueueUpsert({
-          tableName: 'wms_putaway_ubicaciones',
-          data: rowsToInsert,
-          onConflict:
-            'ubicacion_normalizada,codigo_normalizado,serie_normalizada,partida_normalizada',
-          ignoreDuplicates: true,
-          userId: user?.id || null
+        const enqueued = await enqueueSyncItem({
+          type: 'rpc',
+          tableName: 'registrar_putaway_ubicaciones',
+          recordId: `putaway_batch_${Date.now()}`,
+          data: { p_items: rowsToInsert }
         });
 
         if (enqueued) {
