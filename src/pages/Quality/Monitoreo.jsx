@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
 // UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
 // viejos y lanzaría TypeError al agregar hallazgos o subir evidencia.
@@ -2316,6 +2317,7 @@ function def_estado(dictamen) {
 
 // ── Página principal ────────────────────────────────────────────────────────
 const Monitoreo = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission, user } = useAuth();
   const canCreate = hasPermission('manage_monitoreo') || hasPermission('manage_quality');
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
@@ -2325,13 +2327,30 @@ const Monitoreo = () => {
   const [mode, setMode] = useState('list'); // list | new | edit | detail | new-danos | edit-danos
   const [selected, setSelected] = useState(null);
   // Hitos del proceso de calidad, en orden: 1 Recepción · 2 Estancia · 3 Salida
-  const [tab, setTab] = useState('hito1');
+  const requestedHito = searchParams.get('hito');
+  const [tab, setTab] = useState(
+    requestedHito === '2' ? 'hito2' : requestedHito === '3' ? 'hito3' : 'hito1'
+  );
   const [danosPrefill, setDanosPrefill] = useState(null); // pre-carga del Informe de Daños desde un checklist NC
   const [asigPrefill, setAsigPrefill] = useState(null); // pre-carga del informe desde una asignación (hito 2)
   const [busquedaEstancia, setBusquedaEstancia] = useState('');
   const pendCount = useTareasPendientesCount();
   const asigPendCount = useAsignacionesPendientesCount();
   const salidaPendCount = useSalidaPendientesCount();
+  useEffect(() => {
+    const nextTab = requestedHito === '2' ? 'hito2' : requestedHito === '3' ? 'hito3' : 'hito1';
+    setTab(nextTab);
+  }, [requestedHito]);
+
+  const seleccionarHito = useCallback(
+    (hito) => {
+      setTab(hito);
+      const next = new URLSearchParams(searchParams);
+      next.set('hito', hito.replace('hito', ''));
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
   const informesFiltrados = useMemo(() => {
     const q = busquedaEstancia.trim().toLocaleLowerCase('es-CL');
     if (!q) return informes;
@@ -2469,7 +2488,7 @@ const Monitoreo = () => {
 
       {/* Hitos del proceso de Calidad, en orden */}
       {mode === 'list' && (
-        <div className="flex flex-wrap gap-2 mb-5">
+        <div className="quality-hito-nav mb-5 grid grid-cols-3 gap-2 rounded-3xl border border-slate-200/80 bg-white/90 p-2 shadow-sm backdrop-blur sm:flex sm:flex-wrap">
           {[
             {
               id: 'hito1',
@@ -2501,19 +2520,19 @@ const Monitoreo = () => {
             return (
               <button
                 key={h.id}
-                onClick={() => setTab(h.id)}
-                className={`px-4 py-2.5 rounded-xl font-black text-sm border transition-colors flex items-center gap-2.5 ${active ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                onClick={() => seleccionarHito(h.id)}
+                className={`quality-hito-tab min-w-0 rounded-2xl border px-2 py-3 text-xs font-black transition-all sm:px-4 sm:py-2.5 sm:text-sm flex items-center justify-center gap-2 sm:gap-2.5 ${active ? 'border-emerald-600 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-600/20' : 'border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
               >
                 <span
                   className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] ${active ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}
                 >
                   {h.n}
                 </span>
-                <Icon size={16} className="shrink-0" />
+                <Icon size={16} className="hidden shrink-0 sm:block" />
                 <span className="flex flex-col items-start leading-tight">
                   <span>{h.label}</span>
                   <span
-                    className={`text-[9px] font-bold ${active ? 'text-white/70' : 'text-slate-400'}`}
+                    className={`hidden text-[9px] font-bold sm:block ${active ? 'text-white/70' : 'text-slate-400'}`}
                   >
                     {h.sub}
                   </span>

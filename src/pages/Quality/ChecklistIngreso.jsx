@@ -1039,8 +1039,8 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
     );
 
   return (
-    <div>
-      <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 shadow-sm">
+    <div className="anim-fade-up">
+      <div className="quality-mobile-hero mb-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">
@@ -1121,7 +1121,7 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="anim-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tareasFiltradas.map((t) => {
             const meta = ESTADO_TAREA_META[t.estado] || {};
             const om = ORIGEN_META[t.origen] || {};
@@ -1132,7 +1132,7 @@ const ChecklistIngreso = ({ onGenerarDanos }) => {
                 role="button"
                 tabIndex={0}
                 onClick={() => setSel(t)}
-                className={`cursor-pointer text-left bg-white rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}
+                className={`quality-mobile-card cursor-pointer text-left bg-white rounded-3xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[.99] ${pend ? 'border-amber-200 hover:border-amber-300' : 'border-slate-200 hover:border-emerald-300'}`}
               >
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <span className="flex items-center gap-1.5 font-black text-slate-900 truncate">

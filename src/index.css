@@ -13,7 +13,7 @@
     --color-accent: #10b981;
     --border-4: rgba(255, 255, 255, 0.04);
     --border-7: rgba(255, 255, 255, 0.07);
-    --border-10: rgba(255, 255, 255, 0.10);
+    --border-10: rgba(255, 255, 255, 0.1);
     --border-14: rgba(255, 255, 255, 0.14);
     --glow-accent-subtle: rgba(16, 185, 129, 0.12);
     --glow-accent-strong: rgba(16, 185, 129, 0.25);
@@ -104,19 +104,40 @@ select:focus {
   @apply bg-orange-400 rounded-full hover:bg-orange-500;
 }
 
-.custom-scrollbar-flat::-webkit-scrollbar { height: 4px; }
-.custom-scrollbar-flat::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-.custom-scrollbar-flat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.custom-scrollbar-flat::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.custom-scrollbar-flat::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar-flat::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.custom-scrollbar-flat::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar-flat::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 
 /* ── Aviso de stock desactualizado (firma "Tío Inventario") ── */
 @keyframes ti-wave {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-7px); }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-7px);
+  }
 }
 @keyframes ti-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.0); }
-  50% { box-shadow: 0 0 28px 3px rgba(239, 68, 68, 0.22); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 28px 3px rgba(239, 68, 68, 0.22);
+  }
 }
 /* Firma siempre visible (color sólido vivo, sin relleno transparente) */
 .ti-signature {
@@ -130,7 +151,9 @@ select:focus {
   animation: ti-wave 2.4s ease-in-out infinite;
   will-change: transform;
 }
-.ti-banner-glow { animation: ti-glow 2.6s ease-in-out infinite; }
+.ti-banner-glow {
+  animation: ti-glow 2.6s ease-in-out infinite;
+}
 
 /* ============================================================================
    MÓVIL / PDA — responsividad universal y animaciones
@@ -141,8 +164,16 @@ select:focus {
 /* Alto de viewport DINÁMICO: 100vh en móviles incluye la barra del navegador/OS
    y corta el contenido de abajo (botones CONFIRMAR, etc.). dvh mide el área REAL
    visible. Fallbacks en cascada para webviews viejos. */
-.min-h-dvh { min-height: 100vh; min-height: 100svh; min-height: 100dvh; }
-.h-dvh     { height: 100vh; height: 100svh; height: 100dvh; }
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+.h-dvh {
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+}
 
 /* Safe-area: notch, isla dinámica y barra de gestos (variables reutilizables). */
 :root {
@@ -151,8 +182,12 @@ select:focus {
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 }
-.pt-safe { padding-top: max(0.75rem, var(--sat)); }
-.pb-safe { padding-bottom: max(0.75rem, var(--sab)); }
+.pt-safe {
+  padding-top: max(0.75rem, var(--sat));
+}
+.pb-safe {
+  padding-bottom: max(0.75rem, var(--sab));
+}
 
 /* En la app instalada (Capacitor) escalamos la tipografía base de forma FLUIDA:
    Tailwind usa rem, así que al hacer el root fluido TODO (texto, iconos, padding
@@ -172,7 +207,11 @@ html.is-native #root {
   overflow: hidden;
 }
 
-.app-shell { height: 100vh; height: 100svh; height: 100dvh; }
+.app-shell {
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+}
 .app-main {
   padding-top: calc(4.5rem + var(--sat));
   scroll-padding-top: calc(5rem + var(--sat));
@@ -208,8 +247,15 @@ html.is-native .app-navbar {
   backdrop-filter: blur(16px);
   animation: pda-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.download-activity strong { display: block; font-size: 0.78rem; }
-.download-activity span { font-size: 0.68rem; font-weight: 800; color: #64748b; }
+.download-activity strong {
+  display: block;
+  font-size: 0.78rem;
+}
+.download-activity span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+}
 .download-activity p {
   margin-top: 0.15rem;
   overflow: hidden;
@@ -228,8 +274,14 @@ html.is-native .app-navbar {
   background: #fff7ed;
   color: #ea580c;
 }
-.download-activity__icon.is-done { background: #ecfdf5; color: #059669; }
-.download-activity__icon.is-error { background: #fff1f2; color: #e11d48; }
+.download-activity__icon.is-done {
+  background: #ecfdf5;
+  color: #059669;
+}
+.download-activity__icon.is-error {
+  background: #fff1f2;
+  color: #e11d48;
+}
 .download-activity__track {
   margin-top: 0.45rem;
   height: 0.25rem;
@@ -245,68 +297,169 @@ html.is-native .app-navbar {
 }
 
 @media (max-width: 380px) {
-  .app-main { padding-top: calc(4.15rem + var(--sat)); }
+  .app-main {
+    padding-top: calc(4.15rem + var(--sat));
+  }
   .app-page {
     padding-right: max(0.55rem, var(--sar));
     padding-left: max(0.55rem, var(--sal));
   }
-  .app-page h1 { font-size: clamp(1.25rem, 7vw, 1.65rem); line-height: 1.12; }
+  .app-page h1 {
+    font-size: clamp(1.25rem, 7vw, 1.65rem);
+    line-height: 1.12;
+  }
   .download-activity {
     right: max(0.5rem, var(--sar));
     width: calc(100vw - 1rem - var(--sal) - var(--sar));
   }
 }
 @media (max-width: 768px) {
-  .layout-orb { display: none; }
-  .app-navbar, .app-navbar > div { transition-duration: 240ms !important; }
+  .layout-orb {
+    display: none;
+  }
+  .app-navbar,
+  .app-navbar > div {
+    transition-duration: 240ms !important;
+  }
 }
 @media (max-height: 520px) and (orientation: landscape) {
-  .app-main { padding-top: calc(3.9rem + var(--sat)); }
-  .app-page { padding-bottom: max(3.5rem, calc(2rem + var(--sab))); }
+  .app-main {
+    padding-top: calc(3.9rem + var(--sat));
+  }
+  .app-page {
+    padding-bottom: max(3.5rem, calc(2rem + var(--sab)));
+  }
 }
 html.is-native body {
-  -webkit-tap-highlight-color: transparent;   /* sin flash gris al tocar */
-  overscroll-behavior-y: none;                 /* sin "rubber band" tipo web */
-  touch-action: manipulation;                  /* sin zoom por doble-tap */
+  -webkit-tap-highlight-color: transparent; /* sin flash gris al tocar */
+  overscroll-behavior-y: none; /* sin "rubber band" tipo web */
+  touch-action: manipulation; /* sin zoom por doble-tap */
 }
 
 /* ---- Animaciones (CSS puro: fluidas en cualquier equipo, sin costo de JS) ---- */
-@keyframes pda-fade-up   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes pda-scale-in  { from { opacity: 0; transform: scale(0.92); }      to { opacity: 1; transform: none; } }
-@keyframes pda-pop       { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes pda-shimmer   { 100% { transform: translateX(100%); } }
+@keyframes pda-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pda-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pda-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes pda-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 
-@keyframes pda-slide-in { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes pda-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 /* Barra de marca "en movimiento" (overlay de actualización OTA). */
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
 
-.anim-fade-up  { animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.anim-scale-in { animation: pda-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.anim-pop      { animation: pda-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-fade-up {
+  animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-scale-in {
+  animation: pda-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-pop {
+  animation: pda-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 /* Transición de pantalla (cambio de vista dentro del PDA: Home↔Ubicar↔Consulta…) */
-.anim-slide-in { animation: pda-slide-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-slide-in {
+  animation: pda-slide-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 /* Entrada escalonada (los hijos aparecen uno tras otro) */
-.anim-stagger > * { animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.anim-stagger > *:nth-child(1) { animation-delay: 0.04s; }
-.anim-stagger > *:nth-child(2) { animation-delay: 0.10s; }
-.anim-stagger > *:nth-child(3) { animation-delay: 0.16s; }
-.anim-stagger > *:nth-child(4) { animation-delay: 0.22s; }
-.anim-stagger > *:nth-child(5) { animation-delay: 0.28s; }
-.anim-stagger > *:nth-child(6) { animation-delay: 0.34s; }
+.anim-stagger > * {
+  animation: pda-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.anim-stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.anim-stagger > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.anim-stagger > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.anim-stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.anim-stagger > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
 
 /* Skeleton shimmer para estados de carga */
-.pda-skeleton { position: relative; overflow: hidden; background: rgba(148,163,184,0.15); }
+.pda-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.15);
+}
 .pda-skeleton::after {
-  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
   animation: pda-shimmer 1.4s infinite;
 }
 
 /* Respeta a quien pide menos movimiento (accesibilidad). */
 @media (prefers-reduced-motion: reduce) {
-  .anim-fade-up, .anim-scale-in, .anim-pop, .anim-slide-in, .anim-stagger > * { animation: none !important; }
-  .pda-skeleton::after { animation: none; }
+  .anim-fade-up,
+  .anim-scale-in,
+  .anim-pop,
+  .anim-slide-in,
+  .anim-stagger > * {
+    animation: none !important;
+  }
+  .pda-skeleton::after {
+    animation: none;
+  }
 }
 
 /* ============================================================================
@@ -321,15 +474,45 @@ html.is-native body {
    Colapsarla a 2/3 destruía la semana. Los grids KPI densos usan sm:grid-cols-7
    (base grid-cols-3), así que no dependen de esta regla en móvil. */
 @media (max-width: 640px) {
-  .grid-cols-4, .grid-cols-5, .grid-cols-6, .grid-cols-8,
-  .grid-cols-9, .grid-cols-10, .grid-cols-11, .grid-cols-12 {
+  .notification-sheet {
+    padding-bottom: var(--sab);
+    transform-origin: bottom center;
+  }
+  .quality-hito-nav {
+    position: sticky;
+    top: calc(4.35rem + var(--sat));
+    z-index: 20;
+  }
+  .quality-hito-tab {
+    min-height: 3.65rem;
+  }
+  .quality-mobile-hero {
+    border-radius: 1.6rem;
+    box-shadow: 0 18px 45px -30px rgba(15, 23, 42, 0.55);
+  }
+  .quality-mobile-card {
+    padding: 1rem;
+    box-shadow: 0 14px 36px -30px rgba(15, 23, 42, 0.65);
+  }
+  .grid-cols-4,
+  .grid-cols-5,
+  .grid-cols-6,
+  .grid-cols-8,
+  .grid-cols-9,
+  .grid-cols-10,
+  .grid-cols-11,
+  .grid-cols-12 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 @media (min-width: 400px) and (max-width: 640px) {
   /* En teléfonos un poco más anchos, 3 columnas para grids muy densos (iconos, KPIs). */
-  .grid-cols-6, .grid-cols-8, .grid-cols-9,
-  .grid-cols-10, .grid-cols-11, .grid-cols-12 {
+  .grid-cols-6,
+  .grid-cols-8,
+  .grid-cols-9,
+  .grid-cols-10,
+  .grid-cols-11,
+  .grid-cols-12 {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
@@ -337,8 +520,18 @@ html.is-native body {
 /* Flash breve al auto-guardar el progreso (Recepción): el pill "Guardado hh:mm:ss"
    se remonta por su key y reproduce esta animación en cada guardado. */
 @keyframes savedFlash {
-  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(16,185,129,.45); }
-  30%  { transform: scale(1.06); }
-  100% { transform: scale(1);    box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  }
+  30% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
 }
-.anim-saved { animation: savedFlash .5s ease; }
+.anim-saved {
+  animation: savedFlash 0.5s ease;
+}

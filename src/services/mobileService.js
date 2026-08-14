@@ -309,7 +309,7 @@ export const initPushNotifications = async (userId) => {
         return;
       }
       if (data?.type === 'NV_REOPEN_REQUEST') {
-        window.location.href = '/admin/eventos';
+        window.location.href = '/panel/reaperturas';
       }
     });
   } catch (_) {

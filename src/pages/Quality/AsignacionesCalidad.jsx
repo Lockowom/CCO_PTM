@@ -336,8 +336,8 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
   }, [asignaciones, filtro]);
 
   return (
-    <div className="mb-6 space-y-4">
-      <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white shadow-xl shadow-emerald-950/10">
+    <div className="mb-6 space-y-4 anim-fade-up">
+      <section className="quality-mobile-hero overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white shadow-xl shadow-emerald-950/10">
         <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">
@@ -411,7 +411,7 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="anim-stagger grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {visibles.map((a) => {
             const meta = ESTADO_ASIGNACION_META[a.estado] || {};
             const skus = Array.isArray(a.skus) ? a.skus : [];
@@ -429,7 +429,7 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
             return (
               <div
                 key={a.id}
-                className={`relative overflow-hidden rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${a.estado === 'EN_PROCESO' ? 'border-blue-200' : abierta ? 'border-amber-200' : 'border-emerald-200'}`}
+                className={`quality-mobile-card relative overflow-hidden rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[.99] ${a.estado === 'EN_PROCESO' ? 'border-blue-200' : abierta ? 'border-amber-200' : 'border-emerald-200'}`}
               >
                 <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">
                   <div
