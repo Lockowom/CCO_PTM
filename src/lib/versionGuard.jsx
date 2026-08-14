@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabase';
 
 // Versión con la que se compiló este bundle (inyectada por Vite desde package.json).
@@ -58,18 +57,13 @@ async function hardRefreshToBuild(targetBuildId) {
   window.location.reload();
 }
 
-// VersionGuard — "al actualizar, obliga a re-loguear" (igual que el Panel).
+// VersionGuard — actualiza el bundle sin destruir la sesión activa.
 // Consulta /version.json (emitido por Vite para el sitio estático) al montar,
 // cada 120 s y al volver el foco. Si difiere del build de este bundle, significa
-// que hay un deploy nuevo → cierra la sesión (si hay) y recarga para traer el
-// bundle nuevo, dejando al usuario en el login.
+// que hay un deploy nuevo → limpia el bundle anterior y recarga. Conservar la
+// sesión evita borrar el token FCM del dispositivo durante una actualización OTA.
 export default function VersionGuard() {
-  const { user, logout } = useAuth();
   const firing = useRef(false);
-  const userRef = useRef(user);
-  useEffect(() => {
-    userRef.current = user;
-  }, [user]);
 
   useEffect(() => {
     let alive = true;
@@ -120,11 +114,6 @@ export default function VersionGuard() {
             /* ignore */
           }
         }
-        try {
-          if (userRef.current) await logout();
-        } catch {
-          /* ignore */
-        }
         await hardRefreshToBuild(forceRefresh ? `force-${forceToken}` : targetBuildId);
       } catch {
         /* offline/red: reintenta en el próximo tick */
@@ -143,7 +132,7 @@ export default function VersionGuard() {
       window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [logout]);
+  }, []);
 
   return null;
 }

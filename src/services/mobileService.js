@@ -315,14 +315,29 @@ export const initPushNotifications = async (userId) => {
       console.warn('Channel creation skipped:', channelErr);
     }
 
-    await PushNotifications.register();
-
+    // Registrar listeners antes de solicitar el token. Android puede emitir el
+    // evento de registro inmediatamente y antes se perdía esa respuesta.
     PushNotifications.addListener('registration', async (token) => {
       console.log('FCM Token:', token.value?.slice(0, 20) + '...');
-      try {
-        await supabase.from('tms_usuarios').update({ push_token: token.value }).eq('id', userId);
-      } catch (_) {
-        console.error('Push token save error:', _);
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const { error } = await supabase
+            .from('tms_usuarios')
+            .update({ push_token: token.value })
+            .eq('id', userId);
+          if (error) throw error;
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
+          }
+        }
+      }
+      if (lastError) {
+        console.error('Push token save error:', lastError);
       }
     });
 
@@ -351,6 +366,8 @@ export const initPushNotifications = async (userId) => {
         window.location.href = '/panel/reaperturas';
       }
     });
+
+    await PushNotifications.register();
   } catch (_) {
     console.error('Push notifications init error:', _);
   }
