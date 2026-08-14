@@ -885,7 +885,23 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <Toaster richColors position="top-right" />
+      <Toaster
+        richColors
+        position="top-right"
+        visibleToasts={2}
+        offset={{ top: 24, right: 24 }}
+        mobileOffset={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 5.25rem)',
+          right: '0.75rem',
+          left: '0.75rem'
+        }}
+        toastOptions={{
+          style: {
+            borderRadius: '1rem',
+            boxShadow: '0 18px 45px -24px rgba(15, 23, 42, 0.55)'
+          }
+        }}
+      />
       <AppContent />
     </ErrorBoundary>
   );
