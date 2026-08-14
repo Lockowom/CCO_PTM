@@ -188,9 +188,16 @@ Deno.serve(async (req) => {
       .eq('enabled', true)
       .maybeSingle();
     if (bundleError) throw bundleError;
-    // Nunca entregar un bundle igual o inferior al binario/APK instalado. Esto
-    // evita que un canal rezagado haga downgrade de la interfaz persistida.
-    if (!bundle || compareVersions(bundle.version, effectiveVersion) <= 0) {
+    // Si quedó activo un OTA anterior al APK, se permite entregar exactamente
+    // la versión nativa para reparar ese WebView persistido. Fuera de ese caso,
+    // nunca se entrega un bundle igual o inferior a la instalación efectiva.
+    const repairingStaleBundle =
+      compareVersions(currentVersion, nativeVersion) < 0 &&
+      compareVersions(bundle?.version, nativeVersion) === 0;
+    if (
+      !bundle ||
+      (!repairingStaleBundle && compareVersions(bundle.version, effectiveVersion) <= 0)
+    ) {
       return json({ version: effectiveVersion, message: 'No new version available' });
     }
     return json({
