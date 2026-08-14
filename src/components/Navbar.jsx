@@ -187,6 +187,11 @@ const Navbar = () => {
               path: '/admin/locations',
               icon: <MapPin size={16} />
             },
+            {
+              label: 'Solicitudes de Ubicación',
+              path: '/admin/location-requests',
+              icon: <Inbox size={16} />
+            },
             { label: 'Conteo · Contar', path: '/inventory/conteo', icon: <Package size={16} /> },
             {
               label: 'Conteo · Sesiones',

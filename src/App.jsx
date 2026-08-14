@@ -94,6 +94,7 @@ const Cleanup = React.lazy(() => import('./pages/Admin/Cleanup')); // NUEVO
 const Tickets = React.lazy(() => import('./pages/Admin/Tickets'));
 const UploadHistory = React.lazy(() => import('./pages/Admin/UploadHistory')); // NEW: Historial de Cargas
 const LocationManager = React.lazy(() => import('./pages/Admin/LocationManager')); // Gestión Ubicaciones
+const LocationRequests = React.lazy(() => import('./pages/Admin/LocationRequests'));
 const AdminMonitor = React.lazy(() => import('./pages/Admin/AdminMonitor')); // Monitor Tiempo Real
 const Observability = React.lazy(() => import('./pages/Admin/Observability')); // Centro de Observabilidad
 const Workflows = React.lazy(() => import('./pages/Admin/Workflows')); // Workflow Engine (procesos como datos)
@@ -796,6 +797,14 @@ function AppContent() {
               element={
                 <ErrorBoundary>
                   <LocationManager />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/location-requests"
+              element={
+                <ErrorBoundary>
+                  <LocationRequests />
                 </ErrorBoundary>
               }
             />

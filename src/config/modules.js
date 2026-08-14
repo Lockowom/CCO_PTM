@@ -68,6 +68,11 @@ export const APP_ROUTES = [
   { value: '/queries/heatmap', label: 'Inventario - Mapa de Calor', module: 'inventario' },
   { value: '/admin/locations', label: 'Inventario - Gestión de Ubicaciones', module: 'inventario' },
   {
+    value: '/admin/location-requests',
+    label: 'Inventario - Solicitudes de Ubicación',
+    module: 'inventario'
+  },
+  {
     value: '/inventory/conteo',
     label: 'Inventario - Conteo Cíclico (Contar)',
     module: 'inventario'

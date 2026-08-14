@@ -9,142 +9,160 @@ import {
   Package,
   MapPin,
   ArrowUpDown,
-  Layers
+  Layers,
+  AlertTriangle
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useWarehouseStore } from '../../stores/warehouseStore';
 import { useCalidadFlags } from '../../hooks/useCalidadFlags';
 import CalidadBadge from '../../components/ui/CalidadBadge';
+import LocationReportModal from '../../components/locations/LocationReportModal';
 
 // Estimaciones iniciales; la altura real la mide el virtualizer (measureElement).
 const COLLAPSED_HEIGHT = 92;
 const ITEM_HEIGHT = 44;
 
-const LocationGroup = React.memo(({ group, searchQuery, isExpanded, onToggle, flagForItem }) => {
-  const matchingItems = group.matchingItems;
-  const totalItems = group.allItems.length;
-  const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
-  const matchStock = matchingItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
-  const hasSearch = searchQuery.length > 0;
-  const displayItems = hasSearch ? matchingItems : group.allItems;
-  const showItems = isExpanded ? displayItems : displayItems.slice(0, 1);
-  const stock = hasSearch ? matchStock : totalStock;
-  const skus = hasSearch ? matchingItems.length : totalItems;
-  const conStock = stock > 0;
-  const visuales = displayItems.filter((item) => item.fuente === 'putaway').length;
-  const soloVisual = displayItems.length > 0 && visuales === displayItems.length;
-  const searchCode = searchQuery.trim().toUpperCase();
-  const hideRepeatedCode =
-    searchCode.length >= 3 &&
-    displayItems.length > 0 &&
-    displayItems.every((item) =>
-      String(item.codigo || '')
-        .toUpperCase()
-        .includes(searchCode)
-    );
+const LocationGroup = React.memo(
+  ({ group, searchQuery, isExpanded, onToggle, flagForItem, onReport }) => {
+    const matchingItems = group.matchingItems;
+    const totalItems = group.allItems.length;
+    const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+    const matchStock = matchingItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+    const hasSearch = searchQuery.length > 0;
+    const displayItems = hasSearch ? matchingItems : group.allItems;
+    const showItems = isExpanded ? displayItems : displayItems.slice(0, 1);
+    const stock = hasSearch ? matchStock : totalStock;
+    const skus = hasSearch ? matchingItems.length : totalItems;
+    const conStock = stock > 0;
+    const visuales = displayItems.filter((item) => item.fuente === 'putaway').length;
+    const soloVisual = displayItems.length > 0 && visuales === displayItems.length;
+    const searchCode = searchQuery.trim().toUpperCase();
+    const hideRepeatedCode =
+      searchCode.length >= 3 &&
+      displayItems.length > 0 &&
+      displayItems.every((item) =>
+        String(item.codigo || '')
+          .toUpperCase()
+          .includes(searchCode)
+      );
 
-  return (
-    <div className="bg-white border border-slate-200/70 rounded-2xl hover:border-amber-200 hover:shadow-[0_4px_20px_-8px_rgba(245,158,11,0.25)] transition-all overflow-hidden">
-      <div
-        className="flex items-center gap-3 px-4 sm:px-5 py-3.5 cursor-pointer select-none hover:bg-amber-50/30 transition-colors"
-        onClick={onToggle}
-      >
-        {/* Barra de estado: stock físico, ubicación visual o ubicación vacía */}
+    return (
+      <div className="bg-white border border-slate-200/70 rounded-2xl hover:border-amber-200 hover:shadow-[0_4px_20px_-8px_rgba(245,158,11,0.25)] transition-all overflow-hidden">
         <div
-          className={`w-1 self-stretch rounded-full shrink-0 ${conStock ? 'bg-emerald-400' : soloVisual ? 'bg-violet-400' : 'bg-slate-200'}`}
-        />
+          className="flex items-center gap-3 px-4 sm:px-5 py-3.5 cursor-pointer select-none hover:bg-amber-50/30 transition-colors"
+          onClick={onToggle}
+        >
+          {/* Barra de estado: stock físico, ubicación visual o ubicación vacía */}
+          <div
+            className={`w-1 self-stretch rounded-full shrink-0 ${conStock ? 'bg-emerald-400' : soloVisual ? 'bg-violet-400' : 'bg-slate-200'}`}
+          />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`text-sm sm:text-base font-black font-mono tracking-tight ${conStock ? 'text-slate-900' : 'text-slate-400'}`}
-            >
-              {group.ubicacion}
-            </span>
-            {hasSearch && matchingItems.length < totalItems && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                {matchingItems.length}/{totalItems}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-400">
-            <Package size={11} />
-            <span className="font-bold text-slate-500">{skus}</span>
-            <span>{skus === 1 ? 'SKU' : 'SKUs'}</span>
-            {visuales > 0 && (
-              <span className="ml-1 rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[9px] font-black text-violet-600">
-                {visuales} Put Away
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="text-right shrink-0">
-          {soloVisual ? (
-            <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-600">
-              Visual
-            </span>
-          ) : (
-            <>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`text-lg sm:text-xl font-black tabular-nums ${conStock ? 'text-slate-900' : 'text-slate-300'}`}
+                className={`text-sm sm:text-base font-black font-mono tracking-tight ${conStock ? 'text-slate-900' : 'text-slate-400'}`}
               >
-                {stock}
+                {group.ubicacion}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium ml-0.5">uds</span>
-            </>
-          )}
-        </div>
-        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
-          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </div>
-      </div>
-
-      {showItems.length > 0 && (
-        <div className="border-t border-slate-100">
-          {showItems.map((item, idx) => {
-            const flag = flagForItem
-              ? flagForItem(item.codigo, item.ubicacion || group.ubicacion)
-              : null;
-            return (
-              <div
-                key={item.id || idx}
-                className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 text-sm ${idx > 0 ? 'border-t border-slate-50' : ''} hover:bg-amber-50/20 transition-colors`}
-              >
-                {!hideRepeatedCode && (
-                  <span className="text-xs font-bold font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 shrink-0">
-                    {item.codigo}
-                  </span>
-                )}
-                {item.fuente === 'putaway' && (
-                  <span className="shrink-0 rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5 text-[9px] font-black uppercase text-violet-600">
-                    Ubicación visual
-                  </span>
-                )}
-                {flag && <CalidadBadge estado={flag.estado_calidad} size="xs" title={flag.nota} />}
-                <span className="text-slate-500 truncate flex-1 min-w-0">{item.descripcion}</span>
-                <span className="text-sm font-black text-slate-800 tabular-nums shrink-0">
-                  {item.fuente === 'putaway' ? '—' : Number(item.cantidad) || 0}
+              {hasSearch && matchingItems.length < totalItems && (
+                <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                  {matchingItems.length}/{totalItems}
                 </span>
-              </div>
-            );
-          })}
-          {!isExpanded && displayItems.length > 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle();
-              }}
-              className="w-full py-2 text-xs font-bold text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors border-t border-slate-50"
-            >
-              +{displayItems.length - 1} más
-            </button>
-          )}
+              )}
+            </div>
+            <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-400">
+              <Package size={11} />
+              <span className="font-bold text-slate-500">{skus}</span>
+              <span>{skus === 1 ? 'SKU' : 'SKUs'}</span>
+              {visuales > 0 && (
+                <span className="ml-1 rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[9px] font-black text-violet-600">
+                  {visuales} Put Away
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            {soloVisual ? (
+              <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-600">
+                Visual
+              </span>
+            ) : (
+              <>
+                <span
+                  className={`text-lg sm:text-xl font-black tabular-nums ${conStock ? 'text-slate-900' : 'text-slate-300'}`}
+                >
+                  {stock}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium ml-0.5">uds</span>
+              </>
+            )}
+          </div>
+          <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </div>
         </div>
-      )}
-    </div>
-  );
-});
+
+        {showItems.length > 0 && (
+          <div className="border-t border-slate-100">
+            {showItems.map((item, idx) => {
+              const flag = flagForItem
+                ? flagForItem(item.codigo, item.ubicacion || group.ubicacion)
+                : null;
+              return (
+                <div
+                  key={item.id || idx}
+                  className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 text-sm ${idx > 0 ? 'border-t border-slate-50' : ''} hover:bg-amber-50/20 transition-colors`}
+                >
+                  {!hideRepeatedCode && (
+                    <span className="text-xs font-bold font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 shrink-0">
+                      {item.codigo}
+                    </span>
+                  )}
+                  {item.fuente === 'putaway' && (
+                    <span className="shrink-0 rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5 text-[9px] font-black uppercase text-violet-600">
+                      Ubicación visual
+                    </span>
+                  )}
+                  {flag && (
+                    <CalidadBadge estado={flag.estado_calidad} size="xs" title={flag.nota} />
+                  )}
+                  <span className="text-slate-500 truncate flex-1 min-w-0">{item.descripcion}</span>
+                  <span className="text-sm font-black text-slate-800 tabular-nums shrink-0">
+                    {item.fuente === 'putaway' ? '—' : Number(item.cantidad) || 0}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onReport(item);
+                    }}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+                    title="Reportar que el producto se agotó o fue movido"
+                  >
+                    <AlertTriangle size={12} />
+                    <span className="hidden sm:inline">No está aquí</span>
+                  </button>
+                </div>
+              );
+            })}
+            {!isExpanded && displayItems.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
+                className="w-full py-2 text-xs font-bold text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors border-t border-slate-50"
+              >
+                +{displayItems.length - 1} más
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 const WmsLocations = () => {
   const { inventory, stats, loading, fetchWarehouseData } = useWarehouseStore();
@@ -153,6 +171,7 @@ const WmsLocations = () => {
   const [stockFilter, setStockFilter] = useState('all');
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
+  const [reportItem, setReportItem] = useState(null);
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -442,6 +461,7 @@ const WmsLocations = () => {
                       isExpanded={expandedKeys.has(group.ubicacion)}
                       onToggle={() => toggleExpand(group.ubicacion)}
                       flagForItem={flagForItem}
+                      onReport={setReportItem}
                     />
                   </div>
                 );
@@ -450,6 +470,13 @@ const WmsLocations = () => {
           )}
         </div>
       </main>
+      {reportItem && (
+        <LocationReportModal
+          item={reportItem}
+          locations={Object.keys(inventory)}
+          onClose={() => setReportItem(null)}
+        />
+      )}
     </div>
   );
 };
