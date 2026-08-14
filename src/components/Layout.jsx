@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '../supabase';
+import DownloadActivity from './DownloadActivity';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -103,35 +104,39 @@ const Layout = ({ children }) => {
 
   // Animaciones Enterprise para transiciones de página
   useGSAP(() => {
+    const compactMotion = window.matchMedia('(max-width: 768px)').matches;
     // Animación de entrada de página
     gsap.fromTo(
       mainRef.current,
-      { opacity: 0, y: 20, filter: 'blur(10px)', scale: 0.98 },
+      compactMotion
+        ? { opacity: 0, y: 8, scale: 0.995 }
+        : { opacity: 0, y: 14, filter: 'blur(4px)', scale: 0.99 },
       {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
         scale: 1,
-        duration: 0.8,
-        ease: 'expo.out',
+        duration: compactMotion ? 0.24 : 0.42,
+        ease: 'power3.out',
         clearProps: 'all'
       }
     );
 
     // Animación de los orbes del fondo
-    gsap.to('.layout-orb', {
-      x: 'random(-100, 100)',
-      y: 'random(-50, 50)',
-      duration: 'random(15, 25)',
-      repeat: -1,
-      yoyo: true,
-      ease: 'sine.inOut',
-      stagger: 2
-    });
+    if (!compactMotion)
+      gsap.to('.layout-orb', {
+        x: 'random(-100, 100)',
+        y: 'random(-50, 50)',
+        duration: 'random(15, 25)',
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        stagger: 2
+      });
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
+    <div className="app-shell flex flex-col bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
       <OtaBanner />
 
       {/* Background Decorator - Simplificado para Legibilidad */}
@@ -148,10 +153,10 @@ const Layout = ({ children }) => {
         {/* Main Content Area — overflow-x-hidden contiene cualquier elemento ancho
             para que NINGÚN módulo empuje la página de lado en el celular. Las tablas
             anchas siguen con su propio scroll interno (overflow-x-auto en su wrapper). */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative pt-[72px] sm:pt-[100px]">
+        <main className="app-main flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative">
           <div
             ref={mainRef}
-            className="max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10 pb-24"
+            className="app-page max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10"
           >
             {children}
           </div>
@@ -159,6 +164,7 @@ const Layout = ({ children }) => {
 
         {/* Widget de Errores */}
         <ErrorReportWidget />
+        <DownloadActivity />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { WEEKLY_TREND_RELIABLE_LABEL } from '../pages/Panel/dash/weeklyTrendConfig';
+import { downloadPdfDocument } from '../services/downloadService';
 
 const NA = '—';
 const text = (value) =>
@@ -381,34 +382,37 @@ export async function downloadPanelDashboardPDF({
     )
   );
 
-  pdfMake
-    .createPdf({
-      pageSize: 'A4',
-      pageOrientation: 'landscape',
-      pageMargins: [22, 24, 22, 26],
-      content,
-      footer: (currentPage, pageCount) => ({
-        text: `CCO | Panel PTM | ${rangeLabel} | Página ${currentPage} de ${pageCount}`,
-        alignment: 'center',
-        color: '#94a3b8',
+  const pdfDocument = pdfMake.createPdf({
+    pageSize: 'A4',
+    pageOrientation: 'landscape',
+    pageMargins: [22, 24, 22, 26],
+    content,
+    footer: (currentPage, pageCount) => ({
+      text: `CCO | Panel PTM | ${rangeLabel} | Página ${currentPage} de ${pageCount}`,
+      alignment: 'center',
+      color: '#94a3b8',
+      fontSize: 7,
+      margin: [0, 5, 0, 0]
+    }),
+    defaultStyle: { fontSize: 8, color: navy },
+    styles: {
+      tiny: { fontSize: 6.5, bold: true, color: '#94a3b8' },
+      nota: { fontSize: 14, bold: true, color: orange },
+      section: { fontSize: 9, bold: true, color: navy, margin: [0, 9, 0, 4] },
+      headerCell: {
         fontSize: 7,
-        margin: [0, 5, 0, 0]
-      }),
-      defaultStyle: { fontSize: 8, color: navy },
-      styles: {
-        tiny: { fontSize: 6.5, bold: true, color: '#94a3b8' },
-        nota: { fontSize: 14, bold: true, color: orange },
-        section: { fontSize: 9, bold: true, color: navy, margin: [0, 9, 0, 4] },
-        headerCell: {
-          fontSize: 7,
-          bold: true,
-          color: '#ffffff',
-          fillColor: orange,
-          margin: [4, 4, 4, 4],
-          alignment: 'center'
-        },
-        cell: { fontSize: 7, margin: [4, 3, 4, 3], alignment: 'center' }
-      }
-    })
-    .download(`Panel_PTM_${range?.from || 'inicio'}_${range?.to || 'hoy'}.pdf`);
+        bold: true,
+        color: '#ffffff',
+        fillColor: orange,
+        margin: [4, 4, 4, 4],
+        alignment: 'center'
+      },
+      cell: { fontSize: 7, margin: [4, 3, 4, 3], alignment: 'center' }
+    }
+  });
+  await downloadPdfDocument(
+    pdfDocument,
+    `Panel_PTM_${range?.from || 'inicio'}_${range?.to || 'hoy'}.pdf`,
+    { label: 'Panel PTM' }
+  );
 }

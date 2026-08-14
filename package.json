@@ -1,7 +1,7 @@
 {
   "name": "cco-ptm",
   "private": true,
-  "version": "1.55.148",
+  "version": "1.55.149",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -34,8 +34,10 @@
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/push-notifications": "^8.1.1",
+    "@capacitor/share": "^8.0.1",
     "@capgo/capacitor-updater": "^8.50.2",
     "@gsap/react": "^2.1.1",
     "@sentry/browser": "^7.114.0",

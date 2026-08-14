@@ -421,7 +421,7 @@ const Navbar = () => {
   return (
     <header
       ref={navRef}
-      className={`fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-[100] transition-all duration-700 ease-in-out
+      className={`app-navbar fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-[100] transition-all duration-700 ease-in-out
         ${scrolled ? 'py-0.5 sm:py-1' : 'py-1.5 sm:py-3'}`}
     >
       <div

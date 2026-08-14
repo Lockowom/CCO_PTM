@@ -159,9 +159,110 @@ select:focus {
    en rem) escala en proporción al ancho del equipo, acotado para que nunca se vea
    ni gigante (tablet) ni minúsculo (PDA de 320px). No afecta a la web de escritorio. */
 html.is-native {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: clamp(14px, 3.75vw, 16px);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+html.is-native,
+html.is-native body,
+html.is-native #root {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.app-shell { height: 100vh; height: 100svh; height: 100dvh; }
+.app-main {
+  padding-top: calc(4.5rem + var(--sat));
+  scroll-padding-top: calc(5rem + var(--sat));
+  overscroll-behavior: contain;
+}
+html.is-native .app-navbar {
+  top: max(0.5rem, var(--sat));
+  right: max(0.5rem, var(--sar));
+  left: max(0.5rem, var(--sal));
+}
+.app-page {
+  min-width: 0;
+  padding-right: max(0.75rem, var(--sar));
+  padding-bottom: max(6rem, calc(4.5rem + var(--sab)));
+  padding-left: max(0.75rem, var(--sal));
+}
+
+.download-activity {
+  position: fixed;
+  z-index: 180;
+  right: max(0.75rem, var(--sar));
+  bottom: max(0.75rem, calc(0.75rem + var(--sab)));
+  display: flex;
+  width: min(26rem, calc(100vw - 1.5rem - var(--sal) - var(--sar)));
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.9rem;
+  color: #0f172a;
+  box-shadow: 0 20px 55px -24px rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(16px);
+  animation: pda-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.download-activity strong { display: block; font-size: 0.78rem; }
+.download-activity span { font-size: 0.68rem; font-weight: 800; color: #64748b; }
+.download-activity p {
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+.download-activity__icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: #fff7ed;
+  color: #ea580c;
+}
+.download-activity__icon.is-done { background: #ecfdf5; color: #059669; }
+.download-activity__icon.is-error { background: #fff1f2; color: #e11d48; }
+.download-activity__track {
+  margin-top: 0.45rem;
+  height: 0.25rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+.download-activity__track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+  transition: width 0.35s ease;
+}
+
+@media (max-width: 380px) {
+  .app-main { padding-top: calc(4.15rem + var(--sat)); }
+  .app-page {
+    padding-right: max(0.55rem, var(--sar));
+    padding-left: max(0.55rem, var(--sal));
+  }
+  .app-page h1 { font-size: clamp(1.25rem, 7vw, 1.65rem); line-height: 1.12; }
+  .download-activity {
+    right: max(0.5rem, var(--sar));
+    width: calc(100vw - 1rem - var(--sal) - var(--sar));
+  }
+}
+@media (max-width: 768px) {
+  .layout-orb { display: none; }
+  .app-navbar, .app-navbar > div { transition-duration: 240ms !important; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .app-main { padding-top: calc(3.9rem + var(--sat)); }
+  .app-page { padding-bottom: max(3.5rem, calc(2rem + var(--sab))); }
 }
 html.is-native body {
   -webkit-tap-highlight-color: transparent;   /* sin flash gris al tocar */

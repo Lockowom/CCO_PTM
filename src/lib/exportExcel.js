@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { saveReportBlob } from '../services/downloadService';
 
 /**
  * Exporta una o varias hojas a un archivo .xlsx.
@@ -9,7 +10,7 @@ import * as XLSX from 'xlsx';
  *        Lista de hojas. Cada `rows` es un arreglo de objetos planos
  *        (las claves se usan como encabezados de columna).
  */
-export function exportToExcel({ filename, sheets }) {
+export async function exportToExcel({ filename, sheets }) {
   const wb = XLSX.utils.book_new();
 
   (sheets || []).forEach((sheet, idx) => {
@@ -20,5 +21,12 @@ export function exportToExcel({ filename, sheets }) {
   });
 
   const stamp = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `${filename}_${stamp}.xlsx`);
+  const bytes = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  return saveReportBlob(
+    new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }),
+    `${filename}_${stamp}.xlsx`,
+    { label: 'Informe Excel' }
+  );
 }

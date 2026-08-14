@@ -6,6 +6,7 @@ import {
   semaforoSalida, RIESGOS_SALIDA, resultadoPeso,
   CLASIFICACION_INGRESO, EMBALAJE_INGRESO, riesgoIngreso, indicadoresIso,
 } from '../services/calidadService';
+import { downloadPdfDocument, saveReportBlob } from '../services/downloadService';
 
 export { DOC_CONTROL };
 
@@ -16,17 +17,6 @@ const EV_LABEL = {
   PALLET: 'Foto del pallet', EMBALAJE: 'Foto del embalaje', CAMION: 'Foto dentro del camión',
   PRODUCTO: 'Foto del producto', DOCUMENTO: 'Documentación', GENERAL: 'Foto general',
 };
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
 
 const RESP_LABEL = { OK: 'Conforme', NO: 'No conforme', NA: 'N/A' };
 const ORIGEN_LABEL = { IMPORTACION: 'Importación', NACIONAL: 'Nacional' };
@@ -289,7 +279,7 @@ export async function exportChecklistWord(tarea, niveles = [], opts = {}) {
 
   const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
-  downloadBlob(blob, nombreArchivo(tarea, 'docx'));
+  await saveReportBlob(blob, nombreArchivo(tarea, 'docx'), { label: 'Informe Word' });
 }
 
 // ── PDF (pdfmake) ────────────────────────────────────────────────────────────
@@ -550,7 +540,7 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
     });
   }
 
-  pdfMake.createPdf({
+  const pdfDocument = pdfMake.createPdf({
     pageMargins: isoPageMargins,
     header: isoPdfHeader(DOC_KEY(tarea, opts)),
     footer: isoPdfFooter(DOC_KEY(tarea, opts)),
@@ -560,5 +550,8 @@ export async function exportChecklistPDF(tarea, niveles = [], opts = {}) {
       title: { fontSize: 16, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
       h2: { fontSize: 12, bold: true, margin: [0, 10, 0, 4] },
     },
-  }).download(nombreArchivo(tarea, 'pdf'));
+  });
+  await downloadPdfDocument(pdfDocument, nombreArchivo(tarea, 'pdf'), {
+    label: 'Informe de calidad',
+  });
 }

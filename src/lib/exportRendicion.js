@@ -1,4 +1,5 @@
 import { cleanHumanText, excelSafe } from './rendicionValidation.js';
+import { downloadPdfDocument, saveReportBlob } from '../services/downloadService';
 
 const money = (value) => `$ ${Math.round(Number(value || 0)).toLocaleString('es-CL')}`;
 const dateCL = (value) =>
@@ -256,7 +257,9 @@ export async function downloadRendicionPDF(data) {
     logo,
     evidenceImages: evidence.filter((photo) => photo.image)
   });
-  pdfMake.createPdf(doc).download(`${r.folio_texto || 'Rendicion'}.pdf`);
+  await downloadPdfDocument(pdfMake.createPdf(doc), `${r.folio_texto || 'Rendicion'}.pdf`, {
+    label: 'Rendición de gastos'
+  });
 }
 
 export async function downloadRendicionExcel(data) {
@@ -352,5 +355,12 @@ export async function downloadRendicionExcel(data) {
   }
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Rendición');
-  XLSX.writeFile(wb, `${r.folio_texto || 'Rendicion'}.xlsx`);
+  const bytes = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  await saveReportBlob(
+    new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }),
+    `${r.folio_texto || 'Rendicion'}.xlsx`,
+    { label: 'Rendición Excel' }
+  );
 }

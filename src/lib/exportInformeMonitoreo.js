@@ -2,17 +2,7 @@
 // Librerías pesadas (docx, pdfmake) por import dinámico (solo al exportar).
 // Formato de control documental ISO 13485 (encabezado/pie + logo) vía docIso.
 import { isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
+import { downloadPdfDocument, saveReportBlob } from '../services/downloadService';
 
 const DICT_LABEL = {
   LIBERAR: 'Liberado', CUARENTENA: 'Cuarentena', REPROCESO: 'Reproceso',
@@ -113,7 +103,9 @@ export async function exportInformeMonitoreoWord(informe, items = []) {
 
   const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
-  downloadBlob(blob, `${informe.numero || 'Informe_Monitoreo'}.docx`);
+  await saveReportBlob(blob, `${informe.numero || 'Informe_Monitoreo'}.docx`, {
+    label: 'Informe Word',
+  });
 }
 
 // ── PDF (pdfmake) ────────────────────────────────────────────────────────────
@@ -182,7 +174,7 @@ export async function exportInformeMonitoreoPDF(informe, items = []) {
     columnGap: 24,
   });
 
-  pdfMake.createPdf({
+  const pdfDocument = pdfMake.createPdf({
     pageMargins: isoPageMargins,
     header: isoPdfHeader('monitoreo'),
     footer: isoPdfFooter('monitoreo'),
@@ -192,5 +184,8 @@ export async function exportInformeMonitoreoPDF(informe, items = []) {
       title: { fontSize: 16, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
       h2: { fontSize: 12, bold: true, margin: [0, 10, 0, 4] },
     },
-  }).download(`${informe.numero || 'Informe_Monitoreo'}.pdf`);
+  });
+  await downloadPdfDocument(pdfDocument, `${informe.numero || 'Informe_Monitoreo'}.pdf`, {
+    label: 'Informe de monitoreo',
+  });
 }

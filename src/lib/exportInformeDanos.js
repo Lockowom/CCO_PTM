@@ -4,6 +4,7 @@
 // Formato de control documental ISO 13485 (encabezado/pie + logo) vía docIso.
 import { isoPageMargins, isoPdfHeader, isoPdfFooter, isoWordHeaderFooter } from './docIso';
 import { signedUrl } from './storageUrl';
+import { downloadPdfDocument, saveReportBlob } from '../services/downloadService';
 
 // Bucket privado (mig 065): la URL pública guardada en imagen_url ya no
 // resuelve; se firma storage_path con la sesión del usuario que exporta.
@@ -27,17 +28,6 @@ async function fetchDataUrl(url) {
     fr.onerror = rej;
     fr.readAsDataURL(blob);
   });
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
 // Normaliza el modelo común a partir de la cabecera + reporte + hallazgos + evidencias.
@@ -174,7 +164,9 @@ export async function exportInformeDanosWord(informe, hallazgos = [], evidencias
 
   const doc = new Document({ sections: [{ headers: { default: header }, footers: { default: footer }, children }] });
   const blob = await Packer.toBlob(doc);
-  downloadBlob(blob, `${informe.numero || 'Informe_Danos'}.docx`);
+  await saveReportBlob(blob, `${informe.numero || 'Informe_Danos'}.docx`, {
+    label: 'Informe Word',
+  });
 }
 
 // ── PDF (pdfmake) ────────────────────────────────────────────────────────────
@@ -288,5 +280,9 @@ export async function exportInformeDanosPDF(informe, hallazgos = [], evidencias 
     },
   };
 
-  pdfMake.createPdf(docDefinition).download(`${informe.numero || 'Informe_Danos'}.pdf`);
+  await downloadPdfDocument(
+    pdfMake.createPdf(docDefinition),
+    `${informe.numero || 'Informe_Danos'}.pdf`,
+    { label: 'Informe de daños' },
+  );
 }
