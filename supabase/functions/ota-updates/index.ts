@@ -35,6 +35,22 @@ const clean = (value: unknown, max = 160) =>
   String(value ?? '')
     .trim()
     .slice(0, max);
+const versionParts = (value: unknown) =>
+  clean(value, 80)
+    .replace(/^v/i, '')
+    .split(/[.+_-]/)
+    .map((part) => Number.parseInt(part, 10))
+    .map((part) => (Number.isFinite(part) ? part : 0));
+const compareVersions = (left: unknown, right: unknown) => {
+  const a = versionParts(left);
+  const b = versionParts(right);
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    const delta = (a[index] || 0) - (b[index] || 0);
+    if (delta !== 0) return delta > 0 ? 1 : -1;
+  }
+  return 0;
+};
 const validDevice = (body: Record<string, unknown>) => {
   const appId = clean(body.app_id, 100);
   const deviceId = clean(body.device_id, 160);
@@ -136,13 +152,16 @@ Deno.serve(async (req) => {
     }
 
     const currentVersion = clean(body.version_name, 80);
+    const nativeVersion = clean(body.version_build, 80);
+    const effectiveVersion =
+      compareVersions(nativeVersion, currentVersion) > 0 ? nativeVersion : currentVersion;
     await service.from('mobile_ota_devices').upsert(
       {
         app_id: APP_ID,
         device_id: identity.deviceId,
         channel,
         current_version: VERSION_RE.test(currentVersion) ? currentVersion : null,
-        native_version: clean(body.version_build, 80) || null,
+        native_version: nativeVersion || null,
         platform: clean(body.platform, 20) || null,
         plugin_version: clean(body.plugin_version, 40) || null,
         install_source: clean(body.install_source, 80) || null,
@@ -169,8 +188,10 @@ Deno.serve(async (req) => {
       .eq('enabled', true)
       .maybeSingle();
     if (bundleError) throw bundleError;
-    if (!bundle || bundle.version === currentVersion) {
-      return json({ version: currentVersion, message: 'No new version available' });
+    // Nunca entregar un bundle igual o inferior al binario/APK instalado. Esto
+    // evita que un canal rezagado haga downgrade de la interfaz persistida.
+    if (!bundle || compareVersions(bundle.version, effectiveVersion) <= 0) {
+      return json({ version: effectiveVersion, message: 'No new version available' });
     }
     return json({
       version: bundle.version,

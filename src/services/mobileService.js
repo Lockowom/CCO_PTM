@@ -18,6 +18,25 @@ export const CANALES_OTA = ['production', 'beta'];
 const OTA_URL = 'https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates';
 let otaDownloadInFlight = false;
 
+const versionParts = (value) =>
+  String(value || '')
+    .trim()
+    .replace(/^v/i, '')
+    .split(/[.+_-]/)
+    .map((part) => Number.parseInt(part, 10))
+    .map((part) => (Number.isFinite(part) ? part : 0));
+
+const compareVersions = (left, right) => {
+  const a = versionParts(left);
+  const b = versionParts(right);
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    const delta = (a[index] || 0) - (b[index] || 0);
+    if (delta !== 0) return delta > 0 ? 1 : -1;
+  }
+  return 0;
+};
+
 export const getOTAChannel = async () => {
   if (!Capacitor.isNativePlatform()) return null;
   try {
@@ -44,6 +63,15 @@ export const setOTAChannel = async (channel) => {
 
 export const initOTAUpdates = async () => {
   try {
+    const installed = await CapacitorUpdater.current();
+    const activeBundle = installed?.bundle?.version;
+    const nativeVersion = installed?.native;
+    if (activeBundle && nativeVersion && compareVersions(activeBundle, nativeVersion) < 0) {
+      console.warn(`OTA: restaurando APK ${nativeVersion}; bundle antiguo ${activeBundle}`);
+      await CapacitorUpdater.reset({ toLastSuccessful: false });
+      return;
+    }
+
     await CapacitorUpdater.notifyAppReady();
 
     // Progreso de descarga en vivo (píldora fluida en la UI).
@@ -193,6 +221,17 @@ const descargarActualizacionPropia = async (origen = 'manual') => {
   const latest = await consultarActualizacionPropia();
   if (latest?.error) return { estado: 'error', detalle: latest.message || latest.error };
   if (!latest?.url) return { estado: 'al-dia', version: latest?.version };
+
+  const current = await CapacitorUpdater.current();
+  const effectiveVersion =
+    compareVersions(current?.native, current?.bundle?.version) > 0
+      ? current?.native
+      : current?.bundle?.version || current?.native;
+  if (effectiveVersion && compareVersions(latest.version, effectiveVersion) <= 0) {
+    console.warn(`OTA: bundle ${latest.version} descartado; instalado ${effectiveVersion}`);
+    return { estado: 'al-dia', version: effectiveVersion };
+  }
+
   otaDownloadInFlight = true;
   try {
     const bundle = await CapacitorUpdater.download({
