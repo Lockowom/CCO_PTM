@@ -612,3 +612,448 @@
     padding: 0;
   }
 }
+
+/* Diagnóstico histórico privado */
+.cr-view-tabs {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0 18px;
+  padding: 5px;
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid #dbe4ef;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
+}
+.cr-view-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.cr-view-tabs button.is-active {
+  color: #fff;
+  background: #0f172a;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.2);
+}
+.cra-shell {
+  display: grid;
+  gap: 16px;
+}
+.cra-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+}
+.cra-toolbar h2 {
+  margin: 3px 0;
+  font-size: 20px;
+  color: #0f172a;
+}
+.cra-toolbar p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+.cra-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.cra-toolbar__actions label {
+  display: grid;
+  gap: 4px;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.cra-toolbar__actions input {
+  border: 1px solid #dbe4ef;
+  border-radius: 9px;
+  padding: 9px 10px;
+  color: #0f172a;
+  font: inherit;
+  min-height: 38px;
+}
+.cra-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.cra-metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 108px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #dbe4ef;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.045);
+}
+.cra-metric > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  color: #2563eb;
+  background: #eff6ff;
+}
+.cra-metric--orange > span {
+  color: #ea580c;
+  background: #fff7ed;
+}
+.cra-metric--green > span {
+  color: #059669;
+  background: #ecfdf5;
+}
+.cra-metric--purple > span {
+  color: #7c3aed;
+  background: #f5f3ff;
+}
+.cra-metric div {
+  display: grid;
+  min-width: 0;
+}
+.cra-metric small {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cra-metric strong {
+  color: #0f172a;
+  font-size: 23px;
+  line-height: 1.2;
+}
+.cra-metric em {
+  color: #94a3b8;
+  font-size: 10px;
+  font-style: normal;
+}
+.cra-questions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.cra-question {
+  display: flex;
+  gap: 11px;
+  padding: 16px;
+  min-height: 132px;
+  color: #0f172a;
+  background: linear-gradient(145deg, #fff, #f8fafc);
+  border: 1px solid #dbe4ef;
+  border-radius: 16px;
+}
+.cra-question__index {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+.cra-question div {
+  min-width: 0;
+}
+.cra-question small {
+  color: #f97316;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+.cra-question h3 {
+  margin: 4px 0 10px;
+  font-size: 13px;
+}
+.cra-question strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.cra-question p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.cra-grid {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 14px;
+}
+.cra-grid > .cr-card {
+  min-width: 0;
+}
+.cra-chart-card {
+  min-height: 355px;
+}
+.cra-grain {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #f1f5f9;
+}
+.cra-grain button {
+  border: 0;
+  border-radius: 7px;
+  padding: 6px 8px;
+  color: #64748b;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.cra-grain button.is-active {
+  color: #fff;
+  background: #f97316;
+}
+.cra-weight-list {
+  display: grid;
+  gap: 13px;
+}
+.cra-weight-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 12px;
+}
+.cra-weight-list div div {
+  display: grid;
+}
+.cra-weight-list strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+.cra-weight-list span {
+  color: #64748b;
+  font-size: 9px;
+}
+.cra-weight-list b {
+  color: #0f172a;
+  font-size: 14px;
+}
+.cra-weight-list i {
+  grid-column: 1/-1;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eef2f7;
+}
+.cra-weight-list i span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+.cra-table-card {
+  padding-bottom: 4px;
+}
+.cra-table-wrap {
+  overflow: auto;
+  max-height: 390px;
+}
+.cra-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.cra-table-wrap th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 7px;
+  color: #64748b;
+  background: #f8fafc;
+  text-align: right;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cra-table-wrap th:first-child,
+.cra-table-wrap td:first-child,
+.cra-table-wrap th:last-child,
+.cra-table-wrap td:last-child {
+  text-align: left;
+}
+.cra-table-wrap td {
+  padding: 10px 7px;
+  border-top: 1px solid #eef2f7;
+  text-align: right;
+  white-space: nowrap;
+}
+.cra-table-wrap td strong,
+.cra-table-wrap td small {
+  display: block;
+}
+.cra-table-wrap td small {
+  color: #94a3b8;
+  font-size: 8px;
+}
+.cra-findings {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 18px;
+}
+.cra-findings h3 {
+  margin: 3px 0 12px;
+}
+.cra-findings > div p {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 7px 0;
+  color: #475569;
+  font-size: 11px;
+}
+.cra-findings > div p b {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  color: #fff;
+  background: #f97316;
+  font-size: 8px;
+}
+.cra-findings aside {
+  padding: 16px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  color: #9a3412;
+  background: #fff7ed;
+}
+.cra-findings aside strong {
+  display: block;
+  margin: 5px 0;
+}
+.cra-findings aside p,
+.cra-findings aside span {
+  font-size: 10px;
+  line-height: 1.5;
+}
+.cra-findings aside span {
+  display: block;
+  font-weight: 800;
+}
+.cra-import,
+.cra-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cra-import > div,
+.cra-empty-state > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.cra-import h3,
+.cra-empty-state h3 {
+  margin: 2px 0;
+  font-size: 14px;
+}
+.cra-import p,
+.cra-empty-state p {
+  margin: 0;
+  color: #64748b;
+  font-size: 10px;
+}
+.cra-empty-state {
+  border: 1px dashed #fb923c;
+  background: #fffaf5;
+}
+.cra-loading {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #64748b;
+  font-weight: 700;
+}
+@media (max-width: 1100px) {
+  .cra-metrics,
+  .cra-questions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cra-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .cra-toolbar__actions {
+    justify-content: flex-start;
+  }
+  .cra-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .cr-view-tabs {
+    width: 100%;
+  }
+  .cr-view-tabs button {
+    flex: 1;
+    justify-content: center;
+    padding: 9px 8px;
+    font-size: 10px;
+  }
+  .cra-metrics,
+  .cra-questions,
+  .cra-findings {
+    grid-template-columns: 1fr;
+  }
+  .cra-toolbar__actions {
+    width: 100%;
+  }
+  .cra-toolbar__actions label {
+    flex: 1;
+    min-width: 130px;
+  }
+  .cra-toolbar__actions input {
+    width: 100%;
+  }
+  .cra-toolbar__actions .cr-button {
+    flex: 1;
+  }
+  .cra-import,
+  .cra-empty-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .cra-import > div,
+  .cra-empty-state > div {
+    align-items: flex-start;
+  }
+  .cra-import .cr-button,
+  .cra-empty-state .cr-button {
+    width: 100%;
+  }
+  .cra-chart-card {
+    min-height: 320px;
+  }
+}

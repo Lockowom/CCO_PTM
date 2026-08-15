@@ -8,6 +8,9 @@ async function rpc(name, params = {}) {
 
 export const routeCoordinationService = {
   dashboard: () => rpc('coord_rutas_tablero'),
+  analytics: (desde = null, hasta = null) =>
+    rpc('coord_rutas_analitica', { p_desde: desde || null, p_hasta: hasta || null }),
+  importFreights: (rows) => rpc('coord_rutas_importar_fletes', { p_rows: rows }),
   createPickup: (form) => rpc('coord_rutas_crear_retiro', { p_data: form }),
   createPlan: ({ fecha, vuelta, transportistaId, notas }) =>
     rpc('coord_rutas_crear_plan', {
