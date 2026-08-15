@@ -14,7 +14,11 @@ import {
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
 import { routeCoordinationService } from './routeCoordinationService';
-import { FREIGHT_TEMPLATE_HEADERS, normalizeFreightRows } from './routeFreightImport';
+import {
+  consolidateFreightOrders,
+  FREIGHT_TEMPLATE_HEADERS,
+  normalizeFreightRows
+} from './routeFreightImport';
 import { exportRouteAnalyticsExcel, exportRouteAnalyticsPdf } from './routeExecutiveExport';
 
 const number = (value, digits = 0) =>
@@ -97,10 +101,14 @@ export default function RouteAnalytics() {
       result.push(
         `La cobertura de peso es ${number(weightCoverage, 1)}%; las conclusiones de capacidad deben leerse con esa limitación.`
       );
-    result.push(
+    if (Number(data.quality?.pesos_mayores_460 || 0) > 0)
+      result.push(
+        `${number(data.quality.pesos_mayores_460)} registro(s) superan 460 kg y deben validarse antes de comparar capacidad o costo.`
+      );
+    return [
+      ...result.slice(0, 4),
       'No es posible estimar ocupación volumétrica sin largo, ancho y alto de los bultos.'
-    );
-    return result.slice(0, 5);
+    ];
   }, [data, summary.despachos]);
 
   const upload = async (event) => {
@@ -115,7 +123,21 @@ export default function RouteAnalytics() {
         defval: null,
         raw: true
       });
-      const normalized = normalizeFreightRows(rows);
+      const transfarmaFormat = rows.some((row) =>
+        Object.keys(row).some((header) =>
+          String(header)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .includes('orden flete')
+        )
+      );
+      const normalized = consolidateFreightOrders(
+        normalizeFreightRows(rows, {
+          defaultTransportista: transfarmaFormat ? 'Transfarma' : null,
+          defaultTipoTransporte: transfarmaFormat ? 'EXTERNO' : null
+        })
+      );
       if (!normalized.length)
         throw new Error('No se detectaron filas con N.V., factura o cliente.');
       const result = { total: 0, insertados: 0, actualizados: 0, errores: 0 };
@@ -206,9 +228,9 @@ export default function RouteAnalytics() {
       <section className="cra-metrics">
         <Metric
           icon={Truck}
-          label="Despachos"
-          value={number(summary.despachos)}
-          helper={`${summary.desde || '—'} → ${summary.hasta || '—'}`}
+          label="N.V. despachadas"
+          value={number(summary.nvs)}
+          helper={`${number(summary.despachos)} órdenes de flete`}
         />
         <Metric
           icon={Package}
@@ -219,7 +241,7 @@ export default function RouteAnalytics() {
         />
         <Metric
           icon={Scale}
-          label="Kilos válidos"
+          label="Kilos informados"
           value={`${number(summary.kilos, 1)} kg`}
           helper={`${number(summary.kg_despacho, 1)} kg por despacho`}
           tone="green"
@@ -261,7 +283,7 @@ export default function RouteAnalytics() {
         <Question
           number="01"
           title="¿Cuánto despachamos?"
-          answer={`${number(summary.despachos)} despachos · ${number(summary.bultos)} bultos · ${number(summary.kilos, 1)} kg`}
+          answer={`${number(summary.nvs)} N.V. · ${number(summary.despachos)} despachos · ${number(summary.bultos)} bultos · ${number(summary.kilos, 1)} kg`}
         >
           <p>Disponible por día, semana y mes según el selector inferior.</p>
         </Question>
@@ -331,7 +353,7 @@ export default function RouteAnalytics() {
               <XAxis dataKey="periodo" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip />
-              <Bar dataKey="despachos" fill="#f97316" name="Despachos" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="nvs" fill="#f97316" name="N.V." radius={[5, 5, 0, 0]} />
               <Bar dataKey="kilos" fill="#0f766e" name="Kilos" radius={[5, 5, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -378,6 +400,7 @@ export default function RouteAnalytics() {
                 <tr>
                   <th>Transportista</th>
                   <th>Desp.</th>
+                  <th>N.V.</th>
                   <th>%</th>
                   <th>Bultos</th>
                   <th>Kilos</th>
@@ -393,6 +416,7 @@ export default function RouteAnalytics() {
                       <small>{x.tipo_transporte?.replaceAll('_', ' ')}</small>
                     </td>
                     <td>{number(x.despachos)}</td>
+                    <td>{number(x.nvs)}</td>
                     <td>{number(x.porcentaje, 1)}%</td>
                     <td>{number(x.bultos)}</td>
                     <td>{number(x.kilos, 1)}</td>
@@ -418,6 +442,7 @@ export default function RouteAnalytics() {
                 <tr>
                   <th>Destino</th>
                   <th>Desp.</th>
+                  <th>N.V.</th>
                   <th>Bultos</th>
                   <th>Kilos</th>
                 </tr>
@@ -430,6 +455,7 @@ export default function RouteAnalytics() {
                       <small>{x.region || 'Región sin validar'}</small>
                     </td>
                     <td>{number(x.despachos)}</td>
+                    <td>{number(x.nvs)}</td>
                     <td>{number(x.bultos)}</td>
                     <td>{number(x.kilos, 1)}</td>
                   </tr>

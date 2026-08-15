@@ -7,10 +7,18 @@ const clean = (value) =>
     .toLowerCase();
 
 const aliases = {
-  fecha_despacho: ['fecha despacho', 'fecha docto', 'fecha', 'fecha salida'],
+  orden_flete: ['orden flete', 'orden de flete', 'id flete'],
+  fecha_despacho: ['fecha despacho', 'fecha docto', 'fecha emision', 'fecha', 'fecha salida'],
   fecha_entrega: ['fecha entrega', 'fecha real entrega', 'entregado'],
   nv: ['nv', 'n v', 'n nv', 'n venta', 'nota venta', 'numero nv'],
-  factura: ['factura', 'facturas', 'n factura', 'numero factura'],
+  factura: [
+    'factura',
+    'facturas',
+    'n factura',
+    'numero factura',
+    'doct cliente',
+    'documento cliente'
+  ],
   cliente: ['cliente', 'nombre cliente', 'razon social'],
   destino: ['destino', 'localidad', 'pueblo'],
   comuna: ['comuna'],
@@ -82,8 +90,8 @@ const transportType = (value) => {
   return 'SIN_CLASIFICAR';
 };
 
-export function normalizeFreightRows(rows = []) {
-  return rows
+export function normalizeFreightRows(rows = [], options = {}) {
+  const normalized = rows
     .map((source) => {
       const mapped = {};
       Object.entries(source || {}).forEach(([header, value]) => {
@@ -91,6 +99,7 @@ export function normalizeFreightRows(rows = []) {
         if (field && mapped[field] == null) mapped[field] = value;
       });
       return {
+        orden_flete: textValue(mapped.orden_flete),
         fecha_despacho: dateValue(mapped.fecha_despacho),
         fecha_entrega: dateValue(mapped.fecha_entrega),
         nv: textValue(mapped.nv),
@@ -100,20 +109,74 @@ export function normalizeFreightRows(rows = []) {
         comuna: textValue(mapped.comuna),
         ciudad: textValue(mapped.ciudad),
         region: textValue(mapped.region),
-        transportista: textValue(mapped.transportista),
-        tipo_transporte: transportType(mapped.tipo_transporte),
+        transportista: textValue(mapped.transportista) || textValue(options.defaultTransportista),
+        tipo_transporte: transportType(mapped.tipo_transporte || options.defaultTipoTransporte),
         bultos: numberValue(mapped.bultos),
         kilos: numberValue(mapped.kilos),
         valor_venta: numberValue(mapped.valor_venta, true),
         costo_flete: numberValue(mapped.costo_flete, true),
         estado: textValue(mapped.estado),
-        observaciones: textValue(mapped.observaciones)
+        observaciones: textValue(mapped.observaciones),
+        cantidad_nv: 1
       };
     })
     .filter((row) => row.nv || row.factura || row.cliente);
+
+  return normalized;
+}
+
+export function consolidateFreightOrders(rows = []) {
+  const consolidated = new Map();
+
+  rows.forEach((row, index) => {
+    const key = row.orden_flete ? `orden:${clean(row.orden_flete)}` : `fila:${index}`;
+    const current = consolidated.get(key);
+    const references = [row.nv, row.factura].filter(Boolean);
+
+    if (!current) {
+      consolidated.set(key, {
+        ...row,
+        _references: new Set(references),
+        _weightConflict: false,
+        _packageConflict: false
+      });
+      return;
+    }
+
+    references.forEach((value) => current._references.add(value));
+    if (row.kilos != null && current.kilos != null && row.kilos !== current.kilos)
+      current._weightConflict = true;
+    if (row.bultos != null && current.bultos != null && row.bultos !== current.bultos)
+      current._packageConflict = true;
+    current.kilos = Math.max(Number(current.kilos || 0), Number(row.kilos || 0)) || null;
+    current.bultos = Math.max(Number(current.bultos || 0), Number(row.bultos || 0)) || null;
+    current.fecha_entrega = current.fecha_entrega || row.fecha_entrega;
+    current.estado = current.estado || row.estado;
+  });
+
+  return [...consolidated.values()].map((row) => {
+    const references = [...row._references];
+    const warnings = [];
+    if (row._weightConflict)
+      warnings.push('Revisar: la orden traía pesos distintos por documento.');
+    if (row._packageConflict)
+      warnings.push('Revisar: la orden traía bultos distintos por documento.');
+    const observation = [row.observaciones, ...warnings].filter(Boolean).join(' ');
+    const cleanRow = { ...row };
+    delete cleanRow._references;
+    delete cleanRow._weightConflict;
+    delete cleanRow._packageConflict;
+    return {
+      ...cleanRow,
+      factura: references.join(', ') || cleanRow.factura,
+      cantidad_nv: Math.max(references.length, 1),
+      observaciones: observation || null
+    };
+  });
 }
 
 export const FREIGHT_TEMPLATE_HEADERS = [
+  'ORDEN FLETE',
   'FECHA DESPACHO',
   'FECHA ENTREGA',
   'NV',

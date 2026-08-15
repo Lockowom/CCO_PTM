@@ -9,6 +9,7 @@ export async function exportRouteAnalyticsExcel(data) {
     wb,
     XLSX.utils.aoa_to_sheet([
       ['HISTORICO DE DESPACHOS - PTM'],
+      ['N.V.', summary.nvs || 0],
       ['Despachos', summary.despachos || 0],
       ['Bultos', summary.bultos || 0],
       ['Kilos', summary.kilos || 0],
@@ -66,7 +67,7 @@ export async function exportRouteAnalyticsPdf(data, findings = []) {
       {
         columns: [
           {
-            text: `OPERACIÓN\n${number(s.despachos)} despachos\n${number(s.bultos)} bultos\n${number(s.kilos, 1)} kg`,
+            text: `OPERACIÓN\n${number(s.nvs)} N.V.\n${number(s.despachos)} despachos\n${number(s.bultos)} bultos\n${number(s.kilos, 1)} kg`,
             style: 'kpi'
           },
           {
@@ -88,9 +89,9 @@ export async function exportRouteAnalyticsPdf(data, findings = []) {
             stack: [
               { text: 'DESTINOS PRINCIPALES', style: 'h2' },
               table(
-                ['Destino', 'Desp.', 'Kg'],
-                top.map((x) => [x.destino, number(x.despachos), number(x.kilos, 1)]),
-                ['*', 42, 58]
+                ['Destino', 'N.V.', 'Desp.', 'Kg'],
+                top.map((x) => [x.destino, number(x.nvs), number(x.despachos), number(x.kilos, 1)]),
+                ['*', 36, 38, 52]
               )
             ]
           },

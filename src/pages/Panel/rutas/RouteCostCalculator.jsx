@@ -83,6 +83,8 @@ export default function RouteCostCalculator() {
     bultos: 1,
     kilos: '',
     valor_nv_total: '',
+    modalidad_costo: 'TODO_INCLUIDO',
+    costo_tramo_adicional: '',
     espera_motivo: ''
   });
 
@@ -151,6 +153,8 @@ export default function RouteCostCalculator() {
 
   const compare = async () => {
     if (!form.destino.trim()) return toast.warning('Ingresa el destino del despacho.');
+    if (form.modalidad_costo === 'DOS_TRAMOS' && Number(form.costo_tramo_adicional) <= 0)
+      return toast.warning('Ingresa el valor del transportista regional final.');
     if (!availableRates.length)
       return toast.warning('No hay tarifas configuradas para este destino. Agrega una primero.');
     setBusy('compare');
@@ -509,6 +513,35 @@ export default function RouteCostCalculator() {
               />
             </label>
             <label>
+              <span>Modalidad regional</span>
+              <select
+                value={form.modalidad_costo}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    modalidad_costo: e.target.value,
+                    costo_tramo_adicional:
+                      e.target.value === 'TODO_INCLUIDO' ? '' : form.costo_tramo_adicional
+                  })
+                }
+              >
+                <option value="TODO_INCLUIDO">Tarifa todo incluido</option>
+                <option value="DOS_TRAMOS">Transfarma + transportista regional</option>
+              </select>
+            </label>
+            {form.modalidad_costo === 'DOS_TRAMOS' && (
+              <label>
+                <span>Tramo regional adicional</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.costo_tramo_adicional}
+                  onChange={(e) => setForm({ ...form, costo_tramo_adicional: e.target.value })}
+                  placeholder="Valor cotizado por el transportista final"
+                />
+              </label>
+            )}
+            <label>
               <span>Espera atribuible</span>
               <select
                 value={form.espera_motivo}
@@ -584,6 +617,10 @@ export default function RouteCostCalculator() {
                     <dt>Recargo</dt>
                     <dd>{money(item.recargo)}</dd>
                   </div>
+                  <div>
+                    <dt>Tramo regional</dt>
+                    <dd>{money(item.formula.tramo_adicional)}</dd>
+                  </div>
                 </dl>
                 <p>
                   Base {money(item.formula.cargo_base)} + N.V. {money(item.formula.por_nv)} + bultos{' '}
@@ -612,11 +649,13 @@ export default function RouteCostCalculator() {
         <strong>Fórmula auditable</strong>
         <code>
           Total = máximo(mínimo, cargo base + N.V.×tarifa + bultos×tarifa + kg×tarifa + km×tarifa) +
-          recargo
+          recargo + tramo regional separado
         </code>
         <span>
           Si Transfarma cobra $5.800 por bulto en Santiago: 1 N.V. con 3 bultos = $17.400; 5 N.V.
-          consolidadas con 12 bultos = $69.600, equivalente a $13.920 por N.V.
+          consolidadas con 12 bultos = $69.600, equivalente a $13.920 por N.V. Para regiones, usa
+          “todo incluido” si Transfarma ya incorpora el transportista final; usa “dos tramos” solo
+          cuando ambas empresas facturan por separado.
         </span>
       </section>
 
