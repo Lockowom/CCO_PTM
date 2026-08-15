@@ -11,6 +11,17 @@ export const routeCoordinationService = {
   analytics: (desde = null, hasta = null) =>
     rpc('coord_rutas_analitica', { p_desde: desde || null, p_hasta: hasta || null }),
   importFreights: (rows) => rpc('coord_rutas_importar_fletes', { p_rows: rows }),
+  costCatalog: () => rpc('coord_rutas_catalogo_costos'),
+  saveRate: (rate) => rpc('coord_rutas_guardar_tarifa', { p_data: rate }),
+  calculateCost: (payload) => rpc('coord_rutas_calcular_costo', { p_data: payload }),
+  async calculateDistance(origen, destino) {
+    const { data, error } = await supabase.functions.invoke('coord-route-distance', {
+      body: { origen, destino }
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  },
   createPickup: (form) => rpc('coord_rutas_crear_retiro', { p_data: form }),
   createPlan: ({ fecha, vuelta, transportistaId, notas }) =>
     rpc('coord_rutas_crear_plan', {

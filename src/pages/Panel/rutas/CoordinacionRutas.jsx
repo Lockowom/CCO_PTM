@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleDot,
+  CircleDollarSign,
   Clock3,
   LockKeyhole,
   MapPinned,
@@ -23,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import RouteMap from './RouteMap';
 import RouteAnalytics from './RouteAnalytics';
+import RouteCostCalculator from './RouteCostCalculator';
 import {
   optimizeStops,
   SANTIAGO_COMMUNES,
@@ -241,9 +243,14 @@ export default function CoordinacionRutas() {
         >
           <BarChart3 size={16} /> Diagnóstico histórico
         </button>
+        <button className={view === 'costs' ? 'is-active' : ''} onClick={() => setView('costs')}>
+          <CircleDollarSign size={16} /> Costos y distancias
+        </button>
       </nav>
 
-      {view === 'analytics' ? (
+      {view === 'costs' ? (
+        <RouteCostCalculator />
+      ) : view === 'analytics' ? (
         <RouteAnalytics />
       ) : (
         <>
