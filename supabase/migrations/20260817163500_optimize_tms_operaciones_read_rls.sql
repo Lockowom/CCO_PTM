@@ -100,7 +100,7 @@ using (
     (select authz.operaciones_lectura_panel())
     and (
       nullif(btrim(coalesce(centro_costo, '')), '') is null
-      or btrim(centro_costo) = any ((select authz.operaciones_centros_lectura()))
+      or btrim(centro_costo) = any (((select authz.operaciones_centros_lectura()))::text[])
     )
   )
 );
