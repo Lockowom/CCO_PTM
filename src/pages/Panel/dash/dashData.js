@@ -642,10 +642,10 @@ export async function fetchActivasLista() {
 export async function fetchConsolidados() {
   const [{ data: cons, error: e1 }, { data: nvs, error: e2 }] = await Promise.all([
     supabase
-      .from('consolidados')
+      .from('tms_consolidados')
       .select('id, ticket, fecha_comprometida, estado, observacion, created_by, created_at')
       .order('id', { ascending: false }),
-    supabase.from('consolidado_nvs').select('id, consolidado_id, nv, canal, cliente')
+    supabase.from('tms_consolidado_nvs').select('id, consolidado_id, nv, canal, cliente')
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
@@ -698,7 +698,7 @@ export async function fetchConsolidadoKeys() {
       }
 
       const run = async () => {
-        const { data, error } = await supabase.from('consolidado_nvs').select('nv, canal');
+        const { data, error } = await supabase.from('tms_consolidado_nvs').select('nv, canal');
         const keys = error
           ? new Set()
           : new Set((data || []).map((n) => `${n.canal || 'ptm'}:${n.nv}`));
