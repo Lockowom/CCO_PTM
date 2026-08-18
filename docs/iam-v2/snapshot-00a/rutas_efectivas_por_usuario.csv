@@ -1,0 +1,849 @@
+usuario,rol,ruta,estado,via
+Admin Respaldo,ADMIN,/mobile/pda,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/tms/control,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/tms/pda,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inbound/reception,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inbound/reception-nacional,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inbound/entry,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inbound/cubing,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inbound/data-import,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/batches,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/sales-status,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/addresses,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/locations,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/heatmap,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/historial-nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/dispatch-control,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/datasheet,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/queries/grupo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/traspasos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/ingresar,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/reaperturas,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/info,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/tv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/builder,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Admin Respaldo,ADMIN,/panel/configuracion,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/conteo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/bloque/:codigo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/analisis,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/carteles,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/inventory/insumos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/quality/monitoreo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/quality/acciones,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/quality/bandeja,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/quality/clasificacion,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/postventa/tickets,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/seguridad,PERMITIDO,Autenticado
+Admin Respaldo,ADMIN,/admin/users,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/roles,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/views,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/cleanup,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/locations,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/location-requests,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/bodegas-softland,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/tickets,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/upload-history,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/monitor,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/observability,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/workflows,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/flujo-maestro,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/eventos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/api,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,/admin/rendiciones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/mobile/pda,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/tms/control,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/tms/pda,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inbound/reception,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inbound/reception-nacional,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inbound/entry,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inbound/cubing,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inbound/data-import,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/batches,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/sales-status,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/addresses,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/locations,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/heatmap,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/historial-nv,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/dispatch-control,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/datasheet,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/queries/grupo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/traspasos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/ingresar,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/reaperturas,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/info,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/tv,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/builder,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Administrador,ADMIN,/panel/configuracion,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/conteo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/bloque/:codigo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/analisis,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/carteles,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/inventory/insumos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/quality/monitoreo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/quality/acciones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/quality/bandeja,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/quality/clasificacion,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/postventa/tickets,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/seguridad,PERMITIDO,Autenticado
+Administrador,ADMIN,/admin/users,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/roles,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/views,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/cleanup,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/locations,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/location-requests,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/bodegas-softland,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/tickets,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/upload-history,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/monitor,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/observability,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/workflows,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/flujo-maestro,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/eventos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/api,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,/admin/rendiciones,PERMITIDO,Bypass ADMIN
+ARIEL SPOLANSKY,CEO_PTM,/mobile/pda,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/tms/control,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/tms/pda,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inbound/reception,PERMITIDO,process_reception
+ARIEL SPOLANSKY,CEO_PTM,/inbound/reception-nacional,PERMITIDO,process_reception
+ARIEL SPOLANSKY,CEO_PTM,/inbound/entry,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inbound/cubing,PERMITIDO,process_reception
+ARIEL SPOLANSKY,CEO_PTM,/inbound/data-import,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/batches,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/sales-status,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/addresses,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/locations,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/heatmap,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/historial-nv,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/dispatch-control,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/datasheet,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/queries/grupo,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/traspasos,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/panel,PERMITIDO,view_panel
+ARIEL SPOLANSKY,CEO_PTM,/panel/ingresar,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/panel/reaperturas,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/panel/info,PERMITIDO,panel_info
+ARIEL SPOLANSKY,CEO_PTM,/panel/tv,PERMITIDO,panel_tv
+ARIEL SPOLANSKY,CEO_PTM,/panel/builder,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+ARIEL SPOLANSKY,CEO_PTM,/panel/configuracion,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/conteo,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/bloque/:codigo,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/analisis,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/carteles,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/inventory/insumos,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/quality/monitoreo,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/quality/acciones,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/quality/bandeja,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/quality/clasificacion,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/postventa/tickets,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/seguridad,PERMITIDO,Autenticado
+ARIEL SPOLANSKY,CEO_PTM,/admin/users,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/roles,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/views,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/cleanup,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/locations,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/location-requests,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/bodegas-softland,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/tickets,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/upload-history,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/monitor,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/observability,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/workflows,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/flujo-maestro,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/eventos,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/api,DENEGADO,No asignado
+ARIEL SPOLANSKY,CEO_PTM,/admin/rendiciones,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/mobile/pda,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/tms/control,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/tms/pda,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/inbound/reception,PERMITIDO,view_reception
+Christian Vargas,OPERARIO_3,/inbound/reception-nacional,PERMITIDO,view_reception
+Christian Vargas,OPERARIO_3,/inbound/entry,PERMITIDO,view_entry
+Christian Vargas,OPERARIO_3,/inbound/cubing,PERMITIDO,view_reception
+Christian Vargas,OPERARIO_3,/inbound/data-import,PERMITIDO,manage_data_import
+Christian Vargas,OPERARIO_3,/queries/batches,PERMITIDO,view_batches
+Christian Vargas,OPERARIO_3,/queries/sales-status,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/queries/addresses,PERMITIDO,view_addresses
+Christian Vargas,OPERARIO_3,/queries/locations,PERMITIDO,view_locations
+Christian Vargas,OPERARIO_3,/queries/heatmap,PERMITIDO,view_locations
+Christian Vargas,OPERARIO_3,/queries/historial-nv,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/queries/dispatch-control,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/queries/datasheet,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/queries/grupo,PERMITIDO,view_batches
+Christian Vargas,OPERARIO_3,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Christian Vargas,OPERARIO_3,/panel,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/ingresar,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/reaperturas,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/info,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/tv,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/builder,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Christian Vargas,OPERARIO_3,/panel/configuracion,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/inventory/conteo,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/inventory/bloque/:codigo,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/inventory/analisis,PERMITIDO,view_batches|manage_data_import
+Christian Vargas,OPERARIO_3,/inventory/carteles,PERMITIDO,view_batches|view_reception
+Christian Vargas,OPERARIO_3,/inventory/insumos,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/quality/monitoreo,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/quality/acciones,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/quality/bandeja,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/quality/clasificacion,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/postventa/tickets,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/seguridad,PERMITIDO,Autenticado
+Christian Vargas,OPERARIO_3,/admin/users,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/roles,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/views,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/cleanup,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/locations,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/location-requests,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/bodegas-softland,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/tickets,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/upload-history,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/monitor,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/observability,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/workflows,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/flujo-maestro,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/eventos,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/api,DENEGADO,No asignado
+Christian Vargas,OPERARIO_3,/admin/rendiciones,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/mobile/pda,PERMITIDO,view_stock|manage_inventory
+Cristopher,INVENTARIO_,/tms/control,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/tms/pda,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/inbound/reception,PERMITIDO,view_reception|process_reception
+Cristopher,INVENTARIO_,/inbound/reception-nacional,PERMITIDO,view_reception|process_reception
+Cristopher,INVENTARIO_,/inbound/entry,PERMITIDO,view_entry|process_entry
+Cristopher,INVENTARIO_,/inbound/cubing,PERMITIDO,view_reception|process_reception
+Cristopher,INVENTARIO_,/inbound/data-import,PERMITIDO,manage_data_import
+Cristopher,INVENTARIO_,/queries/batches,PERMITIDO,view_batches
+Cristopher,INVENTARIO_,/queries/sales-status,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/queries/addresses,PERMITIDO,view_addresses
+Cristopher,INVENTARIO_,/queries/locations,PERMITIDO,view_locations
+Cristopher,INVENTARIO_,/queries/heatmap,PERMITIDO,view_locations
+Cristopher,INVENTARIO_,/queries/historial-nv,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/queries/dispatch-control,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/queries/datasheet,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/queries/grupo,PERMITIDO,view_batches|view_stock|manage_inventory
+Cristopher,INVENTARIO_,/inventory/traspasos,PERMITIDO,view_traspasos|manage_inventory|view_stock|view_batches|view_reception
+Cristopher,INVENTARIO_,/panel,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/ingresar,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/reaperturas,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/info,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/tv,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/builder,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Cristopher,INVENTARIO_,/panel/configuracion,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/inventory/conteo,PERMITIDO,view_conteo|manage_conteo|manage_inventory
+Cristopher,INVENTARIO_,/inventory/bloque/:codigo,PERMITIDO,view_conteo|manage_conteo|manage_inventory
+Cristopher,INVENTARIO_,/inventory/analisis,PERMITIDO,view_analisis|manage_inventory|view_stock|view_batches|manage_data_import
+Cristopher,INVENTARIO_,/inventory/carteles,PERMITIDO,view_carteles|manage_inventory|view_stock|view_batches|view_reception
+Cristopher,INVENTARIO_,/inventory/insumos,PERMITIDO,view_insumos|manage_insumos|manage_inventory|view_stock
+Cristopher,INVENTARIO_,/quality/monitoreo,PERMITIDO,manage_inventory
+Cristopher,INVENTARIO_,/quality/acciones,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/quality/bandeja,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/quality/clasificacion,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/postventa/tickets,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/seguridad,PERMITIDO,Autenticado
+Cristopher,INVENTARIO_,/admin/users,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/roles,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/views,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/cleanup,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/locations,PERMITIDO,manage_locations
+Cristopher,INVENTARIO_,/admin/location-requests,PERMITIDO,manage_locations
+Cristopher,INVENTARIO_,/admin/bodegas-softland,PERMITIDO,manage_locations
+Cristopher,INVENTARIO_,/admin/tickets,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/upload-history,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/monitor,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/observability,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/workflows,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/flujo-maestro,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/eventos,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/api,DENEGADO,No asignado
+Cristopher,INVENTARIO_,/admin/rendiciones,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/mobile/pda,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/tms/control,PERMITIDO,manage_panel
+Gisselle Romero,SUPERVISOR,/tms/pda,PERMITIDO,manage_panel
+Gisselle Romero,SUPERVISOR,/inbound/reception,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inbound/reception-nacional,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inbound/entry,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inbound/cubing,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inbound/data-import,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/batches,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/sales-status,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/addresses,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/locations,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/heatmap,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/historial-nv,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/dispatch-control,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/datasheet,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/queries/grupo,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/traspasos,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/panel,PERMITIDO,view_panel|manage_panel
+Gisselle Romero,SUPERVISOR,/panel/ingresar,PERMITIDO,panel_ingresar|manage_panel
+Gisselle Romero,SUPERVISOR,/panel/reaperturas,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/panel/info,PERMITIDO,panel_info|manage_panel
+Gisselle Romero,SUPERVISOR,/panel/tv,PERMITIDO,manage_panel
+Gisselle Romero,SUPERVISOR,/panel/builder,PERMITIDO,manage_panel
+Gisselle Romero,SUPERVISOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Gisselle Romero,SUPERVISOR,/panel/configuracion,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/conteo,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/analisis,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/carteles,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/inventory/insumos,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/quality/monitoreo,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/quality/acciones,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/quality/bandeja,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/quality/clasificacion,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/postventa/tickets,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/seguridad,PERMITIDO,Autenticado
+Gisselle Romero,SUPERVISOR,/admin/users,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/roles,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/views,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/cleanup,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/locations,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/location-requests,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/bodegas-softland,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/tickets,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/upload-history,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/monitor,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/observability,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/workflows,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/flujo-maestro,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/eventos,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/api,DENEGADO,No asignado
+Gisselle Romero,SUPERVISOR,/admin/rendiciones,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/mobile/pda,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/tms/control,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/tms/pda,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+Juan Carlos,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+Juan Carlos,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+Juan Carlos,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+Juan Carlos,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/queries/batches,PERMITIDO,view_batches
+Juan Carlos,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+Juan Carlos,OPERADOR,/queries/addresses,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/queries/locations,PERMITIDO,view_locations
+Juan Carlos,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+Juan Carlos,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+Juan Carlos,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Juan Carlos,OPERADOR,/panel,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/info,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/tv,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/builder,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Juan Carlos,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+Juan Carlos,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+Juan Carlos,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/quality/acciones,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/seguridad,PERMITIDO,Autenticado
+Juan Carlos,OPERADOR,/admin/users,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/roles,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/views,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/locations,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/tickets,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/monitor,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/observability,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/workflows,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/eventos,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/api,DENEGADO,No asignado
+Juan Carlos,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/mobile/pda,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/tms/control,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/tms/pda,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+Lucas Toloza,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+Lucas Toloza,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+Lucas Toloza,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+Lucas Toloza,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/queries/batches,PERMITIDO,view_batches
+Lucas Toloza,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+Lucas Toloza,OPERADOR,/queries/addresses,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/queries/locations,PERMITIDO,view_locations
+Lucas Toloza,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+Lucas Toloza,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+Lucas Toloza,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Lucas Toloza,OPERADOR,/panel,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/info,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/tv,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/builder,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Lucas Toloza,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+Lucas Toloza,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+Lucas Toloza,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/quality/acciones,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/seguridad,PERMITIDO,Autenticado
+Lucas Toloza,OPERADOR,/admin/users,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/roles,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/views,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/locations,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/tickets,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/monitor,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/observability,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/workflows,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/eventos,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/api,DENEGADO,No asignado
+Lucas Toloza,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/mobile/pda,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/tms/control,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/tms/pda,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/inbound/reception,PERMITIDO,view_reception|process_reception
+Marco Negroni,CONTROL_CALIDAD,/inbound/reception-nacional,PERMITIDO,view_reception|process_reception
+Marco Negroni,CONTROL_CALIDAD,/inbound/entry,PERMITIDO,view_entry|process_entry
+Marco Negroni,CONTROL_CALIDAD,/inbound/cubing,PERMITIDO,view_reception|process_reception
+Marco Negroni,CONTROL_CALIDAD,/inbound/data-import,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/queries/batches,PERMITIDO,view_batches
+Marco Negroni,CONTROL_CALIDAD,/queries/sales-status,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/queries/addresses,PERMITIDO,view_addresses
+Marco Negroni,CONTROL_CALIDAD,/queries/locations,PERMITIDO,view_locations
+Marco Negroni,CONTROL_CALIDAD,/queries/heatmap,PERMITIDO,view_locations
+Marco Negroni,CONTROL_CALIDAD,/queries/historial-nv,PERMITIDO,view_historial_nv
+Marco Negroni,CONTROL_CALIDAD,/queries/dispatch-control,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/queries/datasheet,PERMITIDO,view_fichas
+Marco Negroni,CONTROL_CALIDAD,/queries/grupo,PERMITIDO,view_batches|view_fichas
+Marco Negroni,CONTROL_CALIDAD,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Marco Negroni,CONTROL_CALIDAD,/panel,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/panel/ingresar,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/panel/reaperturas,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/panel/info,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/panel/tv,PERMITIDO,panel_tv
+Marco Negroni,CONTROL_CALIDAD,/panel/builder,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Marco Negroni,CONTROL_CALIDAD,/panel/configuracion,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/inventory/conteo,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/inventory/bloque/:codigo,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/inventory/analisis,PERMITIDO,view_batches
+Marco Negroni,CONTROL_CALIDAD,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+Marco Negroni,CONTROL_CALIDAD,/inventory/insumos,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/quality/monitoreo,PERMITIDO,manage_monitoreo|manage_quality
+Marco Negroni,CONTROL_CALIDAD,/quality/acciones,PERMITIDO,view_acciones_calidad|manage_quality|manage_monitoreo
+Marco Negroni,CONTROL_CALIDAD,/quality/bandeja,PERMITIDO,view_acciones_calidad|manage_quality|manage_monitoreo
+Marco Negroni,CONTROL_CALIDAD,/quality/clasificacion,PERMITIDO,manage_quality|manage_monitoreo
+Marco Negroni,CONTROL_CALIDAD,/postventa/tickets,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/seguridad,PERMITIDO,Autenticado
+Marco Negroni,CONTROL_CALIDAD,/admin/users,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/roles,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/views,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/cleanup,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/locations,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/location-requests,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/bodegas-softland,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/tickets,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/upload-history,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/monitor,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/observability,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/workflows,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/flujo-maestro,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/eventos,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/api,DENEGADO,No asignado
+Marco Negroni,CONTROL_CALIDAD,/admin/rendiciones,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/mobile/pda,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/tms/control,PERMITIDO,manage_panel
+Maria Angelica,SUPERVISOR_,/tms/pda,PERMITIDO,manage_panel
+Maria Angelica,SUPERVISOR_,/inbound/reception,PERMITIDO,view_reception
+Maria Angelica,SUPERVISOR_,/inbound/reception-nacional,PERMITIDO,view_reception
+Maria Angelica,SUPERVISOR_,/inbound/entry,PERMITIDO,view_entry|process_entry
+Maria Angelica,SUPERVISOR_,/inbound/cubing,PERMITIDO,view_reception
+Maria Angelica,SUPERVISOR_,/inbound/data-import,PERMITIDO,manage_data_import
+Maria Angelica,SUPERVISOR_,/queries/batches,PERMITIDO,view_batches
+Maria Angelica,SUPERVISOR_,/queries/sales-status,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/queries/addresses,PERMITIDO,view_addresses
+Maria Angelica,SUPERVISOR_,/queries/locations,PERMITIDO,view_locations
+Maria Angelica,SUPERVISOR_,/queries/heatmap,PERMITIDO,view_locations
+Maria Angelica,SUPERVISOR_,/queries/historial-nv,PERMITIDO,view_historial_nv
+Maria Angelica,SUPERVISOR_,/queries/dispatch-control,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/queries/datasheet,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/queries/grupo,PERMITIDO,view_batches
+Maria Angelica,SUPERVISOR_,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Maria Angelica,SUPERVISOR_,/panel,PERMITIDO,manage_panel
+Maria Angelica,SUPERVISOR_,/panel/ingresar,PERMITIDO,panel_ingresar|manage_panel
+Maria Angelica,SUPERVISOR_,/panel/reaperturas,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/panel/info,PERMITIDO,panel_info|manage_panel
+Maria Angelica,SUPERVISOR_,/panel/tv,PERMITIDO,manage_panel
+Maria Angelica,SUPERVISOR_,/panel/builder,PERMITIDO,manage_panel
+Maria Angelica,SUPERVISOR_,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Maria Angelica,SUPERVISOR_,/panel/configuracion,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/inventory/conteo,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/inventory/bloque/:codigo,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/inventory/analisis,PERMITIDO,view_batches|manage_data_import
+Maria Angelica,SUPERVISOR_,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+Maria Angelica,SUPERVISOR_,/inventory/insumos,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/quality/monitoreo,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/quality/acciones,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/quality/bandeja,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/quality/clasificacion,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/postventa/tickets,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/seguridad,PERMITIDO,Autenticado
+Maria Angelica,SUPERVISOR_,/admin/users,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/roles,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/views,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/cleanup,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/locations,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/location-requests,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/bodegas-softland,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/tickets,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/upload-history,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/monitor,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/observability,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/workflows,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/flujo-maestro,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/eventos,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/api,DENEGADO,No asignado
+Maria Angelica,SUPERVISOR_,/admin/rendiciones,DENEGADO,No asignado
+MOISES,OPERADOR,/mobile/pda,DENEGADO,No asignado
+MOISES,OPERADOR,/tms/control,DENEGADO,No asignado
+MOISES,OPERADOR,/tms/pda,DENEGADO,No asignado
+MOISES,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+MOISES,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+MOISES,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+MOISES,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+MOISES,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+MOISES,OPERADOR,/queries/batches,PERMITIDO,view_batches
+MOISES,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+MOISES,OPERADOR,/queries/addresses,DENEGADO,No asignado
+MOISES,OPERADOR,/queries/locations,PERMITIDO,view_locations
+MOISES,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+MOISES,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+MOISES,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+MOISES,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+MOISES,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+MOISES,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+MOISES,OPERADOR,/panel,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/info,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/tv,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/builder,DENEGADO,No asignado
+MOISES,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+MOISES,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+MOISES,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+MOISES,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+MOISES,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+MOISES,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+MOISES,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+MOISES,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+MOISES,OPERADOR,/quality/acciones,DENEGADO,No asignado
+MOISES,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+MOISES,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+MOISES,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+MOISES,OPERADOR,/seguridad,PERMITIDO,Autenticado
+MOISES,OPERADOR,/admin/users,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/roles,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/views,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/locations,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/tickets,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/monitor,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/observability,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/workflows,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/eventos,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/api,DENEGADO,No asignado
+MOISES,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/mobile/pda,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/tms/control,PERMITIDO,manage_panel
+NILO Langebach,SUPERVISOR,/tms/pda,PERMITIDO,manage_panel
+NILO Langebach,SUPERVISOR,/inbound/reception,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inbound/reception-nacional,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inbound/entry,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inbound/cubing,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inbound/data-import,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/batches,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/sales-status,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/addresses,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/locations,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/heatmap,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/historial-nv,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/dispatch-control,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/datasheet,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/queries/grupo,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/traspasos,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/panel,PERMITIDO,view_panel|manage_panel
+NILO Langebach,SUPERVISOR,/panel/ingresar,PERMITIDO,panel_ingresar|manage_panel
+NILO Langebach,SUPERVISOR,/panel/reaperturas,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/panel/info,PERMITIDO,panel_info|manage_panel
+NILO Langebach,SUPERVISOR,/panel/tv,PERMITIDO,manage_panel
+NILO Langebach,SUPERVISOR,/panel/builder,PERMITIDO,manage_panel
+NILO Langebach,SUPERVISOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+NILO Langebach,SUPERVISOR,/panel/configuracion,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/conteo,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/analisis,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/carteles,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/inventory/insumos,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/quality/monitoreo,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/quality/acciones,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/quality/bandeja,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/quality/clasificacion,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/postventa/tickets,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/seguridad,PERMITIDO,Autenticado
+NILO Langebach,SUPERVISOR,/admin/users,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/roles,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/views,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/cleanup,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/locations,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/location-requests,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/bodegas-softland,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/tickets,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/upload-history,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/monitor,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/observability,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/workflows,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/flujo-maestro,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/eventos,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/api,DENEGADO,No asignado
+NILO Langebach,SUPERVISOR,/admin/rendiciones,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/mobile/pda,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/tms/control,PERMITIDO,manage_panel
+Oscar Leiva,GERENCIA,/tms/pda,PERMITIDO,manage_panel
+Oscar Leiva,GERENCIA,/inbound/reception,PERMITIDO,view_reception|process_reception
+Oscar Leiva,GERENCIA,/inbound/reception-nacional,PERMITIDO,view_reception|process_reception
+Oscar Leiva,GERENCIA,/inbound/entry,PERMITIDO,view_entry|process_entry
+Oscar Leiva,GERENCIA,/inbound/cubing,PERMITIDO,view_reception|process_reception
+Oscar Leiva,GERENCIA,/inbound/data-import,PERMITIDO,manage_data_import
+Oscar Leiva,GERENCIA,/queries/batches,PERMITIDO,view_batches
+Oscar Leiva,GERENCIA,/queries/sales-status,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/queries/addresses,PERMITIDO,view_addresses
+Oscar Leiva,GERENCIA,/queries/locations,PERMITIDO,view_locations
+Oscar Leiva,GERENCIA,/queries/heatmap,PERMITIDO,view_locations
+Oscar Leiva,GERENCIA,/queries/historial-nv,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/queries/dispatch-control,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/queries/datasheet,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/queries/grupo,PERMITIDO,view_batches
+Oscar Leiva,GERENCIA,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Oscar Leiva,GERENCIA,/panel,PERMITIDO,view_panel|manage_panel
+Oscar Leiva,GERENCIA,/panel/ingresar,PERMITIDO,panel_ingresar|manage_panel
+Oscar Leiva,GERENCIA,/panel/reaperturas,PERMITIDO,approve_panel_reopen_nv
+Oscar Leiva,GERENCIA,/panel/info,PERMITIDO,panel_info|manage_panel
+Oscar Leiva,GERENCIA,/panel/tv,PERMITIDO,panel_tv|manage_panel
+Oscar Leiva,GERENCIA,/panel/builder,PERMITIDO,panel_builder|manage_panel
+Oscar Leiva,GERENCIA,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Oscar Leiva,GERENCIA,/panel/configuracion,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/inventory/conteo,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/inventory/bloque/:codigo,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/inventory/analisis,PERMITIDO,view_batches|manage_data_import
+Oscar Leiva,GERENCIA,/inventory/carteles,PERMITIDO,view_batches|view_reception
+Oscar Leiva,GERENCIA,/inventory/insumos,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/quality/monitoreo,PERMITIDO,manage_monitoreo|manage_quality
+Oscar Leiva,GERENCIA,/quality/acciones,PERMITIDO,view_acciones_calidad|manage_quality|manage_monitoreo
+Oscar Leiva,GERENCIA,/quality/bandeja,PERMITIDO,view_acciones_calidad|manage_quality|manage_monitoreo
+Oscar Leiva,GERENCIA,/quality/clasificacion,PERMITIDO,manage_quality|manage_monitoreo
+Oscar Leiva,GERENCIA,/postventa/tickets,PERMITIDO,view_postventa|manage_postventa|supervise_postventa
+Oscar Leiva,GERENCIA,/seguridad,PERMITIDO,Autenticado
+Oscar Leiva,GERENCIA,/admin/users,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/roles,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/views,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/cleanup,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/locations,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/location-requests,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/bodegas-softland,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/tickets,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/upload-history,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/monitor,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/observability,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/workflows,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/flujo-maestro,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/eventos,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/api,DENEGADO,No asignado
+Oscar Leiva,GERENCIA,/admin/rendiciones,PERMITIDO,view_rendiciones
+PickingBD1,OPERADOR,/mobile/pda,DENEGADO,No asignado
+PickingBD1,OPERADOR,/tms/control,DENEGADO,No asignado
+PickingBD1,OPERADOR,/tms/pda,DENEGADO,No asignado
+PickingBD1,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+PickingBD1,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+PickingBD1,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+PickingBD1,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+PickingBD1,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+PickingBD1,OPERADOR,/queries/batches,PERMITIDO,view_batches
+PickingBD1,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+PickingBD1,OPERADOR,/queries/addresses,DENEGADO,No asignado
+PickingBD1,OPERADOR,/queries/locations,PERMITIDO,view_locations
+PickingBD1,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+PickingBD1,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+PickingBD1,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+PickingBD1,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+PickingBD1,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+PickingBD1,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+PickingBD1,OPERADOR,/panel,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/info,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/tv,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/builder,DENEGADO,No asignado
+PickingBD1,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+PickingBD1,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+PickingBD1,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+PickingBD1,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+PickingBD1,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+PickingBD1,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+PickingBD1,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+PickingBD1,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+PickingBD1,OPERADOR,/quality/acciones,DENEGADO,No asignado
+PickingBD1,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+PickingBD1,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+PickingBD1,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+PickingBD1,OPERADOR,/seguridad,PERMITIDO,Autenticado
+PickingBD1,OPERADOR,/admin/users,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/roles,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/views,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/locations,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/tickets,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/monitor,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/observability,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/workflows,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/eventos,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/api,DENEGADO,No asignado
+PickingBD1,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
+PickingBD3,OPERADOR,/mobile/pda,DENEGADO,No asignado
+PickingBD3,OPERADOR,/tms/control,DENEGADO,No asignado
+PickingBD3,OPERADOR,/tms/pda,DENEGADO,No asignado
+PickingBD3,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+PickingBD3,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+PickingBD3,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+PickingBD3,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+PickingBD3,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+PickingBD3,OPERADOR,/queries/batches,PERMITIDO,view_batches
+PickingBD3,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+PickingBD3,OPERADOR,/queries/addresses,DENEGADO,No asignado
+PickingBD3,OPERADOR,/queries/locations,PERMITIDO,view_locations
+PickingBD3,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+PickingBD3,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+PickingBD3,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+PickingBD3,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+PickingBD3,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+PickingBD3,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+PickingBD3,OPERADOR,/panel,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/info,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/tv,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/builder,DENEGADO,No asignado
+PickingBD3,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+PickingBD3,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+PickingBD3,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+PickingBD3,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+PickingBD3,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+PickingBD3,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+PickingBD3,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+PickingBD3,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+PickingBD3,OPERADOR,/quality/acciones,DENEGADO,No asignado
+PickingBD3,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+PickingBD3,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+PickingBD3,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+PickingBD3,OPERADOR,/seguridad,PERMITIDO,Autenticado
+PickingBD3,OPERADOR,/admin/users,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/roles,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/views,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/locations,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/tickets,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/monitor,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/observability,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/workflows,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/eventos,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/api,DENEGADO,No asignado
+PickingBD3,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
+Revision,OPERADOR,/mobile/pda,DENEGADO,No asignado
+Revision,OPERADOR,/tms/control,DENEGADO,No asignado
+Revision,OPERADOR,/tms/pda,DENEGADO,No asignado
+Revision,OPERADOR,/inbound/reception,PERMITIDO,view_reception
+Revision,OPERADOR,/inbound/reception-nacional,PERMITIDO,view_reception
+Revision,OPERADOR,/inbound/entry,PERMITIDO,view_entry
+Revision,OPERADOR,/inbound/cubing,PERMITIDO,view_reception
+Revision,OPERADOR,/inbound/data-import,DENEGADO,No asignado
+Revision,OPERADOR,/queries/batches,PERMITIDO,view_batches
+Revision,OPERADOR,/queries/sales-status,PERMITIDO,view_sales_status
+Revision,OPERADOR,/queries/addresses,DENEGADO,No asignado
+Revision,OPERADOR,/queries/locations,PERMITIDO,view_locations
+Revision,OPERADOR,/queries/heatmap,PERMITIDO,view_locations
+Revision,OPERADOR,/queries/historial-nv,DENEGADO,No asignado
+Revision,OPERADOR,/queries/dispatch-control,DENEGADO,No asignado
+Revision,OPERADOR,/queries/datasheet,DENEGADO,No asignado
+Revision,OPERADOR,/queries/grupo,PERMITIDO,view_batches|view_sales_status
+Revision,OPERADOR,/inventory/traspasos,PERMITIDO,view_batches|view_reception
+Revision,OPERADOR,/panel,DENEGADO,No asignado
+Revision,OPERADOR,/panel/ingresar,DENEGADO,No asignado
+Revision,OPERADOR,/panel/reaperturas,DENEGADO,No asignado
+Revision,OPERADOR,/panel/info,DENEGADO,No asignado
+Revision,OPERADOR,/panel/tv,DENEGADO,No asignado
+Revision,OPERADOR,/panel/builder,DENEGADO,No asignado
+Revision,OPERADOR,/panel/rutas,DENEGADO,Private beta (flag ON, sin rol cco_private_beta_rutas)
+Revision,OPERADOR,/panel/configuracion,DENEGADO,No asignado
+Revision,OPERADOR,/inventory/conteo,DENEGADO,No asignado
+Revision,OPERADOR,/inventory/bloque/:codigo,DENEGADO,No asignado
+Revision,OPERADOR,/inventory/analisis,PERMITIDO,view_batches
+Revision,OPERADOR,/inventory/carteles,PERMITIDO,view_carteles|view_batches|view_reception
+Revision,OPERADOR,/inventory/insumos,DENEGADO,No asignado
+Revision,OPERADOR,/quality/monitoreo,DENEGADO,No asignado
+Revision,OPERADOR,/quality/acciones,DENEGADO,No asignado
+Revision,OPERADOR,/quality/bandeja,DENEGADO,No asignado
+Revision,OPERADOR,/quality/clasificacion,DENEGADO,No asignado
+Revision,OPERADOR,/postventa/tickets,DENEGADO,No asignado
+Revision,OPERADOR,/seguridad,PERMITIDO,Autenticado
+Revision,OPERADOR,/admin/users,DENEGADO,No asignado
+Revision,OPERADOR,/admin/roles,DENEGADO,No asignado
+Revision,OPERADOR,/admin/views,DENEGADO,No asignado
+Revision,OPERADOR,/admin/cleanup,DENEGADO,No asignado
+Revision,OPERADOR,/admin/locations,DENEGADO,No asignado
+Revision,OPERADOR,/admin/location-requests,DENEGADO,No asignado
+Revision,OPERADOR,/admin/bodegas-softland,DENEGADO,No asignado
+Revision,OPERADOR,/admin/tickets,DENEGADO,No asignado
+Revision,OPERADOR,/admin/upload-history,DENEGADO,No asignado
+Revision,OPERADOR,/admin/monitor,DENEGADO,No asignado
+Revision,OPERADOR,/admin/observability,DENEGADO,No asignado
+Revision,OPERADOR,/admin/workflows,DENEGADO,No asignado
+Revision,OPERADOR,/admin/flujo-maestro,DENEGADO,No asignado
+Revision,OPERADOR,/admin/eventos,DENEGADO,No asignado
+Revision,OPERADOR,/admin/api,DENEGADO,No asignado
+Revision,OPERADOR,/admin/rendiciones,DENEGADO,No asignado
