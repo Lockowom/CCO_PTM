@@ -311,6 +311,7 @@ end;
 $$;
 
 revoke all on function public.guardar_nv(jsonb) from public;
+revoke all on function public.guardar_nv(jsonb) from anon;
 grant execute on function public.guardar_nv(jsonb) to authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -411,6 +412,7 @@ end;
 $$;
 
 revoke all on function public.cambiar_estado_nv(bigint, text, boolean, bigint) from public;
+revoke all on function public.cambiar_estado_nv(bigint, text, boolean, bigint) from anon;
 grant execute on function public.cambiar_estado_nv(bigint, text, boolean, bigint) to authenticated;
 
 -- ---------------------------------------------------------------------------
