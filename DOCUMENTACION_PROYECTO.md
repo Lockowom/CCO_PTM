@@ -726,6 +726,29 @@ extensions, pg_temp`. Migración `004_harden_security_definer_rpcs.sql`.
 - `mv_dashboard_kpis` ya no es seleccionable por `anon` (se lee vía RPC `get_dashboard_kpis`).
 - `clean_operational_data` está protegida por `is_admin()` (esquema `private`, SECURITY DEFINER).
 
+### Registries del dominio de acceso (PR-IAM-R02/R03/R04 — 2026-08-18)
+
+Reconstrucción estructural controlada del IAM (spec `CCO_2_0_IAM_RECONSTRUCCION_ESTRUCTURAL_CONTROLADA_V1.txt`).
+SSOT del modelo MÓDULO → PANTALLA → FUNCIÓN, sin tocar la autoridad actual (ROUTE_PERMISSIONS sigue mandando):
+
+- `src/domain/access/moduleRegistry.js` — 10 módulos (panel, inbound, inventario, queries, quality,
+  postventa, routes [private beta], tms [oculto], asistente, admin) con activo/mobile/privateBeta.
+- `src/domain/access/screenRegistry.js` — 41 pantallas mapeadas a sus rutas reales
+  (validadas contra `ROUTE_PERMISSIONS`) + `defaultPermission` y riesgo (LOW/MEDIUM/HIGH/CRITICAL).
+- `src/domain/access/functionRegistry.js` — ~110 funciones `module.screen.action` con riesgo,
+  scopeAware, audit, backendAction cuando existe RPC gateada. Panel PTM detallado (spec §8);
+  resto de módulos según granularización de la spec §61.
+- `src/domain/access/legacyClassifier.js` — clasifica TODO el catálogo: 20 BROAD, 4 LEGACY_BROAD
+  (manage_panel, manage_inventory, manage_postventa, manage_quality), 19 TAB, 19 GRANULAR,
+  14 ADMIN, 4 UNUSED (deploy_ota, export_data, manage_fichas, view_asistente).
+- `src/domain/access/legacyExpansionMap.js` — expansión REAL de los permisos amplios
+  (manage_panel → 8 rutas + funciones granulares; manage_inventory/postventa/quality → rutas).
+- Contrato CI: `src/tests/accessRegistryContract.test.js` (los registries deben estar
+  sincronizados con `ROUTE_PERMISSIONS`/`TAB_PERMISSIONS`/`APP_PERMISSIONS` o falla la suite).
+
+Casos Nilo/Angélica, snapshot y harness: `docs/iam-v2/` (R00 incident, snapshot-00a, harness-00b,
+inventario-actual, IAM-001-control-acceso-ux).
+
 ---
 
 ## 6. Sistema Offline y Sincronización
