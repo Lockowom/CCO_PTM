@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SystemBadge from './SystemBadge';
+import BrandStatusPill from './BrandStatusPill';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { useSyncQueueCount } from '../hooks/useSyncQueueCount';
@@ -433,38 +434,51 @@ const Navbar = () => {
             : 'bg-white/80 backdrop-blur-md border-white/20 shadow-sm'
         }`}
       >
-        {/* Left: Logo & Brand (BRANDING-001 premium lockup) */}
-        <Link to="/" className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
-          <img
-            src="/logo-ptm.png"
-            alt="PTM Health Care"
-            className="h-7 sm:h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="flex flex-col leading-none">
-            {/* CCO ancla premium + SYSTEM badge cápsula */}
-            <div className="flex items-baseline gap-1.5 sm:gap-2">
-              <div className="relative inline-flex">
-                <span
-                  className="text-lg sm:text-2xl font-extrabold text-slate-900/90 tracking-tight animate-brand-enter"
-                  style={{ animationDelay: '120ms' }}
-                >
-                  CCO
-                </span>
-                {/* shine premium, una sola pasada al montar */}
-                <span
-                  aria-hidden
-                  className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-0 animate-brand-shine"
-                  style={{ animationDelay: '260ms' }}
-                />
+        {/* Left: Brand hero (BRANDING-001 SIDEBAR_BRAND_HERO premium container) */}
+        <div className="relative flex items-center mr-2 sm:mr-3">
+          <Link
+            to="/"
+            className="group relative flex items-center gap-2 sm:gap-4 py-1.5 sm:py-2 pl-1.5 sm:pl-2 pr-2.5 sm:pr-4 rounded-xl sm:rounded-2xl border border-slate-100/80 bg-gradient-to-b from-slate-50/70 to-transparent hover:border-orange-500/15 hover:from-orange-50/40 transition-colors duration-300"
+          >
+            <img
+              src="/logo-ptm.png"
+              alt="PTM Health Care"
+              className="h-7 sm:h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="flex flex-col leading-none">
+              {/* CCO ancla premium + SYSTEM badge cápsula */}
+              <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <div className="relative inline-flex">
+                  <span
+                    className="text-lg sm:text-2xl font-extrabold text-slate-900/90 tracking-tight animate-brand-enter"
+                    style={{ animationDelay: '120ms' }}
+                  >
+                    CCO
+                  </span>
+                  {/* shine premium, una sola pasada al montar */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-0 animate-brand-shine"
+                    style={{ animationDelay: '260ms' }}
+                  />
+                </div>
+                <SystemBadge className="animate-brand-enter" style={{ animationDelay: '190ms' }} />
               </div>
-              <SystemBadge className="animate-brand-enter" style={{ animationDelay: '190ms' }} />
+              {/* Subtítulo institucional + status pill "Operativo": visibles en mobile */}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400/90 uppercase tracking-[0.15em]">
+                  Centro Control Operacional
+                </span>
+                <BrandStatusPill className="hidden min-[400px]:inline-flex" />
+              </div>
             </div>
-            {/* Subtítulo institucional: visible en mobile, fino y ordenado */}
-            <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400/90 uppercase tracking-[0.15em] mt-0.5">
-              Centro Control Operacional
-            </span>
-          </div>
-        </Link>
+          </Link>
+          {/* Hairline divider premium: separa el brand hero del menú */}
+          <span
+            aria-hidden
+            className="absolute inset-y-1.5 sm:inset-y-2 -right-1 sm:-right-1.5 w-px bg-gradient-to-b from-transparent via-[--brand-divider-glow] to-transparent"
+          />
+        </div>
 
         {/* Center: Desktop Navigation */}
         <nav className="hidden xl:flex items-center gap-1">
@@ -489,7 +503,7 @@ const Navbar = () => {
                     <Link
                       to={item.path}
                       className={`group/link relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all overflow-hidden
-                          ${isActive ? 'bg-orange-50 text-orange-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                          ${isActive ? 'bg-gradient-to-b from-orange-50/90 to-orange-100/50 text-orange-700 ring-1 ring-orange-500/20 shadow-[0_2px_6px_rgba(249,115,22,0.08)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
                     >
                       {/* Active Glow */}
                       {isActive && (
@@ -509,7 +523,7 @@ const Navbar = () => {
                     <>
                       <button
                         className={`group/btn relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all outline-none overflow-hidden
-                            ${isActive ? 'bg-orange-50 text-orange-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                            ${isActive ? 'bg-gradient-to-b from-orange-50/90 to-orange-100/50 text-orange-700 ring-1 ring-orange-500/20 shadow-[0_2px_6px_rgba(249,115,22,0.08)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                             ${isOpen ? 'bg-slate-50 text-slate-900' : ''}`}
                       >
                         <div
@@ -549,7 +563,7 @@ const Navbar = () => {
                                       className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all group/item
                                       ${
                                         esRutaActiva(module.path)
-                                          ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-200'
+                                          ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-200 ring-1 ring-orange-500/30'
                                           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                       }`}
                                     >
@@ -707,7 +721,7 @@ const Navbar = () => {
                           to={item.path}
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all
-                            ${isActive ? 'bg-orange-50 text-orange-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                            ${isActive ? 'bg-orange-50 text-orange-600 ring-1 ring-orange-500/20' : 'text-slate-600 hover:bg-slate-50'}`}
                         >
                           <div className={`${isActive ? 'text-orange-500' : 'text-slate-400'}`}>
                             {item.icon}

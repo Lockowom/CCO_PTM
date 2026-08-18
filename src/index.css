@@ -459,6 +459,22 @@ html.is-native body {
   animation: pda-shimmer 1.4s infinite;
 }
 
+/* Status pill del branding (BRANDING-001 V1 §25): ping sutil del punto de estado. */
+@keyframes brand-status-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  75%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.brand-status-ping {
+  animation: brand-status-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 /* Respeta a quien pide menos movimiento (accesibilidad). */
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up,
@@ -468,8 +484,13 @@ html.is-native body {
   .anim-stagger > * {
     animation: none !important;
   }
-  .pda-skeleton::after {
+  .pda-skeleton::after,
+  .brand-status-ping {
     animation: none;
+  }
+  .animate-brand-enter,
+  .animate-brand-shine {
+    animation: none !important;
   }
 }
 

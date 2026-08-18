@@ -4,6 +4,25 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    version: '1.55.163',
+    fecha: '2026-08-18',
+    titulo:
+      'El bloque de marca ahora vive en su propio panel premium con estado "Operativo" y los ítems del menú activos se ven más elegantes',
+    emoji: '⬆️',
+    cambios: [
+      {
+        tipo: 'mejora',
+        texto:
+          'La marca del menú quedó en un panel premium con separador de luz; debajo del subtítulo ahora se ve un indicador "● Operativo".'
+      },
+      {
+        tipo: 'mejora',
+        texto:
+          'El ítem del menú donde estás se ve con más elegancia (relleno suave, borde naranja sutil y sombra) tanto en escritorio como en el menú móvil.'
+      }
+    ]
+  },
+  {
     version: '1.55.162',
     fecha: '2026-08-17',
     titulo:
@@ -273,19 +292,6 @@ export const RELEASE_NOTES = [
         tipo: 'fix',
         texto:
           'Dentro del checklist de Calidad, la sección "Clasificación del producto" ahora muestra los 22 grupos comerciales (Muebles Clínicos, Ortopedia y Traumatología, Insumos Médicos, etc.) en vez de las 6 etiquetas antiguas.'
-      }
-    ]
-  },
-  {
-    version: '1.55.89',
-    fecha: '2026-07-20',
-    titulo: 'Calidad clasifica por grupo comercial',
-    emoji: '🆕',
-    cambios: [
-      {
-        tipo: 'nuevo',
-        texto:
-          'El checklist de Calidad ahora clasifica los productos por los 22 grupos comerciales del ERP (Muebles Clínicos, Ortopedia, Insumos Médicos, etc.) en vez de categorías de riesgo. Hay una pantalla nueva "Clasificación de Productos" para cargar/actualizar el mapeo con un botón.'
       }
     ]
   }
