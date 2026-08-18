@@ -18,6 +18,7 @@ import gsap from 'gsap';
 import CanalOTA from '../../components/CanalOTA';
 import DespliegueOTA from '../../components/DespliegueOTA';
 import TraficoConsulta from '../../components/TraficoConsulta';
+import { isOnline, isIdle, getSessionDuration, getLastSeenText } from '../../lib/presence';
 
 const AdminMonitor = () => {
   const containerRef = useRef(null);
@@ -56,66 +57,34 @@ const AdminMonitor = () => {
 
   const now = new Date();
 
-  const isOnline = (lastSeen) => {
-    if (!lastSeen) return false;
-    const diff = (now - new Date(lastSeen)) / 1000;
-    return diff < 180; // Compatible con heartbeat de 90 s
-  };
-
-  const isIdle = (lastSeen) => {
-    if (!lastSeen) return false;
-    const diff = (now - new Date(lastSeen)) / 1000;
-    return diff >= 180 && diff < 300; // Inactivo entre 3-5 min
-  };
-
-  const getSessionDuration = (sessionStart) => {
-    if (!sessionStart) return '-';
-    const diff = Math.floor((now - new Date(sessionStart)) / 1000);
-    if (diff < 60) return `${diff}s`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    const hours = Math.floor(diff / 3600);
-    const mins = Math.floor((diff % 3600) / 60);
-    return `${hours}h ${mins}m`;
-  };
-
-  const getLastSeenText = (lastSeen) => {
-    if (!lastSeen) return 'Nunca';
-    const diff = Math.floor((now - new Date(lastSeen)) / 1000);
-    if (diff < 10) return 'Ahora';
-    if (diff < 60) return `Hace ${diff}s`;
-    if (diff < 3600) return `Hace ${Math.floor(diff / 60)}m`;
-    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)}h`;
-    return new Date(lastSeen).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
-  };
-
   const getStatusColor = (lastSeen) => {
-    if (isOnline(lastSeen)) return 'bg-emerald-500';
-    if (isIdle(lastSeen)) return 'bg-amber-400';
+    if (isOnline(lastSeen, now)) return 'bg-emerald-500';
+    if (isIdle(lastSeen, now)) return 'bg-amber-400';
     return 'bg-slate-300';
   };
 
   const getStatusLabel = (lastSeen) => {
-    if (isOnline(lastSeen)) return 'Online';
-    if (isIdle(lastSeen)) return 'Inactivo';
+    if (isOnline(lastSeen, now)) return 'Online';
+    if (isIdle(lastSeen, now)) return 'Inactivo';
     return 'Offline';
   };
 
   // Filter users
   const filteredUsers = users.filter((u) => {
-    if (filter === 'online') return isOnline(u.last_seen) || isIdle(u.last_seen);
-    if (filter === 'offline') return !isOnline(u.last_seen) && !isIdle(u.last_seen);
+    if (filter === 'online') return isOnline(u.last_seen, now) || isIdle(u.last_seen, now);
+    if (filter === 'offline') return !isOnline(u.last_seen, now) && !isIdle(u.last_seen, now);
     return true;
   });
 
   // Stats
-  const onlineCount = users.filter((u) => isOnline(u.last_seen)).length;
-  const idleCount = users.filter((u) => isIdle(u.last_seen)).length;
+  const onlineCount = users.filter((u) => isOnline(u.last_seen, now)).length;
+  const idleCount = users.filter((u) => isIdle(u.last_seen, now)).length;
   const totalCount = users.length;
 
   // Group online users by module
   const moduleGroups = {};
   users
-    .filter((u) => isOnline(u.last_seen) || isIdle(u.last_seen))
+    .filter((u) => isOnline(u.last_seen, now) || isIdle(u.last_seen, now))
     .forEach((u) => {
       const mod = u.current_module || 'Desconocido';
       if (!moduleGroups[mod]) moduleGroups[mod] = [];
@@ -296,23 +265,24 @@ const AdminMonitor = () => {
                   <td className="px-2 sm:px-5 py-3 sm:py-4">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-2.5 h-2.5 rounded-full ${getStatusColor(u.last_seen)} ${isOnline(u.last_seen) ? 'animate-pulse' : ''}`}
+                        className={`w-2.5 h-2.5 rounded-full ${getStatusColor(u.last_seen, now)} ${isOnline(u.last_seen, now) ? 'animate-pulse' : ''}`}
                       ></div>
                       <span
                         className={`text-xs font-medium ${
-                          isOnline(u.last_seen)
+                          isOnline(u.last_seen, now)
                             ? 'text-emerald-600'
-                            : isIdle(u.last_seen)
+                            : isIdle(u.last_seen, now)
                               ? 'text-amber-600'
                               : 'text-slate-400'
                         }`}
                       >
-                        {getStatusLabel(u.last_seen)}
+                        {getStatusLabel(u.last_seen, now)}
                       </span>
                     </div>
                   </td>
                   <td className="px-2 sm:px-5 py-3 sm:py-4">
-                    {(isOnline(u.last_seen) || isIdle(u.last_seen)) && u.current_module ? (
+                    {(isOnline(u.last_seen, now) || isIdle(u.last_seen, now)) &&
+                    u.current_module ? (
                       <div className="flex items-center gap-2">
                         <MapPin size={14} className="text-indigo-400" />
                         <span className="text-sm font-medium text-slate-700">
@@ -324,11 +294,11 @@ const AdminMonitor = () => {
                     )}
                   </td>
                   <td className="px-2 sm:px-5 py-3 sm:py-4">
-                    {(isOnline(u.last_seen) || isIdle(u.last_seen)) && u.session_start ? (
+                    {(isOnline(u.last_seen, now) || isIdle(u.last_seen, now)) && u.session_start ? (
                       <div className="flex items-center gap-2">
                         <Timer size={14} className="text-slate-400" />
                         <span className="text-sm font-medium text-slate-600">
-                          {getSessionDuration(u.session_start)}
+                          {getSessionDuration(u.session_start, now)}
                         </span>
                       </div>
                     ) : (
@@ -336,7 +306,9 @@ const AdminMonitor = () => {
                     )}
                   </td>
                   <td className="px-2 sm:px-5 py-3 sm:py-4">
-                    <span className="text-xs text-slate-500">{getLastSeenText(u.last_seen)}</span>
+                    <span className="text-xs text-slate-500">
+                      {getLastSeenText(u.last_seen, now)}
+                    </span>
                   </td>
                 </tr>
               ))}

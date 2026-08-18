@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { pwaConfig } from './src/config/pwaConfig';
 
 // VersiÃ³n real de la app (package.json) expuesta al bundle como __APP_VERSION__
 // para mostrarla en el PDA/pie y que soporte sepa quÃ© build corre.
@@ -48,92 +49,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
-  plugins: [
-    react(),
-    versionManifestPlugin(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
-      manifest: {
-        name: 'CCO WMS Industrial',
-        short_name: 'WMS CCO',
-        description: 'Centro de Control Operacional & Warehouse Management System',
-        theme_color: '#0f172a', // wms-dark
-        background_color: '#0f172a',
-        display: 'standalone',
-        orientation: 'portrait',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // El mÃ³dulo integrado /traspasos (app estÃ¡tica vendorizada) NO se precachea
-        // (2.6MB) y NO debe recibir el fallback SPA: se sirve directo por express.
-        globIgnores: ['**/traspasos/**'],
-        navigateFallbackDenylist: [/^\/traspasos\//],
-        runtimeCaching: [
-          {
-            // PR-005 · HARDENING: datos SENSIBLES nunca se cachean.
-            // Auth, sesiones, IAM, usuarios, roles y tablas con datos personales
-            // SIEMPRE van a red (NetworkOnly). Esta regla debe estar ANTES del
-            // catch-all de NetworkFirst para tener prioridad.
-            urlPattern:
-              /^https:\/\/.*\.supabase\.co\/(auth\/|rest\/v1\/(tms_usuarios|tms_usuarios_activos|tms_accesos|tms_roles|tms_permisos|tms_sesiones|tms_postventa_tickets|tms_postventa_correos|tms_direcciones|tms_historial_cargas|tms_consulta_metricas)|rest\/v1\/rpc\/iam_)/i,
-            handler: 'NetworkOnly'
-          },
-          {
-            // El token de actualizaci��n global siempre debe venir de red.
-            // Nunca reutilizar una respuesta del Service Worker para decidir
-            // si hay que cerrar sesi��n y recargar el cliente.
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i,
-            handler: 'NetworkOnly'
-          },
-          {
-            // Estrategia StaleWhileRevalidate para datos de referencia (GET)
-            urlPattern:
-              /^https:\/\/.*\.supabase\.co\/rest\/v1\/(tms_skus|tms_ubicaciones|tms_conductores|tms_vehiculos).*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'supabase-reference-data',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 semana
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // NetworkFirst para el resto de la API de Supabase
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 1 dÃ­a
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      }
-    })
-  ],
+  plugins: [react(), versionManifestPlugin(), VitePWA(pwaConfig)],
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

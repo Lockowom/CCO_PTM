@@ -1,0 +1,107 @@
+-- PR-008c · IAM negative tests (B2) — ejecutado en PROD 2026-08-18 con PASS
+-- ============================================================================
+--  Objetivo: probar los gates IAM de guardar_nv / cambiar_estado_nv con
+--  sesiones REALES simuladas (set local role + request.jwt.claims) y verificar
+--  que la telemetría (tms_iam_denegaciones, migración 174) registra cada
+--  intento denegado con el uid del JWT (no del payload).
+--
+--  Técnica (Management API): cada caso en una transacción:
+--    begin;
+--    set local role authenticated;
+--    set local request.jwt.claims = '{"sub":"<auth_uid>","role":"authenticated"}';
+--    select ...;
+--    commit;
+--
+--  Usuarios reales usados:
+--    * Christian Vargas (OPERARIO_3, activo) auth_uid=224c7d7d-abe6-41ed-9390-421017dbf578
+--    * Administrador (ADMIN)            auth_uid=c12e2286-9619-445e-afe4-e9aefc51996c
+--
+--  Setup TEMPORAL (limpio al final): assignment del rol SUPERVISOR para
+--  Christian restringido a centro de costo 'TEST-CC' (sin scope global),
+--  para que `_panel_puede_escribir` pase pero el scope ajeno falle.
+--
+--  RESULTADOS (todos PASS, 2026-08-18):
+--    A1 anon guardar_nv            → permission denied for function guardar_nv
+--                                     (bloqueado por el revoke de la 174, ni
+--                                     siquiera llega al gate interno)
+--    T1 create en scope propio     → {ok:true, version:1}
+--    T2 create en scope ajeno      → {ok:false, forbidden:true} + telemetría
+--    T3 update con version propia  → {ok:true, version:2}
+--    T4 cambiar_estado scope propio→ {ok:true, version:3}
+--    T5 update scope ajeno (N.V. real 12137) → forbidden:true + telemetría;
+--       la fila real NO se modificó (cliente/estado/row_version intactos)
+--    T6 cambiar_estado scope ajeno → forbidden:true + telemetría
+--    A2 ADMIN create/update        → {ok:true} v1/v2 (los hooks no rompen el
+--                                     flujo legítimo)
+--    Telemetría: 3 filas en tms_iam_denegaciones con uid=Christian,
+--       rol=OPERARIO_3, accion=guardar_nv/cambiar_estado_nv, permiso=
+--       manage_panel, centro_costo y nv correctos, motivo exacto.
+--    Cleanup: 0 residuales (assignment temporal borrado, filas TEST-IAM
+--       borradas, telemetría de prueba borrada; los permisos efectivos de
+--       Christian volvieron a su baseline OPERARIO_3 sin panel).
+-- ============================================================================
+
+-- ---------------------------------------------------------------------------
+-- SETUP (temporal; se revierte al final)
+-- ---------------------------------------------------------------------------
+-- insert into iam.assignments (principal_type, principal_id, role_id, scope_type, scope_id, scope_code, granted_by, granted_at)
+-- select 'user', '224c7d7d-abe6-41ed-9390-421017dbf578', r.id, 'centro_costo', null, 'TEST-CC', 'c12e2286-9619-445e-afe4-e9aefc51996c', now()
+-- from iam.roles r where r.codigo = 'SUPERVISOR';
+-- -- Verificar: iam.user_effective_permissions del usuario debe incluir
+-- -- manage_panel/panel_ingresar con scope_code='TEST-CC' (los triggers tg_sync_*
+-- -- reconstruyen la tabla efectiva automáticamente).
+
+-- ---------------------------------------------------------------------------
+-- CASOS (cada uno en su transacción)
+-- ---------------------------------------------------------------------------
+-- A1) ANON — debe fallar en la capa de grants (migración 174):
+--   begin; set local role anon;
+--   select public.guardar_nv('{"nv":"TEST-IAM-ANON","canal":"varios","cliente":"X"}');
+--   commit;
+--   → ERROR: permission denied for function guardar_nv  (PASS)
+
+-- T1) CREATE en scope propio → ok
+--   begin; set local role authenticated;
+--   set local request.jwt.claims = '{"sub":"224c7d7d-abe6-41ed-9390-421017dbf578","role":"authenticated"}';
+--   select public.guardar_nv('{"nv":"TEST-IAM-C1","canal":"varios","cliente":"TEST B2","centro_costo":"TEST-CC","vendedor":"test"}');
+--   commit;
+--   → {ok:true, id:12144, version:1}  (PASS)
+
+-- T2) CREATE en scope ajeno → forbidden + telemetría
+--   ...centro_costo:"OTRO-CC"...
+--   → {ok:false, forbidden:true}  + fila en tms_iam_denegaciones (PASS)
+
+-- T3) UPDATE con versión correcta en scope propio → ok
+--   ...{"id":"12144","version":"1","estado":"Shipping",...}
+--   → {ok:true, version:2}  (PASS)
+
+-- T4) cambiar_estado_nv en scope propio → ok
+--   ...cambiar_estado_nv(12144,'En Ruta',null,2)
+--   → {ok:true, version:3}  (PASS)
+
+-- T5) UPDATE en scope ajeno (N.V. real 12137, cc 1-03) → forbidden + telemetría
+--   → {ok:false, forbidden:true}; verificar 12137 intacta (PASS)
+
+-- T6) cambiar_estado_nv en scope ajeno → forbidden + telemetría
+--   → {ok:false, forbidden:true}  (PASS)
+
+-- A2) ADMIN create + update → ok (los hooks no rompen flujo legítimo)
+--   set local request.jwt.claims = '{"sub":"c12e2286-9619-445e-afe4-e9aefc51996c","role":"authenticated"}';
+--   → {ok:true} v1 → v2  (PASS)
+
+-- VERIFICAR TELEMETRÍA:
+-- select id, uid, rol, accion, permiso, centro_costo, nv_id, nv_texto, motivo
+-- from public.tms_iam_denegaciones order by id;
+-- → 3 filas: (T2) guardar_nv/OTRO-CC/TEST-IAM-C2, (T5) guardar_nv/1-03/97705,
+--   (T6) cambiar_estado_nv/1-03/97705 — todas uid=224c7d7d…, rol=OPERARIO_3,
+--   permiso=manage_panel, motivo exacto.  (PASS)
+
+-- ---------------------------------------------------------------------------
+-- CLEANUP (ejecutado en PROD; no dejar residuales)
+-- ---------------------------------------------------------------------------
+-- delete from iam.assignments
+--  where principal_id = '224c7d7d-abe6-41ed-9390-421017dbf578' and scope_code = 'TEST-CC';
+-- delete from public.tms_operaciones
+--  where id in (12144, 12145) or nv_orange like 'TEST-IAM-%' or nv_ptm::text like 'TEST-IAM-%' or varios like 'TEST-IAM-%';
+-- delete from public.tms_iam_denegaciones where uid = '224c7d7d-abe6-41ed-9390-421017dbf578';
+-- -- Verificar 0 residuales + permisos efectivos de Christian = baseline OPERARIO_3.

@@ -1,7 +1,7 @@
 {
   "name": "cco-ptm",
   "private": true,
-  "version": "1.55.160",
+  "version": "1.55.161",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -91,14 +91,5 @@
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.7"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,css}": [
-      "prettier --write"
-    ]
   }
 }

@@ -276,6 +276,14 @@ salto de etapa es una decisión de release, NO consecuencia del merge/deploy.
 
 - Existen hallazgos de seguridad históricos en la BD (políticas RLS permisivas `USING (true)`,
   funciones `SECURITY DEFINER` ejecutables por `authenticated`). Revisar `get_advisors` antes de tocar BD.
+- **PR-008b (RELEASE B, 1.55.161)**: audit LIVE RPC/GRANT cerrado. Migración `174` en PROD: revoke
+  anon/public de ~55 funciones sensibles + telemetría IAM (`tms_iam_denegaciones` + `iam_log_denegacion`
+  hookeada en ramas forbidden de `guardar_nv`/`cambiar_estado_nv`, cuerpos byte-fieles a la 173).
+  Tests negativos IAM en BD real PASS (ver `supabase/verificacion/PR-008c_iam_negative_tests.sql`).
+  Contracts de calidad: presence (`src/lib/presence.js` + tests), observability (Logger/Engine vs
+  `log_client_event`/`system_logs`), PWA (`src/config/pwaConfig.js` + iconos generados en `public/`).
+  Docs: `docs/PR-008_RLS_GRANT_AUDIT_PHASE1.md` (phase 2). Anon solo conserva EXECUTE en
+  `buscar_nv_publico`/`verificar_certificado`/`private.is_admin()` (intencional).
 
 ## Git
 
