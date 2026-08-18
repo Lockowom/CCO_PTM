@@ -1,0 +1,55 @@
+usuario,funcion,estado,origen,detalle
+NILO,Entrar a / y /seguridad (2FA),PERMITIDO,Autenticado,usuario activo
+NILO,Panel Dashboard,PERMITIDO,Perfil SUPERVISOR,view_panel / manage_panel
+NILO,Ingresar N.V.,PERMITIDO,Perfil SUPERVISOR,panel_ingresar / manage_panel
+NILO,Info N.V.,PERMITIDO,Perfil SUPERVISOR,panel_info / manage_panel
+NILO,Modo TV,PERMITIDO,Perfil SUPERVISOR,manage_panel
+NILO,Builder,PERMITIDO,Perfil SUPERVISOR,manage_panel
+NILO,Reaperturas (solicitudes),DENEGADO,No asignado,approve_panel_reopen_nv / manage_roles
+NILO,Coordinacion Rutas,DENEGADO,Private beta,sin rol cco_private_beta_rutas
+NILO,Configuracion Panel,DENEGADO,No asignado,manage_roles
+NILO,Crear N.V.,PERMITIDO,Perfil SUPERVISOR,manage_panel + scope global
+NILO,Editar N.V.,PERMITIDO,Perfil SUPERVISOR,manage_panel
+NILO,Cambiar estado N.V.,PERMITIDO,Perfil SUPERVISOR,manage_panel + scope
+NILO,Eliminar N.V.,DENEGADO,No asignado,allowlist mig 099 (solo admin + angelica)
+NILO,Solicitar reapertura,PERMITIDO,Perfil SUPERVISOR,manage_panel
+NILO,Resolver reapertura,DENEGADO,No asignado,approve_panel_reopen_nv
+NILO,Asistente IA,DENEGADO,No asignado,view_asistente
+NILO,Admin / IAM,DENEGADO,No asignado,no admin
+NILO,Stock / Insumos / Conteo / Post-Venta / Quality,DENEGADO,No asignado,sin permisos
+NILO,bulk_upsert (carga stock),PERMITIDO,AUTENTICADO (hallazgo),sin gate por permiso
+MARIA ANGELICA,Entrar a / y /seguridad (2FA),PERMITIDO,Autenticado,usuario activo
+MARIA ANGELICA,Recepcion Importaciones,PERMITIDO,Perfil SUPERVISOR_,view_reception / process_reception
+MARIA ANGELICA,Recepcion Nacionales,PERMITIDO,Perfil SUPERVISOR_,view_reception / process_reception
+MARIA ANGELICA,Cubicaje,PERMITIDO,Perfil SUPERVISOR_,view_reception / process_reception
+MARIA ANGELICA,Putaway,PERMITIDO,Perfil SUPERVISOR_,view_entry / process_entry
+MARIA ANGELICA,Carga Masiva,PERMITIDO,Perfil SUPERVISOR_,manage_data_import
+MARIA ANGELICA,Lotes/Series,PERMITIDO,Perfil SUPERVISOR_,view_batches
+MARIA ANGELICA,Grupo por SKU,PERMITIDO,Perfil SUPERVISOR_,view_batches
+MARIA ANGELICA,Historial N.V.,PERMITIDO,Perfil SUPERVISOR_,view_historial_nv
+MARIA ANGELICA,Direcciones,PERMITIDO,Perfil SUPERVISOR_,view_addresses
+MARIA ANGELICA,Ubicaciones,PERMITIDO,Perfil SUPERVISOR_,view_locations
+MARIA ANGELICA,Mapa de Calor,PERMITIDO,Perfil SUPERVISOR_,view_locations
+MARIA ANGELICA,Carteles de Bodega,PERMITIDO,Perfil SUPERVISOR_,view_carteles
+MARIA ANGELICA,Traspasos y Ajustes,PERMITIDO,Perfil SUPERVISOR_ (aditivo),view_batches
+MARIA ANGELICA,Analisis de Codigos,PARCIAL,Hallazgo,ruta abierta por view_batches pero sin permiso de pestanas
+MARIA ANGELICA,Conteo Ciclico,DENEGADO,No asignado,sin view_conteo
+MARIA ANGELICA,Insumos,DENEGADO,No asignado,sin view_insumos
+MARIA ANGELICA,PDA Operativa,DENEGADO,No asignado,sin view_stock / manage_inventory
+MARIA ANGELICA,Panel Dashboard,PERMITIDO,Perfil SUPERVISOR_,manage_panel
+MARIA ANGELICA,Ingresar N.V.,PERMITIDO,Perfil SUPERVISOR_,panel_ingresar / manage_panel
+MARIA ANGELICA,Info N.V.,PERMITIDO,Perfil SUPERVISOR_,panel_info / manage_panel
+MARIA ANGELICA,Modo TV,PERMITIDO,Perfil SUPERVISOR_,manage_panel
+MARIA ANGELICA,Builder,PERMITIDO,Perfil SUPERVISOR_,manage_panel
+MARIA ANGELICA,Reaperturas (solicitudes),DENEGADO,No asignado,approve_panel_reopen_nv / manage_roles
+MARIA ANGELICA,Coordinacion Rutas,DENEGADO,Private beta,sin rol cco_private_beta_rutas
+MARIA ANGELICA,Configuracion Panel,DENEGADO,No asignado,manage_roles
+MARIA ANGELICA,Crear N.V.,PERMITIDO,Perfil SUPERVISOR_,manage_panel + scope global
+MARIA ANGELICA,Editar N.V.,PERMITIDO,Perfil SUPERVISOR_,manage_panel
+MARIA ANGELICA,Cambiar estado N.V.,PERMITIDO,Perfil SUPERVISOR_,manage_panel + scope (global + bodega 100)
+MARIA ANGELICA,Eliminar N.V.,PERMITIDO,INDIVIDUAL (critico),allowlist mig 099 angelica@ptm.cl
+MARIA ANGELICA,Solicitar reapertura,PERMITIDO,Perfil SUPERVISOR_,manage_panel
+MARIA ANGELICA,Resolver reapertura,DENEGADO,No asignado,approve_panel_reopen_nv
+MARIA ANGELICA,Asistente IA,DENEGADO,No asignado,view_asistente
+MARIA ANGELICA,Admin / IAM,DENEGADO,No asignado,no admin
+MARIA ANGELICA,bulk_upsert (carga stock),PERMITIDO,AUTENTICADO (hallazgo),sin gate por permiso

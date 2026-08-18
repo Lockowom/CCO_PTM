@@ -1,0 +1,17 @@
+nombre,email,rol,activo,es_admin_delegado,landing_efectiva
+Admin Respaldo,admin@cco.cl,ADMIN,true,true,/admin/users
+Administrador,admin@sistema.com,ADMIN,true,false,/admin/users
+ARIEL SPOLANSKY,ariel@ptm.cl,CEO_PTM,true,false,/panel
+Christian Vargas,chv@ptm.cl,OPERARIO_3,true,false,/queries/batches
+Cristopher,inventary@ptm.cl,INVENTARIO_,false,false,/inventory/traspasos
+Gisselle Romero,gisselle@ptm.cl,SUPERVISOR,false,false,/panel/ingresar
+Juan Carlos,jc@ptm.cl,OPERADOR,false,false,/mobile/pda
+Lucas Toloza,lmodric@ptm.cl,OPERADOR,true,false,/mobile/pda
+Marco Negroni,mnegroni@ptm.cl,CONTROL_CALIDAD,true,false,/quality/monitoreo
+Maria Angelica,angelica@ptm.cl,SUPERVISOR_,true,false,/panel/ingresar
+MOISES,moi@ptm.cl,OPERADOR,false,false,/mobile/pda
+NILO Langebach,nilo@ptm.cl,SUPERVISOR,true,false,/panel/ingresar
+Oscar Leiva,oleiva@ptm.cl,GERENCIA,true,false,/panel
+PickingBD1,picking1@ptm.cl,OPERADOR,false,false,/mobile/pda
+PickingBD3,picking2@ptm.cl,OPERADOR,false,false,/mobile/pda
+Revision,packing@ptm.cl,OPERADOR,true,false,/mobile/pda
