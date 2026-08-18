@@ -1,0 +1,1397 @@
+{
+  "snapshot_fecha": "2026-08-18",
+  "catalog": [
+    "admin_monitor",
+    "admin_upload_history",
+    "analisis_tab_anomalias",
+    "analisis_tab_antiguos",
+    "analisis_tab_antiguos_disp",
+    "analisis_tab_detalle",
+    "analisis_tab_duplicados",
+    "analisis_tab_no_activos",
+    "analisis_tab_resumen",
+    "approve_panel_reopen_nv",
+    "complete_rendiciones",
+    "conteo_tab_ajuste",
+    "conteo_tab_bloques",
+    "conteo_tab_conciliacion",
+    "conteo_tab_contar",
+    "conteo_tab_proyeccion",
+    "conteo_tab_sesiones",
+    "deploy_ota",
+    "export_data",
+    "manage_api",
+    "manage_cleanup",
+    "manage_conteo",
+    "manage_data_import",
+    "manage_eventos",
+    "manage_fichas",
+    "manage_insumos",
+    "manage_inventory",
+    "manage_locations",
+    "manage_monitoreo",
+    "manage_panel",
+    "manage_postventa",
+    "manage_quality",
+    "manage_rendiciones",
+    "manage_roles",
+    "manage_tickets",
+    "manage_tms",
+    "manage_users",
+    "manage_views",
+    "manage_workflows",
+    "panel_builder",
+    "panel_info",
+    "panel_ingresar",
+    "panel_tv",
+    "process_entry",
+    "process_reception",
+    "pv_tab_bandeja",
+    "pv_tab_calendario",
+    "pv_tab_dashboard",
+    "pv_tab_nuevo",
+    "pv_tab_tecnicos",
+    "pv_tab_tickets",
+    "supervise_conteo",
+    "supervise_postventa",
+    "supervise_tms",
+    "view_acciones_calidad",
+    "view_addresses",
+    "view_analisis",
+    "view_api",
+    "view_asistente",
+    "view_batches",
+    "view_carteles",
+    "view_conteo",
+    "view_dispatch_control",
+    "view_entry",
+    "view_eventos",
+    "view_fichas",
+    "view_historial_nv",
+    "view_insumos",
+    "view_locations",
+    "view_panel",
+    "view_postventa",
+    "view_reception",
+    "view_rendiciones",
+    "view_roles",
+    "view_sales_status",
+    "view_stock",
+    "view_tms",
+    "view_traspasos",
+    "view_users",
+    "view_views",
+    "view_workflows"
+  ],
+  "tms_roles": [
+    {
+      "nombre": "Administrador",
+      "permisos": [
+        "view_stock",
+        "manage_inventory",
+        "view_traspasos",
+        "view_carteles",
+        "view_insumos",
+        "manage_insumos",
+        "manage_locations",
+        "view_analisis",
+        "analisis_tab_resumen",
+        "analisis_tab_antiguos",
+        "analisis_tab_antiguos_disp",
+        "analisis_tab_no_activos",
+        "analisis_tab_duplicados",
+        "analisis_tab_anomalias",
+        "analisis_tab_detalle",
+        "view_conteo",
+        "manage_conteo",
+        "supervise_conteo",
+        "conteo_tab_contar",
+        "conteo_tab_sesiones",
+        "conteo_tab_conciliacion",
+        "conteo_tab_ajuste",
+        "conteo_tab_bloques",
+        "conteo_tab_proyeccion",
+        "view_entry",
+        "process_entry",
+        "view_reception",
+        "process_reception",
+        "manage_data_import",
+        "view_historial_nv",
+        "view_dispatch_control",
+        "view_batches",
+        "view_sales_status",
+        "view_addresses",
+        "view_locations",
+        "view_fichas",
+        "manage_fichas",
+        "export_data",
+        "manage_monitoreo",
+        "manage_quality",
+        "view_acciones_calidad",
+        "view_panel",
+        "manage_panel",
+        "approve_panel_reopen_nv",
+        "panel_ingresar",
+        "panel_info",
+        "panel_tv",
+        "panel_builder",
+        "view_postventa",
+        "manage_postventa",
+        "supervise_postventa",
+        "pv_tab_tickets",
+        "pv_tab_bandeja",
+        "pv_tab_calendario",
+        "pv_tab_nuevo",
+        "pv_tab_dashboard",
+        "pv_tab_tecnicos",
+        "view_users",
+        "manage_users",
+        "view_roles",
+        "manage_roles",
+        "view_views",
+        "manage_views",
+        "manage_tickets",
+        "admin_upload_history",
+        "admin_monitor",
+        "deploy_ota",
+        "view_workflows",
+        "manage_workflows",
+        "view_eventos",
+        "manage_eventos",
+        "view_api",
+        "manage_api",
+        "manage_cleanup",
+        "view_rendiciones",
+        "manage_rendiciones",
+        "view_tms",
+        "manage_tms",
+        "supervise_tms"
+      ]
+    },
+    {
+      "nombre": "CEO PTM",
+      "permisos": ["panel_info", "process_reception", "view_panel", "panel_tv"]
+    },
+    {
+      "nombre": "Control Calidad",
+      "permisos": [
+        "view_entry",
+        "process_entry",
+        "view_reception",
+        "process_reception",
+        "manage_monitoreo",
+        "manage_quality",
+        "view_acciones_calidad",
+        "view_batches",
+        "view_locations",
+        "view_addresses",
+        "view_fichas",
+        "view_carteles",
+        "view_historial_nv",
+        "panel_tv"
+      ]
+    },
+    {
+      "nombre": "Gerencia",
+      "permisos": [
+        "view_entry",
+        "process_entry",
+        "view_reception",
+        "process_reception",
+        "manage_data_import",
+        "manage_monitoreo",
+        "manage_quality",
+        "view_acciones_calidad",
+        "view_postventa",
+        "manage_postventa",
+        "supervise_postventa",
+        "pv_tab_tickets",
+        "pv_tab_bandeja",
+        "pv_tab_calendario",
+        "pv_tab_nuevo",
+        "pv_tab_dashboard",
+        "pv_tab_tecnicos",
+        "view_panel",
+        "manage_panel",
+        "approve_panel_reopen_nv",
+        "panel_ingresar",
+        "panel_info",
+        "panel_tv",
+        "panel_builder",
+        "view_batches",
+        "view_addresses",
+        "view_locations"
+      ]
+    },
+    {
+      "nombre": "Inventario",
+      "permisos": [
+        "view_stock",
+        "manage_inventory",
+        "view_traspasos",
+        "view_carteles",
+        "view_insumos",
+        "manage_insumos",
+        "manage_locations",
+        "view_analisis",
+        "analisis_tab_resumen",
+        "analisis_tab_antiguos",
+        "analisis_tab_antiguos_disp",
+        "analisis_tab_no_activos",
+        "analisis_tab_duplicados",
+        "analisis_tab_anomalias",
+        "analisis_tab_detalle",
+        "view_conteo",
+        "manage_conteo",
+        "conteo_tab_contar",
+        "conteo_tab_sesiones",
+        "conteo_tab_conciliacion",
+        "conteo_tab_ajuste",
+        "conteo_tab_bloques",
+        "conteo_tab_proyeccion",
+        "view_entry",
+        "process_entry",
+        "view_reception",
+        "process_reception",
+        "manage_data_import",
+        "view_batches",
+        "view_locations",
+        "view_addresses"
+      ]
+    },
+    {
+      "nombre": "Operador Bodega",
+      "permisos": [
+        "view_entry",
+        "view_reception",
+        "view_batches",
+        "view_locations",
+        "view_sales_status",
+        "view_carteles"
+      ]
+    },
+    {
+      "nombre": "Operario 3",
+      "permisos": [
+        "view_batches",
+        "view_addresses",
+        "view_locations",
+        "view_entry",
+        "view_reception",
+        "manage_data_import"
+      ]
+    },
+    {
+      "nombre": "Supervisor ",
+      "permisos": ["view_panel", "panel_ingresar", "panel_info", "manage_panel"]
+    },
+    {
+      "nombre": "SupervisorN.v",
+      "permisos": [
+        "view_entry",
+        "process_entry",
+        "view_reception",
+        "manage_data_import",
+        "view_carteles",
+        "view_historial_nv",
+        "view_batches",
+        "view_addresses",
+        "view_locations",
+        "manage_panel",
+        "panel_ingresar",
+        "panel_info"
+      ]
+    }
+  ],
+  "iam_role_permissions": [
+    {
+      "rol": "ADMIN",
+      "permiso": "admin_monitor"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "admin_upload_history"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_anomalias"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_antiguos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_antiguos_disp"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_detalle"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_duplicados"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_no_activos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "analisis_tab_resumen"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "approve_panel_reopen_nv"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_ajuste"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_bloques"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_conciliacion"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_contar"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_proyeccion"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "conteo_tab_sesiones"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "deploy_ota"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "export_data"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_api"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_cleanup"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_conteo"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_data_import"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_eventos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_fichas"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_insumos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_inventory"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_locations"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_monitoreo"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_panel"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_postventa"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_quality"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_rendiciones"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_roles"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_tickets"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_tms"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_users"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_views"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "manage_workflows"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "panel_builder"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "panel_info"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "panel_ingresar"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "panel_tv"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "process_entry"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "process_reception"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_bandeja"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_calendario"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_dashboard"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_nuevo"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_tecnicos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "pv_tab_tickets"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "supervise_conteo"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "supervise_postventa"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "supervise_tms"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_acciones_calidad"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_analisis"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_api"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_carteles"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_conteo"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_dispatch_control"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_eventos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_fichas"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_historial_nv"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_insumos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_panel"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_postventa"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_rendiciones"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_roles"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_sales_status"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_stock"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_tms"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_traspasos"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_users"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_views"
+    },
+    {
+      "rol": "ADMIN",
+      "permiso": "view_workflows"
+    },
+    {
+      "rol": "CEO_PTM",
+      "permiso": "panel_info"
+    },
+    {
+      "rol": "CEO_PTM",
+      "permiso": "panel_tv"
+    },
+    {
+      "rol": "CEO_PTM",
+      "permiso": "process_reception"
+    },
+    {
+      "rol": "CEO_PTM",
+      "permiso": "view_panel"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "manage_monitoreo"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "manage_quality"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "panel_tv"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "process_entry"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "process_reception"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_acciones_calidad"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_carteles"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_fichas"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_historial_nv"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "CONTROL_CALIDAD",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "approve_panel_reopen_nv"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "manage_data_import"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "manage_monitoreo"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "manage_panel"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "manage_postventa"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "manage_quality"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "panel_builder"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "panel_info"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "panel_ingresar"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "panel_tv"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "process_entry"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "process_reception"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_bandeja"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_calendario"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_dashboard"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_nuevo"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_tecnicos"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "pv_tab_tickets"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "supervise_postventa"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_acciones_calidad"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_panel"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_postventa"
+    },
+    {
+      "rol": "GERENCIA",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_anomalias"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_antiguos"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_antiguos_disp"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_detalle"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_duplicados"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_no_activos"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "analisis_tab_resumen"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_ajuste"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_bloques"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_conciliacion"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_contar"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_proyeccion"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "conteo_tab_sesiones"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "manage_conteo"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "manage_data_import"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "manage_insumos"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "manage_inventory"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "manage_locations"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "process_entry"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "process_reception"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_analisis"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_carteles"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_conteo"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_insumos"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_stock"
+    },
+    {
+      "rol": "INVENTARIO_",
+      "permiso": "view_traspasos"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_carteles"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "OPERADOR",
+      "permiso": "view_sales_status"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "manage_data_import"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "OPERARIO_3",
+      "permiso": "view_reception"
+    },
+    {
+      "rol": "rendiciones_oscar",
+      "permiso": "complete_rendiciones"
+    },
+    {
+      "rol": "rendiciones_oscar",
+      "permiso": "view_rendiciones"
+    },
+    {
+      "rol": "SUPERVISOR",
+      "permiso": "manage_panel"
+    },
+    {
+      "rol": "SUPERVISOR",
+      "permiso": "panel_info"
+    },
+    {
+      "rol": "SUPERVISOR",
+      "permiso": "panel_ingresar"
+    },
+    {
+      "rol": "SUPERVISOR",
+      "permiso": "view_panel"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "manage_data_import"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "manage_panel"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "panel_info"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "panel_ingresar"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "process_entry"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_addresses"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_batches"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_carteles"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_entry"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_historial_nv"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_locations"
+    },
+    {
+      "rol": "SUPERVISOR_",
+      "permiso": "view_reception"
+    }
+  ],
+  "usuarios": [
+    {
+      "id": "0f4dc62a-0253-4899-8a02-185ee6554812",
+      "nombre": "ARIEL SPOLANSKY",
+      "email": "ariel@ptm.cl",
+      "rol": "CEO_PTM",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "90fca96e-3b51-47df-88b0-7f4b542d7dbf",
+      "nombre": "Lucas Toloza",
+      "email": "lmodric@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "77a37645-4356-4db6-9434-4ec239bcec61",
+      "nombre": "Admin Respaldo",
+      "email": "admin@cco.cl",
+      "rol": "ADMIN",
+      "activo": true,
+      "es_admin_delegado": true
+    },
+    {
+      "id": "2965491a-4397-4197-a004-30db8f1acaa4",
+      "nombre": "Juan Carlos",
+      "email": "jc@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": false,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "57ad329d-b44c-4fb3-8e07-b6c0416ffba7",
+      "nombre": "Christian Vargas",
+      "email": "chv@ptm.cl",
+      "rol": "OPERARIO_3",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "8205c0d8-1ed9-4206-a3b1-811e8ea8500c",
+      "nombre": "Marco Negroni",
+      "email": "mnegroni@ptm.cl",
+      "rol": "CONTROL_CALIDAD",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "8cea7b72-1e2e-4b23-b4dd-002aba55776d",
+      "nombre": "Gisselle Romero",
+      "email": "gisselle@ptm.cl",
+      "rol": "SUPERVISOR",
+      "activo": false,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "295a61d5-27d9-433b-af29-8143c0a7ead0",
+      "nombre": "Administrador",
+      "email": "admin@sistema.com",
+      "rol": "ADMIN",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "55c5228f-6471-4bc0-a699-dd660ae63d53",
+      "nombre": "Oscar Leiva",
+      "email": "oleiva@ptm.cl",
+      "rol": "GERENCIA",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "9e730312-fe69-405c-9e4b-b10b71db8f29",
+      "nombre": "NILO Langebach",
+      "email": "nilo@ptm.cl",
+      "rol": "SUPERVISOR",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "66e30eb8-bf15-49bc-80f1-59d098836524",
+      "nombre": "Cristopher",
+      "email": "inventary@ptm.cl",
+      "rol": "INVENTARIO_",
+      "activo": false,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "0a1fac2b-ac97-46a1-a8fb-e6b90a6dba6b",
+      "nombre": "María Angélica",
+      "email": "angelica@ptm.cl",
+      "rol": "SUPERVISOR_",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "1dd77b2c-1123-4e12-9d14-a0974f3b7709",
+      "nombre": "Revision",
+      "email": "packing@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": true,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "6404fd28-ef89-4323-9e4f-76b30051fc45",
+      "nombre": "MOISES",
+      "email": "moi@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": false,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "eda77c5a-5a8d-42a9-9142-15578d6582bf",
+      "nombre": "PickingBD1",
+      "email": "picking1@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": false,
+      "es_admin_delegado": false
+    },
+    {
+      "id": "76dd6777-36c3-4744-87d4-5801489d1749",
+      "nombre": "PickingBD3",
+      "email": "picking2@ptm.cl",
+      "rol": "OPERADOR",
+      "activo": false,
+      "es_admin_delegado": false
+    }
+  ],
+  "iam_roles": [
+    {
+      "id": "fba8b8eb-7732-44c3-a310-c5a14aaa9a92",
+      "codigo": "ADMIN"
+    },
+    {
+      "id": "ac47360f-ce0d-4401-997a-05e550a01385",
+      "codigo": "CEO_PTM"
+    },
+    {
+      "id": "4146969b-528d-4456-b4f8-9ec46bbefcee",
+      "codigo": "CONTROL_CALIDAD"
+    },
+    {
+      "id": "4e7b4917-06e3-4c4b-a764-da386a19ee05",
+      "codigo": "GERENCIA"
+    },
+    {
+      "id": "819be9b8-1c60-40c9-a5d7-e521e0b360aa",
+      "codigo": "INVENTARIO_"
+    },
+    {
+      "id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "codigo": "OPERADOR"
+    },
+    {
+      "id": "600e539d-fc55-42bf-b574-e4cecdc63c42",
+      "codigo": "OPERARIO_3"
+    },
+    {
+      "id": "bee30641-e6fe-491a-93bd-0e23aa15279c",
+      "codigo": "rendiciones_oscar"
+    },
+    {
+      "id": "3e33280b-0d88-4049-9845-58a827b18a02",
+      "codigo": "SUPERVISOR"
+    },
+    {
+      "id": "3b7b3ba9-0b93-4a4a-9be0-e82a486d9889",
+      "codigo": "SUPERVISOR_"
+    }
+  ],
+  "iam_usuarios": [
+    {
+      "id": "62a16824-a23f-4ac2-b903-6e14ee14ec5c",
+      "correo": "jc@ptm.cl"
+    },
+    {
+      "id": "0e757833-5d48-46d7-b41e-94f1b35f17cf",
+      "correo": "ariel@ptm.cl"
+    },
+    {
+      "id": "7d2a7c35-69fd-4be2-8d41-45a5ffa42a4a",
+      "correo": "mnegroni@ptm.cl"
+    },
+    {
+      "id": "3367ad58-bef3-4477-a99b-b6f036a412fb",
+      "correo": "inventary@ptm.cl"
+    },
+    {
+      "id": "8f3503e6-ecf7-418f-a267-ed98e06a71c9",
+      "correo": "lmodric@ptm.cl"
+    },
+    {
+      "id": "c12e2286-9619-445e-afe4-e9aefc51996c",
+      "correo": "admin@sistema.com"
+    },
+    {
+      "id": "cd300614-fd5b-4765-95f0-667375950a1d",
+      "correo": "nilo@ptm.cl"
+    },
+    {
+      "id": "93cd184d-6302-40a5-828d-d6bb8cde50ee",
+      "correo": "angelica@ptm.cl"
+    },
+    {
+      "id": "87c8b733-da7d-45ed-8fd9-7aee71dfd373",
+      "correo": "oleiva@ptm.cl"
+    },
+    {
+      "id": "2f2f7bcf-c011-4ba7-81db-4973307327ba",
+      "correo": "gisselle@ptm.cl"
+    },
+    {
+      "id": "e115dbe4-6ec2-45a3-a44b-55dc33a551e8",
+      "correo": "moi@ptm.cl"
+    },
+    {
+      "id": "a3190780-2cd9-4b95-ada0-17b227ac9c85",
+      "correo": "admin@cco.cl"
+    },
+    {
+      "id": "e795743a-c60e-4693-a1c1-172cde64c812",
+      "correo": "picking1@ptm.cl"
+    },
+    {
+      "id": "224c7d7d-abe6-41ed-9390-421017dbf578",
+      "correo": "chv@ptm.cl"
+    },
+    {
+      "id": "fbddd6e1-8f14-4b55-bafb-31b9643c1983",
+      "correo": "picking2@ptm.cl"
+    },
+    {
+      "id": "8d59a132-f7f5-4e19-af3a-9d9190abe79e",
+      "correo": "packing@ptm.cl"
+    }
+  ],
+  "assignments": [
+    {
+      "principal_id": "c12e2286-9619-445e-afe4-e9aefc51996c",
+      "role_id": "fba8b8eb-7732-44c3-a310-c5a14aaa9a92",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "a3190780-2cd9-4b95-ada0-17b227ac9c85",
+      "role_id": "fba8b8eb-7732-44c3-a310-c5a14aaa9a92",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "224c7d7d-abe6-41ed-9390-421017dbf578",
+      "role_id": "600e539d-fc55-42bf-b574-e4cecdc63c42",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "8d59a132-f7f5-4e19-af3a-9d9190abe79e",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "8f3503e6-ecf7-418f-a267-ed98e06a71c9",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "7d2a7c35-69fd-4be2-8d41-45a5ffa42a4a",
+      "role_id": "4146969b-528d-4456-b4f8-9ec46bbefcee",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "2f2f7bcf-c011-4ba7-81db-4973307327ba",
+      "role_id": "3e33280b-0d88-4049-9845-58a827b18a02",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "62a16824-a23f-4ac2-b903-6e14ee14ec5c",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "e115dbe4-6ec2-45a3-a44b-55dc33a551e8",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "e795743a-c60e-4693-a1c1-172cde64c812",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "fbddd6e1-8f14-4b55-bafb-31b9643c1983",
+      "role_id": "5aa542e9-eb45-462c-b3b4-1e8c3fca7004",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "87c8b733-da7d-45ed-8fd9-7aee71dfd373",
+      "role_id": "4e7b4917-06e3-4c4b-a764-da386a19ee05",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "93cd184d-6302-40a5-828d-d6bb8cde50ee",
+      "role_id": "3b7b3ba9-0b93-4a4a-9be0-e82a486d9889",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "3367ad58-bef3-4477-a99b-b6f036a412fb",
+      "role_id": "819be9b8-1c60-40c9-a5d7-e521e0b360aa",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "cd300614-fd5b-4765-95f0-667375950a1d",
+      "role_id": "3e33280b-0d88-4049-9845-58a827b18a02",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "93cd184d-6302-40a5-828d-d6bb8cde50ee",
+      "role_id": "3b7b3ba9-0b93-4a4a-9be0-e82a486d9889",
+      "scope_type": "bodega",
+      "scope_code": "100"
+    },
+    {
+      "principal_id": "0e757833-5d48-46d7-b41e-94f1b35f17cf",
+      "role_id": "ac47360f-ce0d-4401-997a-05e550a01385",
+      "scope_type": "global",
+      "scope_code": null
+    },
+    {
+      "principal_id": "87c8b733-da7d-45ed-8fd9-7aee71dfd373",
+      "role_id": "bee30641-e6fe-491a-93bd-0e23aa15279c",
+      "scope_type": "global",
+      "scope_code": null
+    }
+  ],
+  "delegations": []
+}

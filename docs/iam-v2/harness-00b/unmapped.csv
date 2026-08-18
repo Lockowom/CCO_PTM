@@ -1,0 +1,7 @@
+categoria,codigo,lado,detalle
+rol-iam-sin-legacy,rendiciones_oscar,IAM 2.0,rol no existe en tms_roles
+permiso-huerfano,view_asistente,catalog,ningun rol lo tiene (legacy ni IAM2)
+funcion-sin-permiso,eliminar_nv,allowlist por EMAIL en mig 099 (admin + angelica@ptm.cl),no existe permiso en catalog; IAM2 no la representa
+funcion-sin-permiso,wms_move_stock,EXECUTE a authenticated sin gate (mig 174),no existe permiso en catalog; IAM2 la gatea → pérdida para TODOS
+funcion-sin-permiso,batch_update_nv_estado,EXECUTE a authenticated sin gate (mig 174),no existe permiso en catalog; IAM2 la gatea → pérdida para TODOS
+funcion-sin-permiso,bulk_upsert,allowlist de 11 tablas sin gate (mig 143),no existe permiso en catalog; IAM2 la gatea → pérdida para TODOS

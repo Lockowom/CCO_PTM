@@ -4,17 +4,23 @@ Snapshot cero-pérdida: congelamiento del acceso EFECTIVO actual de los 16 usuar
 antes de tocar el resolver nuevo del IAM 2.0. Generado con
 `generar_snapshot.cjs` (reproducible: `node generar_snapshot.cjs`).
 
+> **Fuente única de datos**: `docs/iam-v2/datos_iam.json` (dump real de PROD vía
+> Management API, descargable con `node fetch_datos.cjs`). El snapshot NO se edita a mano.
+
 ## Entregables (spec V2)
 
 | Archivo                              | Contenido                                                  |
 | ------------------------------------ | ---------------------------------------------------------- |
-| `permisos_efectivos_por_usuario.csv` | 16 usuarios × 80 permisos (PERMITIDO / No asignado)        |
+| `permisos_efectivos_por_usuario.csv` | 16 usuarios × 81 permisos (PERMITIDO / No asignado)        |
 | `rutas_efectivas_por_usuario.csv`    | 16 usuarios × 52 rutas (estado + vía que la habilita)      |
 | `tabs_efectivas_por_usuario.csv`     | Tabs de Conteo / Análisis / Postventa por usuario          |
 | `scopes_por_usuario.csv`             | Scopes por usuario (global; Angélica: global + bodega:100) |
 | `funciones_rpc_por_usuario.csv`      | 14 funciones gateadas a nivel RPC por usuario              |
 | `sha256sums.txt`                     | Hash SHA-256 de cada CSV (integridad del snapshot)         |
-| `generar_snapshot.cjs`               | Generador reproducible                                     |
+| `generar_snapshot.cjs`               | Generador reproducible (lee `../datos_iam.json`)           |
+
+> Los hashes de este commit corresponden al catálogo completo de 81 permisos
+> (regeneración 2026-08-18 tras corregir el omitido `view_asistente`).
 
 ## Reglas
 

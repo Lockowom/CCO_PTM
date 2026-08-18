@@ -1,1281 +1,1297 @@
 usuario,rol,permiso,estado,origen
-Admin Respaldo,ADMIN,view_stock,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_inventory,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_traspasos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_carteles,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_insumos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_insumos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_locations,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_analisis,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_resumen,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_antiguos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_antiguos_disp,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_no_activos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_duplicados,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_anomalias,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,analisis_tab_detalle,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_conteo,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_conteo,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,supervise_conteo,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_contar,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_sesiones,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_conciliacion,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_ajuste,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_bloques,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,conteo_tab_proyeccion,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_entry,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,process_entry,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_reception,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,process_reception,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_data_import,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_historial_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_dispatch_control,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_batches,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_sales_status,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_addresses,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_locations,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_fichas,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_fichas,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,export_data,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_monitoreo,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_quality,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_acciones_calidad,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_panel,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_panel,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,approve_panel_reopen_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,panel_ingresar,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,panel_info,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,panel_tv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,panel_builder,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_postventa,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_postventa,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,supervise_postventa,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_tickets,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_bandeja,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_calendario,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_nuevo,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_dashboard,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,pv_tab_tecnicos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_users,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_users,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_roles,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_roles,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_views,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_views,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_tickets,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,admin_upload_history,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,admin_monitor,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,deploy_ota,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_workflows,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_workflows,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_eventos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_eventos,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_api,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_api,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_cleanup,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_rendiciones,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_rendiciones,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,view_tms,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,manage_tms,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,supervise_tms,PERMITIDO,Bypass ADMIN
-Admin Respaldo,ADMIN,complete_rendiciones,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_stock,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_inventory,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_traspasos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_carteles,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_insumos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_insumos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_locations,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_analisis,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_resumen,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_antiguos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_antiguos_disp,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_no_activos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_duplicados,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_anomalias,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,analisis_tab_detalle,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_conteo,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_conteo,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,supervise_conteo,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_contar,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_sesiones,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_conciliacion,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_ajuste,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_bloques,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,conteo_tab_proyeccion,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_entry,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,process_entry,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_reception,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,process_reception,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_data_import,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_historial_nv,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_dispatch_control,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_batches,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_sales_status,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_addresses,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_locations,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_fichas,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_fichas,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,export_data,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_monitoreo,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_quality,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_acciones_calidad,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_panel,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_panel,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,approve_panel_reopen_nv,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,panel_ingresar,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,panel_info,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,panel_tv,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,panel_builder,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_postventa,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_postventa,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,supervise_postventa,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_tickets,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_bandeja,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_calendario,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_nuevo,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_dashboard,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,pv_tab_tecnicos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_users,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_users,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_roles,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_roles,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_views,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_views,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_tickets,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,admin_upload_history,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,admin_monitor,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,deploy_ota,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_workflows,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_workflows,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_eventos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_eventos,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_api,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_api,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_cleanup,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_rendiciones,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_rendiciones,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,view_tms,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,manage_tms,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,supervise_tms,PERMITIDO,Bypass ADMIN
-Administrador,ADMIN,complete_rendiciones,PERMITIDO,Bypass ADMIN
-ARIEL SPOLANSKY,CEO_PTM,view_stock,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_inventory,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_traspasos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_carteles,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_insumos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_insumos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_locations,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_analisis,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,analisis_tab_resumen,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,admin_monitor,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,admin_upload_history,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,analisis_tab_anomalias,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,analisis_tab_antiguos,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,analisis_tab_antiguos_disp,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,analisis_tab_no_activos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,analisis_tab_duplicados,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,analisis_tab_anomalias,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,analisis_tab_detalle,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_conteo,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_conteo,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,supervise_conteo,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,conteo_tab_contar,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,conteo_tab_sesiones,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,conteo_tab_conciliacion,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,analisis_tab_duplicados,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,analisis_tab_no_activos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,analisis_tab_resumen,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,approve_panel_reopen_nv,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,complete_rendiciones,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,conteo_tab_ajuste,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,conteo_tab_bloques,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,conteo_tab_conciliacion,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,conteo_tab_contar,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,conteo_tab_proyeccion,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_entry,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,process_entry,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_reception,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,process_reception,PERMITIDO,Perfil
-ARIEL SPOLANSKY,CEO_PTM,manage_data_import,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_historial_nv,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_dispatch_control,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_batches,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_sales_status,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_addresses,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_locations,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_fichas,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_fichas,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,export_data,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_monitoreo,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_quality,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_acciones_calidad,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_panel,PERMITIDO,Perfil
-ARIEL SPOLANSKY,CEO_PTM,manage_panel,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,approve_panel_reopen_nv,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,panel_ingresar,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,panel_info,PERMITIDO,Perfil
-ARIEL SPOLANSKY,CEO_PTM,panel_tv,PERMITIDO,Perfil
-ARIEL SPOLANSKY,CEO_PTM,panel_builder,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_postventa,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_postventa,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,supervise_postventa,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_tickets,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_bandeja,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_calendario,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_nuevo,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_dashboard,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,pv_tab_tecnicos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_users,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_users,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_roles,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_roles,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_views,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_views,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_tickets,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,admin_upload_history,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,admin_monitor,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,conteo_tab_sesiones,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,deploy_ota,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_workflows,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_workflows,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_eventos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,manage_eventos,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_api,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,export_data,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,manage_api,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,manage_cleanup,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_rendiciones,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_conteo,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_data_import,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_eventos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_fichas,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_insumos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_inventory,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_locations,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_monitoreo,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_panel,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_postventa,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_quality,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,manage_rendiciones,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,view_tms,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_roles,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_tickets,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,manage_tms,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_users,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_views,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,manage_workflows,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,panel_builder,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,panel_info,PERMITIDO,Perfil
+ARIEL SPOLANSKY,CEO_PTM,panel_ingresar,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,panel_tv,PERMITIDO,Perfil
+ARIEL SPOLANSKY,CEO_PTM,process_entry,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,process_reception,PERMITIDO,Perfil
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_bandeja,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_calendario,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_dashboard,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_nuevo,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_tecnicos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,pv_tab_tickets,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,supervise_conteo,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,supervise_postventa,No asignado,
 ARIEL SPOLANSKY,CEO_PTM,supervise_tms,No asignado,
-ARIEL SPOLANSKY,CEO_PTM,complete_rendiciones,No asignado,
-Christian Vargas,OPERARIO_3,view_stock,No asignado,
-Christian Vargas,OPERARIO_3,manage_inventory,No asignado,
-Christian Vargas,OPERARIO_3,view_traspasos,No asignado,
-Christian Vargas,OPERARIO_3,view_carteles,No asignado,
-Christian Vargas,OPERARIO_3,view_insumos,No asignado,
-Christian Vargas,OPERARIO_3,manage_insumos,No asignado,
-Christian Vargas,OPERARIO_3,manage_locations,No asignado,
-Christian Vargas,OPERARIO_3,view_analisis,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_resumen,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_antiguos,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_antiguos_disp,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_no_activos,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_duplicados,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_anomalias,No asignado,
-Christian Vargas,OPERARIO_3,analisis_tab_detalle,No asignado,
-Christian Vargas,OPERARIO_3,view_conteo,No asignado,
-Christian Vargas,OPERARIO_3,manage_conteo,No asignado,
-Christian Vargas,OPERARIO_3,supervise_conteo,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_contar,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_sesiones,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_conciliacion,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_ajuste,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_bloques,No asignado,
-Christian Vargas,OPERARIO_3,conteo_tab_proyeccion,No asignado,
-Christian Vargas,OPERARIO_3,view_entry,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,process_entry,No asignado,
-Christian Vargas,OPERARIO_3,view_reception,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,process_reception,No asignado,
-Christian Vargas,OPERARIO_3,manage_data_import,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,view_historial_nv,No asignado,
-Christian Vargas,OPERARIO_3,view_dispatch_control,No asignado,
-Christian Vargas,OPERARIO_3,view_batches,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,view_sales_status,No asignado,
-Christian Vargas,OPERARIO_3,view_addresses,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,view_locations,PERMITIDO,Perfil
-Christian Vargas,OPERARIO_3,view_fichas,No asignado,
-Christian Vargas,OPERARIO_3,manage_fichas,No asignado,
-Christian Vargas,OPERARIO_3,export_data,No asignado,
-Christian Vargas,OPERARIO_3,manage_monitoreo,No asignado,
-Christian Vargas,OPERARIO_3,manage_quality,No asignado,
-Christian Vargas,OPERARIO_3,view_acciones_calidad,No asignado,
-Christian Vargas,OPERARIO_3,view_panel,No asignado,
-Christian Vargas,OPERARIO_3,manage_panel,No asignado,
-Christian Vargas,OPERARIO_3,approve_panel_reopen_nv,No asignado,
-Christian Vargas,OPERARIO_3,panel_ingresar,No asignado,
-Christian Vargas,OPERARIO_3,panel_info,No asignado,
-Christian Vargas,OPERARIO_3,panel_tv,No asignado,
-Christian Vargas,OPERARIO_3,panel_builder,No asignado,
-Christian Vargas,OPERARIO_3,view_postventa,No asignado,
-Christian Vargas,OPERARIO_3,manage_postventa,No asignado,
-Christian Vargas,OPERARIO_3,supervise_postventa,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_tickets,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_bandeja,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_calendario,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_nuevo,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_dashboard,No asignado,
-Christian Vargas,OPERARIO_3,pv_tab_tecnicos,No asignado,
-Christian Vargas,OPERARIO_3,view_users,No asignado,
-Christian Vargas,OPERARIO_3,manage_users,No asignado,
-Christian Vargas,OPERARIO_3,view_roles,No asignado,
-Christian Vargas,OPERARIO_3,manage_roles,No asignado,
-Christian Vargas,OPERARIO_3,view_views,No asignado,
-Christian Vargas,OPERARIO_3,manage_views,No asignado,
-Christian Vargas,OPERARIO_3,manage_tickets,No asignado,
-Christian Vargas,OPERARIO_3,admin_upload_history,No asignado,
-Christian Vargas,OPERARIO_3,admin_monitor,No asignado,
-Christian Vargas,OPERARIO_3,deploy_ota,No asignado,
-Christian Vargas,OPERARIO_3,view_workflows,No asignado,
-Christian Vargas,OPERARIO_3,manage_workflows,No asignado,
-Christian Vargas,OPERARIO_3,view_eventos,No asignado,
-Christian Vargas,OPERARIO_3,manage_eventos,No asignado,
-Christian Vargas,OPERARIO_3,view_api,No asignado,
-Christian Vargas,OPERARIO_3,manage_api,No asignado,
-Christian Vargas,OPERARIO_3,manage_cleanup,No asignado,
-Christian Vargas,OPERARIO_3,view_rendiciones,No asignado,
-Christian Vargas,OPERARIO_3,manage_rendiciones,No asignado,
-Christian Vargas,OPERARIO_3,view_tms,No asignado,
-Christian Vargas,OPERARIO_3,manage_tms,No asignado,
-Christian Vargas,OPERARIO_3,supervise_tms,No asignado,
-Christian Vargas,OPERARIO_3,complete_rendiciones,No asignado,
-Cristopher,INVENTARIO_,view_stock,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,manage_inventory,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_traspasos,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_carteles,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_insumos,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,manage_insumos,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,manage_locations,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_analisis,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_resumen,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_antiguos,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_antiguos_disp,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_no_activos,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_duplicados,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_anomalias,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,analisis_tab_detalle,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_conteo,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,manage_conteo,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,supervise_conteo,No asignado,
-Cristopher,INVENTARIO_,conteo_tab_contar,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,conteo_tab_sesiones,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,conteo_tab_conciliacion,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,conteo_tab_ajuste,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,conteo_tab_bloques,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,conteo_tab_proyeccion,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_entry,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,process_entry,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_reception,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,process_reception,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,manage_data_import,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_historial_nv,No asignado,
-Cristopher,INVENTARIO_,view_dispatch_control,No asignado,
-Cristopher,INVENTARIO_,view_batches,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_sales_status,No asignado,
-Cristopher,INVENTARIO_,view_addresses,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_locations,PERMITIDO,Perfil
-Cristopher,INVENTARIO_,view_fichas,No asignado,
-Cristopher,INVENTARIO_,manage_fichas,No asignado,
-Cristopher,INVENTARIO_,export_data,No asignado,
-Cristopher,INVENTARIO_,manage_monitoreo,No asignado,
-Cristopher,INVENTARIO_,manage_quality,No asignado,
-Cristopher,INVENTARIO_,view_acciones_calidad,No asignado,
-Cristopher,INVENTARIO_,view_panel,No asignado,
-Cristopher,INVENTARIO_,manage_panel,No asignado,
-Cristopher,INVENTARIO_,approve_panel_reopen_nv,No asignado,
-Cristopher,INVENTARIO_,panel_ingresar,No asignado,
-Cristopher,INVENTARIO_,panel_info,No asignado,
-Cristopher,INVENTARIO_,panel_tv,No asignado,
-Cristopher,INVENTARIO_,panel_builder,No asignado,
-Cristopher,INVENTARIO_,view_postventa,No asignado,
-Cristopher,INVENTARIO_,manage_postventa,No asignado,
-Cristopher,INVENTARIO_,supervise_postventa,No asignado,
-Cristopher,INVENTARIO_,pv_tab_tickets,No asignado,
-Cristopher,INVENTARIO_,pv_tab_bandeja,No asignado,
-Cristopher,INVENTARIO_,pv_tab_calendario,No asignado,
-Cristopher,INVENTARIO_,pv_tab_nuevo,No asignado,
-Cristopher,INVENTARIO_,pv_tab_dashboard,No asignado,
-Cristopher,INVENTARIO_,pv_tab_tecnicos,No asignado,
-Cristopher,INVENTARIO_,view_users,No asignado,
-Cristopher,INVENTARIO_,manage_users,No asignado,
-Cristopher,INVENTARIO_,view_roles,No asignado,
-Cristopher,INVENTARIO_,manage_roles,No asignado,
-Cristopher,INVENTARIO_,view_views,No asignado,
-Cristopher,INVENTARIO_,manage_views,No asignado,
-Cristopher,INVENTARIO_,manage_tickets,No asignado,
-Cristopher,INVENTARIO_,admin_upload_history,No asignado,
-Cristopher,INVENTARIO_,admin_monitor,No asignado,
-Cristopher,INVENTARIO_,deploy_ota,No asignado,
-Cristopher,INVENTARIO_,view_workflows,No asignado,
-Cristopher,INVENTARIO_,manage_workflows,No asignado,
-Cristopher,INVENTARIO_,view_eventos,No asignado,
-Cristopher,INVENTARIO_,manage_eventos,No asignado,
-Cristopher,INVENTARIO_,view_api,No asignado,
-Cristopher,INVENTARIO_,manage_api,No asignado,
-Cristopher,INVENTARIO_,manage_cleanup,No asignado,
-Cristopher,INVENTARIO_,view_rendiciones,No asignado,
-Cristopher,INVENTARIO_,manage_rendiciones,No asignado,
-Cristopher,INVENTARIO_,view_tms,No asignado,
-Cristopher,INVENTARIO_,manage_tms,No asignado,
-Cristopher,INVENTARIO_,supervise_tms,No asignado,
-Cristopher,INVENTARIO_,complete_rendiciones,No asignado,
-Gisselle Romero,SUPERVISOR,view_stock,No asignado,
-Gisselle Romero,SUPERVISOR,manage_inventory,No asignado,
-Gisselle Romero,SUPERVISOR,view_traspasos,No asignado,
-Gisselle Romero,SUPERVISOR,view_carteles,No asignado,
-Gisselle Romero,SUPERVISOR,view_insumos,No asignado,
-Gisselle Romero,SUPERVISOR,manage_insumos,No asignado,
-Gisselle Romero,SUPERVISOR,manage_locations,No asignado,
-Gisselle Romero,SUPERVISOR,view_analisis,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_resumen,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_antiguos,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_antiguos_disp,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_no_activos,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_duplicados,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_anomalias,No asignado,
-Gisselle Romero,SUPERVISOR,analisis_tab_detalle,No asignado,
-Gisselle Romero,SUPERVISOR,view_conteo,No asignado,
-Gisselle Romero,SUPERVISOR,manage_conteo,No asignado,
-Gisselle Romero,SUPERVISOR,supervise_conteo,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_contar,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_sesiones,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_conciliacion,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_ajuste,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_bloques,No asignado,
-Gisselle Romero,SUPERVISOR,conteo_tab_proyeccion,No asignado,
-Gisselle Romero,SUPERVISOR,view_entry,No asignado,
-Gisselle Romero,SUPERVISOR,process_entry,No asignado,
-Gisselle Romero,SUPERVISOR,view_reception,No asignado,
-Gisselle Romero,SUPERVISOR,process_reception,No asignado,
-Gisselle Romero,SUPERVISOR,manage_data_import,No asignado,
-Gisselle Romero,SUPERVISOR,view_historial_nv,No asignado,
-Gisselle Romero,SUPERVISOR,view_dispatch_control,No asignado,
-Gisselle Romero,SUPERVISOR,view_batches,No asignado,
-Gisselle Romero,SUPERVISOR,view_sales_status,No asignado,
-Gisselle Romero,SUPERVISOR,view_addresses,No asignado,
-Gisselle Romero,SUPERVISOR,view_locations,No asignado,
-Gisselle Romero,SUPERVISOR,view_fichas,No asignado,
-Gisselle Romero,SUPERVISOR,manage_fichas,No asignado,
-Gisselle Romero,SUPERVISOR,export_data,No asignado,
-Gisselle Romero,SUPERVISOR,manage_monitoreo,No asignado,
-Gisselle Romero,SUPERVISOR,manage_quality,No asignado,
-Gisselle Romero,SUPERVISOR,view_acciones_calidad,No asignado,
-Gisselle Romero,SUPERVISOR,view_panel,PERMITIDO,Perfil
-Gisselle Romero,SUPERVISOR,manage_panel,PERMITIDO,Perfil
-Gisselle Romero,SUPERVISOR,approve_panel_reopen_nv,No asignado,
-Gisselle Romero,SUPERVISOR,panel_ingresar,PERMITIDO,Perfil
-Gisselle Romero,SUPERVISOR,panel_info,PERMITIDO,Perfil
-Gisselle Romero,SUPERVISOR,panel_tv,No asignado,
-Gisselle Romero,SUPERVISOR,panel_builder,No asignado,
-Gisselle Romero,SUPERVISOR,view_postventa,No asignado,
-Gisselle Romero,SUPERVISOR,manage_postventa,No asignado,
-Gisselle Romero,SUPERVISOR,supervise_postventa,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_tickets,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_bandeja,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_calendario,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_nuevo,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_dashboard,No asignado,
-Gisselle Romero,SUPERVISOR,pv_tab_tecnicos,No asignado,
-Gisselle Romero,SUPERVISOR,view_users,No asignado,
-Gisselle Romero,SUPERVISOR,manage_users,No asignado,
-Gisselle Romero,SUPERVISOR,view_roles,No asignado,
-Gisselle Romero,SUPERVISOR,manage_roles,No asignado,
-Gisselle Romero,SUPERVISOR,view_views,No asignado,
-Gisselle Romero,SUPERVISOR,manage_views,No asignado,
-Gisselle Romero,SUPERVISOR,manage_tickets,No asignado,
-Gisselle Romero,SUPERVISOR,admin_upload_history,No asignado,
-Gisselle Romero,SUPERVISOR,admin_monitor,No asignado,
-Gisselle Romero,SUPERVISOR,deploy_ota,No asignado,
-Gisselle Romero,SUPERVISOR,view_workflows,No asignado,
-Gisselle Romero,SUPERVISOR,manage_workflows,No asignado,
-Gisselle Romero,SUPERVISOR,view_eventos,No asignado,
-Gisselle Romero,SUPERVISOR,manage_eventos,No asignado,
-Gisselle Romero,SUPERVISOR,view_api,No asignado,
-Gisselle Romero,SUPERVISOR,manage_api,No asignado,
-Gisselle Romero,SUPERVISOR,manage_cleanup,No asignado,
-Gisselle Romero,SUPERVISOR,view_rendiciones,No asignado,
-Gisselle Romero,SUPERVISOR,manage_rendiciones,No asignado,
-Gisselle Romero,SUPERVISOR,view_tms,No asignado,
-Gisselle Romero,SUPERVISOR,manage_tms,No asignado,
-Gisselle Romero,SUPERVISOR,supervise_tms,No asignado,
-Gisselle Romero,SUPERVISOR,complete_rendiciones,No asignado,
-Juan Carlos,OPERADOR,view_stock,No asignado,
-Juan Carlos,OPERADOR,manage_inventory,No asignado,
-Juan Carlos,OPERADOR,view_traspasos,No asignado,
-Juan Carlos,OPERADOR,view_carteles,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,view_insumos,No asignado,
-Juan Carlos,OPERADOR,manage_insumos,No asignado,
-Juan Carlos,OPERADOR,manage_locations,No asignado,
-Juan Carlos,OPERADOR,view_analisis,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_resumen,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_antiguos,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_no_activos,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_duplicados,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_anomalias,No asignado,
-Juan Carlos,OPERADOR,analisis_tab_detalle,No asignado,
-Juan Carlos,OPERADOR,view_conteo,No asignado,
-Juan Carlos,OPERADOR,manage_conteo,No asignado,
-Juan Carlos,OPERADOR,supervise_conteo,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_contar,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_sesiones,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_conciliacion,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_ajuste,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_bloques,No asignado,
-Juan Carlos,OPERADOR,conteo_tab_proyeccion,No asignado,
-Juan Carlos,OPERADOR,view_entry,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,process_entry,No asignado,
-Juan Carlos,OPERADOR,view_reception,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,process_reception,No asignado,
-Juan Carlos,OPERADOR,manage_data_import,No asignado,
-Juan Carlos,OPERADOR,view_historial_nv,No asignado,
-Juan Carlos,OPERADOR,view_dispatch_control,No asignado,
-Juan Carlos,OPERADOR,view_batches,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,view_sales_status,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,view_addresses,No asignado,
-Juan Carlos,OPERADOR,view_locations,PERMITIDO,Perfil
-Juan Carlos,OPERADOR,view_fichas,No asignado,
-Juan Carlos,OPERADOR,manage_fichas,No asignado,
-Juan Carlos,OPERADOR,export_data,No asignado,
-Juan Carlos,OPERADOR,manage_monitoreo,No asignado,
-Juan Carlos,OPERADOR,manage_quality,No asignado,
-Juan Carlos,OPERADOR,view_acciones_calidad,No asignado,
-Juan Carlos,OPERADOR,view_panel,No asignado,
-Juan Carlos,OPERADOR,manage_panel,No asignado,
-Juan Carlos,OPERADOR,approve_panel_reopen_nv,No asignado,
-Juan Carlos,OPERADOR,panel_ingresar,No asignado,
-Juan Carlos,OPERADOR,panel_info,No asignado,
-Juan Carlos,OPERADOR,panel_tv,No asignado,
-Juan Carlos,OPERADOR,panel_builder,No asignado,
-Juan Carlos,OPERADOR,view_postventa,No asignado,
-Juan Carlos,OPERADOR,manage_postventa,No asignado,
-Juan Carlos,OPERADOR,supervise_postventa,No asignado,
-Juan Carlos,OPERADOR,pv_tab_tickets,No asignado,
-Juan Carlos,OPERADOR,pv_tab_bandeja,No asignado,
-Juan Carlos,OPERADOR,pv_tab_calendario,No asignado,
-Juan Carlos,OPERADOR,pv_tab_nuevo,No asignado,
-Juan Carlos,OPERADOR,pv_tab_dashboard,No asignado,
-Juan Carlos,OPERADOR,pv_tab_tecnicos,No asignado,
-Juan Carlos,OPERADOR,view_users,No asignado,
-Juan Carlos,OPERADOR,manage_users,No asignado,
-Juan Carlos,OPERADOR,view_roles,No asignado,
-Juan Carlos,OPERADOR,manage_roles,No asignado,
-Juan Carlos,OPERADOR,view_views,No asignado,
-Juan Carlos,OPERADOR,manage_views,No asignado,
-Juan Carlos,OPERADOR,manage_tickets,No asignado,
-Juan Carlos,OPERADOR,admin_upload_history,No asignado,
-Juan Carlos,OPERADOR,admin_monitor,No asignado,
-Juan Carlos,OPERADOR,deploy_ota,No asignado,
-Juan Carlos,OPERADOR,view_workflows,No asignado,
-Juan Carlos,OPERADOR,manage_workflows,No asignado,
-Juan Carlos,OPERADOR,view_eventos,No asignado,
-Juan Carlos,OPERADOR,manage_eventos,No asignado,
-Juan Carlos,OPERADOR,view_api,No asignado,
-Juan Carlos,OPERADOR,manage_api,No asignado,
-Juan Carlos,OPERADOR,manage_cleanup,No asignado,
-Juan Carlos,OPERADOR,view_rendiciones,No asignado,
-Juan Carlos,OPERADOR,manage_rendiciones,No asignado,
-Juan Carlos,OPERADOR,view_tms,No asignado,
-Juan Carlos,OPERADOR,manage_tms,No asignado,
-Juan Carlos,OPERADOR,supervise_tms,No asignado,
-Juan Carlos,OPERADOR,complete_rendiciones,No asignado,
-Lucas Toloza,OPERADOR,view_stock,No asignado,
-Lucas Toloza,OPERADOR,manage_inventory,No asignado,
-Lucas Toloza,OPERADOR,view_traspasos,No asignado,
-Lucas Toloza,OPERADOR,view_carteles,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,view_insumos,No asignado,
-Lucas Toloza,OPERADOR,manage_insumos,No asignado,
-Lucas Toloza,OPERADOR,manage_locations,No asignado,
-Lucas Toloza,OPERADOR,view_analisis,No asignado,
-Lucas Toloza,OPERADOR,analisis_tab_resumen,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_acciones_calidad,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_addresses,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_analisis,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_api,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_asistente,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_batches,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_carteles,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_conteo,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_dispatch_control,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_entry,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_eventos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_fichas,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_historial_nv,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_insumos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_locations,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_panel,PERMITIDO,Perfil
+ARIEL SPOLANSKY,CEO_PTM,view_postventa,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_reception,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_rendiciones,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_roles,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_sales_status,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_stock,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_tms,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_traspasos,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_users,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_views,No asignado,
+ARIEL SPOLANSKY,CEO_PTM,view_workflows,No asignado,
+Lucas Toloza,OPERADOR,admin_monitor,No asignado,
+Lucas Toloza,OPERADOR,admin_upload_history,No asignado,
+Lucas Toloza,OPERADOR,analisis_tab_anomalias,No asignado,
 Lucas Toloza,OPERADOR,analisis_tab_antiguos,No asignado,
 Lucas Toloza,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-Lucas Toloza,OPERADOR,analisis_tab_no_activos,No asignado,
-Lucas Toloza,OPERADOR,analisis_tab_duplicados,No asignado,
-Lucas Toloza,OPERADOR,analisis_tab_anomalias,No asignado,
 Lucas Toloza,OPERADOR,analisis_tab_detalle,No asignado,
-Lucas Toloza,OPERADOR,view_conteo,No asignado,
-Lucas Toloza,OPERADOR,manage_conteo,No asignado,
-Lucas Toloza,OPERADOR,supervise_conteo,No asignado,
-Lucas Toloza,OPERADOR,conteo_tab_contar,No asignado,
-Lucas Toloza,OPERADOR,conteo_tab_sesiones,No asignado,
-Lucas Toloza,OPERADOR,conteo_tab_conciliacion,No asignado,
+Lucas Toloza,OPERADOR,analisis_tab_duplicados,No asignado,
+Lucas Toloza,OPERADOR,analisis_tab_no_activos,No asignado,
+Lucas Toloza,OPERADOR,analisis_tab_resumen,No asignado,
+Lucas Toloza,OPERADOR,approve_panel_reopen_nv,No asignado,
+Lucas Toloza,OPERADOR,complete_rendiciones,No asignado,
 Lucas Toloza,OPERADOR,conteo_tab_ajuste,No asignado,
 Lucas Toloza,OPERADOR,conteo_tab_bloques,No asignado,
+Lucas Toloza,OPERADOR,conteo_tab_conciliacion,No asignado,
+Lucas Toloza,OPERADOR,conteo_tab_contar,No asignado,
 Lucas Toloza,OPERADOR,conteo_tab_proyeccion,No asignado,
-Lucas Toloza,OPERADOR,view_entry,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,process_entry,No asignado,
-Lucas Toloza,OPERADOR,view_reception,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,process_reception,No asignado,
-Lucas Toloza,OPERADOR,manage_data_import,No asignado,
-Lucas Toloza,OPERADOR,view_historial_nv,No asignado,
-Lucas Toloza,OPERADOR,view_dispatch_control,No asignado,
-Lucas Toloza,OPERADOR,view_batches,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,view_sales_status,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,view_addresses,No asignado,
-Lucas Toloza,OPERADOR,view_locations,PERMITIDO,Perfil
-Lucas Toloza,OPERADOR,view_fichas,No asignado,
-Lucas Toloza,OPERADOR,manage_fichas,No asignado,
-Lucas Toloza,OPERADOR,export_data,No asignado,
-Lucas Toloza,OPERADOR,manage_monitoreo,No asignado,
-Lucas Toloza,OPERADOR,manage_quality,No asignado,
-Lucas Toloza,OPERADOR,view_acciones_calidad,No asignado,
-Lucas Toloza,OPERADOR,view_panel,No asignado,
-Lucas Toloza,OPERADOR,manage_panel,No asignado,
-Lucas Toloza,OPERADOR,approve_panel_reopen_nv,No asignado,
-Lucas Toloza,OPERADOR,panel_ingresar,No asignado,
-Lucas Toloza,OPERADOR,panel_info,No asignado,
-Lucas Toloza,OPERADOR,panel_tv,No asignado,
-Lucas Toloza,OPERADOR,panel_builder,No asignado,
-Lucas Toloza,OPERADOR,view_postventa,No asignado,
-Lucas Toloza,OPERADOR,manage_postventa,No asignado,
-Lucas Toloza,OPERADOR,supervise_postventa,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_tickets,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_bandeja,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_calendario,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_nuevo,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_dashboard,No asignado,
-Lucas Toloza,OPERADOR,pv_tab_tecnicos,No asignado,
-Lucas Toloza,OPERADOR,view_users,No asignado,
-Lucas Toloza,OPERADOR,manage_users,No asignado,
-Lucas Toloza,OPERADOR,view_roles,No asignado,
-Lucas Toloza,OPERADOR,manage_roles,No asignado,
-Lucas Toloza,OPERADOR,view_views,No asignado,
-Lucas Toloza,OPERADOR,manage_views,No asignado,
-Lucas Toloza,OPERADOR,manage_tickets,No asignado,
-Lucas Toloza,OPERADOR,admin_upload_history,No asignado,
-Lucas Toloza,OPERADOR,admin_monitor,No asignado,
+Lucas Toloza,OPERADOR,conteo_tab_sesiones,No asignado,
 Lucas Toloza,OPERADOR,deploy_ota,No asignado,
-Lucas Toloza,OPERADOR,view_workflows,No asignado,
-Lucas Toloza,OPERADOR,manage_workflows,No asignado,
-Lucas Toloza,OPERADOR,view_eventos,No asignado,
-Lucas Toloza,OPERADOR,manage_eventos,No asignado,
-Lucas Toloza,OPERADOR,view_api,No asignado,
+Lucas Toloza,OPERADOR,export_data,No asignado,
 Lucas Toloza,OPERADOR,manage_api,No asignado,
 Lucas Toloza,OPERADOR,manage_cleanup,No asignado,
-Lucas Toloza,OPERADOR,view_rendiciones,No asignado,
+Lucas Toloza,OPERADOR,manage_conteo,No asignado,
+Lucas Toloza,OPERADOR,manage_data_import,No asignado,
+Lucas Toloza,OPERADOR,manage_eventos,No asignado,
+Lucas Toloza,OPERADOR,manage_fichas,No asignado,
+Lucas Toloza,OPERADOR,manage_insumos,No asignado,
+Lucas Toloza,OPERADOR,manage_inventory,No asignado,
+Lucas Toloza,OPERADOR,manage_locations,No asignado,
+Lucas Toloza,OPERADOR,manage_monitoreo,No asignado,
+Lucas Toloza,OPERADOR,manage_panel,No asignado,
+Lucas Toloza,OPERADOR,manage_postventa,No asignado,
+Lucas Toloza,OPERADOR,manage_quality,No asignado,
 Lucas Toloza,OPERADOR,manage_rendiciones,No asignado,
-Lucas Toloza,OPERADOR,view_tms,No asignado,
+Lucas Toloza,OPERADOR,manage_roles,No asignado,
+Lucas Toloza,OPERADOR,manage_tickets,No asignado,
 Lucas Toloza,OPERADOR,manage_tms,No asignado,
+Lucas Toloza,OPERADOR,manage_users,No asignado,
+Lucas Toloza,OPERADOR,manage_views,No asignado,
+Lucas Toloza,OPERADOR,manage_workflows,No asignado,
+Lucas Toloza,OPERADOR,panel_builder,No asignado,
+Lucas Toloza,OPERADOR,panel_info,No asignado,
+Lucas Toloza,OPERADOR,panel_ingresar,No asignado,
+Lucas Toloza,OPERADOR,panel_tv,No asignado,
+Lucas Toloza,OPERADOR,process_entry,No asignado,
+Lucas Toloza,OPERADOR,process_reception,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_bandeja,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_calendario,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_dashboard,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_nuevo,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_tecnicos,No asignado,
+Lucas Toloza,OPERADOR,pv_tab_tickets,No asignado,
+Lucas Toloza,OPERADOR,supervise_conteo,No asignado,
+Lucas Toloza,OPERADOR,supervise_postventa,No asignado,
 Lucas Toloza,OPERADOR,supervise_tms,No asignado,
-Lucas Toloza,OPERADOR,complete_rendiciones,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_stock,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_inventory,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_traspasos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_carteles,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_insumos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_insumos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_locations,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_analisis,No asignado,
-Marco Negroni,CONTROL_CALIDAD,analisis_tab_resumen,No asignado,
+Lucas Toloza,OPERADOR,view_acciones_calidad,No asignado,
+Lucas Toloza,OPERADOR,view_addresses,No asignado,
+Lucas Toloza,OPERADOR,view_analisis,No asignado,
+Lucas Toloza,OPERADOR,view_api,No asignado,
+Lucas Toloza,OPERADOR,view_asistente,No asignado,
+Lucas Toloza,OPERADOR,view_batches,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_carteles,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_conteo,No asignado,
+Lucas Toloza,OPERADOR,view_dispatch_control,No asignado,
+Lucas Toloza,OPERADOR,view_entry,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_eventos,No asignado,
+Lucas Toloza,OPERADOR,view_fichas,No asignado,
+Lucas Toloza,OPERADOR,view_historial_nv,No asignado,
+Lucas Toloza,OPERADOR,view_insumos,No asignado,
+Lucas Toloza,OPERADOR,view_locations,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_panel,No asignado,
+Lucas Toloza,OPERADOR,view_postventa,No asignado,
+Lucas Toloza,OPERADOR,view_reception,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_rendiciones,No asignado,
+Lucas Toloza,OPERADOR,view_roles,No asignado,
+Lucas Toloza,OPERADOR,view_sales_status,PERMITIDO,Perfil
+Lucas Toloza,OPERADOR,view_stock,No asignado,
+Lucas Toloza,OPERADOR,view_tms,No asignado,
+Lucas Toloza,OPERADOR,view_traspasos,No asignado,
+Lucas Toloza,OPERADOR,view_users,No asignado,
+Lucas Toloza,OPERADOR,view_views,No asignado,
+Lucas Toloza,OPERADOR,view_workflows,No asignado,
+Admin Respaldo,ADMIN,admin_monitor,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,admin_upload_history,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_anomalias,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_antiguos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_antiguos_disp,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_detalle,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_duplicados,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_no_activos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,analisis_tab_resumen,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,approve_panel_reopen_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,complete_rendiciones,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_ajuste,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_bloques,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_conciliacion,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_contar,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_proyeccion,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,conteo_tab_sesiones,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,deploy_ota,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,export_data,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_api,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_cleanup,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_conteo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_data_import,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_eventos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_fichas,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_insumos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_inventory,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_locations,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_monitoreo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_panel,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_postventa,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_quality,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_rendiciones,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_roles,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_tickets,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_tms,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_users,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_views,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,manage_workflows,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,panel_builder,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,panel_info,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,panel_ingresar,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,panel_tv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,process_entry,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,process_reception,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_bandeja,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_calendario,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_dashboard,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_nuevo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_tecnicos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,pv_tab_tickets,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,supervise_conteo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,supervise_postventa,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,supervise_tms,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_acciones_calidad,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_addresses,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_analisis,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_api,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_asistente,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_batches,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_carteles,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_conteo,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_dispatch_control,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_entry,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_eventos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_fichas,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_historial_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_insumos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_locations,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_panel,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_postventa,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_reception,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_rendiciones,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_roles,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_sales_status,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_stock,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_tms,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_traspasos,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_users,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_views,PERMITIDO,Bypass ADMIN
+Admin Respaldo,ADMIN,view_workflows,PERMITIDO,Bypass ADMIN
+Juan Carlos,OPERADOR,admin_monitor,No asignado,
+Juan Carlos,OPERADOR,admin_upload_history,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_anomalias,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_antiguos,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_antiguos_disp,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_detalle,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_duplicados,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_no_activos,No asignado,
+Juan Carlos,OPERADOR,analisis_tab_resumen,No asignado,
+Juan Carlos,OPERADOR,approve_panel_reopen_nv,No asignado,
+Juan Carlos,OPERADOR,complete_rendiciones,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_ajuste,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_bloques,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_conciliacion,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_contar,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_proyeccion,No asignado,
+Juan Carlos,OPERADOR,conteo_tab_sesiones,No asignado,
+Juan Carlos,OPERADOR,deploy_ota,No asignado,
+Juan Carlos,OPERADOR,export_data,No asignado,
+Juan Carlos,OPERADOR,manage_api,No asignado,
+Juan Carlos,OPERADOR,manage_cleanup,No asignado,
+Juan Carlos,OPERADOR,manage_conteo,No asignado,
+Juan Carlos,OPERADOR,manage_data_import,No asignado,
+Juan Carlos,OPERADOR,manage_eventos,No asignado,
+Juan Carlos,OPERADOR,manage_fichas,No asignado,
+Juan Carlos,OPERADOR,manage_insumos,No asignado,
+Juan Carlos,OPERADOR,manage_inventory,No asignado,
+Juan Carlos,OPERADOR,manage_locations,No asignado,
+Juan Carlos,OPERADOR,manage_monitoreo,No asignado,
+Juan Carlos,OPERADOR,manage_panel,No asignado,
+Juan Carlos,OPERADOR,manage_postventa,No asignado,
+Juan Carlos,OPERADOR,manage_quality,No asignado,
+Juan Carlos,OPERADOR,manage_rendiciones,No asignado,
+Juan Carlos,OPERADOR,manage_roles,No asignado,
+Juan Carlos,OPERADOR,manage_tickets,No asignado,
+Juan Carlos,OPERADOR,manage_tms,No asignado,
+Juan Carlos,OPERADOR,manage_users,No asignado,
+Juan Carlos,OPERADOR,manage_views,No asignado,
+Juan Carlos,OPERADOR,manage_workflows,No asignado,
+Juan Carlos,OPERADOR,panel_builder,No asignado,
+Juan Carlos,OPERADOR,panel_info,No asignado,
+Juan Carlos,OPERADOR,panel_ingresar,No asignado,
+Juan Carlos,OPERADOR,panel_tv,No asignado,
+Juan Carlos,OPERADOR,process_entry,No asignado,
+Juan Carlos,OPERADOR,process_reception,No asignado,
+Juan Carlos,OPERADOR,pv_tab_bandeja,No asignado,
+Juan Carlos,OPERADOR,pv_tab_calendario,No asignado,
+Juan Carlos,OPERADOR,pv_tab_dashboard,No asignado,
+Juan Carlos,OPERADOR,pv_tab_nuevo,No asignado,
+Juan Carlos,OPERADOR,pv_tab_tecnicos,No asignado,
+Juan Carlos,OPERADOR,pv_tab_tickets,No asignado,
+Juan Carlos,OPERADOR,supervise_conteo,No asignado,
+Juan Carlos,OPERADOR,supervise_postventa,No asignado,
+Juan Carlos,OPERADOR,supervise_tms,No asignado,
+Juan Carlos,OPERADOR,view_acciones_calidad,No asignado,
+Juan Carlos,OPERADOR,view_addresses,No asignado,
+Juan Carlos,OPERADOR,view_analisis,No asignado,
+Juan Carlos,OPERADOR,view_api,No asignado,
+Juan Carlos,OPERADOR,view_asistente,No asignado,
+Juan Carlos,OPERADOR,view_batches,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_carteles,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_conteo,No asignado,
+Juan Carlos,OPERADOR,view_dispatch_control,No asignado,
+Juan Carlos,OPERADOR,view_entry,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_eventos,No asignado,
+Juan Carlos,OPERADOR,view_fichas,No asignado,
+Juan Carlos,OPERADOR,view_historial_nv,No asignado,
+Juan Carlos,OPERADOR,view_insumos,No asignado,
+Juan Carlos,OPERADOR,view_locations,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_panel,No asignado,
+Juan Carlos,OPERADOR,view_postventa,No asignado,
+Juan Carlos,OPERADOR,view_reception,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_rendiciones,No asignado,
+Juan Carlos,OPERADOR,view_roles,No asignado,
+Juan Carlos,OPERADOR,view_sales_status,PERMITIDO,Perfil
+Juan Carlos,OPERADOR,view_stock,No asignado,
+Juan Carlos,OPERADOR,view_tms,No asignado,
+Juan Carlos,OPERADOR,view_traspasos,No asignado,
+Juan Carlos,OPERADOR,view_users,No asignado,
+Juan Carlos,OPERADOR,view_views,No asignado,
+Juan Carlos,OPERADOR,view_workflows,No asignado,
+Christian Vargas,OPERARIO_3,admin_monitor,No asignado,
+Christian Vargas,OPERARIO_3,admin_upload_history,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_anomalias,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_antiguos,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_antiguos_disp,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_detalle,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_duplicados,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_no_activos,No asignado,
+Christian Vargas,OPERARIO_3,analisis_tab_resumen,No asignado,
+Christian Vargas,OPERARIO_3,approve_panel_reopen_nv,No asignado,
+Christian Vargas,OPERARIO_3,complete_rendiciones,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_ajuste,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_bloques,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_conciliacion,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_contar,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_proyeccion,No asignado,
+Christian Vargas,OPERARIO_3,conteo_tab_sesiones,No asignado,
+Christian Vargas,OPERARIO_3,deploy_ota,No asignado,
+Christian Vargas,OPERARIO_3,export_data,No asignado,
+Christian Vargas,OPERARIO_3,manage_api,No asignado,
+Christian Vargas,OPERARIO_3,manage_cleanup,No asignado,
+Christian Vargas,OPERARIO_3,manage_conteo,No asignado,
+Christian Vargas,OPERARIO_3,manage_data_import,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,manage_eventos,No asignado,
+Christian Vargas,OPERARIO_3,manage_fichas,No asignado,
+Christian Vargas,OPERARIO_3,manage_insumos,No asignado,
+Christian Vargas,OPERARIO_3,manage_inventory,No asignado,
+Christian Vargas,OPERARIO_3,manage_locations,No asignado,
+Christian Vargas,OPERARIO_3,manage_monitoreo,No asignado,
+Christian Vargas,OPERARIO_3,manage_panel,No asignado,
+Christian Vargas,OPERARIO_3,manage_postventa,No asignado,
+Christian Vargas,OPERARIO_3,manage_quality,No asignado,
+Christian Vargas,OPERARIO_3,manage_rendiciones,No asignado,
+Christian Vargas,OPERARIO_3,manage_roles,No asignado,
+Christian Vargas,OPERARIO_3,manage_tickets,No asignado,
+Christian Vargas,OPERARIO_3,manage_tms,No asignado,
+Christian Vargas,OPERARIO_3,manage_users,No asignado,
+Christian Vargas,OPERARIO_3,manage_views,No asignado,
+Christian Vargas,OPERARIO_3,manage_workflows,No asignado,
+Christian Vargas,OPERARIO_3,panel_builder,No asignado,
+Christian Vargas,OPERARIO_3,panel_info,No asignado,
+Christian Vargas,OPERARIO_3,panel_ingresar,No asignado,
+Christian Vargas,OPERARIO_3,panel_tv,No asignado,
+Christian Vargas,OPERARIO_3,process_entry,No asignado,
+Christian Vargas,OPERARIO_3,process_reception,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_bandeja,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_calendario,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_dashboard,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_nuevo,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_tecnicos,No asignado,
+Christian Vargas,OPERARIO_3,pv_tab_tickets,No asignado,
+Christian Vargas,OPERARIO_3,supervise_conteo,No asignado,
+Christian Vargas,OPERARIO_3,supervise_postventa,No asignado,
+Christian Vargas,OPERARIO_3,supervise_tms,No asignado,
+Christian Vargas,OPERARIO_3,view_acciones_calidad,No asignado,
+Christian Vargas,OPERARIO_3,view_addresses,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,view_analisis,No asignado,
+Christian Vargas,OPERARIO_3,view_api,No asignado,
+Christian Vargas,OPERARIO_3,view_asistente,No asignado,
+Christian Vargas,OPERARIO_3,view_batches,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,view_carteles,No asignado,
+Christian Vargas,OPERARIO_3,view_conteo,No asignado,
+Christian Vargas,OPERARIO_3,view_dispatch_control,No asignado,
+Christian Vargas,OPERARIO_3,view_entry,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,view_eventos,No asignado,
+Christian Vargas,OPERARIO_3,view_fichas,No asignado,
+Christian Vargas,OPERARIO_3,view_historial_nv,No asignado,
+Christian Vargas,OPERARIO_3,view_insumos,No asignado,
+Christian Vargas,OPERARIO_3,view_locations,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,view_panel,No asignado,
+Christian Vargas,OPERARIO_3,view_postventa,No asignado,
+Christian Vargas,OPERARIO_3,view_reception,PERMITIDO,Perfil
+Christian Vargas,OPERARIO_3,view_rendiciones,No asignado,
+Christian Vargas,OPERARIO_3,view_roles,No asignado,
+Christian Vargas,OPERARIO_3,view_sales_status,No asignado,
+Christian Vargas,OPERARIO_3,view_stock,No asignado,
+Christian Vargas,OPERARIO_3,view_tms,No asignado,
+Christian Vargas,OPERARIO_3,view_traspasos,No asignado,
+Christian Vargas,OPERARIO_3,view_users,No asignado,
+Christian Vargas,OPERARIO_3,view_views,No asignado,
+Christian Vargas,OPERARIO_3,view_workflows,No asignado,
+Marco Negroni,CONTROL_CALIDAD,admin_monitor,No asignado,
+Marco Negroni,CONTROL_CALIDAD,admin_upload_history,No asignado,
+Marco Negroni,CONTROL_CALIDAD,analisis_tab_anomalias,No asignado,
 Marco Negroni,CONTROL_CALIDAD,analisis_tab_antiguos,No asignado,
 Marco Negroni,CONTROL_CALIDAD,analisis_tab_antiguos_disp,No asignado,
-Marco Negroni,CONTROL_CALIDAD,analisis_tab_no_activos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,analisis_tab_duplicados,No asignado,
-Marco Negroni,CONTROL_CALIDAD,analisis_tab_anomalias,No asignado,
 Marco Negroni,CONTROL_CALIDAD,analisis_tab_detalle,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_conteo,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_conteo,No asignado,
-Marco Negroni,CONTROL_CALIDAD,supervise_conteo,No asignado,
-Marco Negroni,CONTROL_CALIDAD,conteo_tab_contar,No asignado,
-Marco Negroni,CONTROL_CALIDAD,conteo_tab_sesiones,No asignado,
-Marco Negroni,CONTROL_CALIDAD,conteo_tab_conciliacion,No asignado,
+Marco Negroni,CONTROL_CALIDAD,analisis_tab_duplicados,No asignado,
+Marco Negroni,CONTROL_CALIDAD,analisis_tab_no_activos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,analisis_tab_resumen,No asignado,
+Marco Negroni,CONTROL_CALIDAD,approve_panel_reopen_nv,No asignado,
+Marco Negroni,CONTROL_CALIDAD,complete_rendiciones,No asignado,
 Marco Negroni,CONTROL_CALIDAD,conteo_tab_ajuste,No asignado,
 Marco Negroni,CONTROL_CALIDAD,conteo_tab_bloques,No asignado,
+Marco Negroni,CONTROL_CALIDAD,conteo_tab_conciliacion,No asignado,
+Marco Negroni,CONTROL_CALIDAD,conteo_tab_contar,No asignado,
 Marco Negroni,CONTROL_CALIDAD,conteo_tab_proyeccion,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_entry,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,process_entry,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_reception,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,process_reception,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,manage_data_import,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_historial_nv,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_dispatch_control,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_batches,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_sales_status,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_addresses,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_locations,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_fichas,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,manage_fichas,No asignado,
-Marco Negroni,CONTROL_CALIDAD,export_data,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_monitoreo,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,manage_quality,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_acciones_calidad,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,view_panel,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_panel,No asignado,
-Marco Negroni,CONTROL_CALIDAD,approve_panel_reopen_nv,No asignado,
-Marco Negroni,CONTROL_CALIDAD,panel_ingresar,No asignado,
-Marco Negroni,CONTROL_CALIDAD,panel_info,No asignado,
-Marco Negroni,CONTROL_CALIDAD,panel_tv,PERMITIDO,Perfil
-Marco Negroni,CONTROL_CALIDAD,panel_builder,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_postventa,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_postventa,No asignado,
-Marco Negroni,CONTROL_CALIDAD,supervise_postventa,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_tickets,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_bandeja,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_calendario,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_nuevo,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_dashboard,No asignado,
-Marco Negroni,CONTROL_CALIDAD,pv_tab_tecnicos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_users,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_users,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_roles,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_roles,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_views,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_views,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_tickets,No asignado,
-Marco Negroni,CONTROL_CALIDAD,admin_upload_history,No asignado,
-Marco Negroni,CONTROL_CALIDAD,admin_monitor,No asignado,
+Marco Negroni,CONTROL_CALIDAD,conteo_tab_sesiones,No asignado,
 Marco Negroni,CONTROL_CALIDAD,deploy_ota,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_workflows,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_workflows,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_eventos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,manage_eventos,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_api,No asignado,
+Marco Negroni,CONTROL_CALIDAD,export_data,No asignado,
 Marco Negroni,CONTROL_CALIDAD,manage_api,No asignado,
 Marco Negroni,CONTROL_CALIDAD,manage_cleanup,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_rendiciones,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_conteo,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_data_import,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_eventos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_fichas,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_insumos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_inventory,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_locations,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_monitoreo,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,manage_panel,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_postventa,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_quality,PERMITIDO,Perfil
 Marco Negroni,CONTROL_CALIDAD,manage_rendiciones,No asignado,
-Marco Negroni,CONTROL_CALIDAD,view_tms,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_roles,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_tickets,No asignado,
 Marco Negroni,CONTROL_CALIDAD,manage_tms,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_users,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_views,No asignado,
+Marco Negroni,CONTROL_CALIDAD,manage_workflows,No asignado,
+Marco Negroni,CONTROL_CALIDAD,panel_builder,No asignado,
+Marco Negroni,CONTROL_CALIDAD,panel_info,No asignado,
+Marco Negroni,CONTROL_CALIDAD,panel_ingresar,No asignado,
+Marco Negroni,CONTROL_CALIDAD,panel_tv,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,process_entry,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,process_reception,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,pv_tab_bandeja,No asignado,
+Marco Negroni,CONTROL_CALIDAD,pv_tab_calendario,No asignado,
+Marco Negroni,CONTROL_CALIDAD,pv_tab_dashboard,No asignado,
+Marco Negroni,CONTROL_CALIDAD,pv_tab_nuevo,No asignado,
+Marco Negroni,CONTROL_CALIDAD,pv_tab_tecnicos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,pv_tab_tickets,No asignado,
+Marco Negroni,CONTROL_CALIDAD,supervise_conteo,No asignado,
+Marco Negroni,CONTROL_CALIDAD,supervise_postventa,No asignado,
 Marco Negroni,CONTROL_CALIDAD,supervise_tms,No asignado,
-Marco Negroni,CONTROL_CALIDAD,complete_rendiciones,No asignado,
-Maria Angelica,SUPERVISOR_,view_stock,No asignado,
-Maria Angelica,SUPERVISOR_,manage_inventory,No asignado,
-Maria Angelica,SUPERVISOR_,view_traspasos,No asignado,
-Maria Angelica,SUPERVISOR_,view_carteles,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_insumos,No asignado,
-Maria Angelica,SUPERVISOR_,manage_insumos,No asignado,
-Maria Angelica,SUPERVISOR_,manage_locations,No asignado,
-Maria Angelica,SUPERVISOR_,view_analisis,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_resumen,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_antiguos,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_antiguos_disp,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_no_activos,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_duplicados,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_anomalias,No asignado,
-Maria Angelica,SUPERVISOR_,analisis_tab_detalle,No asignado,
-Maria Angelica,SUPERVISOR_,view_conteo,No asignado,
-Maria Angelica,SUPERVISOR_,manage_conteo,No asignado,
-Maria Angelica,SUPERVISOR_,supervise_conteo,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_contar,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_sesiones,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_conciliacion,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_ajuste,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_bloques,No asignado,
-Maria Angelica,SUPERVISOR_,conteo_tab_proyeccion,No asignado,
-Maria Angelica,SUPERVISOR_,view_entry,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,process_entry,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_reception,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,process_reception,No asignado,
-Maria Angelica,SUPERVISOR_,manage_data_import,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_historial_nv,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_dispatch_control,No asignado,
-Maria Angelica,SUPERVISOR_,view_batches,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_sales_status,No asignado,
-Maria Angelica,SUPERVISOR_,view_addresses,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_locations,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,view_fichas,No asignado,
-Maria Angelica,SUPERVISOR_,manage_fichas,No asignado,
-Maria Angelica,SUPERVISOR_,export_data,No asignado,
-Maria Angelica,SUPERVISOR_,manage_monitoreo,No asignado,
-Maria Angelica,SUPERVISOR_,manage_quality,No asignado,
-Maria Angelica,SUPERVISOR_,view_acciones_calidad,No asignado,
-Maria Angelica,SUPERVISOR_,view_panel,No asignado,
-Maria Angelica,SUPERVISOR_,manage_panel,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,approve_panel_reopen_nv,No asignado,
-Maria Angelica,SUPERVISOR_,panel_ingresar,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,panel_info,PERMITIDO,Perfil
-Maria Angelica,SUPERVISOR_,panel_tv,No asignado,
-Maria Angelica,SUPERVISOR_,panel_builder,No asignado,
-Maria Angelica,SUPERVISOR_,view_postventa,No asignado,
-Maria Angelica,SUPERVISOR_,manage_postventa,No asignado,
-Maria Angelica,SUPERVISOR_,supervise_postventa,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_tickets,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_bandeja,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_calendario,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_nuevo,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_dashboard,No asignado,
-Maria Angelica,SUPERVISOR_,pv_tab_tecnicos,No asignado,
-Maria Angelica,SUPERVISOR_,view_users,No asignado,
-Maria Angelica,SUPERVISOR_,manage_users,No asignado,
-Maria Angelica,SUPERVISOR_,view_roles,No asignado,
-Maria Angelica,SUPERVISOR_,manage_roles,No asignado,
-Maria Angelica,SUPERVISOR_,view_views,No asignado,
-Maria Angelica,SUPERVISOR_,manage_views,No asignado,
-Maria Angelica,SUPERVISOR_,manage_tickets,No asignado,
-Maria Angelica,SUPERVISOR_,admin_upload_history,No asignado,
-Maria Angelica,SUPERVISOR_,admin_monitor,No asignado,
-Maria Angelica,SUPERVISOR_,deploy_ota,No asignado,
-Maria Angelica,SUPERVISOR_,view_workflows,No asignado,
-Maria Angelica,SUPERVISOR_,manage_workflows,No asignado,
-Maria Angelica,SUPERVISOR_,view_eventos,No asignado,
-Maria Angelica,SUPERVISOR_,manage_eventos,No asignado,
-Maria Angelica,SUPERVISOR_,view_api,No asignado,
-Maria Angelica,SUPERVISOR_,manage_api,No asignado,
-Maria Angelica,SUPERVISOR_,manage_cleanup,No asignado,
-Maria Angelica,SUPERVISOR_,view_rendiciones,No asignado,
-Maria Angelica,SUPERVISOR_,manage_rendiciones,No asignado,
-Maria Angelica,SUPERVISOR_,view_tms,No asignado,
-Maria Angelica,SUPERVISOR_,manage_tms,No asignado,
-Maria Angelica,SUPERVISOR_,supervise_tms,No asignado,
-Maria Angelica,SUPERVISOR_,complete_rendiciones,No asignado,
-MOISES,OPERADOR,view_stock,No asignado,
-MOISES,OPERADOR,manage_inventory,No asignado,
-MOISES,OPERADOR,view_traspasos,No asignado,
-MOISES,OPERADOR,view_carteles,PERMITIDO,Perfil
-MOISES,OPERADOR,view_insumos,No asignado,
-MOISES,OPERADOR,manage_insumos,No asignado,
-MOISES,OPERADOR,manage_locations,No asignado,
-MOISES,OPERADOR,view_analisis,No asignado,
-MOISES,OPERADOR,analisis_tab_resumen,No asignado,
-MOISES,OPERADOR,analisis_tab_antiguos,No asignado,
-MOISES,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-MOISES,OPERADOR,analisis_tab_no_activos,No asignado,
-MOISES,OPERADOR,analisis_tab_duplicados,No asignado,
-MOISES,OPERADOR,analisis_tab_anomalias,No asignado,
-MOISES,OPERADOR,analisis_tab_detalle,No asignado,
-MOISES,OPERADOR,view_conteo,No asignado,
-MOISES,OPERADOR,manage_conteo,No asignado,
-MOISES,OPERADOR,supervise_conteo,No asignado,
-MOISES,OPERADOR,conteo_tab_contar,No asignado,
-MOISES,OPERADOR,conteo_tab_sesiones,No asignado,
-MOISES,OPERADOR,conteo_tab_conciliacion,No asignado,
-MOISES,OPERADOR,conteo_tab_ajuste,No asignado,
-MOISES,OPERADOR,conteo_tab_bloques,No asignado,
-MOISES,OPERADOR,conteo_tab_proyeccion,No asignado,
-MOISES,OPERADOR,view_entry,PERMITIDO,Perfil
-MOISES,OPERADOR,process_entry,No asignado,
-MOISES,OPERADOR,view_reception,PERMITIDO,Perfil
-MOISES,OPERADOR,process_reception,No asignado,
-MOISES,OPERADOR,manage_data_import,No asignado,
-MOISES,OPERADOR,view_historial_nv,No asignado,
-MOISES,OPERADOR,view_dispatch_control,No asignado,
-MOISES,OPERADOR,view_batches,PERMITIDO,Perfil
-MOISES,OPERADOR,view_sales_status,PERMITIDO,Perfil
-MOISES,OPERADOR,view_addresses,No asignado,
-MOISES,OPERADOR,view_locations,PERMITIDO,Perfil
-MOISES,OPERADOR,view_fichas,No asignado,
-MOISES,OPERADOR,manage_fichas,No asignado,
-MOISES,OPERADOR,export_data,No asignado,
-MOISES,OPERADOR,manage_monitoreo,No asignado,
-MOISES,OPERADOR,manage_quality,No asignado,
-MOISES,OPERADOR,view_acciones_calidad,No asignado,
-MOISES,OPERADOR,view_panel,No asignado,
-MOISES,OPERADOR,manage_panel,No asignado,
-MOISES,OPERADOR,approve_panel_reopen_nv,No asignado,
-MOISES,OPERADOR,panel_ingresar,No asignado,
-MOISES,OPERADOR,panel_info,No asignado,
-MOISES,OPERADOR,panel_tv,No asignado,
-MOISES,OPERADOR,panel_builder,No asignado,
-MOISES,OPERADOR,view_postventa,No asignado,
-MOISES,OPERADOR,manage_postventa,No asignado,
-MOISES,OPERADOR,supervise_postventa,No asignado,
-MOISES,OPERADOR,pv_tab_tickets,No asignado,
-MOISES,OPERADOR,pv_tab_bandeja,No asignado,
-MOISES,OPERADOR,pv_tab_calendario,No asignado,
-MOISES,OPERADOR,pv_tab_nuevo,No asignado,
-MOISES,OPERADOR,pv_tab_dashboard,No asignado,
-MOISES,OPERADOR,pv_tab_tecnicos,No asignado,
-MOISES,OPERADOR,view_users,No asignado,
-MOISES,OPERADOR,manage_users,No asignado,
-MOISES,OPERADOR,view_roles,No asignado,
-MOISES,OPERADOR,manage_roles,No asignado,
-MOISES,OPERADOR,view_views,No asignado,
-MOISES,OPERADOR,manage_views,No asignado,
-MOISES,OPERADOR,manage_tickets,No asignado,
-MOISES,OPERADOR,admin_upload_history,No asignado,
-MOISES,OPERADOR,admin_monitor,No asignado,
-MOISES,OPERADOR,deploy_ota,No asignado,
-MOISES,OPERADOR,view_workflows,No asignado,
-MOISES,OPERADOR,manage_workflows,No asignado,
-MOISES,OPERADOR,view_eventos,No asignado,
-MOISES,OPERADOR,manage_eventos,No asignado,
-MOISES,OPERADOR,view_api,No asignado,
-MOISES,OPERADOR,manage_api,No asignado,
-MOISES,OPERADOR,manage_cleanup,No asignado,
-MOISES,OPERADOR,view_rendiciones,No asignado,
-MOISES,OPERADOR,manage_rendiciones,No asignado,
-MOISES,OPERADOR,view_tms,No asignado,
-MOISES,OPERADOR,manage_tms,No asignado,
-MOISES,OPERADOR,supervise_tms,No asignado,
-MOISES,OPERADOR,complete_rendiciones,No asignado,
-NILO Langebach,SUPERVISOR,view_stock,No asignado,
-NILO Langebach,SUPERVISOR,manage_inventory,No asignado,
-NILO Langebach,SUPERVISOR,view_traspasos,No asignado,
-NILO Langebach,SUPERVISOR,view_carteles,No asignado,
-NILO Langebach,SUPERVISOR,view_insumos,No asignado,
-NILO Langebach,SUPERVISOR,manage_insumos,No asignado,
-NILO Langebach,SUPERVISOR,manage_locations,No asignado,
-NILO Langebach,SUPERVISOR,view_analisis,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_resumen,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_antiguos,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_antiguos_disp,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_no_activos,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_duplicados,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_anomalias,No asignado,
-NILO Langebach,SUPERVISOR,analisis_tab_detalle,No asignado,
-NILO Langebach,SUPERVISOR,view_conteo,No asignado,
-NILO Langebach,SUPERVISOR,manage_conteo,No asignado,
-NILO Langebach,SUPERVISOR,supervise_conteo,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_contar,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_sesiones,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_conciliacion,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_ajuste,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_bloques,No asignado,
-NILO Langebach,SUPERVISOR,conteo_tab_proyeccion,No asignado,
-NILO Langebach,SUPERVISOR,view_entry,No asignado,
-NILO Langebach,SUPERVISOR,process_entry,No asignado,
-NILO Langebach,SUPERVISOR,view_reception,No asignado,
-NILO Langebach,SUPERVISOR,process_reception,No asignado,
-NILO Langebach,SUPERVISOR,manage_data_import,No asignado,
-NILO Langebach,SUPERVISOR,view_historial_nv,No asignado,
-NILO Langebach,SUPERVISOR,view_dispatch_control,No asignado,
-NILO Langebach,SUPERVISOR,view_batches,No asignado,
-NILO Langebach,SUPERVISOR,view_sales_status,No asignado,
-NILO Langebach,SUPERVISOR,view_addresses,No asignado,
-NILO Langebach,SUPERVISOR,view_locations,No asignado,
-NILO Langebach,SUPERVISOR,view_fichas,No asignado,
-NILO Langebach,SUPERVISOR,manage_fichas,No asignado,
-NILO Langebach,SUPERVISOR,export_data,No asignado,
-NILO Langebach,SUPERVISOR,manage_monitoreo,No asignado,
-NILO Langebach,SUPERVISOR,manage_quality,No asignado,
-NILO Langebach,SUPERVISOR,view_acciones_calidad,No asignado,
-NILO Langebach,SUPERVISOR,view_panel,PERMITIDO,Perfil
-NILO Langebach,SUPERVISOR,manage_panel,PERMITIDO,Perfil
-NILO Langebach,SUPERVISOR,approve_panel_reopen_nv,No asignado,
-NILO Langebach,SUPERVISOR,panel_ingresar,PERMITIDO,Perfil
-NILO Langebach,SUPERVISOR,panel_info,PERMITIDO,Perfil
-NILO Langebach,SUPERVISOR,panel_tv,No asignado,
-NILO Langebach,SUPERVISOR,panel_builder,No asignado,
-NILO Langebach,SUPERVISOR,view_postventa,No asignado,
-NILO Langebach,SUPERVISOR,manage_postventa,No asignado,
-NILO Langebach,SUPERVISOR,supervise_postventa,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_tickets,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_bandeja,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_calendario,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_nuevo,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_dashboard,No asignado,
-NILO Langebach,SUPERVISOR,pv_tab_tecnicos,No asignado,
-NILO Langebach,SUPERVISOR,view_users,No asignado,
-NILO Langebach,SUPERVISOR,manage_users,No asignado,
-NILO Langebach,SUPERVISOR,view_roles,No asignado,
-NILO Langebach,SUPERVISOR,manage_roles,No asignado,
-NILO Langebach,SUPERVISOR,view_views,No asignado,
-NILO Langebach,SUPERVISOR,manage_views,No asignado,
-NILO Langebach,SUPERVISOR,manage_tickets,No asignado,
-NILO Langebach,SUPERVISOR,admin_upload_history,No asignado,
-NILO Langebach,SUPERVISOR,admin_monitor,No asignado,
-NILO Langebach,SUPERVISOR,deploy_ota,No asignado,
-NILO Langebach,SUPERVISOR,view_workflows,No asignado,
-NILO Langebach,SUPERVISOR,manage_workflows,No asignado,
-NILO Langebach,SUPERVISOR,view_eventos,No asignado,
-NILO Langebach,SUPERVISOR,manage_eventos,No asignado,
-NILO Langebach,SUPERVISOR,view_api,No asignado,
-NILO Langebach,SUPERVISOR,manage_api,No asignado,
-NILO Langebach,SUPERVISOR,manage_cleanup,No asignado,
-NILO Langebach,SUPERVISOR,view_rendiciones,No asignado,
-NILO Langebach,SUPERVISOR,manage_rendiciones,No asignado,
-NILO Langebach,SUPERVISOR,view_tms,No asignado,
-NILO Langebach,SUPERVISOR,manage_tms,No asignado,
-NILO Langebach,SUPERVISOR,supervise_tms,No asignado,
-NILO Langebach,SUPERVISOR,complete_rendiciones,No asignado,
-Oscar Leiva,GERENCIA,view_stock,No asignado,
-Oscar Leiva,GERENCIA,manage_inventory,No asignado,
-Oscar Leiva,GERENCIA,view_traspasos,No asignado,
-Oscar Leiva,GERENCIA,view_carteles,No asignado,
-Oscar Leiva,GERENCIA,view_insumos,No asignado,
-Oscar Leiva,GERENCIA,manage_insumos,No asignado,
-Oscar Leiva,GERENCIA,manage_locations,No asignado,
-Oscar Leiva,GERENCIA,view_analisis,No asignado,
-Oscar Leiva,GERENCIA,analisis_tab_resumen,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_acciones_calidad,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_addresses,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_analisis,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_api,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_asistente,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_batches,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_carteles,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_conteo,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_dispatch_control,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_entry,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_eventos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_fichas,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_historial_nv,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_insumos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_locations,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_panel,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_postventa,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_reception,PERMITIDO,Perfil
+Marco Negroni,CONTROL_CALIDAD,view_rendiciones,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_roles,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_sales_status,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_stock,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_tms,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_traspasos,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_users,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_views,No asignado,
+Marco Negroni,CONTROL_CALIDAD,view_workflows,No asignado,
+Gisselle Romero,SUPERVISOR,admin_monitor,No asignado,
+Gisselle Romero,SUPERVISOR,admin_upload_history,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_anomalias,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_antiguos,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_antiguos_disp,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_detalle,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_duplicados,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_no_activos,No asignado,
+Gisselle Romero,SUPERVISOR,analisis_tab_resumen,No asignado,
+Gisselle Romero,SUPERVISOR,approve_panel_reopen_nv,No asignado,
+Gisselle Romero,SUPERVISOR,complete_rendiciones,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_ajuste,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_bloques,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_conciliacion,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_contar,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_proyeccion,No asignado,
+Gisselle Romero,SUPERVISOR,conteo_tab_sesiones,No asignado,
+Gisselle Romero,SUPERVISOR,deploy_ota,No asignado,
+Gisselle Romero,SUPERVISOR,export_data,No asignado,
+Gisselle Romero,SUPERVISOR,manage_api,No asignado,
+Gisselle Romero,SUPERVISOR,manage_cleanup,No asignado,
+Gisselle Romero,SUPERVISOR,manage_conteo,No asignado,
+Gisselle Romero,SUPERVISOR,manage_data_import,No asignado,
+Gisselle Romero,SUPERVISOR,manage_eventos,No asignado,
+Gisselle Romero,SUPERVISOR,manage_fichas,No asignado,
+Gisselle Romero,SUPERVISOR,manage_insumos,No asignado,
+Gisselle Romero,SUPERVISOR,manage_inventory,No asignado,
+Gisselle Romero,SUPERVISOR,manage_locations,No asignado,
+Gisselle Romero,SUPERVISOR,manage_monitoreo,No asignado,
+Gisselle Romero,SUPERVISOR,manage_panel,PERMITIDO,Perfil
+Gisselle Romero,SUPERVISOR,manage_postventa,No asignado,
+Gisselle Romero,SUPERVISOR,manage_quality,No asignado,
+Gisselle Romero,SUPERVISOR,manage_rendiciones,No asignado,
+Gisselle Romero,SUPERVISOR,manage_roles,No asignado,
+Gisselle Romero,SUPERVISOR,manage_tickets,No asignado,
+Gisselle Romero,SUPERVISOR,manage_tms,No asignado,
+Gisselle Romero,SUPERVISOR,manage_users,No asignado,
+Gisselle Romero,SUPERVISOR,manage_views,No asignado,
+Gisselle Romero,SUPERVISOR,manage_workflows,No asignado,
+Gisselle Romero,SUPERVISOR,panel_builder,No asignado,
+Gisselle Romero,SUPERVISOR,panel_info,PERMITIDO,Perfil
+Gisselle Romero,SUPERVISOR,panel_ingresar,PERMITIDO,Perfil
+Gisselle Romero,SUPERVISOR,panel_tv,No asignado,
+Gisselle Romero,SUPERVISOR,process_entry,No asignado,
+Gisselle Romero,SUPERVISOR,process_reception,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_bandeja,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_calendario,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_dashboard,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_nuevo,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_tecnicos,No asignado,
+Gisselle Romero,SUPERVISOR,pv_tab_tickets,No asignado,
+Gisselle Romero,SUPERVISOR,supervise_conteo,No asignado,
+Gisselle Romero,SUPERVISOR,supervise_postventa,No asignado,
+Gisselle Romero,SUPERVISOR,supervise_tms,No asignado,
+Gisselle Romero,SUPERVISOR,view_acciones_calidad,No asignado,
+Gisselle Romero,SUPERVISOR,view_addresses,No asignado,
+Gisselle Romero,SUPERVISOR,view_analisis,No asignado,
+Gisselle Romero,SUPERVISOR,view_api,No asignado,
+Gisselle Romero,SUPERVISOR,view_asistente,No asignado,
+Gisselle Romero,SUPERVISOR,view_batches,No asignado,
+Gisselle Romero,SUPERVISOR,view_carteles,No asignado,
+Gisselle Romero,SUPERVISOR,view_conteo,No asignado,
+Gisselle Romero,SUPERVISOR,view_dispatch_control,No asignado,
+Gisselle Romero,SUPERVISOR,view_entry,No asignado,
+Gisselle Romero,SUPERVISOR,view_eventos,No asignado,
+Gisselle Romero,SUPERVISOR,view_fichas,No asignado,
+Gisselle Romero,SUPERVISOR,view_historial_nv,No asignado,
+Gisselle Romero,SUPERVISOR,view_insumos,No asignado,
+Gisselle Romero,SUPERVISOR,view_locations,No asignado,
+Gisselle Romero,SUPERVISOR,view_panel,PERMITIDO,Perfil
+Gisselle Romero,SUPERVISOR,view_postventa,No asignado,
+Gisselle Romero,SUPERVISOR,view_reception,No asignado,
+Gisselle Romero,SUPERVISOR,view_rendiciones,No asignado,
+Gisselle Romero,SUPERVISOR,view_roles,No asignado,
+Gisselle Romero,SUPERVISOR,view_sales_status,No asignado,
+Gisselle Romero,SUPERVISOR,view_stock,No asignado,
+Gisselle Romero,SUPERVISOR,view_tms,No asignado,
+Gisselle Romero,SUPERVISOR,view_traspasos,No asignado,
+Gisselle Romero,SUPERVISOR,view_users,No asignado,
+Gisselle Romero,SUPERVISOR,view_views,No asignado,
+Gisselle Romero,SUPERVISOR,view_workflows,No asignado,
+Administrador,ADMIN,admin_monitor,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,admin_upload_history,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_anomalias,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_antiguos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_antiguos_disp,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_detalle,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_duplicados,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_no_activos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,analisis_tab_resumen,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,approve_panel_reopen_nv,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,complete_rendiciones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_ajuste,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_bloques,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_conciliacion,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_contar,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_proyeccion,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,conteo_tab_sesiones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,deploy_ota,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,export_data,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_api,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_cleanup,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_conteo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_data_import,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_eventos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_fichas,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_insumos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_inventory,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_locations,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_monitoreo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_panel,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_postventa,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_quality,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_rendiciones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_roles,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_tickets,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_tms,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_users,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_views,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,manage_workflows,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,panel_builder,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,panel_info,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,panel_ingresar,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,panel_tv,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,process_entry,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,process_reception,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_bandeja,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_calendario,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_dashboard,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_nuevo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_tecnicos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,pv_tab_tickets,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,supervise_conteo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,supervise_postventa,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,supervise_tms,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_acciones_calidad,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_addresses,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_analisis,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_api,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_asistente,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_batches,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_carteles,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_conteo,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_dispatch_control,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_entry,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_eventos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_fichas,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_historial_nv,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_insumos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_locations,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_panel,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_postventa,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_reception,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_rendiciones,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_roles,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_sales_status,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_stock,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_tms,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_traspasos,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_users,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_views,PERMITIDO,Bypass ADMIN
+Administrador,ADMIN,view_workflows,PERMITIDO,Bypass ADMIN
+Oscar Leiva,GERENCIA,admin_monitor,No asignado,
+Oscar Leiva,GERENCIA,admin_upload_history,No asignado,
+Oscar Leiva,GERENCIA,analisis_tab_anomalias,No asignado,
 Oscar Leiva,GERENCIA,analisis_tab_antiguos,No asignado,
 Oscar Leiva,GERENCIA,analisis_tab_antiguos_disp,No asignado,
-Oscar Leiva,GERENCIA,analisis_tab_no_activos,No asignado,
-Oscar Leiva,GERENCIA,analisis_tab_duplicados,No asignado,
-Oscar Leiva,GERENCIA,analisis_tab_anomalias,No asignado,
 Oscar Leiva,GERENCIA,analisis_tab_detalle,No asignado,
-Oscar Leiva,GERENCIA,view_conteo,No asignado,
-Oscar Leiva,GERENCIA,manage_conteo,No asignado,
-Oscar Leiva,GERENCIA,supervise_conteo,No asignado,
-Oscar Leiva,GERENCIA,conteo_tab_contar,No asignado,
-Oscar Leiva,GERENCIA,conteo_tab_sesiones,No asignado,
-Oscar Leiva,GERENCIA,conteo_tab_conciliacion,No asignado,
+Oscar Leiva,GERENCIA,analisis_tab_duplicados,No asignado,
+Oscar Leiva,GERENCIA,analisis_tab_no_activos,No asignado,
+Oscar Leiva,GERENCIA,analisis_tab_resumen,No asignado,
+Oscar Leiva,GERENCIA,approve_panel_reopen_nv,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,complete_rendiciones,PERMITIDO,Perfil
 Oscar Leiva,GERENCIA,conteo_tab_ajuste,No asignado,
 Oscar Leiva,GERENCIA,conteo_tab_bloques,No asignado,
+Oscar Leiva,GERENCIA,conteo_tab_conciliacion,No asignado,
+Oscar Leiva,GERENCIA,conteo_tab_contar,No asignado,
 Oscar Leiva,GERENCIA,conteo_tab_proyeccion,No asignado,
-Oscar Leiva,GERENCIA,view_entry,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,process_entry,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_reception,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,process_reception,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,manage_data_import,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_historial_nv,No asignado,
-Oscar Leiva,GERENCIA,view_dispatch_control,No asignado,
-Oscar Leiva,GERENCIA,view_batches,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_sales_status,No asignado,
-Oscar Leiva,GERENCIA,view_addresses,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_locations,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_fichas,No asignado,
-Oscar Leiva,GERENCIA,manage_fichas,No asignado,
-Oscar Leiva,GERENCIA,export_data,No asignado,
-Oscar Leiva,GERENCIA,manage_monitoreo,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,manage_quality,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_acciones_calidad,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_panel,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,manage_panel,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,approve_panel_reopen_nv,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,panel_ingresar,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,panel_info,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,panel_tv,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,panel_builder,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_postventa,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,manage_postventa,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,supervise_postventa,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_tickets,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_bandeja,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_calendario,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_nuevo,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_dashboard,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,pv_tab_tecnicos,PERMITIDO,Perfil
-Oscar Leiva,GERENCIA,view_users,No asignado,
-Oscar Leiva,GERENCIA,manage_users,No asignado,
-Oscar Leiva,GERENCIA,view_roles,No asignado,
-Oscar Leiva,GERENCIA,manage_roles,No asignado,
-Oscar Leiva,GERENCIA,view_views,No asignado,
-Oscar Leiva,GERENCIA,manage_views,No asignado,
-Oscar Leiva,GERENCIA,manage_tickets,No asignado,
-Oscar Leiva,GERENCIA,admin_upload_history,No asignado,
-Oscar Leiva,GERENCIA,admin_monitor,No asignado,
+Oscar Leiva,GERENCIA,conteo_tab_sesiones,No asignado,
 Oscar Leiva,GERENCIA,deploy_ota,No asignado,
-Oscar Leiva,GERENCIA,view_workflows,No asignado,
-Oscar Leiva,GERENCIA,manage_workflows,No asignado,
-Oscar Leiva,GERENCIA,view_eventos,No asignado,
-Oscar Leiva,GERENCIA,manage_eventos,No asignado,
-Oscar Leiva,GERENCIA,view_api,No asignado,
+Oscar Leiva,GERENCIA,export_data,No asignado,
 Oscar Leiva,GERENCIA,manage_api,No asignado,
 Oscar Leiva,GERENCIA,manage_cleanup,No asignado,
-Oscar Leiva,GERENCIA,view_rendiciones,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,manage_conteo,No asignado,
+Oscar Leiva,GERENCIA,manage_data_import,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,manage_eventos,No asignado,
+Oscar Leiva,GERENCIA,manage_fichas,No asignado,
+Oscar Leiva,GERENCIA,manage_insumos,No asignado,
+Oscar Leiva,GERENCIA,manage_inventory,No asignado,
+Oscar Leiva,GERENCIA,manage_locations,No asignado,
+Oscar Leiva,GERENCIA,manage_monitoreo,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,manage_panel,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,manage_postventa,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,manage_quality,PERMITIDO,Perfil
 Oscar Leiva,GERENCIA,manage_rendiciones,No asignado,
-Oscar Leiva,GERENCIA,view_tms,No asignado,
+Oscar Leiva,GERENCIA,manage_roles,No asignado,
+Oscar Leiva,GERENCIA,manage_tickets,No asignado,
 Oscar Leiva,GERENCIA,manage_tms,No asignado,
+Oscar Leiva,GERENCIA,manage_users,No asignado,
+Oscar Leiva,GERENCIA,manage_views,No asignado,
+Oscar Leiva,GERENCIA,manage_workflows,No asignado,
+Oscar Leiva,GERENCIA,panel_builder,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,panel_info,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,panel_ingresar,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,panel_tv,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,process_entry,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,process_reception,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_bandeja,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_calendario,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_dashboard,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_nuevo,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_tecnicos,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,pv_tab_tickets,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,supervise_conteo,No asignado,
+Oscar Leiva,GERENCIA,supervise_postventa,PERMITIDO,Perfil
 Oscar Leiva,GERENCIA,supervise_tms,No asignado,
-Oscar Leiva,GERENCIA,complete_rendiciones,PERMITIDO,Perfil
-PickingBD1,OPERADOR,view_stock,No asignado,
-PickingBD1,OPERADOR,manage_inventory,No asignado,
-PickingBD1,OPERADOR,view_traspasos,No asignado,
-PickingBD1,OPERADOR,view_carteles,PERMITIDO,Perfil
-PickingBD1,OPERADOR,view_insumos,No asignado,
-PickingBD1,OPERADOR,manage_insumos,No asignado,
-PickingBD1,OPERADOR,manage_locations,No asignado,
-PickingBD1,OPERADOR,view_analisis,No asignado,
-PickingBD1,OPERADOR,analisis_tab_resumen,No asignado,
-PickingBD1,OPERADOR,analisis_tab_antiguos,No asignado,
-PickingBD1,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-PickingBD1,OPERADOR,analisis_tab_no_activos,No asignado,
-PickingBD1,OPERADOR,analisis_tab_duplicados,No asignado,
-PickingBD1,OPERADOR,analisis_tab_anomalias,No asignado,
-PickingBD1,OPERADOR,analisis_tab_detalle,No asignado,
-PickingBD1,OPERADOR,view_conteo,No asignado,
-PickingBD1,OPERADOR,manage_conteo,No asignado,
-PickingBD1,OPERADOR,supervise_conteo,No asignado,
-PickingBD1,OPERADOR,conteo_tab_contar,No asignado,
-PickingBD1,OPERADOR,conteo_tab_sesiones,No asignado,
-PickingBD1,OPERADOR,conteo_tab_conciliacion,No asignado,
-PickingBD1,OPERADOR,conteo_tab_ajuste,No asignado,
-PickingBD1,OPERADOR,conteo_tab_bloques,No asignado,
-PickingBD1,OPERADOR,conteo_tab_proyeccion,No asignado,
-PickingBD1,OPERADOR,view_entry,PERMITIDO,Perfil
-PickingBD1,OPERADOR,process_entry,No asignado,
-PickingBD1,OPERADOR,view_reception,PERMITIDO,Perfil
-PickingBD1,OPERADOR,process_reception,No asignado,
-PickingBD1,OPERADOR,manage_data_import,No asignado,
-PickingBD1,OPERADOR,view_historial_nv,No asignado,
-PickingBD1,OPERADOR,view_dispatch_control,No asignado,
-PickingBD1,OPERADOR,view_batches,PERMITIDO,Perfil
-PickingBD1,OPERADOR,view_sales_status,PERMITIDO,Perfil
-PickingBD1,OPERADOR,view_addresses,No asignado,
-PickingBD1,OPERADOR,view_locations,PERMITIDO,Perfil
-PickingBD1,OPERADOR,view_fichas,No asignado,
-PickingBD1,OPERADOR,manage_fichas,No asignado,
-PickingBD1,OPERADOR,export_data,No asignado,
-PickingBD1,OPERADOR,manage_monitoreo,No asignado,
-PickingBD1,OPERADOR,manage_quality,No asignado,
-PickingBD1,OPERADOR,view_acciones_calidad,No asignado,
-PickingBD1,OPERADOR,view_panel,No asignado,
-PickingBD1,OPERADOR,manage_panel,No asignado,
-PickingBD1,OPERADOR,approve_panel_reopen_nv,No asignado,
-PickingBD1,OPERADOR,panel_ingresar,No asignado,
-PickingBD1,OPERADOR,panel_info,No asignado,
-PickingBD1,OPERADOR,panel_tv,No asignado,
-PickingBD1,OPERADOR,panel_builder,No asignado,
-PickingBD1,OPERADOR,view_postventa,No asignado,
-PickingBD1,OPERADOR,manage_postventa,No asignado,
-PickingBD1,OPERADOR,supervise_postventa,No asignado,
-PickingBD1,OPERADOR,pv_tab_tickets,No asignado,
-PickingBD1,OPERADOR,pv_tab_bandeja,No asignado,
-PickingBD1,OPERADOR,pv_tab_calendario,No asignado,
-PickingBD1,OPERADOR,pv_tab_nuevo,No asignado,
-PickingBD1,OPERADOR,pv_tab_dashboard,No asignado,
-PickingBD1,OPERADOR,pv_tab_tecnicos,No asignado,
-PickingBD1,OPERADOR,view_users,No asignado,
-PickingBD1,OPERADOR,manage_users,No asignado,
-PickingBD1,OPERADOR,view_roles,No asignado,
-PickingBD1,OPERADOR,manage_roles,No asignado,
-PickingBD1,OPERADOR,view_views,No asignado,
-PickingBD1,OPERADOR,manage_views,No asignado,
-PickingBD1,OPERADOR,manage_tickets,No asignado,
-PickingBD1,OPERADOR,admin_upload_history,No asignado,
-PickingBD1,OPERADOR,admin_monitor,No asignado,
-PickingBD1,OPERADOR,deploy_ota,No asignado,
-PickingBD1,OPERADOR,view_workflows,No asignado,
-PickingBD1,OPERADOR,manage_workflows,No asignado,
-PickingBD1,OPERADOR,view_eventos,No asignado,
-PickingBD1,OPERADOR,manage_eventos,No asignado,
-PickingBD1,OPERADOR,view_api,No asignado,
-PickingBD1,OPERADOR,manage_api,No asignado,
-PickingBD1,OPERADOR,manage_cleanup,No asignado,
-PickingBD1,OPERADOR,view_rendiciones,No asignado,
-PickingBD1,OPERADOR,manage_rendiciones,No asignado,
-PickingBD1,OPERADOR,view_tms,No asignado,
-PickingBD1,OPERADOR,manage_tms,No asignado,
-PickingBD1,OPERADOR,supervise_tms,No asignado,
-PickingBD1,OPERADOR,complete_rendiciones,No asignado,
-PickingBD3,OPERADOR,view_stock,No asignado,
-PickingBD3,OPERADOR,manage_inventory,No asignado,
-PickingBD3,OPERADOR,view_traspasos,No asignado,
-PickingBD3,OPERADOR,view_carteles,PERMITIDO,Perfil
-PickingBD3,OPERADOR,view_insumos,No asignado,
-PickingBD3,OPERADOR,manage_insumos,No asignado,
-PickingBD3,OPERADOR,manage_locations,No asignado,
-PickingBD3,OPERADOR,view_analisis,No asignado,
-PickingBD3,OPERADOR,analisis_tab_resumen,No asignado,
-PickingBD3,OPERADOR,analisis_tab_antiguos,No asignado,
-PickingBD3,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-PickingBD3,OPERADOR,analisis_tab_no_activos,No asignado,
-PickingBD3,OPERADOR,analisis_tab_duplicados,No asignado,
-PickingBD3,OPERADOR,analisis_tab_anomalias,No asignado,
-PickingBD3,OPERADOR,analisis_tab_detalle,No asignado,
-PickingBD3,OPERADOR,view_conteo,No asignado,
-PickingBD3,OPERADOR,manage_conteo,No asignado,
-PickingBD3,OPERADOR,supervise_conteo,No asignado,
-PickingBD3,OPERADOR,conteo_tab_contar,No asignado,
-PickingBD3,OPERADOR,conteo_tab_sesiones,No asignado,
-PickingBD3,OPERADOR,conteo_tab_conciliacion,No asignado,
-PickingBD3,OPERADOR,conteo_tab_ajuste,No asignado,
-PickingBD3,OPERADOR,conteo_tab_bloques,No asignado,
-PickingBD3,OPERADOR,conteo_tab_proyeccion,No asignado,
-PickingBD3,OPERADOR,view_entry,PERMITIDO,Perfil
-PickingBD3,OPERADOR,process_entry,No asignado,
-PickingBD3,OPERADOR,view_reception,PERMITIDO,Perfil
-PickingBD3,OPERADOR,process_reception,No asignado,
-PickingBD3,OPERADOR,manage_data_import,No asignado,
-PickingBD3,OPERADOR,view_historial_nv,No asignado,
-PickingBD3,OPERADOR,view_dispatch_control,No asignado,
-PickingBD3,OPERADOR,view_batches,PERMITIDO,Perfil
-PickingBD3,OPERADOR,view_sales_status,PERMITIDO,Perfil
-PickingBD3,OPERADOR,view_addresses,No asignado,
-PickingBD3,OPERADOR,view_locations,PERMITIDO,Perfil
-PickingBD3,OPERADOR,view_fichas,No asignado,
-PickingBD3,OPERADOR,manage_fichas,No asignado,
-PickingBD3,OPERADOR,export_data,No asignado,
-PickingBD3,OPERADOR,manage_monitoreo,No asignado,
-PickingBD3,OPERADOR,manage_quality,No asignado,
-PickingBD3,OPERADOR,view_acciones_calidad,No asignado,
-PickingBD3,OPERADOR,view_panel,No asignado,
-PickingBD3,OPERADOR,manage_panel,No asignado,
-PickingBD3,OPERADOR,approve_panel_reopen_nv,No asignado,
-PickingBD3,OPERADOR,panel_ingresar,No asignado,
-PickingBD3,OPERADOR,panel_info,No asignado,
-PickingBD3,OPERADOR,panel_tv,No asignado,
-PickingBD3,OPERADOR,panel_builder,No asignado,
-PickingBD3,OPERADOR,view_postventa,No asignado,
-PickingBD3,OPERADOR,manage_postventa,No asignado,
-PickingBD3,OPERADOR,supervise_postventa,No asignado,
-PickingBD3,OPERADOR,pv_tab_tickets,No asignado,
-PickingBD3,OPERADOR,pv_tab_bandeja,No asignado,
-PickingBD3,OPERADOR,pv_tab_calendario,No asignado,
-PickingBD3,OPERADOR,pv_tab_nuevo,No asignado,
-PickingBD3,OPERADOR,pv_tab_dashboard,No asignado,
-PickingBD3,OPERADOR,pv_tab_tecnicos,No asignado,
-PickingBD3,OPERADOR,view_users,No asignado,
-PickingBD3,OPERADOR,manage_users,No asignado,
-PickingBD3,OPERADOR,view_roles,No asignado,
-PickingBD3,OPERADOR,manage_roles,No asignado,
-PickingBD3,OPERADOR,view_views,No asignado,
-PickingBD3,OPERADOR,manage_views,No asignado,
-PickingBD3,OPERADOR,manage_tickets,No asignado,
-PickingBD3,OPERADOR,admin_upload_history,No asignado,
-PickingBD3,OPERADOR,admin_monitor,No asignado,
-PickingBD3,OPERADOR,deploy_ota,No asignado,
-PickingBD3,OPERADOR,view_workflows,No asignado,
-PickingBD3,OPERADOR,manage_workflows,No asignado,
-PickingBD3,OPERADOR,view_eventos,No asignado,
-PickingBD3,OPERADOR,manage_eventos,No asignado,
-PickingBD3,OPERADOR,view_api,No asignado,
-PickingBD3,OPERADOR,manage_api,No asignado,
-PickingBD3,OPERADOR,manage_cleanup,No asignado,
-PickingBD3,OPERADOR,view_rendiciones,No asignado,
-PickingBD3,OPERADOR,manage_rendiciones,No asignado,
-PickingBD3,OPERADOR,view_tms,No asignado,
-PickingBD3,OPERADOR,manage_tms,No asignado,
-PickingBD3,OPERADOR,supervise_tms,No asignado,
-PickingBD3,OPERADOR,complete_rendiciones,No asignado,
-Revision,OPERADOR,view_stock,No asignado,
-Revision,OPERADOR,manage_inventory,No asignado,
-Revision,OPERADOR,view_traspasos,No asignado,
-Revision,OPERADOR,view_carteles,PERMITIDO,Perfil
-Revision,OPERADOR,view_insumos,No asignado,
-Revision,OPERADOR,manage_insumos,No asignado,
-Revision,OPERADOR,manage_locations,No asignado,
-Revision,OPERADOR,view_analisis,No asignado,
-Revision,OPERADOR,analisis_tab_resumen,No asignado,
+Oscar Leiva,GERENCIA,view_acciones_calidad,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_addresses,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_analisis,No asignado,
+Oscar Leiva,GERENCIA,view_api,No asignado,
+Oscar Leiva,GERENCIA,view_asistente,No asignado,
+Oscar Leiva,GERENCIA,view_batches,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_carteles,No asignado,
+Oscar Leiva,GERENCIA,view_conteo,No asignado,
+Oscar Leiva,GERENCIA,view_dispatch_control,No asignado,
+Oscar Leiva,GERENCIA,view_entry,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_eventos,No asignado,
+Oscar Leiva,GERENCIA,view_fichas,No asignado,
+Oscar Leiva,GERENCIA,view_historial_nv,No asignado,
+Oscar Leiva,GERENCIA,view_insumos,No asignado,
+Oscar Leiva,GERENCIA,view_locations,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_panel,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_postventa,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_reception,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_rendiciones,PERMITIDO,Perfil
+Oscar Leiva,GERENCIA,view_roles,No asignado,
+Oscar Leiva,GERENCIA,view_sales_status,No asignado,
+Oscar Leiva,GERENCIA,view_stock,No asignado,
+Oscar Leiva,GERENCIA,view_tms,No asignado,
+Oscar Leiva,GERENCIA,view_traspasos,No asignado,
+Oscar Leiva,GERENCIA,view_users,No asignado,
+Oscar Leiva,GERENCIA,view_views,No asignado,
+Oscar Leiva,GERENCIA,view_workflows,No asignado,
+NILO Langebach,SUPERVISOR,admin_monitor,No asignado,
+NILO Langebach,SUPERVISOR,admin_upload_history,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_anomalias,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_antiguos,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_antiguos_disp,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_detalle,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_duplicados,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_no_activos,No asignado,
+NILO Langebach,SUPERVISOR,analisis_tab_resumen,No asignado,
+NILO Langebach,SUPERVISOR,approve_panel_reopen_nv,No asignado,
+NILO Langebach,SUPERVISOR,complete_rendiciones,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_ajuste,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_bloques,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_conciliacion,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_contar,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_proyeccion,No asignado,
+NILO Langebach,SUPERVISOR,conteo_tab_sesiones,No asignado,
+NILO Langebach,SUPERVISOR,deploy_ota,No asignado,
+NILO Langebach,SUPERVISOR,export_data,No asignado,
+NILO Langebach,SUPERVISOR,manage_api,No asignado,
+NILO Langebach,SUPERVISOR,manage_cleanup,No asignado,
+NILO Langebach,SUPERVISOR,manage_conteo,No asignado,
+NILO Langebach,SUPERVISOR,manage_data_import,No asignado,
+NILO Langebach,SUPERVISOR,manage_eventos,No asignado,
+NILO Langebach,SUPERVISOR,manage_fichas,No asignado,
+NILO Langebach,SUPERVISOR,manage_insumos,No asignado,
+NILO Langebach,SUPERVISOR,manage_inventory,No asignado,
+NILO Langebach,SUPERVISOR,manage_locations,No asignado,
+NILO Langebach,SUPERVISOR,manage_monitoreo,No asignado,
+NILO Langebach,SUPERVISOR,manage_panel,PERMITIDO,Perfil
+NILO Langebach,SUPERVISOR,manage_postventa,No asignado,
+NILO Langebach,SUPERVISOR,manage_quality,No asignado,
+NILO Langebach,SUPERVISOR,manage_rendiciones,No asignado,
+NILO Langebach,SUPERVISOR,manage_roles,No asignado,
+NILO Langebach,SUPERVISOR,manage_tickets,No asignado,
+NILO Langebach,SUPERVISOR,manage_tms,No asignado,
+NILO Langebach,SUPERVISOR,manage_users,No asignado,
+NILO Langebach,SUPERVISOR,manage_views,No asignado,
+NILO Langebach,SUPERVISOR,manage_workflows,No asignado,
+NILO Langebach,SUPERVISOR,panel_builder,No asignado,
+NILO Langebach,SUPERVISOR,panel_info,PERMITIDO,Perfil
+NILO Langebach,SUPERVISOR,panel_ingresar,PERMITIDO,Perfil
+NILO Langebach,SUPERVISOR,panel_tv,No asignado,
+NILO Langebach,SUPERVISOR,process_entry,No asignado,
+NILO Langebach,SUPERVISOR,process_reception,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_bandeja,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_calendario,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_dashboard,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_nuevo,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_tecnicos,No asignado,
+NILO Langebach,SUPERVISOR,pv_tab_tickets,No asignado,
+NILO Langebach,SUPERVISOR,supervise_conteo,No asignado,
+NILO Langebach,SUPERVISOR,supervise_postventa,No asignado,
+NILO Langebach,SUPERVISOR,supervise_tms,No asignado,
+NILO Langebach,SUPERVISOR,view_acciones_calidad,No asignado,
+NILO Langebach,SUPERVISOR,view_addresses,No asignado,
+NILO Langebach,SUPERVISOR,view_analisis,No asignado,
+NILO Langebach,SUPERVISOR,view_api,No asignado,
+NILO Langebach,SUPERVISOR,view_asistente,No asignado,
+NILO Langebach,SUPERVISOR,view_batches,No asignado,
+NILO Langebach,SUPERVISOR,view_carteles,No asignado,
+NILO Langebach,SUPERVISOR,view_conteo,No asignado,
+NILO Langebach,SUPERVISOR,view_dispatch_control,No asignado,
+NILO Langebach,SUPERVISOR,view_entry,No asignado,
+NILO Langebach,SUPERVISOR,view_eventos,No asignado,
+NILO Langebach,SUPERVISOR,view_fichas,No asignado,
+NILO Langebach,SUPERVISOR,view_historial_nv,No asignado,
+NILO Langebach,SUPERVISOR,view_insumos,No asignado,
+NILO Langebach,SUPERVISOR,view_locations,No asignado,
+NILO Langebach,SUPERVISOR,view_panel,PERMITIDO,Perfil
+NILO Langebach,SUPERVISOR,view_postventa,No asignado,
+NILO Langebach,SUPERVISOR,view_reception,No asignado,
+NILO Langebach,SUPERVISOR,view_rendiciones,No asignado,
+NILO Langebach,SUPERVISOR,view_roles,No asignado,
+NILO Langebach,SUPERVISOR,view_sales_status,No asignado,
+NILO Langebach,SUPERVISOR,view_stock,No asignado,
+NILO Langebach,SUPERVISOR,view_tms,No asignado,
+NILO Langebach,SUPERVISOR,view_traspasos,No asignado,
+NILO Langebach,SUPERVISOR,view_users,No asignado,
+NILO Langebach,SUPERVISOR,view_views,No asignado,
+NILO Langebach,SUPERVISOR,view_workflows,No asignado,
+Cristopher,INVENTARIO_,admin_monitor,No asignado,
+Cristopher,INVENTARIO_,admin_upload_history,No asignado,
+Cristopher,INVENTARIO_,analisis_tab_anomalias,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_antiguos,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_antiguos_disp,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_detalle,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_duplicados,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_no_activos,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,analisis_tab_resumen,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,approve_panel_reopen_nv,No asignado,
+Cristopher,INVENTARIO_,complete_rendiciones,No asignado,
+Cristopher,INVENTARIO_,conteo_tab_ajuste,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,conteo_tab_bloques,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,conteo_tab_conciliacion,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,conteo_tab_contar,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,conteo_tab_proyeccion,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,conteo_tab_sesiones,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,deploy_ota,No asignado,
+Cristopher,INVENTARIO_,export_data,No asignado,
+Cristopher,INVENTARIO_,manage_api,No asignado,
+Cristopher,INVENTARIO_,manage_cleanup,No asignado,
+Cristopher,INVENTARIO_,manage_conteo,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,manage_data_import,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,manage_eventos,No asignado,
+Cristopher,INVENTARIO_,manage_fichas,No asignado,
+Cristopher,INVENTARIO_,manage_insumos,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,manage_inventory,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,manage_locations,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,manage_monitoreo,No asignado,
+Cristopher,INVENTARIO_,manage_panel,No asignado,
+Cristopher,INVENTARIO_,manage_postventa,No asignado,
+Cristopher,INVENTARIO_,manage_quality,No asignado,
+Cristopher,INVENTARIO_,manage_rendiciones,No asignado,
+Cristopher,INVENTARIO_,manage_roles,No asignado,
+Cristopher,INVENTARIO_,manage_tickets,No asignado,
+Cristopher,INVENTARIO_,manage_tms,No asignado,
+Cristopher,INVENTARIO_,manage_users,No asignado,
+Cristopher,INVENTARIO_,manage_views,No asignado,
+Cristopher,INVENTARIO_,manage_workflows,No asignado,
+Cristopher,INVENTARIO_,panel_builder,No asignado,
+Cristopher,INVENTARIO_,panel_info,No asignado,
+Cristopher,INVENTARIO_,panel_ingresar,No asignado,
+Cristopher,INVENTARIO_,panel_tv,No asignado,
+Cristopher,INVENTARIO_,process_entry,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,process_reception,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,pv_tab_bandeja,No asignado,
+Cristopher,INVENTARIO_,pv_tab_calendario,No asignado,
+Cristopher,INVENTARIO_,pv_tab_dashboard,No asignado,
+Cristopher,INVENTARIO_,pv_tab_nuevo,No asignado,
+Cristopher,INVENTARIO_,pv_tab_tecnicos,No asignado,
+Cristopher,INVENTARIO_,pv_tab_tickets,No asignado,
+Cristopher,INVENTARIO_,supervise_conteo,No asignado,
+Cristopher,INVENTARIO_,supervise_postventa,No asignado,
+Cristopher,INVENTARIO_,supervise_tms,No asignado,
+Cristopher,INVENTARIO_,view_acciones_calidad,No asignado,
+Cristopher,INVENTARIO_,view_addresses,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_analisis,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_api,No asignado,
+Cristopher,INVENTARIO_,view_asistente,No asignado,
+Cristopher,INVENTARIO_,view_batches,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_carteles,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_conteo,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_dispatch_control,No asignado,
+Cristopher,INVENTARIO_,view_entry,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_eventos,No asignado,
+Cristopher,INVENTARIO_,view_fichas,No asignado,
+Cristopher,INVENTARIO_,view_historial_nv,No asignado,
+Cristopher,INVENTARIO_,view_insumos,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_locations,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_panel,No asignado,
+Cristopher,INVENTARIO_,view_postventa,No asignado,
+Cristopher,INVENTARIO_,view_reception,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_rendiciones,No asignado,
+Cristopher,INVENTARIO_,view_roles,No asignado,
+Cristopher,INVENTARIO_,view_sales_status,No asignado,
+Cristopher,INVENTARIO_,view_stock,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_tms,No asignado,
+Cristopher,INVENTARIO_,view_traspasos,PERMITIDO,Perfil
+Cristopher,INVENTARIO_,view_users,No asignado,
+Cristopher,INVENTARIO_,view_views,No asignado,
+Cristopher,INVENTARIO_,view_workflows,No asignado,
+María Angélica,SUPERVISOR_,admin_monitor,No asignado,
+María Angélica,SUPERVISOR_,admin_upload_history,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_anomalias,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_antiguos,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_antiguos_disp,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_detalle,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_duplicados,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_no_activos,No asignado,
+María Angélica,SUPERVISOR_,analisis_tab_resumen,No asignado,
+María Angélica,SUPERVISOR_,approve_panel_reopen_nv,No asignado,
+María Angélica,SUPERVISOR_,complete_rendiciones,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_ajuste,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_bloques,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_conciliacion,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_contar,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_proyeccion,No asignado,
+María Angélica,SUPERVISOR_,conteo_tab_sesiones,No asignado,
+María Angélica,SUPERVISOR_,deploy_ota,No asignado,
+María Angélica,SUPERVISOR_,export_data,No asignado,
+María Angélica,SUPERVISOR_,manage_api,No asignado,
+María Angélica,SUPERVISOR_,manage_cleanup,No asignado,
+María Angélica,SUPERVISOR_,manage_conteo,No asignado,
+María Angélica,SUPERVISOR_,manage_data_import,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,manage_eventos,No asignado,
+María Angélica,SUPERVISOR_,manage_fichas,No asignado,
+María Angélica,SUPERVISOR_,manage_insumos,No asignado,
+María Angélica,SUPERVISOR_,manage_inventory,No asignado,
+María Angélica,SUPERVISOR_,manage_locations,No asignado,
+María Angélica,SUPERVISOR_,manage_monitoreo,No asignado,
+María Angélica,SUPERVISOR_,manage_panel,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,manage_postventa,No asignado,
+María Angélica,SUPERVISOR_,manage_quality,No asignado,
+María Angélica,SUPERVISOR_,manage_rendiciones,No asignado,
+María Angélica,SUPERVISOR_,manage_roles,No asignado,
+María Angélica,SUPERVISOR_,manage_tickets,No asignado,
+María Angélica,SUPERVISOR_,manage_tms,No asignado,
+María Angélica,SUPERVISOR_,manage_users,No asignado,
+María Angélica,SUPERVISOR_,manage_views,No asignado,
+María Angélica,SUPERVISOR_,manage_workflows,No asignado,
+María Angélica,SUPERVISOR_,panel_builder,No asignado,
+María Angélica,SUPERVISOR_,panel_info,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,panel_ingresar,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,panel_tv,No asignado,
+María Angélica,SUPERVISOR_,process_entry,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,process_reception,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_bandeja,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_calendario,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_dashboard,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_nuevo,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_tecnicos,No asignado,
+María Angélica,SUPERVISOR_,pv_tab_tickets,No asignado,
+María Angélica,SUPERVISOR_,supervise_conteo,No asignado,
+María Angélica,SUPERVISOR_,supervise_postventa,No asignado,
+María Angélica,SUPERVISOR_,supervise_tms,No asignado,
+María Angélica,SUPERVISOR_,view_acciones_calidad,No asignado,
+María Angélica,SUPERVISOR_,view_addresses,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_analisis,No asignado,
+María Angélica,SUPERVISOR_,view_api,No asignado,
+María Angélica,SUPERVISOR_,view_asistente,No asignado,
+María Angélica,SUPERVISOR_,view_batches,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_carteles,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_conteo,No asignado,
+María Angélica,SUPERVISOR_,view_dispatch_control,No asignado,
+María Angélica,SUPERVISOR_,view_entry,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_eventos,No asignado,
+María Angélica,SUPERVISOR_,view_fichas,No asignado,
+María Angélica,SUPERVISOR_,view_historial_nv,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_insumos,No asignado,
+María Angélica,SUPERVISOR_,view_locations,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_panel,No asignado,
+María Angélica,SUPERVISOR_,view_postventa,No asignado,
+María Angélica,SUPERVISOR_,view_reception,PERMITIDO,Perfil
+María Angélica,SUPERVISOR_,view_rendiciones,No asignado,
+María Angélica,SUPERVISOR_,view_roles,No asignado,
+María Angélica,SUPERVISOR_,view_sales_status,No asignado,
+María Angélica,SUPERVISOR_,view_stock,No asignado,
+María Angélica,SUPERVISOR_,view_tms,No asignado,
+María Angélica,SUPERVISOR_,view_traspasos,No asignado,
+María Angélica,SUPERVISOR_,view_users,No asignado,
+María Angélica,SUPERVISOR_,view_views,No asignado,
+María Angélica,SUPERVISOR_,view_workflows,No asignado,
+Revision,OPERADOR,admin_monitor,No asignado,
+Revision,OPERADOR,admin_upload_history,No asignado,
+Revision,OPERADOR,analisis_tab_anomalias,No asignado,
 Revision,OPERADOR,analisis_tab_antiguos,No asignado,
 Revision,OPERADOR,analisis_tab_antiguos_disp,No asignado,
-Revision,OPERADOR,analisis_tab_no_activos,No asignado,
-Revision,OPERADOR,analisis_tab_duplicados,No asignado,
-Revision,OPERADOR,analisis_tab_anomalias,No asignado,
 Revision,OPERADOR,analisis_tab_detalle,No asignado,
-Revision,OPERADOR,view_conteo,No asignado,
-Revision,OPERADOR,manage_conteo,No asignado,
-Revision,OPERADOR,supervise_conteo,No asignado,
-Revision,OPERADOR,conteo_tab_contar,No asignado,
-Revision,OPERADOR,conteo_tab_sesiones,No asignado,
-Revision,OPERADOR,conteo_tab_conciliacion,No asignado,
+Revision,OPERADOR,analisis_tab_duplicados,No asignado,
+Revision,OPERADOR,analisis_tab_no_activos,No asignado,
+Revision,OPERADOR,analisis_tab_resumen,No asignado,
+Revision,OPERADOR,approve_panel_reopen_nv,No asignado,
+Revision,OPERADOR,complete_rendiciones,No asignado,
 Revision,OPERADOR,conteo_tab_ajuste,No asignado,
 Revision,OPERADOR,conteo_tab_bloques,No asignado,
+Revision,OPERADOR,conteo_tab_conciliacion,No asignado,
+Revision,OPERADOR,conteo_tab_contar,No asignado,
 Revision,OPERADOR,conteo_tab_proyeccion,No asignado,
-Revision,OPERADOR,view_entry,PERMITIDO,Perfil
-Revision,OPERADOR,process_entry,No asignado,
-Revision,OPERADOR,view_reception,PERMITIDO,Perfil
-Revision,OPERADOR,process_reception,No asignado,
-Revision,OPERADOR,manage_data_import,No asignado,
-Revision,OPERADOR,view_historial_nv,No asignado,
-Revision,OPERADOR,view_dispatch_control,No asignado,
-Revision,OPERADOR,view_batches,PERMITIDO,Perfil
-Revision,OPERADOR,view_sales_status,PERMITIDO,Perfil
-Revision,OPERADOR,view_addresses,No asignado,
-Revision,OPERADOR,view_locations,PERMITIDO,Perfil
-Revision,OPERADOR,view_fichas,No asignado,
-Revision,OPERADOR,manage_fichas,No asignado,
-Revision,OPERADOR,export_data,No asignado,
-Revision,OPERADOR,manage_monitoreo,No asignado,
-Revision,OPERADOR,manage_quality,No asignado,
-Revision,OPERADOR,view_acciones_calidad,No asignado,
-Revision,OPERADOR,view_panel,No asignado,
-Revision,OPERADOR,manage_panel,No asignado,
-Revision,OPERADOR,approve_panel_reopen_nv,No asignado,
-Revision,OPERADOR,panel_ingresar,No asignado,
-Revision,OPERADOR,panel_info,No asignado,
-Revision,OPERADOR,panel_tv,No asignado,
-Revision,OPERADOR,panel_builder,No asignado,
-Revision,OPERADOR,view_postventa,No asignado,
-Revision,OPERADOR,manage_postventa,No asignado,
-Revision,OPERADOR,supervise_postventa,No asignado,
-Revision,OPERADOR,pv_tab_tickets,No asignado,
-Revision,OPERADOR,pv_tab_bandeja,No asignado,
-Revision,OPERADOR,pv_tab_calendario,No asignado,
-Revision,OPERADOR,pv_tab_nuevo,No asignado,
-Revision,OPERADOR,pv_tab_dashboard,No asignado,
-Revision,OPERADOR,pv_tab_tecnicos,No asignado,
-Revision,OPERADOR,view_users,No asignado,
-Revision,OPERADOR,manage_users,No asignado,
-Revision,OPERADOR,view_roles,No asignado,
-Revision,OPERADOR,manage_roles,No asignado,
-Revision,OPERADOR,view_views,No asignado,
-Revision,OPERADOR,manage_views,No asignado,
-Revision,OPERADOR,manage_tickets,No asignado,
-Revision,OPERADOR,admin_upload_history,No asignado,
-Revision,OPERADOR,admin_monitor,No asignado,
+Revision,OPERADOR,conteo_tab_sesiones,No asignado,
 Revision,OPERADOR,deploy_ota,No asignado,
-Revision,OPERADOR,view_workflows,No asignado,
-Revision,OPERADOR,manage_workflows,No asignado,
-Revision,OPERADOR,view_eventos,No asignado,
-Revision,OPERADOR,manage_eventos,No asignado,
-Revision,OPERADOR,view_api,No asignado,
+Revision,OPERADOR,export_data,No asignado,
 Revision,OPERADOR,manage_api,No asignado,
 Revision,OPERADOR,manage_cleanup,No asignado,
-Revision,OPERADOR,view_rendiciones,No asignado,
+Revision,OPERADOR,manage_conteo,No asignado,
+Revision,OPERADOR,manage_data_import,No asignado,
+Revision,OPERADOR,manage_eventos,No asignado,
+Revision,OPERADOR,manage_fichas,No asignado,
+Revision,OPERADOR,manage_insumos,No asignado,
+Revision,OPERADOR,manage_inventory,No asignado,
+Revision,OPERADOR,manage_locations,No asignado,
+Revision,OPERADOR,manage_monitoreo,No asignado,
+Revision,OPERADOR,manage_panel,No asignado,
+Revision,OPERADOR,manage_postventa,No asignado,
+Revision,OPERADOR,manage_quality,No asignado,
 Revision,OPERADOR,manage_rendiciones,No asignado,
-Revision,OPERADOR,view_tms,No asignado,
+Revision,OPERADOR,manage_roles,No asignado,
+Revision,OPERADOR,manage_tickets,No asignado,
 Revision,OPERADOR,manage_tms,No asignado,
+Revision,OPERADOR,manage_users,No asignado,
+Revision,OPERADOR,manage_views,No asignado,
+Revision,OPERADOR,manage_workflows,No asignado,
+Revision,OPERADOR,panel_builder,No asignado,
+Revision,OPERADOR,panel_info,No asignado,
+Revision,OPERADOR,panel_ingresar,No asignado,
+Revision,OPERADOR,panel_tv,No asignado,
+Revision,OPERADOR,process_entry,No asignado,
+Revision,OPERADOR,process_reception,No asignado,
+Revision,OPERADOR,pv_tab_bandeja,No asignado,
+Revision,OPERADOR,pv_tab_calendario,No asignado,
+Revision,OPERADOR,pv_tab_dashboard,No asignado,
+Revision,OPERADOR,pv_tab_nuevo,No asignado,
+Revision,OPERADOR,pv_tab_tecnicos,No asignado,
+Revision,OPERADOR,pv_tab_tickets,No asignado,
+Revision,OPERADOR,supervise_conteo,No asignado,
+Revision,OPERADOR,supervise_postventa,No asignado,
 Revision,OPERADOR,supervise_tms,No asignado,
-Revision,OPERADOR,complete_rendiciones,No asignado,
+Revision,OPERADOR,view_acciones_calidad,No asignado,
+Revision,OPERADOR,view_addresses,No asignado,
+Revision,OPERADOR,view_analisis,No asignado,
+Revision,OPERADOR,view_api,No asignado,
+Revision,OPERADOR,view_asistente,No asignado,
+Revision,OPERADOR,view_batches,PERMITIDO,Perfil
+Revision,OPERADOR,view_carteles,PERMITIDO,Perfil
+Revision,OPERADOR,view_conteo,No asignado,
+Revision,OPERADOR,view_dispatch_control,No asignado,
+Revision,OPERADOR,view_entry,PERMITIDO,Perfil
+Revision,OPERADOR,view_eventos,No asignado,
+Revision,OPERADOR,view_fichas,No asignado,
+Revision,OPERADOR,view_historial_nv,No asignado,
+Revision,OPERADOR,view_insumos,No asignado,
+Revision,OPERADOR,view_locations,PERMITIDO,Perfil
+Revision,OPERADOR,view_panel,No asignado,
+Revision,OPERADOR,view_postventa,No asignado,
+Revision,OPERADOR,view_reception,PERMITIDO,Perfil
+Revision,OPERADOR,view_rendiciones,No asignado,
+Revision,OPERADOR,view_roles,No asignado,
+Revision,OPERADOR,view_sales_status,PERMITIDO,Perfil
+Revision,OPERADOR,view_stock,No asignado,
+Revision,OPERADOR,view_tms,No asignado,
+Revision,OPERADOR,view_traspasos,No asignado,
+Revision,OPERADOR,view_users,No asignado,
+Revision,OPERADOR,view_views,No asignado,
+Revision,OPERADOR,view_workflows,No asignado,
+MOISES,OPERADOR,admin_monitor,No asignado,
+MOISES,OPERADOR,admin_upload_history,No asignado,
+MOISES,OPERADOR,analisis_tab_anomalias,No asignado,
+MOISES,OPERADOR,analisis_tab_antiguos,No asignado,
+MOISES,OPERADOR,analisis_tab_antiguos_disp,No asignado,
+MOISES,OPERADOR,analisis_tab_detalle,No asignado,
+MOISES,OPERADOR,analisis_tab_duplicados,No asignado,
+MOISES,OPERADOR,analisis_tab_no_activos,No asignado,
+MOISES,OPERADOR,analisis_tab_resumen,No asignado,
+MOISES,OPERADOR,approve_panel_reopen_nv,No asignado,
+MOISES,OPERADOR,complete_rendiciones,No asignado,
+MOISES,OPERADOR,conteo_tab_ajuste,No asignado,
+MOISES,OPERADOR,conteo_tab_bloques,No asignado,
+MOISES,OPERADOR,conteo_tab_conciliacion,No asignado,
+MOISES,OPERADOR,conteo_tab_contar,No asignado,
+MOISES,OPERADOR,conteo_tab_proyeccion,No asignado,
+MOISES,OPERADOR,conteo_tab_sesiones,No asignado,
+MOISES,OPERADOR,deploy_ota,No asignado,
+MOISES,OPERADOR,export_data,No asignado,
+MOISES,OPERADOR,manage_api,No asignado,
+MOISES,OPERADOR,manage_cleanup,No asignado,
+MOISES,OPERADOR,manage_conteo,No asignado,
+MOISES,OPERADOR,manage_data_import,No asignado,
+MOISES,OPERADOR,manage_eventos,No asignado,
+MOISES,OPERADOR,manage_fichas,No asignado,
+MOISES,OPERADOR,manage_insumos,No asignado,
+MOISES,OPERADOR,manage_inventory,No asignado,
+MOISES,OPERADOR,manage_locations,No asignado,
+MOISES,OPERADOR,manage_monitoreo,No asignado,
+MOISES,OPERADOR,manage_panel,No asignado,
+MOISES,OPERADOR,manage_postventa,No asignado,
+MOISES,OPERADOR,manage_quality,No asignado,
+MOISES,OPERADOR,manage_rendiciones,No asignado,
+MOISES,OPERADOR,manage_roles,No asignado,
+MOISES,OPERADOR,manage_tickets,No asignado,
+MOISES,OPERADOR,manage_tms,No asignado,
+MOISES,OPERADOR,manage_users,No asignado,
+MOISES,OPERADOR,manage_views,No asignado,
+MOISES,OPERADOR,manage_workflows,No asignado,
+MOISES,OPERADOR,panel_builder,No asignado,
+MOISES,OPERADOR,panel_info,No asignado,
+MOISES,OPERADOR,panel_ingresar,No asignado,
+MOISES,OPERADOR,panel_tv,No asignado,
+MOISES,OPERADOR,process_entry,No asignado,
+MOISES,OPERADOR,process_reception,No asignado,
+MOISES,OPERADOR,pv_tab_bandeja,No asignado,
+MOISES,OPERADOR,pv_tab_calendario,No asignado,
+MOISES,OPERADOR,pv_tab_dashboard,No asignado,
+MOISES,OPERADOR,pv_tab_nuevo,No asignado,
+MOISES,OPERADOR,pv_tab_tecnicos,No asignado,
+MOISES,OPERADOR,pv_tab_tickets,No asignado,
+MOISES,OPERADOR,supervise_conteo,No asignado,
+MOISES,OPERADOR,supervise_postventa,No asignado,
+MOISES,OPERADOR,supervise_tms,No asignado,
+MOISES,OPERADOR,view_acciones_calidad,No asignado,
+MOISES,OPERADOR,view_addresses,No asignado,
+MOISES,OPERADOR,view_analisis,No asignado,
+MOISES,OPERADOR,view_api,No asignado,
+MOISES,OPERADOR,view_asistente,No asignado,
+MOISES,OPERADOR,view_batches,PERMITIDO,Perfil
+MOISES,OPERADOR,view_carteles,PERMITIDO,Perfil
+MOISES,OPERADOR,view_conteo,No asignado,
+MOISES,OPERADOR,view_dispatch_control,No asignado,
+MOISES,OPERADOR,view_entry,PERMITIDO,Perfil
+MOISES,OPERADOR,view_eventos,No asignado,
+MOISES,OPERADOR,view_fichas,No asignado,
+MOISES,OPERADOR,view_historial_nv,No asignado,
+MOISES,OPERADOR,view_insumos,No asignado,
+MOISES,OPERADOR,view_locations,PERMITIDO,Perfil
+MOISES,OPERADOR,view_panel,No asignado,
+MOISES,OPERADOR,view_postventa,No asignado,
+MOISES,OPERADOR,view_reception,PERMITIDO,Perfil
+MOISES,OPERADOR,view_rendiciones,No asignado,
+MOISES,OPERADOR,view_roles,No asignado,
+MOISES,OPERADOR,view_sales_status,PERMITIDO,Perfil
+MOISES,OPERADOR,view_stock,No asignado,
+MOISES,OPERADOR,view_tms,No asignado,
+MOISES,OPERADOR,view_traspasos,No asignado,
+MOISES,OPERADOR,view_users,No asignado,
+MOISES,OPERADOR,view_views,No asignado,
+MOISES,OPERADOR,view_workflows,No asignado,
+PickingBD1,OPERADOR,admin_monitor,No asignado,
+PickingBD1,OPERADOR,admin_upload_history,No asignado,
+PickingBD1,OPERADOR,analisis_tab_anomalias,No asignado,
+PickingBD1,OPERADOR,analisis_tab_antiguos,No asignado,
+PickingBD1,OPERADOR,analisis_tab_antiguos_disp,No asignado,
+PickingBD1,OPERADOR,analisis_tab_detalle,No asignado,
+PickingBD1,OPERADOR,analisis_tab_duplicados,No asignado,
+PickingBD1,OPERADOR,analisis_tab_no_activos,No asignado,
+PickingBD1,OPERADOR,analisis_tab_resumen,No asignado,
+PickingBD1,OPERADOR,approve_panel_reopen_nv,No asignado,
+PickingBD1,OPERADOR,complete_rendiciones,No asignado,
+PickingBD1,OPERADOR,conteo_tab_ajuste,No asignado,
+PickingBD1,OPERADOR,conteo_tab_bloques,No asignado,
+PickingBD1,OPERADOR,conteo_tab_conciliacion,No asignado,
+PickingBD1,OPERADOR,conteo_tab_contar,No asignado,
+PickingBD1,OPERADOR,conteo_tab_proyeccion,No asignado,
+PickingBD1,OPERADOR,conteo_tab_sesiones,No asignado,
+PickingBD1,OPERADOR,deploy_ota,No asignado,
+PickingBD1,OPERADOR,export_data,No asignado,
+PickingBD1,OPERADOR,manage_api,No asignado,
+PickingBD1,OPERADOR,manage_cleanup,No asignado,
+PickingBD1,OPERADOR,manage_conteo,No asignado,
+PickingBD1,OPERADOR,manage_data_import,No asignado,
+PickingBD1,OPERADOR,manage_eventos,No asignado,
+PickingBD1,OPERADOR,manage_fichas,No asignado,
+PickingBD1,OPERADOR,manage_insumos,No asignado,
+PickingBD1,OPERADOR,manage_inventory,No asignado,
+PickingBD1,OPERADOR,manage_locations,No asignado,
+PickingBD1,OPERADOR,manage_monitoreo,No asignado,
+PickingBD1,OPERADOR,manage_panel,No asignado,
+PickingBD1,OPERADOR,manage_postventa,No asignado,
+PickingBD1,OPERADOR,manage_quality,No asignado,
+PickingBD1,OPERADOR,manage_rendiciones,No asignado,
+PickingBD1,OPERADOR,manage_roles,No asignado,
+PickingBD1,OPERADOR,manage_tickets,No asignado,
+PickingBD1,OPERADOR,manage_tms,No asignado,
+PickingBD1,OPERADOR,manage_users,No asignado,
+PickingBD1,OPERADOR,manage_views,No asignado,
+PickingBD1,OPERADOR,manage_workflows,No asignado,
+PickingBD1,OPERADOR,panel_builder,No asignado,
+PickingBD1,OPERADOR,panel_info,No asignado,
+PickingBD1,OPERADOR,panel_ingresar,No asignado,
+PickingBD1,OPERADOR,panel_tv,No asignado,
+PickingBD1,OPERADOR,process_entry,No asignado,
+PickingBD1,OPERADOR,process_reception,No asignado,
+PickingBD1,OPERADOR,pv_tab_bandeja,No asignado,
+PickingBD1,OPERADOR,pv_tab_calendario,No asignado,
+PickingBD1,OPERADOR,pv_tab_dashboard,No asignado,
+PickingBD1,OPERADOR,pv_tab_nuevo,No asignado,
+PickingBD1,OPERADOR,pv_tab_tecnicos,No asignado,
+PickingBD1,OPERADOR,pv_tab_tickets,No asignado,
+PickingBD1,OPERADOR,supervise_conteo,No asignado,
+PickingBD1,OPERADOR,supervise_postventa,No asignado,
+PickingBD1,OPERADOR,supervise_tms,No asignado,
+PickingBD1,OPERADOR,view_acciones_calidad,No asignado,
+PickingBD1,OPERADOR,view_addresses,No asignado,
+PickingBD1,OPERADOR,view_analisis,No asignado,
+PickingBD1,OPERADOR,view_api,No asignado,
+PickingBD1,OPERADOR,view_asistente,No asignado,
+PickingBD1,OPERADOR,view_batches,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_carteles,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_conteo,No asignado,
+PickingBD1,OPERADOR,view_dispatch_control,No asignado,
+PickingBD1,OPERADOR,view_entry,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_eventos,No asignado,
+PickingBD1,OPERADOR,view_fichas,No asignado,
+PickingBD1,OPERADOR,view_historial_nv,No asignado,
+PickingBD1,OPERADOR,view_insumos,No asignado,
+PickingBD1,OPERADOR,view_locations,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_panel,No asignado,
+PickingBD1,OPERADOR,view_postventa,No asignado,
+PickingBD1,OPERADOR,view_reception,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_rendiciones,No asignado,
+PickingBD1,OPERADOR,view_roles,No asignado,
+PickingBD1,OPERADOR,view_sales_status,PERMITIDO,Perfil
+PickingBD1,OPERADOR,view_stock,No asignado,
+PickingBD1,OPERADOR,view_tms,No asignado,
+PickingBD1,OPERADOR,view_traspasos,No asignado,
+PickingBD1,OPERADOR,view_users,No asignado,
+PickingBD1,OPERADOR,view_views,No asignado,
+PickingBD1,OPERADOR,view_workflows,No asignado,
+PickingBD3,OPERADOR,admin_monitor,No asignado,
+PickingBD3,OPERADOR,admin_upload_history,No asignado,
+PickingBD3,OPERADOR,analisis_tab_anomalias,No asignado,
+PickingBD3,OPERADOR,analisis_tab_antiguos,No asignado,
+PickingBD3,OPERADOR,analisis_tab_antiguos_disp,No asignado,
+PickingBD3,OPERADOR,analisis_tab_detalle,No asignado,
+PickingBD3,OPERADOR,analisis_tab_duplicados,No asignado,
+PickingBD3,OPERADOR,analisis_tab_no_activos,No asignado,
+PickingBD3,OPERADOR,analisis_tab_resumen,No asignado,
+PickingBD3,OPERADOR,approve_panel_reopen_nv,No asignado,
+PickingBD3,OPERADOR,complete_rendiciones,No asignado,
+PickingBD3,OPERADOR,conteo_tab_ajuste,No asignado,
+PickingBD3,OPERADOR,conteo_tab_bloques,No asignado,
+PickingBD3,OPERADOR,conteo_tab_conciliacion,No asignado,
+PickingBD3,OPERADOR,conteo_tab_contar,No asignado,
+PickingBD3,OPERADOR,conteo_tab_proyeccion,No asignado,
+PickingBD3,OPERADOR,conteo_tab_sesiones,No asignado,
+PickingBD3,OPERADOR,deploy_ota,No asignado,
+PickingBD3,OPERADOR,export_data,No asignado,
+PickingBD3,OPERADOR,manage_api,No asignado,
+PickingBD3,OPERADOR,manage_cleanup,No asignado,
+PickingBD3,OPERADOR,manage_conteo,No asignado,
+PickingBD3,OPERADOR,manage_data_import,No asignado,
+PickingBD3,OPERADOR,manage_eventos,No asignado,
+PickingBD3,OPERADOR,manage_fichas,No asignado,
+PickingBD3,OPERADOR,manage_insumos,No asignado,
+PickingBD3,OPERADOR,manage_inventory,No asignado,
+PickingBD3,OPERADOR,manage_locations,No asignado,
+PickingBD3,OPERADOR,manage_monitoreo,No asignado,
+PickingBD3,OPERADOR,manage_panel,No asignado,
+PickingBD3,OPERADOR,manage_postventa,No asignado,
+PickingBD3,OPERADOR,manage_quality,No asignado,
+PickingBD3,OPERADOR,manage_rendiciones,No asignado,
+PickingBD3,OPERADOR,manage_roles,No asignado,
+PickingBD3,OPERADOR,manage_tickets,No asignado,
+PickingBD3,OPERADOR,manage_tms,No asignado,
+PickingBD3,OPERADOR,manage_users,No asignado,
+PickingBD3,OPERADOR,manage_views,No asignado,
+PickingBD3,OPERADOR,manage_workflows,No asignado,
+PickingBD3,OPERADOR,panel_builder,No asignado,
+PickingBD3,OPERADOR,panel_info,No asignado,
+PickingBD3,OPERADOR,panel_ingresar,No asignado,
+PickingBD3,OPERADOR,panel_tv,No asignado,
+PickingBD3,OPERADOR,process_entry,No asignado,
+PickingBD3,OPERADOR,process_reception,No asignado,
+PickingBD3,OPERADOR,pv_tab_bandeja,No asignado,
+PickingBD3,OPERADOR,pv_tab_calendario,No asignado,
+PickingBD3,OPERADOR,pv_tab_dashboard,No asignado,
+PickingBD3,OPERADOR,pv_tab_nuevo,No asignado,
+PickingBD3,OPERADOR,pv_tab_tecnicos,No asignado,
+PickingBD3,OPERADOR,pv_tab_tickets,No asignado,
+PickingBD3,OPERADOR,supervise_conteo,No asignado,
+PickingBD3,OPERADOR,supervise_postventa,No asignado,
+PickingBD3,OPERADOR,supervise_tms,No asignado,
+PickingBD3,OPERADOR,view_acciones_calidad,No asignado,
+PickingBD3,OPERADOR,view_addresses,No asignado,
+PickingBD3,OPERADOR,view_analisis,No asignado,
+PickingBD3,OPERADOR,view_api,No asignado,
+PickingBD3,OPERADOR,view_asistente,No asignado,
+PickingBD3,OPERADOR,view_batches,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_carteles,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_conteo,No asignado,
+PickingBD3,OPERADOR,view_dispatch_control,No asignado,
+PickingBD3,OPERADOR,view_entry,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_eventos,No asignado,
+PickingBD3,OPERADOR,view_fichas,No asignado,
+PickingBD3,OPERADOR,view_historial_nv,No asignado,
+PickingBD3,OPERADOR,view_insumos,No asignado,
+PickingBD3,OPERADOR,view_locations,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_panel,No asignado,
+PickingBD3,OPERADOR,view_postventa,No asignado,
+PickingBD3,OPERADOR,view_reception,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_rendiciones,No asignado,
+PickingBD3,OPERADOR,view_roles,No asignado,
+PickingBD3,OPERADOR,view_sales_status,PERMITIDO,Perfil
+PickingBD3,OPERADOR,view_stock,No asignado,
+PickingBD3,OPERADOR,view_tms,No asignado,
+PickingBD3,OPERADOR,view_traspasos,No asignado,
+PickingBD3,OPERADOR,view_users,No asignado,
+PickingBD3,OPERADOR,view_views,No asignado,
+PickingBD3,OPERADOR,view_workflows,No asignado,

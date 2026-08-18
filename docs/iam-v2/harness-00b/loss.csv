@@ -1,0 +1,5 @@
+usuario,permiso,via_legacy,detalle
+Admin Respaldo,complete_rendiciones,Bypass ADMIN,sin bypass en IAM2 (catalogado, ningun rol asignado lo otorga)
+Admin Respaldo,view_asistente,Bypass ADMIN,sin bypass en IAM2 (catalogado, ningun rol asignado lo otorga)
+Administrador,complete_rendiciones,Bypass ADMIN,sin bypass en IAM2 (catalogado, ningun rol asignado lo otorga)
+Administrador,view_asistente,Bypass ADMIN,sin bypass en IAM2 (catalogado, ningun rol asignado lo otorga)

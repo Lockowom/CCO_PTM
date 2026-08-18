@@ -1,0 +1,54 @@
+usuario,funcion,via_legacy,detalle
+ARIEL SPOLANSKY,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+ARIEL SPOLANSKY,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+ARIEL SPOLANSKY,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Lucas Toloza,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Lucas Toloza,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Lucas Toloza,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Admin Respaldo,eliminar_nv,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Admin Respaldo,wms_move_stock,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Admin Respaldo,batch_update_nv_estado,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Admin Respaldo,bulk_upsert (11 tablas stock),Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Admin Respaldo,ia_kpis / ia_buscar_* (Asistente),Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Juan Carlos,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Juan Carlos,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Juan Carlos,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Christian Vargas,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Christian Vargas,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Christian Vargas,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Marco Negroni,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Marco Negroni,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Marco Negroni,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Gisselle Romero,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Gisselle Romero,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Gisselle Romero,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Administrador,eliminar_nv,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Administrador,wms_move_stock,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Administrador,batch_update_nv_estado,Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Administrador,bulk_upsert (11 tablas stock),Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Administrador,ia_kpis / ia_buscar_* (Asistente),Bypass ADMIN,IAM2 la gatea y el usuario no tiene el permiso
+Oscar Leiva,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Oscar Leiva,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Oscar Leiva,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+NILO Langebach,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+NILO Langebach,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+NILO Langebach,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Cristopher,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Cristopher,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Cristopher,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+María Angélica,eliminar_nv,allowlist individual (mig 099),IAM2 la gatea y el usuario no tiene el permiso
+María Angélica,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+María Angélica,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+María Angélica,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+Revision,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Revision,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+Revision,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+MOISES,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+MOISES,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+MOISES,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+PickingBD1,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+PickingBD1,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+PickingBD1,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso
+PickingBD3,wms_move_stock,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+PickingBD3,batch_update_nv_estado,HALLAZGO: sin gate (authenticated),IAM2 la gatea y el usuario no tiene el permiso
+PickingBD3,bulk_upsert (11 tablas stock),HALLAZGO: allowlist sin gate,IAM2 la gatea y el usuario no tiene el permiso

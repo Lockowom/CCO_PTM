@@ -1,42 +1,4 @@
 usuario,modulo,tab,estado
-Admin Respaldo,/inventory/conteo,contar,PERMITIDO
-Admin Respaldo,/inventory/conteo,sesiones,PERMITIDO
-Admin Respaldo,/inventory/conteo,conciliacion,PERMITIDO
-Admin Respaldo,/inventory/conteo,ajuste,PERMITIDO
-Admin Respaldo,/inventory/conteo,bloques,PERMITIDO
-Admin Respaldo,/inventory/conteo,proyeccion,PERMITIDO
-Admin Respaldo,/inventory/analisis,resumen,PERMITIDO
-Admin Respaldo,/inventory/analisis,antiguos,PERMITIDO
-Admin Respaldo,/inventory/analisis,antiguos_disp,PERMITIDO
-Admin Respaldo,/inventory/analisis,no_activos_stock,PERMITIDO
-Admin Respaldo,/inventory/analisis,duplicados,PERMITIDO
-Admin Respaldo,/inventory/analisis,anomalias,PERMITIDO
-Admin Respaldo,/inventory/analisis,detalle,PERMITIDO
-Admin Respaldo,/postventa/tickets,tickets,PERMITIDO
-Admin Respaldo,/postventa/tickets,bandeja,PERMITIDO
-Admin Respaldo,/postventa/tickets,calendario,PERMITIDO
-Admin Respaldo,/postventa/tickets,nuevo,PERMITIDO
-Admin Respaldo,/postventa/tickets,dashboard,PERMITIDO
-Admin Respaldo,/postventa/tickets,tecnicos,PERMITIDO
-Administrador,/inventory/conteo,contar,PERMITIDO
-Administrador,/inventory/conteo,sesiones,PERMITIDO
-Administrador,/inventory/conteo,conciliacion,PERMITIDO
-Administrador,/inventory/conteo,ajuste,PERMITIDO
-Administrador,/inventory/conteo,bloques,PERMITIDO
-Administrador,/inventory/conteo,proyeccion,PERMITIDO
-Administrador,/inventory/analisis,resumen,PERMITIDO
-Administrador,/inventory/analisis,antiguos,PERMITIDO
-Administrador,/inventory/analisis,antiguos_disp,PERMITIDO
-Administrador,/inventory/analisis,no_activos_stock,PERMITIDO
-Administrador,/inventory/analisis,duplicados,PERMITIDO
-Administrador,/inventory/analisis,anomalias,PERMITIDO
-Administrador,/inventory/analisis,detalle,PERMITIDO
-Administrador,/postventa/tickets,tickets,PERMITIDO
-Administrador,/postventa/tickets,bandeja,PERMITIDO
-Administrador,/postventa/tickets,calendario,PERMITIDO
-Administrador,/postventa/tickets,nuevo,PERMITIDO
-Administrador,/postventa/tickets,dashboard,PERMITIDO
-Administrador,/postventa/tickets,tecnicos,PERMITIDO
 ARIEL SPOLANSKY,/inventory/conteo,contar,DENEGADO
 ARIEL SPOLANSKY,/inventory/conteo,sesiones,DENEGADO
 ARIEL SPOLANSKY,/inventory/conteo,conciliacion,DENEGADO
@@ -56,82 +18,6 @@ ARIEL SPOLANSKY,/postventa/tickets,calendario,DENEGADO
 ARIEL SPOLANSKY,/postventa/tickets,nuevo,DENEGADO
 ARIEL SPOLANSKY,/postventa/tickets,dashboard,DENEGADO
 ARIEL SPOLANSKY,/postventa/tickets,tecnicos,DENEGADO
-Christian Vargas,/inventory/conteo,contar,DENEGADO
-Christian Vargas,/inventory/conteo,sesiones,DENEGADO
-Christian Vargas,/inventory/conteo,conciliacion,DENEGADO
-Christian Vargas,/inventory/conteo,ajuste,DENEGADO
-Christian Vargas,/inventory/conteo,bloques,DENEGADO
-Christian Vargas,/inventory/conteo,proyeccion,DENEGADO
-Christian Vargas,/inventory/analisis,resumen,DENEGADO
-Christian Vargas,/inventory/analisis,antiguos,DENEGADO
-Christian Vargas,/inventory/analisis,antiguos_disp,DENEGADO
-Christian Vargas,/inventory/analisis,no_activos_stock,DENEGADO
-Christian Vargas,/inventory/analisis,duplicados,DENEGADO
-Christian Vargas,/inventory/analisis,anomalias,DENEGADO
-Christian Vargas,/inventory/analisis,detalle,DENEGADO
-Christian Vargas,/postventa/tickets,tickets,DENEGADO
-Christian Vargas,/postventa/tickets,bandeja,DENEGADO
-Christian Vargas,/postventa/tickets,calendario,DENEGADO
-Christian Vargas,/postventa/tickets,nuevo,DENEGADO
-Christian Vargas,/postventa/tickets,dashboard,DENEGADO
-Christian Vargas,/postventa/tickets,tecnicos,DENEGADO
-Cristopher,/inventory/conteo,contar,PERMITIDO
-Cristopher,/inventory/conteo,sesiones,PERMITIDO
-Cristopher,/inventory/conteo,conciliacion,PERMITIDO
-Cristopher,/inventory/conteo,ajuste,PERMITIDO
-Cristopher,/inventory/conteo,bloques,PERMITIDO
-Cristopher,/inventory/conteo,proyeccion,PERMITIDO
-Cristopher,/inventory/analisis,resumen,PERMITIDO
-Cristopher,/inventory/analisis,antiguos,PERMITIDO
-Cristopher,/inventory/analisis,antiguos_disp,PERMITIDO
-Cristopher,/inventory/analisis,no_activos_stock,PERMITIDO
-Cristopher,/inventory/analisis,duplicados,PERMITIDO
-Cristopher,/inventory/analisis,anomalias,PERMITIDO
-Cristopher,/inventory/analisis,detalle,PERMITIDO
-Cristopher,/postventa/tickets,tickets,DENEGADO
-Cristopher,/postventa/tickets,bandeja,DENEGADO
-Cristopher,/postventa/tickets,calendario,DENEGADO
-Cristopher,/postventa/tickets,nuevo,DENEGADO
-Cristopher,/postventa/tickets,dashboard,DENEGADO
-Cristopher,/postventa/tickets,tecnicos,DENEGADO
-Gisselle Romero,/inventory/conteo,contar,DENEGADO
-Gisselle Romero,/inventory/conteo,sesiones,DENEGADO
-Gisselle Romero,/inventory/conteo,conciliacion,DENEGADO
-Gisselle Romero,/inventory/conteo,ajuste,DENEGADO
-Gisselle Romero,/inventory/conteo,bloques,DENEGADO
-Gisselle Romero,/inventory/conteo,proyeccion,DENEGADO
-Gisselle Romero,/inventory/analisis,resumen,DENEGADO
-Gisselle Romero,/inventory/analisis,antiguos,DENEGADO
-Gisselle Romero,/inventory/analisis,antiguos_disp,DENEGADO
-Gisselle Romero,/inventory/analisis,no_activos_stock,DENEGADO
-Gisselle Romero,/inventory/analisis,duplicados,DENEGADO
-Gisselle Romero,/inventory/analisis,anomalias,DENEGADO
-Gisselle Romero,/inventory/analisis,detalle,DENEGADO
-Gisselle Romero,/postventa/tickets,tickets,DENEGADO
-Gisselle Romero,/postventa/tickets,bandeja,DENEGADO
-Gisselle Romero,/postventa/tickets,calendario,DENEGADO
-Gisselle Romero,/postventa/tickets,nuevo,DENEGADO
-Gisselle Romero,/postventa/tickets,dashboard,DENEGADO
-Gisselle Romero,/postventa/tickets,tecnicos,DENEGADO
-Juan Carlos,/inventory/conteo,contar,DENEGADO
-Juan Carlos,/inventory/conteo,sesiones,DENEGADO
-Juan Carlos,/inventory/conteo,conciliacion,DENEGADO
-Juan Carlos,/inventory/conteo,ajuste,DENEGADO
-Juan Carlos,/inventory/conteo,bloques,DENEGADO
-Juan Carlos,/inventory/conteo,proyeccion,DENEGADO
-Juan Carlos,/inventory/analisis,resumen,DENEGADO
-Juan Carlos,/inventory/analisis,antiguos,DENEGADO
-Juan Carlos,/inventory/analisis,antiguos_disp,DENEGADO
-Juan Carlos,/inventory/analisis,no_activos_stock,DENEGADO
-Juan Carlos,/inventory/analisis,duplicados,DENEGADO
-Juan Carlos,/inventory/analisis,anomalias,DENEGADO
-Juan Carlos,/inventory/analisis,detalle,DENEGADO
-Juan Carlos,/postventa/tickets,tickets,DENEGADO
-Juan Carlos,/postventa/tickets,bandeja,DENEGADO
-Juan Carlos,/postventa/tickets,calendario,DENEGADO
-Juan Carlos,/postventa/tickets,nuevo,DENEGADO
-Juan Carlos,/postventa/tickets,dashboard,DENEGADO
-Juan Carlos,/postventa/tickets,tecnicos,DENEGADO
 Lucas Toloza,/inventory/conteo,contar,DENEGADO
 Lucas Toloza,/inventory/conteo,sesiones,DENEGADO
 Lucas Toloza,/inventory/conteo,conciliacion,DENEGADO
@@ -151,6 +37,63 @@ Lucas Toloza,/postventa/tickets,calendario,DENEGADO
 Lucas Toloza,/postventa/tickets,nuevo,DENEGADO
 Lucas Toloza,/postventa/tickets,dashboard,DENEGADO
 Lucas Toloza,/postventa/tickets,tecnicos,DENEGADO
+Admin Respaldo,/inventory/conteo,contar,PERMITIDO
+Admin Respaldo,/inventory/conteo,sesiones,PERMITIDO
+Admin Respaldo,/inventory/conteo,conciliacion,PERMITIDO
+Admin Respaldo,/inventory/conteo,ajuste,PERMITIDO
+Admin Respaldo,/inventory/conteo,bloques,PERMITIDO
+Admin Respaldo,/inventory/conteo,proyeccion,PERMITIDO
+Admin Respaldo,/inventory/analisis,resumen,PERMITIDO
+Admin Respaldo,/inventory/analisis,antiguos,PERMITIDO
+Admin Respaldo,/inventory/analisis,antiguos_disp,PERMITIDO
+Admin Respaldo,/inventory/analisis,no_activos_stock,PERMITIDO
+Admin Respaldo,/inventory/analisis,duplicados,PERMITIDO
+Admin Respaldo,/inventory/analisis,anomalias,PERMITIDO
+Admin Respaldo,/inventory/analisis,detalle,PERMITIDO
+Admin Respaldo,/postventa/tickets,tickets,PERMITIDO
+Admin Respaldo,/postventa/tickets,bandeja,PERMITIDO
+Admin Respaldo,/postventa/tickets,calendario,PERMITIDO
+Admin Respaldo,/postventa/tickets,nuevo,PERMITIDO
+Admin Respaldo,/postventa/tickets,dashboard,PERMITIDO
+Admin Respaldo,/postventa/tickets,tecnicos,PERMITIDO
+Juan Carlos,/inventory/conteo,contar,DENEGADO
+Juan Carlos,/inventory/conteo,sesiones,DENEGADO
+Juan Carlos,/inventory/conteo,conciliacion,DENEGADO
+Juan Carlos,/inventory/conteo,ajuste,DENEGADO
+Juan Carlos,/inventory/conteo,bloques,DENEGADO
+Juan Carlos,/inventory/conteo,proyeccion,DENEGADO
+Juan Carlos,/inventory/analisis,resumen,DENEGADO
+Juan Carlos,/inventory/analisis,antiguos,DENEGADO
+Juan Carlos,/inventory/analisis,antiguos_disp,DENEGADO
+Juan Carlos,/inventory/analisis,no_activos_stock,DENEGADO
+Juan Carlos,/inventory/analisis,duplicados,DENEGADO
+Juan Carlos,/inventory/analisis,anomalias,DENEGADO
+Juan Carlos,/inventory/analisis,detalle,DENEGADO
+Juan Carlos,/postventa/tickets,tickets,DENEGADO
+Juan Carlos,/postventa/tickets,bandeja,DENEGADO
+Juan Carlos,/postventa/tickets,calendario,DENEGADO
+Juan Carlos,/postventa/tickets,nuevo,DENEGADO
+Juan Carlos,/postventa/tickets,dashboard,DENEGADO
+Juan Carlos,/postventa/tickets,tecnicos,DENEGADO
+Christian Vargas,/inventory/conteo,contar,DENEGADO
+Christian Vargas,/inventory/conteo,sesiones,DENEGADO
+Christian Vargas,/inventory/conteo,conciliacion,DENEGADO
+Christian Vargas,/inventory/conteo,ajuste,DENEGADO
+Christian Vargas,/inventory/conteo,bloques,DENEGADO
+Christian Vargas,/inventory/conteo,proyeccion,DENEGADO
+Christian Vargas,/inventory/analisis,resumen,DENEGADO
+Christian Vargas,/inventory/analisis,antiguos,DENEGADO
+Christian Vargas,/inventory/analisis,antiguos_disp,DENEGADO
+Christian Vargas,/inventory/analisis,no_activos_stock,DENEGADO
+Christian Vargas,/inventory/analisis,duplicados,DENEGADO
+Christian Vargas,/inventory/analisis,anomalias,DENEGADO
+Christian Vargas,/inventory/analisis,detalle,DENEGADO
+Christian Vargas,/postventa/tickets,tickets,DENEGADO
+Christian Vargas,/postventa/tickets,bandeja,DENEGADO
+Christian Vargas,/postventa/tickets,calendario,DENEGADO
+Christian Vargas,/postventa/tickets,nuevo,DENEGADO
+Christian Vargas,/postventa/tickets,dashboard,DENEGADO
+Christian Vargas,/postventa/tickets,tecnicos,DENEGADO
 Marco Negroni,/inventory/conteo,contar,DENEGADO
 Marco Negroni,/inventory/conteo,sesiones,DENEGADO
 Marco Negroni,/inventory/conteo,conciliacion,DENEGADO
@@ -170,63 +113,44 @@ Marco Negroni,/postventa/tickets,calendario,DENEGADO
 Marco Negroni,/postventa/tickets,nuevo,DENEGADO
 Marco Negroni,/postventa/tickets,dashboard,DENEGADO
 Marco Negroni,/postventa/tickets,tecnicos,DENEGADO
-Maria Angelica,/inventory/conteo,contar,DENEGADO
-Maria Angelica,/inventory/conteo,sesiones,DENEGADO
-Maria Angelica,/inventory/conteo,conciliacion,DENEGADO
-Maria Angelica,/inventory/conteo,ajuste,DENEGADO
-Maria Angelica,/inventory/conteo,bloques,DENEGADO
-Maria Angelica,/inventory/conteo,proyeccion,DENEGADO
-Maria Angelica,/inventory/analisis,resumen,DENEGADO
-Maria Angelica,/inventory/analisis,antiguos,DENEGADO
-Maria Angelica,/inventory/analisis,antiguos_disp,DENEGADO
-Maria Angelica,/inventory/analisis,no_activos_stock,DENEGADO
-Maria Angelica,/inventory/analisis,duplicados,DENEGADO
-Maria Angelica,/inventory/analisis,anomalias,DENEGADO
-Maria Angelica,/inventory/analisis,detalle,DENEGADO
-Maria Angelica,/postventa/tickets,tickets,DENEGADO
-Maria Angelica,/postventa/tickets,bandeja,DENEGADO
-Maria Angelica,/postventa/tickets,calendario,DENEGADO
-Maria Angelica,/postventa/tickets,nuevo,DENEGADO
-Maria Angelica,/postventa/tickets,dashboard,DENEGADO
-Maria Angelica,/postventa/tickets,tecnicos,DENEGADO
-MOISES,/inventory/conteo,contar,DENEGADO
-MOISES,/inventory/conteo,sesiones,DENEGADO
-MOISES,/inventory/conteo,conciliacion,DENEGADO
-MOISES,/inventory/conteo,ajuste,DENEGADO
-MOISES,/inventory/conteo,bloques,DENEGADO
-MOISES,/inventory/conteo,proyeccion,DENEGADO
-MOISES,/inventory/analisis,resumen,DENEGADO
-MOISES,/inventory/analisis,antiguos,DENEGADO
-MOISES,/inventory/analisis,antiguos_disp,DENEGADO
-MOISES,/inventory/analisis,no_activos_stock,DENEGADO
-MOISES,/inventory/analisis,duplicados,DENEGADO
-MOISES,/inventory/analisis,anomalias,DENEGADO
-MOISES,/inventory/analisis,detalle,DENEGADO
-MOISES,/postventa/tickets,tickets,DENEGADO
-MOISES,/postventa/tickets,bandeja,DENEGADO
-MOISES,/postventa/tickets,calendario,DENEGADO
-MOISES,/postventa/tickets,nuevo,DENEGADO
-MOISES,/postventa/tickets,dashboard,DENEGADO
-MOISES,/postventa/tickets,tecnicos,DENEGADO
-NILO Langebach,/inventory/conteo,contar,DENEGADO
-NILO Langebach,/inventory/conteo,sesiones,DENEGADO
-NILO Langebach,/inventory/conteo,conciliacion,DENEGADO
-NILO Langebach,/inventory/conteo,ajuste,DENEGADO
-NILO Langebach,/inventory/conteo,bloques,DENEGADO
-NILO Langebach,/inventory/conteo,proyeccion,DENEGADO
-NILO Langebach,/inventory/analisis,resumen,DENEGADO
-NILO Langebach,/inventory/analisis,antiguos,DENEGADO
-NILO Langebach,/inventory/analisis,antiguos_disp,DENEGADO
-NILO Langebach,/inventory/analisis,no_activos_stock,DENEGADO
-NILO Langebach,/inventory/analisis,duplicados,DENEGADO
-NILO Langebach,/inventory/analisis,anomalias,DENEGADO
-NILO Langebach,/inventory/analisis,detalle,DENEGADO
-NILO Langebach,/postventa/tickets,tickets,DENEGADO
-NILO Langebach,/postventa/tickets,bandeja,DENEGADO
-NILO Langebach,/postventa/tickets,calendario,DENEGADO
-NILO Langebach,/postventa/tickets,nuevo,DENEGADO
-NILO Langebach,/postventa/tickets,dashboard,DENEGADO
-NILO Langebach,/postventa/tickets,tecnicos,DENEGADO
+Gisselle Romero,/inventory/conteo,contar,DENEGADO
+Gisselle Romero,/inventory/conteo,sesiones,DENEGADO
+Gisselle Romero,/inventory/conteo,conciliacion,DENEGADO
+Gisselle Romero,/inventory/conteo,ajuste,DENEGADO
+Gisselle Romero,/inventory/conteo,bloques,DENEGADO
+Gisselle Romero,/inventory/conteo,proyeccion,DENEGADO
+Gisselle Romero,/inventory/analisis,resumen,DENEGADO
+Gisselle Romero,/inventory/analisis,antiguos,DENEGADO
+Gisselle Romero,/inventory/analisis,antiguos_disp,DENEGADO
+Gisselle Romero,/inventory/analisis,no_activos_stock,DENEGADO
+Gisselle Romero,/inventory/analisis,duplicados,DENEGADO
+Gisselle Romero,/inventory/analisis,anomalias,DENEGADO
+Gisselle Romero,/inventory/analisis,detalle,DENEGADO
+Gisselle Romero,/postventa/tickets,tickets,DENEGADO
+Gisselle Romero,/postventa/tickets,bandeja,DENEGADO
+Gisselle Romero,/postventa/tickets,calendario,DENEGADO
+Gisselle Romero,/postventa/tickets,nuevo,DENEGADO
+Gisselle Romero,/postventa/tickets,dashboard,DENEGADO
+Gisselle Romero,/postventa/tickets,tecnicos,DENEGADO
+Administrador,/inventory/conteo,contar,PERMITIDO
+Administrador,/inventory/conteo,sesiones,PERMITIDO
+Administrador,/inventory/conteo,conciliacion,PERMITIDO
+Administrador,/inventory/conteo,ajuste,PERMITIDO
+Administrador,/inventory/conteo,bloques,PERMITIDO
+Administrador,/inventory/conteo,proyeccion,PERMITIDO
+Administrador,/inventory/analisis,resumen,PERMITIDO
+Administrador,/inventory/analisis,antiguos,PERMITIDO
+Administrador,/inventory/analisis,antiguos_disp,PERMITIDO
+Administrador,/inventory/analisis,no_activos_stock,PERMITIDO
+Administrador,/inventory/analisis,duplicados,PERMITIDO
+Administrador,/inventory/analisis,anomalias,PERMITIDO
+Administrador,/inventory/analisis,detalle,PERMITIDO
+Administrador,/postventa/tickets,tickets,PERMITIDO
+Administrador,/postventa/tickets,bandeja,PERMITIDO
+Administrador,/postventa/tickets,calendario,PERMITIDO
+Administrador,/postventa/tickets,nuevo,PERMITIDO
+Administrador,/postventa/tickets,dashboard,PERMITIDO
+Administrador,/postventa/tickets,tecnicos,PERMITIDO
 Oscar Leiva,/inventory/conteo,contar,DENEGADO
 Oscar Leiva,/inventory/conteo,sesiones,DENEGADO
 Oscar Leiva,/inventory/conteo,conciliacion,DENEGADO
@@ -246,6 +170,101 @@ Oscar Leiva,/postventa/tickets,calendario,PERMITIDO
 Oscar Leiva,/postventa/tickets,nuevo,PERMITIDO
 Oscar Leiva,/postventa/tickets,dashboard,PERMITIDO
 Oscar Leiva,/postventa/tickets,tecnicos,PERMITIDO
+NILO Langebach,/inventory/conteo,contar,DENEGADO
+NILO Langebach,/inventory/conteo,sesiones,DENEGADO
+NILO Langebach,/inventory/conteo,conciliacion,DENEGADO
+NILO Langebach,/inventory/conteo,ajuste,DENEGADO
+NILO Langebach,/inventory/conteo,bloques,DENEGADO
+NILO Langebach,/inventory/conteo,proyeccion,DENEGADO
+NILO Langebach,/inventory/analisis,resumen,DENEGADO
+NILO Langebach,/inventory/analisis,antiguos,DENEGADO
+NILO Langebach,/inventory/analisis,antiguos_disp,DENEGADO
+NILO Langebach,/inventory/analisis,no_activos_stock,DENEGADO
+NILO Langebach,/inventory/analisis,duplicados,DENEGADO
+NILO Langebach,/inventory/analisis,anomalias,DENEGADO
+NILO Langebach,/inventory/analisis,detalle,DENEGADO
+NILO Langebach,/postventa/tickets,tickets,DENEGADO
+NILO Langebach,/postventa/tickets,bandeja,DENEGADO
+NILO Langebach,/postventa/tickets,calendario,DENEGADO
+NILO Langebach,/postventa/tickets,nuevo,DENEGADO
+NILO Langebach,/postventa/tickets,dashboard,DENEGADO
+NILO Langebach,/postventa/tickets,tecnicos,DENEGADO
+Cristopher,/inventory/conteo,contar,PERMITIDO
+Cristopher,/inventory/conteo,sesiones,PERMITIDO
+Cristopher,/inventory/conteo,conciliacion,PERMITIDO
+Cristopher,/inventory/conteo,ajuste,PERMITIDO
+Cristopher,/inventory/conteo,bloques,PERMITIDO
+Cristopher,/inventory/conteo,proyeccion,PERMITIDO
+Cristopher,/inventory/analisis,resumen,PERMITIDO
+Cristopher,/inventory/analisis,antiguos,PERMITIDO
+Cristopher,/inventory/analisis,antiguos_disp,PERMITIDO
+Cristopher,/inventory/analisis,no_activos_stock,PERMITIDO
+Cristopher,/inventory/analisis,duplicados,PERMITIDO
+Cristopher,/inventory/analisis,anomalias,PERMITIDO
+Cristopher,/inventory/analisis,detalle,PERMITIDO
+Cristopher,/postventa/tickets,tickets,DENEGADO
+Cristopher,/postventa/tickets,bandeja,DENEGADO
+Cristopher,/postventa/tickets,calendario,DENEGADO
+Cristopher,/postventa/tickets,nuevo,DENEGADO
+Cristopher,/postventa/tickets,dashboard,DENEGADO
+Cristopher,/postventa/tickets,tecnicos,DENEGADO
+María Angélica,/inventory/conteo,contar,DENEGADO
+María Angélica,/inventory/conteo,sesiones,DENEGADO
+María Angélica,/inventory/conteo,conciliacion,DENEGADO
+María Angélica,/inventory/conteo,ajuste,DENEGADO
+María Angélica,/inventory/conteo,bloques,DENEGADO
+María Angélica,/inventory/conteo,proyeccion,DENEGADO
+María Angélica,/inventory/analisis,resumen,DENEGADO
+María Angélica,/inventory/analisis,antiguos,DENEGADO
+María Angélica,/inventory/analisis,antiguos_disp,DENEGADO
+María Angélica,/inventory/analisis,no_activos_stock,DENEGADO
+María Angélica,/inventory/analisis,duplicados,DENEGADO
+María Angélica,/inventory/analisis,anomalias,DENEGADO
+María Angélica,/inventory/analisis,detalle,DENEGADO
+María Angélica,/postventa/tickets,tickets,DENEGADO
+María Angélica,/postventa/tickets,bandeja,DENEGADO
+María Angélica,/postventa/tickets,calendario,DENEGADO
+María Angélica,/postventa/tickets,nuevo,DENEGADO
+María Angélica,/postventa/tickets,dashboard,DENEGADO
+María Angélica,/postventa/tickets,tecnicos,DENEGADO
+Revision,/inventory/conteo,contar,DENEGADO
+Revision,/inventory/conteo,sesiones,DENEGADO
+Revision,/inventory/conteo,conciliacion,DENEGADO
+Revision,/inventory/conteo,ajuste,DENEGADO
+Revision,/inventory/conteo,bloques,DENEGADO
+Revision,/inventory/conteo,proyeccion,DENEGADO
+Revision,/inventory/analisis,resumen,DENEGADO
+Revision,/inventory/analisis,antiguos,DENEGADO
+Revision,/inventory/analisis,antiguos_disp,DENEGADO
+Revision,/inventory/analisis,no_activos_stock,DENEGADO
+Revision,/inventory/analisis,duplicados,DENEGADO
+Revision,/inventory/analisis,anomalias,DENEGADO
+Revision,/inventory/analisis,detalle,DENEGADO
+Revision,/postventa/tickets,tickets,DENEGADO
+Revision,/postventa/tickets,bandeja,DENEGADO
+Revision,/postventa/tickets,calendario,DENEGADO
+Revision,/postventa/tickets,nuevo,DENEGADO
+Revision,/postventa/tickets,dashboard,DENEGADO
+Revision,/postventa/tickets,tecnicos,DENEGADO
+MOISES,/inventory/conteo,contar,DENEGADO
+MOISES,/inventory/conteo,sesiones,DENEGADO
+MOISES,/inventory/conteo,conciliacion,DENEGADO
+MOISES,/inventory/conteo,ajuste,DENEGADO
+MOISES,/inventory/conteo,bloques,DENEGADO
+MOISES,/inventory/conteo,proyeccion,DENEGADO
+MOISES,/inventory/analisis,resumen,DENEGADO
+MOISES,/inventory/analisis,antiguos,DENEGADO
+MOISES,/inventory/analisis,antiguos_disp,DENEGADO
+MOISES,/inventory/analisis,no_activos_stock,DENEGADO
+MOISES,/inventory/analisis,duplicados,DENEGADO
+MOISES,/inventory/analisis,anomalias,DENEGADO
+MOISES,/inventory/analisis,detalle,DENEGADO
+MOISES,/postventa/tickets,tickets,DENEGADO
+MOISES,/postventa/tickets,bandeja,DENEGADO
+MOISES,/postventa/tickets,calendario,DENEGADO
+MOISES,/postventa/tickets,nuevo,DENEGADO
+MOISES,/postventa/tickets,dashboard,DENEGADO
+MOISES,/postventa/tickets,tecnicos,DENEGADO
 PickingBD1,/inventory/conteo,contar,DENEGADO
 PickingBD1,/inventory/conteo,sesiones,DENEGADO
 PickingBD1,/inventory/conteo,conciliacion,DENEGADO
@@ -284,22 +303,3 @@ PickingBD3,/postventa/tickets,calendario,DENEGADO
 PickingBD3,/postventa/tickets,nuevo,DENEGADO
 PickingBD3,/postventa/tickets,dashboard,DENEGADO
 PickingBD3,/postventa/tickets,tecnicos,DENEGADO
-Revision,/inventory/conteo,contar,DENEGADO
-Revision,/inventory/conteo,sesiones,DENEGADO
-Revision,/inventory/conteo,conciliacion,DENEGADO
-Revision,/inventory/conteo,ajuste,DENEGADO
-Revision,/inventory/conteo,bloques,DENEGADO
-Revision,/inventory/conteo,proyeccion,DENEGADO
-Revision,/inventory/analisis,resumen,DENEGADO
-Revision,/inventory/analisis,antiguos,DENEGADO
-Revision,/inventory/analisis,antiguos_disp,DENEGADO
-Revision,/inventory/analisis,no_activos_stock,DENEGADO
-Revision,/inventory/analisis,duplicados,DENEGADO
-Revision,/inventory/analisis,anomalias,DENEGADO
-Revision,/inventory/analisis,detalle,DENEGADO
-Revision,/postventa/tickets,tickets,DENEGADO
-Revision,/postventa/tickets,bandeja,DENEGADO
-Revision,/postventa/tickets,calendario,DENEGADO
-Revision,/postventa/tickets,nuevo,DENEGADO
-Revision,/postventa/tickets,dashboard,DENEGADO
-Revision,/postventa/tickets,tecnicos,DENEGADO

@@ -1,32 +1,4 @@
 usuario,funcion,estado,via
-Admin Respaldo,guardar_nv (crear/editar N.V.),PERMITIDO,Bypass ADMIN
-Admin Respaldo,cambiar_estado_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,eliminar_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,solicitar_reapertura_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,resolver_reapertura_nv,PERMITIDO,Bypass ADMIN
-Admin Respaldo,wms_move_stock,PERMITIDO,Bypass ADMIN
-Admin Respaldo,batch_update_nv_estado,PERMITIDO,Bypass ADMIN
-Admin Respaldo,bulk_upsert (11 tablas stock),PERMITIDO,Bypass ADMIN
-Admin Respaldo,ia_kpis / ia_buscar_* (Asistente),PERMITIDO,Bypass ADMIN
-Admin Respaldo,iam_asignar_scope / iam_*,PERMITIDO,Bypass ADMIN
-Admin Respaldo,insumos_guardar/set_cantidad,PERMITIDO,Bypass ADMIN
-Admin Respaldo,monitoreo_dictaminar,PERMITIDO,Bypass ADMIN
-Admin Respaldo,pv_correos_ticket,PERMITIDO,Bypass ADMIN
-Admin Respaldo,usuarios_bulk / guardar_usuario,PERMITIDO,Bypass ADMIN
-Administrador,guardar_nv (crear/editar N.V.),PERMITIDO,Bypass ADMIN
-Administrador,cambiar_estado_nv,PERMITIDO,Bypass ADMIN
-Administrador,eliminar_nv,PERMITIDO,Bypass ADMIN
-Administrador,solicitar_reapertura_nv,PERMITIDO,Bypass ADMIN
-Administrador,resolver_reapertura_nv,PERMITIDO,Bypass ADMIN
-Administrador,wms_move_stock,PERMITIDO,Bypass ADMIN
-Administrador,batch_update_nv_estado,PERMITIDO,Bypass ADMIN
-Administrador,bulk_upsert (11 tablas stock),PERMITIDO,Bypass ADMIN
-Administrador,ia_kpis / ia_buscar_* (Asistente),PERMITIDO,Bypass ADMIN
-Administrador,iam_asignar_scope / iam_*,PERMITIDO,Bypass ADMIN
-Administrador,insumos_guardar/set_cantidad,PERMITIDO,Bypass ADMIN
-Administrador,monitoreo_dictaminar,PERMITIDO,Bypass ADMIN
-Administrador,pv_correos_ticket,PERMITIDO,Bypass ADMIN
-Administrador,usuarios_bulk / guardar_usuario,PERMITIDO,Bypass ADMIN
 ARIEL SPOLANSKY,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
 ARIEL SPOLANSKY,cambiar_estado_nv,DENEGADO,No asignado
 ARIEL SPOLANSKY,eliminar_nv,DENEGADO,No asignado
@@ -41,62 +13,6 @@ ARIEL SPOLANSKY,insumos_guardar/set_cantidad,DENEGADO,No asignado
 ARIEL SPOLANSKY,monitoreo_dictaminar,DENEGADO,No asignado
 ARIEL SPOLANSKY,pv_correos_ticket,DENEGADO,No asignado
 ARIEL SPOLANSKY,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Christian Vargas,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
-Christian Vargas,cambiar_estado_nv,DENEGADO,No asignado
-Christian Vargas,eliminar_nv,DENEGADO,No asignado
-Christian Vargas,solicitar_reapertura_nv,DENEGADO,No asignado
-Christian Vargas,resolver_reapertura_nv,DENEGADO,No asignado
-Christian Vargas,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Christian Vargas,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Christian Vargas,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Christian Vargas,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Christian Vargas,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Christian Vargas,insumos_guardar/set_cantidad,DENEGADO,No asignado
-Christian Vargas,monitoreo_dictaminar,DENEGADO,No asignado
-Christian Vargas,pv_correos_ticket,DENEGADO,No asignado
-Christian Vargas,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Cristopher,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
-Cristopher,cambiar_estado_nv,DENEGADO,No asignado
-Cristopher,eliminar_nv,DENEGADO,No asignado
-Cristopher,solicitar_reapertura_nv,DENEGADO,No asignado
-Cristopher,resolver_reapertura_nv,DENEGADO,No asignado
-Cristopher,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Cristopher,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Cristopher,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Cristopher,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Cristopher,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Cristopher,insumos_guardar/set_cantidad,PERMITIDO,gate manage_insumos|manage_inventory
-Cristopher,monitoreo_dictaminar,DENEGADO,No asignado
-Cristopher,pv_correos_ticket,DENEGADO,No asignado
-Cristopher,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Gisselle Romero,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
-Gisselle Romero,cambiar_estado_nv,PERMITIDO,gate manage_panel
-Gisselle Romero,eliminar_nv,DENEGADO,No asignado
-Gisselle Romero,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
-Gisselle Romero,resolver_reapertura_nv,DENEGADO,No asignado
-Gisselle Romero,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Gisselle Romero,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Gisselle Romero,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Gisselle Romero,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Gisselle Romero,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Gisselle Romero,insumos_guardar/set_cantidad,DENEGADO,No asignado
-Gisselle Romero,monitoreo_dictaminar,DENEGADO,No asignado
-Gisselle Romero,pv_correos_ticket,DENEGADO,No asignado
-Gisselle Romero,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Juan Carlos,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
-Juan Carlos,cambiar_estado_nv,DENEGADO,No asignado
-Juan Carlos,eliminar_nv,DENEGADO,No asignado
-Juan Carlos,solicitar_reapertura_nv,DENEGADO,No asignado
-Juan Carlos,resolver_reapertura_nv,DENEGADO,No asignado
-Juan Carlos,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Juan Carlos,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Juan Carlos,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Juan Carlos,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Juan Carlos,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Juan Carlos,insumos_guardar/set_cantidad,DENEGADO,No asignado
-Juan Carlos,monitoreo_dictaminar,DENEGADO,No asignado
-Juan Carlos,pv_correos_ticket,DENEGADO,No asignado
-Juan Carlos,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
 Lucas Toloza,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
 Lucas Toloza,cambiar_estado_nv,DENEGADO,No asignado
 Lucas Toloza,eliminar_nv,DENEGADO,No asignado
@@ -111,6 +27,48 @@ Lucas Toloza,insumos_guardar/set_cantidad,DENEGADO,No asignado
 Lucas Toloza,monitoreo_dictaminar,DENEGADO,No asignado
 Lucas Toloza,pv_correos_ticket,DENEGADO,No asignado
 Lucas Toloza,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Admin Respaldo,guardar_nv (crear/editar N.V.),PERMITIDO,Bypass ADMIN
+Admin Respaldo,cambiar_estado_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,eliminar_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,solicitar_reapertura_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,resolver_reapertura_nv,PERMITIDO,Bypass ADMIN
+Admin Respaldo,wms_move_stock,PERMITIDO,Bypass ADMIN
+Admin Respaldo,batch_update_nv_estado,PERMITIDO,Bypass ADMIN
+Admin Respaldo,bulk_upsert (11 tablas stock),PERMITIDO,Bypass ADMIN
+Admin Respaldo,ia_kpis / ia_buscar_* (Asistente),PERMITIDO,Bypass ADMIN
+Admin Respaldo,iam_asignar_scope / iam_*,PERMITIDO,Bypass ADMIN
+Admin Respaldo,insumos_guardar/set_cantidad,PERMITIDO,Bypass ADMIN
+Admin Respaldo,monitoreo_dictaminar,PERMITIDO,Bypass ADMIN
+Admin Respaldo,pv_correos_ticket,PERMITIDO,Bypass ADMIN
+Admin Respaldo,usuarios_bulk / guardar_usuario,PERMITIDO,Bypass ADMIN
+Juan Carlos,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
+Juan Carlos,cambiar_estado_nv,DENEGADO,No asignado
+Juan Carlos,eliminar_nv,DENEGADO,No asignado
+Juan Carlos,solicitar_reapertura_nv,DENEGADO,No asignado
+Juan Carlos,resolver_reapertura_nv,DENEGADO,No asignado
+Juan Carlos,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Juan Carlos,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Juan Carlos,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+Juan Carlos,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+Juan Carlos,iam_asignar_scope / iam_*,DENEGADO,No asignado
+Juan Carlos,insumos_guardar/set_cantidad,DENEGADO,No asignado
+Juan Carlos,monitoreo_dictaminar,DENEGADO,No asignado
+Juan Carlos,pv_correos_ticket,DENEGADO,No asignado
+Juan Carlos,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Christian Vargas,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
+Christian Vargas,cambiar_estado_nv,DENEGADO,No asignado
+Christian Vargas,eliminar_nv,DENEGADO,No asignado
+Christian Vargas,solicitar_reapertura_nv,DENEGADO,No asignado
+Christian Vargas,resolver_reapertura_nv,DENEGADO,No asignado
+Christian Vargas,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Christian Vargas,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Christian Vargas,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+Christian Vargas,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+Christian Vargas,iam_asignar_scope / iam_*,DENEGADO,No asignado
+Christian Vargas,insumos_guardar/set_cantidad,DENEGADO,No asignado
+Christian Vargas,monitoreo_dictaminar,DENEGADO,No asignado
+Christian Vargas,pv_correos_ticket,DENEGADO,No asignado
+Christian Vargas,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
 Marco Negroni,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
 Marco Negroni,cambiar_estado_nv,DENEGADO,No asignado
 Marco Negroni,eliminar_nv,DENEGADO,No asignado
@@ -125,48 +83,34 @@ Marco Negroni,insumos_guardar/set_cantidad,DENEGADO,No asignado
 Marco Negroni,monitoreo_dictaminar,PERMITIDO,gate manage_quality|manage_monitoreo
 Marco Negroni,pv_correos_ticket,DENEGADO,No asignado
 Marco Negroni,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Maria Angelica,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
-Maria Angelica,cambiar_estado_nv,PERMITIDO,gate manage_panel
-Maria Angelica,eliminar_nv,PERMITIDO,allowlist individual (mig 099)
-Maria Angelica,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
-Maria Angelica,resolver_reapertura_nv,DENEGADO,No asignado
-Maria Angelica,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Maria Angelica,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Maria Angelica,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Maria Angelica,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Maria Angelica,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Maria Angelica,insumos_guardar/set_cantidad,DENEGADO,No asignado
-Maria Angelica,monitoreo_dictaminar,DENEGADO,No asignado
-Maria Angelica,pv_correos_ticket,DENEGADO,No asignado
-Maria Angelica,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-MOISES,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
-MOISES,cambiar_estado_nv,DENEGADO,No asignado
-MOISES,eliminar_nv,DENEGADO,No asignado
-MOISES,solicitar_reapertura_nv,DENEGADO,No asignado
-MOISES,resolver_reapertura_nv,DENEGADO,No asignado
-MOISES,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-MOISES,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-MOISES,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-MOISES,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-MOISES,iam_asignar_scope / iam_*,DENEGADO,No asignado
-MOISES,insumos_guardar/set_cantidad,DENEGADO,No asignado
-MOISES,monitoreo_dictaminar,DENEGADO,No asignado
-MOISES,pv_correos_ticket,DENEGADO,No asignado
-MOISES,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-NILO Langebach,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
-NILO Langebach,cambiar_estado_nv,PERMITIDO,gate manage_panel
-NILO Langebach,eliminar_nv,DENEGADO,No asignado
-NILO Langebach,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
-NILO Langebach,resolver_reapertura_nv,DENEGADO,No asignado
-NILO Langebach,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-NILO Langebach,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-NILO Langebach,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-NILO Langebach,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-NILO Langebach,iam_asignar_scope / iam_*,DENEGADO,No asignado
-NILO Langebach,insumos_guardar/set_cantidad,DENEGADO,No asignado
-NILO Langebach,monitoreo_dictaminar,DENEGADO,No asignado
-NILO Langebach,pv_correos_ticket,DENEGADO,No asignado
-NILO Langebach,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Gisselle Romero,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
+Gisselle Romero,cambiar_estado_nv,PERMITIDO,gate manage_panel
+Gisselle Romero,eliminar_nv,DENEGADO,No asignado
+Gisselle Romero,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
+Gisselle Romero,resolver_reapertura_nv,DENEGADO,No asignado
+Gisselle Romero,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Gisselle Romero,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Gisselle Romero,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+Gisselle Romero,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+Gisselle Romero,iam_asignar_scope / iam_*,DENEGADO,No asignado
+Gisselle Romero,insumos_guardar/set_cantidad,DENEGADO,No asignado
+Gisselle Romero,monitoreo_dictaminar,DENEGADO,No asignado
+Gisselle Romero,pv_correos_ticket,DENEGADO,No asignado
+Gisselle Romero,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Administrador,guardar_nv (crear/editar N.V.),PERMITIDO,Bypass ADMIN
+Administrador,cambiar_estado_nv,PERMITIDO,Bypass ADMIN
+Administrador,eliminar_nv,PERMITIDO,Bypass ADMIN
+Administrador,solicitar_reapertura_nv,PERMITIDO,Bypass ADMIN
+Administrador,resolver_reapertura_nv,PERMITIDO,Bypass ADMIN
+Administrador,wms_move_stock,PERMITIDO,Bypass ADMIN
+Administrador,batch_update_nv_estado,PERMITIDO,Bypass ADMIN
+Administrador,bulk_upsert (11 tablas stock),PERMITIDO,Bypass ADMIN
+Administrador,ia_kpis / ia_buscar_* (Asistente),PERMITIDO,Bypass ADMIN
+Administrador,iam_asignar_scope / iam_*,PERMITIDO,Bypass ADMIN
+Administrador,insumos_guardar/set_cantidad,PERMITIDO,Bypass ADMIN
+Administrador,monitoreo_dictaminar,PERMITIDO,Bypass ADMIN
+Administrador,pv_correos_ticket,PERMITIDO,Bypass ADMIN
+Administrador,usuarios_bulk / guardar_usuario,PERMITIDO,Bypass ADMIN
 Oscar Leiva,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
 Oscar Leiva,cambiar_estado_nv,PERMITIDO,gate manage_panel
 Oscar Leiva,eliminar_nv,DENEGADO,No asignado
@@ -181,6 +125,76 @@ Oscar Leiva,insumos_guardar/set_cantidad,DENEGADO,No asignado
 Oscar Leiva,monitoreo_dictaminar,PERMITIDO,gate manage_quality|manage_monitoreo
 Oscar Leiva,pv_correos_ticket,PERMITIDO,gate view/manage/supervise_postventa
 Oscar Leiva,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+NILO Langebach,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
+NILO Langebach,cambiar_estado_nv,PERMITIDO,gate manage_panel
+NILO Langebach,eliminar_nv,DENEGADO,No asignado
+NILO Langebach,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
+NILO Langebach,resolver_reapertura_nv,DENEGADO,No asignado
+NILO Langebach,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+NILO Langebach,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+NILO Langebach,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+NILO Langebach,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+NILO Langebach,iam_asignar_scope / iam_*,DENEGADO,No asignado
+NILO Langebach,insumos_guardar/set_cantidad,DENEGADO,No asignado
+NILO Langebach,monitoreo_dictaminar,DENEGADO,No asignado
+NILO Langebach,pv_correos_ticket,DENEGADO,No asignado
+NILO Langebach,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Cristopher,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
+Cristopher,cambiar_estado_nv,DENEGADO,No asignado
+Cristopher,eliminar_nv,DENEGADO,No asignado
+Cristopher,solicitar_reapertura_nv,DENEGADO,No asignado
+Cristopher,resolver_reapertura_nv,DENEGADO,No asignado
+Cristopher,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Cristopher,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Cristopher,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+Cristopher,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+Cristopher,iam_asignar_scope / iam_*,DENEGADO,No asignado
+Cristopher,insumos_guardar/set_cantidad,PERMITIDO,gate manage_insumos|manage_inventory
+Cristopher,monitoreo_dictaminar,DENEGADO,No asignado
+Cristopher,pv_correos_ticket,DENEGADO,No asignado
+Cristopher,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+María Angélica,guardar_nv (crear/editar N.V.),PERMITIDO,gate manage_panel
+María Angélica,cambiar_estado_nv,PERMITIDO,gate manage_panel
+María Angélica,eliminar_nv,PERMITIDO,allowlist individual (mig 099)
+María Angélica,solicitar_reapertura_nv,PERMITIDO,gate manage_panel
+María Angélica,resolver_reapertura_nv,DENEGADO,No asignado
+María Angélica,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+María Angélica,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+María Angélica,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+María Angélica,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+María Angélica,iam_asignar_scope / iam_*,DENEGADO,No asignado
+María Angélica,insumos_guardar/set_cantidad,DENEGADO,No asignado
+María Angélica,monitoreo_dictaminar,DENEGADO,No asignado
+María Angélica,pv_correos_ticket,DENEGADO,No asignado
+María Angélica,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+Revision,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
+Revision,cambiar_estado_nv,DENEGADO,No asignado
+Revision,eliminar_nv,DENEGADO,No asignado
+Revision,solicitar_reapertura_nv,DENEGADO,No asignado
+Revision,resolver_reapertura_nv,DENEGADO,No asignado
+Revision,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Revision,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+Revision,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+Revision,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+Revision,iam_asignar_scope / iam_*,DENEGADO,No asignado
+Revision,insumos_guardar/set_cantidad,DENEGADO,No asignado
+Revision,monitoreo_dictaminar,DENEGADO,No asignado
+Revision,pv_correos_ticket,DENEGADO,No asignado
+Revision,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
+MOISES,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
+MOISES,cambiar_estado_nv,DENEGADO,No asignado
+MOISES,eliminar_nv,DENEGADO,No asignado
+MOISES,solicitar_reapertura_nv,DENEGADO,No asignado
+MOISES,resolver_reapertura_nv,DENEGADO,No asignado
+MOISES,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
+MOISES,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
+MOISES,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
+MOISES,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
+MOISES,iam_asignar_scope / iam_*,DENEGADO,No asignado
+MOISES,insumos_guardar/set_cantidad,DENEGADO,No asignado
+MOISES,monitoreo_dictaminar,DENEGADO,No asignado
+MOISES,pv_correos_ticket,DENEGADO,No asignado
+MOISES,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
 PickingBD1,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
 PickingBD1,cambiar_estado_nv,DENEGADO,No asignado
 PickingBD1,eliminar_nv,DENEGADO,No asignado
@@ -209,17 +223,3 @@ PickingBD3,insumos_guardar/set_cantidad,DENEGADO,No asignado
 PickingBD3,monitoreo_dictaminar,DENEGADO,No asignado
 PickingBD3,pv_correos_ticket,DENEGADO,No asignado
 PickingBD3,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
-Revision,guardar_nv (crear/editar N.V.),DENEGADO,No asignado
-Revision,cambiar_estado_nv,DENEGADO,No asignado
-Revision,eliminar_nv,DENEGADO,No asignado
-Revision,solicitar_reapertura_nv,DENEGADO,No asignado
-Revision,resolver_reapertura_nv,DENEGADO,No asignado
-Revision,wms_move_stock,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Revision,batch_update_nv_estado,PERMITIDO,HALLAZGO: sin gate (authenticated)
-Revision,bulk_upsert (11 tablas stock),PERMITIDO,HALLAZGO: allowlist sin gate
-Revision,ia_kpis / ia_buscar_* (Asistente),DENEGADO,No asignado
-Revision,iam_asignar_scope / iam_*,DENEGADO,No asignado
-Revision,insumos_guardar/set_cantidad,DENEGADO,No asignado
-Revision,monitoreo_dictaminar,DENEGADO,No asignado
-Revision,pv_correos_ticket,DENEGADO,No asignado
-Revision,usuarios_bulk / guardar_usuario,DENEGADO,No asignado
