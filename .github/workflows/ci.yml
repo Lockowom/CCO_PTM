@@ -1,0 +1,45 @@
+﻿name: CI (baseline)
+
+on:
+  push:
+    branches: [main, 'release-*']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Lint + Typecheck + Tests + Build
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.12.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Tests unitarios (Vitest)
+        run: npm run test
+
+      - name: Build de producción (Vite)
+        run: npm run build
+
+      - name: Verificar contrato de permisos (fail-closed)
+        run: npx vitest run src/tests/routePermissionMatrix.test.js src/tests/operationalContracts.test.js

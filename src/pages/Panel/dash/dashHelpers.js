@@ -1,4 +1,11 @@
 // Helpers portados de panel- (format.ts, estados.ts, businessDays.ts) a JS plano.
+// PR-009: los estados N.V. se DERIVAN de `operationalContracts.js` (SSOT).
+import {
+  ESTADO_NV,
+  ESTADO_NV_MIGRACION,
+  ESTADO_NV_ACTIVOS,
+  ESTADO_NV_FLUJO
+} from '../../../constants/operationalContracts';
 
 /* ──────────────── format ──────────────── */
 
@@ -57,38 +64,17 @@ export function hexToRgbObj(hex) {
 /* ──────────────── estados ──────────────── */
 
 /** Nombres canónicos de los estados (la forma "nueva", capitalizada). */
-export const ESTADOS = {
-  EN_PROCESO: 'En Proceso',
-  SHIPPING: 'Shipping',
-  EN_RUTA: 'En Ruta',
-  ENTREGADO: 'Entregado',
-  RECIBIDO_CONFORME: 'Recibido Conforme',
-  RECIBIDO_OBS: 'Recibido C/OBS'
-};
+export const ESTADOS = ESTADO_NV;
 
 // Mapeo de estados VIEJOS (en MAYÚSCULAS) → nuevos canónicos.
-export const ESTADO_MIGRACION = {
-  'EN PROCESO': ESTADOS.EN_PROCESO,
-  'EN SHIPPING': ESTADOS.SHIPPING,
-  'P / VENDEDOR': ESTADOS.SHIPPING,
-  'P / STOCK': ESTADOS.EN_PROCESO,
-  'P / RETIRO': ESTADOS.SHIPPING,
-  CURRIER: ESTADOS.EN_RUTA,
-  Currier: ESTADOS.EN_RUTA,
-  'EN RUTA': ESTADOS.EN_RUTA,
-  ENTREGADO: ESTADOS.ENTREGADO,
-  'RECIBIDO CONFORME': ESTADOS.ENTREGADO,
-  'RECIBIDO C/OBS': ESTADOS.ENTREGADO,
-  'Recibido Conforme': ESTADOS.ENTREGADO,
-  'Recibido C/OBS': ESTADOS.ENTREGADO
-};
+export const ESTADO_MIGRACION = ESTADO_NV_MIGRACION;
 
 export function normEstado(e) {
   return e ? ESTADO_MIGRACION[e] || e : '';
 }
 
 // Estados "activos" visibles en la lista de /ingresar (sin Entregado/Recibido*).
-export const ESTADOS_ACTIVOS_LISTA = [ESTADOS.EN_PROCESO, ESTADOS.SHIPPING, ESTADOS.EN_RUTA];
+export const ESTADOS_ACTIVOS_LISTA = ESTADO_NV_ACTIVOS;
 
 // Estados que implican que la NV ya salió a despacho (estampan fecha_despacho).
 export const ESTADOS_DESPACHO = [
@@ -106,12 +92,7 @@ export const ESTADOS_REQUIERE_COMPROMISO = [
 ];
 
 // Estados seleccionables en los dropdowns de alta/edición.
-export const ESTADOS_SELECCIONABLES = [
-  ESTADOS.EN_PROCESO,
-  ESTADOS.SHIPPING,
-  ESTADOS.EN_RUTA,
-  ESTADOS.ENTREGADO
-];
+export const ESTADOS_SELECCIONABLES = ESTADO_NV_FLUJO;
 
 export const ESTADO_COLOR = {
   [ESTADOS.EN_PROCESO]: '#f59e0b',

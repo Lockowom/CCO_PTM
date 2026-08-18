@@ -17,9 +17,10 @@ export const APP_MODULES = [
 ];
 
 export const APP_ROUTES = [
-  // TMS (Transporte) OCULTO — módulo no operativo (rutas siguen existiendo en App.jsx).
-  // { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
-  // { value: '/tms/pda', label: 'TMS - Mi Ruta (Chofer)', module: 'tms' },
+  // TMS (Transporte) OCULTO — rutas siguen existiendo en App.jsx; se reactivarán
+  // en el menú cuando el módulo esté operativo.
+  { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
+  { value: '/tms/pda', label: 'TMS - Mi Ruta (Chofer)', module: 'tms' },
   // PDA Operativa de Bodega (herramienta de bodega, ahora bajo Inventario)
   { value: '/mobile/pda', label: 'PDA Operativa (Bodega)', module: 'inventario' },
 
@@ -183,16 +184,18 @@ export const APP_ROUTES = [
 ];
 
 export const APP_PERMISSIONS = [
-  // TMS (Transporte) OCULTO — módulo no operativo; se reactivará cuando esté listo.
-  // {
-  //   id: 'tms',
-  //   label: 'TMS (Transporte)',
-  //   permissions: [
-  //     { id: 'view_tms', label: 'Ver Torre de Control' },
-  //     { id: 'manage_tms', label: 'Gestionar (asignar, estados, POD)' },
-  //     { id: 'supervise_tms', label: 'Supervisar (cancelar, incidencias)' }
-  //   ]
-  // },
+  // TMS (Transporte) OCULTO — rutas `/tms/*` siguen vivas en App.jsx y su acceso
+  // se resuelve por ROUTE_PERMISSIONS; los permisos se mantienen en el catálogo
+  // para no perder asignaciones existentes (gate PERMISSION_LOSS=0 del TXT 00).
+  {
+    id: 'tms',
+    label: 'TMS (Transporte)',
+    permissions: [
+      { id: 'view_tms', label: 'Ver Torre de Control' },
+      { id: 'manage_tms', label: 'Gestionar (asignar, estados, POD)' },
+      { id: 'supervise_tms', label: 'Supervisar (cancelar, incidencias)' }
+    ]
+  },
   {
     id: 'inventario',
     label: 'Inventario (Traspasos + Conteo Cíclico)',

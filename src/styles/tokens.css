@@ -1,0 +1,116 @@
+/* ============================================================================
+ * PR-012 · CCO 2.0 Design Tokens (TXT 03 §2)
+ *
+ * Tokens semánticos de la plataforma. Se consumen como variables CSS o a
+ * través de utilidades Tailwind (colors/spacing/radius/shadow). La fuente
+ * principal de la UI es `--font-sans` (Inter); Poppins queda para marcas y
+ * JetBrains Mono para SKUs/códigos/números.
+ * ============================================================================
+ */
+
+:root {
+  /* ── Brand ─────────────────────────────────────────────────────────────── */
+  --brand-50: #fff7ed;
+  --brand-100: #ffedd5;
+  --brand-200: #fed7aa;
+  --brand-300: #fdba74;
+  --brand-400: #fb923c;
+  --brand-500: #f97316;
+  --brand-600: #ea580c;
+  --brand-700: #c2410c;
+  --brand-800: #9a3412;
+  --brand-900: #7c2d12;
+
+  /* ── Surface (dark-first) ──────────────────────────────────────────────── */
+  --surface-void: #07080a;
+  --surface-base: #0c0e12;
+  --surface-elevated: #12151c;
+  --surface-card: #181b24;
+  --surface-overlay: #1e2430;
+  --surface-inverse: #f1f5f9;
+
+  /* ── Border ────────────────────────────────────────────────────────────── */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-default: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-accent: rgba(249, 115, 22, 0.35);
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --text-inverse: #0f172a;
+  --text-link: #38bdf8;
+
+  /* ── Semantic status ───────────────────────────────────────────────────── */
+  --status-ok: #10b981;
+  --status-ok-subtle: rgba(16, 185, 129, 0.12);
+  --status-warning: #f59e0b;
+  --status-warning-subtle: rgba(245, 158, 11, 0.14);
+  --status-danger: #ef4444;
+  --status-danger-subtle: rgba(239, 68, 68, 0.14);
+  --status-info: #3b82f6;
+  --status-info-subtle: rgba(59, 130, 246, 0.14);
+  --status-accent: #8b5cf6;
+  --status-accent-subtle: rgba(139, 92, 246, 0.14);
+
+  /* ── Spacing ───────────────────────────────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --panel-padding: 1.5rem;
+
+  /* ── Radius ────────────────────────────────────────────────────────────── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+
+  /* ── Shadow ────────────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --shadow-glow-accent: 0 0 15px rgba(249, 115, 22, 0.25);
+  --shadow-glow-ok: 0 0 15px rgba(16, 185, 129, 0.2);
+
+  /* ── Font ──────────────────────────────────────────────────────────────── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-brand: 'Poppins', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-slow: 240ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Z-index ───────────────────────────────────────────────────────────── */
+  --z-sticky: 100;
+  --z-drawer: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-banner: 600;
+}
+
+/* Motion reducida: respeto a prefers-reduced-motion (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

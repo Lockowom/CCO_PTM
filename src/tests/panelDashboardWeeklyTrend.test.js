@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { construirTendenciaSemanal } from '../pages/Panel/dash/dashData';
+vi.mock('../supabase', () => ({ supabase: {} }));
 import { WEEKLY_TREND_RELIABLE_FROM } from '../pages/Panel/dash/weeklyTrendConfig';
 
 describe('tendencia semanal del Panel PTM', () => {

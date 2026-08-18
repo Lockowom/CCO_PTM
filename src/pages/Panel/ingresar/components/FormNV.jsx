@@ -1071,6 +1071,38 @@ export default function FormNV({
                 <span>⚠</span>
                 {submitResult.message}
               </p>
+              {submitResult.diff &&
+                (submitResult.diff.serverChanges.length > 0 ||
+                  submitResult.diff.tusChanges.length > 0) && (
+                  <div className="mt-2.5 space-y-2 text-[12px]">
+                    {submitResult.diff.serverChanges.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-red-700">
+                          Cambios actuales (otro operador):
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-red-600">
+                          {submitResult.diff.serverChanges.map((c, i) => (
+                            <li key={`s${i}`}>
+                              {c.label}: <span className="line-through">{c.de}</span> → {c.a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {submitResult.diff.tusChanges.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-red-700">Tus cambios (no aplicados):</p>
+                        <ul className="mt-1 space-y-0.5 text-red-600">
+                          {submitResult.diff.tusChanges.map((c, i) => (
+                            <li key={`t${i}`}>
+                              {c.label}: {c.a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
           )}
         </>

@@ -7,6 +7,7 @@
 import { supabase } from '../../../supabase';
 import { Logger } from '../../../lib/logger';
 import { withTimeout } from '../../../lib/supabaseQuery';
+import { versionDePayload, esConflicto, resultadoConflicto } from './optimisticVersion';
 
 const OPERACIONES_READ_VIEW = 'tms_operaciones_vigentes';
 const OPERACIONES_BASE_TABLE = 'tms_operaciones';
@@ -729,7 +730,7 @@ export async function opciones({ force = false, includeHistoricos = false } = {}
 
 // ── Lookup de una N.V. (preview para editar) ────────────────────────────────
 const PREVIEW =
-  'id,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia,reabierta,fecha_reapertura,motivo_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_hasta,shipping_pausa_motivo,shipping_pausa_total_segundos,shipping_pausa_elegible_sla,incidencia_area,incidencia_origen,incidencia_reportada_at';
+  'id,row_version,nv_ptm,nv_orange,nv_farmapack,varios,cliente,vendedor,centro_costo,division,estado,transportista,tipo_despacho,fecha_aprobacion,fecha_aprobacion_real,fecha_compromiso,fecha_facturacion,fecha_despacho,fecha_estado,fecha_registro_nv,fecha_en_proceso,fecha_shipping,fecha_en_ruta,fecha_entregado,factura,guia,bultos,valor_factura,numero_envio,urgente,incidencia,estado_incidencia,observaciones_incidencia,reabierta,fecha_reapertura,motivo_reapertura,shipping_subestado,shipping_pausa_desde,shipping_pausa_hasta,shipping_pausa_motivo,shipping_pausa_total_segundos,shipping_pausa_elegible_sla,incidencia_area,incidencia_origen,incidencia_reportada_at';
 // Catálogo maestro NV → cliente/vendedor (hojas CARGA). Fuente precisa.
 export async function buscarNvCatalogo(canal, nv) {
   const t = normNV(nv);
@@ -1128,11 +1129,18 @@ export async function guardar(payload) {
     async () => {
       const { data, error } = await supabase.rpc('guardar_nv', { p });
       const result = rpcResult(data, error);
+      // PR-016 · Optimistic version: si el server detectó que otro operador ya
+      // modificó la N.V. (fecha_estado cambió), NO se pisa el cambio ajeno y se
+      // tipifica como CONFLICT para que el screen recargue el lookup.
+      if (esConflicto(result)) return resultadoConflicto(result);
       if (result?.ok !== false) resetIngresarCaches();
       return result;
     },
     {
-      payload: summarizeOperacionPayload(p),
+      payload: {
+        ...summarizeOperacionPayload(p),
+        version: versionDePayload(p)
+      },
       message: 'Guardado de N.V. en Panel'
     }
   );
@@ -1157,21 +1165,23 @@ export async function puedeCambiarEstadoOperacion(id, estado = null) {
     };
   return data || { permitida: false, message: 'No se pudo validar la transición de estado.' };
 }
-export async function cambiarEstado(id, estado, urgente = null) {
+export async function cambiarEstado(id, estado, urgente = null, expectedVersion = null) {
   return runPanelMutation(
     'cambiar_estado_nv',
     async () => {
       const { data, error } = await supabase.rpc('cambiar_estado_nv', {
         p_id: id,
         p_estado: estado,
-        p_urgente: urgente
+        p_urgente: urgente,
+        p_expected_version: expectedVersion
       });
       const result = rpcResult(data, error);
+      if (esConflicto(result)) return resultadoConflicto(result);
       if (result?.ok !== false) resetIngresarCaches();
       return result;
     },
     {
-      payload: { id, estado, urgente },
+      payload: { id, estado, urgente, expectedVersion },
       message: 'Cambio de estado de N.V. en Panel'
     }
   );
@@ -1262,6 +1272,7 @@ export async function actualizarCampos(id, dirty) {
     async () => {
       const { data, error } = await supabase.rpc('guardar_nv', { p });
       const result = rpcResult(data, error);
+      if (esConflicto(result)) return resultadoConflicto(result);
       if (result?.ok !== false) resetIngresarCaches();
       return result;
     },

@@ -66,6 +66,25 @@ npm run update:traspasos # re-sincroniza el módulo Traspasos (lockowom/em-il) �
   tras completar la migración** (ruta, menú, `frame-src` de Vercel en el CSP y el archivo, todo eliminado).
   Permisos: `view_panel` (umbral) + `manage_panel` + por pantalla `panel_ingresar`/`panel_info`/`panel_tv`/
   `panel_builder` (migración `096`). El módulo `panel` sigue en `tms_modules_config` (Vistas).
+  - **Ingresar N.V. refactor (PR-016)**: la validación del guardado NO vive inline en el screen;
+    está centralizada en módulos puros testeables de `src/pages/Panel/ingresar/`:
+    `preflight.js` (reglas con código: `ESTADO_REQUERIDO`/`SHIPPING_PAUSA_SIN_MOTIVO`/
+    `SHIPPING_PAUSA_ACTIVA`/`IAM_DENEGADO`/`NV_ENTREGADA`/`ORANGE_ASSOCIATION_REQUERIDA`/
+    `CLIENTE_REQUERIDO`), `dataQuality.js` (normalización `normNV`/`normNumber`/`soloFecha`/
+    `sanitizePayload`/`tieneCamposInventario`/`diffNvConflict`) y `optimisticVersion.js`
+    (token de concurrencia **dedicado `row_version` bigint**, NO `fecha_estado` → detección
+    de CONFLICT y de `version_required`/fase D). `ingresarService.guardar/cambiarEstado/
+    actualizarCampos` envían `version` y tipifican el conflicto sin resetear caches; el
+    screen recarga el lookup, NO cierra el modal y muestra el diff (UX conflicto).
+    Migración `173`: columna `row_version` + trigger de incremento + RPCs `guardar_nv`/
+    `cambiar_estado_nv` con gate `p_version`/`p_expected_version` (devuelven la versión
+    nueva) + authz IAM completa + `nv_version_obligatoria()` (fase D). **Estado real**:
+    CODE_READY=true, DB_DEPLOYED=false (migración 173 sin aplicar), CONCURRENCY_ACTIVE=false
+    → hoy compatibility mode (fase A): el gate solo aplica si el cliente envía `version`.
+    Enforcement definitivo = aplicar 173 y luego `set app.nv_require_version='on'` (fase D) +
+    flag cliente `panel_nv_require_version`. Regla transversal **No inventory mutation**:
+    este flujo nunca toca stock (solo `tms_operaciones`); gate `STOCK_SIDE_EFFECT_FROM_PANEL_NV=0`
+    con test BD transaccional en `supabase/verificacion/PR-016_no_stock_mutation_test.sql`.
 
 ## Módulo nativo: Conteo Cíclico
 - **Conteo Cíclico de Inventario** (port nativo del proyecto `lockowom/t-o-inventario`, NO iframe):
@@ -174,6 +193,23 @@ cambio, actualizar SIEMPRE:
 5. Migración SQL — permisos nuevos en `tms_permisos` (id/nombre/modulo) **y** fila del módulo en
    `tms_modules_config` (Vistas solo muestra módulos con fila en esa tabla ∩ APP_MODULES).
 6. Docs: `DOCUMENTACION_PROYECTO.md` (+changelog), `supabase/README.md` y `supabase/DIAGRAMA_BD.md` si cambia la BD.
+
+## Regla transversal: FEATURE_IMPLEMENTED != FEATURE_RELEASED (HIDDEN_PRIVATE_BETA)
+Un módulo implementado y desplegado **NO es sinónimo de publicado**. TODO módulo nuevo de CCO 2.0
+nace **oculto** (`NEW_MODULE_PUBLIC_VISIBILITY = 0`, `NEW_MODULE_NAV_VISIBILITY = 0`,
+`NEW_MODULE_GENERAL_ACCESS = 0`; `RELEASE STATUS = HIDDEN_PRIVATE_BETA`) hasta que el dueño/Admin
+lo libere por etapas (DEVELOPMENT → PRIVATE BETA → INTERNAL PILOT → LIMITED RELEASE → GA). Cada
+salto de etapa es una decisión de release, NO consecuencia del merge/deploy.
+- Infra: `src/config/featureFlags.js` (flag `module_<nombre>_private_beta`, fail-closed) +
+  `src/constants/privateBeta.js` (`PRIVATE_BETA_MODULES`: path/flag/permisos
+  `view_<nombre>_private_beta`+`manage_<nombre>_private_beta`/rol IAM `cco_private_beta_<modulo>`/stage).
+- Al registrar un módulo nuevo: añadir flag (OFF) y entrada en `PRIVATE_BETA_MODULES`; la ruta se
+  oculta sola de nav/búsqueda global (routeMeta) y el guard devuelve **404** si el flag está OFF
+  (no filtra la existencia) o AccessDenied sin rol/permiso. Si la ruta NO está en `APP_ROUTES`,
+  registrarla en `PRIVATE_BETA_EXTRA` de `routeMeta.js`.
+- **NO hardcodear UUIDs** para permitir betas (el viejo `PRIVATE_ROUTE_COORDINATOR_AUTH_UID` se migró
+  a rol IAM + permiso). Asignación siempre por rol IAM + permiso en `tms_permisos`/`iam.assignments`,
+  y gatear RPC/RLS en el backend (la ruta sola no basta). Referencia: `docs/PR-015B_PRIVATE_BETA_GOVERNANCE.md`.
 
 ## Estructura
 - `src/pages/` — módulos (Inbound, Inventory, Queries, Quality, Panel, Postventa, Admin, Mobile).

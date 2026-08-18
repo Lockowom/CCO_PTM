@@ -16,7 +16,7 @@ const safeFilename = (value, fallback = 'Informe.pdf') => {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9._-]+/g, '_')
     .replace(/_+/g, '_')
-    .replace(/^[_\.]+|[_\.]+$/g, '');
+    .replace(/^[_.]+|[_.]+$/g, '');
   return name || fallback;
 };
 

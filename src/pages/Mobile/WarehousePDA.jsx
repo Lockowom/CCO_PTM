@@ -11,9 +11,6 @@ import {
   ArrowLeft,
   Wifi,
   WifiOff,
-  Plus,
-  Minus,
-  ChevronRight,
   Archive,
   Camera,
   CloudOff,
@@ -27,6 +24,8 @@ import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
 import useSyncQueue from '../../hooks/useSyncQueue';
 import { enqueueSyncItem } from '../../lib/syncManager';
+import { db } from '../../lib/db';
+import { buildPutawayRecord, putawayQueueKey, isValidPutaway, PUTAWAY_STEPS, PUTAWAY_COPY } from './putawayVisual';
 import ConteoPDA from './ConteoPDA';
 import ConsultaPDA from './ConsultaPDA';
 
@@ -63,13 +62,12 @@ const WarehousePDA = () => {
   const [mode, setMode] = useState('HOME'); // HOME, PUTAWAY, INVENTORY, QUERY
   const [scannedValue, setScannedValue] = useState('');
 
-  // PUTAWAY STATE
-  const [putawayStep, setPutawayStep] = useState('SCAN_LOC'); // SCAN_LOC -> SCAN_SKU -> ENTER_QTY -> CONFIRM
+  // PUTAWAY STATE — visual only (PR-015: sin cantidad, flujo SCAN_LOC→SCAN_SKU→CONFIRM)
+  const [putawayStep, setPutawayStep] = useState(PUTAWAY_STEPS[0]);
   const [putawayData, setPutawayData] = useState({
     ubicacion: '',
     codigo: '',
-    descripcion: '',
-    cantidad: 1
+    descripcion: ''
   });
   const [putawayCount, setPutawayCount] = useState(0);
 
@@ -162,7 +160,7 @@ const WarehousePDA = () => {
       if (!online) {
         hapticSuccess();
         setPutawayData((prev) => ({ ...prev, codigo: val, descripcion: 'Por validar (offline)' }));
-        setPutawayStep('ENTER_QTY');
+        setPutawayStep('CONFIRM');
         toast.success(`Producto: ${val} (offline)`);
         return;
       }
@@ -185,7 +183,7 @@ const WarehousePDA = () => {
           codigo: data.codigo_producto,
           descripcion: data.producto
         }));
-        setPutawayStep('ENTER_QTY');
+        setPutawayStep('CONFIRM');
         toast.success(`Producto: ${data.producto}`);
       } catch (err) {
         if (esErrorDeRed(err)) {
@@ -195,7 +193,7 @@ const WarehousePDA = () => {
             codigo: val,
             descripcion: 'Por validar (offline)'
           }));
-          setPutawayStep('ENTER_QTY');
+          setPutawayStep('CONFIRM');
           toast.warning(`Producto: ${val} (sin validar, offline)`);
           return;
         }
@@ -206,26 +204,39 @@ const WarehousePDA = () => {
   };
 
   const confirmPutaway = async () => {
-    const registro = {
-      ubicacion: putawayData.ubicacion,
-      codigo: putawayData.codigo,
-      descripcion: putawayData.descripcion
-    };
+    // Visual only: el registro NO lleva cantidad (referencia operacional).
+    const registro = buildPutawayRecord(putawayData);
+    const queueKey = putawayQueueKey(putawayData);
+    if (!isValidPutaway(registro)) {
+      hapticError();
+      toast.error('Faltan ubicación o producto');
+      return;
+    }
 
     // Continúa al siguiente ítem (se guardó online o quedó en cola offline).
     const avanzar = () => {
       hapticSuccess();
       setPutawayCount((prev) => prev + 1);
-      setPutawayData({ ubicacion: '', codigo: '', descripcion: '', cantidad: 1 });
-      setPutawayStep('SCAN_LOC');
+      setPutawayData({ ubicacion: '', codigo: '', descripcion: '' });
+      setPutawayStep(PUTAWAY_STEPS[0]);
     };
 
     // Guarda la operación en la cola local para subirla al reconectar.
+    // Idempotente: si ya hay un pendiente con la misma clave, no se duplica.
     const encolar = async () => {
+      const yaEnCola = await db.syncQueue
+        .where('recordId')
+        .equals(queueKey)
+        .toArray();
+      if (yaEnCola.some((it) => it.status === 'pending' || it.status === 'failed')) {
+        toast.info('Ubicación ya en cola de sincronización');
+        avanzar();
+        return;
+      }
       await enqueueSyncItem({
         type: 'rpc',
         tableName: 'registrar_putaway_ubicaciones',
-        recordId: `putaway_${registro.ubicacion}_${registro.codigo}_${Date.now()}`,
+        recordId: queueKey,
         data: { p_items: [registro] }
       });
       // enqueueSyncItem ya muestra "Operación guardada offline".
@@ -263,8 +274,8 @@ const WarehousePDA = () => {
 
   const goHome = () => {
     setMode('HOME');
-    setPutawayStep('SCAN_LOC');
-    setPutawayData({ ubicacion: '', codigo: '', descripcion: '', cantidad: 1 });
+    setPutawayStep(PUTAWAY_STEPS[0]);
+    setPutawayData({ ubicacion: '', codigo: '', descripcion: '' });
   };
 
   // ==================== VISTAS ====================
@@ -372,7 +383,7 @@ const WarehousePDA = () => {
   // ==================== PUTAWAY VIEW ====================
 
   if (mode === 'PUTAWAY') {
-    const steps = ['SCAN_LOC', 'SCAN_SKU', 'ENTER_QTY', 'CONFIRM'];
+    const steps = PUTAWAY_STEPS;
     const currentStepIdx = steps.indexOf(putawayStep) + 1;
 
     return (
@@ -472,71 +483,11 @@ const WarehousePDA = () => {
             </div>
           )}
 
-          {/* STEP 3: ENTER QUANTITY */}
-          {putawayStep === 'ENTER_QTY' && (
-            <div
-              key="s3"
-              className="anim-fade-up flex-1 flex flex-col items-center justify-center gap-4"
-            >
-              <div className="bg-slate-800 rounded-xl p-3 w-full">
-                <label className="text-[10px] text-slate-500 uppercase">Ubicación</label>
-                <div className="text-lg font-bold text-emerald-400">{putawayData.ubicacion}</div>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-3 w-full">
-                <label className="text-[10px] text-slate-500 uppercase">Producto</label>
-                <div className="text-lg font-bold text-white">{putawayData.codigo}</div>
-                <div className="text-sm text-slate-400 truncate">{putawayData.descripcion}</div>
-              </div>
-
-              <h2 className="text-xl font-black text-emerald-400 mt-2">CANTIDAD</h2>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <button
-                  onClick={() =>
-                    setPutawayData((prev) => ({
-                      ...prev,
-                      cantidad: Math.max(1, prev.cantidad - 1)
-                    }))
-                  }
-                  className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
-                >
-                  <Minus size={24} className="text-white" />
-                </button>
-                <input
-                  type="number"
-                  value={putawayData.cantidad}
-                  onChange={(e) =>
-                    setPutawayData((prev) => ({
-                      ...prev,
-                      cantidad: Math.max(1, parseInt(e.target.value) || 1)
-                    }))
-                  }
-                  className="w-24 h-14 bg-slate-800 border-2 border-emerald-400 rounded-xl text-center text-3xl font-black text-white outline-none"
-                  min="1"
-                />
-                <button
-                  onClick={() =>
-                    setPutawayData((prev) => ({ ...prev, cantidad: prev.cantidad + 1 }))
-                  }
-                  className="w-12 h-12 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] bg-slate-700 rounded-xl flex items-center justify-center active:bg-slate-600"
-                >
-                  <Plus size={24} className="text-white" />
-                </button>
-              </div>
-
-              <button
-                onClick={() => setPutawayStep('CONFIRM')}
-                className="mt-4 w-full bg-emerald-500 text-black py-4 rounded-xl font-bold text-lg active:bg-emerald-400 flex items-center justify-center gap-2"
-              >
-                SIGUIENTE <ChevronRight size={20} />
-              </button>
-            </div>
-          )}
-
-          {/* STEP 4: CONFIRM */}
+          {/* STEP 3: CONFIRM (visual only — sin cantidad) */}
           {putawayStep === 'CONFIRM' && (
-            <div key="s4" className="anim-fade-up flex-1 flex flex-col gap-4">
+            <div key="s3" className="anim-fade-up flex-1 flex flex-col gap-4">
               <h2 className="text-xl font-black text-emerald-400 text-center">
-                CONFIRMAR UBICACIÓN
+                {PUTAWAY_COPY.confirm}
               </h2>
 
               <div className="bg-slate-800 rounded-xl p-4 space-y-3">
@@ -551,15 +502,21 @@ const WarehousePDA = () => {
                   <div className="text-lg font-bold text-white">{putawayData.codigo}</div>
                   <div className="text-sm text-slate-400">{putawayData.descripcion}</div>
                 </div>
-                <div className="border-t border-slate-700 pt-3">
-                  <label className="text-[10px] text-slate-500 uppercase">Cantidad</label>
-                  <div className="text-4xl font-black text-white">{putawayData.cantidad}</div>
-                </div>
+              </div>
+
+              {/* Copy operacional: referencia visual, no toca stock ERP */}
+              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3">
+                <p className="text-center text-sm font-bold text-emerald-300">
+                  {PUTAWAY_COPY.title}
+                </p>
+                <p className="text-center text-xs text-emerald-400/80 mt-0.5">
+                  {PUTAWAY_COPY.note}
+                </p>
               </div>
 
               <div className="flex gap-3 mt-auto">
                 <button
-                  onClick={() => setPutawayStep('ENTER_QTY')}
+                  onClick={() => setPutawayStep(PUTAWAY_STEPS[1])}
                   className="flex-1 bg-slate-700 text-white py-4 rounded-xl font-bold text-base sm:text-lg active:bg-slate-600 min-h-[44px]"
                 >
                   ATRÁS

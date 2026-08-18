@@ -56,6 +56,9 @@ import PillNavEstado from '../ingresar/components/PillNavEstado';
 import Toast from '../ingresar/components/Toast';
 import Consolidados from '../ingresar/components/Consolidados';
 import { useFormNVStore } from '../ingresar/store/useFormNVStore';
+import { preflightGuardar, primerProblema } from '../ingresar/preflight';
+import { sanitizePayload, normNV as normNVLocal, diffNvConflict } from '../ingresar/dataQuality';
+import { versionDeRow } from '../ingresar/optimisticVersion';
 import '../ingresar/components/PillNavCanal.css';
 
 const soloFecha = (v) => (v ? String(v).slice(0, 10) : '');
@@ -2009,86 +2012,48 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
   const handleSubmit = async () => {
     const st = useFormNVStore.getState();
     if (st.mode === 'idle') return;
-    if (!st.estado) {
-      st.patch({ submitResult: { success: false, message: 'Falta el Estado' } });
+
+    // PR-016 · Preflight centralizado (módulo puro + testeable). Extrae todas
+    // las validaciones que vivían inline aquí: estado, pausa Shipping, IAM,
+    // N.V. entregada y asociación Orange.
+    const preflight = preflightGuardar(st, {
+      originalShippingSubestado: currentLookup?.data?.shipping_subestado || '',
+      estadoOriginal: currentLookup?.data?.estado || '',
+      editAccess,
+      canSubmitRestrictedUpdate: currentCanSubmitRestrictedUpdate,
+      autoFill: st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill
+    });
+    if (!preflight.ok) {
+      const prob = primerProblema(preflight);
+      st.patch({ submitResult: { success: false, message: prob.message } });
+      if (prob.code === 'IAM_DENEGADO') {
+        setToastMsg({ type: 'error', message: prob.message });
+      }
+      if (prob.code === 'NV_ENTREGADA' && st.lookupResult?.row) {
+        const requests = await loadReopenRequests(st.lookupResult.row);
+        openExistingModal(
+          {
+            id: st.lookupResult.row,
+            canal: st.canal,
+            nv: st.nv,
+            estado: st.lookupResult.data.estado,
+            reabierta: st.lookupResult.data.reabierta === true,
+            motivo_reapertura: st.lookupResult.data.motivo_reapertura || ''
+          },
+          requests
+        );
+      }
       return;
     }
+
+    st.patch({ submitting: true, submitResult: null });
+    const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
+    const orangeData = st.orangeAssociationData;
     const originalShippingSubestado = currentLookup?.data?.shipping_subestado || '';
     const shippingPauseChanged =
       st.mode === 'update' &&
       String(st.shippingSubestado || '') !== String(originalShippingSubestado);
-    if (
-      shippingPauseChanged &&
-      st.shippingSubestado &&
-      !String(st.shippingPausaMotivo || '').trim()
-    ) {
-      st.patch({
-        submitResult: { success: false, message: 'Debes indicar el motivo de la pausa Shipping.' }
-      });
-      return;
-    }
-    if (originalShippingSubestado && st.estado !== 'Shipping') {
-      st.patch({
-        submitResult: {
-          success: false,
-          message: 'Reactiva la N.V. en Shipping y guarda antes de avanzar a En Ruta.'
-        }
-      });
-      return;
-    }
-    if (
-      st.mode === 'update' &&
-      currentLookup?.row &&
-      editAccess?.permitida === false &&
-      !currentCanSubmitRestrictedUpdate
-    ) {
-      st.patch({
-        submitResult: {
-          success: false,
-          message: editAccess.message || 'No tienes permisos IAM para editar esta N.V.'
-        }
-      });
-      setToastMsg({
-        type: 'error',
-        message: editAccess.message || 'No tienes permisos IAM para editar esta N.V.'
-      });
-      return;
-    }
-    if (st.lookupResult?.found && st.lookupResult?.data?.estado === 'Entregado') {
-      const requests = await loadReopenRequests(st.lookupResult.row);
-      openExistingModal(
-        {
-          id: st.lookupResult.row,
-          canal: st.canal,
-          nv: st.nv,
-          estado: st.lookupResult.data.estado,
-          reabierta: st.lookupResult.data.reabierta === true,
-          motivo_reapertura: st.lookupResult.data.motivo_reapertura || ''
-        },
-        requests
-      );
-      st.patch({
-        submitResult: {
-          success: false,
-          message:
-            'La N.V. está entregada y bloqueada. Solicita reapertura para volver a gestionarla.'
-        }
-      });
-      return;
-    }
-    if (st.orangeAssociationRequired && (!st.orangeAssociationNv || !st.orangeAssociationData)) {
-      st.patch({
-        submitResult: {
-          success: false,
-          message: 'Debes asociar una N.V. Orange válida para este cliente PTM.'
-        }
-      });
-      return;
-    }
-    st.patch({ submitting: true, submitResult: null });
-    const af = st.lookupResult?.found ? st.lookupResult.data : st.lookupResult?.autoFill;
-    const orangeData = st.orangeAssociationData;
-    const payload = {
+    const rawPayload = {
       id: st.mode === 'update' ? st.lookupResult?.row : null,
       mode: st.mode,
       canal: st.canal,
@@ -2121,8 +2086,55 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
       variosDivision: st.variosDivision,
       variosCcosto: st.variosCcosto
     };
+    // PR-016 · Data quality + Optimistic version: normalizamos el payload
+    // (NV, fechas, números, textos) y adjuntamos la versión que cargamos.
+    const payload = {
+      ...sanitizePayload(rawPayload),
+      version: versionDeRow(currentLookup?.data || null)
+    };
     const res = await guardar(payload);
     useFormNVStore.getState().patch({ submitting: false });
+
+    // PR-016 · Fase D (version obligatoria): la RPC exige la versión actual.
+    // Se recarga el lookup (que trae row_version) y se avisa sin cerrar modal.
+    if (res.version_required) {
+      const found = await lookup(st.canal, st.nv);
+      if (found.found) await syncFoundResult(found);
+      const verMsg =
+        res.message ||
+        res.error ||
+        'Esta N.V. requiere la versión actual para editarse. Recarga la ficha e inténtalo de nuevo.';
+      useFormNVStore.getState().patch({
+        submitResult: { success: false, message: verMsg }
+      });
+      setToastMsg({ type: 'error', message: verMsg });
+      return;
+    }
+
+    // PR-016 · Conflicto de versión: otro operador modificó la N.V. mientras
+    // se editaba. NO se pisa su cambio: se recarga el lookup y se avisa SIN
+    // cerrar el modal ni perder lo editado, mostrando QUÉ cambió el otro y
+    // QUÉ tenía editado el usuario (UX de conflicto, no solo "inténtalo otra vez").
+    if (res.conflict) {
+      const loadedData = currentLookup?.data || null;
+      const found = await lookup(st.canal, st.nv);
+      if (found.found) await syncFoundResult(found);
+      const conflictMsg =
+        res.message ||
+        res.error ||
+        'Otra persona modificó esta N.V. mientras la editabas. Revisa los datos e intenta guardar de nuevo.';
+      const diff = diffNvConflict(loadedData, found.data || null, rawPayload);
+      useFormNVStore.getState().patch({
+        submitResult: {
+          success: false,
+          message: conflictMsg,
+          diff
+        }
+      });
+      setToastMsg({ type: 'error', message: conflictMsg });
+      return;
+    }
+
     if (res.ok) {
       if (shippingPauseChanged && payload.id) {
         const pauseResult = await gestionarPausaShipping(
@@ -2146,7 +2158,7 @@ function TabIngresar({ puedeEscribir, puedeAprobarReapertura }) {
       setReopenRequests([]);
       setToastMsg({
         type: 'success',
-        message: `NV ${payload.nv} ${payload.mode === 'update' ? 'actualizada' : 'creada'}`
+        message: `NV ${normNVLocal(payload.nv)} ${payload.mode === 'update' ? 'actualizada' : 'creada'}`
       });
       useFormNVStore.getState().reset();
       return;

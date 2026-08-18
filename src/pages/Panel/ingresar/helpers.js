@@ -1,9 +1,9 @@
 // Helpers de fechas del módulo Ingresar (port de lib/format.ts + lib/businessDays.ts).
 
 /** Recorta un timestamp ISO a YYYY-MM-DD. Retorna `fallback` si el valor es falsy o no es string válido. */
-export function soloFecha(v, fallback = "") {
+export function soloFecha(v, fallback = '') {
   if (!v) return fallback;
-  return typeof v === "string" && v.length >= 10 ? v.slice(0, 10) : String(v);
+  return typeof v === 'string' && v.length >= 10 ? v.slice(0, 10) : String(v);
 }
 
 /**
@@ -12,7 +12,7 @@ export function soloFecha(v, fallback = "") {
  * con hora) y lo reordena. Muestra el dato EXACTO guardado. Para nulos devuelve
  * `fallback`.
  */
-export function fmtFechaCL(v, fallback = "—") {
+export function fmtFechaCL(v, fallback = '—') {
   if (!v) return fallback;
   const s = String(v).slice(0, 10);
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -46,12 +46,12 @@ export function addBusinessDays(startDate, days) {
  */
 export function calcFechaCompromiso(fechaAprobacion, fechaAprobacionReal) {
   const base = fechaAprobacionReal || fechaAprobacion;
-  if (!base) return "";
-  const d = new Date(base + "T12:00:00");
-  if (isNaN(d.getTime())) return "";
+  if (!base) return '';
+  const d = new Date(base + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
   const result = addBusinessDays(d, 2);
   const y = result.getFullYear();
-  const m = String(result.getMonth() + 1).padStart(2, "0");
-  const day = String(result.getDate()).padStart(2, "0");
+  const m = String(result.getMonth() + 1).padStart(2, '0');
+  const day = String(result.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }

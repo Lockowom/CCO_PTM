@@ -14,6 +14,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
 import { permisosDeRuta, puedeAccederRuta, resolverRutaInicial } from './constants/permissions';
+import { privateBetaForPath, evaluatePrivateBetaAccess } from './constants/privateBeta';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
 import { initOTAUpdates, onUpdateAvailable, applyPendingUpdate } from './services/mobileService';
@@ -218,7 +219,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
 
 // Componente que determina la primera ruta disponible para el usuario
 const SmartRedirect = () => {
-  const { user, permissions, hasPermission, loading, landingPage } = useAuth();
+  const { user, permissions, roles, hasPermission, loading, landingPage } = useAuth();
 
   if (loading) {
     return (
@@ -232,7 +233,7 @@ const SmartRedirect = () => {
   // Se recorta el query string (?tab=...) porque las landing de APP_ROUTES incluyen
   // deep-links de pestañas y el mapa de permisos se indexa por pathname puro.
   if (landingPage && landingPage !== '/') {
-    if (puedeAccederRuta(landingPage, user, hasPermission)) {
+    if (puedeAccederRuta(landingPage, user, hasPermission, roles)) {
       return <Navigate to={landingPage} replace />;
     }
   }
@@ -253,7 +254,7 @@ const SmartRedirect = () => {
 
 // Ruta Protegida con validación de permisos + tracking de presencia
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading, user, hasPermission } = useAuth();
+  const { isAuthenticated, loading, user, roles, hasPermission } = useAuth();
   const location = useLocation();
   const { startTracking, updatePath } = usePresenceTracker();
 
@@ -297,9 +298,18 @@ const ProtectedRoute = () => {
   // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
   // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
   const requiredPermissions = permisosDeRuta(location.pathname);
-  const hasAccess = puedeAccederRuta(location.pathname, user, hasPermission);
+  const hasAccess = puedeAccederRuta(location.pathname, user, hasPermission, roles);
 
   if (!hasAccess) {
+    // PR-015B: módulo en private beta con flag OFF → 404 (no existe), no
+    // "Acceso Denegado", para no filtrar la existencia del módulo oculto.
+    const beta = privateBetaForPath(location.pathname);
+    const betaEval = beta
+      ? evaluatePrivateBetaAccess(beta, { hasPermission, roles })
+      : null;
+    if (beta && betaEval && betaEval.reason === 'FLAG_OFF') {
+      return <NotFound />;
+    }
     return (
       <AccessDenied requiredPermissions={requiredPermissions || []} route={location.pathname} />
     );

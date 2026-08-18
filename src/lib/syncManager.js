@@ -13,6 +13,28 @@ export const emitQueueUpdate = () => {
   syncEventEmitter.dispatchEvent(new Event('queueUpdated'));
 };
 
+// PR-011 · usuario actual para la cola offline (user-scoped).
+// Devuelve el id del usuario autenticado o `null` si no hay sesión (o falla la
+// lectura). La cola queda etiquetada con este valor para que en dispositivos
+// compartidos cada usuario solo sincronice SUS operaciones.
+export const getCurrentUserId = async () => {
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
+// PR-011 · filtra los items de cola del usuario actual.
+// En un dispositivo compartido, los items de otros usuarios quedan visibles
+// para auditoría (getFailedItems) pero NO se sincronizan por accidente.
+export const filterQueueByUser = async (items) => {
+  const userId = await getCurrentUserId();
+  if (!userId) return items; // sin sesión: comportamiento legacy (global)
+  return items.filter((item) => !item.userId || item.userId === userId);
+};
+
 // ── ENQUEUE ──
 export const enqueueSyncItem = async ({
   type,
@@ -20,7 +42,8 @@ export const enqueueSyncItem = async ({
   recordId,
   data,
   onConflict,
-  conflictResolution = 'client_wins'
+  conflictResolution = 'client_wins',
+  userId
 }) => {
   // Protección contra cola infinita
   const currentCount = await db.syncQueue.count();
@@ -47,7 +70,7 @@ export const enqueueSyncItem = async ({
     conflictResolution,
     lastAttempt: null,
     lastError: null,
-    userId: null // se puede setear al encolar
+    userId: userId || (await getCurrentUserId())
   });
 
   emitQueueUpdate();
@@ -106,7 +129,7 @@ export const enqueueUpsert = async ({
     conflictResolution: 'client_wins',
     lastAttempt: null,
     lastError: null,
-    userId: userId || null
+    userId: userId || (await getCurrentUserId())
   });
 
   emitQueueUpdate();
@@ -122,13 +145,14 @@ export const syncOfflineData = async () => {
 
   try {
     const allItems = await db.syncQueue.toArray();
+    const scopedItems = await filterQueueByUser(allItems);
     const now = Date.now();
 
     // Recuperación: items marcados 'syncing' por una corrida anterior que murió
     // a mitad (cierre de app/WebView, recarga, crash) quedarían atascados para
     // siempre — el filtro de reintento solo reincluye 'pending'/'failed' y el
     // cleanup los excluye. Los devolvemos a 'pending' para no perder la operación.
-    const stuck = allItems.filter((it) => it.status === 'syncing');
+    const stuck = scopedItems.filter((it) => it.status === 'syncing');
     if (stuck.length > 0) {
       await Promise.all(
         stuck.map((it) =>
@@ -144,7 +168,7 @@ export const syncOfflineData = async () => {
       });
     }
 
-    const pendingItems = allItems.filter((item) => {
+    const pendingItems = scopedItems.filter((item) => {
       if (item.status === 'pending') return true;
       if (item.status === 'failed' && item.retryCount < MAX_RETRIES) {
         // Backoff exponencial con jitter para evitar thundering herd
@@ -253,10 +277,11 @@ export const syncOfflineData = async () => {
 const cleanupStaleItems = async () => {
   try {
     const allItems = await db.syncQueue.toArray();
+    const scopedItems = await filterQueueByUser(allItems);
     const now = Date.now();
     let expiredCount = 0;
 
-    for (const item of allItems) {
+    for (const item of scopedItems) {
       const age = now - (item.timestamp || 0);
 
       if (item.status === 'dead') {
@@ -306,11 +331,12 @@ const cleanupStaleItems = async () => {
 
 // ── UTILIDADES ──
 
-// Obtener items fallidos/muertos para UI de auditoría
+// Obtener items fallidos/muertos para UI de auditoría (solo del usuario actual)
 export const getFailedItems = async () => {
   try {
     const allItems = await db.syncQueue.toArray();
-    return allItems.filter((item) => item.status === 'dead' || item.status === 'failed');
+    const scoped = await filterQueueByUser(allItems);
+    return scoped.filter((item) => item.status === 'dead' || item.status === 'failed');
   } catch {
     return [];
   }

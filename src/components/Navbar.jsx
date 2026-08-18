@@ -69,7 +69,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const navRef = useRef(null);
 
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, roles } = useAuth();
   const { isModuleEnabled } = useConfig();
   const syncQueueCount = useSyncQueueCount();
 
@@ -100,7 +100,7 @@ const Navbar = () => {
   const esAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
   const canAccessRoute = (path, sectionId) => {
     const [base, query] = String(path).split('?');
-    if (base === '/panel/rutas') return puedeVerCoordinacionRutas(user);
+    if (base === '/panel/rutas') return puedeVerCoordinacionRutas(user, hasPermission, roles);
     if (esAdmin) return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
     const perms = ROUTE_PERMISSIONS[base];

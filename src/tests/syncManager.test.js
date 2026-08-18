@@ -18,6 +18,9 @@ vi.mock('../lib/db', () => ({
 // Mock Supabase
 const mockSupabase = {
   rpc: vi.fn(),
+  auth: {
+    getUser: vi.fn()
+  },
   from: vi.fn(() => ({
     upsert: vi.fn(),
     update: vi.fn(() => ({ eq: vi.fn() })),
@@ -465,14 +468,60 @@ describe('syncManager', () => {
     });
   });
 
-  describe('removeItem', () => {
-    it('elimina item de la cola', async () => {
-      mockSyncQueue.delete.mockResolvedValue(undefined);
 
-      const result = await removeItem(42);
+  describe('PR-011 · user-scoped offline queue', () => {
+    beforeEach(() => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
+    });
 
-      expect(result).toBe(true);
-      expect(mockSyncQueue.delete).toHaveBeenCalledWith(42);
+    it('enqueueSyncItem etiqueta el item con el userId del usuario actual', async () => {
+      await enqueueSyncItem({ type: 'rpc', tableName: 'wms_move_stock', recordId: 'x', data: {} });
+      const added = mockSyncQueue.add.mock.calls[0][0];
+      expect(added.userId).toBe('user-1');
+    });
+
+    it('enqueueUpsert etiqueta el item con el userId del usuario actual', async () => {
+      await enqueueUpsert({ tableName: 'tms_operaciones', data: {} });
+      const added = mockSyncQueue.add.mock.calls[0][0];
+      expect(added.userId).toBe('user-1');
+    });
+
+    it('syncOfflineData sincroniza SOLO los items del usuario actual', async () => {
+      mockSupabase.rpc.mockResolvedValue({ error: null });
+      mockSyncQueue.toArray.mockResolvedValue([
+        { id: 1, userId: 'user-1', type: 'rpc', tableName: 'wms_move_stock', recordId: 'a', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() },
+        { id: 2, userId: 'user-2', type: 'rpc', tableName: 'wms_move_stock', recordId: 'b', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() },
+        { id: 3, userId: null, type: 'rpc', tableName: 'wms_move_stock', recordId: 'c', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() }
+      ]);
+
+      await syncOfflineData();
+
+      const rpcCalls = mockSupabase.rpc.mock.calls.map((c) => c[1] && c[0]);
+      expect(rpcCalls.filter(Boolean)).toEqual(['wms_move_stock', 'wms_move_stock']);
+    });
+
+    it('getFailedItems devuelve solo items del usuario actual', async () => {
+      mockSyncQueue.toArray.mockResolvedValue([
+        { id: 1, userId: 'user-1', status: 'dead' },
+        { id: 2, userId: 'user-2', status: 'dead' },
+        { id: 3, userId: null, status: 'failed' }
+      ]);
+
+      const failed = await getFailedItems();
+
+      expect(failed.map((i) => i.id)).toEqual([1, 3]);
+    });
+
+    it('sin sesión cae al comportamiento legacy (no filtra)', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+      mockSyncQueue.toArray.mockResolvedValue([
+        { id: 1, userId: null, status: 'failed' },
+        { id: 2, userId: 'otro', status: 'failed' }
+      ]);
+
+      const failed = await getFailedItems();
+
+      expect(failed.map((i) => i.id)).toEqual([1, 2]);
     });
   });
 });

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   accesosConPermisos,
-  PRIVATE_ROUTE_COORDINATOR_AUTH_UID,
   puedeAccederRuta,
   resolverRutaInicial
 } from '../constants/permissions';
@@ -46,11 +45,19 @@ describe('autorización por ruta', () => {
     expect(puedeAccederRuta('/panel/ingresar', user, approver)).toBe(false);
   });
 
-  it('mantiene Coordinación Rutas privada incluso frente a otros administradores', () => {
-    const anotherAdmin = { rol: 'ADMIN', auth_uid: '00000000-0000-0000-0000-000000000001' };
-    const owner = { rol: 'ADMIN', auth_uid: PRIVATE_ROUTE_COORDINATOR_AUTH_UID };
+  it('mantiene Coordinación Rutas privada: rol IAM beta + permiso, nunca admin por defecto', () => {
+    const anotherAdmin = { rol: 'ADMIN' };
+    const betaAdmin = { rol: 'ADMIN' };
+    const betaRole = ['cco_private_beta_rutas'];
+    const hasBetaPerm = (permission) => permission === 'view_rutas_private_beta';
+    // Admin sin rol beta: denegado aunque hasPermission diga true (fail-closed).
     expect(puedeAccederRuta('/panel/rutas', anotherAdmin, () => true)).toBe(false);
-    expect(puedeAccederRuta('/panel/rutas', owner, () => false)).toBe(true);
+    // Admin con rol beta + permiso: permitido (migración del UUID → IAM).
+    expect(puedeAccederRuta('/panel/rutas', betaAdmin, hasBetaPerm, betaRole)).toBe(true);
+    // Admin con rol beta pero SIN el permiso específico: denegado.
+    expect(puedeAccederRuta('/panel/rutas', betaAdmin, () => false, betaRole)).toBe(false);
+    // Admin con permiso pero SIN el rol beta: denegado.
+    expect(puedeAccederRuta('/panel/rutas', betaAdmin, hasBetaPerm)).toBe(false);
   });
 });
 

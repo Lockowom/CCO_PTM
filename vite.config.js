@@ -5,8 +5,8 @@ import path from 'path';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
 
-// Versión real de la app (package.json) expuesta al bundle como __APP_VERSION__
-// para mostrarla en el PDA/pie y que soporte sepa qué build corre.
+// VersiÃ³n real de la app (package.json) expuesta al bundle como __APP_VERSION__
+// para mostrarla en el PDA/pie y que soporte sepa quÃ© build corre.
 const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 
 function resolveBuildId() {
@@ -78,15 +78,24 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // El módulo integrado /traspasos (app estática vendorizada) NO se precachea
+        // El mÃ³dulo integrado /traspasos (app estÃ¡tica vendorizada) NO se precachea
         // (2.6MB) y NO debe recibir el fallback SPA: se sirve directo por express.
         globIgnores: ['**/traspasos/**'],
         navigateFallbackDenylist: [/^\/traspasos\//],
         runtimeCaching: [
           {
-            // El token de actualización global siempre debe venir de red.
+            // PR-005 · HARDENING: datos SENSIBLES nunca se cachean.
+            // Auth, sesiones, IAM, usuarios, roles y tablas con datos personales
+            // SIEMPRE van a red (NetworkOnly). Esta regla debe estar ANTES del
+            // catch-all de NetworkFirst para tener prioridad.
+            urlPattern:
+              /^https:\/\/.*\.supabase\.co\/(auth\/|rest\/v1\/(tms_usuarios|tms_usuarios_activos|tms_accesos|tms_roles|tms_permisos|tms_sesiones|tms_postventa_tickets|tms_postventa_correos|tms_direcciones|tms_historial_cargas|tms_consulta_metricas)|rest\/v1\/rpc\/iam_)/i,
+            handler: 'NetworkOnly'
+          },
+          {
+            // El token de actualizaci��n global siempre debe venir de red.
             // Nunca reutilizar una respuesta del Service Worker para decidir
-            // si hay que cerrar sesión y recargar el cliente.
+            // si hay que cerrar sesi��n y recargar el cliente.
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i,
             handler: 'NetworkOnly'
           },
@@ -114,7 +123,7 @@ export default defineConfig({
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 1 día
+                maxAgeSeconds: 60 * 60 * 24 // 1 dÃ­a
               },
               cacheableResponse: {
                 statuses: [0, 200]
