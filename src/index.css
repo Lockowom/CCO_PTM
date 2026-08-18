@@ -17,6 +17,17 @@
     --border-14: rgba(255, 255, 255, 0.14);
     --glow-accent-subtle: rgba(16, 185, 129, 0.12);
     --glow-accent-strong: rgba(16, 185, 129, 0.25);
+
+    /* ── BRANDING PREMIUM (BRANDING-001 V1) ────────────────────────────────── */
+    --brand-cco-font-weight: 800;
+    --brand-cco-tracking: -0.02em;
+    --brand-system-bg: #f97316;
+    --brand-system-fg: #ffffff;
+    --brand-system-glow: rgba(249, 115, 22, 0.35);
+    --brand-subtitle-tracking: 0.15em;
+    --brand-divider-glow: rgba(249, 115, 22, 0.12);
+    --brand-shine-duration: 1.6s;
+    --brand-enter-duration: 420ms;
   }
 }
 

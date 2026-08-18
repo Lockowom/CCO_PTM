@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import SystemBadge from './SystemBadge';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { useSyncQueueCount } from '../hooks/useSyncQueueCount';
@@ -432,7 +433,7 @@ const Navbar = () => {
             : 'bg-white/80 backdrop-blur-md border-white/20 shadow-sm'
         }`}
       >
-        {/* Left: Logo & Brand */}
+        {/* Left: Logo & Brand (BRANDING-001 premium lockup) */}
         <Link to="/" className="flex items-center gap-2 sm:gap-4 group py-1.5 sm:py-2">
           <img
             src="/logo-ptm.png"
@@ -440,15 +441,26 @@ const Navbar = () => {
             className="h-7 sm:h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
           />
           <div className="flex flex-col leading-none">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="text-lg sm:text-2xl font-black text-slate-900 tracking-tighter">
-                CCO
-              </span>
-              <span className="px-1 sm:px-1.5 py-0.5 bg-orange-500 text-white text-[8px] sm:text-[10px] font-black rounded-md tracking-widest uppercase">
-                System
-              </span>
+            {/* CCO ancla premium + SYSTEM badge cápsula */}
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <div className="relative inline-flex">
+                <span
+                  className="text-lg sm:text-2xl font-extrabold text-slate-900/90 tracking-tight animate-brand-enter"
+                  style={{ animationDelay: '120ms' }}
+                >
+                  CCO
+                </span>
+                {/* shine premium, una sola pasada al montar */}
+                <span
+                  aria-hidden
+                  className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-0 animate-brand-shine"
+                  style={{ animationDelay: '260ms' }}
+                />
+              </div>
+              <SystemBadge className="animate-brand-enter" style={{ animationDelay: '190ms' }} />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 hidden sm:block">
+            {/* Subtítulo institucional: visible en mobile, fino y ordenado */}
+            <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400/90 uppercase tracking-[0.15em] mt-0.5">
               Centro Control Operacional
             </span>
           </div>

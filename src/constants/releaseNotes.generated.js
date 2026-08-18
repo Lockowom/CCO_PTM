@@ -4,6 +4,30 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    version: '1.55.162',
+    fecha: '2026-08-17',
+    titulo:
+      'El branding del menú subió de nivel: CCO más proeminente y badge SYSTEM premium con animación',
+    emoji: '⬆️',
+    cambios: [
+      {
+        tipo: 'mejora',
+        texto:
+          'El bloque de marca del menú se volvió premium: "CCO" es ahora la pieza visual dominante y "SYSTEM" es un badge tecnológico con fondo naranja en vez de texto pegado.'
+      },
+      {
+        tipo: 'fix',
+        texto:
+          'El subtítulo "Centro Control Operacional" ahora también se ve en pantalla pequeña (antes desaparecía en mobile).'
+      },
+      {
+        tipo: 'nuevo',
+        texto:
+          'El branding entra con una animación elegante y un brillo sutil al cargar, con movimiento respetuoso (prefers-reduced-motion).'
+      }
+    ]
+  },
+  {
     version: '1.55.161',
     fecha: '2026-08-17',
     titulo: 'Acceso anónimo cerrado a funciones internas + bloqueos IAM registrados',
@@ -262,19 +286,6 @@ export const RELEASE_NOTES = [
         tipo: 'nuevo',
         texto:
           'El checklist de Calidad ahora clasifica los productos por los 22 grupos comerciales del ERP (Muebles Clínicos, Ortopedia, Insumos Médicos, etc.) en vez de categorías de riesgo. Hay una pantalla nueva "Clasificación de Productos" para cargar/actualizar el mapeo con un botón.'
-      }
-    ]
-  },
-  {
-    version: '1.55.88',
-    fecha: '2026-07-20',
-    titulo: 'Carga Masiva valida el largo de la N.V.',
-    emoji: '🛡️',
-    cambios: [
-      {
-        tipo: 'seguridad',
-        texto:
-          'La Carga Masiva de N.V. ahora también bloquea si el largo de la N.V. no corresponde al canal (PTM 5 dígitos, Orange/Farmapack 3). Y se ajusta solo: cuando Orange/Farmapack empiecen a usar 4 dígitos o PTM 6, lo acepta automáticamente sin cambiar nada.'
       }
     ]
   }
