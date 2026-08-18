@@ -105,3 +105,38 @@
 --  where id in (12144, 12145) or nv_orange like 'TEST-IAM-%' or nv_ptm::text like 'TEST-IAM-%' or varios like 'TEST-IAM-%';
 -- delete from public.tms_iam_denegaciones where uid = '224c7d7d-abe6-41ed-9390-421017dbf578';
 -- -- Verificar 0 residuales + permisos efectivos de Christian = baseline OPERARIO_3.
+
+-- ---------------------------------------------------------------------------
+-- SMOKE PR-008C — LECTURA/TELEMETRÍA (ejecutado en PROD 2026-08-18, PASS)
+-- ---------------------------------------------------------------------------
+-- Verifica los grants finales de la migración 174 sobre la superficie de
+-- telemetría, que B2 (escritura con assignment) no cubre del todo:
+--   * grant select on table tms_iam_denegaciones to authenticated  (RLS)
+--   * grant execute on function iam_log_denegacion to authenticated
+--
+-- Casos (Management API, tabla con RLS; leer = SELECT policy is_admin):
+--
+--  A. anon SELECT tms_iam_denegaciones
+--       → 42501 permission denied (el revoke de la 174 bloquea anon a nivel SQL)
+--
+--  B. Christian (authenticated, NO admin) llama DIRECTAMENTE:
+--       select public.iam_log_denegacion('guardar_nv','manage_panel','1-03',
+--              9999999999,'9999999999','scope test for PR-008C');
+--       → INSERT exitoso (SECURITY DEFINER: escribe aunque el llamante no tenga
+--         permiso sobre la tabla). Row id=4 con uid=224c7d7d…, rol=OPERARIO_3,
+--         accion=guardar_nv, permiso=manage_panel, centro_costo=1-03,
+--         nv_id=9999999999, motivo correcto. (PASS)
+--
+--  C. Christian SELECT tms_iam_denegaciones (después del insert)
+--       → 0 filas (RLS select policy → is_admin() = false). El operador no puede
+--         leer su propia denegación: trazabilidad no suplantable. (PASS)
+--
+--  D. ADMIN SELECT tms_iam_denegaciones
+--       → ve el row id=4 con todos los campos. (PASS)
+--
+--  E. SELECT como authenticated fuera del scope → siempre 0 / denegado, aún con
+--     la fila presente: confirma fail-closed por RLS. (PASS)
+--
+-- Cleanup: delete como superuser (bypass RLS: el API corre como postgres owner)
+--   begin; delete from public.tms_iam_denegaciones where id=4; select count(*) ; commit;
+--   → restantes = 0; list verificado vacío []. (PASS, 0 residuales)
