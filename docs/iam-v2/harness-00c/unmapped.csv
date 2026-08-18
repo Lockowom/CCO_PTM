@@ -1,0 +1,7 @@
+user,permiso
+Admin Respaldo,deploy_ota
+Admin Respaldo,export_data
+Admin Respaldo,manage_fichas
+Administrador,deploy_ota
+Administrador,export_data
+Administrador,manage_fichas

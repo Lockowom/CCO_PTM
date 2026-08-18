@@ -1,0 +1,801 @@
+user,screen,legacy,v2,diff,origin
+ARIEL SPOLANSKY,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,panel.tv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+ARIEL SPOLANSKY,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,inbound.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+ARIEL SPOLANSKY,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.traspasos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.heatmap,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.analisis,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.carteles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.batches,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,queries.grupo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Lucas Toloza,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Lucas Toloza,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Admin Respaldo,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.nv.reopen,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.tv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.builder,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Admin Respaldo,panel.settings,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.pda,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.conteo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.bloque,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,inventory.insumos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.historial-nv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.dispatch-control,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.datasheet,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,quality.monitoreo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,quality.acciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,quality.bandeja,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,quality.clasificacion,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,postventa.tickets,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,tms.control,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,tms.pda,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.users,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.roles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.views,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.cleanup,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.tickets,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.upload-history,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.monitor,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.observability,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.workflows,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.flujo-maestro,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.eventos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.api,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.rendiciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Juan Carlos,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Juan Carlos,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Christian Vargas,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Christian Vargas,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.tv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Marco Negroni,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,queries.historial-nv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,queries.datasheet,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,quality.monitoreo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,quality.acciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,quality.bandeja,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,quality.clasificacion,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Marco Negroni,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Gisselle Romero,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Gisselle Romero,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Gisselle Romero,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,panel.tv,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Gisselle Romero,panel.builder,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Gisselle Romero,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Gisselle Romero,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inbound.reception,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inbound.reception-nacional,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inbound.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inbound.cubing,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.traspasos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.heatmap,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.analisis,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.carteles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.batches,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,queries.grupo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,tms.control,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Gisselle Romero,tms.pda,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Gisselle Romero,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Administrador,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.nv.reopen,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.tv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.builder,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Administrador,panel.settings,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.pda,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.conteo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.bloque,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,inventory.insumos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.historial-nv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.dispatch-control,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.datasheet,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,quality.monitoreo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,quality.acciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,quality.bandeja,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,quality.clasificacion,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,postventa.tickets,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,tms.control,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,tms.pda,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.users,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.roles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.views,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.cleanup,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.tickets,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.upload-history,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.monitor,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.observability,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.workflows,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.flujo-maestro,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.eventos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.api,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.rendiciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.nv.reopen,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.tv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.builder,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Oscar Leiva,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,quality.monitoreo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,quality.acciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,quality.bandeja,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,quality.clasificacion,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,postventa.tickets,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Oscar Leiva,tms.control,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Oscar Leiva,tms.pda,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Oscar Leiva,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+NILO Langebach,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+NILO Langebach,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+NILO Langebach,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,panel.tv,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+NILO Langebach,panel.builder,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+NILO Langebach,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+NILO Langebach,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inbound.reception,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inbound.reception-nacional,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inbound.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inbound.cubing,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.traspasos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.heatmap,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.analisis,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.carteles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.batches,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,queries.grupo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,tms.control,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+NILO Langebach,tms.pda,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+NILO Langebach,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Cristopher,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.pda,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.conteo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.bloque,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,inventory.insumos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Cristopher,quality.monitoreo,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+Cristopher,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+María Angélica,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,panel.tv,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+María Angélica,panel.builder,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+María Angélica,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+María Angélica,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inbound.data-import,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,queries.sales-status,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,queries.addresses,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,queries.historial-nv,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+María Angélica,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,tms.control,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+María Angélica,tms.pda,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
+María Angélica,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+Revision,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Revision,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+MOISES,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+MOISES,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+PickingBD1,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD1,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.nv.reopen,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.tv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.builder,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,panel.routes,DENY,DENY,SAME_DENY,PRIVATE_BETA
+PickingBD3,panel.settings,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inbound.reception,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inbound.reception-nacional,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inbound.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inbound.cubing,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inbound.data-import,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inventory.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inventory.traspasos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inventory.heatmap,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inventory.locations,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inventory.conteo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inventory.bloque,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,inventory.analisis,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inventory.carteles,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,inventory.insumos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,queries.batches,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,queries.sales-status,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,queries.addresses,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,queries.locations,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,queries.historial-nv,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,queries.dispatch-control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,queries.datasheet,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,queries.grupo,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+PickingBD3,quality.monitoreo,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,quality.acciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,quality.bandeja,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,quality.clasificacion,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,postventa.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,tms.control,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,tms.pda,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.users,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.roles,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.views,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.cleanup,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.tickets,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.upload-history,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.monitor,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.observability,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.workflows,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY

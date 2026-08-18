@@ -743,8 +743,15 @@ SSOT del modelo MÓDULO → PANTALLA → FUNCIÓN, sin tocar la autoridad actual
   14 ADMIN, 4 UNUSED (deploy_ota, export_data, manage_fichas, view_asistente).
 - `src/domain/access/legacyExpansionMap.js` — expansión REAL de los permisos amplios
   (manage_panel → 8 rutas + funciones granulares; manage_inventory/postventa/quality → rutas).
+- `src/domain/access/resolverV2.js` — **Access Resolver V2 (shadow mode, sin autoridad)**:
+  precedencia EXPLICIT_DENY > DIRECT_ALLOW > PROFILE_ALLOW > LEGACY_COMPATIBILITY >
+  DEFAULT_DENY; devuelve pantallas/módulos permitidos + ORIGEN y motivos (alimenta R10);
+  `legacyScreenAccess()` replica el guard actual para comparar; fail-closed en private beta.
 - Contrato CI: `src/tests/accessRegistryContract.test.js` (los registries deben estar
-  sincronizados con `ROUTE_PERMISSIONS`/`TAB_PERMISSIONS`/`APP_PERMISSIONS` o falla la suite).
+  sincronizados con `ROUTE_PERMISSIONS`/`TAB_PERMISSIONS`/`APP_PERMISSIONS` o falla la suite)
+  - `src/tests/accessResolverContract.test.js` (resolver V2) + `src/tests/iamHarness00c.test.js`
+    (**gate R06: LOSS=0, GAIN=0, ERROR=0** en 800 surfaces — 16 usuarios × 50 pantallas;
+    artefactos en `docs/iam-v2/harness-00c/`, regenerables con `IAM_HARNESS_WRITE=1`).
 
 Casos Nilo/Angélica, snapshot y harness: `docs/iam-v2/` (R00 incident, snapshot-00a, harness-00b,
 inventario-actual, IAM-001-control-acceso-ux).
