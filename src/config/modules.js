@@ -168,6 +168,7 @@ export const APP_ROUTES = [
 
   // System
   { value: '/admin/users', label: 'Admin - Usuarios y Roles', module: 'admin' },
+  { value: '/admin/access', label: 'Admin - Control de Acceso (IAM 2.0)', module: 'admin' },
   { value: '/admin/roles', label: 'Admin - Roles y Permisos', module: 'admin' },
   { value: '/admin/views', label: 'Admin - Vistas', module: 'admin' },
   { value: '/admin/cleanup', label: 'Admin - Limpieza', module: 'admin' },

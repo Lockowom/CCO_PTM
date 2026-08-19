@@ -4,6 +4,47 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    version: '1.55.165',
+    fecha: '2026-08-19',
+    titulo:
+      'Nueva pantalla "Control de Acceso (IAM 2.0)": ve exactamente qué tiene cada usuario y por qué',
+    emoji: '🆕',
+    cambios: [
+      {
+        tipo: 'nuevo',
+        texto:
+          'Nueva pantalla en Sistema → Control de Acceso (IAM 2.0) que muestra qué puede hacer cada usuario: pantallas permitidas o negadas, con el origen de cada permiso (perfil, permiso individual, legacy o no asignado) y si algo cambiaría respecto al acceso actual.'
+      },
+      {
+        tipo: 'nuevo',
+        texto: 'Catálogo completo de módulos, pantallas y funciones del sistema para revisión.'
+      },
+      {
+        tipo: 'seguridad',
+        texto:
+          'Es solo lectura: no modifica permisos ni roles; la administración sigue en Identidad y Seguridad.'
+      }
+    ]
+  },
+  {
+    version: '1.55.164',
+    fecha: '2026-08-18',
+    titulo: 'Overrides individuales de acceso listos en base de datos (base del nuevo IAM)',
+    emoji: '🛡️',
+    cambios: [
+      {
+        tipo: 'seguridad',
+        texto:
+          'Se preparó la base para excepciones puntuales de acceso por usuario (permitir/bloquear una pantalla concreta sin cambiarle el rol), con contador de versión de permisos y trazabilidad de quién lo cambió.'
+      },
+      {
+        tipo: 'nuevo',
+        texto:
+          'Se definieron 8 perfiles operacionales de referencia (operador panel, bodega, inventario, calidad, despacho, supervisor, gerencia, admin) derivados del acceso real actual, listos para la nueva administración de accesos.'
+      }
+    ]
+  },
+  {
     version: '1.55.163',
     fecha: '2026-08-18',
     titulo:
@@ -261,37 +302,6 @@ export const RELEASE_NOTES = [
         tipo: 'fix',
         texto:
           'Se corrigió un error que impedía subir catálogos en Carga Masiva (por ejemplo N.V. y productos activos): salía "Tabla no permitida" y no cargaba nada. Ya vuelve a funcionar.'
-      }
-    ]
-  },
-  {
-    version: '1.55.91',
-    fecha: '2026-07-20',
-    titulo: 'Buscador de grupo por SKU + carga de grupos',
-    emoji: '🆕',
-    cambios: [
-      {
-        tipo: 'nuevo',
-        texto:
-          'Nueva consulta "Grupo por SKU" (Consultas): escribes el código del producto y te dice a qué grupo pertenece.'
-      },
-      {
-        tipo: 'nuevo',
-        texto:
-          'En Carga Masiva hay una opción "Grupos de SKU" para subir el Excel del ERP: los SKU nuevos se detectan solos y los existentes se actualizan sin duplicar.'
-      }
-    ]
-  },
-  {
-    version: '1.55.90',
-    fecha: '2026-07-20',
-    titulo: 'El checklist ya muestra los 22 grupos',
-    emoji: '🔧',
-    cambios: [
-      {
-        tipo: 'fix',
-        texto:
-          'Dentro del checklist de Calidad, la sección "Clasificación del producto" ahora muestra los 22 grupos comerciales (Muebles Clínicos, Ortopedia y Traumatología, Insumos Médicos, etc.) en vez de las 6 etiquetas antiguas.'
       }
     ]
   }

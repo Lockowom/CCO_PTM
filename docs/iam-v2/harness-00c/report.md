@@ -1,11 +1,11 @@
 # Harness PR-IAM-R06 · Legacy vs Resolver V2 (surface-level, shadow mode)
 
-Generado: 2026-08-18T16:09:24.416Z · usuarios: 16 · surfaces: 50
+Generado: 2026-08-19T01:10:40.551Z · usuarios: 16 · surfaces: 51
 
 ## Resumen
 
-| SAME_ALLOW | 288 |
-| SAME_DENY | 512 |
+| SAME_ALLOW | 290 |
+| SAME_DENY | 526 |
 | LOSS | 0 |
 | GAIN | 0 |
 | ERROR | 0 |

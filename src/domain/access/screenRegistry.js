@@ -613,5 +613,17 @@ export const SCREEN_REGISTRY = [
     navigation: true,
     mobileEnabled: false,
     active: true
+  },
+  {
+    id: 'admin.access',
+    module: 'admin',
+    label: 'Control de Acceso (IAM 2.0)',
+    routes: ['/admin/access'],
+    defaultPermission: 'view_users',
+    risk: 'LOW',
+    privateBeta: false,
+    navigation: true,
+    mobileEnabled: true,
+    active: true
   }
 ];

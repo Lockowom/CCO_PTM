@@ -131,6 +131,7 @@ export const ROUTE_PERMISSIONS = {
 
   // Admin
   '/admin/users': ['manage_users', 'view_users'],
+  '/admin/access': ['view_users', 'manage_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],
   '/admin/views': ['manage_views', 'view_views'],
   '/admin/cleanup': ['manage_cleanup'],
@@ -158,7 +159,7 @@ export const puedeVerCoordinacionRutas = (user, hasPermission, roles = []) => {
   const cfg = PRIVATE_BETA_MODULES.rutas;
   const { allowed } = evaluatePrivateBetaAccess(cfg, {
     hasPermission,
-    roles,
+    roles
   });
   return allowed;
 };

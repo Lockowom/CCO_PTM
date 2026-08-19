@@ -49,6 +49,7 @@ ARIEL SPOLANSKY,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 ARIEL SPOLANSKY,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 ARIEL SPOLANSKY,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 ARIEL SPOLANSKY,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+ARIEL SPOLANSKY,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -99,6 +100,7 @@ Lucas Toloza,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Lucas Toloza,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Lucas Toloza,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Admin Respaldo,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Admin Respaldo,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Admin Respaldo,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -149,6 +151,7 @@ Admin Respaldo,admin.flujo-maestro,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Admin Respaldo,admin.eventos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Admin Respaldo,admin.api,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Admin Respaldo,admin.rendiciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Admin Respaldo,admin.access,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Juan Carlos,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Juan Carlos,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Juan Carlos,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -199,6 +202,7 @@ Juan Carlos,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Juan Carlos,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Juan Carlos,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Juan Carlos,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Juan Carlos,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -249,6 +253,7 @@ Christian Vargas,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Christian Vargas,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Christian Vargas,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -299,6 +304,7 @@ Marco Negroni,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Marco Negroni,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Marco Negroni,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Gisselle Romero,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Gisselle Romero,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Gisselle Romero,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -349,6 +355,7 @@ Gisselle Romero,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Gisselle Romero,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Gisselle Romero,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Gisselle Romero,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Gisselle Romero,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Administrador,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Administrador,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Administrador,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -399,6 +406,7 @@ Administrador,admin.flujo-maestro,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Administrador,admin.eventos,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Administrador,admin.api,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Administrador,admin.rendiciones,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
+Administrador,admin.access,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Oscar Leiva,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Oscar Leiva,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 Oscar Leiva,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -449,6 +457,7 @@ Oscar Leiva,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Oscar Leiva,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Oscar Leiva,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Oscar Leiva,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Oscar Leiva,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 NILO Langebach,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 NILO Langebach,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 NILO Langebach,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -499,6 +508,7 @@ NILO Langebach,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 NILO Langebach,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 NILO Langebach,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 NILO Langebach,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+NILO Langebach,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -549,6 +559,7 @@ Cristopher,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Cristopher,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Cristopher,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 María Angélica,panel.dashboard,ALLOW,ALLOW,SAME_ALLOW,LEGACY_COMPATIBILITY
 María Angélica,panel.nv.entry,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
 María Angélica,panel.nv.info,ALLOW,ALLOW,SAME_ALLOW,PROFILE_ALLOW
@@ -599,6 +610,7 @@ María Angélica,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 María Angélica,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 María Angélica,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 María Angélica,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+María Angélica,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -649,6 +661,7 @@ Revision,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 Revision,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+Revision,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -699,6 +712,7 @@ MOISES,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 MOISES,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+MOISES,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -749,6 +763,7 @@ PickingBD1,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD1,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD1,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,panel.dashboard,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,panel.nv.entry,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,panel.nv.info,DENY,DENY,SAME_DENY,DEFAULT_DENY
@@ -799,3 +814,4 @@ PickingBD3,admin.flujo-maestro,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,admin.eventos,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,admin.api,DENY,DENY,SAME_DENY,DEFAULT_DENY
 PickingBD3,admin.rendiciones,DENY,DENY,SAME_DENY,DEFAULT_DENY
+PickingBD3,admin.access,DENY,DENY,SAME_DENY,DEFAULT_DENY

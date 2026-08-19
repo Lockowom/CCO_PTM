@@ -380,6 +380,11 @@ const Navbar = () => {
           icon: <Settings size={18} />,
           modules: [
             { label: 'Identidad y Seguridad', path: '/admin/users', icon: <Users size={16} /> },
+            {
+              label: 'Control de Acceso (IAM 2.0)',
+              path: '/admin/access',
+              icon: <Shield size={16} />
+            },
             { label: 'Vistas', path: '/admin/views', icon: <Layers size={16} /> },
             { label: 'Tickets TI', path: '/admin/tickets', icon: <MessageSquare size={16} /> },
             {

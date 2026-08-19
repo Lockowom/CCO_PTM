@@ -87,6 +87,7 @@ const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
 const AccessControl = React.lazy(() => import('./pages/Admin/AccessControl')); // Usuarios y Roles unificados
+const AccessControlV2 = React.lazy(() => import('./pages/Admin/AccessControlV2')); // Control de Acceso IAM 2.0 (read-only)
 const Seguridad = React.lazy(() => import('./pages/Seguridad')); // Seguridad de mi cuenta (MFA/2FA) — cualquier autenticado
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
@@ -304,9 +305,7 @@ const ProtectedRoute = () => {
     // PR-015B: módulo en private beta con flag OFF → 404 (no existe), no
     // "Acceso Denegado", para no filtrar la existencia del módulo oculto.
     const beta = privateBetaForPath(location.pathname);
-    const betaEval = beta
-      ? evaluatePrivateBetaAccess(beta, { hasPermission, roles })
-      : null;
+    const betaEval = beta ? evaluatePrivateBetaAccess(beta, { hasPermission, roles }) : null;
     if (beta && betaEval && betaEval.reason === 'FLAG_OFF') {
       return <NotFound />;
     }
@@ -759,6 +758,14 @@ function AppContent() {
               element={
                 <ErrorBoundary>
                   <AccessControl />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="admin/access"
+              element={
+                <ErrorBoundary>
+                  <AccessControlV2 />
                 </ErrorBoundary>
               }
             />

@@ -366,3 +366,25 @@ export const refrescarGruposDinamicos = (groupId = null) =>
     { p_group: groupId },
     { module: 'iam', action: 'refrescar_grupos_dinamicos', payload: { groupId } }
   );
+
+// ── Control de Acceso (IAM 2.0, read-only) — RPCs migración 176 ─────────────
+// Permisos efectivos de un usuario según el motor iam.user_effective_permissions
+// (admin ∨ manage_users). Estado REAL, no una copia cliente.
+export async function permisosEfectivosDe(uid) {
+  const data = await rpcQuery(
+    'iam_permisos_efectivos',
+    { p_uid: uid },
+    { module: 'iam', action: 'permisos_efectivos_de', payload: { uid } }
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+// Overrides (INHERIT/ALLOW/DENY) de un usuario (admin ∨ manage_users).
+export async function listarOverridesDe(uid) {
+  const data = await rpcQuery(
+    'iam_overrides_list',
+    { p_uid: uid },
+    { module: 'iam', action: 'overrides_list_de', payload: { uid } }
+  );
+  return Array.isArray(data) ? data : [];
+}
