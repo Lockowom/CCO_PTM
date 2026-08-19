@@ -388,3 +388,37 @@ export async function listarOverridesDe(uid) {
   );
   return Array.isArray(data) ? data : [];
 }
+
+// Escritura piloto (spec §107): excepción individual ALLOW/DENY o INHERIT
+// (upsert; RPC migración 175, gate admin ∨ manage_users, bump permission_version).
+export const upsertOverride = (uid, surfaceType, surfaceId, access, reason = null) =>
+  rpcCommand(
+    'iam_overrides_upsert',
+    {
+      p_uid: uid,
+      p_surface_type: surfaceType,
+      p_surface_id: surfaceId,
+      p_access: access,
+      p_reason: reason
+    },
+    {
+      module: 'iam',
+      action: 'upsert_override',
+      payload: { uid, surfaceType, surfaceId, access }
+    }
+  );
+
+export const deleteOverride = (uid, surfaceType, surfaceId) =>
+  rpcCommand(
+    'iam_overrides_delete',
+    {
+      p_uid: uid,
+      p_surface_type: surfaceType,
+      p_surface_id: surfaceId
+    },
+    {
+      module: 'iam',
+      action: 'delete_override',
+      payload: { uid, surfaceType, surfaceId }
+    }
+  );

@@ -100,3 +100,37 @@ export function buildEffectiveView({ perms = [], overrides = [], privateBetaFlag
 
   return { modules, screens, functions, counts, unmapped: v2.unmapped };
 }
+
+// Preview de cambios pendientes (edición piloto §107): para cada override en
+// pausa calcula el estado "después" (ALLOW → sí, DENY → no, INHERIT → vuelve al
+// estado natural sin overrides) y el diff contra el estado actual (SAME/LOSS/GAIN).
+export function previewPendingChanges(view, naturalView, pending = []) {
+  const naturalByScreen = new Map(naturalView.screens.map((s) => [s.id, s.allow]));
+  const changes = [];
+  let losses = 0;
+  let gains = 0;
+  for (const c of pending) {
+    const cur = view.screens.find((s) => s.id === c.screenId);
+    if (!cur) continue;
+    const before = cur.allow;
+    const after =
+      c.access === 'ALLOW'
+        ? true
+        : c.access === 'DENY'
+          ? false
+          : naturalByScreen.get(c.screenId) === true;
+    const diff = after === before ? DIFF.SAME : after ? DIFF.GAIN : DIFF.LOSS;
+    if (diff === DIFF.LOSS) losses += 1;
+    if (diff === DIFF.GAIN) gains += 1;
+    changes.push({
+      screenId: c.screenId,
+      label: cur.label,
+      before,
+      after,
+      diff,
+      risk: cur.risk,
+      critical: cur.risk === 'CRITICAL' || cur.risk === 'HIGH'
+    });
+  }
+  return { changes, losses, gains };
+}

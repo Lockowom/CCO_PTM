@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildEffectiveView,
+  previewPendingChanges,
   DIFF,
   ORIGIN_LABEL,
   ORIGIN_TONE
@@ -138,5 +139,59 @@ describe('PR-IAM-R09/R10 · Vista efectiva (read-only) + origen', () => {
     });
     expect(v.unmapped).toContain('permiso_inexistente_x');
     expect(v.screens).toHaveLength(SCREEN_REGISTRY.length);
+  });
+});
+
+describe('PR-IAM · Preview de cambios pendientes (edición piloto §107)', () => {
+  const perms = NILO_LIKE;
+  const overrides = [{ screen: 'panel.dashboard', access: 'ALLOW' }];
+
+  function setup() {
+    const v = buildEffectiveView({ perms, overrides, privateBetaFlags: BETA });
+    const natural = buildEffectiveView({ perms, overrides: [], privateBetaFlags: BETA });
+    return { v, natural };
+  }
+
+  it('DENY sobre pantalla permitida → pierde (LOSS); ALLOW sobre negada → gana (GAIN)', () => {
+    const { v, natural } = setup();
+    const preview = previewPendingChanges(v, natural, [
+      { screenId: 'panel.dashboard', access: 'DENY' },
+      { screenId: 'admin.access', access: 'ALLOW' }
+    ]);
+    const byId = new Map(preview.changes.map((c) => [c.screenId, c]));
+    expect(byId.get('panel.dashboard').before).toBe(true);
+    expect(byId.get('panel.dashboard').after).toBe(false);
+    expect(byId.get('panel.dashboard').diff).toBe(DIFF.LOSS);
+    expect(byId.get('admin.access').before).toBe(false);
+    expect(byId.get('admin.access').after).toBe(true);
+    expect(byId.get('admin.access').diff).toBe(DIFF.GAIN);
+    expect(preview.losses).toBe(1);
+    expect(preview.gains).toBe(1);
+  });
+
+  it('INHERIT devuelve al estado natural (sin overrides)', () => {
+    const { v, natural } = setup();
+    const preview = previewPendingChanges(v, natural, [
+      { screenId: 'panel.dashboard', access: 'INHERIT' }
+    ]);
+    const c = preview.changes[0];
+    expect(c.before).toBe(true);
+    expect(c.after).toBe(natural.screens.find((s) => s.id === 'panel.dashboard').allow);
+    expect(c.diff).toBe(DIFF.SAME);
+    expect(preview.losses).toBe(0);
+    expect(preview.gains).toBe(0);
+  });
+
+  it('marca como críticos los cambios en pantallas HIGH/CRITICAL', () => {
+    const { v, natural } = setup();
+    const preview = previewPendingChanges(v, natural, [
+      { screenId: 'panel.nv.entry', access: 'DENY' },
+      { screenId: 'panel.tv', access: 'DENY' }
+    ]);
+    const entry = preview.changes.find((c) => c.screenId === 'panel.nv.entry');
+    const tv = preview.changes.find((c) => c.screenId === 'panel.tv');
+    expect(entry.critical).toBe(true);
+    expect(entry.diff).toBe(DIFF.LOSS);
+    expect(tv.critical).toBe(false);
   });
 });

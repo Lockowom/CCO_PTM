@@ -4,6 +4,25 @@
 // (opcional: anota {{titulo: …}} y {{simple: [etiqueta] … ;; …}} para lenguaje simple).
 export const RELEASE_NOTES = [
   {
+    version: '1.55.166',
+    fecha: '2026-08-19',
+    titulo:
+      'Control de Acceso ahora permite editar (piloto): HEREDAR / PERMITIR / DENEGAR por pantalla',
+    emoji: '🆕',
+    cambios: [
+      {
+        tipo: 'nuevo',
+        texto:
+          'En Sistema → Control de Acceso (IAM 2.0), los administradores pueden gobernar el acceso por persona con tres estados por pantalla: HEREDAR (lo decide el perfil), PERMITIR o DENEGAR (excepción individual).'
+      },
+      {
+        tipo: 'seguridad',
+        texto:
+          'Todo cambio muestra su impacto antes de guardar (pantallas que el usuario pierde o gana) y se registra como excepción individual, sin tocar roles ni scopes.'
+      }
+    ]
+  },
+  {
     version: '1.55.165',
     fecha: '2026-08-19',
     titulo:
@@ -289,19 +308,6 @@ export const RELEASE_NOTES = [
         tipo: 'mejora',
         texto:
           'El backlog activo (En Proceso, Shipping, etc.), su resumen, el embudo y las alertas de riesgo son ahora una foto EN VIVO que no depende del rango de fechas; el rango sigue acotando solo las métricas de período (entregadas, tardanza, fill rate, tendencias).'
-      }
-    ]
-  },
-  {
-    version: '1.55.92',
-    fecha: '2026-07-20',
-    titulo: 'Se arregló Carga Masiva ("Tabla no permitida")',
-    emoji: '🔧',
-    cambios: [
-      {
-        tipo: 'fix',
-        texto:
-          'Se corrigió un error que impedía subir catálogos en Carga Masiva (por ejemplo N.V. y productos activos): salía "Tabla no permitida" y no cargaba nada. Ya vuelve a funcionar.'
       }
     ]
   }

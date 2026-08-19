@@ -7,23 +7,35 @@ import {
   KeyRound,
   LayoutGrid,
   ListTree,
+  Loader2,
+  Pencil,
+  Save,
   Search,
   ShieldCheck,
   AlertTriangle,
+  Undo2,
   Users as UsersIcon,
   XCircle
 } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
+import { useAuthz } from '../../components/authz';
 import { MODULE_REGISTRY } from '../../domain/access/moduleRegistry.js';
 import { SCREEN_REGISTRY } from '../../domain/access/screenRegistry.js';
 import { FUNCTION_REGISTRY } from '../../domain/access/functionRegistry.js';
 import {
   buildEffectiveView,
+  previewPendingChanges,
   ORIGIN_LABEL,
   ORIGIN_TONE,
   DIFF
 } from '../../domain/access/effectiveView.js';
-import { usuariosLite, permisosEfectivosDe, listarOverridesDe } from '../../services/iamService';
+import {
+  usuariosLite,
+  permisosEfectivosDe,
+  listarOverridesDe,
+  upsertOverride,
+  deleteOverride
+} from '../../services/iamService';
 
 const TONE_CLASSES = {
   red: 'bg-red-500/10 text-red-400 border-red-500/30',
@@ -41,6 +53,12 @@ const RISK_STYLE = {
   HIGH: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
   LOW: 'text-slate-400 border-slate-500/30 bg-slate-500/10'
 };
+
+const TRI_OPTIONS = [
+  { id: 'INHERIT', label: 'HEREDAR' },
+  { id: 'ALLOW', label: 'PERMITIR' },
+  { id: 'DENY', label: 'DENEGAR' }
+];
 
 function initials(name) {
   return (name || '?')
@@ -99,6 +117,36 @@ function OverrideChip({ override }) {
   );
 }
 
+function TriState({ value, onChange, disabled }) {
+  return (
+    <div
+      className={`flex shrink-0 rounded-lg border border-slate-700/60 bg-slate-950/60 p-0.5 ${
+        disabled ? 'opacity-40' : ''
+      }`}
+    >
+      {TRI_OPTIONS.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(o.id)}
+          className={`rounded-md px-2 py-1 text-[10px] font-black tracking-wide transition-colors ${
+            value === o.id
+              ? o.id === 'DENY'
+                ? 'bg-red-500/25 text-red-300'
+                : o.id === 'ALLOW'
+                  ? 'bg-emerald-500/25 text-emerald-300'
+                  : 'bg-slate-700 text-slate-100'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function KpiCard({ label, value, accent }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
@@ -108,7 +156,7 @@ function KpiCard({ label, value, accent }) {
   );
 }
 
-function ScreenRow({ screen, override }) {
+function ScreenRow({ screen, override, editable, triValue, onTriChange, saving }) {
   return (
     <li className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -120,7 +168,7 @@ function ScreenRow({ screen, override }) {
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-slate-200">{screen.label}</div>
           <div className="truncate text-[11px] text-slate-500">
-            {screen.routes.join(' Â· ')}
+            {screen.routes.join(' · ')}
             <span className="ml-1 font-mono text-slate-600">{screen.id}</span>
           </div>
         </div>
@@ -135,11 +183,12 @@ function ScreenRow({ screen, override }) {
       <OverrideChip override={override} />
       <OriginChip origin={screen.origin} reasons={screen.reasons} />
       <DiffChip diff={screen.diff} />
+      {editable && <TriState value={triValue} onChange={onTriChange} disabled={saving} />}
     </li>
   );
 }
 
-function ModuleSection({ module, overridesByScreen }) {
+function ModuleSection({ module, overridesByScreen, editable, triValueOf, onTriChange, saving }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
@@ -170,7 +219,15 @@ function ModuleSection({ module, overridesByScreen }) {
       {open && (
         <ul className="space-y-2 border-t border-slate-800 px-3 py-3">
           {module.screens.map((s) => (
-            <ScreenRow key={s.id} screen={s} override={overridesByScreen[s.id]} />
+            <ScreenRow
+              key={s.id}
+              screen={s}
+              override={overridesByScreen[s.id]}
+              editable={editable}
+              triValue={triValueOf(s.id)}
+              onTriChange={(access) => onTriChange(s.id, access)}
+              saving={saving}
+            />
           ))}
         </ul>
       )}
@@ -178,17 +235,17 @@ function ModuleSection({ module, overridesByScreen }) {
   );
 }
 
-function UserDetail({ user, perms, overrideRows, error, onRetry }) {
-  const view = useMemo(() => {
-    if (!perms) return null;
-    const normalized = overrideRows.map((o) => ({ screen: o.surface_id, access: o.access }));
-    return buildEffectiveView({
-      perms,
-      overrides: normalized,
-      privateBetaFlags: { 'panel.routes': false }
-    });
-  }, [perms, overrideRows]);
-
+function UserDetail({
+  user,
+  view,
+  error,
+  onRetry,
+  canEdit,
+  triValueOf,
+  onTriChange,
+  saving,
+  overridesByScreen
+}) {
   if (!view) {
     if (error) {
       return (
@@ -214,9 +271,6 @@ function UserDetail({ user, perms, overrideRows, error, onRetry }) {
     );
   }
 
-  const overridesByScreen = {};
-  for (const o of overrideRows) overridesByScreen[o.surface_id] = o;
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -229,7 +283,7 @@ function UserDetail({ user, perms, overrideRows, error, onRetry }) {
         <KpiCard label="Excepciones" value={view.counts.overrides} accent="text-orange-400" />
         {view.counts.losses > 0 && (
           <KpiCard
-            label="PÃ©rdidas vs acceso actual"
+            label="Pérdidas vs acceso actual"
             value={view.counts.losses}
             accent="text-red-400"
           />
@@ -245,7 +299,15 @@ function UserDetail({ user, perms, overrideRows, error, onRetry }) {
 
       <div className="space-y-3">
         {view.modules.map((m) => (
-          <ModuleSection key={m.id} module={m} overridesByScreen={overridesByScreen} />
+          <ModuleSection
+            key={m.id}
+            module={m}
+            overridesByScreen={overridesByScreen}
+            editable={canEdit}
+            triValueOf={triValueOf}
+            onTriChange={onTriChange}
+            saving={saving}
+          />
         ))}
       </div>
 
@@ -268,9 +330,10 @@ function UserDetail({ user, perms, overrideRows, error, onRetry }) {
       )}
 
       <p className="text-[11px] text-slate-500">
-        Vista efectiva calculada con el resolver IAM 2.0 (precedencia: DenegaciÃ³n explÃ­cita â†’
-        Permiso individual â†’ Perfil â†’ Legacy â†’ No asignado). El origen de cada pantalla indica
-        quÃ© regla la otorga. ComparaciÃ³n "vs hoy" contra el guard actual.
+        Vista efectiva calculada con el resolver IAM 2.0 (precedencia: Denegación explícita →
+        Permiso individual → Perfil → Legacy → No asignado). El origen de cada pantalla indica qué
+        regla la otorga. Comparación "vs hoy" contra el guard actual. El tri-state aplica una
+        excepción individual (tabla iam.user_overrides); los roles no se tocan.
       </p>
     </div>
   );
@@ -299,7 +362,7 @@ function CatalogSection() {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {[
-          { id: 'modulos', label: 'MÃ³dulos' },
+          { id: 'modulos', label: 'Módulos' },
           { id: 'pantallas', label: 'Pantallas' },
           { id: 'funciones', label: 'Funciones' }
         ].map((t) => (
@@ -346,7 +409,7 @@ function CatalogSection() {
             <thead>
               <tr className="border-b border-slate-800 text-[11px] uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">Pantalla</th>
-                <th className="px-4 py-3">MÃ³dulo</th>
+                <th className="px-4 py-3">Módulo</th>
                 <th className="px-4 py-3">Rutas</th>
                 <th className="px-4 py-3">Permiso default</th>
                 <th className="px-4 py-3">Riesgo</th>
@@ -364,7 +427,7 @@ function CatalogSection() {
                   </td>
                   <td className="px-4 py-2.5 text-slate-400">{s.module}</td>
                   <td className="px-4 py-2.5 font-mono text-[11px] text-slate-400">
-                    {s.routes.join(' Â· ')}
+                    {s.routes.join(' · ')}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-[11px] text-slate-300">
                     {s.defaultPermission}
@@ -388,9 +451,9 @@ function CatalogSection() {
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-800 text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">FunciÃ³n</th>
+                <th className="px-4 py-3">Función</th>
                 <th className="px-4 py-3">Pantalla</th>
-                <th className="px-4 py-3">MÃ³dulo</th>
+                <th className="px-4 py-3">Módulo</th>
                 <th className="px-4 py-3">Riesgo</th>
                 <th className="px-4 py-3">Backend</th>
               </tr>
@@ -415,7 +478,7 @@ function CatalogSection() {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 font-mono text-[11px] text-slate-500">
-                    {f.backendAction || 'â€”'}
+                    {f.backendAction || '—'}
                   </td>
                 </tr>
               ))}
@@ -428,12 +491,19 @@ function CatalogSection() {
 }
 
 export default function AccessControlV2() {
+  const { hasAny, isAdmin } = useAuthz();
+  const canEdit = isAdmin || hasAny(['manage_users']);
+
   const [tab, setTab] = useState('usuarios');
   const [q, setQ] = useState('');
   const [users, setUsers] = useState(null);
   const [usersError, setUsersError] = useState(false);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [pending, setPending] = useState(new Map());
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [savedOk, setSavedOk] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setUsersError(false);
@@ -463,6 +533,17 @@ export default function AccessControlV2() {
     }
   }, []);
 
+  const selectUser = useCallback(
+    (uid) => {
+      setSelected(uid);
+      setPending(new Map());
+      setSaveError(null);
+      setSavedOk(false);
+      loadDetail(uid);
+    },
+    [loadDetail]
+  );
+
   const filtered = useMemo(() => {
     if (!users) return [];
     const t = q.trim().toLowerCase();
@@ -473,31 +554,141 @@ export default function AccessControlV2() {
   const selectedUser = users?.find((u) => u.id === selected) || null;
   const selectedDetail = detail && detail.uid === selected ? detail : null;
 
+  const overridesByScreen = useMemo(() => {
+    const map = {};
+    for (const o of selectedDetail?.overrideRows || []) map[o.surface_id] = o;
+    return map;
+  }, [selectedDetail]);
+
+  const view = useMemo(() => {
+    if (!selectedDetail?.perms) return null;
+    const normalized = (selectedDetail.overrideRows || []).map((o) => ({
+      screen: o.surface_id,
+      access: o.access
+    }));
+    return buildEffectiveView({
+      perms: selectedDetail.perms,
+      overrides: normalized,
+      privateBetaFlags: { 'panel.routes': false }
+    });
+  }, [selectedDetail]);
+
+  const naturalView = useMemo(() => {
+    if (!selectedDetail?.perms) return null;
+    return buildEffectiveView({
+      perms: selectedDetail.perms,
+      overrides: [],
+      privateBetaFlags: { 'panel.routes': false }
+    });
+  }, [selectedDetail]);
+
+  const preview = useMemo(() => {
+    if (!view || !naturalView || pending.size === 0) return null;
+    return previewPendingChanges(view, naturalView, [...pending.values()]);
+  }, [view, naturalView, pending]);
+
+  const triValueOf = useCallback(
+    (screenId) => {
+      const p = pending.get(screenId);
+      if (p) return p.access;
+      const current = overridesByScreen[screenId];
+      return current && current.access !== 'INHERIT' ? current.access : 'INHERIT';
+    },
+    [pending, overridesByScreen]
+  );
+
+  const onTriChange = useCallback(
+    (screenId, access) => {
+      if (!canEdit || saving) return;
+      setSavedOk(false);
+      setSaveError(null);
+      setPending((prev) => {
+        const next = new Map(prev);
+        const current = prev.get(screenId);
+        if (current && current.access === access) {
+          next.delete(screenId);
+        } else {
+          next.set(screenId, { screenId, access });
+        }
+        return next;
+      });
+    },
+    [canEdit, saving]
+  );
+
+  const discardPending = useCallback(() => {
+    setPending(new Map());
+    setSaveError(null);
+    setSavedOk(false);
+  }, []);
+
+  const savePending = useCallback(async () => {
+    if (!selected || pending.size === 0 || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    setSavedOk(false);
+    try {
+      for (const p of pending.values()) {
+        const res =
+          p.access === 'INHERIT'
+            ? await deleteOverride(selected, 'screen', p.screenId)
+            : await upsertOverride(selected, 'screen', p.screenId, p.access);
+        if (res && res.ok === false) {
+          throw new Error(res.error || 'Error al guardar el cambio');
+        }
+      }
+      setPending(new Map());
+      setSavedOk(true);
+      await loadDetail(selected);
+    } catch (e) {
+      setSaveError(e.message || 'Error al guardar los cambios');
+    } finally {
+      setSaving(false);
+    }
+  }, [selected, pending, saving, loadDetail]);
+
   return (
-    <div className="min-h-screen bg-slate-950 p-3 text-slate-200 sm:p-6">
+    <div className="min-h-screen bg-slate-950 p-3 pb-24 text-slate-200 sm:p-6 sm:pb-28">
       <PageHeader
         icon={ShieldCheck}
         title="Control de Acceso (IAM 2.0)"
-        description="Muestra exactamente quÃ© tiene cada usuario: pantallas, origen y comparaciÃ³n con el acceso actual"
+        description="Muestra exactamente qué tiene cada usuario: pantallas, origen y comparación con el acceso actual"
         actions={
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-xs font-bold text-orange-400">
-            <Eye size={14} />
-            Solo lectura
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${
+              canEdit
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                : 'border-orange-500/40 bg-orange-500/10 text-orange-400'
+            }`}
+          >
+            {canEdit ? <Pencil size={14} /> : <Eye size={14} />}
+            {canEdit ? 'Edición piloto' : 'Solo lectura'}
           </span>
         }
       />
 
       <div className="mb-5 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-xs text-slate-400">
-        Vista de referencia IAM 2.0. La autoridad real sigue siendo{' '}
-        <span className="font-semibold text-slate-300">Admin â†’ Identidad y Seguridad</span>; aquÃ­
-        no se modifican permisos, roles ni scopes. Los overrides visibles por pantalla provienen de
-        la tabla
-        <span className="font-mono text-slate-300"> iam.user_overrides</span>.
+        {canEdit ? (
+          <>
+            Edición piloto IAM 2.0 (spec §107): los cambios se guardan como{' '}
+            <span className="font-semibold text-slate-300">overrides individuales</span> en{' '}
+            <span className="font-mono text-slate-300">iam.user_overrides</span> y no tocan roles ni
+            scopes. La administración oficial sigue siendo{' '}
+            <span className="font-semibold text-slate-300">Admin → Identidad y Seguridad</span>.
+            Todo cambio muestra su impacto (pierde/gana vs hoy) antes de guardar.
+          </>
+        ) : (
+          <>
+            Vista de referencia IAM 2.0. La autoridad real sigue siendo{' '}
+            <span className="font-semibold text-slate-300">Admin → Identidad y Seguridad</span>;
+            aquí no se modifican permisos, roles ni scopes.
+          </>
+        )}
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard label="Usuarios" value={users ? users.length : 'â€¦'} />
-        <KpiCard label="MÃ³dulos" value={MODULE_REGISTRY.length} />
+        <KpiCard label="Usuarios" value={users ? users.length : '…'} />
+        <KpiCard label="Módulos" value={MODULE_REGISTRY.length} />
         <KpiCard label="Pantallas" value={SCREEN_REGISTRY.length} />
         <KpiCard label="Funciones" value={FUNCTION_REGISTRY.length} />
       </div>
@@ -505,7 +696,7 @@ export default function AccessControlV2() {
       <div className="mb-4 flex flex-wrap gap-2">
         {[
           { id: 'usuarios', label: 'Usuarios', icon: UsersIcon },
-          { id: 'catalogo', label: 'CatÃ¡logo', icon: LayoutGrid }
+          { id: 'catalogo', label: 'Catálogo', icon: LayoutGrid }
         ].map((t) => (
           <button
             key={t.id}
@@ -536,7 +727,7 @@ export default function AccessControlV2() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar usuarioâ€¦"
+                placeholder="Buscar usuario…"
                 className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-orange-500/50 focus:outline-none"
               />
             </div>
@@ -566,10 +757,7 @@ export default function AccessControlV2() {
                     <li key={u.id}>
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelected(u.id);
-                          loadDetail(u.id);
-                        }}
+                        onClick={() => selectUser(u.id)}
                         className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
                           selected === u.id
                             ? 'border-orange-500/60 bg-orange-500/10'
@@ -612,10 +800,14 @@ export default function AccessControlV2() {
                 </div>
                 <UserDetail
                   user={selectedUser}
-                  perms={selectedDetail?.perms}
-                  overrideRows={selectedDetail?.overrideRows || []}
+                  view={view}
                   error={selectedDetail?.error}
                   onRetry={() => loadDetail(selected)}
+                  canEdit={canEdit}
+                  triValueOf={triValueOf}
+                  onTriChange={onTriChange}
+                  saving={saving}
+                  overridesByScreen={overridesByScreen}
                 />
               </div>
             ) : (
@@ -626,6 +818,79 @@ export default function AccessControlV2() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {pending.size > 0 && preview && (
+        <div className="fixed bottom-3 left-1/2 z-50 w-[min(96vw,720px)] -translate-x-1/2">
+          <div className="rounded-2xl border border-orange-500/40 bg-slate-900/95 p-4 shadow-2xl shadow-black/50 backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-slate-100">
+                  {preview.changes.length} cambio{preview.changes.length === 1 ? '' : 's'} pendiente
+                  {preview.changes.length === 1 ? '' : 's'}
+                </div>
+                <div className="mt-0.5 flex flex-wrap gap-1.5 text-[11px]">
+                  {preview.losses > 0 && (
+                    <span className="rounded-full bg-red-500/15 px-2 py-0.5 font-bold text-red-300">
+                      {preview.losses} pierde(n)
+                    </span>
+                  )}
+                  {preview.gains > 0 && (
+                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold text-emerald-300">
+                      {preview.gains} gana(n)
+                    </span>
+                  )}
+                  {preview.changes.some((c) => c.critical) && (
+                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-bold text-amber-300">
+                      Incluye pantalla de riesgo alto/crítico
+                    </span>
+                  )}
+                </div>
+                {saveError && (
+                  <div className="mt-1 text-[11px] font-semibold text-red-400">{saveError}</div>
+                )}
+                {savedOk && (
+                  <div className="mt-1 text-[11px] font-semibold text-emerald-400">
+                    Cambios guardados
+                  </div>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={discardPending}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                >
+                  <Undo2 size={14} />
+                  Descartar
+                </button>
+                <button
+                  type="button"
+                  onClick={savePending}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-2 text-xs font-bold text-white hover:bg-orange-600 disabled:opacity-60"
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Guardar cambios
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 max-h-36 space-y-1 overflow-y-auto border-t border-slate-800 pt-2">
+              {preview.changes.map((c) => (
+                <div key={c.screenId} className="flex items-center gap-2 text-[11px]">
+                  <span className="min-w-0 flex-1 truncate text-slate-300">{c.label}</span>
+                  <span className="text-slate-500">
+                    {c.before ? 'Permitido' : 'Negado'} →{' '}
+                    <span className={c.after ? 'text-emerald-400' : 'text-red-400'}>
+                      {c.after ? 'Permitido' : 'Negado'}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
