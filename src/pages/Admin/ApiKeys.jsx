@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { KeyRound, Plus, X, Copy, Ban, RefreshCw, Terminal, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ConfirmDialog } from '../../components/ui/Overlay';
 import {
   listarApiKeys,
   crearApiKey,
@@ -33,6 +34,8 @@ export default function ApiKeys() {
   const [nueva, setNueva] = useState(false);
   const [creada, setCreada] = useState(null); // {key, prefijo}
   const [copied, setCopied] = useState('');
+  const [revokeTarget, setRevokeTarget] = useState(null);
+  const [revoking, setRevoking] = useState(false);
 
   const cargar = useCallback(async () => {
     setKeys(await listarApiKeys());
@@ -52,10 +55,12 @@ export default function ApiKeys() {
     }
   };
   const revocar = async (id) => {
-    if (!window.confirm('¿Revocar esta API key? Dejará de funcionar de inmediato.')) return;
+    setRevoking(true);
     const r = await revocarApiKey(id);
+    setRevoking(false);
     if (r?.ok) {
       toast.success('Key revocada');
+      setRevokeTarget(null);
       cargar();
     } else toast.error(r?.error || 'Error');
   };
@@ -191,7 +196,7 @@ curl -X POST "${API_BASE}/operaciones/estado" \\
                 </span>
                 {puede && k.activo && (
                   <button
-                    onClick={() => revocar(k.id)}
+                    onClick={() => setRevokeTarget(k)}
                     title="Revocar"
                     className="w-8 h-8 rounded-lg hover:bg-red-50 grid place-items-center text-red-400 shrink-0"
                   >
@@ -244,6 +249,16 @@ curl -X POST "${API_BASE}/operaciones/estado" \\
           }}
         />
       )}
+      <ConfirmDialog
+        open={Boolean(revokeTarget)}
+        onClose={() => !revoking && setRevokeTarget(null)}
+        onConfirm={() => revocar(revokeTarget.id)}
+        title="Revocar API key"
+        message={`La clave ${revokeTarget?.nombre || ''} dejará de funcionar inmediatamente. Esta acción queda registrada.`}
+        confirmLabel="Revocar clave"
+        tone="danger"
+        loading={revoking}
+      />
     </div>
   );
 }

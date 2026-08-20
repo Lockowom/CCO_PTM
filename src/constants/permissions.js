@@ -130,6 +130,23 @@ export const ROUTE_PERMISSIONS = {
   '/seguridad': [],
 
   // Admin
+  '/admin': [
+    'manage_users',
+    'view_users',
+    'manage_locations',
+    'manage_cleanup',
+    'manage_tickets',
+    'admin_upload_history',
+    'admin_monitor',
+    'view_workflows',
+    'manage_workflows',
+    'view_eventos',
+    'manage_eventos',
+    'view_api',
+    'manage_api',
+    'view_rendiciones',
+    'manage_rendiciones'
+  ],
   '/admin/users': ['manage_users', 'view_users'],
   '/admin/access': ['view_users', 'manage_users'],
   '/admin/roles': ['manage_roles', 'view_roles'],

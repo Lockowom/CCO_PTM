@@ -87,6 +87,7 @@ const BloqueDetalle = React.lazy(() => import('./pages/Inventory/BloqueDetalle')
 const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
+const AdminHome = React.lazy(() => import('./pages/Admin/AdminHome'));
 const AccessControl = React.lazy(() => import('./pages/Admin/AccessControl')); // Usuarios y Roles unificados
 const AccessControlV2 = React.lazy(() => import('./pages/Admin/AccessControlV2')); // Control de Acceso IAM 2.0
 const Seguridad = React.lazy(() => import('./pages/Seguridad')); // Seguridad de mi cuenta (MFA/2FA) — cualquier autenticado
@@ -780,6 +781,14 @@ function AppContent() {
             />
 
             {/* Admin Modules */}
+            <Route
+              path="admin"
+              element={
+                <ErrorBoundary>
+                  <AdminHome />
+                </ErrorBoundary>
+              }
+            />
             <Route
               path="admin/users"
               element={

@@ -47,6 +47,11 @@ const CORE_MODULE_RULES = [
     id: 'postventa',
     flag: 'web_postventa_v2',
     matches: (path) => path === '/postventa' || path.startsWith('/postventa/')
+  },
+  {
+    id: 'admin',
+    flag: 'web_admin_v2',
+    matches: (path) => path === '/admin' || path.startsWith('/admin/')
   }
 ];
 

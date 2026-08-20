@@ -64,6 +64,132 @@
   background: linear-gradient(180deg, rgba(15, 118, 110, 0.04), transparent 20rem);
 }
 
+.cco-module-admin {
+  --module-accent: #4f46e5;
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.04), transparent 22rem);
+}
+
+.admin-home-v2 {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-bottom: 4rem;
+}
+
+.admin-home-v2 > header h1 {
+  color: var(--text-primary);
+}
+.admin-home-v2 > header p {
+  color: var(--text-muted);
+}
+
+.admin-domain-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-domain {
+  padding: 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-domain > header {
+  margin-bottom: 0.9rem;
+}
+.admin-domain > header > span {
+  color: #818cf8;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.admin-domain h2 {
+  margin-top: 0.15rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 900;
+}
+.admin-domain p {
+  margin-top: 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+.admin-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.admin-tool-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  min-height: 7rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: var(--surface-base);
+}
+
+.admin-tool-card:hover {
+  border-color: #6366f1;
+  background: rgba(79, 70, 229, 0.08);
+  transform: translateY(-1px);
+}
+.admin-tool-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  color: #a5b4fc;
+  background: rgba(79, 70, 229, 0.18);
+}
+.admin-tool-card__copy {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+.admin-tool-card__copy strong {
+  font-size: 0.78rem;
+}
+.admin-tool-card__copy small {
+  color: var(--text-secondary);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+.admin-tool-card__status {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.55rem;
+  color: #34d399;
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .admin-domain-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-tool-card {
+    min-height: 6rem;
+  }
+}
+
 .cco-module-routes .cr-map-card,
 .cco-module-routes .cr-sector-card,
 .cco-module-tms > div > div {

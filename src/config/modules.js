@@ -17,6 +17,7 @@ export const APP_MODULES = [
 ];
 
 export const APP_ROUTES = [
+  { value: '/admin', label: 'Admin - Inicio', module: 'admin' },
   // TMS (Transporte) OCULTO — rutas siguen existiendo en App.jsx; se reactivarán
   // en el menú cuando el módulo esté operativo.
   { value: '/tms/control', label: 'TMS - Torre de Control', module: 'tms' },
