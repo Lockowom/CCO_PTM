@@ -3,6 +3,11 @@ import { resolveModuleUiRuntime } from '../components/shell/moduleUiRuntime';
 
 describe('CCO 2.0 core module runtime', () => {
   it.each([
+    ['/login', 'login', 'web_login_v2'],
+    ['/consulta', 'public', 'web_public_v2'],
+    ['/rendiciones/token', 'public', 'web_public_v2'],
+    ['/panel/builder', 'builder', 'web_builder_v2'],
+    ['/panel/tv', 'tv', 'web_tv_v2'],
     ['/panel', 'dashboard', 'web_dashboard_v2'],
     ['/panel/ingresar', 'panel-nv', 'web_panel_nv_v2'],
     ['/panel/info', 'panel-nv', 'web_panel_nv_v2'],

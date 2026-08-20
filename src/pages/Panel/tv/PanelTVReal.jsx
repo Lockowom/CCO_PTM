@@ -6,6 +6,7 @@ import { ESTADOS } from '../dash/dashHelpers';
 import { supabase } from '../../../supabase';
 import { Logger } from '../../../lib/logger';
 import CountUp from './ui/CountUp';
+import { isFeatureFlagEnabled } from '../../../config/featureFlags';
 
 const REFRESH_MS = 30_000;
 const ROTATE_MS = 8_000;
@@ -138,12 +139,14 @@ function NvCard({ n, estado }) {
 
 export default function TVDashboard() {
   const navigate = useNavigate();
+  const tvV2 = isFeatureFlagEnabled('web_tv_v2');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState('');
   const [error, setError] = useState(null);
   const [sel, setSel] = useState(null);
   const [autoRotate, setAutoRotate] = useState(true);
+  const [clock, setClock] = useState(() => new Date());
   const pauseUntilRef = useRef(0);
   const rotateIdxRef = useRef(0);
 
@@ -189,6 +192,11 @@ export default function TVDashboard() {
     const interval = setInterval(loadData, REFRESH_MS);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Realtime SIEMPRE: recarga en vivo ante cualquier cambio en operaciones
   // (además del poll de respaldo) y al finalizar sync/import.
@@ -304,7 +312,10 @@ export default function TVDashboard() {
   const detalleEstado = sel === 'URGENTES' ? 'URGENTES' : sel || '';
 
   return createPortal(
-    <div className="fixed inset-0 z-[110] overflow-hidden bg-black">
+    <div
+      className="fixed inset-0 z-[110] overflow-hidden bg-black"
+      data-ui-surface={tvV2 ? 'tv-v2' : 'tv-legacy'}
+    >
       {SalirBtn}
       <div
         className="overflow-hidden bg-[#0a0a0f] text-white flex flex-col p-5"
@@ -335,6 +346,23 @@ export default function TVDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-6">
+            {tvV2 && (
+              <div
+                className="border-r border-gray-800 pr-6 text-right"
+                aria-label="Hora del tablero"
+              >
+                <p className="text-3xl font-black tabular-nums text-white">
+                  {clock.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-500">
+                  {clock.toLocaleDateString('es-CL', {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short'
+                  })}
+                </p>
+              </div>
+            )}
             <button
               onClick={() => handleManualSel(sel === 'URGENTES' ? null : 'URGENTES')}
               className={`flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all ${urgentes.length > 0 ? 'bg-red-500/15 border-glow-red' : 'bg-gray-800/40 border-2 border-gray-700/50'} ${sel === 'URGENTES' ? 'ring-2 ring-red-400' : ''}`}
