@@ -8,10 +8,19 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '../supabase';
 import DownloadActivity from './DownloadActivity';
+import AppShell from './shell/AppShell';
+import { isFeatureFlagEnabled } from '../config/featureFlags';
+import { useAuth } from '../context/AuthContext';
+import { resolveShellRuntime } from './shell/shellRuntime';
 
 const Layout = ({ children }) => {
   const location = useLocation();
   const mainRef = useRef(null);
+  const { canAccessRoute } = useAuth();
+  const shellRuntime = resolveShellRuntime({
+    webShellEnabled: isFeatureFlagEnabled('web_shell_v2')
+  });
+  const useShellV2 = shellRuntime === 'v2';
 
   // Sistema de Notificaciones en Tiempo Real (con throttle para uploads masivos)
   useEffect(() => {
@@ -135,8 +144,26 @@ const Layout = ({ children }) => {
       });
   }, [location.pathname]);
 
+  if (useShellV2) {
+    return (
+      <div data-shell-version="2" className="relative min-h-[100dvh] overflow-hidden">
+        <OtaBanner />
+        <AppShell canAccessRoute={canAccessRoute} mobileHeader={<Navbar />}>
+          <div ref={mainRef} className="min-h-full">
+            {children}
+          </div>
+        </AppShell>
+        <ErrorReportWidget />
+        <DownloadActivity />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-shell flex flex-col bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900">
+    <div
+      data-shell-version="legacy"
+      className="app-shell flex flex-col bg-slate-50 font-sans overflow-hidden relative selection:bg-orange-200 selection:text-orange-900"
+    >
       <OtaBanner />
 
       {/* Background Decorator - Simplificado para Legibilidad */}

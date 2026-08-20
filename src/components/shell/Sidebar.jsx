@@ -16,32 +16,31 @@ const ICONS = {
   ShieldCheck: '✓',
   Headset: '♪',
   Settings: '⚙',
-  Truck: '▬',
+  Truck: '▬'
 };
 
-const Sidebar = ({ collapsed, onToggle, width = 'w-60' }) => {
+const Sidebar = ({ collapsed, onToggle, width = 'w-60', canAccessRoute = null }) => {
   const [openGroups, setOpenGroups] = useState({});
-  const groups = getNavGroups();
+  const groups = getNavGroups(canAccessRoute);
 
-  const toggleGroup = (id) =>
-    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleGroup = (id) => setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <aside
-      className={`shrink-0 border-r border-slate-800 bg-[var(--surface-elevated)] transition-[width] duration-200
+      className={`cco-sidebar shrink-0 border-r border-[var(--border-default)] bg-[var(--surface-elevated)] transition-[width] duration-200
         ${collapsed ? 'w-16' : width} hidden lg:flex flex-col`}
       aria-label="Navegación principal"
     >
-      <div className="flex h-14 items-center justify-between border-b border-slate-800 px-3">
+      <div className="flex h-14 items-center justify-between border-b border-[var(--border-default)] px-3">
         {!collapsed && (
-          <span className="text-xs font-black tracking-widest text-brand-500 truncate">
-            CCO · WMS
+          <span className="font-brand text-xs font-black tracking-widest text-brand-500 truncate">
+            CCO · SYSTEM
           </span>
         )}
         <button
           onClick={onToggle}
           aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+          className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
@@ -52,13 +51,13 @@ const Sidebar = ({ collapsed, onToggle, width = 'w-60' }) => {
           <div key={g.id} className="mb-1">
             <button
               onClick={() => !collapsed && toggleGroup(g.id)}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-300"
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-[var(--text-faint)] hover:text-[var(--text-secondary)]"
               aria-expanded={collapsed || openGroups[g.id]}
             >
               <span className="w-5 text-center text-sm text-slate-600">{ICONS[g.icon] || '•'}</span>
               {!collapsed && <span className="truncate">{g.label}</span>}
             </button>
-            {(!collapsed && (openGroups[g.id] ?? true)) && (
+            {!collapsed && (openGroups[g.id] ?? true) && (
               <ul className="space-y-0.5 px-2">
                 {g.items.map((item) => (
                   <li key={item.path}>
@@ -67,7 +66,7 @@ const Sidebar = ({ collapsed, onToggle, width = 'w-60' }) => {
                       end={item.path.split('?')[0].split('/').length <= 3}
                       className={({ isActive }) =>
                         `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors
-                        ${isActive ? 'bg-brand-500/10 text-brand-400 font-semibold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'}`
+                        ${isActive ? 'bg-brand-500/10 text-brand-600 font-semibold' : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'}`
                       }
                     >
                       <span className="w-5 shrink-0 text-center text-sm text-slate-500">•</span>

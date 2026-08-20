@@ -21,26 +21,26 @@
   --brand-800: #9a3412;
   --brand-900: #7c2d12;
 
-  /* ── Surface (dark-first) ──────────────────────────────────────────────── */
-  --surface-void: #07080a;
-  --surface-base: #0c0e12;
-  --surface-elevated: #12151c;
-  --surface-card: #181b24;
-  --surface-overlay: #1e2430;
-  --surface-inverse: #f1f5f9;
+  /* ── Surface: claro por defecto para preservar módulos existentes ────── */
+  --surface-void: #e2e8f0;
+  --surface-base: #f5f7fb;
+  --surface-elevated: #ffffff;
+  --surface-card: #ffffff;
+  --surface-overlay: #f8fafc;
+  --surface-inverse: #0f172a;
 
   /* ── Border ────────────────────────────────────────────────────────────── */
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-default: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-subtle: #f1f5f9;
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
   --border-accent: rgba(249, 115, 22, 0.35);
 
   /* ── Text ──────────────────────────────────────────────────────────────── */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
-  --text-inverse: #0f172a;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --text-inverse: #f8fafc;
   --text-link: #38bdf8;
 
   /* ── Semantic status ───────────────────────────────────────────────────── */
@@ -77,9 +77,9 @@
   --radius-full: 9999px;
 
   /* ── Shadow ────────────────────────────────────────────────────────────── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.12);
   --shadow-glow-accent: 0 0 15px rgba(249, 115, 22, 0.25);
   --shadow-glow-ok: 0 0 15px rgba(16, 185, 129, 0.2);
 
@@ -113,4 +113,24 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+[data-theme='dark'] {
+  --surface-void: #07080a;
+  --surface-base: #0c0e12;
+  --surface-elevated: #12151c;
+  --surface-card: #181b24;
+  --surface-overlay: #1e2430;
+  --surface-inverse: #f1f5f9;
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-default: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --text-inverse: #0f172a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.4);
 }

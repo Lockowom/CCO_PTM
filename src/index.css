@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import './styles/tokens.css';
 
 @tailwind base;
 @tailwind components;
@@ -32,7 +33,7 @@
 }
 
 * {
-  @apply font-poppins;
+  box-sizing: border-box;
 }
 
 html {
@@ -40,7 +41,23 @@ html {
 }
 
 body {
-  @apply bg-white;
+  margin: 0;
+  min-width: 320px;
+  @apply font-sans antialiased;
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+.font-code {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(249, 115, 22, 0.45);
+  outline-offset: 2px;
 }
 
 /* Global Button Styles */
