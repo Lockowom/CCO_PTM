@@ -18,7 +18,15 @@ import { useAuth } from '../../context/AuthContext';
  * mismo que aplica `hasPermission` y el guard de rutas.
  */
 export function useAuthz() {
-  const { hasPermission, permissions, roles, user } = useAuth();
+  const {
+    hasPermission,
+    hasScreenAccess,
+    hasFunctionAccess,
+    permissions,
+    roles,
+    user,
+    iamRuntime
+  } = useAuth();
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
 
   const hasAny = (perms = []) =>
@@ -28,12 +36,15 @@ export function useAuthz() {
 
   return {
     hasPermission,
+    hasScreenAccess,
+    hasFunctionAccess,
     hasAny,
     hasAll,
     isAdmin,
     permissions: permissions || [],
     roles: roles || [],
     user,
+    iamRuntime
   };
 }
 
@@ -44,7 +55,9 @@ export function useAuthz() {
  *  - allOf : string[] → requiere todos.
  * Sin ninguna prop → permite (útil para envolver sin condición).
  */
-function evaluate({ perm, anyOf, allOf }, authz) {
+function evaluate({ perm, anyOf, allOf, screen, fn, fallbackPermissions }, authz) {
+  if (fn) return authz.hasFunctionAccess(fn, fallbackPermissions || []);
+  if (screen) return authz.hasScreenAccess(screen, false);
   if (perm) return authz.hasPermission(perm);
   if (anyOf) return authz.hasAny(anyOf);
   if (allOf) return authz.hasAll(allOf);
@@ -56,9 +69,18 @@ function evaluate({ perm, anyOf, allOf }, authz) {
  * (por defecto: nada). `children` puede ser función `() => ReactNode` para
  * diferir el render del bloque protegido.
  */
-export function Can({ perm, anyOf, allOf, fallback = null, children }) {
+export function Can({
+  perm,
+  anyOf,
+  allOf,
+  screen,
+  fn,
+  fallbackPermissions,
+  fallback = null,
+  children
+}) {
   const authz = useAuthz();
-  const ok = evaluate({ perm, anyOf, allOf }, authz);
+  const ok = evaluate({ perm, anyOf, allOf, screen, fn, fallbackPermissions }, authz);
   if (!ok) return fallback;
   return typeof children === 'function' ? children(authz) : children;
 }

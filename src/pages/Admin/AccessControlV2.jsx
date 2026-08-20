@@ -34,7 +34,9 @@ import {
   permisosEfectivosDe,
   listarOverridesDe,
   upsertOverride,
-  deleteOverride
+  deleteOverride,
+  listarModosEnforcement,
+  cambiarModoEnforcement
 } from '../../services/iamService';
 
 const TONE_CLASSES = {
@@ -51,6 +53,7 @@ const TONE_CLASSES = {
 const RISK_STYLE = {
   CRITICAL: 'text-red-400 border-red-500/30 bg-red-500/10',
   HIGH: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+  MEDIUM: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
   LOW: 'text-slate-400 border-slate-500/30 bg-slate-500/10'
 };
 
@@ -73,7 +76,7 @@ function OriginChip({ origin, reasons }) {
   const tone = TONE_CLASSES[ORIGIN_TONE[origin]] || TONE_CLASSES.slate;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${tone}`}
       title={reasons && reasons.length ? `Por: ${reasons.join(', ')}` : ORIGIN_LABEL[origin]}
     >
       {ORIGIN_LABEL[origin] || origin}
@@ -235,6 +238,59 @@ function ModuleSection({ module, overridesByScreen, editable, triValueOf, onTriC
   );
 }
 
+function FunctionOverridesSection({
+  overridesByFunction,
+  editable,
+  triValueOf,
+  onTriChange,
+  saving
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-800/40"
+      >
+        <span className="flex items-center gap-2 text-sm font-bold text-slate-100">
+          {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          Funciones y acciones ({FUNCTION_REGISTRY.length})
+        </span>
+        <span className="text-xs text-slate-500">Control fino</span>
+      </button>
+      {open && (
+        <div className="max-h-[520px] space-y-2 overflow-y-auto border-t border-slate-800 p-3">
+          {FUNCTION_REGISTRY.map((fn) => (
+            <div
+              key={fn.id}
+              className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2"
+            >
+              <div className="min-w-[220px] flex-1">
+                <div className="text-xs font-bold text-slate-200">{fn.label}</div>
+                <div className="font-mono text-[10px] text-slate-500">{fn.id}</div>
+              </div>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${RISK_STYLE[fn.risk]}`}
+              >
+                {fn.risk}
+              </span>
+              <OverrideChip override={overridesByFunction[fn.id]} />
+              {editable && (
+                <TriState
+                  value={triValueOf(fn.id)}
+                  onChange={(access) => onTriChange(fn.id, access)}
+                  disabled={saving}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function UserDetail({
   user,
   view,
@@ -244,7 +300,10 @@ function UserDetail({
   triValueOf,
   onTriChange,
   saving,
-  overridesByScreen
+  overridesByScreen,
+  overridesByFunction,
+  triValueOfFunction,
+  onFunctionTriChange
 }) {
   if (!view) {
     if (error) {
@@ -309,6 +368,13 @@ function UserDetail({
             saving={saving}
           />
         ))}
+        <FunctionOverridesSection
+          overridesByFunction={overridesByFunction}
+          editable={canEdit}
+          triValueOf={triValueOfFunction}
+          onTriChange={onFunctionTriChange}
+          saving={saving}
+        />
       </div>
 
       {view.unmapped.length > 0 && (
@@ -504,11 +570,19 @@ export default function AccessControlV2() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [savedOk, setSavedOk] = useState(false);
+  const [enforcement, setEnforcement] = useState([]);
+  const [modeReason, setModeReason] = useState('');
+  const [modeSaving, setModeSaving] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setUsersError(false);
     try {
-      setUsers(await usuariosLite());
+      const [userRows, modeRows] = await Promise.all([
+        usuariosLite(),
+        listarModosEnforcement().catch(() => [])
+      ]);
+      setUsers(userRows);
+      setEnforcement(modeRows);
     } catch {
       setUsersError(true);
       setUsers([]);
@@ -539,6 +613,7 @@ export default function AccessControlV2() {
       setPending(new Map());
       setSaveError(null);
       setSavedOk(false);
+      setModeReason('');
       loadDetail(uid);
     },
     [loadDetail]
@@ -553,10 +628,46 @@ export default function AccessControlV2() {
 
   const selectedUser = users?.find((u) => u.id === selected) || null;
   const selectedDetail = detail && detail.uid === selected ? detail : null;
+  const selectedEnforcement = enforcement.find((row) => row.user_id === selected) || {
+    mode: 'SHADOW',
+    permission_version: 1
+  };
+
+  const changeEnforcement = useCallback(async () => {
+    if (!selected || modeSaving) return;
+    const reason = modeReason.trim();
+    if (reason.length < 8) {
+      setSaveError('Registra un motivo de al menos 8 caracteres para cambiar el modo.');
+      return;
+    }
+    const nextMode = selectedEnforcement.mode === 'ENFORCE' ? 'SHADOW' : 'ENFORCE';
+    setModeSaving(true);
+    setSaveError(null);
+    try {
+      await cambiarModoEnforcement(selected, nextMode, reason);
+      setModeReason('');
+      setSavedOk(true);
+      setEnforcement(await listarModosEnforcement());
+    } catch (error) {
+      setSaveError(error?.message || 'No se pudo cambiar el modo de aplicación.');
+    } finally {
+      setModeSaving(false);
+    }
+  }, [modeReason, modeSaving, selected, selectedEnforcement.mode]);
 
   const overridesByScreen = useMemo(() => {
     const map = {};
-    for (const o of selectedDetail?.overrideRows || []) map[o.surface_id] = o;
+    for (const o of selectedDetail?.overrideRows || []) {
+      if (o.surface_type === 'screen') map[o.surface_id] = o;
+    }
+    return map;
+  }, [selectedDetail]);
+
+  const overridesByFunction = useMemo(() => {
+    const map = {};
+    for (const o of selectedDetail?.overrideRows || []) {
+      if (o.surface_type === 'function') map[o.surface_id] = o;
+    }
     return map;
   }, [selectedDetail]);
 
@@ -584,17 +695,48 @@ export default function AccessControlV2() {
 
   const preview = useMemo(() => {
     if (!view || !naturalView || pending.size === 0) return null;
-    return previewPendingChanges(view, naturalView, [...pending.values()]);
+    const values = [...pending.values()];
+    const screenPreview = previewPendingChanges(
+      view,
+      naturalView,
+      values
+        .filter((item) => item.surfaceType === 'screen')
+        .map((item) => ({ screenId: item.surfaceId, access: item.access }))
+    );
+    const functionChanges = values
+      .filter((item) => item.surfaceType === 'function')
+      .map((item) => ({
+        screenId: item.surfaceId,
+        label: FUNCTION_REGISTRY.find((fn) => fn.id === item.surfaceId)?.label || item.surfaceId,
+        before: null,
+        after: item.access,
+        diff: DIFF.SAME,
+        risk: FUNCTION_REGISTRY.find((fn) => fn.id === item.surfaceId)?.risk || 'LOW',
+        critical: ['HIGH', 'CRITICAL'].includes(
+          FUNCTION_REGISTRY.find((fn) => fn.id === item.surfaceId)?.risk
+        )
+      }));
+    return { ...screenPreview, changes: [...screenPreview.changes, ...functionChanges] };
   }, [view, naturalView, pending]);
 
   const triValueOf = useCallback(
     (screenId) => {
-      const p = pending.get(screenId);
+      const p = pending.get(`screen:${screenId}`);
       if (p) return p.access;
       const current = overridesByScreen[screenId];
       return current && current.access !== 'INHERIT' ? current.access : 'INHERIT';
     },
     [pending, overridesByScreen]
+  );
+
+  const triValueOfFunction = useCallback(
+    (functionId) => {
+      const p = pending.get(`function:${functionId}`);
+      if (p) return p.access;
+      const current = overridesByFunction[functionId];
+      return current && current.access !== 'INHERIT' ? current.access : 'INHERIT';
+    },
+    [pending, overridesByFunction]
   );
 
   const onTriChange = useCallback(
@@ -604,12 +746,30 @@ export default function AccessControlV2() {
       setSaveError(null);
       setPending((prev) => {
         const next = new Map(prev);
-        const current = prev.get(screenId);
+        const key = `screen:${screenId}`;
+        const current = prev.get(key);
         if (current && current.access === access) {
-          next.delete(screenId);
+          next.delete(key);
         } else {
-          next.set(screenId, { screenId, access });
+          next.set(key, { surfaceType: 'screen', surfaceId: screenId, access });
         }
+        return next;
+      });
+    },
+    [canEdit, saving]
+  );
+
+  const onFunctionTriChange = useCallback(
+    (functionId, access) => {
+      if (!canEdit || saving) return;
+      setSavedOk(false);
+      setSaveError(null);
+      setPending((previous) => {
+        const next = new Map(previous);
+        const key = `function:${functionId}`;
+        const current = previous.get(key);
+        if (current && current.access === access) next.delete(key);
+        else next.set(key, { surfaceType: 'function', surfaceId: functionId, access });
         return next;
       });
     },
@@ -631,8 +791,8 @@ export default function AccessControlV2() {
       for (const p of pending.values()) {
         const res =
           p.access === 'INHERIT'
-            ? await deleteOverride(selected, 'screen', p.screenId)
-            : await upsertOverride(selected, 'screen', p.screenId, p.access);
+            ? await deleteOverride(selected, p.surfaceType, p.surfaceId)
+            : await upsertOverride(selected, p.surfaceType, p.surfaceId, p.access);
         if (res && res.ok === false) {
           throw new Error(res.error || 'Error al guardar el cambio');
         }
@@ -662,7 +822,7 @@ export default function AccessControlV2() {
             }`}
           >
             {canEdit ? <Pencil size={14} /> : <Eye size={14} />}
-            {canEdit ? 'Edición piloto' : 'Solo lectura'}
+            {canEdit ? 'Administración operativa' : 'Solo lectura'}
           </span>
         }
       />
@@ -670,18 +830,16 @@ export default function AccessControlV2() {
       <div className="mb-5 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-xs text-slate-400">
         {canEdit ? (
           <>
-            Edición piloto IAM 2.0 (spec §107): los cambios se guardan como{' '}
+            IAM 2.0 operativo: los cambios se guardan como{' '}
             <span className="font-semibold text-slate-300">overrides individuales</span> en{' '}
             <span className="font-mono text-slate-300">iam.user_overrides</span> y no tocan roles ni
-            scopes. La administración oficial sigue siendo{' '}
-            <span className="font-semibold text-slate-300">Admin → Identidad y Seguridad</span>.
-            Todo cambio muestra su impacto (pierde/gana vs hoy) antes de guardar.
+            scopes. Cada usuario permanece en <b>SHADOW</b> hasta que un administrador activa
+            <b> ENFORCE</b>. Todo cambio muestra su impacto antes de guardar y queda auditado.
           </>
         ) : (
           <>
-            Vista de referencia IAM 2.0. La autoridad real sigue siendo{' '}
-            <span className="font-semibold text-slate-300">Admin → Identidad y Seguridad</span>;
-            aquí no se modifican permisos, roles ni scopes.
+            Vista efectiva IAM 2.0. Solo un administrador o gestor de usuarios puede modificar
+            excepciones o activar su aplicación.
           </>
         )}
       </div>
@@ -798,6 +956,66 @@ export default function AccessControlV2() {
                     </div>
                   </div>
                 </div>
+                <div
+                  className={`rounded-2xl border p-4 ${
+                    selectedEnforcement.mode === 'ENFORCE'
+                      ? 'border-emerald-500/40 bg-emerald-500/10'
+                      : 'border-blue-500/30 bg-blue-500/5'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-wider text-slate-400">
+                        Aplicación del IAM
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-black ${
+                            selectedEnforcement.mode === 'ENFORCE'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-blue-500/20 text-blue-300'
+                          }`}
+                        >
+                          {selectedEnforcement.mode}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          versión {selectedEnforcement.permission_version || 1}
+                        </span>
+                      </div>
+                      <p className="mt-2 max-w-2xl text-xs text-slate-400">
+                        {selectedEnforcement.mode === 'ENFORCE'
+                          ? 'Rutas, menús y acciones integradas respetan ALLOW/DENY de este usuario.'
+                          : 'Se calcula el acceso nuevo, pero el usuario continúa con el comportamiento legado.'}
+                      </p>
+                    </div>
+                    {canEdit && (
+                      <div className="flex min-w-[280px] flex-1 items-center justify-end gap-2">
+                        <input
+                          value={modeReason}
+                          onChange={(event) => setModeReason(event.target.value)}
+                          placeholder="Motivo obligatorio del cambio"
+                          className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-xs text-slate-200 outline-none focus:border-orange-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={changeEnforcement}
+                          disabled={modeSaving}
+                          className={`rounded-xl px-3 py-2 text-xs font-black text-white disabled:opacity-50 ${
+                            selectedEnforcement.mode === 'ENFORCE'
+                              ? 'bg-blue-600 hover:bg-blue-500'
+                              : 'bg-emerald-600 hover:bg-emerald-500'
+                          }`}
+                        >
+                          {modeSaving
+                            ? 'Aplicando…'
+                            : selectedEnforcement.mode === 'ENFORCE'
+                              ? 'Volver a SHADOW'
+                              : 'Activar ENFORCE'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <UserDetail
                   user={selectedUser}
                   view={view}
@@ -808,6 +1026,9 @@ export default function AccessControlV2() {
                   onTriChange={onTriChange}
                   saving={saving}
                   overridesByScreen={overridesByScreen}
+                  overridesByFunction={overridesByFunction}
+                  triValueOfFunction={triValueOfFunction}
+                  onFunctionTriChange={onFunctionTriChange}
                 />
               </div>
             ) : (

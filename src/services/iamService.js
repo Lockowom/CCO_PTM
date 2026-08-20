@@ -367,7 +367,7 @@ export const refrescarGruposDinamicos = (groupId = null) =>
     { module: 'iam', action: 'refrescar_grupos_dinamicos', payload: { groupId } }
   );
 
-// ── Control de Acceso (IAM 2.0, read-only) — RPCs migración 176 ─────────────
+// ── Control de Acceso IAM 2.0 — lectura efectiva + overrides ────────────────
 // Permisos efectivos de un usuario según el motor iam.user_effective_permissions
 // (admin ∨ manage_users). Estado REAL, no una copia cliente.
 export async function permisosEfectivosDe(uid) {
@@ -389,7 +389,7 @@ export async function listarOverridesDe(uid) {
   return Array.isArray(data) ? data : [];
 }
 
-// Escritura piloto (spec §107): excepción individual ALLOW/DENY o INHERIT
+// Excepción individual ALLOW/DENY o INHERIT
 // (upsert; RPC migración 175, gate admin ∨ manage_users, bump permission_version).
 export const upsertOverride = (uid, surfaceType, surfaceId, access, reason = null) =>
   rpcCommand(
@@ -422,3 +422,38 @@ export const deleteOverride = (uid, surfaceType, surfaceId) =>
       payload: { uid, surfaceType, surfaceId }
     }
   );
+
+// ── IAM 2.0 runtime — migración 20260820185353 ─────────────────────────────
+export async function runtimeContext() {
+  const data = await rpcQuery(
+    'iam_runtime_context',
+    {},
+    { module: 'iam', action: 'runtime_context' }
+  );
+  return data || { mode: 'SHADOW', permission_version: 1, overrides: [] };
+}
+
+export async function listarModosEnforcement() {
+  const data = await rpcQuery(
+    'iam_enforcement_list',
+    {},
+    { module: 'iam', action: 'enforcement_list' }
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+export const cambiarModoEnforcement = (uid, mode, reason) =>
+  rpcCommand(
+    'iam_set_enforcement_mode',
+    { p_uid: uid, p_mode: mode, p_reason: reason },
+    { module: 'iam', action: 'set_enforcement_mode', payload: { uid, mode } }
+  );
+
+export async function historialCambiosAcceso(uid, limit = 50) {
+  const data = await rpcQuery(
+    'iam_access_change_history',
+    { p_uid: uid, p_limit: limit },
+    { module: 'iam', action: 'access_change_history', payload: { uid, limit } }
+  );
+  return Array.isArray(data) ? data : [];
+}
