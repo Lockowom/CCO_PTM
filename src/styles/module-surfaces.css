@@ -34,6 +34,30 @@
   border-color: var(--border-default);
 }
 
+/* Inbound: evidencia y confirmación con acento azul operacional. */
+.cco-module-inbound {
+  --module-accent: #2563eb;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.035), transparent 18rem);
+}
+
+/* Calidad: decisión y trazabilidad con acento verde, sin mezclar fuentes ERP/CCO. */
+.cco-module-quality {
+  --module-accent: #059669;
+  background: linear-gradient(180deg, rgba(5, 150, 105, 0.04), transparent 18rem);
+}
+
+/* Postventa: gestión de casos, prioridad visual y lectura en una columna móvil. */
+.cco-module-postventa {
+  --module-accent: #7c3aed;
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.035), transparent 18rem);
+}
+
+.cco-module-inbound :is(.card, section),
+.cco-module-quality :is(.card, section),
+.cco-module-postventa :is(.card, section) {
+  scroll-margin-top: 5rem;
+}
+
 @media (max-width: 640px) {
   .cco-module-v2 :is(button, [role='button'], a) {
     min-height: 44px;

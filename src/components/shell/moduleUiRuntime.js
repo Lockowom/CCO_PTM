@@ -13,6 +13,21 @@ const CORE_MODULE_RULES = [
     id: 'inventory',
     flag: 'web_inventory_v2',
     matches: (path) => path.startsWith('/inventory/') || path === '/queries/locations'
+  },
+  {
+    id: 'inbound',
+    flag: 'web_inbound_v2',
+    matches: (path) => path === '/inbound' || path.startsWith('/inbound/')
+  },
+  {
+    id: 'quality',
+    flag: 'web_quality_v2',
+    matches: (path) => path === '/quality' || path.startsWith('/quality/')
+  },
+  {
+    id: 'postventa',
+    flag: 'web_postventa_v2',
+    matches: (path) => path === '/postventa' || path.startsWith('/postventa/')
   }
 ];
 
