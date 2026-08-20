@@ -41,6 +41,28 @@ describe('PR-IAM-R09/R10 · Vista efectiva (read-only) + origen', () => {
     }
   });
 
+  it('agrupa cada pantalla exactamente una vez dentro de su módulo', () => {
+    const v = buildEffectiveView({ perms: NILO_LIKE, privateBetaFlags: BETA });
+    const grouped = v.modules.flatMap((module) => module.screens);
+
+    expect(v.catalogIntegrity).toEqual({
+      valid: true,
+      groupedScreenCount: SCREEN_REGISTRY.length,
+      expectedScreenCount: SCREEN_REGISTRY.length
+    });
+    expect(grouped).toHaveLength(SCREEN_REGISTRY.length);
+    expect(new Set(grouped.map((screen) => screen.id)).size).toBe(SCREEN_REGISTRY.length);
+
+    for (const module of v.modules) {
+      const expected = SCREEN_REGISTRY.filter((screen) => screen.module === module.id).length;
+      expect(module.screens, module.id).toHaveLength(expected);
+      expect(
+        module.screens.every((screen) => screen.module === module.id),
+        module.id
+      ).toBe(true);
+    }
+  });
+
   it('granular → PROFILE_ALLOW; legacy broad → LEGACY_COMPATIBILITY; sin nada → DEFAULT_DENY', () => {
     const v = buildEffectiveView({ perms: NILO_LIKE, privateBetaFlags: BETA });
     const byId = new Map(v.screens.map((s) => [s.id, s]));

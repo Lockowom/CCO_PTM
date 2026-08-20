@@ -34,7 +34,6 @@ export const ORIGIN_TONE = {
 };
 
 const screenById = new Map(SCREEN_REGISTRY.map((s) => [s.id, s]));
-const moduleById = new Map(MODULE_REGISTRY.map((m) => [m.id, m]));
 
 export function buildEffectiveView({ perms = [], overrides = [], privateBetaFlags = {} }) {
   const v2 = resolveAccessV2({ perms, overrides, privateBetaFlags });
@@ -48,7 +47,8 @@ export function buildEffectiveView({ perms = [], overrides = [], privateBetaFlag
     const diff = s.allow === legacyAllow ? DIFF.SAME : s.allow ? DIFF.GAIN : DIFF.LOSS;
     return {
       id: s.id,
-      module: s.module,
+      // El registro es la fuente canónica de la relación pantalla → módulo.
+      module: meta?.module || s.module,
       label: meta ? meta.label : s.id,
       routes: meta ? meta.routes : [],
       risk: meta ? meta.risk : 'LOW',
@@ -98,7 +98,16 @@ export function buildEffectiveView({ perms = [], overrides = [], privateBetaFlag
     overrides: overrides.filter((o) => o.access !== 'INHERIT').length
   };
 
-  return { modules, screens, functions, counts, unmapped: v2.unmapped };
+  const groupedScreenCount = modules.reduce((total, module) => total + module.screens.length, 0);
+  const catalogIntegrity = {
+    valid:
+      groupedScreenCount === SCREEN_REGISTRY.length &&
+      screens.every((screen) => MODULE_REGISTRY.some((module) => module.id === screen.module)),
+    groupedScreenCount,
+    expectedScreenCount: SCREEN_REGISTRY.length
+  };
+
+  return { modules, screens, functions, counts, unmapped: v2.unmapped, catalogIntegrity };
 }
 
 // Preview de cambios pendientes (edición piloto §107): para cada override en

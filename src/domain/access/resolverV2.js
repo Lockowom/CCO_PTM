@@ -64,16 +64,24 @@ export function resolveAccessV2({ perms = [], overrides = [], privateBetaFlags =
   const overrideMap = new Map(overrides.map((o) => [o.screen, o.access]));
 
   const screens = SCREEN_REGISTRY.map((screen) => {
+    const decision = (allow, origin, reasons = []) => ({
+      id: screen.id,
+      module: screen.module,
+      allow,
+      origin,
+      reasons
+    });
+
     if (screen.privateBeta && !privateBetaFlags[screen.id]) {
-      return { id: screen.id, allow: false, origin: ORIGIN.PRIVATE_BETA, reasons: [] };
+      return decision(false, ORIGIN.PRIVATE_BETA);
     }
 
     const override = overrideMap.get(screen.id);
     if (override === 'DENY') {
-      return { id: screen.id, allow: false, origin: ORIGIN.EXPLICIT_DENY, reasons: [] };
+      return decision(false, ORIGIN.EXPLICIT_DENY);
     }
     if (override === 'ALLOW') {
-      return { id: screen.id, allow: true, origin: ORIGIN.DIRECT_ALLOW, reasons: [] };
+      return decision(true, ORIGIN.DIRECT_ALLOW);
     }
 
     const profileReasons = [];
@@ -83,7 +91,7 @@ export function resolveAccessV2({ perms = [], overrides = [], privateBetaFlags =
       if (screensFor.includes(screen.id)) profileReasons.push(p);
     }
     if (profileReasons.length > 0) {
-      return { id: screen.id, allow: true, origin: ORIGIN.PROFILE_ALLOW, reasons: profileReasons };
+      return decision(true, ORIGIN.PROFILE_ALLOW, profileReasons);
     }
 
     const legacyReasons = [];
@@ -92,15 +100,10 @@ export function resolveAccessV2({ perms = [], overrides = [], privateBetaFlags =
       if (exp && exp.screens.includes(screen.id)) legacyReasons.push(p);
     }
     if (legacyReasons.length > 0) {
-      return {
-        id: screen.id,
-        allow: true,
-        origin: ORIGIN.LEGACY_COMPATIBILITY,
-        reasons: legacyReasons
-      };
+      return decision(true, ORIGIN.LEGACY_COMPATIBILITY, legacyReasons);
     }
 
-    return { id: screen.id, allow: false, origin: ORIGIN.DEFAULT_DENY, reasons: [] };
+    return decision(false, ORIGIN.DEFAULT_DENY);
   });
 
   const modules = MODULE_REGISTRY.map((m) => ({
