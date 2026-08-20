@@ -216,7 +216,9 @@ function ModuleSection({ module, overridesByScreen, editable, triValueOf, onTriC
         <span
           className={`text-xs font-bold ${module.allow ? 'text-emerald-400' : 'text-slate-500'}`}
         >
-          {module.screens.filter((s) => s.allow).length}/{module.screens.length}
+          {module.screens.length > 0
+            ? `${module.screens.filter((s) => s.allow).length}/${module.screens.length}`
+            : 'Sin pantallas'}
         </span>
       </button>
       {open && (
@@ -357,6 +359,15 @@ function UserDetail({
       </div>
 
       <div className="space-y-3">
+        {!view.catalogIntegrity?.valid && (
+          <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm font-semibold text-red-300">
+            El catálogo IAM está incompleto: se agruparon{' '}
+            {view.catalogIntegrity?.groupedScreenCount}
+            {' de '}
+            {view.catalogIntegrity?.expectedScreenCount} pantallas. ENFORCE permanecerá bloqueado
+            hasta corregir la matriz.
+          </div>
+        )}
         {view.modules.map((m) => (
           <ModuleSection
             key={m.id}
@@ -633,8 +644,27 @@ export default function AccessControlV2() {
     permission_version: 1
   };
 
+  const view = useMemo(() => {
+    if (!selectedDetail?.perms) return null;
+    const normalized = (selectedDetail.overrideRows || []).map((o) => ({
+      screen: o.surface_id,
+      access: o.access
+    }));
+    return buildEffectiveView({
+      perms: selectedDetail.perms,
+      overrides: normalized,
+      privateBetaFlags: { 'panel.routes': false }
+    });
+  }, [selectedDetail]);
+
   const changeEnforcement = useCallback(async () => {
     if (!selected || modeSaving) return;
+    if (selectedEnforcement.mode !== 'ENFORCE' && !view?.catalogIntegrity?.valid) {
+      setSaveError(
+        'No se puede activar ENFORCE: la asociación entre módulos y pantallas está incompleta.'
+      );
+      return;
+    }
     const reason = modeReason.trim();
     if (reason.length < 8) {
       setSaveError('Registra un motivo de al menos 8 caracteres para cambiar el modo.');
@@ -653,7 +683,7 @@ export default function AccessControlV2() {
     } finally {
       setModeSaving(false);
     }
-  }, [modeReason, modeSaving, selected, selectedEnforcement.mode]);
+  }, [modeReason, modeSaving, selected, selectedEnforcement.mode, view]);
 
   const overridesByScreen = useMemo(() => {
     const map = {};
@@ -669,19 +699,6 @@ export default function AccessControlV2() {
       if (o.surface_type === 'function') map[o.surface_id] = o;
     }
     return map;
-  }, [selectedDetail]);
-
-  const view = useMemo(() => {
-    if (!selectedDetail?.perms) return null;
-    const normalized = (selectedDetail.overrideRows || []).map((o) => ({
-      screen: o.surface_id,
-      access: o.access
-    }));
-    return buildEffectiveView({
-      perms: selectedDetail.perms,
-      overrides: normalized,
-      privateBetaFlags: { 'panel.routes': false }
-    });
   }, [selectedDetail]);
 
   const naturalView = useMemo(() => {

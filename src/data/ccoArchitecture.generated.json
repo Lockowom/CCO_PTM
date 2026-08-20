@@ -3,7 +3,7 @@
     "name": "Arquitectura funcional CCO",
     "schemaVersion": 2,
     "generator": "scripts/generate_architecture_catalog.mjs",
-    "sourceVersion": "1.55.168",
+    "sourceVersion": "1.55.169",
     "fingerprint": "0c602d17e41a",
     "totals": {
       "module": 10,
