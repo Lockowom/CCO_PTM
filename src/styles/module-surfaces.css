@@ -1,0 +1,41 @@
+.cco-module-v2 {
+  min-height: 100%;
+  color: var(--text-primary);
+}
+
+.cco-module-v2 :is(button, a, input, select, textarea) {
+  transition-duration: var(--motion-normal);
+  transition-timing-function: var(--ease-out);
+}
+
+.cco-module-v2 :is(input, select, textarea) {
+  min-height: 42px;
+}
+
+.cco-module-v2 :is(.card, .table-container) {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.cco-module-dashboard .dash-root,
+.cco-module-panel-nv,
+.cco-module-inventory {
+  background: var(--surface-base);
+}
+
+.cco-module-dashboard .dash-root > header {
+  border-color: var(--border-default);
+  background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.cco-module-panel-nv [role='tablist'],
+.cco-module-inventory [role='tablist'] {
+  border-color: var(--border-default);
+}
+
+@media (max-width: 640px) {
+  .cco-module-v2 :is(button, [role='button'], a) {
+    min-height: 44px;
+  }
+}

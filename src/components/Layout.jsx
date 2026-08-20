@@ -12,6 +12,8 @@ import AppShell from './shell/AppShell';
 import { isFeatureFlagEnabled } from '../config/featureFlags';
 import { useAuth } from '../context/AuthContext';
 import { resolveShellRuntime } from './shell/shellRuntime';
+import ModuleUiBoundary from './shell/ModuleUiBoundary';
+import { resolveModuleUiRuntime } from './shell/moduleUiRuntime';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -21,6 +23,8 @@ const Layout = ({ children }) => {
     webShellEnabled: isFeatureFlagEnabled('web_shell_v2')
   });
   const useShellV2 = shellRuntime === 'v2';
+  const moduleRuntime = resolveModuleUiRuntime(location.pathname, isFeatureFlagEnabled);
+  const content = <ModuleUiBoundary runtime={moduleRuntime}>{children}</ModuleUiBoundary>;
 
   // Sistema de Notificaciones en Tiempo Real (con throttle para uploads masivos)
   useEffect(() => {
@@ -150,7 +154,7 @@ const Layout = ({ children }) => {
         <OtaBanner />
         <AppShell canAccessRoute={canAccessRoute} mobileHeader={<Navbar />}>
           <div ref={mainRef} className="min-h-full">
-            {children}
+            {content}
           </div>
         </AppShell>
         <ErrorReportWidget />
@@ -185,7 +189,7 @@ const Layout = ({ children }) => {
             ref={mainRef}
             className="app-page max-w-[1600px] mx-auto w-full min-h-full p-3 sm:p-6 lg:p-10"
           >
-            {children}
+            {content}
           </div>
         </main>
 
