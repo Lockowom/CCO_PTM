@@ -9,6 +9,15 @@ import { withTimeout } from '../lib/supabaseQuery';
 import { toast } from 'sonner';
 import { clearLoggerUserContext, Logger, setLoggerUserContext } from '../lib/logger';
 import { db } from '../lib/db';
+import { runtimeContext } from '../services/iamService';
+import {
+  buildRuntimeAccess,
+  runtimeAllowsFunction,
+  runtimeAllowsPath,
+  runtimeAllowsScreen,
+  runtimeDecisionDetails
+} from '../domain/access/runtimeAccess.js';
+import { puedeAccederRuta as legacyPuedeAccederRuta } from '../constants/permissions';
 
 const AuthContext = createContext();
 const PROFILE_SELECT = 'id, nombre, email, rol, activo, es_admin_delegado, auth_uid';
@@ -63,6 +72,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [iamRuntime, setIamRuntime] = useState(() =>
+    buildRuntimeAccess({ perms: [], context: { mode: 'SHADOW', overrides: [] } })
+  );
   const [landingPage, setLandingPage] = useState('/');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -88,6 +100,7 @@ export const AuthProvider = ({ children }) => {
     if (!rolId) {
       setPermissions([]);
       setRoles([]);
+      setIamRuntime(buildRuntimeAccess({ perms: [], context: { mode: 'SHADOW', overrides: [] } }));
       setLandingPage('/');
       return { permissions: [], landingPage: '/' };
     }
@@ -126,7 +139,17 @@ export const AuthProvider = ({ children }) => {
     setPermissions(perms);
     setRoles(iamRoles ?? [rolId]);
     setLandingPage(landing);
-    return { permissions: perms, landingPage: landing };
+    // El runtime es fail-safe: si la migración aún no está publicada o la red
+    // falla, queda en SHADOW y la aplicación conserva exactamente el guard legacy.
+    let runtime = { mode: 'SHADOW', permission_version: 1, overrides: [] };
+    try {
+      runtime = await runtimeContext();
+    } catch {
+      /* compatibilidad durante rollout */
+    }
+    const nextRuntime = buildRuntimeAccess({ perms, context: runtime });
+    setIamRuntime(nextRuntime);
+    return { permissions: perms, landingPage: landing, iamRuntime: nextRuntime };
   }, []);
 
   const refreshPermissions = useCallback(async () => {
@@ -135,6 +158,23 @@ export const AuthProvider = ({ children }) => {
     }
     return null;
   }, [user?.rol, loadRoleConfig]);
+
+  // Los cambios IAM aplican sin cerrar sesión. El foco acelera la propagación y
+  // el sondeo cubre navegadores/PDA donde Realtime puede quedar suspendido.
+  useEffect(() => {
+    if (!user?.rol) return undefined;
+    const refresh = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void loadRoleConfig(user.rol);
+      }
+    };
+    const interval = window.setInterval(refresh, 60000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [loadRoleConfig, user?.rol]);
 
   // ── Suscripción global a cambios de roles ──
   useEffect(() => {
@@ -354,6 +394,9 @@ export const AuthProvider = ({ children }) => {
         clearLoggerUserContext();
         setPermissions([]);
         setRoles([]);
+        setIamRuntime(
+          buildRuntimeAccess({ perms: [], context: { mode: 'SHADOW', overrides: [] } })
+        );
         setLandingPage('/');
       } else if (event === 'SIGNED_IN' && session?.user?.email) {
         // Deduplicar: si login() ya cargó este perfil, no re-cargar.
@@ -559,6 +602,7 @@ export const AuthProvider = ({ children }) => {
     clearLoggerUserContext();
     setPermissions([]);
     setRoles([]);
+    setIamRuntime(buildRuntimeAccess({ perms: [], context: { mode: 'SHADOW', overrides: [] } }));
     localStorage.removeItem('currentUser'); // Limpiar legacy
 
     // Limpieza que REQUIERE el token (debe correr ANTES de signOut, que lo destruye):
@@ -713,6 +757,39 @@ export const AuthProvider = ({ children }) => {
     [permissions, user?.rol, user?.es_admin_delegado]
   );
 
+  const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado === true;
+
+  const canAccessRoute = useCallback(
+    (pathname) => {
+      const legacyDecision = legacyPuedeAccederRuta(pathname, user, hasPermission, roles);
+      return runtimeAllowsPath(iamRuntime, pathname, legacyDecision, isAdmin);
+    },
+    [hasPermission, iamRuntime, isAdmin, roles, user]
+  );
+
+  const hasScreenAccess = useCallback(
+    (screenId, legacyDecision = false) =>
+      runtimeAllowsScreen(iamRuntime, screenId, legacyDecision, isAdmin),
+    [iamRuntime, isAdmin]
+  );
+
+  const hasFunctionAccess = useCallback(
+    (functionId, legacyPermissions = []) => {
+      const required = Array.isArray(legacyPermissions) ? legacyPermissions : [legacyPermissions];
+      const legacyDecision =
+        typeof legacyPermissions === 'boolean'
+          ? legacyPermissions
+          : required.length > 0 && required.some((perm) => hasPermission(perm));
+      return runtimeAllowsFunction(iamRuntime, functionId, { legacyDecision, isAdmin });
+    },
+    [hasPermission, iamRuntime, isAdmin]
+  );
+
+  const accessDecisionForRoute = useCallback(
+    (pathname) => runtimeDecisionDetails(iamRuntime, pathname),
+    [iamRuntime]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -726,6 +803,11 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAuthenticated: !!user,
         hasPermission,
+        hasScreenAccess,
+        hasFunctionAccess,
+        canAccessRoute,
+        accessDecisionForRoute,
+        iamRuntime,
         refreshPermissions
       }}
     >

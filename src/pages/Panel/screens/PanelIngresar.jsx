@@ -2322,11 +2322,11 @@ function puedeEliminarNV(user) {
 }
 
 export default function PanelIngresar() {
-  const { hasPermission, user } = useAuth();
-  const puedeEscribir = hasPermission('manage_panel');
+  const { hasPermission, hasFunctionAccess, user } = useAuth();
+  const puedeEscribir = hasFunctionAccess('panel.nv.entry.edit', ['manage_panel']);
   const puedeAprobarReapertura =
     hasPermission('approve_panel_reopen_nv') || hasPermission('manage_roles');
-  const puedeEliminar = puedeEliminarNV(user);
+  const puedeEliminar = hasFunctionAccess('panel.nv.entry.delete', puedeEliminarNV(user));
   const [tab, setTab] = useState('buscar');
   const TABS = [
     {

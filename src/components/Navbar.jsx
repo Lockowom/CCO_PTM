@@ -54,12 +54,7 @@ import {
 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import {
-  ROUTE_PERMISSIONS,
-  puedeVerTab,
-  TAB_PERMISSIONS,
-  puedeVerCoordinacionRutas
-} from '../constants/permissions';
+import { puedeVerTab, TAB_PERMISSIONS, puedeVerCoordinacionRutas } from '../constants/permissions';
 import { mostrarNovedades } from './NovedadesModal';
 import NotificationBell from './NotificationBell';
 
@@ -71,7 +66,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const navRef = useRef(null);
 
-  const { user, logout, hasPermission, roles } = useAuth();
+  const { user, logout, hasPermission, roles, canAccessRoute: canAccessRouteIam } = useAuth();
   const { isModuleEnabled } = useConfig();
   const syncQueueCount = useSyncQueueCount();
 
@@ -95,7 +90,7 @@ const Navbar = () => {
     navigate('/login', { replace: true });
   };
 
-  // ¿El usuario puede acceder a esta ruta? Fuente única: ROUTE_PERMISSIONS.
+  // ¿El usuario puede acceder a esta ruta? Fuente única: AuthContext/IAM runtime.
   // El admin delegado ve lo mismo que ADMIN: el guard de rutas (ProtectedRoute)
   // ya le concede acceso total, así que ocultarle el menú solo desincronizaba
   // ambas fuentes de verdad.
@@ -105,11 +100,7 @@ const Navbar = () => {
     if (base === '/panel/rutas') return puedeVerCoordinacionRutas(user, hasPermission, roles);
     if (esAdmin) return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
-    const perms = ROUTE_PERMISSIONS[base];
-    // Sin permiso definido → DENEGAR por defecto (no mostrar lo no autorizado)
-    if (!perms || perms.length === 0) return false;
-    const permList = Array.isArray(perms) ? perms : [perms];
-    if (!permList.some((perm) => hasPermission(perm))) return false;
+    if (!canAccessRouteIam(base)) return false;
     // Control fino por pestaña: si el item es un deep-link ?tab=… exige el permiso
     // de esa pestaña; el item base (sin ?tab) equivale a la pestaña por defecto.
     const tab = (query && new URLSearchParams(query).get('tab')) || null;

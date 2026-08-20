@@ -13,7 +13,8 @@ import CommandPalette from './components/ui/CommandPalette';
 import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
-import { permisosDeRuta, puedeAccederRuta, resolverRutaInicial } from './constants/permissions';
+import { permisosDeRuta, resolverRutaInicial } from './constants/permissions';
+import { SCREEN_REGISTRY } from './domain/access/screenRegistry.js';
 import { privateBetaForPath, evaluatePrivateBetaAccess } from './constants/privateBeta';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
@@ -87,7 +88,7 @@ const Postventa = React.lazy(() => import('./pages/Postventa/Postventa'));
 
 // Admin Modules
 const AccessControl = React.lazy(() => import('./pages/Admin/AccessControl')); // Usuarios y Roles unificados
-const AccessControlV2 = React.lazy(() => import('./pages/Admin/AccessControlV2')); // Control de Acceso IAM 2.0 (read-only)
+const AccessControlV2 = React.lazy(() => import('./pages/Admin/AccessControlV2')); // Control de Acceso IAM 2.0
 const Seguridad = React.lazy(() => import('./pages/Seguridad')); // Seguridad de mi cuenta (MFA/2FA) — cualquier autenticado
 const BodegasSoftland = React.lazy(() => import('./pages/Admin/BodegasSoftland'));
 const Views = React.lazy(() => import('./pages/Admin/Views'));
@@ -181,7 +182,7 @@ const AnalyticsRouteTracker = () => {
 };
 
 // Componente de Acceso Denegado
-const AccessDenied = ({ requiredPermissions, route }) => {
+const AccessDenied = ({ requiredPermissions, route, iamDecision }) => {
   return (
     <Layout>
       <div className="min-h-screen flex items-center justify-center bg-white p-4">
@@ -203,6 +204,14 @@ const AccessDenied = ({ requiredPermissions, route }) => {
                   </div>
                 ))}
               </div>
+              {iamDecision?.decision && (
+                <div className="mt-4 border-t border-red-200 pt-3">
+                  <p className="font-bold text-red-900">Decisión IAM 2.0:</p>
+                  <p className="mt-1 font-mono text-xs text-red-700">
+                    {iamDecision.screen.id} · {iamDecision.mode} · {iamDecision.decision.origin}
+                  </p>
+                </div>
+              )}
             </div>
 
             <a
@@ -220,7 +229,7 @@ const AccessDenied = ({ requiredPermissions, route }) => {
 
 // Componente que determina la primera ruta disponible para el usuario
 const SmartRedirect = () => {
-  const { user, permissions, roles, hasPermission, loading, landingPage } = useAuth();
+  const { user, permissions, loading, landingPage, canAccessRoute } = useAuth();
 
   if (loading) {
     return (
@@ -234,7 +243,7 @@ const SmartRedirect = () => {
   // Se recorta el query string (?tab=...) porque las landing de APP_ROUTES incluyen
   // deep-links de pestañas y el mapa de permisos se indexa por pathname puro.
   if (landingPage && landingPage !== '/') {
-    if (puedeAccederRuta(landingPage, user, hasPermission, roles)) {
+    if (canAccessRoute(landingPage)) {
       return <Navigate to={landingPage} replace />;
     }
   }
@@ -246,7 +255,13 @@ const SmartRedirect = () => {
 
   // 3. FALLBACK: usar todo el catálogo central. Así también funcionan roles
   // nuevos de Calidad, Inventario, Postventa o cualquier módulo futuro.
-  const firstAllowedRoute = resolverRutaInicial(permissions);
+  const legacyFirstRoute = resolverRutaInicial(permissions);
+  if (legacyFirstRoute && canAccessRoute(legacyFirstRoute)) {
+    return <Navigate to={legacyFirstRoute} replace />;
+  }
+  const firstAllowedRoute = SCREEN_REGISTRY.find(
+    (screen) => screen.active && screen.navigation && canAccessRoute(screen.routes[0])
+  )?.routes[0];
   if (firstAllowedRoute) return <Navigate to={firstAllowedRoute} replace />;
 
   // Si no tiene acceso a nada, ir al Panel (mostrará acceso denegado)
@@ -255,7 +270,15 @@ const SmartRedirect = () => {
 
 // Ruta Protegida con validación de permisos + tracking de presencia
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading, user, roles, hasPermission } = useAuth();
+  const {
+    isAuthenticated,
+    loading,
+    user,
+    roles,
+    hasPermission,
+    canAccessRoute,
+    accessDecisionForRoute
+  } = useAuth();
   const location = useLocation();
   const { startTracking, updatePath } = usePresenceTracker();
 
@@ -299,7 +322,7 @@ const ProtectedRoute = () => {
   // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
   // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
   const requiredPermissions = permisosDeRuta(location.pathname);
-  const hasAccess = puedeAccederRuta(location.pathname, user, hasPermission, roles);
+  const hasAccess = canAccessRoute(location.pathname);
 
   if (!hasAccess) {
     // PR-015B: módulo en private beta con flag OFF → 404 (no existe), no
@@ -310,7 +333,11 @@ const ProtectedRoute = () => {
       return <NotFound />;
     }
     return (
-      <AccessDenied requiredPermissions={requiredPermissions || []} route={location.pathname} />
+      <AccessDenied
+        requiredPermissions={requiredPermissions || []}
+        route={location.pathname}
+        iamDecision={accessDecisionForRoute(location.pathname)}
+      />
     );
   }
 
