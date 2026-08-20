@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -22,7 +22,6 @@ import {
   UsersRound
 } from 'lucide-react';
 import { toast } from 'sonner';
-import RouteMap from './RouteMap';
 import RouteAnalytics from './RouteAnalytics';
 import RouteCostCalculator from './RouteCostCalculator';
 import RouteCapacityPlanner from './RouteCapacityPlanner';
@@ -34,6 +33,8 @@ import {
 } from './routeCoordination';
 import { routeCoordinationService } from './routeCoordinationService';
 import './coordinacionRutas.css';
+
+const RouteMap = lazy(() => import('./RouteMap'));
 
 const today = () => new Date().toLocaleDateString('en-CA');
 const realLetters = (value) => /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(String(value || '').trim());
@@ -339,7 +340,15 @@ export default function CoordinacionRutas() {
                   <CircleDot size={11} /> Sincronización activa
                 </Badge>
               </div>
-              <RouteMap items={mapItems} selectedPlan={selectedPlan} sector={sector} />
+              <Suspense
+                fallback={
+                  <div className="cr-map-state" role="status">
+                    <Navigation className="cr-spin" size={22} /> Cargando mapa operacional…
+                  </div>
+                }
+              >
+                <RouteMap items={mapItems} selectedPlan={selectedPlan} sector={sector} />
+              </Suspense>
               <div className="cr-map-note">
                 <CircleDot size={14} /> Los puntos sin latitud histórica se muestran temporalmente
                 en el centro de su comuna.

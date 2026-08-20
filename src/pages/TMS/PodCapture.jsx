@@ -1,6 +1,16 @@
 import { useRef, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Camera, MapPin, PenLine, Check, X } from 'lucide-react';
+import {
+  Camera,
+  MapPin,
+  PenLine,
+  Check,
+  X,
+  Loader2,
+  WifiOff,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 import { subirEvidencia, registrarPOD } from '../../services/tmsService';
 
 // Captura de Prueba de Entrega: recibido por + GPS + foto + firma → sube a
@@ -10,7 +20,9 @@ export default function PodCapture({ ordenId, onDone, onCancel }) {
   const [gps, setGps] = useState('');
   const [foto, setFoto] = useState(null); // File
   const [fotoUrl, setFotoUrl] = useState(null); // preview
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(() => (navigator.onLine ? 'draft' : 'offline_pending'));
+  const [statusDetail, setStatusDetail] = useState('Completa la evidencia antes de enviar.');
+  const [confirmedAt, setConfirmedAt] = useState(null);
   const canvasRef = useRef(null);
   const drawing = useRef(false);
   const dirty = useRef(false);
@@ -89,7 +101,13 @@ export default function PodCapture({ ordenId, onDone, onCancel }) {
 
   const confirmar = async () => {
     if (!recibido.trim()) return toast.info('Indica quién recibió');
-    setBusy(true);
+    if (!navigator.onLine) {
+      setStatus('offline_pending');
+      setStatusDetail('Sin conexión. La entrega no ha sido enviada ni confirmada.');
+      return toast.info('Conéctate para enviar la entrega');
+    }
+    setStatus('uploading');
+    setStatusDetail('Subiendo evidencia y esperando confirmación del servidor…');
     try {
       const payload = { recibido_por: recibido.trim(), gps };
       if (foto)
@@ -103,18 +121,55 @@ export default function PodCapture({ ordenId, onDone, onCancel }) {
       if (fb) payload.firma_url = await subirEvidencia(ordenId, 'firma', fb, 'png');
       const res = await registrarPOD(ordenId, payload);
       if (res.ok) {
+        const now = new Date();
+        setStatus('success');
+        setConfirmedAt(now);
+        setStatusDetail(
+          `Confirmado por el servidor a las ${now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}.`
+        );
         toast.success('Entrega registrada');
         onDone?.();
-      } else toast.error(res.error || 'No se pudo registrar');
+      } else {
+        setStatus('failed');
+        setStatusDetail(res.error || 'El servidor rechazó el registro. Puedes reintentar.');
+        toast.error(res.error || 'No se pudo registrar');
+      }
     } catch (e) {
+      const offline = !navigator.onLine;
+      setStatus(offline ? 'offline_pending' : 'failed');
+      setStatusDetail(
+        offline
+          ? 'Se perdió la conexión. La entrega no ha sido enviada ni confirmada.'
+          : `Falló el envío: ${e?.message || 'error desconocido'}`
+      );
       toast.error('Error al subir evidencia: ' + (e?.message || ''));
-    } finally {
-      setBusy(false);
     }
   };
 
+  const busy = status === 'uploading';
+  const statusIcon = {
+    draft: <PenLine size={15} />,
+    uploading: <Loader2 className="animate-spin" size={15} />,
+    success: <CheckCircle2 size={15} />,
+    failed: <AlertCircle size={15} />,
+    offline_pending: <WifiOff size={15} />
+  }[status];
+
   return (
     <div className="space-y-3">
+      <div
+        className={`tms-pod-status tms-pod-status--${status}`}
+        role={status === 'failed' ? 'alert' : 'status'}
+      >
+        {statusIcon}
+        <div>
+          <strong>{status.replace('_', ' ')}</strong>
+          <span>{statusDetail}</span>
+          {confirmedAt && (
+            <time dateTime={confirmedAt.toISOString()}>{confirmedAt.toLocaleString('es-CL')}</time>
+          )}
+        </div>
+      </div>
       <input
         value={recibido}
         onChange={(e) => setRecibido(e.target.value)}
@@ -187,7 +242,12 @@ export default function PodCapture({ ordenId, onDone, onCancel }) {
           disabled={busy}
           className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
-          <Check size={16} /> {busy ? 'Registrando…' : 'Confirmar entrega'}
+          <Check size={16} />{' '}
+          {busy
+            ? 'Enviando y confirmando…'
+            : status === 'failed' || status === 'offline_pending'
+              ? 'Reintentar envío'
+              : 'Confirmar entrega'}
         </button>
       </div>
     </div>

@@ -11,7 +11,10 @@ describe('CCO 2.0 core module runtime', () => {
     ['/inbound/reception', 'inbound', 'web_inbound_v2'],
     ['/quality/monitoring', 'quality', 'web_quality_v2'],
     ['/postventa', 'postventa', 'web_postventa_v2'],
-    ['/postventa/tickets', 'postventa', 'web_postventa_v2']
+    ['/postventa/tickets', 'postventa', 'web_postventa_v2'],
+    ['/panel/rutas', 'routes', 'web_routes_v2'],
+    ['/tms/control', 'tms', 'web_tms_v2'],
+    ['/tms/pda', 'tms-mobile', 'mobile_tms_v2']
   ])('mapea %s a %s', (path, id, flag) => {
     const enabled = vi.fn(() => true);
     const runtime = resolveModuleUiRuntime(path, enabled);
@@ -24,5 +27,12 @@ describe('CCO 2.0 core module runtime', () => {
       id: 'legacy',
       enabled: false
     });
+  });
+
+  it('resuelve los flags móviles y de mapa sin convertirlos en permisos', () => {
+    const runtime = resolveModuleUiRuntime('/panel/rutas', (flag) => flag === 'mobile_map_v2');
+    expect(runtime.enabled).toBe(false);
+    expect(runtime.mobileEnabled).toBe(false);
+    expect(runtime.mapEnabled).toBe(true);
   });
 });
