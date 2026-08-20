@@ -14,7 +14,9 @@ describe('CCO 2.0 core module runtime', () => {
     ['/postventa/tickets', 'postventa', 'web_postventa_v2'],
     ['/panel/rutas', 'routes', 'web_routes_v2'],
     ['/tms/control', 'tms', 'web_tms_v2'],
-    ['/tms/pda', 'tms-mobile', 'mobile_tms_v2']
+    ['/tms/pda', 'tms-mobile', 'mobile_tms_v2'],
+    ['/admin', 'admin', 'web_admin_v2'],
+    ['/admin/observability', 'admin', 'web_admin_v2']
   ])('mapea %s a %s', (path, id, flag) => {
     const enabled = vi.fn(() => true);
     const runtime = resolveModuleUiRuntime(path, enabled);
@@ -23,7 +25,7 @@ describe('CCO 2.0 core module runtime', () => {
   });
 
   it('mantiene rutas fuera del bloque en legacy', () => {
-    expect(resolveModuleUiRuntime('/admin/users', () => true)).toMatchObject({
+    expect(resolveModuleUiRuntime('/tools/architecture', () => true)).toMatchObject({
       id: 'legacy',
       enabled: false
     });

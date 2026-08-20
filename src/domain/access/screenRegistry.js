@@ -1,4 +1,16 @@
 export const SCREEN_REGISTRY = [
+  {
+    id: 'admin.home',
+    module: 'admin',
+    label: 'Administración',
+    routes: ['/admin'],
+    defaultPermission: 'view_users',
+    risk: 'LOW',
+    privateBeta: false,
+    navigation: true,
+    mobileEnabled: true,
+    active: true
+  },
   // ── Panel PTM ────────────────────────────────────────────────────────────
   {
     id: 'panel.dashboard',
