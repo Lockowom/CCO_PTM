@@ -1,5 +1,29 @@
 const CORE_MODULE_RULES = [
   {
+    id: 'login',
+    flag: 'web_login_v2',
+    matches: (path) => path === '/login'
+  },
+  {
+    id: 'public',
+    flag: 'web_public_v2',
+    matches: (path) =>
+      path.startsWith('/consulta') ||
+      path.startsWith('/verificar') ||
+      path.startsWith('/soporte') ||
+      path.startsWith('/rendiciones')
+  },
+  {
+    id: 'builder',
+    flag: 'web_builder_v2',
+    matches: (path) => path === '/panel/builder' || path.startsWith('/panel/builder/')
+  },
+  {
+    id: 'tv',
+    flag: 'web_tv_v2',
+    matches: (path) => path === '/panel/tv' || path.startsWith('/panel/tv/')
+  },
+  {
     id: 'dashboard',
     flag: 'web_dashboard_v2',
     matches: (path) => path === '/panel' || path === '/panel/'

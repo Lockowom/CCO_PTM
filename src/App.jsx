@@ -10,6 +10,7 @@ import {
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import CommandPalette from './components/ui/CommandPalette';
+import PublicShell from './components/shell/PublicShell';
 import ErrorBoundary from './components/ErrorBoundary';
 import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
@@ -457,13 +458,22 @@ function AppContent() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/verificar" element={<VerificarCertificado />} />
+          <Route
+            path="/verificar"
+            element={
+              <PublicShell>
+                <VerificarCertificado />
+              </PublicShell>
+            }
+          />
           {/* Formulario público de solicitud de servicio (sin login) */}
           <Route
             path="/soporte"
             element={
               <ErrorBoundary>
-                <SolicitudPublica />
+                <PublicShell>
+                  <SolicitudPublica />
+                </PublicShell>
               </ErrorBoundary>
             }
           />
@@ -472,7 +482,9 @@ function AppContent() {
             path="/consulta"
             element={
               <ErrorBoundary>
-                <ConsultaNV />
+                <PublicShell>
+                  <ConsultaNV />
+                </PublicShell>
               </ErrorBoundary>
             }
           />
@@ -480,7 +492,9 @@ function AppContent() {
             path="/rendiciones"
             element={
               <ErrorBoundary>
-                <RendicionPublica />
+                <PublicShell>
+                  <RendicionPublica />
+                </PublicShell>
               </ErrorBoundary>
             }
           />
@@ -488,7 +502,9 @@ function AppContent() {
             path="/rendiciones/:token"
             element={
               <ErrorBoundary>
-                <RendicionPublica />
+                <PublicShell>
+                  <RendicionPublica />
+                </PublicShell>
               </ErrorBoundary>
             }
           />
@@ -496,7 +512,9 @@ function AppContent() {
             path="/rendiciones/ver/:reportId/:viewToken"
             element={
               <ErrorBoundary>
-                <RendicionPublica />
+                <PublicShell>
+                  <RendicionPublica />
+                </PublicShell>
               </ErrorBoundary>
             }
           />
@@ -504,7 +522,9 @@ function AppContent() {
             path="/rendiciones/:token/ver/:reportId/:viewToken"
             element={
               <ErrorBoundary>
-                <RendicionPublica />
+                <PublicShell>
+                  <RendicionPublica />
+                </PublicShell>
               </ErrorBoundary>
             }
           />

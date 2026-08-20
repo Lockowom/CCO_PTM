@@ -13,6 +13,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { nivelAAL, factoresVerificados, verificarTOTP } from '../services/securityService';
+import { isFeatureFlagEnabled } from '../config/featureFlags';
 
 // Versión real de la app (inyectada por Vite desde package.json). Se muestra en el
 // login para que cualquier PDA sepa qué build corre sin abrir el menú.
@@ -39,6 +40,7 @@ const Login = () => {
   const containerRef = useRef(null);
 
   const { login, isAuthenticated, logout, canAccessRoute } = useAuth();
+  const loginV2 = isFeatureFlagEnabled('web_login_v2');
 
   // Si el guard nos mandó aquí desde un deep-link (p.ej. el QR de un bloque de
   // conteo), volver a esa URL tras autenticarse en vez de a la landing del rol.
@@ -58,9 +60,7 @@ const Login = () => {
 
   const finalizarIngreso = async () => {
     setLoadingPhase(2);
-    await new Promise((r) => setTimeout(r, 120));
     setLoadingPhase(3);
-    await new Promise((r) => setTimeout(r, 80));
   };
 
   const confirmarMfa = async () => {
@@ -153,6 +153,7 @@ const Login = () => {
   return (
     <div
       ref={containerRef}
+      data-ui-surface={loginV2 ? 'login-v2' : 'login-legacy'}
       className="min-h-dvh w-full flex items-center justify-center bg-slate-50 font-sans selection:bg-orange-500 selection:text-white relative overflow-hidden px-5"
     >
       {/* Desafío MFA (segundo factor) — sobre todo lo demás */}
