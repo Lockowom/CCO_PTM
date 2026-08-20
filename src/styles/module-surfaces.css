@@ -52,6 +52,111 @@
   background: linear-gradient(180deg, rgba(124, 58, 237, 0.035), transparent 18rem);
 }
 
+/* Rutas/TMS: superficies operacionales densas, activadas solo por sus flags. */
+.cco-module-routes {
+  --module-accent: #ea580c;
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.04), transparent 22rem);
+}
+
+.cco-module-tms,
+.cco-module-tms-mobile {
+  --module-accent: #0f766e;
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.04), transparent 20rem);
+}
+
+.cco-module-routes .cr-map-card,
+.cco-module-routes .cr-sector-card,
+.cco-module-tms > div > div {
+  border-color: var(--border-default);
+}
+
+.tms-pod-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.tms-pod-status > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.tms-pod-status strong {
+  text-transform: capitalize;
+  font-size: 0.72rem;
+}
+
+.tms-pod-status span,
+.tms-pod-status time {
+  font-size: 0.68rem;
+}
+
+.tms-pod-status--uploading {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.tms-pod-status--success {
+  color: #047857;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.tms-pod-status--failed {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.tms-pod-status--offline_pending {
+  color: #9a3412;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.tms-stop-context {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  padding: 0.7rem;
+  border-radius: 0.8rem;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.tms-stop-context span,
+.tms-navigation-link,
+.tms-mobile-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tms-navigation-link {
+  margin-bottom: 0.65rem;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.tms-mobile-sync {
+  position: sticky;
+  bottom: 0.5rem;
+  margin: 1rem auto 0;
+  width: fit-content;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  color: #1e40af;
+  background: rgba(239, 246, 255, 0.94);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
 .cco-module-inbound :is(.card, section),
 .cco-module-quality :is(.card, section),
 .cco-module-postventa :is(.card, section) {
@@ -61,5 +166,22 @@
 @media (max-width: 640px) {
   .cco-module-v2 :is(button, [role='button'], a) {
     min-height: 44px;
+  }
+
+  [data-ui-mobile='2'] .tms-my-route {
+    max-width: none;
+    padding-inline: 0.25rem;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  [data-ui-mobile='2'] .tms-my-route {
+    max-width: 58rem;
+  }
+
+  [data-ui-mobile='2'] .tms-my-route > .space-y-3 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 }

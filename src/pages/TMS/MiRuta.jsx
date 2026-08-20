@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Truck, RefreshCw, PackageCheck, X, ChevronRight } from 'lucide-react';
+import {
+  Truck,
+  RefreshCw,
+  PackageCheck,
+  X,
+  ChevronRight,
+  MapPin,
+  Phone,
+  Navigation,
+  Wifi
+} from 'lucide-react';
 import {
   ESTADO_META,
   SIGUIENTE,
@@ -59,16 +69,19 @@ export default function MiRuta() {
   };
 
   return (
-    <div className="max-w-md mx-auto pb-20">
+    <div className="tms-my-route max-w-md mx-auto pb-20">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-black text-slate-800 flex items-center gap-2">
             <Truck className="text-orange-500" size={22} /> Mi Ruta
           </h1>
-          <p className="text-[12px] text-slate-500">Hoja de ruta del chofer</p>
+          <p className="text-[12px] text-slate-500">
+            Hoja de ruta del chofer · {lista.length} paradas activas
+          </p>
         </div>
         <button onClick={cargar} className="p-2 rounded-xl border border-slate-200 text-slate-500">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          <span className="sr-only">Sincronizar ruta</span>
         </button>
       </div>
 
@@ -125,6 +138,32 @@ export default function MiRuta() {
                   </span>
                 </div>
                 <div className="mt-3">
+                  {(o.direccion || o.contacto) && (
+                    <div className="tms-stop-context">
+                      {o.direccion && (
+                        <span>
+                          <MapPin size={14} />
+                          {o.direccion}
+                        </span>
+                      )}
+                      {o.contacto && (
+                        <span>
+                          <Phone size={14} />
+                          {o.contacto}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {o.direccion && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.direccion)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="tms-navigation-link"
+                    >
+                      <Navigation size={15} /> Abrir navegación
+                    </a>
+                  )}
                   {o.estado === 'en_ruta' ? (
                     <button
                       onClick={() => setPod(o)}
@@ -178,6 +217,9 @@ export default function MiRuta() {
           </div>
         </div>
       )}
+      <div className="tms-mobile-sync" role="status">
+        <Wifi size={13} /> Datos sincronizados al actualizar
+      </div>
     </div>
   );
 }

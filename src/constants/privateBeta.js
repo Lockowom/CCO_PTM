@@ -24,7 +24,7 @@ export const RELEASE_STAGES = {
   PRIVATE_BETA: 'PRIVATE_BETA',
   INTERNAL_PILOT: 'INTERNAL_PILOT',
   LIMITED_RELEASE: 'LIMITED_RELEASE',
-  GENERAL_AVAILABILITY: 'GENERAL_AVAILABILITY',
+  GENERAL_AVAILABILITY: 'GENERAL_AVAILABILITY'
 };
 
 /**
@@ -39,8 +39,24 @@ export const PRIVATE_BETA_MODULES = {
     viewPermission: 'view_rutas_private_beta',
     managePermission: 'manage_rutas_private_beta',
     betaRole: 'cco_private_beta_rutas',
-    stage: RELEASE_STAGES.PRIVATE_BETA,
+    stage: RELEASE_STAGES.PRIVATE_BETA
   },
+  tms_control: {
+    path: '/tms/control',
+    flag: 'module_rutas_private_beta',
+    viewPermission: 'view_rutas_private_beta',
+    managePermission: 'manage_rutas_private_beta',
+    betaRole: 'cco_private_beta_rutas',
+    stage: RELEASE_STAGES.PRIVATE_BETA
+  },
+  tms_pda: {
+    path: '/tms/pda',
+    flag: 'module_rutas_private_beta',
+    viewPermission: 'view_rutas_private_beta',
+    managePermission: 'manage_rutas_private_beta',
+    betaRole: 'cco_private_beta_rutas',
+    stage: RELEASE_STAGES.PRIVATE_BETA
+  }
   // FUTUROS: module_id: { path, flag, viewPermission, managePermission, betaRole, stage }
 };
 
@@ -94,5 +110,8 @@ export function evaluatePrivateBetaAccess(cfg, { flagOn, hasPermission, roles = 
 /** ¿Un usuario tiene el rol de beta de un módulo? (helpers para UI). */
 export function inPrivateBetaRole(cfg, roles = []) {
   if (!cfg) return false;
-  return Array.isArray(roles) && roles.some((r) => String(r).toLowerCase() === String(cfg.betaRole).toLowerCase());
+  return (
+    Array.isArray(roles) &&
+    roles.some((r) => String(r).toLowerCase() === String(cfg.betaRole).toLowerCase())
+  );
 }

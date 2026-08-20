@@ -7,7 +7,7 @@ import {
   RELEASE_STAGES,
   privateBetaForPath,
   evaluatePrivateBetaAccess,
-  inPrivateBetaRole,
+  inPrivateBetaRole
 } from '../constants/privateBeta';
 import { isFeatureFlagEnabled, enabledFeatureFlags } from '../config/featureFlags';
 import { ROUTE_META, getNavGroups, SEARCHABLE_ROUTES } from '../constants/routeMeta';
@@ -22,13 +22,17 @@ describe('PR-015B · registro de módulos en private beta', () => {
   it('resuelve la config por ruta exacta y con query', () => {
     expect(privateBetaForPath('/panel/rutas')).toEqual(PRIVATE_BETA_MODULES.rutas);
     expect(privateBetaForPath('/panel/rutas?tab=plan')).toEqual(PRIVATE_BETA_MODULES.rutas);
+    expect(privateBetaForPath('/tms/control')).toEqual(PRIVATE_BETA_MODULES.tms_control);
+    expect(privateBetaForPath('/tms/pda')).toEqual(PRIVATE_BETA_MODULES.tms_pda);
     expect(privateBetaForPath('/panel')).toBeNull();
   });
 
   it('no usa UUIDs: solo rol IAM + permisos', () => {
     expect(PRIVATE_BETA_MODULES.rutas.betaRole).toBe('cco_private_beta_rutas');
     expect(PRIVATE_BETA_MODULES.rutas.viewPermission).toBe('view_rutas_private_beta');
-    expect(String(JSON.stringify(PRIVATE_BETA_MODULES))).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    expect(String(JSON.stringify(PRIVATE_BETA_MODULES))).not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    );
   });
 
   it('declara la etapa de release', () => {
@@ -43,7 +47,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     const { allowed, reason } = evaluatePrivateBetaAccess(cfg, {
       flagOn: false,
       hasPermission: allPerms,
-      roles: betaRole,
+      roles: betaRole
     });
     expect(allowed).toBe(false);
     expect(reason).toBe('FLAG_OFF');
@@ -53,7 +57,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     const { allowed, reason } = evaluatePrivateBetaAccess(cfg, {
       flagOn: true,
       hasPermission: hasBetaPerm,
-      roles: [],
+      roles: []
     });
     expect(allowed).toBe(false);
     expect(reason).toBe('NOT_IN_BETA');
@@ -63,7 +67,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     const { allowed, reason } = evaluatePrivateBetaAccess(cfg, {
       flagOn: true,
       hasPermission: noPerms,
-      roles: betaRole,
+      roles: betaRole
     });
     expect(allowed).toBe(false);
     expect(reason).toBe('NO_PERMISSION');
@@ -73,7 +77,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     const { allowed, reason } = evaluatePrivateBetaAccess(cfg, {
       flagOn: true,
       hasPermission: hasBetaPerm,
-      roles: betaRole,
+      roles: betaRole
     });
     expect(allowed).toBe(true);
     expect(reason).toBeNull();
@@ -83,7 +87,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     expect(evaluatePrivateBetaAccess(null, { hasPermission: noPerms, roles: [] })).toEqual({
       allowed: true,
       reason: null,
-      stage: null,
+      stage: null
     });
   });
 
@@ -91,7 +95,7 @@ describe('PR-015B · evaluatePrivateBetaAccess (3 capas)', () => {
     const { allowed } = evaluatePrivateBetaAccess(cfg, {
       flagOn: true,
       hasPermission: allPerms, // ADMIN devuelve true para todo permiso
-      roles: ['ADMIN'],
+      roles: ['ADMIN']
     });
     expect(allowed).toBe(false);
   });
@@ -126,7 +130,17 @@ describe('PR-015B · routeMeta oculta módulos en beta (nav + búsqueda global)'
   });
 
   it('no aparece en la búsqueda global', () => {
-    expect(SEARCHABLE_ROUTES.map((m) => m.path)).not.toContain('/panel/rutas');
+    const searchable = SEARCHABLE_ROUTES.map((m) => m.path);
+    expect(searchable).not.toContain('/panel/rutas');
+    expect(searchable).not.toContain('/tms/control');
+    expect(searchable).not.toContain('/tms/pda');
+  });
+
+  it('no filtra Rutas/TMS en navegación aunque sus flags visuales estén activos', () => {
+    const nav = getNavGroups(() => true).flatMap((g) => g.items.map((i) => i.path));
+    expect(nav).not.toContain('/panel/rutas');
+    expect(nav).not.toContain('/tms/control');
+    expect(nav).not.toContain('/tms/pda');
   });
 });
 
@@ -141,6 +155,11 @@ describe('PR-015B · puedeAccederRuta integra el gate (regresión)', () => {
 
   it('rutas no-beta siguen sin tocarse', () => {
     expect(puedeAccederRuta('/panel', { rol: 'ADMIN' }, allPerms)).toBe(true);
+  });
+
+  it.each(['/tms/control', '/tms/pda'])('%s exige rol y permiso de beta', (path) => {
+    expect(puedeAccederRuta(path, { rol: 'ADMIN' }, allPerms, [])).toBe(false);
+    expect(puedeAccederRuta(path, { rol: 'ADMIN' }, hasBetaPerm, betaRole)).toBe(true);
   });
 
   it('inPrivateBetaRole detecta el rol beta', () => {
