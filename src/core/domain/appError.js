@@ -8,6 +8,10 @@ export class AppError extends Error {
     this.status = options.status || 'error';
     this.context = options.context || {};
     this.cause = options.cause || null;
+    this.retryable = options.retryable === true;
+    this.permission = options.permission || null;
+    this.conflict = options.conflict === true;
+    this.correlationId = options.correlationId || options.correlation_id || null;
   }
 }
 

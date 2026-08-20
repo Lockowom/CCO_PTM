@@ -15,13 +15,42 @@ export async function listarDespliegueOTA() {
 
 // Promueve (enlaza) una versión ya existente al canal indicado (por defecto
 // production = toda la bodega). No recompila; solo apunta el canal al bundle.
-export async function promoverOTA(version, channel = 'production') {
+export async function promoverOTA(version, channel = 'production', options = {}) {
   const { data, error } = await supabase.functions.invoke('ota-deploy', {
-    body: { action: 'promote', version, channel }
+    body: {
+      action: 'promote',
+      version,
+      channel,
+      rollback: options.rollback === true,
+      reason: options.reason || ''
+    }
   });
   if (error) throw new Error(error.message || 'No se pudo promover');
   if (!data?.ok) throw new Error(data?.error || 'No se pudo promover');
   return data; // { version, channel }
+}
+
+export async function asignarCanalDispositivoOTA(deviceId, channel, deviceAlias = '') {
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: {
+      action: 'set-device-channel',
+      device_id: deviceId,
+      channel,
+      device_alias: deviceAlias
+    }
+  });
+  if (error) throw new Error(error.message || 'No se pudo asignar el dispositivo');
+  if (!data?.ok) throw new Error(data?.error || 'No se pudo asignar el dispositivo');
+  return data.device;
+}
+
+export async function revisarBetaOTA(version, decision, notes) {
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: { action: 'review-beta', version, decision, notes }
+  });
+  if (error) throw new Error(error.message || 'No se pudo registrar la revisión beta');
+  if (!data?.ok) throw new Error(data?.error || 'No se pudo registrar la revisión beta');
+  return data;
 }
 
 // Archiva un bundle viejo. No toca canales activos ni borra evidencia histórica.

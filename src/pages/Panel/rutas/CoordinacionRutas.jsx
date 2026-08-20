@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import RouteMap from './RouteMap';
 import RouteAnalytics from './RouteAnalytics';
 import RouteCostCalculator from './RouteCostCalculator';
+import RouteCapacityPlanner from './RouteCapacityPlanner';
 import {
   optimizeStops,
   SANTIAGO_COMMUNES,
@@ -75,8 +76,11 @@ export default function CoordinacionRutas() {
     if (silent) setRefreshing(true);
     else setLoading(true);
     try {
-      const next = await routeCoordinationService.dashboard();
-      setData({ shipping: [], retiros: [], planes: [], transportistas: [], ...next });
+      const [next, origin] = await Promise.all([
+        routeCoordinationService.dashboard(),
+        routeCoordinationService.configuration()
+      ]);
+      setData({ shipping: [], retiros: [], planes: [], transportistas: [], ...next, origin });
       setSelectedPlanId((current) => {
         if (current && next?.planes?.some((item) => item.id === current)) return current;
         return next?.planes?.[0]?.id || '';
@@ -185,10 +189,41 @@ export default function CoordinacionRutas() {
     );
   };
 
-  const optimize = () => {
+  const optimize = async () => {
     if (!selectedPlan || selectedPlan.paradas.length < 2)
       return toast.warning('La ruta necesita al menos dos paradas.');
-    const ordered = optimizeStops(selectedPlan.paradas);
+    const origin =
+      data.origin?.origin_lat != null && data.origin?.origin_lon != null
+        ? {
+            id: 'WAREHOUSE',
+            lat: Number(data.origin.origin_lat),
+            lon: Number(data.origin.origin_lon)
+          }
+        : null;
+    const routable = selectedPlan.paradas.every(
+      (item) => Number.isFinite(Number(item.latitud)) && Number.isFinite(Number(item.longitud))
+    );
+    let ordered;
+    if (origin && routable) {
+      try {
+        const route = await routeCoordinationService.planRoute(
+          origin,
+          selectedPlan.paradas.map((item) => ({
+            id: item.id,
+            lat: Number(item.latitud),
+            lon: Number(item.longitud)
+          })),
+          data.origin.return_to_origin !== false
+        );
+        const rank = new Map(route.order.map((item) => [item.id, item.order]));
+        ordered = [...selectedPlan.paradas].sort((a, b) => rank.get(a.id) - rank.get(b.id));
+      } catch (error) {
+        toast.warning(`Proveedor vial no disponible: ${error.message}. Se usará orden aproximado.`);
+      }
+    } else {
+      toast.warning('Falta origen verificado o coordenadas; se usará orden aproximado.');
+    }
+    ordered ||= optimizeStops(selectedPlan.paradas, origin && { lat: origin.lat, lng: origin.lon });
     return run(
       'optimize',
       () =>
@@ -246,9 +281,17 @@ export default function CoordinacionRutas() {
         <button className={view === 'costs' ? 'is-active' : ''} onClick={() => setView('costs')}>
           <CircleDollarSign size={16} /> Costos y distancias
         </button>
+        <button
+          className={view === 'capacity' ? 'is-active' : ''}
+          onClick={() => setView('capacity')}
+        >
+          <Truck size={16} /> Capacidad y flota
+        </button>
       </nav>
 
-      {view === 'costs' ? (
+      {view === 'capacity' ? (
+        <RouteCapacityPlanner />
+      ) : view === 'costs' ? (
         <RouteCostCalculator />
       ) : view === 'analytics' ? (
         <RouteAnalytics />
@@ -621,9 +664,9 @@ export default function CoordinacionRutas() {
                           run(
                             'confirm',
                             () =>
-                              routeCoordinationService.changePlanStatus(
+                              routeCoordinationService.confirmPlan(
                                 selectedPlan.id,
-                                'CONFIRMADA'
+                                selectedPlan.version
                               ),
                             'Ruta confirmada.'
                           )

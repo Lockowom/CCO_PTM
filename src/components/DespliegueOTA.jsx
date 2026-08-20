@@ -27,7 +27,9 @@ import {
   guardarGobernanzaOTA,
   historialOTA,
   avisarNuevaVersionPush,
-  limpiarBundlesViejos
+  limpiarBundlesViejos,
+  asignarCanalDispositivoOTA,
+  revisarBetaOTA
 } from '../services/otaDeployService';
 
 /**
@@ -47,6 +49,12 @@ const DespliegueOTA = () => {
   const [confirmar, setConfirmar] = useState(false);
   const [promoviendo, setPromoviendo] = useState(false);
   const [dispos, setDispos] = useState([]);
+  const [deviceDetails, setDeviceDetails] = useState([]);
+  const [deviceAliases, setDeviceAliases] = useState({});
+  const [asignando, setAsignando] = useState('');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewing, setReviewing] = useState(false);
+  const [rollbackReason, setRollbackReason] = useState('');
   const [gob, setGob] = useState({ min_version: '', obligatorio: false, mensaje: '' });
   const [savingGob, setSavingGob] = useState(false);
   const [delVer, setDelVer] = useState(null);
@@ -65,6 +73,13 @@ const DespliegueOTA = () => {
       });
       setData({ ...r, bundles });
       setDispos(r.devices || []);
+      setDeviceDetails(r.device_details || []);
+      setDeviceAliases(
+        Object.fromEntries(
+          (r.device_details || []).map((device) => [device.device_id, device.device_alias || ''])
+        )
+      );
+      setReviewNotes(r.beta_gate?.review?.notes || '');
     } catch (e) {
       toast.error(`No se pudo consultar OTA: ${e.message}`);
       setData({ bundles: [], channels: [] });
@@ -119,12 +134,48 @@ const DespliegueOTA = () => {
     (data?.channels || []).find((c) => String(c.name).toLowerCase() === nombre)?.version || null;
   const vProd = canal('production');
   const vBeta = canal('beta');
+  const betaGate = data?.beta_gate || {};
+  const esRollback = Boolean(sel && sel !== vBeta);
+
+  const asignarDispositivo = async (device, channel) => {
+    setAsignando(device.device_id);
+    try {
+      await asignarCanalDispositivoOTA(
+        device.device_id,
+        channel,
+        deviceAliases[device.device_id] || device.device_alias || ''
+      );
+      toast.success(`Dispositivo asignado a ${channel === 'beta' ? 'BETA' : 'PRODUCCIÓN'}.`);
+      await cargar();
+    } catch (error) {
+      toast.error(error.message || 'No se pudo cambiar el canal.');
+    } finally {
+      setAsignando('');
+    }
+  };
+
+  const revisarBeta = async (decision) => {
+    if (!vBeta) return;
+    setReviewing(true);
+    try {
+      await revisarBetaOTA(vBeta, decision, reviewNotes);
+      toast.success(decision === 'APPROVED' ? 'Beta aprobada para promoción.' : 'Beta rechazada.');
+      await cargar();
+    } catch (error) {
+      toast.error(error.message || 'No se pudo registrar la revisión.');
+    } finally {
+      setReviewing(false);
+    }
+  };
 
   const promover = async () => {
     if (!sel) return;
     setPromoviendo(true);
     try {
-      await promoverOTA(sel, 'production');
+      await promoverOTA(sel, 'production', {
+        rollback: esRollback,
+        reason: esRollback ? rollbackReason : reviewNotes
+      });
       toast.success(`Versión ${sel} promovida a PRODUCCIÓN. Toda la bodega la recibirá.`);
       if (avisar) {
         try {
@@ -136,6 +187,7 @@ const DespliegueOTA = () => {
       }
       setConfirmar(false);
       setSel('');
+      setRollbackReason('');
       await cargar();
     } catch (e) {
       toast.error(`No se pudo promover: ${e.message}`);
@@ -215,6 +267,61 @@ const DespliegueOTA = () => {
           <p className="text-lg font-black text-slate-800">{vBeta || '—'}</p>
         </div>
       </div>
+
+      {/* Gate beta: evidencia real antes de habilitar producción */}
+      {vBeta && (
+        <div
+          className={`rounded-xl border p-3 mb-3 ${betaGate.ready ? 'border-emerald-300 bg-emerald-50' : 'border-amber-300 bg-amber-50'}`}
+        >
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <FlaskConical size={14} /> Validación beta {vBeta}
+              </p>
+              <p className="text-[11px] text-slate-600 mt-1">
+                Asignados: <b>{betaGate.assigned || 0}</b> · Instalados:{' '}
+                <b>{betaGate.applied || 0}</b> · Sanos 24 h: <b>{betaGate.healthy || 0}</b> ·
+                Errores: <b>{betaGate.errors || 0}</b>
+              </p>
+            </div>
+            <span
+              className={`text-[10px] font-black rounded-full px-2 py-1 ${betaGate.ready ? 'bg-emerald-600 text-white' : 'bg-amber-200 text-amber-900'}`}
+            >
+              {betaGate.ready ? 'LISTA PARA PRODUCCIÓN' : betaGate.review?.status || 'EN PRUEBAS'}
+            </span>
+          </div>
+          <textarea
+            value={reviewNotes}
+            onChange={(event) => setReviewNotes(event.target.value)}
+            placeholder="Describe qué se probó, en qué equipo y el resultado…"
+            className="mt-3 min-h-20 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              onClick={() => revisarBeta('REJECTED')}
+              disabled={reviewing || reviewNotes.trim().length < 5}
+              className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-600 disabled:opacity-40"
+            >
+              Rechazar beta
+            </button>
+            <button
+              onClick={() => revisarBeta('APPROVED')}
+              disabled={
+                reviewing || reviewNotes.trim().length < 5 || Number(betaGate.healthy || 0) < 1
+              }
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white disabled:opacity-40"
+            >
+              {reviewing ? 'Guardando…' : 'Aprobar beta'}
+            </button>
+          </div>
+          {Number(betaGate.healthy || 0) < 1 && (
+            <p className="mt-2 text-[10px] font-bold text-amber-800">
+              Para aprobar, al menos un dispositivo beta debe instalar {vBeta}, reportarse en las
+              últimas 24 horas y no tener error.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Adopción */}
       {totalDisp > 0 && (
@@ -330,15 +437,16 @@ const DespliegueOTA = () => {
         <div className="flex items-center gap-2">
           {sel && sel !== vProd && (
             <span className="text-[10px] font-bold text-amber-600 bg-amber-50 rounded px-1.5 py-1">
-              {data?.bundles?.findIndex((b) => b.version === sel) >
-              data?.bundles?.findIndex((b) => b.version === vProd)
-                ? '↩ rollback'
-                : '↑ avance'}
+              {esRollback
+                ? '↩ rollback justificado'
+                : betaGate.ready
+                  ? '✓ beta aprobada'
+                  : '⚠ beta pendiente'}
             </span>
           )}
           <button
             onClick={() => setConfirmar(true)}
-            disabled={!sel || promoviendo}
+            disabled={!sel || promoviendo || (!esRollback && !betaGate.ready)}
             className="px-4 py-2 rounded-lg text-sm font-black inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
           >
             <Rocket size={15} /> Promover a producción
@@ -346,8 +454,8 @@ const DespliegueOTA = () => {
         </div>
       </div>
       <p className="text-[10px] text-slate-400 mt-1">
-        Para <b>rollback</b>, selecciona una versión anterior a la de producción y promuévela: el
-        canal apunta al bundle previo (sin recompilar).
+        La beta vigente requiere aprobación y un dispositivo sano. Cualquier otra versión se trata
+        como rollback y exige una justificación auditada.
       </p>
 
       {/* Gobernanza de versión (mínima / obligatoria) */}
@@ -391,6 +499,86 @@ const DespliegueOTA = () => {
           Los dispositivos con versión inferior verán un aviso para actualizar. Deja la versión
           vacía para desactivar.
         </p>
+      </div>
+
+      {/* Administración remota de dispositivos */}
+      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-600">
+          <Smartphone size={12} /> Dispositivos y canal administrado ({deviceDetails.length})
+        </p>
+        {deviceDetails.length === 0 ? (
+          <p className="text-xs text-slate-400">
+            Los equipos aparecerán después de consultar una actualización.
+          </p>
+        ) : (
+          <div className="max-h-80 divide-y divide-slate-100 overflow-y-auto">
+            {deviceDetails.map((device) => {
+              const busy = asignando === device.device_id;
+              const currentBeta = device.channel === 'beta';
+              return (
+                <div
+                  key={device.device_id}
+                  className="grid gap-2 py-2 md:grid-cols-[minmax(190px,1fr)_120px_150px_auto] md:items-center"
+                >
+                  <div className="min-w-0">
+                    <input
+                      aria-label={`Nombre del dispositivo ${device.device_id}`}
+                      value={deviceAliases[device.device_id] || ''}
+                      onChange={(event) =>
+                        setDeviceAliases((current) => ({
+                          ...current,
+                          [device.device_id]: event.target.value
+                        }))
+                      }
+                      placeholder={`PDA ${device.device_id.slice(0, 8)}`}
+                      maxLength={80}
+                      className="w-full rounded-md border border-slate-200 px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:border-indigo-400"
+                    />
+                    <p className="mt-1 truncate font-mono text-[9px] text-slate-400">
+                      {device.device_id}
+                    </p>
+                  </div>
+                  <div className="text-[11px]">
+                    <b className="block text-slate-700">
+                      v{device.current_version || device.native_version || '—'}
+                    </b>
+                    <span className="text-slate-400">{device.platform || 'desconocido'}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    <span
+                      className={
+                        device.last_error ? 'font-bold text-red-600' : 'font-bold text-emerald-600'
+                      }
+                    >
+                      {device.last_error || 'Sin error reportado'}
+                    </span>
+                    <span className="block">
+                      {device.last_seen_at
+                        ? new Date(device.last_seen_at).toLocaleString('es-CL')
+                        : 'Sin conexión reciente'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => asignarDispositivo(device, 'production')}
+                      disabled={busy || !currentBeta}
+                      className={`rounded-md px-2 py-1.5 text-[10px] font-black disabled:opacity-40 ${!currentBeta ? 'bg-emerald-600 text-white' : 'border border-slate-200 text-slate-600'}`}
+                    >
+                      Producción
+                    </button>
+                    <button
+                      onClick={() => asignarDispositivo(device, 'beta')}
+                      disabled={busy || currentBeta}
+                      className={`rounded-md px-2 py-1.5 text-[10px] font-black disabled:opacity-40 ${currentBeta ? 'bg-amber-500 text-white' : 'border border-amber-200 text-amber-700'}`}
+                    >
+                      {busy ? 'Guardando…' : 'Beta'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Inventario: versiones aplicadas por dispositivo */}
@@ -499,6 +687,17 @@ const DespliegueOTA = () => {
                 <X size={18} />
               </button>
             </div>
+            {esRollback && (
+              <label className="mt-3 block text-xs font-bold text-slate-600">
+                Motivo obligatorio del rollback
+                <textarea
+                  value={rollbackReason}
+                  onChange={(event) => setRollbackReason(event.target.value)}
+                  placeholder="Explica el incidente y por qué se vuelve a esta versión…"
+                  className="mt-1 min-h-20 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-normal outline-none focus:border-red-400"
+                />
+              </label>
+            )}
             <label className="flex items-center gap-2 mt-3 text-[13px] text-slate-600 cursor-pointer">
               <input
                 type="checkbox"
@@ -518,7 +717,7 @@ const DespliegueOTA = () => {
               </button>
               <button
                 onClick={promover}
-                disabled={promoviendo}
+                disabled={promoviendo || (esRollback && rollbackReason.trim().length < 10)}
                 className="flex-1 px-4 py-2.5 rounded-lg text-sm font-black bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {promoviendo ? (

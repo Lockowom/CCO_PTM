@@ -1,7 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const OWNER_UID = 'c12e2286-9619-445e-afe4-e9aefc51996c';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -71,7 +70,8 @@ Deno.serve(async (request: Request) => {
     });
     const { data, error } = await authClient.auth.getUser(token);
     if (error || !data.user) return response({ error: 'Sesión inválida' }, 401);
-    if (data.user.id !== OWNER_UID) return response({ error: 'Acceso privado denegado' }, 403);
+    const { data: allowed, error: gateError } = await authClient.rpc('coord_rutas_es_propietario');
+    if (gateError || allowed !== true) return response({ error: 'Acceso privado denegado' }, 403);
 
     const body = await request.json().catch(() => ({}));
     const origen = String(body.origen || 'Santiago').trim();

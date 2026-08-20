@@ -13,7 +13,7 @@
  */
 
 export const PWA_SENSITIVE_ROUTES =
-  /^https:\/\/.*\.supabase\.co\/(auth\/|rest\/v1\/(tms_usuarios|tms_usuarios_activos|tms_accesos|tms_roles|tms_permisos|tms_sesiones|tms_postventa_tickets|tms_postventa_correos|tms_direcciones|tms_historial_cargas|tms_consulta_metricas)|rest\/v1\/rpc\/iam_)/i;
+  /^https:\/\/.*\.supabase\.co\/(auth\/|rest\/v1\/(iam\.|tms_usuarios|tms_usuarios_activos|tms_accesos|tms_roles|tms_permisos|tms_sesiones|tms_postventa_tickets|tms_postventa_correos|tms_direcciones|tms_historial_cargas|tms_consulta_metricas|tms_operaciones|tms_transporte_ordenes|coord_rutas_|system_alert|mobile_ota_|app_runtime_control)|rest\/v1\/rpc\/(iam_|coord_rutas_|tms_|guardar_|cambiar_estado_|usuarios_|api_key_|update_system_alert_))/i;
 
 export const PWA_RUNTIME_CONTROL_ROUTE =
   /^https:\/\/.*\.supabase\.co\/rest\/v1\/app_runtime_control.*/i;

@@ -19,6 +19,13 @@ export const emitQueueUpdate = () => {
 // compartidos cada usuario solo sincronice SUS operaciones.
 export const getCurrentUserId = async () => {
   try {
+    // getSession lee la sesión local y sigue disponible offline. getUser queda
+    // como validación/fallback cuando existe red.
+    if (typeof supabase.auth.getSession === 'function') {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const sessionUserId = sessionData?.session?.user?.id;
+      if (sessionUserId) return sessionUserId;
+    }
     const { data } = await supabase.auth.getUser();
     return data?.user?.id ?? null;
   } catch {
@@ -31,8 +38,15 @@ export const getCurrentUserId = async () => {
 // para auditoría (getFailedItems) pero NO se sincronizan por accidente.
 export const filterQueueByUser = async (items) => {
   const userId = await getCurrentUserId();
-  if (!userId) return items; // sin sesión: comportamiento legacy (global)
-  return items.filter((item) => !item.userId || item.userId === userId);
+  // Fail-closed: sin identidad no se procesa ni se revela ninguna cola. Los
+  // items legacy sin userId quedan en cuarentena para revisión manual.
+  if (!userId) return [];
+  return items.filter((item) => item.userId === userId);
+};
+
+const createIdempotencyKey = (module, action, recordId) => {
+  const random = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  return `cco:${module || 'app'}:${action || 'write'}:${recordId || 'new'}:${random}`;
 };
 
 // ── ENQUEUE ──
@@ -43,7 +57,10 @@ export const enqueueSyncItem = async ({
   data,
   onConflict,
   conflictResolution = 'client_wins',
-  userId
+  userId,
+  module = 'offline',
+  action,
+  idempotencyKey
 }) => {
   // Protección contra cola infinita
   const currentCount = await db.syncQueue.count();
@@ -58,6 +75,15 @@ export const enqueueSyncItem = async ({
     return false;
   }
 
+  const ownerId = userId || (await getCurrentUserId());
+  if (!ownerId) {
+    toast.error('No pudimos identificar tu sesión. La operación no fue encolada.', {
+      id: 'queue-auth-required'
+    });
+    return false;
+  }
+
+  const commandAction = action || `${type}:${tableName}`;
   await db.syncQueue.add({
     type,
     tableName,
@@ -70,7 +96,14 @@ export const enqueueSyncItem = async ({
     conflictResolution,
     lastAttempt: null,
     lastError: null,
-    userId: userId || (await getCurrentUserId())
+    userId: ownerId,
+    module,
+    action: commandAction,
+    payload: data,
+    createdAt: new Date().toISOString(),
+    attempts: 0,
+    statusV2: 'PENDING',
+    idempotencyKey: idempotencyKey || createIdempotencyKey(module, commandAction, recordId)
   });
 
   emitQueueUpdate();
@@ -105,7 +138,9 @@ export const enqueueUpsert = async ({
   data,
   onConflict,
   ignoreDuplicates = false,
-  userId
+  userId,
+  module = 'offline',
+  idempotencyKey
 }) => {
   const currentCount = await db.syncQueue.count();
   if (currentCount >= MAX_QUEUE_SIZE) {
@@ -116,10 +151,13 @@ export const enqueueUpsert = async ({
     return false;
   }
 
+  const ownerId = userId || (await getCurrentUserId());
+  if (!ownerId) return false;
+  const recordId = `batch_${Date.now()}`;
   await db.syncQueue.add({
     type: 'upsert',
     tableName,
-    recordId: `batch_${Date.now()}`,
+    recordId,
     data,
     onConflict: onConflict || null,
     ignoreDuplicates,
@@ -129,7 +167,14 @@ export const enqueueUpsert = async ({
     conflictResolution: 'client_wins',
     lastAttempt: null,
     lastError: null,
-    userId: userId || (await getCurrentUserId())
+    userId: ownerId,
+    module,
+    action: `upsert:${tableName}`,
+    payload: data,
+    createdAt: new Date().toISOString(),
+    attempts: 0,
+    statusV2: 'PENDING',
+    idempotencyKey: idempotencyKey || createIdempotencyKey(module, `upsert:${tableName}`, recordId)
   });
 
   emitQueueUpdate();
@@ -229,7 +274,9 @@ export const syncOfflineData = async () => {
 
         await db.syncQueue.update(item.id, {
           status: isMaxRetries ? 'dead' : 'failed',
+          statusV2: isMaxRetries ? 'REJECTED' : 'FAILED',
           retryCount: newRetryCount,
+          attempts: newRetryCount,
           lastAttempt: Date.now(),
           lastError: error.message || 'Error desconocido'
         });

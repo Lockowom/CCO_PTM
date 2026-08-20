@@ -52,6 +52,7 @@ describe('syncManager', () => {
     mockSyncQueue.count.mockResolvedValue(0);
     mockSyncQueue.add.mockResolvedValue(1);
     mockSyncQueue.toArray.mockResolvedValue([]);
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
   });
 
@@ -75,6 +76,8 @@ describe('syncManager', () => {
       expect(addedItem.status).toBe('pending');
       expect(addedItem.retryCount).toBe(0);
       expect(addedItem.onConflict).toBe('ubicacion,codigo');
+      expect(addedItem.userId).toBe('user-1');
+      expect(addedItem.idempotencyKey).toMatch(/^cco:/);
     });
 
     it('rechaza cuando la cola está llena (500 items)', async () => {
@@ -213,6 +216,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 1,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'wms_ubicaciones',
           data: [{ ubicacion: 'A-01-1', codigo: 'SKU001' }],
@@ -238,6 +242,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 2,
+          userId: 'user-1',
           type: 'rpc',
           tableName: 'move_stock',
           data: { from: 'A-01-1', to: 'B-02-3' },
@@ -262,6 +267,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 22,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'wms_putaway_ubicaciones',
           data: [{ ubicacion: 'A-01-1', codigo: 'SKU001' }],
@@ -289,6 +295,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 3,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'test',
           data: [{ a: 1 }],
@@ -318,6 +325,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 4,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'test',
           data: [{ a: 1 }],
@@ -341,6 +349,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 5,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'test',
           data: [{ a: 1 }],
@@ -362,6 +371,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 6,
+          userId: 'user-1',
           type: 'upsert',
           tableName: 'test',
           data: [{ a: 1 }],
@@ -384,6 +394,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 7,
+          userId: 'user-1',
           type: 'update',
           tableName: 'tms_mediciones_tiempos',
           recordId: 'rec-123',
@@ -409,6 +420,7 @@ describe('syncManager', () => {
       mockSyncQueue.toArray.mockResolvedValue([
         {
           id: 8,
+          userId: 'user-1',
           type: 'delete',
           tableName: 'tms_nv_eliminadas',
           recordId: 'del-1',
@@ -432,10 +444,10 @@ describe('syncManager', () => {
   describe('getFailedItems', () => {
     it('retorna items dead y failed', async () => {
       mockSyncQueue.toArray.mockResolvedValue([
-        { id: 1, status: 'pending' },
-        { id: 2, status: 'failed', lastError: 'err1' },
-        { id: 3, status: 'dead', lastError: 'err2' },
-        { id: 4, status: 'syncing' }
+        { id: 1, userId: 'user-1', status: 'pending' },
+        { id: 2, userId: 'user-1', status: 'failed', lastError: 'err1' },
+        { id: 3, userId: 'user-1', status: 'dead', lastError: 'err2' },
+        { id: 4, userId: 'user-1', status: 'syncing' }
       ]);
 
       const failed = await getFailedItems();
@@ -468,7 +480,6 @@ describe('syncManager', () => {
     });
   });
 
-
   describe('PR-011 · user-scoped offline queue', () => {
     beforeEach(() => {
       mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
@@ -489,15 +500,45 @@ describe('syncManager', () => {
     it('syncOfflineData sincroniza SOLO los items del usuario actual', async () => {
       mockSupabase.rpc.mockResolvedValue({ error: null });
       mockSyncQueue.toArray.mockResolvedValue([
-        { id: 1, userId: 'user-1', type: 'rpc', tableName: 'wms_move_stock', recordId: 'a', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() },
-        { id: 2, userId: 'user-2', type: 'rpc', tableName: 'wms_move_stock', recordId: 'b', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() },
-        { id: 3, userId: null, type: 'rpc', tableName: 'wms_move_stock', recordId: 'c', data: {}, status: 'pending', retryCount: 0, timestamp: Date.now() }
+        {
+          id: 1,
+          userId: 'user-1',
+          type: 'rpc',
+          tableName: 'wms_move_stock',
+          recordId: 'a',
+          data: {},
+          status: 'pending',
+          retryCount: 0,
+          timestamp: Date.now()
+        },
+        {
+          id: 2,
+          userId: 'user-2',
+          type: 'rpc',
+          tableName: 'wms_move_stock',
+          recordId: 'b',
+          data: {},
+          status: 'pending',
+          retryCount: 0,
+          timestamp: Date.now()
+        },
+        {
+          id: 3,
+          userId: null,
+          type: 'rpc',
+          tableName: 'wms_move_stock',
+          recordId: 'c',
+          data: {},
+          status: 'pending',
+          retryCount: 0,
+          timestamp: Date.now()
+        }
       ]);
 
       await syncOfflineData();
 
       const rpcCalls = mockSupabase.rpc.mock.calls.map((c) => c[1] && c[0]);
-      expect(rpcCalls.filter(Boolean)).toEqual(['wms_move_stock', 'wms_move_stock']);
+      expect(rpcCalls.filter(Boolean)).toEqual(['wms_move_stock']);
     });
 
     it('getFailedItems devuelve solo items del usuario actual', async () => {
@@ -509,10 +550,10 @@ describe('syncManager', () => {
 
       const failed = await getFailedItems();
 
-      expect(failed.map((i) => i.id)).toEqual([1, 3]);
+      expect(failed.map((i) => i.id)).toEqual([1]);
     });
 
-    it('sin sesión cae al comportamiento legacy (no filtra)', async () => {
+    it('sin sesión falla cerrado y no revela colas', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
       mockSyncQueue.toArray.mockResolvedValue([
         { id: 1, userId: null, status: 'failed' },
@@ -521,7 +562,21 @@ describe('syncManager', () => {
 
       const failed = await getFailedItems();
 
-      expect(failed.map((i) => i.id)).toEqual([1, 2]);
+      expect(failed).toEqual([]);
+    });
+
+    it('sin sesión no permite encolar comandos', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+
+      const result = await enqueueSyncItem({
+        type: 'rpc',
+        tableName: 'wms_move_stock',
+        recordId: 'x',
+        data: {}
+      });
+
+      expect(result).toBe(false);
+      expect(mockSyncQueue.add).not.toHaveBeenCalled();
     });
   });
 });

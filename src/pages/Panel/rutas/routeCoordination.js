@@ -144,10 +144,13 @@ export function pointForStop(item) {
 
 const distanceSquared = (a, b) => (a.lat - b.lat) ** 2 + (a.lng - b.lng) ** 2;
 
-export function optimizeStops(stops = [], origin = { lat: -33.4489, lng: -70.6693 }) {
+export function optimizeStops(stops = [], origin = null) {
   const pending = stops.map((stop) => ({ stop, point: pointForStop(stop) }));
   const ordered = [];
-  let current = origin;
+  // Sin origen configurado no se inventa una coordenada: se usa la primera
+  // parada conocida y la UI etiqueta el resultado como aproximado.
+  let current = origin || pending.find((entry) => entry.point)?.point;
+  if (!current) return [...stops];
   while (pending.length) {
     let best = 0;
     let bestDistance = Number.POSITIVE_INFINITY;

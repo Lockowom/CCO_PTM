@@ -10,10 +10,9 @@ import {
 } from '../services/mobileService';
 
 /**
- * Selector de canal OTA de ESTE dispositivo (solo app Android).
- * Permite asignar un PDA de PRUEBA al canal `beta` para validar una versión
- * antes de promoverla a `production` (toda la bodega). Volver a `production`
- * deshace la asignación. No aparece en web.
+ * Control del canal OTA de ESTE dispositivo (solo app Android). El cambio se
+ * autoriza y persiste primero en el centro OTA web; el plugin local solo refleja
+ * esa asignación. No existe autoasignación pública a beta.
  */
 const CanalOTA = () => {
   const [canal, setCanal] = useState(null);

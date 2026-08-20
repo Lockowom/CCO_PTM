@@ -81,8 +81,16 @@ Deno.serve(async (req) => {
         const identity = validDevice(body);
         if (!identity) continue;
         const action = clean(body.action, 80);
-        const channel = CHANNELS.has(clean(body.defaultChannel, 20))
-          ? clean(body.defaultChannel, 20)
+        const { data: registered } = await service
+          .from('mobile_ota_devices')
+          .select('channel')
+          .eq('app_id', APP_ID)
+          .eq('device_id', identity.deviceId)
+          .maybeSingle();
+        // El servidor es autoritativo. Un dispositivo nuevo entra siempre a
+        // producción; beta solo se asigna desde el centro OTA autenticado.
+        const channel = CHANNELS.has(clean(registered?.channel, 20))
+          ? clean(registered?.channel, 20)
           : 'production';
         const version = clean(body.version_name, 80);
         await service.from('mobile_ota_devices').upsert(
@@ -126,29 +134,23 @@ Deno.serve(async (req) => {
     const body = payload as Record<string, unknown>;
     const identity = validDevice(body);
     if (!identity) return json({ error: 'invalid_client' }, 400);
-    const requested = clean(body.defaultChannel, 20);
-    const channel = CHANNELS.has(requested) ? requested : 'production';
+    const { data: registeredDevice } = await service
+      .from('mobile_ota_devices')
+      .select('channel')
+      .eq('app_id', APP_ID)
+      .eq('device_id', identity.deviceId)
+      .maybeSingle();
+    const channel = CHANNELS.has(clean(registeredDevice?.channel, 20))
+      ? clean(registeredDevice?.channel, 20)
+      : 'production';
 
     // PUT = consulta de canal realizada por getChannel().
     if (req.method === 'PUT') return json({ channel, status: 'ok' });
 
-    // POST con channel = setChannel(). El servidor solo admite los dos canales
-    // explícitos; la elección también queda persistida por el plugin en el equipo.
+    // La selección de canal es administrada por ota-deploy con JWT. El endpoint
+    // nativo público nunca puede autoasignarse a beta.
     if (Object.hasOwn(body, 'channel')) {
-      const next = clean(body.channel, 20);
-      if (!CHANNELS.has(next)) return json({ error: 'channel_not_found' }, 400);
-      await service.from('mobile_ota_devices').upsert(
-        {
-          app_id: APP_ID,
-          device_id: identity.deviceId,
-          channel: next,
-          current_version: clean(body.version_name, 80) || null,
-          last_action: 'channel_set',
-          last_seen_at: new Date().toISOString()
-        },
-        { onConflict: 'app_id,device_id' }
-      );
-      return json({ status: 'ok', channel: next });
+      return json({ status: 'ok', channel, managed: 'admin_web' });
     }
 
     const currentVersion = clean(body.version_name, 80);

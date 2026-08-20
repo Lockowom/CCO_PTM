@@ -29,6 +29,10 @@ describe('sectorización de Coordinación Rutas', () => {
       { id: 'near', comuna: 'Santiago' },
       { id: 'middle', comuna: 'Ñuñoa' }
     ];
-    expect(optimizeStops(stops).map((item) => item.id)).toEqual(['near', 'middle', 'far']);
+    expect(optimizeStops(stops, { lat: -33.4489, lng: -70.6693 }).map((item) => item.id)).toEqual([
+      'near',
+      'middle',
+      'far'
+    ]);
   });
 });

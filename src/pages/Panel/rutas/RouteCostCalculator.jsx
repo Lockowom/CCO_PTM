@@ -38,9 +38,11 @@ const emptyRate = {
   tarifa_nv: 0,
   tarifa_bulto: 0,
   tarifa_kg: 0,
+  tarifa_m3: 0,
   tarifa_km: 0,
   minimo: 0,
   recargo_pct: 0,
+  recargo_urgencia_pct: 0,
   incluye_iva: '',
   vigencia_desde: today(),
   notas: ''
@@ -82,6 +84,8 @@ export default function RouteCostCalculator() {
     cantidad_nv: 1,
     bultos: 1,
     kilos: '',
+    volumen_m3: '',
+    urgente: false,
     valor_nv_total: '',
     modalidad_costo: 'TODO_INCLUIDO',
     costo_tramo_adicional: '',
@@ -187,7 +191,15 @@ export default function RouteCostCalculator() {
   const saveRate = async (event) => {
     event.preventDefault();
     if (!rate.transportista_id) return toast.warning('Selecciona un transportista.');
-    const values = ['cargo_base', 'tarifa_nv', 'tarifa_bulto', 'tarifa_kg', 'tarifa_km', 'minimo'];
+    const values = [
+      'cargo_base',
+      'tarifa_nv',
+      'tarifa_bulto',
+      'tarifa_kg',
+      'tarifa_m3',
+      'tarifa_km',
+      'minimo'
+    ];
     if (!values.some((key) => Number(rate[key]) > 0))
       return toast.warning('La tarifa debe tener al menos un valor mayor que cero.');
     setBusy('rate');
@@ -195,6 +207,7 @@ export default function RouteCostCalculator() {
       await routeCoordinationService.saveRate({
         ...rate,
         recargo_pct: Number(rate.recargo_pct || 0) / 100,
+        recargo_urgencia_pct: Number(rate.recargo_urgencia_pct || 0) / 100,
         incluye_iva: rate.incluye_iva === '' ? null : rate.incluye_iva === 'true'
       });
       toast.success('Tarifa guardada y disponible para comparar.');
@@ -326,6 +339,12 @@ export default function RouteCostCalculator() {
             onChange={updateRate}
           />
           <RateInput
+            label="Precio por m³"
+            field="tarifa_m3"
+            value={rate.tarifa_m3}
+            onChange={updateRate}
+          />
+          <RateInput
             label="Precio por kilómetro"
             field="tarifa_km"
             value={rate.tarifa_km}
@@ -346,6 +365,17 @@ export default function RouteCostCalculator() {
               step="0.1"
               value={rate.recargo_pct}
               onChange={(event) => updateRate('recargo_pct', event.target.value)}
+            />
+          </label>
+          <label>
+            <span>Recargo urgencia %</span>
+            <input
+              type="number"
+              min="0"
+              max="1000"
+              step="0.1"
+              value={rate.recargo_urgencia_pct}
+              onChange={(event) => updateRate('recargo_urgencia_pct', event.target.value)}
             />
           </label>
           <label>
@@ -503,6 +533,25 @@ export default function RouteCostCalculator() {
               />
             </label>
             <label>
+              <span>Volumen total (m³)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.0001"
+                value={form.volumen_m3}
+                onChange={(e) => setForm({ ...form, volumen_m3: e.target.value })}
+                placeholder="Desde cubicaje"
+              />
+            </label>
+            <label className="crc-checkbox-field">
+              <input
+                type="checkbox"
+                checked={form.urgente}
+                onChange={(e) => setForm({ ...form, urgente: e.target.checked })}
+              />
+              <span>Despacho prioritario/urgente</span>
+            </label>
+            <label>
               <span>Valor total N.V.</span>
               <input
                 type="number"
@@ -618,6 +667,10 @@ export default function RouteCostCalculator() {
                     <dd>{money(item.recargo)}</dd>
                   </div>
                   <div>
+                    <dt>Urgencia</dt>
+                    <dd>{money(item.recargo_urgencia)}</dd>
+                  </div>
+                  <div>
                     <dt>Tramo regional</dt>
                     <dd>{money(item.formula.tramo_adicional)}</dd>
                   </div>
@@ -625,7 +678,7 @@ export default function RouteCostCalculator() {
                 <p>
                   Base {money(item.formula.cargo_base)} + N.V. {money(item.formula.por_nv)} + bultos{' '}
                   {money(item.formula.por_bulto)} + kg {money(item.formula.por_kg)} + km{' '}
-                  {money(item.formula.por_km)}.
+                  {money(item.formula.por_km)} + m³ {money(item.formula.por_m3)}.
                 </p>
                 {item.tarifa.incluye_iva == null && (
                   <div className="crc-warning">
@@ -648,8 +701,8 @@ export default function RouteCostCalculator() {
       <section className="crc-formula cr-card">
         <strong>Fórmula auditable</strong>
         <code>
-          Total = máximo(mínimo, cargo base + N.V.×tarifa + bultos×tarifa + kg×tarifa + km×tarifa) +
-          recargo + tramo regional separado
+          Total = máximo(mínimo, cargo base + N.V.×tarifa + bultos×tarifa + kg×tarifa + m³×tarifa +
+          km×tarifa) + recargo general + recargo de urgencia + tramo regional separado
         </code>
         <span>
           Si Transfarma cobra $5.800 por bulto en Santiago: 1 N.V. con 3 bultos = $17.400; 5 N.V.

@@ -13,7 +13,7 @@ export const onUpdateAvailable = (cb) => {
 // ── Canal OTA de ESTE dispositivo (Supabase + GitHub Releases) ─────────────
 // Producción recibe solo bundles promovidos; los PDA de PRUEBA se asignan al
 // canal 'beta' para validar una versión antes de soltarla a toda la bodega.
-// Guardado por dispositivo (no es una preferencia de usuario/servidor).
+// Guardado server-side por dispositivo; el plugin conserva una copia local.
 export const CANALES_OTA = ['production', 'beta'];
 const OTA_URL = 'https://vtrtyzbgpsvqwbfoudaf.supabase.co/functions/v1/ota-updates';
 let otaDownloadInFlight = false;
@@ -52,6 +52,17 @@ export const getOTAChannel = async () => {
 export const setOTAChannel = async (channel) => {
   if (!Capacitor.isNativePlatform()) throw new Error('Solo disponible en la app Android.');
   if (!CANALES_OTA.includes(channel)) throw new Error(`Canal inválido: ${channel}`);
+  const device = await CapacitorUpdater.getDeviceId();
+  const { data, error } = await supabase.functions.invoke('ota-deploy', {
+    body: {
+      action: 'set-device-channel',
+      device_id: device?.deviceId,
+      channel,
+      device_alias: `PDA ${String(device?.deviceId || '').slice(0, 8)}`
+    }
+  });
+  if (error || !data?.ok)
+    throw new Error(data?.error || error?.message || 'No autorizado para cambiar el canal.');
   if (channel === 'production') {
     // Volver al canal por defecto = quitar la asignación explícita.
     await CapacitorUpdater.unsetChannel({ triggerAutoUpdate: true });

@@ -18,12 +18,12 @@ FEATURE_IMPLEMENTED != FEATURE_RELEASED
 
 ## Capas de protección (TODAS deben pasar)
 
-| # | Capa | Implementación |
-|---|------|----------------|
-| 1 | Feature flag `module_<nombre>_private_beta` | `src/config/featureFlags.js` (OFF por defecto, fail-closed, override `VITE_FF_<FLAG>=true`) |
-| 2 | Allowlist por rol IAM `cco_private_beta_<modulo>` | `src/constants/privateBeta.js` → `evaluatePrivateBetaAccess` (ADMIN no abre la beta por sí solo) |
-| 3 | Permiso específico `view_<nombre>_private_beta` / `manage_<nombre>_private_beta` | guard de rutas + RPC |
-| 4 | Autorización backend/RPC + RLS | el guard del cliente no basta; la RPC/RLS deben gatear igual |
+| #   | Capa                                                                             | Implementación                                                                                   |
+| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1   | Feature flag `module_<nombre>_private_beta`                                      | `src/config/featureFlags.js` (OFF por defecto, fail-closed, override `VITE_FF_<FLAG>=true`)      |
+| 2   | Allowlist por rol IAM `cco_private_beta_<modulo>`                                | `src/constants/privateBeta.js` → `evaluatePrivateBetaAccess` (ADMIN no abre la beta por sí solo) |
+| 3   | Permiso específico `view_<nombre>_private_beta` / `manage_<nombre>_private_beta` | guard de rutas + RPC                                                                             |
+| 4   | Autorización backend/RPC + RLS                                                   | el guard del cliente no basta; la RPC/RLS deben gatear igual                                     |
 
 Flujo del guard: `flag ON?` → `NO` → **404** (el módulo no existe, no filtra su existencia).
 `SÍ` → `¿en beta (rol IAM)?` → `NO` → Access Denied/404. `SÍ` → `¿permiso específico?` → `NO` →
@@ -63,9 +63,12 @@ módulo nuevo debe marcarse `RELEASE STATUS = HIDDEN_PRIVATE_BETA` hasta autoriz
 
 Antes: `permissions.js` hardcodeaba `PRIVATE_ROUTE_COORDINATOR_AUTH_UID = 'c12e2286-…'` (allowlist por
 UUID). Ahora: flag `module_rutas_private_beta` **ON** (pilot activo) + rol IAM `cco_private_beta_rutas`
-+ permiso `view_rutas_private_beta`. **Backend pendiente:** crear el rol IAM `cco_private_beta_rutas`,
-asignarlo al pilot y al dar de alta permisos `view_rutas_private_beta`/`manage_rutas_private_beta` en
-`tms_permisos`, y gatear las RPCs del módulo (`_rutas_puede_acceder` o similar).
+
+- permisos `view_rutas_private_beta`/`manage_rutas_private_beta`. El backend queda cerrado por la
+  migración `20260820163037_coord_rutas_capacity_fleet_v1_polished.sql`: crea el rol, asigna únicamente
+  al propietario histórico del piloto y redefine `coord_rutas_es_propietario()` para validar rol y
+  permiso IAM en todas las políticas/RPC existentes. El UUID se usa una sola vez como dato de migración
+  para la asignación inicial; no participa en la autorización en tiempo de ejecución.
 
 ## Cómo registrar un módulo nuevo (checklist)
 

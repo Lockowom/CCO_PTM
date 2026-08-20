@@ -4,18 +4,21 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
-import { pwaConfig } from './src/config/pwaConfig';
+import { fileURLToPath } from 'url';
+import { pwaConfig } from './src/config/pwaConfig.js';
 
-// VersiÃ³n real de la app (package.json) expuesta al bundle como __APP_VERSION__
-// para mostrarla en el PDA/pie y que soporte sepa quÃ© build corre.
-const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
+
+// Versión real de la app (package.json) expuesta al bundle como __APP_VERSION__
+// para mostrarla en el PDA/pie y que soporte sepa qué build corre.
+const pkg = JSON.parse(readFileSync(path.resolve(rootDir, 'package.json'), 'utf8'));
 
 function resolveBuildId() {
   const envBuildId =
     process.env.RENDER_GIT_COMMIT || process.env.SOURCE_VERSION || process.env.COMMIT_SHA;
   if (envBuildId) return String(envBuildId);
   try {
-    return execSync('git rev-parse HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] })
+    return execSync('git rev-parse HEAD', { cwd: rootDir, stdio: ['ignore', 'pipe', 'ignore'] })
       .toString()
       .trim();
   } catch {
@@ -46,7 +49,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(rootDir, './src')
     }
   },
   plugins: [react(), versionManifestPlugin(), VitePWA(pwaConfig)],
