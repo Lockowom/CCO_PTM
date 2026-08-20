@@ -11,7 +11,7 @@ const Topbar = ({ pathname, onSearch = null, syncing = false, onSync = null }) =
   const crumbs = getBreadcrumb(pathname);
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-800 bg-[var(--surface-elevated)] px-4">
+    <header className="cco-topbar flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-elevated)] px-4">
       <div className="flex min-w-0 items-center gap-2">
         {crumbs.length > 0 && (
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-sm">
@@ -19,11 +19,16 @@ const Topbar = ({ pathname, onSearch = null, syncing = false, onSync = null }) =
               <span key={i} className="flex items-center gap-1 min-w-0">
                 {i > 0 && <ChevronRight size={12} className="text-slate-600 shrink-0" />}
                 {c.path && i === crumbs.length - 1 ? (
-                  <Link to={c.path} className="truncate font-bold text-slate-100 hover:text-brand-400">
+                  <Link
+                    to={c.path}
+                    className="truncate font-bold text-[var(--text-primary)] hover:text-brand-500"
+                  >
                     {c.label.split(' - ')[1] || c.label}
                   </Link>
                 ) : (
-                  <span className={`truncate ${i === crumbs.length - 1 ? 'font-bold text-slate-100' : 'text-slate-400'}`}>
+                  <span
+                    className={`truncate ${i === crumbs.length - 1 ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}
+                  >
                     {c.label.split(' - ')[1] || c.label}
                   </span>
                 )}
@@ -42,7 +47,9 @@ const Topbar = ({ pathname, onSearch = null, syncing = false, onSync = null }) =
           >
             <Search size={14} />
             <span className="hidden md:inline">Buscar…</span>
-            <kbd className="hidden md:inline rounded border border-slate-600 px-1 text-[10px] text-slate-500">Ctrl K</kbd>
+            <kbd className="hidden md:inline rounded border border-slate-600 px-1 text-[10px] text-slate-500">
+              Ctrl K
+            </kbd>
           </button>
         )}
         {onSync && (

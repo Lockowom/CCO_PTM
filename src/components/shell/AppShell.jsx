@@ -8,20 +8,29 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
-const AppShell = ({ children, onSearch = null, syncing = false, onSync = null }) => {
+const AppShell = ({
+  children,
+  onSearch = null,
+  syncing = false,
+  onSync = null,
+  canAccessRoute = null,
+  mobileHeader = null
+}) => {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex h-full min-h-screen bg-[var(--surface-base)] text-slate-100 font-sans">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+    <div className="cco-app-shell flex h-full min-h-[100dvh] bg-[var(--surface-base)] text-[var(--text-primary)] font-sans">
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
+        canAccessRoute={canAccessRoute}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar
-          pathname={pathname}
-          onSearch={onSearch}
-          syncing={syncing}
-          onSync={onSync}
-        />
+        {mobileHeader && <div className="lg:hidden">{mobileHeader}</div>}
+        <div className="hidden lg:block">
+          <Topbar pathname={pathname} onSearch={onSearch} syncing={syncing} onSync={onSync} />
+        </div>
         <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <div className="mx-auto w-full max-w-[1600px] min-h-full p-3 sm:p-6 lg:p-8">
             {children}

@@ -6,7 +6,7 @@ Fecha de corte: 2026-08-20. Este documento separa código preparado de validacio
 | ------- | -------------------------------- | ----------------- | ----------------------------------------------- |
 | A       | baseline, contratos, inventarios | IMPLEMENTED_LOCAL | CI verde + aprobación inventarios               |
 | B       | IAM, RLS, Storage                | PARTIAL           | Advisor revisado; cero pérdida de permisos      |
-| C       | shell, UI común, errores         | IMPLEMENTED_LOCAL | regresión visual multi-viewport                 |
+| C       | shell, UI común, errores         | FOUNDATION_READY  | regresión visual multi-viewport + adopción ≥95% |
 | D       | offline/PWA/móvil                | IMPLEMENTED_LOCAL | prueba Android offline y cambio de usuario      |
 | E       | N.V./Calidad/WMS/TMS por flag    | PARTIAL           | pruebas operacionales por dueño de proceso      |
 | F       | Rutas privadas                   | IMPLEMENTED_LOCAL | migración rollback + proveedor + piloto privado |

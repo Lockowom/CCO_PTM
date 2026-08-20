@@ -21,7 +21,7 @@ const MODULE_GROUP = {
   quality: { label: 'Calidad', icon: 'ShieldCheck' },
   postventa: { label: 'Post-Venta', icon: 'Headset' },
   admin: { label: 'Admin', icon: 'Settings' },
-  tms: { label: 'TMS', icon: 'Truck' },
+  tms: { label: 'TMS', icon: 'Truck' }
 };
 
 // Rutas ocultas del menú pero que siguen siendo rutas válidas (requieren
@@ -30,7 +30,7 @@ const HIDDEN_FROM_NAV = new Set([
   '/panel/tv', // TV se abre por URL directa (kiosko)
   '/admin/monitor', // monitor dentro de Admin → Monitor
   '/tms/control',
-  '/tms/pda',
+  '/tms/pda'
 ]);
 
 // Prioridad de búsqueda móvil (menor = más arriba). Default: 50.
@@ -39,7 +39,7 @@ const MOBILE_PRIORITY = {
   '/inventory/traspasos': 20,
   '/inventory/conteo': 30,
   '/inbound/entry': 40,
-  '/panel/ingresar': 30,
+  '/panel/ingresar': 30
 };
 
 function normalizePath(path) {
@@ -56,8 +56,8 @@ const PRIVATE_BETA_EXTRA = [
     path: '/panel/rutas',
     label: 'Coordinación Rutas',
     module: 'panel',
-    group: { label: 'Panel PTM', icon: 'LayoutDashboard' },
-  },
+    group: { label: 'Panel PTM', icon: 'LayoutDashboard' }
+  }
 ];
 
 const PRIVATE_BETA_EXTRA_META = PRIVATE_BETA_EXTRA.map((r) => {
@@ -73,34 +73,37 @@ const PRIVATE_BETA_EXTRA_META = PRIVATE_BETA_EXTRA.map((r) => {
     mobilePriority: 50,
     hiddenFromNav: true,
     privateBeta: Boolean(privateBeta),
-    privateBetaStage: privateBeta ? privateBeta.stage : null,
+    privateBetaStage: privateBeta ? privateBeta.stage : null
   };
 });
 
-export const ROUTE_META = [...APP_ROUTES.map((r) => {
-  const norm = normalizePath(r.value);
-  const requiredPermissions = ROUTE_PERMISSIONS[norm] || null;
-  const module = r.module || null;
-  const group = MODULE_GROUP[module] || null;
-  // PR-015B: módulos en private beta nunca aparecen en nav/búsqueda global
-  // (NEW_MODULE_NAV_VISIBILITY = 0). Se accede solo por URL directa y el guard
-  // evalúa flag + rol IAM + permiso. Si el flag está OFF, getRouteMeta aun así
-  // no debe listarlo; el guard de rutas devuelve 404.
-  const privateBeta = privateBetaForPath(r.value);
-  return {
-    path: r.value,
-    title: r.label,
-    module,
-    group,
-    parent: group ? group.label : null,
-    requiredPermissions,
-    searchable: !HIDDEN_FROM_NAV.has(r.value) && !privateBeta,
-    mobilePriority: MOBILE_PRIORITY[r.value] ?? 50,
-    hiddenFromNav: HIDDEN_FROM_NAV.has(r.value) || Boolean(privateBeta),
-    privateBeta: Boolean(privateBeta),
-    privateBetaStage: privateBeta ? privateBeta.stage : null,
-  };
-}), ...PRIVATE_BETA_EXTRA_META];
+export const ROUTE_META = [
+  ...APP_ROUTES.map((r) => {
+    const norm = normalizePath(r.value);
+    const requiredPermissions = ROUTE_PERMISSIONS[norm] || null;
+    const module = r.module || null;
+    const group = MODULE_GROUP[module] || null;
+    // PR-015B: módulos en private beta nunca aparecen en nav/búsqueda global
+    // (NEW_MODULE_NAV_VISIBILITY = 0). Se accede solo por URL directa y el guard
+    // evalúa flag + rol IAM + permiso. Si el flag está OFF, getRouteMeta aun así
+    // no debe listarlo; el guard de rutas devuelve 404.
+    const privateBeta = privateBetaForPath(r.value);
+    return {
+      path: r.value,
+      title: r.label,
+      module,
+      group,
+      parent: group ? group.label : null,
+      requiredPermissions,
+      searchable: !HIDDEN_FROM_NAV.has(r.value) && !privateBeta,
+      mobilePriority: MOBILE_PRIORITY[r.value] ?? 50,
+      hiddenFromNav: HIDDEN_FROM_NAV.has(r.value) || Boolean(privateBeta),
+      privateBeta: Boolean(privateBeta),
+      privateBetaStage: privateBeta ? privateBeta.stage : null
+    };
+  }),
+  ...PRIVATE_BETA_EXTRA_META
+];
 
 const byPath = new Map(ROUTE_META.map((m) => [m.path, m]));
 
@@ -134,26 +137,28 @@ export function getBreadcrumb(pathname) {
 }
 
 /** Rutas buscables para la paleta de búsqueda global (ordenadas por prioridad). */
-export const SEARCHABLE_ROUTES = ROUTE_META.filter((m) => m.searchable)
-  .sort((a, b) => a.mobilePriority - b.mobilePriority);
+export const SEARCHABLE_ROUTES = ROUTE_META.filter((m) => m.searchable).sort(
+  (a, b) => a.mobilePriority - b.mobilePriority
+);
 
 /** Agrupa las rutas del menú por grupo (para el Sidebar del AppShell). */
-export function getNavGroups() {
+export function getNavGroups(canAccessRoute = null) {
   const groups = new Map();
   for (const meta of ROUTE_META) {
     if (meta.hiddenFromNav) continue;
+    if (canAccessRoute && !canAccessRoute(meta.path)) continue;
     const key = meta.module || 'other';
     if (!groups.has(key)) {
       groups.set(key, {
         id: key,
         label: meta.group?.label || key,
         icon: meta.group?.icon || 'Circle',
-        items: [],
+        items: []
       });
     }
     groups.get(key).items.push(meta);
   }
-  return [...groups.values()];
+  return [...groups.values()].filter((group) => group.items.length > 0);
 }
 
 export default ROUTE_META;

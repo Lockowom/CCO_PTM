@@ -19,7 +19,9 @@ export const FEATURE_FLAGS = {
   core_sla_domain_v2: false,
   core_query_cache_v2: false,
   core_logging_v2: true,
-  web_shell_v2: true,
+  // Runtime implementado. OFF por defecto hasta completar la regresión visual;
+  // beta/staging puede activarlo con VITE_FF_WEB_SHELL_V2=true.
+  web_shell_v2: false,
   web_sidebar_v2: true,
   web_topbar_v2: true,
   web_page_header_v2: true,

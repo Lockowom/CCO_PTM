@@ -2,6 +2,7 @@
 
 | Tabla                                      | RLS estático | Policies detectadas | Lifecycle                        | Fuente                                                                            |
 | ------------------------------------------ | -----------: | ------------------: | -------------------------------- | --------------------------------------------------------------------------------- |
+| `iam.access_change_log`                    |           ON |                   0 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/20260820185353_iam_v2_runtime_enforcement.sql`               |
 | `iam.assignments`                          |      REVISAR |                   0 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/121_iam_fase0.sql`                                           |
 | `iam.bodegas`                              |      REVISAR |                   0 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/121_iam_fase0.sql`                                           |
 | `iam.centros_distribucion`                 |      REVISAR |                   0 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/121_iam_fase0.sql`                                           |
@@ -38,6 +39,7 @@
 | `public.mobile_ota_channels`               |           ON |                   1 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/20260813225606_migrate_capgo_to_free_ota.sql`                |
 | `public.mobile_ota_devices`                |           ON |                   1 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/20260813225606_migrate_capgo_to_free_ota.sql`                |
 | `public.mobile_ota_events`                 |           ON |                   1 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/20260813225606_migrate_capgo_to_free_ota.sql`                |
+| `public.mobile_ota_release_reviews`        |           ON |                   1 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/20260820173922_ota_beta_control_center.sql`                  |
 | `public.notificacion`                      |           ON |                   2 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/114_motor_eventos_notificaciones.sql`                        |
 | `public.notificacion_regla`                |           ON |                   1 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/114_motor_eventos_notificaciones.sql`                        |
 | `public.operaciones`                       |           ON |                   3 | ACTIVE/COMPATIBILITY por validar | `supabase/migrations/017_create_operaciones_table.sql`                            |
