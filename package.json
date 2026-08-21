@@ -22,6 +22,7 @@
     "ui:audit": "npm run ui:audit:tokens && npm run ui:audit:adoption",
     "security:secrets": "node scripts/check_secrets.mjs",
     "build": "vite build",
+    "perf:bundle": "node scripts/audit_bundle_budget.mjs",
     "docs:iam:pptx": "node scripts/generate_iam_tutorial_pptx.mjs",
     "preview": "vite preview",
     "start": "node server.js",
