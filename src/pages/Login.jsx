@@ -173,6 +173,7 @@ const Login = () => {
               onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               onKeyDown={(e) => e.key === 'Enter' && confirmarMfa()}
               inputMode="numeric"
+              aria-label="Código de verificación de seis dígitos"
               placeholder="000000"
               className="w-full border border-slate-200 rounded-xl px-3 py-3 text-2xl font-mono tracking-[0.4em] text-center outline-none focus:border-orange-400"
             />
@@ -263,6 +264,7 @@ const Login = () => {
                 </div>
                 <input
                   type="email"
+                  aria-label="Correo o identificador"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setFocusedInput('email')}
@@ -286,6 +288,7 @@ const Login = () => {
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  aria-label="Contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setFocusedInput('password')}
@@ -299,8 +302,9 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-orange-500 transition-colors"
-                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-2 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-orange-500 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
