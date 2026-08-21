@@ -44,5 +44,8 @@ jobs:
       - name: Build de producción (Vite)
         run: npm run build
 
+      - name: Verificar presupuesto de bundles
+        run: npm run perf:bundle
+
       - name: Verificar contrato de permisos (fail-closed)
         run: npx vitest run src/tests/routePermissionMatrix.test.js src/tests/operationalContracts.test.js
