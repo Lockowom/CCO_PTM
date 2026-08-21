@@ -20,6 +20,8 @@
     "ui:audit:tokens": "node scripts/audit_ui_tokens.mjs",
     "ui:audit:adoption": "node scripts/audit_ui_adoption.mjs",
     "ui:audit": "npm run ui:audit:tokens && npm run ui:audit:adoption",
+    "ui:flags:beta": "node scripts/verify_ui_release_flags.mjs --target=beta",
+    "ui:flags:production": "node scripts/verify_ui_release_flags.mjs --target=production",
     "security:secrets": "node scripts/check_secrets.mjs",
     "build": "vite build",
     "perf:bundle": "node scripts/audit_bundle_budget.mjs",

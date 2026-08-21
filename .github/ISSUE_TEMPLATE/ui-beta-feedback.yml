@@ -1,0 +1,67 @@
+name: CCO 2.0 — Hallazgo Internal Beta
+description: Registrar una observación reproducible del piloto UI V2.
+title: '[BETA][SEVERIDAD][ETIQUETA] '
+labels: ['internal-beta']
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidad
+      options: [BLOCKER, MAJOR, MINOR, POLISH]
+    validations:
+      required: true
+  - type: dropdown
+    id: tag
+    attributes:
+      label: Etiqueta
+      options:
+        [
+          LAYOUT,
+          RESPONSIVE,
+          COLOR,
+          TYPOGRAPHY,
+          NAVIGATION,
+          MOTION,
+          PERFORMANCE,
+          ACCESSIBILITY,
+          FUNCTIONAL,
+          IAM,
+          MOBILE
+        ]
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Ruta y módulo
+      placeholder: /panel/ingresar — Panel N.V.
+    validations:
+      required: true
+  - type: input
+    id: actor
+    attributes:
+      label: Usuario o rol piloto
+    validations:
+      required: true
+  - type: input
+    id: viewport
+    attributes:
+      label: Dispositivo / viewport
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado real y evidencia
+    validations:
+      required: true
