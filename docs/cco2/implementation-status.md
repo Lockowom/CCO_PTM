@@ -15,3 +15,7 @@ Fecha de corte: 2026-08-20. Este documento separa código preparado de validacio
 
 Nada marcado `PARTIAL` o `BLOCKED_EXTERNAL` se presenta como producción terminada.
 Secuencia obligatoria: BASELINE → FLAG → NEW PATH → SHADOW → TEST → PILOT → CUTOVER → OBSERVE.
+
+## UI 2.0
+
+PR20–PR26 están integrados. PR27 activó un entorno `INTERNAL_BETA` separado en Render con los 12 flags web V2; producción conserva los defaults OFF. La salida de beta sigue condicionada al smoke autenticado de todos los perfiles piloto y a `BLOCKER = 0`.
