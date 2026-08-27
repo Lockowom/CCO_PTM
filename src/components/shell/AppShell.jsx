@@ -3,10 +3,10 @@
 // este AppShell es la nueva capa que convivirá bajo feature flag `web_shell_v2`
 // hasta el CUTOVER de RELEASE B. No elimina ni reemplaza Layout todavía.
 
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import { usePersistentSidebarState } from './sidebar/usePersistentSidebarState';
 
 const AppShell = ({
   children,
@@ -17,7 +17,7 @@ const AppShell = ({
   mobileHeader = null
 }) => {
   const { pathname } = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = usePersistentSidebarState();
 
   return (
     <div className="cco-app-shell flex h-full min-h-[100dvh] bg-[var(--surface-base)] text-[var(--text-primary)] font-sans">
