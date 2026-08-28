@@ -1,23 +1,25 @@
 import {
-  ArrowDownToLine,
   Circle,
+  ClipboardCheck,
   Headphones,
   LayoutDashboard,
-  Search,
-  Settings,
+  PackagePlus,
+  ScanSearch,
   ShieldCheck,
   Truck,
   Warehouse
 } from 'lucide-react';
 
 export const SIDEBAR_ICONS = Object.freeze({
-  ArrowDownToLine,
+  PackagePlus,
   Warehouse,
-  Search,
+  ScanSearch,
   LayoutDashboard,
-  ShieldCheck,
-  Headset: Headphones,
-  Settings,
+  ClipboardCheck,
+  Headphones,
+  // lucide-react 0.294 no expone ShieldCog; mantenemos la clave semántica
+  // del catálogo y usamos su equivalente de seguridad disponible.
+  ShieldCog: ShieldCheck,
   Truck,
   Circle
 });

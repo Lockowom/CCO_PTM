@@ -12,9 +12,9 @@ const SidebarBrand = ({ collapsed }) => {
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
-      <img src="/logo-ptm.png" alt="PTM Health Care" className="h-9 w-auto shrink-0" />
-      <div className="min-w-0 border-l border-[var(--sidebar-border)] pl-2.5">
+    <div className="flex min-w-0 items-center gap-2">
+      <img src="/logo-ptm.png" alt="PTM Health Care" className="h-8 w-auto shrink-0" />
+      <div className="min-w-0 border-l border-[var(--sidebar-border)] pl-2">
         <div className="flex items-center gap-1.5">
           <span className="font-brand text-sm font-black tracking-tight text-[var(--text-primary)]">
             CCO
@@ -23,7 +23,7 @@ const SidebarBrand = ({ collapsed }) => {
             SYSTEM
           </span>
         </div>
-        <p className="truncate text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+        <p className="truncate text-[7.5px] font-bold uppercase tracking-[0.06em] text-[var(--text-faint)]">
           Centro Control Operacional
         </p>
       </div>

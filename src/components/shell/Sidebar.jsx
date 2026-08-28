@@ -4,13 +4,44 @@ import { getNavGroups } from '../../constants/routeMeta';
 import SidebarBrand from './sidebar/SidebarBrand';
 import SidebarFooter from './sidebar/SidebarFooter';
 import SidebarGroup from './sidebar/SidebarGroup';
+import SidebarSection from './sidebar/SidebarSection';
 import { isGroupActive } from './sidebar/sidebar.utils';
 
-const Sidebar = ({ collapsed, onToggle, canAccessRoute = null }) => {
+const SYSTEM_GROUP_IDS = new Set(['admin']);
+const OPERATION_GROUP_ORDER = [
+  'panel',
+  'inventario',
+  'inbound',
+  'queries',
+  'quality',
+  'postventa',
+  'tms'
+];
+
+function sortByOperationalOrder(groups) {
+  return [...groups].sort((a, b) => {
+    const aIndex = OPERATION_GROUP_ORDER.indexOf(a.id);
+    const bIndex = OPERATION_GROUP_ORDER.indexOf(b.id);
+    return (
+      (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex) -
+      (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex)
+    );
+  });
+}
+
+const Sidebar = ({ collapsed, onToggle, canAccessRoute = null, session = null }) => {
   const location = useLocation();
   const [openGroups, setOpenGroups] = useState({});
   const [flyout, setFlyout] = useState(null);
   const groups = useMemo(() => getNavGroups(canAccessRoute), [canAccessRoute]);
+  const operationGroups = useMemo(
+    () => sortByOperationalOrder(groups.filter((group) => !SYSTEM_GROUP_IDS.has(group.id))),
+    [groups]
+  );
+  const systemGroups = useMemo(
+    () => groups.filter((group) => SYSTEM_GROUP_IDS.has(group.id)),
+    [groups]
+  );
 
   const closeFlyout = useCallback(() => setFlyout(null), []);
 
@@ -51,23 +82,49 @@ const Sidebar = ({ collapsed, onToggle, canAccessRoute = null }) => {
         className={`custom-scrollbar flex-1 overflow-y-auto py-3 ${collapsed ? 'px-2' : 'px-2.5'}`}
         aria-label="Módulos CCO"
       >
-        {groups.map((group) => (
-          <SidebarGroup
-            key={group.id}
-            group={group}
-            collapsed={collapsed}
-            open={openGroups[group.id] ?? true}
-            active={isGroupActive(group, location.pathname)}
-            flyoutOpen={flyout?.groupId === group.id}
-            flyoutAnchorRect={flyout?.groupId === group.id ? flyout.anchorRect : null}
-            onToggle={toggleGroup}
-            onOpenFlyout={openFlyout}
-            onCloseFlyout={closeFlyout}
-          />
-        ))}
+        <SidebarSection label="Operación" collapsed={collapsed}>
+          {operationGroups.map((group) => (
+            <SidebarGroup
+              key={group.id}
+              group={group}
+              collapsed={collapsed}
+              open={openGroups[group.id] ?? true}
+              active={isGroupActive(group, location.pathname)}
+              flyoutOpen={flyout?.groupId === group.id}
+              flyoutAnchorRect={flyout?.groupId === group.id ? flyout.anchorRect : null}
+              onToggle={toggleGroup}
+              onOpenFlyout={openFlyout}
+              onCloseFlyout={closeFlyout}
+            />
+          ))}
+        </SidebarSection>
+
+        {systemGroups.length > 0 && (
+          <SidebarSection label="Sistema" collapsed={collapsed} divider>
+            {systemGroups.map((group) => (
+              <SidebarGroup
+                key={group.id}
+                group={group}
+                collapsed={collapsed}
+                open={openGroups[group.id] ?? true}
+                active={isGroupActive(group, location.pathname)}
+                flyoutOpen={flyout?.groupId === group.id}
+                flyoutAnchorRect={flyout?.groupId === group.id ? flyout.anchorRect : null}
+                onToggle={toggleGroup}
+                onOpenFlyout={openFlyout}
+                onCloseFlyout={closeFlyout}
+              />
+            ))}
+          </SidebarSection>
+        )}
       </nav>
 
-      <SidebarFooter collapsed={collapsed} onToggle={onToggle} />
+      <SidebarFooter
+        collapsed={collapsed}
+        onToggle={onToggle}
+        canAccessRoute={canAccessRoute}
+        session={session}
+      />
     </aside>
   );
 };
