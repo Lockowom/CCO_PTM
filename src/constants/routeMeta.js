@@ -14,13 +14,13 @@ import { privateBetaForPath } from './privateBeta';
 
 // Grupo por módulo (para sidebar/breadcrumb). Los labels salen de APP_ROUTES.
 const MODULE_GROUP = {
-  inbound: { label: 'Inbound', icon: 'ArrowDownToLine' },
+  inbound: { label: 'Inbound', icon: 'PackagePlus' },
   inventario: { label: 'Inventario', icon: 'Warehouse' },
-  queries: { label: 'Consultas', icon: 'Search' },
+  queries: { label: 'Consultas', icon: 'ScanSearch' },
   panel: { label: 'Panel PTM', icon: 'LayoutDashboard' },
-  quality: { label: 'Calidad', icon: 'ShieldCheck' },
-  postventa: { label: 'Post-Venta', icon: 'Headset' },
-  admin: { label: 'Admin', icon: 'Settings' },
+  quality: { label: 'Calidad', icon: 'ClipboardCheck' },
+  postventa: { label: 'Post-Venta', icon: 'Headphones' },
+  admin: { label: 'Admin', icon: 'ShieldCog' },
   tms: { label: 'TMS', icon: 'Truck' }
 };
 

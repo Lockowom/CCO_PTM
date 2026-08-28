@@ -14,7 +14,8 @@ const AppShell = ({
   syncing = false,
   onSync = null,
   canAccessRoute = null,
-  mobileHeader = null
+  mobileHeader = null,
+  sidebarSession = null
 }) => {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = usePersistentSidebarState();
@@ -25,6 +26,7 @@ const AppShell = ({
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
         canAccessRoute={canAccessRoute}
+        session={sidebarSession}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileHeader && <div className="lg:hidden">{mobileHeader}</div>}
