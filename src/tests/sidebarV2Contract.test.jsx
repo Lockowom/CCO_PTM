@@ -1,9 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useEffect } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Sidebar from '../components/shell/Sidebar';
-import { getSidebarIcon } from '../components/shell/sidebar/sidebarIcons';
+import { getSidebarIcon, SIDEBAR_ICONS } from '../components/shell/sidebar/sidebarIcons';
 import {
   SIDEBAR_STORAGE_KEY,
   usePersistentSidebarState
@@ -22,19 +22,32 @@ const NAV_GROUPS = [
   {
     id: 'quality',
     label: 'Calidad',
-    icon: 'ShieldCheck',
+    icon: 'ClipboardCheck',
     items: [{ path: '/quality/bandeja', title: 'Calidad - Mi bandeja' }]
   },
   {
     id: 'admin',
     label: 'Admin',
-    icon: 'Settings',
+    icon: 'ShieldCog',
     items: [
       { path: '/admin/access', title: 'Admin - Control de Acceso' },
       { path: '/admin/observability', title: 'Admin - Observabilidad' }
     ]
   }
 ];
+
+const TEST_SESSION = {
+  user: { id: 'user-1', nombre: 'Cristopher Cabezas', rol: 'ADMIN' },
+  logout: vi.fn(async () => {}),
+  isAuthenticated: false,
+  loading: false
+};
+
+vi.mock('../services/eventosService', () => ({
+  misNotificaciones: vi.fn(async () => []),
+  marcarLeida: vi.fn(async () => {}),
+  marcarTodasLeidas: vi.fn(async () => {})
+}));
 
 vi.mock('../constants/routeMeta', () => ({
   getNavGroups: (canAccessRoute) =>
@@ -44,30 +57,48 @@ vi.mock('../constants/routeMeta', () => ({
     })).filter((group) => group.items.length > 0)
 }));
 
-function renderSidebar({ collapsed = false, path = '/panel/dashboard', canAccessRoute } = {}) {
+function renderSidebar({
+  collapsed = false,
+  path = '/panel/dashboard',
+  canAccessRoute,
+  session = TEST_SESSION
+} = {}) {
   const onToggle = vi.fn();
   const result = render(
     <MemoryRouter initialEntries={[path]}>
-      <Sidebar collapsed={collapsed} onToggle={onToggle} canAccessRoute={canAccessRoute} />
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={onToggle}
+        canAccessRoute={canAccessRoute}
+        session={session}
+      />
     </MemoryRouter>
   );
   return { ...result, onToggle };
 }
 
-describe('NAV-001 · Sidebar V2', () => {
+describe('NAV-002 · Sidebar operacional', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    TEST_SESSION.logout.mockClear();
   });
 
   it('renderiza el modo expandido con branding, módulos, rutas permitidas e iconos SVG', () => {
     const { container } = renderSidebar();
 
     expect(screen.getByRole('navigation', { name: 'Módulos CCO' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Operación' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Sistema' })).toBeInTheDocument();
     expect(screen.getByAltText('PTM Health Care')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Contraer Panel PTM' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Dashboard/ })).toHaveAttribute('aria-current', 'page');
     expect(container.querySelectorAll('svg.lucide').length).toBeGreaterThan(3);
     expect(container.textContent).not.toMatch(/[→▣⌕▦✓♪⚙▬]/);
+    expect(screen.getByText('Cristopher Cabezas')).toBeInTheDocument();
+    expect(screen.getByText('ADMIN')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notificaciones' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    expect(screen.getByText('Operativo')).toBeInTheDocument();
   });
 
   it('renderiza exactamente un trigger por módulo en collapsed y abre flyout multi-ruta', () => {
@@ -96,14 +127,24 @@ describe('NAV-001 · Sidebar V2', () => {
     const canAccessRoute = (path) => !path.startsWith('/admin');
     const { rerender } = render(
       <MemoryRouter>
-        <Sidebar collapsed={false} onToggle={vi.fn()} canAccessRoute={canAccessRoute} />
+        <Sidebar
+          collapsed={false}
+          onToggle={vi.fn()}
+          canAccessRoute={canAccessRoute}
+          session={TEST_SESSION}
+        />
       </MemoryRouter>
     );
     expect(screen.queryByRole('button', { name: /Admin/ })).not.toBeInTheDocument();
 
     rerender(
       <MemoryRouter>
-        <Sidebar collapsed onToggle={vi.fn()} canAccessRoute={canAccessRoute} />
+        <Sidebar
+          collapsed
+          onToggle={vi.fn()}
+          canAccessRoute={canAccessRoute}
+          session={TEST_SESSION}
+        />
       </MemoryRouter>
     );
     expect(screen.queryByRole('button', { name: /Admin/ })).not.toBeInTheDocument();
@@ -123,6 +164,55 @@ describe('NAV-001 · Sidebar V2', () => {
 
   it('usa Circle Lucide como fallback sin introducir glyphs Unicode', () => {
     expect(getSidebarIcon('UnknownIcon').displayName).toBe('Circle');
+  });
+
+  it('mapea los módulos a iconografía logística Lucide', () => {
+    expect(SIDEBAR_ICONS.PackagePlus.displayName).toBe('PackagePlus');
+    expect(SIDEBAR_ICONS.Warehouse.displayName).toBe('Warehouse');
+    expect(SIDEBAR_ICONS.ScanSearch.displayName).toBe('ScanSearch');
+    expect(SIDEBAR_ICONS.LayoutDashboard.displayName).toBe('LayoutDashboard');
+    expect(SIDEBAR_ICONS.ClipboardCheck.displayName).toBe('ClipboardCheck');
+    expect(SIDEBAR_ICONS.Headphones.displayName).toBe('Headphones');
+    expect(SIDEBAR_ICONS.ShieldCog.displayName).toBe('ShieldCheck');
+    expect(SIDEBAR_ICONS.Truck.displayName).toBe('Truck');
+  });
+
+  it('oculta etiquetas de sección en collapsed y mantiene acciones del footer accesibles', () => {
+    renderSidebar({ collapsed: true });
+    expect(screen.queryByText('Operación')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sistema')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notificaciones' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Cristopher Cabezas, rol ADMIN')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expandir menú' })).toBeInTheDocument();
+  });
+
+  it('oculta el acceso al centro completo sin permiso, pero conserva la campana', async () => {
+    renderSidebar({ canAccessRoute: () => false });
+    fireEvent.click(screen.getByRole('button', { name: 'Notificaciones' }));
+    expect(await screen.findByLabelText('Centro de notificaciones')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ver centro completo/ })).not.toBeInTheDocument();
+  });
+
+  it('ejecuta logout una vez y reemplaza la ruta por login', async () => {
+    const logout = vi.fn(async () => {});
+    const LocationProbe = () => <span data-testid="location">{useLocation().pathname}</span>;
+    render(
+      <MemoryRouter initialEntries={['/panel/dashboard']}>
+        <Sidebar
+          collapsed={false}
+          onToggle={vi.fn()}
+          canAccessRoute={() => true}
+          session={{ ...TEST_SESSION, logout }}
+        />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+    const button = screen.getByRole('button', { name: 'Cerrar sesión' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/login'));
   });
 });
 
