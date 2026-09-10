@@ -57,6 +57,11 @@ import gsap from 'gsap';
 import { puedeVerTab, TAB_PERMISSIONS, puedeVerCoordinacionRutas } from '../constants/permissions';
 import { mostrarNovedades } from './NovedadesModal';
 import NotificationBell from './NotificationBell';
+import {
+  devolucionesAccessPath,
+  DEVOLUCIONES_INBOUND_PATH,
+  DEVOLUCIONES_QUALITY_PATH
+} from '../config/devolucionesRouting';
 
 // Versión instalada (inyectada por Vite desde package.json).
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -100,7 +105,7 @@ const Navbar = () => {
     if (base === '/panel/rutas') return puedeVerCoordinacionRutas(user, hasPermission, roles);
     if (esAdmin) return true;
     if (sectionId === 'admin') return false; // sección admin: solo ADMIN/delegado
-    if (!canAccessRouteIam(base)) return false;
+    if (!canAccessRouteIam(devolucionesAccessPath(base))) return false;
     // Control fino por pestaña: si el item es un deep-link ?tab=… exige el permiso
     // de esa pestaña; el item base (sin ?tab) equivale a la pestaña por defecto.
     const tab = (query && new URLSearchParams(query).get('tab')) || null;
@@ -148,6 +153,7 @@ const Navbar = () => {
           label: 'Inbound',
           icon: <ArrowDownToLine size={18} />,
           modules: [
+            { label: 'Devoluciones', path: DEVOLUCIONES_INBOUND_PATH, icon: <Package size={16} /> },
             {
               label: 'Recepción Importaciones',
               path: '/inbound/reception',
@@ -294,6 +300,11 @@ const Navbar = () => {
               label: 'Clasificación de Productos',
               path: '/quality/clasificacion',
               icon: <Tags size={16} />
+            },
+            {
+              label: 'Pendientes de Devoluciones',
+              path: DEVOLUCIONES_QUALITY_PATH,
+              icon: <Package size={16} />
             }
           ]
         },

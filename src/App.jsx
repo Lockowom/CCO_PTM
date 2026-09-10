@@ -16,6 +16,7 @@ import SuspenseLoaderTimeout from './components/ui/SuspenseLoaderTimeout';
 import { Lock, Database, MessageSquare } from 'lucide-react';
 import { permisosDeRuta, resolverRutaInicial } from './constants/permissions';
 import { SCREEN_REGISTRY } from './domain/access/screenRegistry.js';
+import { devolucionesAccessPath, DEVOLUCIONES_INBOUND_PATH } from './config/devolucionesRouting';
 import { privateBetaForPath, evaluatePrivateBetaAccess } from './constants/privateBeta';
 import { usePresenceTracker } from './hooks/usePresence';
 import { Capacitor } from '@capacitor/core';
@@ -73,6 +74,7 @@ const MonitoreoCalidad = React.lazy(() => import('./pages/Quality/Monitoreo'));
 const AccionesCalidad = React.lazy(() => import('./pages/Quality/AccionesCalidad'));
 const MiBandeja = React.lazy(() => import('./pages/Quality/MiBandeja'));
 const ClasificacionProductos = React.lazy(() => import('./pages/Quality/ClasificacionProductos'));
+const RecepcionDevoluciones = React.lazy(() => import('./pages/Quality/RecepcionDevoluciones'));
 
 // Tools (módulos externos integrados)
 const Traspasos = React.lazy(() => import('./pages/Tools/Traspasos'));
@@ -323,8 +325,9 @@ const ProtectedRoute = () => {
   // quedaba abierto a todo usuario autenticado). permisosDeRuta normaliza el
   // pathname y resuelve también rutas con parámetros (/inventory/bloque/:codigo).
   // La raíz "/" queda fuera: la renderiza SmartRedirect, que decide por permisos.
-  const requiredPermissions = permisosDeRuta(location.pathname);
-  const hasAccess = canAccessRoute(location.pathname);
+  const accessPath = devolucionesAccessPath(location.pathname);
+  const requiredPermissions = permisosDeRuta(accessPath);
+  const hasAccess = canAccessRoute(accessPath);
 
   if (!hasAccess) {
     // PR-015B: módulo en private beta con flag OFF → 404 (no existe), no
@@ -338,7 +341,7 @@ const ProtectedRoute = () => {
       <AccessDenied
         requiredPermissions={requiredPermissions || []}
         route={location.pathname}
-        iamDecision={accessDecisionForRoute(location.pathname)}
+        iamDecision={accessDecisionForRoute(accessPath)}
       />
     );
   }
@@ -708,6 +711,26 @@ function AppContent() {
               element={
                 <ErrorBoundary>
                   <ClasificacionProductos />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="quality/devoluciones"
+              element={<Navigate to={DEVOLUCIONES_INBOUND_PATH} replace />}
+            />
+            <Route
+              path="inbound/devoluciones"
+              element={
+                <ErrorBoundary>
+                  <RecepcionDevoluciones />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="quality/devoluciones/pendientes"
+              element={
+                <ErrorBoundary>
+                  <RecepcionDevoluciones />
                 </ErrorBoundary>
               }
             />

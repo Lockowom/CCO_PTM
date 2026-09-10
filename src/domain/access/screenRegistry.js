@@ -428,6 +428,18 @@ export const SCREEN_REGISTRY = [
     mobileEnabled: false,
     active: true
   },
+  {
+    id: 'quality.devoluciones',
+    module: 'quality',
+    label: 'Recepción de devoluciones',
+    routes: ['/quality/devoluciones'],
+    defaultPermission: 'manage_quality',
+    risk: 'HIGH',
+    privateBeta: false,
+    navigation: false,
+    mobileEnabled: true,
+    active: true
+  },
 
   // ── Post-Venta ──────────────────────────────────────────────────────────
   {

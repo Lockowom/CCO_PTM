@@ -142,6 +142,11 @@ export const APP_ROUTES = [
     label: 'Calidad - Clasificación de Productos',
     module: 'quality'
   },
+  {
+    value: '/quality/devoluciones',
+    label: 'Calidad - Recepción de Devoluciones',
+    module: 'quality'
+  },
 
   // Post-Venta
   { value: '/postventa/tickets', label: 'Post-Venta - Tickets', module: 'postventa' },
@@ -265,7 +270,10 @@ export const APP_PERMISSIONS = [
     permissions: [
       { id: 'manage_monitoreo', label: 'Crear/Editar Informes de Monitoreo' },
       { id: 'manage_quality', label: 'Dictaminar Calidad (Liberar/Cuarentena/Baja)' },
-      { id: 'view_acciones_calidad', label: 'Ver Acciones de Calidad (tablero por área)' }
+      { id: 'view_acciones_calidad', label: 'Ver Acciones de Calidad (tablero por área)' },
+      { id: 'view_devoluciones', label: 'Recepción devoluciones · Ver' },
+      { id: 'manage_devoluciones', label: 'Recepción devoluciones · Registrar y gestionar' },
+      { id: 'inspect_devoluciones', label: 'Recepción devoluciones · Dictaminar Calidad' }
     ]
   },
   {

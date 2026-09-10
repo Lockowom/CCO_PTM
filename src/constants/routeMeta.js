@@ -11,6 +11,11 @@
 import { ROUTE_PERMISSIONS } from './permissions';
 import { APP_ROUTES } from '../config/modules';
 import { privateBetaForPath } from './privateBeta';
+import {
+  DEVOLUCIONES_LEGACY_PATH,
+  DEVOLUCIONES_NAV_ENTRIES,
+  devolucionesAccessPath
+} from '../config/devolucionesRouting';
 
 // Grupo por módulo (para sidebar/breadcrumb). Los labels salen de APP_ROUTES.
 const MODULE_GROUP = {
@@ -30,7 +35,8 @@ const HIDDEN_FROM_NAV = new Set([
   '/panel/tv', // TV se abre por URL directa (kiosko)
   '/admin/monitor', // monitor dentro de Admin → Monitor
   '/tms/control',
-  '/tms/pda'
+  '/tms/pda',
+  '/quality/devoluciones' // compatibilidad: redirige a la entrada canónica Inbound
 ]);
 
 // Prioridad de búsqueda móvil (menor = más arriba). Default: 50.
@@ -102,7 +108,18 @@ export const ROUTE_META = [
       privateBetaStage: privateBeta ? privateBeta.stage : null
     };
   }),
-  ...PRIVATE_BETA_EXTRA_META
+  ...PRIVATE_BETA_EXTRA_META,
+  ...DEVOLUCIONES_NAV_ENTRIES.map((entry) => ({
+    ...entry,
+    group: MODULE_GROUP[entry.module],
+    parent: MODULE_GROUP[entry.module].label,
+    requiredPermissions: ROUTE_PERMISSIONS[DEVOLUCIONES_LEGACY_PATH],
+    searchable: false,
+    mobilePriority: 50,
+    hiddenFromNav: false,
+    privateBeta: false,
+    privateBetaStage: null
+  }))
 ];
 
 const byPath = new Map(ROUTE_META.map((m) => [m.path, m]));
@@ -146,7 +163,10 @@ export function getNavGroups(canAccessRoute = null) {
   const groups = new Map();
   for (const meta of ROUTE_META) {
     if (meta.hiddenFromNav) continue;
-    if (canAccessRoute && !canAccessRoute(meta.path)) continue;
+    if (canAccessRoute && !canAccessRoute(devolucionesAccessPath(meta.path))) continue;
+    // Sin sesión/callback no exponer las entradas nuevas en consumidores sin guard.
+    if (!canAccessRoute && DEVOLUCIONES_NAV_ENTRIES.some((entry) => entry.path === meta.path))
+      continue;
     const key = meta.module || 'other';
     if (!groups.has(key)) {
       groups.set(key, {
