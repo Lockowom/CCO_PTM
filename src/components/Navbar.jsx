@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SystemBadge from './SystemBadge';
 import BrandStatusPill from './BrandStatusPill';
@@ -80,6 +80,12 @@ const Navbar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false); // menú de perfil (tap en táctil)
   const [scrolled, setScrolled] = useState(false);
 
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+    setActiveDropdown(null);
+    setUserMenuOpen(false);
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
 
@@ -89,6 +95,26 @@ const Navbar = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  // El drawer es estado local: se cierra al navegar, con Escape y siempre
+  // restaura el scroll que tenía el documento antes de abrirse.
+  useEffect(() => {
+    closeMobileMenu();
+  }, [location.pathname, location.search, closeMobileMenu]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeMobileMenu();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [mobileMenuOpen, closeMobileMenu]);
 
   const handleLogout = () => {
     logout();
@@ -434,27 +460,27 @@ const Navbar = () => {
         ${scrolled ? 'py-0.5 sm:py-1' : 'py-1.5 sm:py-3'}`}
     >
       <div
-        className={`max-w-[1600px] mx-auto px-3 sm:px-6 flex items-center justify-between rounded-2xl sm:rounded-[2rem] border transition-all duration-700 ease-in-out
+        className={`max-w-[1600px] mx-auto px-2.5 sm:px-6 flex min-w-0 items-center justify-between rounded-2xl sm:rounded-[2rem] border transition-all duration-700 ease-in-out
         ${
           scrolled
             ? 'bg-white border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.1)]'
-            : 'bg-white/80 backdrop-blur-md border-white/20 shadow-sm'
+            : 'bg-white/90 border-white/20 shadow-sm sm:bg-white/80 sm:backdrop-blur-md'
         }`}
       >
         {/* Left: Brand hero (BRANDING-001 SIDEBAR_BRAND_HERO premium container) */}
-        <div className="relative flex items-center mr-2 sm:mr-3">
+        <div className="relative mr-1 flex min-w-0 flex-1 items-center sm:mr-3">
           <Link
             to="/"
-            className="group relative flex items-center gap-2 sm:gap-4 py-1.5 sm:py-2 pl-1.5 sm:pl-2 pr-2.5 sm:pr-4 rounded-xl sm:rounded-2xl border border-slate-100/80 bg-gradient-to-b from-slate-50/70 to-transparent hover:border-orange-500/15 hover:from-orange-50/40 transition-colors duration-300"
+            className="group relative flex min-w-0 max-w-full items-center gap-1.5 overflow-hidden py-1.5 pl-1 sm:gap-4 sm:py-2 sm:pl-2 sm:pr-4 rounded-xl sm:rounded-2xl border border-slate-100/80 bg-gradient-to-b from-slate-50/70 to-transparent hover:border-orange-500/15 hover:from-orange-50/40 transition-colors duration-300"
           >
             <img
               src="/logo-ptm.png"
               alt="PTM Health Care"
-              className="h-7 sm:h-9 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+              className="h-7 w-auto shrink-0 object-contain transition-transform duration-500 group-hover:scale-105 sm:h-9"
             />
-            <div className="flex flex-col leading-none">
+            <div className="min-w-0 flex flex-col leading-none">
               {/* CCO ancla premium + SYSTEM badge cápsula */}
-              <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <div className="flex items-baseline gap-1 sm:gap-2">
                 <div className="relative inline-flex">
                   <span
                     className="text-lg sm:text-2xl font-extrabold text-slate-900/90 tracking-tight animate-brand-enter"
@@ -469,11 +495,11 @@ const Navbar = () => {
                     style={{ animationDelay: '260ms' }}
                   />
                 </div>
-                <SystemBadge className="animate-brand-enter" style={{ animationDelay: '190ms' }} />
+                <SystemBadge className="hidden min-[400px]:inline-flex animate-brand-enter" style={{ animationDelay: '190ms' }} />
               </div>
               {/* Subtítulo institucional + status pill "Operativo": visibles en mobile */}
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400/90 uppercase tracking-[0.15em]">
+              <div className="mt-0.5 hidden items-center gap-2 min-[400px]:flex">
+                <span className="truncate text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-400/90 sm:text-[10px]">
                   Centro Control Operacional
                 </span>
                 <BrandStatusPill className="hidden min-[400px]:inline-flex" />
@@ -603,11 +629,11 @@ const Navbar = () => {
         </nav>
 
         {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1 min-[400px]:gap-1.5 sm:gap-3">
           {/* Sync Queue */}
           {syncQueueCount > 0 && (
             <div
-              className="p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-200 animate-bounce"
+              className="hidden min-[400px]:flex p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-200 animate-bounce"
               title="Sincronización pendiente"
             >
               <RefreshCw size={18} className="animate-spin" />
@@ -618,7 +644,7 @@ const Navbar = () => {
           <NotificationBell />
 
           {/* User Profile Dropdown — abre por HOVER (desktop) o TAP (táctil) */}
-          <div className="relative group">
+          <div className="relative hidden group sm:block">
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-200"
@@ -672,18 +698,21 @@ const Navbar = () => {
 
           {/* Mobile Menu Toggle */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`xl:hidden p-2 rounded-xl transition-all duration-300 relative w-10 h-10 flex items-center justify-center
+            onClick={() => (mobileMenuOpen ? closeMobileMenu() : setMobileMenuOpen(true))}
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="cco-mobile-navigation"
+            className={`xl:hidden relative flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2 transition-all duration-200 motion-reduce:transition-none
             ${mobileMenuOpen ? 'bg-orange-50 text-orange-600 rotate-90' : 'text-slate-600 hover:bg-slate-50'}`}
           >
             <div className="relative w-6 h-6">
               <Menu
                 size={24}
-                className={`absolute inset-0 transition-all duration-300 transform ${mobileMenuOpen ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}
+                className={`absolute inset-0 transition-all duration-200 transform motion-reduce:transition-none ${mobileMenuOpen ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}
               />
               <X
                 size={24}
-                className={`absolute inset-0 transition-all duration-300 transform ${mobileMenuOpen ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`}
+                className={`absolute inset-0 transition-all duration-200 transform motion-reduce:transition-none ${mobileMenuOpen ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`}
               />
             </div>
           </button>
@@ -692,20 +721,23 @@ const Navbar = () => {
 
       {/* Mobile Navigation Drawer */}
       <div
-        className={`xl:hidden fixed inset-0 z-[90] transition-all duration-500 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`xl:hidden fixed inset-0 z-[90] transition-opacity duration-200 motion-reduce:transition-none ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
         {/* Backdrop con desenfoque */}
         <div
-          className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
+          className="absolute inset-0 bg-slate-950/30 sm:backdrop-blur-sm"
+          onClick={closeMobileMenu}
         />
 
         {/* Contenido del Menú (Drawer) */}
         <div
-          className={`absolute right-2 sm:right-4 top-[60px] sm:top-[85px] bottom-2 sm:bottom-4 w-[calc(100%-16px)] sm:w-[calc(100%-32px)] max-w-[280px] sm:max-w-[320px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-500 ease-out
+          id="cco-mobile-navigation"
+          role="dialog"
+          aria-label="Navegación móvil"
+          className={`absolute left-2 right-2 top-[calc(4rem+env(safe-area-inset-top))] bottom-[calc(0.5rem+env(safe-area-inset-bottom))] h-[calc(100dvh-4.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-auto max-w-none sm:left-auto sm:right-4 sm:top-[calc(5.3rem+env(safe-area-inset-top))] sm:bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:h-[calc(100dvh-6.3rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[calc(100%-32px)] sm:max-w-[320px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col transition-all duration-200 ease-out motion-reduce:transition-none
             ${mobileMenuOpen ? 'translate-x-0 scale-100' : 'translate-x-8 scale-95'}`}
         >
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 space-y-4 sm:space-y-6">
+          <div className="custom-scrollbar flex-1 overscroll-contain overflow-y-auto p-4 pb-5 sm:p-6 sm:pb-6 space-y-4 sm:space-y-6">
             {menuCategories.map((category) => {
               const visibleItems = category.items.filter(isModuleVisible);
               if (visibleItems.length === 0) return null;
@@ -726,7 +758,7 @@ const Navbar = () => {
                         <Link
                           key={item.id}
                           to={item.path}
-                          onClick={() => setMobileMenuOpen(false)}
+                          onClick={closeMobileMenu}
                           className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all
                             ${isActive ? 'bg-orange-50 text-orange-600 ring-1 ring-orange-500/20' : 'text-slate-600 hover:bg-slate-50'}`}
                         >
@@ -767,7 +799,7 @@ const Navbar = () => {
                                   <Link
                                     key={module.path}
                                     to={module.path}
-                                    onClick={() => setMobileMenuOpen(false)}
+                                    onClick={closeMobileMenu}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all
                                     ${
                                       esRutaActiva(module.path)
@@ -799,14 +831,14 @@ const Navbar = () => {
             </div>
             <Link
               to="/seguridad"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-all text-sm font-black"
             >
               <Lock size={18} /> Seguridad (2FA)
             </Link>
             <button
               onClick={() => {
-                setMobileMenuOpen(false);
+                closeMobileMenu();
                 handleLogout();
               }}
               className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all text-sm font-black"

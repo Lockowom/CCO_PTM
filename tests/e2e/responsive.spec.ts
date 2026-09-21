@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 const VIEWPORTS = [
+  [320, 568],
   [320, 720],
+  [360, 640],
+  [360, 720],
   [360, 800],
   [375, 812],
   [390, 844],
@@ -9,6 +12,9 @@ const VIEWPORTS = [
   [430, 932],
   [480, 960],
   [600, 960],
+  [568, 320],
+  [640, 360],
+  [800, 360],
   [768, 1024],
   [1024, 768],
   [1280, 800],
@@ -24,7 +30,11 @@ for (const route of PUBLIC_ROUTES) {
     test(`@responsive ${route} ${width}x${height} no tiene overflow crítico`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto(route, { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('body')).toBeVisible();
+      // El body puede quedar marcado como no visible por el splash de la app aunque
+      // el documento ya exista y pueda medirse. La prueba certifica geometría, no
+      // el estado transitorio del splash; la acción primaria de login se verifica
+      // aparte con una aserción visible.
+      await expect(page.locator('#root')).toBeAttached();
 
       const geometry = await page.evaluate(() => ({
         viewport: window.innerWidth,

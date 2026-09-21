@@ -4,9 +4,11 @@
 
 La suite `tests/e2e/responsive.spec.ts` valida que Login y Consulta pública no produzcan overflow horizontal crítico en:
 
-`320x720`, `360x800`, `375x812`, `390x844`, `412x915`, `430x932`, `480x960`, `600x960`, `768x1024`, `1024x768`, `1280x800`, `1366x768`, `1440x900` y `1920x1080`.
+`320x568`, `320x720`, `360x640`, `360x720`, `360x800`, `375x812`, `390x844`, `412x915`, `430x932`, `480x960`, `600x960`, `568x320`, `640x360`, `800x360`, `768x1024`, `1024x768`, `1280x800`, `1366x768`, `1440x900` y `1920x1080`.
 
 También comprueba que la acción primaria del login siga accesible a `320x720`.
+El contrato autenticado del Navbar, incluidas las reglas de drawer, accesibilidad
+y permisos, está descrito en `NAV_MOBILE_001_SMALL_DEVICE_HARDENING.md`.
 
 ```bash
 npx playwright test tests/e2e/responsive.spec.ts
