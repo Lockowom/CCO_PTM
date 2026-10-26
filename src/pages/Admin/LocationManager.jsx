@@ -23,6 +23,7 @@ import { logUpload } from '../../utils/logUpload';
 
 // ─── Helpers ──────────────────────────────────────────
 const PAGE_SIZE = 50;
+const EXPORT_PAGE_SIZE = 1000;
 
 const normalizeLoc = (loc) => {
   if (!loc) return '';
@@ -267,6 +268,7 @@ export default function LocationManager() {
   const [moveItem, setMoveItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [putawayStats, setPutawayStats] = useState({
     registros: 0,
     skus: 0,
@@ -279,26 +281,29 @@ export default function LocationManager() {
 
   const RACKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
+  const applyLocationFilters = useCallback(
+    (query) => {
+      let filtered = isPutaway ? query.eq('registrado_putaway', true) : query.gt('cantidad', 0);
+
+      if (search.trim()) {
+        const s = search.trim();
+        filtered = filtered.or(`ubicacion.ilike.%${s}%,codigo.ilike.%${s}%,descripcion.ilike.%${s}%`);
+      }
+
+      if (rackFilter) {
+        filtered = filtered.ilike('ubicacion', `${rackFilter}-%`);
+      }
+
+      return filtered.order(sortField, { ascending: sortDir === 'asc' });
+    },
+    [isPutaway, rackFilter, search, sortDir, sortField]
+  );
+
   // ─── Fetch Data (paginated + server-side search) ────
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase.from(sourceTable).select('*', { count: 'exact' });
-      query = isPutaway ? query.eq('registrado_putaway', true) : query.gt('cantidad', 0);
-
-      // Search filter
-      if (search.trim()) {
-        const s = search.trim();
-        query = query.or(`ubicacion.ilike.%${s}%,codigo.ilike.%${s}%,descripcion.ilike.%${s}%`);
-      }
-
-      // Rack filter
-      if (rackFilter) {
-        query = query.ilike('ubicacion', `${rackFilter}-%`);
-      }
-
-      // Sort
-      query = query.order(sortField, { ascending: sortDir === 'asc' });
+      let query = applyLocationFilters(supabase.from(sourceTable).select('*', { count: 'exact' }));
 
       // Pagination
       const from = page * PAGE_SIZE;
@@ -314,7 +319,7 @@ export default function LocationManager() {
     } finally {
       setLoading(false);
     }
-  }, [search, rackFilter, sortField, sortDir, page, sourceTable, isPutaway]);
+  }, [applyLocationFilters, page, sourceTable]);
 
   useEffect(() => {
     fetchData();
@@ -465,10 +470,31 @@ export default function LocationManager() {
     }
   };
 
-  const exportToExcel = () => {
-    if (data.length === 0) return;
-    const ws = XLSX.utils.json_to_sheet(
-      data.map((r) => ({
+  const exportToExcel = async () => {
+    if (totalCount === 0) {
+      toast.info('No hay ubicaciones para exportar');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const allRows = [];
+      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+        const query = applyLocationFilters(supabase.from(sourceTable).select('*'));
+        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
+        if (error) throw error;
+
+        allRows.push(...(rows || []));
+        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
+      }
+
+      if (allRows.length === 0) {
+        toast.info('No hay ubicaciones para exportar');
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(
+        allRows.map((r) => ({
         Ubicación: r.ubicacion,
         Código: r.codigo,
         Descripción: r.descripcion,
@@ -486,7 +512,12 @@ export default function LocationManager() {
       wb,
       `ubicaciones_${rackFilter || 'ALL'}_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
-    toast.success('Exportado correctamente');
+      toast.success(`${allRows.length.toLocaleString()} ubicaciones exportadas correctamente`);
+    } catch (err) {
+      toast.error('Error exportando ubicaciones: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -628,10 +659,11 @@ export default function LocationManager() {
             </button>
             <button
               onClick={exportToExcel}
-              className="p-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 transition-colors"
-              title="Exportar Excel"
+              disabled={exporting || totalCount === 0}
+              className="p-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              title="Exportar todas las ubicaciones a Excel"
             >
-              <Download size={16} />
+              {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
             </button>
             <div className="text-xs text-slate-400 font-medium pl-2 border-l border-slate-200">
               <span className="font-bold text-slate-700">{totalCount.toLocaleString()}</span>{' '}
