@@ -235,11 +235,14 @@ const Entry = () => {
       return;
     }
 
+    const ubicacionNormalizada = form.ubicacion.trim().toUpperCase();
+
     try {
       const { data, error: queryError } = await supabase
-        .from('wms_ubicaciones')
+        .from('wms_ubicaciones_maestras')
         .select('ubicacion')
-        .eq('ubicacion', form.ubicacion)
+        .eq('ubicacion', ubicacionNormalizada)
+        .eq('activo', true)
         .limit(1)
         .maybeSingle();
 
@@ -249,7 +252,7 @@ const Entry = () => {
       }
 
       if (!data) {
-        setUbicacionWarning('⚠ Ubicación no registrada en el sistema');
+        setUbicacionWarning('⚠ Ubicación no registrada o desactivada');
       } else {
         setUbicacionWarning(null);
       }

@@ -20,6 +20,7 @@ import { supabase } from '../../supabase';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { logUpload } from '../../utils/logUpload';
+import LocationCatalog from './LocationCatalog';
 
 // ─── Helpers ──────────────────────────────────────────
 const PAGE_SIZE = 50;
@@ -256,7 +257,7 @@ const DeleteModal = ({ item, onClose, onConfirm, isPutaway }) => {
 
 // ─── Main Component ──────────────────────────────────
 export default function LocationManager() {
-  const [source, setSource] = useState('putaway');
+  const [source, setSource] = useState('catalog');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -276,6 +277,7 @@ export default function LocationManager() {
     hoy: 0,
     ultimos: []
   });
+  const isCatalog = source === 'catalog';
   const isPutaway = source === 'putaway';
   const sourceTable = 'wms_ubicaciones';
 
@@ -301,6 +303,12 @@ export default function LocationManager() {
 
   // ─── Fetch Data (paginated + server-side search) ────
   const fetchData = useCallback(async () => {
+    if (isCatalog) {
+      setData([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       let query = applyLocationFilters(supabase.from(sourceTable).select('*', { count: 'exact' }));
@@ -319,7 +327,7 @@ export default function LocationManager() {
     } finally {
       setLoading(false);
     }
-  }, [applyLocationFilters, page, sourceTable]);
+  }, [applyLocationFilters, isCatalog, page, sourceTable]);
 
   useEffect(() => {
     fetchData();
@@ -340,6 +348,7 @@ export default function LocationManager() {
   }, [fetchPutawayStats]);
 
   useEffect(() => {
+    if (isCatalog) return undefined;
     const channel = supabase
       .channel(`location-manager-${sourceTable}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: sourceTable }, () => {
@@ -350,7 +359,7 @@ export default function LocationManager() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchData, fetchPutawayStats, sourceTable]);
+  }, [fetchData, fetchPutawayStats, isCatalog, sourceTable]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -523,6 +532,10 @@ export default function LocationManager() {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   // ─── Render ─────────────────────────────────────────
+  if (isCatalog) {
+    return <LocationCatalog onOpenRecords={() => setSource('putaway')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 md:p-6">
       {/* Header */}
@@ -533,16 +546,23 @@ export default function LocationManager() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Modificar ubicaciones
+              Registros de ubicaciones
             </h1>
             <p className="text-sm text-slate-500">
-              Una sola fuente para Put Away, Calidad, Gestión e inventario físico
+              Consulta y mantenimiento de registros de Put Away e inventario físico
             </p>
           </div>
         </div>
       </div>
 
       <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 mb-4 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setSource('catalog')}
+          className="px-4 py-2 rounded-lg text-xs font-black transition-colors text-slate-500 hover:bg-slate-50"
+        >
+          Catálogo maestro
+        </button>
         <button
           type="button"
           onClick={() => setSource('putaway')}
