@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   X,
@@ -21,12 +22,50 @@ import { supabase } from '../../supabase';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { logUpload } from '../../utils/logUpload';
+import { putawayRowKey } from '../../lib/putawayBulk';
 import LocationCatalog from './LocationCatalog';
 import PutawayBulkImport from './PutawayBulkImport';
 
 // ─── Helpers ──────────────────────────────────────────
 const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 1000;
+const BULK_RETIRE_CHUNK_SIZE = 500;
+
+const putawaySelectionKey = (item) =>
+  putawayRowKey(
+    String(item?.ubicacion || '').trim().toUpperCase(),
+    String(item?.codigo || '').trim().toUpperCase()
+  );
+
+const uniquePutawayItems = (items) => {
+  const byKey = new Map();
+  items.forEach((item) => {
+    if (item?.ubicacion && item?.codigo) {
+      byKey.set(putawaySelectionKey(item), { ubicacion: item.ubicacion, codigo: item.codigo });
+    }
+  });
+  return [...byKey.values()];
+};
+
+const uniqueWmsItems = (items) => {
+  const byId = new Map();
+  items.forEach((item) => {
+    if (item?.id) {
+      byId.set(item.id, {
+        id: item.id,
+        ubicacion: item.ubicacion,
+        codigo: item.codigo
+      });
+    }
+  });
+  return [...byId.values()];
+};
+
+const chunk = (items, size) => {
+  const result = [];
+  for (let index = 0; index < items.length; index += size) result.push(items.slice(index, index + size));
+  return result;
+};
 
 const normalizeLoc = (loc) => {
   if (!loc) return '';
@@ -288,6 +327,120 @@ const DeleteModal = ({ item, onClose, onConfirm, isPutaway }) => {
   );
 };
 
+const BulkRetireModal = ({ items, loading, onClose, onConfirm }) => {
+  const count = items?.length || 0;
+  return createPortal(
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Retirar selección de Put Away"
+        className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+      >
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div>
+            <h3 className="text-lg font-black text-slate-900">Retirar selección de Put Away</h3>
+            <p className="mt-1 text-xs text-slate-500">Confirma el retiro visual de las asociaciones elegidas.</p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 disabled:opacity-50"
+            aria-label="Cerrar"
+          >
+            <X size={18} />
+          </button>
+        </header>
+        <div className="space-y-4 p-5 text-sm text-slate-600">
+          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-600" />
+            <div>
+              <strong className="block font-black">Retirar {count.toLocaleString('es-CL')} asociación(es) visual(es)</strong>
+              <span className="mt-1 block text-xs">Se ocultarán de Put Away visual y quedarán auditadas.</span>
+            </div>
+          </div>
+          <p>No se eliminan SKU ni filas WMS; no cambian cantidades, stock ni ERP.</p>
+        </div>
+        <footer className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading || count === 0}
+            className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-black text-white hover:bg-rose-700 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+            Retirar {count.toLocaleString('es-CL')}
+          </button>
+        </footer>
+      </section>
+    </div>,
+    document.body
+  );
+};
+
+const BulkArchiveModal = ({ items, loading, onClose, onConfirm }) => {
+  const count = items?.length || 0;
+  return createPortal(
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Archivar registros WMS filtrados"
+        className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+      >
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div>
+            <h3 className="text-lg font-black text-slate-900">Archivar registros WMS</h3>
+            <p className="mt-1 text-xs text-slate-500">Esta acción limpia el resultado filtrado de Inventario WMS.</p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 disabled:opacity-50"
+            aria-label="Cerrar"
+          >
+            <X size={18} />
+          </button>
+        </header>
+        <div className="space-y-4 p-5 text-sm text-slate-600">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-600" />
+            <div>
+              <strong className="block font-black">Archivar {count.toLocaleString('es-CL')} registro(s)</strong>
+              <span className="mt-1 block text-xs">Cada SKU se respalda con su ubicación y trazabilidad antes de retirarse de la vista operativa.</span>
+            </div>
+          </div>
+          <p>El catálogo maestro de ubicaciones se conserva. No cambia cantidades, stock físico, Softland ni ERP.</p>
+        </div>
+        <footer className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-4">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading || count === 0}
+            className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+            Archivar {count.toLocaleString('es-CL')}
+          </button>
+        </footer>
+      </section>
+    </div>,
+    document.body
+  );
+};
+
 // ─── Main Component ──────────────────────────────────
 export default function LocationManager() {
   const [source, setSource] = useState('catalog');
@@ -304,6 +457,11 @@ export default function LocationManager() {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [bulkImportMode, setBulkImportMode] = useState(null);
+  const [selectedPutaway, setSelectedPutaway] = useState([]);
+  const [bulkRetireItems, setBulkRetireItems] = useState(null);
+  const [bulkArchiveItems, setBulkArchiveItems] = useState(null);
+  const [selectingAllPutaway, setSelectingAllPutaway] = useState(false);
+  const [selectingAllWms, setSelectingAllWms] = useState(false);
   const [putawayStats, setPutawayStats] = useState({
     registros: 0,
     skus: 0,
@@ -398,6 +556,7 @@ export default function LocationManager() {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
+    setSelectedPutaway([]);
   }, [search, rackFilter, source]);
 
   useEffect(() => {
@@ -501,6 +660,144 @@ export default function LocationManager() {
       fetchData();
     } catch (err) {
       toast.error('Error al eliminar: ' + err.message);
+    }
+  };
+
+  const togglePutawayItem = (item) => {
+    const key = putawaySelectionKey(item);
+    setSelectedPutaway((previous) => {
+      const exists = previous.some((selected) => putawaySelectionKey(selected) === key);
+      return exists
+        ? previous.filter((selected) => putawaySelectionKey(selected) !== key)
+        : uniquePutawayItems([...previous, item]);
+    });
+  };
+
+  const toggleVisiblePutawayItems = () => {
+    const visibleItems = uniquePutawayItems(data);
+    const selectedKeys = new Set(selectedPutaway.map(putawaySelectionKey));
+    const allVisibleSelected = visibleItems.length > 0 && visibleItems.every((item) => selectedKeys.has(putawaySelectionKey(item)));
+    setSelectedPutaway((previous) =>
+      allVisibleSelected
+        ? previous.filter((item) => !visibleItems.some((visible) => putawaySelectionKey(visible) === putawaySelectionKey(item)))
+        : uniquePutawayItems([...previous, ...visibleItems])
+    );
+  };
+
+  const selectAllFilteredPutawayItems = async () => {
+    setSelectingAllPutaway(true);
+    try {
+      const allItems = [];
+      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+        const query = applyLocationFilters(supabase.from(sourceTable).select('ubicacion, codigo'));
+        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
+        if (error) throw error;
+        allItems.push(...(rows || []));
+        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
+      }
+      const items = uniquePutawayItems(allItems);
+      setSelectedPutaway(items);
+      toast.success(`${items.length.toLocaleString('es-CL')} asociación(es) seleccionada(s)`);
+    } catch (error) {
+      toast.error(`No se pudieron seleccionar los resultados: ${error.message}`);
+    } finally {
+      setSelectingAllPutaway(false);
+    }
+  };
+
+  const prepareWmsArchiveFiltered = async () => {
+    setSelectingAllWms(true);
+    try {
+      const allItems = [];
+      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+        const query = applyLocationFilters(supabase.from(sourceTable).select('id, ubicacion, codigo'));
+        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
+        if (error) throw error;
+        allItems.push(...(rows || []));
+        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
+      }
+      const items = uniqueWmsItems(allItems);
+      if (!items.length) {
+        toast.info('No hay registros WMS para archivar con el filtro actual');
+        return;
+      }
+      setBulkArchiveItems(items);
+    } catch (error) {
+      toast.error(`No se pudieron preparar los registros para archivo: ${error.message}`);
+    } finally {
+      setSelectingAllWms(false);
+    }
+  };
+
+  const handleBulkRetire = async () => {
+    const items = uniquePutawayItems(bulkRetireItems || []);
+    if (!items.length) return;
+    setSaving(true);
+    try {
+      let retirados = 0;
+      let omitidos = 0;
+      for (const batch of chunk(items, BULK_RETIRE_CHUNK_SIZE)) {
+        const { data: result, error } = await supabase.rpc('retirar_putaway_ubicaciones', {
+          p_items: batch
+        });
+        if (error) throw error;
+        retirados += Number(result?.retirados || 0);
+        omitidos += Number(result?.omitidos || 0);
+      }
+      await logUpload({
+        modulo: 'Put Away visual · retiro desde tabla',
+        tablaDestino: sourceTable,
+        totalRegistros: items.length,
+        actualizados: retirados,
+        errores: omitidos
+      });
+      toast.success(`${retirados.toLocaleString('es-CL')} asociación(es) retiradas visualmente.`);
+      setBulkRetireItems(null);
+      setSelectedPutaway([]);
+      fetchData();
+      fetchPutawayStats();
+    } catch (error) {
+      toast.error(error.message || 'No se pudo completar el retiro masivo. No se reintentó automáticamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    const items = uniqueWmsItems(bulkArchiveItems || []);
+    if (!items.length) return;
+    setSaving(true);
+    try {
+      let archivados = 0;
+      let omitidos = 0;
+      let solicitudesDesvinculadas = 0;
+      for (const batch of chunk(items, BULK_RETIRE_CHUNK_SIZE)) {
+        const { data: result, error } = await supabase.rpc('archivar_ubicaciones_wms', {
+          p_ids: batch.map((item) => item.id),
+          p_motivo: 'Limpieza masiva desde Gestion de Ubicaciones'
+        });
+        if (error) throw error;
+        archivados += Number(result?.archivados || 0);
+        omitidos += Number(result?.omitidos || 0);
+        solicitudesDesvinculadas += Number(result?.solicitudes_desvinculadas || 0);
+      }
+      await logUpload({
+        modulo: 'Inventario WMS · archivo desde tabla',
+        tablaDestino: sourceTable,
+        totalRegistros: items.length,
+        actualizados: archivados,
+        errores: omitidos
+      });
+      const notice = solicitudesDesvinculadas
+        ? ` Se conservó trazabilidad de ${solicitudesDesvinculadas} solicitud(es) previa(s).`
+        : '';
+      toast.success(`${archivados.toLocaleString('es-CL')} registro(s) archivado(s).${notice}`);
+      setBulkArchiveItems(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.message || 'No se pudo completar el archivo masivo. No se reintentó automáticamente.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -715,11 +1012,31 @@ export default function LocationManager() {
               <button
                 onClick={() => setBulkImportMode('RETIRE')}
                 className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
-                title="Retira en lote solo la asociación visual SKU a ubicación"
+                title="Retira en lote usando un archivo Excel o CSV"
               >
-                <Trash2 size={15} /> Retiro masivo
+                <Trash2 size={15} /> Retiro por archivo
+              </button>
+              <button
+                onClick={selectAllFilteredPutawayItems}
+                disabled={selectingAllPutaway || totalCount === 0}
+                className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-black text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Selecciona todos los resultados del filtro actual para retirarlos juntos"
+              >
+                {selectingAllPutaway ? <Loader2 size={15} className="animate-spin" /> : <Package size={15} />}
+                Seleccionar filtrados
               </button>
               </>
+            )}
+            {!isPutaway && (
+              <button
+                onClick={prepareWmsArchiveFiltered}
+                disabled={selectingAllWms || totalCount === 0}
+                className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Archiva todos los resultados del filtro actual después de respaldarlos"
+              >
+                {selectingAllWms ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                Archivar filtrados
+              </button>
             )}
             <button
               onClick={fetchData}
@@ -745,6 +1062,38 @@ export default function LocationManager() {
         </div>
       </div>
 
+      {isPutaway && selectedPutaway.length > 0 && (
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+              <Trash2 size={17} />
+            </div>
+            <div>
+              <strong className="block text-sm font-black text-rose-950">
+                {selectedPutaway.length.toLocaleString('es-CL')} asociación(es) seleccionada(s)
+              </strong>
+              <span className="text-xs text-rose-800">Solo se retirarán de Put Away visual; no se borra stock ni SKU.</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedPutaway([])}
+              disabled={saving}
+              className="rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+            >
+              Limpiar
+            </button>
+            <button
+              onClick={() => setBulkRetireItems(selectedPutaway)}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-black text-white hover:bg-rose-700 disabled:opacity-50"
+            >
+              <Trash2 size={15} /> Retirar selección
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {/* Saving indicator */}
@@ -758,6 +1107,17 @@ export default function LocationManager() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
+                {isPutaway && (
+                  <th className="w-11 px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={data.length > 0 && data.every((row) => selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row)))}
+                      onChange={toggleVisiblePutawayItems}
+                      aria-label="Seleccionar todos los registros visibles de Put Away"
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                    />
+                  </th>
+                )}
                 {[
                   { key: 'ubicacion', label: 'Ubicación', w: 'w-32' },
                   { key: 'codigo', label: 'Código', w: 'w-36' },
@@ -785,14 +1145,14 @@ export default function LocationManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={isPutaway ? 6 : 7} className="text-center py-12">
+                  <td colSpan={7} className="text-center py-12">
                     <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">Cargando...</p>
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={isPutaway ? 6 : 7} className="text-center py-12">
+                  <td colSpan={7} className="text-center py-12">
                     <Package size={32} className="text-slate-200 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">No se encontraron registros</p>
                   </td>
@@ -801,8 +1161,23 @@ export default function LocationManager() {
                 data.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors"
+                    className={`border-b border-slate-100 transition-colors ${
+                      isPutaway && selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
+                        ? 'bg-rose-50/70 hover:bg-rose-100/70'
+                        : 'hover:bg-blue-50/30'
+                    }`}
                   >
+                    {isPutaway && (
+                      <td className="px-3 py-1 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))}
+                          onChange={() => togglePutawayItem(row)}
+                          aria-label={`Seleccionar ${row.codigo || 'SKU'} en ${row.ubicacion || 'ubicación'}`}
+                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                        />
+                      </td>
+                    )}
                     <td className="px-3 py-1">
                       <EditableCell
                         value={row.ubicacion}
@@ -861,9 +1236,9 @@ export default function LocationManager() {
                           <MoveRight size={15} />
                         </button>
                         <button
-                          onClick={() => setDeleteItem(row)}
+                          onClick={() => (isPutaway ? setBulkRetireItems([row]) : setBulkArchiveItems([row]))}
                           className="p-1.5 rounded-md hover:bg-red-100 text-slate-400 hover:text-red-600 transition-colors"
-                          title="Eliminar registro"
+                          title={isPutaway ? 'Retirar de Put Away visual' : 'Archivar registro WMS'}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -929,6 +1304,22 @@ export default function LocationManager() {
             fetchData();
             fetchPutawayStats();
           }}
+        />
+      )}
+      {bulkRetireItems && (
+        <BulkRetireModal
+          items={bulkRetireItems}
+          loading={saving}
+          onClose={() => setBulkRetireItems(null)}
+          onConfirm={handleBulkRetire}
+        />
+      )}
+      {bulkArchiveItems && (
+        <BulkArchiveModal
+          items={bulkArchiveItems}
+          loading={saving}
+          onClose={() => setBulkArchiveItems(null)}
+          onConfirm={handleBulkArchive}
         />
       )}
     </div>
