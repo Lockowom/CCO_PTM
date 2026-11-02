@@ -14,13 +14,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-  Loader2
+  Loader2,
+  Upload
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { logUpload } from '../../utils/logUpload';
 import LocationCatalog from './LocationCatalog';
+import PutawayBulkImport from './PutawayBulkImport';
 
 // ─── Helpers ──────────────────────────────────────────
 const PAGE_SIZE = 50;
@@ -42,6 +44,37 @@ const normalizeLoc = (loc) => {
     return `${rack}-${normPos}-${normLevel}`;
   }
   return cleaned;
+};
+
+// La descripción visible viene siempre del maestro SKU cuando la fila histórica
+// de Put Away no la tenía. Es solo una mejora de presentación: no altera stock
+// ni reescribe registros existentes.
+const fillMissingDescriptionsFromMaster = async (rows) => {
+  const missingCodes = [
+    ...new Set(
+      rows
+        .filter((row) => !String(row.descripcion || '').trim())
+        .map((row) => String(row.codigo || '').trim().toUpperCase())
+        .filter(Boolean)
+    )
+  ];
+  if (!missingCodes.length) return rows;
+
+  const { data, error } = await supabase
+    .from('tms_matriz_codigos')
+    .select('codigo_producto, producto')
+    .in('codigo_producto', missingCodes);
+  if (error) {
+    console.error('No se pudieron completar las descripciones desde maestro:', error);
+    return rows;
+  }
+  const descriptions = new Map(
+    (data || []).map((item) => [String(item.codigo_producto || '').trim().toUpperCase(), item.producto])
+  );
+  return rows.map((row) => ({
+    ...row,
+    descripcion: row.descripcion || descriptions.get(String(row.codigo || '').trim().toUpperCase()) || ''
+  }));
 };
 
 // ─── Inline Editable Cell ──────────────────────────────
@@ -270,6 +303,7 @@ export default function LocationManager() {
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [putawayStats, setPutawayStats] = useState({
     registros: 0,
     skus: 0,
@@ -320,7 +354,7 @@ export default function LocationManager() {
       const { data: rows, count, error } = await query;
       if (error) throw error;
 
-      setData(rows || []);
+      setData(await fillMissingDescriptionsFromMaster(rows || []));
       setTotalCount(count || 0);
     } catch (err) {
       toast.error('Error cargando datos: ' + err.message);
@@ -669,6 +703,15 @@ export default function LocationManager() {
 
           {/* Actions */}
           <div className="flex items-center gap-2 ml-auto">
+            {isPutaway && (
+              <button
+                onClick={() => setBulkImportOpen(true)}
+                className="flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-black text-white transition-colors hover:bg-emerald-700"
+                title="Carga masiva de SKU a ubicaciones Put Away"
+              >
+                <Upload size={15} /> Carga masiva
+              </button>
+            )}
             <button
               onClick={fetchData}
               disabled={loading}
@@ -867,6 +910,15 @@ export default function LocationManager() {
           onClose={() => setDeleteItem(null)}
           onConfirm={handleDelete}
           isPutaway={isPutaway}
+        />
+      )}
+      {bulkImportOpen && (
+        <PutawayBulkImport
+          onClose={() => setBulkImportOpen(false)}
+          onSaved={() => {
+            fetchData();
+            fetchPutawayStats();
+          }}
         />
       )}
     </div>
