@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, Loader2, Upload, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
@@ -193,9 +194,15 @@ export default function PutawayBulkImport({ mode = 'LOAD', onClose, onSaved }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[130] overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm">
-      <div className="mx-auto my-4 w-full max-w-6xl rounded-3xl bg-slate-50 shadow-2xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto bg-slate-950/50 backdrop-blur-sm">
+      <div className="flex min-h-full items-start justify-center p-3 sm:items-center sm:p-6">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-label={isRetire ? 'Retiro masivo Put Away' : 'Carga masiva Put Away'}
+          className="w-full max-w-6xl rounded-3xl bg-slate-50 shadow-2xl"
+        >
         <header className="flex items-start justify-between gap-4 border-b border-slate-200 bg-white p-5">
           <div>
             <h2 className="flex items-center gap-2 text-xl font-black text-slate-950"><FileSpreadsheet size={22} /> {isRetire ? 'Retiro masivo Put Away' : 'Carga masiva Put Away'}</h2>
@@ -245,7 +252,9 @@ export default function PutawayBulkImport({ mode = 'LOAD', onClose, onSaved }) {
             </>
           )}
         </div>
+        </section>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
