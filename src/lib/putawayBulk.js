@@ -67,6 +67,32 @@ export const classifyPutawayRow = ({ raw, rowNumber, skuByCode, activeLocations 
   };
 };
 
+export const putawayRowKey = (ubicacion, codigo) => `${ubicacion}\u001f${codigo}`;
+
+/** Clasifica un retiro sin borrar la fila ni tocar su cantidad. */
+export const classifyPutawayRetireRow = ({ raw, rowNumber, activePutawayByKey }) => {
+  const ubicacion = normalizePutawayLocation(raw.ubicacion);
+  const codigo = normalizePutawaySku(raw.codigo);
+  if (!ubicacion || !isPutawayLocationFormat(ubicacion)) {
+    return { rowNumber, ubicacion, codigo, status: 'ERROR', reason: 'Formato de ubicación inválido' };
+  }
+  if (!codigo) {
+    return { rowNumber, ubicacion, codigo, status: 'ERROR', reason: 'SKU obligatorio' };
+  }
+  const existing = activePutawayByKey.get(putawayRowKey(ubicacion, codigo));
+  if (!existing) {
+    return { rowNumber, ubicacion, codigo, status: 'ERROR', reason: 'No existe como Put Away activo' };
+  }
+  return {
+    rowNumber,
+    ubicacion,
+    codigo,
+    descripcion: cleanText(existing.descripcion),
+    status: 'READY',
+    reason: ''
+  };
+};
+
 export const canonicalPutawayHeaders = (header) => {
   const normalized = cleanText(header)
     .normalize('NFD')

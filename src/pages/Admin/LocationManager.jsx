@@ -303,7 +303,7 @@ export default function LocationManager() {
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkImportMode, setBulkImportMode] = useState(null);
   const [putawayStats, setPutawayStats] = useState({
     registros: 0,
     skus: 0,
@@ -704,13 +704,22 @@ export default function LocationManager() {
           {/* Actions */}
           <div className="flex items-center gap-2 ml-auto">
             {isPutaway && (
+              <>
               <button
-                onClick={() => setBulkImportOpen(true)}
+                onClick={() => setBulkImportMode('LOAD')}
                 className="flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-black text-white transition-colors hover:bg-emerald-700"
                 title="Carga masiva de SKU a ubicaciones Put Away"
               >
                 <Upload size={15} /> Carga masiva
               </button>
+              <button
+                onClick={() => setBulkImportMode('RETIRE')}
+                className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
+                title="Retira en lote solo la asociación visual SKU a ubicación"
+              >
+                <Trash2 size={15} /> Retiro masivo
+              </button>
+              </>
             )}
             <button
               onClick={fetchData}
@@ -912,9 +921,10 @@ export default function LocationManager() {
           isPutaway={isPutaway}
         />
       )}
-      {bulkImportOpen && (
+      {bulkImportMode && (
         <PutawayBulkImport
-          onClose={() => setBulkImportOpen(false)}
+          mode={bulkImportMode}
+          onClose={() => setBulkImportMode(null)}
           onSaved={() => {
             fetchData();
             fetchPutawayStats();

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   classifyPutawayRow,
+  classifyPutawayRetireRow,
   normalizePutawayLocation,
-  parsePutawaySheetRows
+  parsePutawaySheetRows,
+  putawayRowKey
 } from '../lib/putawayBulk';
 
 describe('putawayBulk', () => {
@@ -36,5 +38,16 @@ describe('putawayBulk', () => {
     expect(parsePutawaySheetRows([['UBICACIÓN', 'SKU'], ['E-8-1', 'N022350020'], ['', '']])).toEqual([
       { rowNumber: 2, ubicacion: 'E-8-1', codigo: 'N022350020' }
     ]);
+  });
+
+  it('previsualiza un retiro sin depender del maestro SKU', () => {
+    const row = classifyPutawayRetireRow({
+      raw: { ubicacion: 'E-8-1', codigo: 'N022350020' },
+      rowNumber: 2,
+      activePutawayByKey: new Map([
+        [putawayRowKey('E-08-01', 'N022350020'), { descripcion: 'Producto ubicado' }]
+      ])
+    });
+    expect(row).toMatchObject({ status: 'READY', ubicacion: 'E-08-01', descripcion: 'Producto ubicado' });
   });
 });

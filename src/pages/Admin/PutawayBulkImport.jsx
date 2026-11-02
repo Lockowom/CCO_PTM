@@ -4,7 +4,13 @@ import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { supabase } from '../../supabase';
 import { logUpload } from '../../utils/logUpload';
-import { classifyPutawayRow, normalizePutawayLocation, parsePutawaySheetRows } from '../../lib/putawayBulk';
+import {
+  classifyPutawayRetireRow,
+  classifyPutawayRow,
+  normalizePutawayLocation,
+  parsePutawaySheetRows,
+  putawayRowKey
+} from '../../lib/putawayBulk';
 
 const LOOKUP_CHUNK_SIZE = 400;
 const WRITE_CHUNK_SIZE = 500;
@@ -24,8 +30,43 @@ const parseFile = async (file) => {
   return parsePutawaySheetRows(sheetRows);
 };
 
-async function resolveRows(rawRows) {
+async function resolveRows(rawRows, mode) {
   const codes = [...new Set(rawRows.map((row) => String(row.codigo || '').trim().toUpperCase()).filter(Boolean))];
+  const normalizedCandidates = rawRows.map((row) => ({
+    ...row,
+    ubicacion: normalizePutawayLocation(row.ubicacion)
+  }));
+  const normalizedLocations = [
+    ...new Set(
+      normalizedCandidates
+        .map((row) => String(row.ubicacion || '').trim().toUpperCase())
+        .filter(Boolean)
+    )
+  ];
+
+  if (mode === 'RETIRE') {
+    const activePutawayByKey = new Map();
+    await Promise.all(
+      chunk(normalizedLocations, LOOKUP_CHUNK_SIZE).map(async (locationsChunk) => {
+        const { data, error } = await supabase
+          .from('wms_ubicaciones')
+          .select('ubicacion, codigo, descripcion')
+          .eq('registrado_putaway', true)
+          .in('ubicacion', locationsChunk);
+        if (error) throw error;
+        (data || []).forEach((row) => {
+          activePutawayByKey.set(
+            putawayRowKey(String(row.ubicacion).trim().toUpperCase(), String(row.codigo || '').trim().toUpperCase()),
+            row
+          );
+        });
+      })
+    );
+    return rawRows.map((raw) =>
+      classifyPutawayRetireRow({ raw, rowNumber: raw.rowNumber, activePutawayByKey })
+    );
+  }
+
   const skuByCode = new Map();
   const activeLocations = new Set();
 
@@ -42,17 +83,6 @@ async function resolveRows(rawRows) {
 
   // Esta consulta usa el formato canónico (E-8-1 -> E-08-01) antes de enviar
   // cualquier escritura al RPC de Put Away.
-  const normalizedCandidates = rawRows.map((row) => ({
-    ...row,
-    ubicacion: normalizePutawayLocation(row.ubicacion)
-  }));
-  const normalizedLocations = [
-    ...new Set(
-      normalizedCandidates
-        .map((row) => String(row.ubicacion || '').trim().toUpperCase())
-        .filter(Boolean)
-    )
-  ];
   await Promise.all(
     chunk(normalizedLocations, LOOKUP_CHUNK_SIZE).map(async (locationsChunk) => {
       const { data, error } = await supabase
@@ -68,7 +98,7 @@ async function resolveRows(rawRows) {
   return rawRows.map((raw) => classifyPutawayRow({ raw, ...raw, skuByCode, activeLocations }));
 }
 
-const downloadTemplate = () => {
+const downloadTemplate = (mode) => {
   const worksheet = XLSX.utils.aoa_to_sheet([
     ['UBICACION', 'CODIGO'],
     ['E-8-1', 'N022350020'],
@@ -76,15 +106,16 @@ const downloadTemplate = () => {
   ]);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Put Away');
-  XLSX.writeFile(workbook, 'plantilla_putaway_masivo.xlsx');
+  XLSX.writeFile(workbook, mode === 'RETIRE' ? 'plantilla_retiro_putaway_masivo.xlsx' : 'plantilla_putaway_masivo.xlsx');
 };
 
-export default function PutawayBulkImport({ onClose, onSaved }) {
+export default function PutawayBulkImport({ mode = 'LOAD', onClose, onSaved }) {
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const isRetire = mode === 'RETIRE';
 
   const readyRows = useMemo(() => rows.filter((row) => row.status === 'READY'), [rows]);
   const rejectedRows = useMemo(() => rows.filter((row) => row.status !== 'READY'), [rows]);
@@ -100,11 +131,11 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
     try {
       const parsedRows = await parseFile(file);
       if (!parsedRows.length) throw new Error('El archivo no contiene filas de Put Away.');
-      const resolvedRows = await resolveRows(parsedRows);
+      const resolvedRows = await resolveRows(parsedRows, mode);
       const seen = new Set();
       const uniqueRows = resolvedRows.map((row) => {
         if (row.status !== 'READY') return { ...row, rawUbicacion: parsedRows.find((raw) => raw.rowNumber === row.rowNumber)?.ubicacion };
-        const key = `${row.ubicacion}\u001f${row.codigo}`;
+        const key = putawayRowKey(row.ubicacion, row.codigo);
         if (seen.has(key)) return { ...row, status: 'ERROR', reason: 'Duplicada en el archivo' };
         seen.add(key);
         return { ...row, rawUbicacion: parsedRows.find((raw) => raw.rowNumber === row.rowNumber)?.ubicacion };
@@ -128,24 +159,31 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
     let saved = 0;
     try {
       for (const batch of chunk(readyRows, WRITE_CHUNK_SIZE)) {
-        const { data, error } = await supabase.rpc('registrar_putaway_ubicaciones', {
+        const { data, error } = await supabase.rpc(
+          isRetire ? 'retirar_putaway_ubicaciones' : 'registrar_putaway_ubicaciones', {
           p_items: batch.map((row) => ({
             ubicacion: row.ubicacion,
             codigo: row.codigo,
-            descripcion: row.descripcion
+            ...(isRetire ? {} : { descripcion: row.descripcion })
           }))
-        });
+          }
+        );
         if (error) throw error;
-        saved += Number(data?.guardados || 0);
+        saved += Number(isRetire ? data?.retirados || 0 : data?.guardados || 0);
       }
       await logUpload({
-        modulo: 'Put Away visual · carga masiva',
+        modulo: isRetire ? 'Put Away visual · retiro masivo' : 'Put Away visual · carga masiva',
         tablaDestino: 'wms_ubicaciones',
         totalRegistros: rows.length,
-        nuevos: saved,
+        nuevos: isRetire ? 0 : saved,
+        actualizados: isRetire ? saved : 0,
         errores: rejectedRows.length
       });
-      toast.success(`${saved} SKU(s) registrados visualmente. ${rejectedRows.length} fila(s) quedaron fuera.`);
+      toast.success(
+        isRetire
+          ? `${saved} SKU(s) retirados visualmente. ${rejectedRows.length} fila(s) quedaron fuera.`
+          : `${saved} SKU(s) registrados visualmente. ${rejectedRows.length} fila(s) quedaron fuera.`
+      );
       onSaved?.();
       onClose();
     } catch (error) {
@@ -160,9 +198,9 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
       <div className="mx-auto my-4 w-full max-w-6xl rounded-3xl bg-slate-50 shadow-2xl">
         <header className="flex items-start justify-between gap-4 border-b border-slate-200 bg-white p-5">
           <div>
-            <h2 className="flex items-center gap-2 text-xl font-black text-slate-950"><FileSpreadsheet size={22} /> Carga masiva Put Away</h2>
-            <p className="mt-1 text-sm text-slate-500">Usa el maestro SKU para completar descripciones y omite errores sin detener las filas correctas.</p>
-            <p className="mt-1 text-xs font-bold text-emerald-700">Solo crea ubicación visual: cantidad = 0, sin escritura en stock ni ERP.</p>
+            <h2 className="flex items-center gap-2 text-xl font-black text-slate-950"><FileSpreadsheet size={22} /> {isRetire ? 'Retiro masivo Put Away' : 'Carga masiva Put Away'}</h2>
+            <p className="mt-1 text-sm text-slate-500">{isRetire ? 'Retira solo la asignación visual SKU → ubicación y omite errores sin detener las filas correctas.' : 'Usa el maestro SKU para completar descripciones y omite errores sin detener las filas correctas.'}</p>
+            <p className="mt-1 text-xs font-bold text-emerald-700">{isRetire ? 'No borra SKU ni filas WMS; no cambia cantidad, stock ni ERP.' : 'Solo crea ubicación visual: cantidad = 0, sin escritura en stock ni ERP.'}</p>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100" aria-label="Cerrar"><X size={20} /></button>
         </header>
@@ -174,7 +212,7 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
               <span className="text-xs text-slate-500">Columnas requeridas: <b>UBICACION</b> y <b>CODIGO</b> o <b>SKU</b>. Ej.: E-8-1 se convierte en E-08-01.</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button onClick={downloadTemplate} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><Download size={15} /> Plantilla</button>
+              <button onClick={() => downloadTemplate(mode)} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><Download size={15} /> Plantilla</button>
               <button onClick={() => inputRef.current?.click()} disabled={loading || saving} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-700 disabled:opacity-50">
                 {loading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} {loading ? 'Validando...' : 'Seleccionar archivo'}
               </button>
@@ -187,7 +225,7 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[
                   ['Archivo', fileName, 'text-slate-700'],
-                  ['Listas para cargar', readyRows.length, 'text-emerald-700'],
+                  [isRetire ? 'Listas para retirar' : 'Listas para cargar', readyRows.length, 'text-emerald-700'],
                   ['Con error / omitidas', rejectedRows.length, 'text-rose-700'],
                   ['Ubicaciones corregidas', correctedRows, 'text-blue-700']
                 ].map(([label, value, tone]) => <div key={label} className="rounded-2xl border border-slate-200 bg-white p-3"><span className="block text-[10px] font-black uppercase text-slate-400">{label}</span><strong className={`mt-1 block truncate text-sm ${tone}`}>{value}</strong></div>)}
@@ -196,14 +234,14 @@ export default function PutawayBulkImport({ onClose, onSaved }) {
               <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div className="max-h-[48vh] overflow-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="sticky top-0 bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Fila</th><th className="px-3 py-3">Ubicación final</th><th className="px-3 py-3">SKU</th><th className="px-3 py-3">Descripción desde maestro</th><th className="px-3 py-3">Resultado</th></tr></thead>
+                    <thead className="sticky top-0 bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Fila</th><th className="px-3 py-3">Ubicación final</th><th className="px-3 py-3">SKU</th><th className="px-3 py-3">{isRetire ? 'Descripción actual' : 'Descripción desde maestro'}</th><th className="px-3 py-3">Resultado</th></tr></thead>
                     <tbody>{rows.slice(0, 1000).map((row) => <tr key={row.rowNumber} className={`border-t border-slate-100 ${row.status === 'READY' ? '' : 'bg-rose-50/50'}`}><td className="px-3 py-2 text-slate-400">{row.rowNumber}</td><td className="px-3 py-2 font-mono font-bold">{row.ubicacion || '—'}</td><td className="px-3 py-2 font-mono text-blue-700">{row.codigo || '—'}</td><td className="px-3 py-2 text-slate-700">{row.descripcion || '—'}</td><td className={`px-3 py-2 font-bold ${row.status === 'READY' ? 'text-emerald-700' : 'text-rose-700'}`}>{row.status === 'READY' ? 'LISTA' : row.reason}</td></tr>)}</tbody>
                   </table>
                 </div>
               </div>
               {rows.length > 1000 && <p className="mt-2 text-xs text-slate-400">Vista previa de 1.000 de {rows.length.toLocaleString()} filas.</p>}
               {rejectedRows.length > 0 && <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"><AlertTriangle size={16} className="mt-0.5 shrink-0" />Las filas con error no se enviarán. Corrige el SKU o la ubicación y vuelve a subir el archivo.</div>}
-              <div className="mt-5 flex justify-end gap-3"><button onClick={onClose} disabled={saving} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Cancelar</button><button onClick={handleSave} disabled={!readyRows.length || saving} className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-50">{saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Confirmar {readyRows.length} carga(s)</button></div>
+              <div className="mt-5 flex justify-end gap-3"><button onClick={onClose} disabled={saving} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Cancelar</button><button onClick={handleSave} disabled={!readyRows.length || saving} className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-50">{saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Confirmar {readyRows.length} {isRetire ? 'retiro(s)' : 'carga(s)'}</button></div>
             </>
           )}
         </div>
