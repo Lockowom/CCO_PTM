@@ -46,6 +46,39 @@ export const eliminarRegla = (id) =>
     { module: 'eventos', action: 'eliminar_regla', payload: { id } }
   );
 
+// Destinatarios individuales: se administran exclusivamente a través de los
+// RPC canónicos. Las reglas en modo rol no admiten estas asociaciones.
+export async function listarDestinatariosRegla(reglaId) {
+  const data = await rpcQuery(
+    'notif_regla_destinatarios_listar',
+    { p_regla_id: reglaId },
+    { module: 'eventos', action: 'listar_destinatarios_regla', payload: { reglaId } }
+  );
+  return data || [];
+}
+
+async function commandDestinatarioRegla(fn, args, action, payload) {
+  const result = await rpcCommand(fn, args, { module: 'eventos', action, payload });
+  if (result?.ok === false) throw new Error(result.error || 'No se pudo actualizar el destinatario');
+  return result;
+}
+
+export const agregarDestinatarioRegla = (reglaId, destinatarioId) =>
+  commandDestinatarioRegla(
+    'notif_regla_destinatario_agregar',
+    { p_regla_id: reglaId, p_destinatario_id: destinatarioId },
+    'agregar_destinatario_regla',
+    { reglaId, destinatarioId }
+  );
+
+export const desactivarDestinatarioRegla = (reglaId, destinatarioId) =>
+  commandDestinatarioRegla(
+    'notif_regla_destinatario_desactivar',
+    { p_regla_id: reglaId, p_destinatario_id: destinatarioId },
+    'desactivar_destinatario_regla',
+    { reglaId, destinatarioId }
+  );
+
 export async function listarBandeja({ canal, estado, limit = 150 } = {}) {
   let q = supabase
     .from('notificacion')

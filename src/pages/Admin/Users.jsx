@@ -25,7 +25,8 @@ import {
   Clock,
   Target,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Bell
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -35,6 +36,12 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { toast } from 'sonner';
 import { listarAsignaciones, refrescarPermisos } from '../../services/iamService';
+import {
+  agregarDestinatarioRegla,
+  desactivarDestinatarioRegla,
+  listarDestinatariosRegla,
+  listarReglas
+} from '../../services/eventosService';
 
 // Alta/edición pasan por la RPC transaccional `guardar_usuario` (crea la cuenta
 // auth + la fila en una sola transacción, gateada a admin). Las acciones en
@@ -85,6 +92,8 @@ const UsersPage = ({ embedded = false }) => {
     es_admin_delegado: false
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedNotificationRuleIds, setSelectedNotificationRuleIds] = useState(() => new Set());
+  const [notificationSelectionLoadedFor, setNotificationSelectionLoadedFor] = useState(null);
 
   useGSAP(() => {
     if (isModalOpen && modalRef.current) {
@@ -134,6 +143,60 @@ const UsersPage = ({ embedded = false }) => {
     queryFn: () => listarAsignaciones(),
     staleTime: 30 * 1000
   });
+
+  // Solo las reglas de destinatarios individuales pueden asociarse a un
+  // usuario. Las reglas por rol siguen administrándose desde el motor.
+  const { data: notificationRules = [], isLoading: loadingNotificationRules } = useQuery({
+    queryKey: ['notification_individual_rules'],
+    queryFn: listarReglas,
+    staleTime: 30 * 1000
+  });
+  const individualNotificationRules = React.useMemo(
+    () => notificationRules.filter((rule) => rule.destinatario_rol == null && rule.activo),
+    [notificationRules]
+  );
+  const individualNotificationRulesKey = React.useMemo(
+    () => individualNotificationRules.map((rule) => rule.id).join(','),
+    [individualNotificationRules]
+  );
+  const {
+    data: existingNotificationRuleIds = [],
+    isFetching: loadingExistingNotificationRules,
+    isError: notificationRulesAccessError
+  } = useQuery({
+    queryKey: ['user_notification_rules', editingUser?.id || null, individualNotificationRulesKey],
+    enabled: Boolean(isModalOpen && editingUser?.id && individualNotificationRules.length),
+    queryFn: async () => {
+      const memberships = await Promise.all(
+        individualNotificationRules.map(async (rule) => {
+          const recipients = await listarDestinatariosRegla(rule.id);
+          const active = recipients.some(
+            (recipient) => recipient.destinatario_id === editingUser.id && recipient.activo
+          );
+          return active ? rule.id : null;
+        })
+      );
+      return memberships.filter(Boolean);
+    }
+  });
+
+  React.useEffect(() => {
+    if (
+      editingUser?.id &&
+      isModalOpen &&
+      !loadingExistingNotificationRules &&
+      notificationSelectionLoadedFor !== editingUser.id
+    ) {
+      setSelectedNotificationRuleIds(new Set(existingNotificationRuleIds));
+      setNotificationSelectionLoadedFor(editingUser.id);
+    }
+  }, [
+    editingUser?.id,
+    existingNotificationRuleIds,
+    isModalOpen,
+    loadingExistingNotificationRules,
+    notificationSelectionLoadedFor
+  ]);
 
   // Realtime (con debounce) → refresca ambos queryKeys propios.
   React.useEffect(() => {
@@ -213,6 +276,31 @@ const UsersPage = ({ embedded = false }) => {
     ]);
   }, [queryClient]);
 
+  const syncNotificationRecipients = React.useCallback(
+    async (profileId, desiredRuleIds) => {
+      if (!profileId || !individualNotificationRules.length) return;
+      const desired = new Set(desiredRuleIds);
+      const currentByRule = await Promise.all(
+        individualNotificationRules.map(async (rule) => [
+          rule.id,
+          await listarDestinatariosRegla(rule.id)
+        ])
+      );
+
+      await Promise.all(
+        currentByRule.map(async ([ruleId, recipients]) => {
+          const membership = recipients.find((recipient) => recipient.destinatario_id === profileId);
+          if (desired.has(ruleId) && !membership?.activo) {
+            await agregarDestinatarioRegla(ruleId, profileId);
+          } else if (!desired.has(ruleId) && membership?.activo) {
+            await desactivarDestinatarioRegla(ruleId, profileId);
+          }
+        })
+      );
+    },
+    [individualNotificationRules]
+  );
+
   // Mutation: Guardar Usuario (RPC transaccional gateada).
   const saveMutation = useMutation({
     mutationFn: async (user) => {
@@ -228,6 +316,13 @@ const UsersPage = ({ embedded = false }) => {
       const { data, error } = await supabase.rpc('guardar_usuario', { p: payload });
       if (error) throw error;
       if (data && data.ok === false) throw new Error(data.error || 'No se pudo guardar');
+      const profileId = data?.id || editingUser?.id;
+      try {
+        await syncNotificationRecipients(profileId, selectedNotificationRuleIds);
+      } catch (error) {
+        error.profileSaved = true;
+        throw error;
+      }
       return data;
     },
     onSuccess: async (_data, user) => {
@@ -244,7 +339,13 @@ const UsersPage = ({ embedded = false }) => {
       }
       setIsModalOpen(false);
     },
-    onError: (err) => toast.error('Error al guardar usuario: ' + err.message, { style: ERR_STYLE })
+    onError: (err) =>
+      toast.error(
+        err.profileSaved
+          ? 'El usuario se guardó, pero no se pudieron actualizar sus notificaciones: ' + err.message
+          : 'Error al guardar usuario: ' + err.message,
+        { style: ERR_STYLE }
+      )
   });
 
   // Mutation: Eliminar Usuario — supresión COMPLETA (Ley 21.719) vía RPC.
@@ -298,6 +399,8 @@ const UsersPage = ({ embedded = false }) => {
   const handleOpenModal = (user = null) => {
     setEditingUser(user);
     setShowPassword(false);
+    setSelectedNotificationRuleIds(new Set());
+    setNotificationSelectionLoadedFor(null);
     setFormData({
       nombre: user?.nombre || '',
       email: user?.email || '',
@@ -307,6 +410,14 @@ const UsersPage = ({ embedded = false }) => {
       es_admin_delegado: user?.es_admin_delegado || false
     });
     setIsModalOpen(true);
+  };
+
+  const toggleNotificationRule = (ruleId) => {
+    setSelectedNotificationRuleIds((current) => {
+      const next = new Set(current);
+      next.has(ruleId) ? next.delete(ruleId) : next.add(ruleId);
+      return next;
+    });
   };
 
   const handleSave = (e) => {
@@ -1153,6 +1264,73 @@ const UsersPage = ({ embedded = false }) => {
                       </div>
                     );
                   })()}
+
+                <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-lg bg-sky-100 p-2 text-sky-700">
+                      <Bell size={18} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-sky-900">
+                        Notificaciones individuales
+                      </h3>
+                      <p className="mt-1 text-[11px] leading-relaxed text-sky-700">
+                        Selecciona las reglas activas que deben avisar a esta persona. No cambia
+                        su rol ni sus permisos. Las reglas por rol se mantienen en el Motor de
+                        Eventos.
+                      </p>
+                    </div>
+                  </div>
+
+                  {loadingNotificationRules || loadingExistingNotificationRules ? (
+                    <div className="flex items-center gap-2 text-xs font-semibold text-sky-700">
+                      <Loader2 size={15} className="animate-spin" /> Cargando reglas…
+                    </div>
+                  ) : notificationRulesAccessError ? (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] font-medium text-amber-700">
+                      No fue posible consultar las asignaciones de notificaciones con esta
+                      sesión. El usuario puede guardarse, pero las notificaciones deben ser
+                      gestionadas por un administrador autorizado del Motor de Eventos.
+                    </p>
+                  ) : individualNotificationRules.length ? (
+                    <div className="space-y-2">
+                      {individualNotificationRules.map((rule) => {
+                        const checked = selectedNotificationRuleIds.has(rule.id);
+                        return (
+                          <label
+                            key={rule.id}
+                            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${checked ? 'border-sky-300 bg-white' : 'border-sky-100 bg-sky-50/40 hover:bg-white'}`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 h-4 w-4 accent-sky-600"
+                              checked={checked}
+                              onChange={() => toggleNotificationRule(rule.id)}
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-xs font-black text-slate-800">
+                                {rule.nombre || rule.evento_patron || `Regla #${rule.id}`}
+                              </span>
+                              {rule.evento_patron && rule.nombre && (
+                                <span className="mt-0.5 block truncate text-[10px] font-medium text-slate-500">
+                                  {rule.evento_patron}
+                                </span>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })}
+                      <p className="pt-1 text-[10px] leading-relaxed text-sky-700">
+                        Una regla con destinatarios individuales entrega sus avisos a los miembros
+                        configurados; no agrega destinatarios ni altera otras reglas.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] font-medium text-sky-700">
+                      No hay reglas activas de destinatario individual disponibles.
+                    </p>
+                  )}
+                </section>
 
                 <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 mt-4 flex items-start gap-3">
                   <div className="bg-amber-500/20 text-amber-400 p-2 rounded-lg flex-shrink-0 mt-1">
