@@ -17,13 +17,14 @@ import { useWarehouseStore } from '../../stores/warehouseStore';
 import { useCalidadFlags } from '../../hooks/useCalidadFlags';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import LocationReportModal from '../../components/locations/LocationReportModal';
+import { supabase } from '../../supabase';
 
 // Estimaciones iniciales; la altura real la mide el virtualizer (measureElement).
 const COLLAPSED_HEIGHT = 92;
 const ITEM_HEIGHT = 44;
 
 const LocationGroup = React.memo(
-  ({ group, searchQuery, isExpanded, onToggle, flagForItem, onReport }) => {
+  ({ group, searchQuery, isExpanded, onToggle, flagForItem, onReport, isQualityLocation }) => {
     const matchingItems = group.matchingItems;
     const totalItems = group.allItems.length;
     const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
@@ -64,6 +65,11 @@ const LocationGroup = React.memo(
               >
                 {group.ubicacion}
               </span>
+              {isQualityLocation && (
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-violet-700">
+                  Calidad protegida
+                </span>
+              )}
               {hasSearch && matchingItems.length < totalItems && (
                 <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
                   {matchingItems.length}/{totalItems}
@@ -172,12 +178,45 @@ const WmsLocations = () => {
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [reportItem, setReportItem] = useState(null);
+  const [qualityLocations, setQualityLocations] = useState(() => new Set());
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
   useEffect(() => {
     fetchWarehouseData();
   }, [fetchWarehouseData]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadQualityLocations = async () => {
+      const { data, error } = await supabase
+        .from('wms_ubicaciones_maestras')
+        .select('ubicacion')
+        .eq('tipo_uso', 'CALIDAD');
+
+      if (!error && active) {
+        setQualityLocations(
+          new Set((data || []).map(({ ubicacion }) => String(ubicacion || '').trim().toUpperCase()))
+        );
+      }
+    };
+
+    loadQualityLocations();
+    const channel = supabase
+      .channel('wms-location-uses-query')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wms_ubicaciones_maestras' },
+        loadQualityLocations
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Búsqueda INSTANTÁNEA: el inventario ya está en memoria, así que filtramos
   // en cada tecla sin debounce → escribir/borrar refleja al instante.
@@ -260,6 +299,14 @@ const WmsLocations = () => {
     );
     return { totalLocations, totalItems, totalStock };
   }, [filteredGroups, search]);
+
+  const qualityResults = useMemo(
+    () =>
+      filteredGroups.filter((group) =>
+        qualityLocations.has(String(group.ubicacion || '').trim().toUpperCase())
+      ),
+    [filteredGroups, qualityLocations]
+  );
 
   const toggleExpand = useCallback((key) => {
     setExpandedKeys((prev) => {
@@ -383,6 +430,16 @@ const WmsLocations = () => {
             </div>
           </div>
 
+          {search.trim() && qualityResults.length > 0 && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-left text-xs font-semibold text-violet-800">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              <span>
+                Ubicación de Calidad protegida: no se puede sacar productos de ahí. Los resultados
+                identificados como Calidad permanecen resguardados.
+              </span>
+            </div>
+          )}
+
           {/* Filtros + acciones */}
           <div className="flex items-center justify-center flex-wrap gap-2 mt-4">
             <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
@@ -462,6 +519,9 @@ const WmsLocations = () => {
                       onToggle={() => toggleExpand(group.ubicacion)}
                       flagForItem={flagForItem}
                       onReport={setReportItem}
+                      isQualityLocation={qualityLocations.has(
+                        String(group.ubicacion || '').trim().toUpperCase()
+                      )}
                     />
                   </div>
                 );
