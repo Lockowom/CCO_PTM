@@ -24,7 +24,16 @@ const COLLAPSED_HEIGHT = 92;
 const ITEM_HEIGHT = 44;
 
 const LocationGroup = React.memo(
-  ({ group, searchQuery, isExpanded, onToggle, flagForItem, onReport, isQualityLocation }) => {
+  ({
+    group,
+    searchQuery,
+    isExpanded,
+    onToggle,
+    flagForItem,
+    onReport,
+    isQualityLocation,
+    rotationForCode
+  }) => {
     const matchingItems = group.matchingItems;
     const totalItems = group.allItems.length;
     const totalStock = group.allItems.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
@@ -115,6 +124,7 @@ const LocationGroup = React.memo(
               const flag = flagForItem
                 ? flagForItem(item.codigo, item.ubicacion || group.ubicacion)
                 : null;
+              const rotation = rotationForCode?.(item.codigo);
               return (
                 <div
                   key={item.id || idx}
@@ -132,6 +142,27 @@ const LocationGroup = React.memo(
                   )}
                   {flag && (
                     <CalidadBadge estado={flag.estado_calidad} size="xs" title={flag.nota} />
+                  )}
+                  {rotation ? (
+                    <span
+                      className={`shrink-0 rounded-md border px-2 py-0.5 text-[9px] font-black uppercase ${
+                        rotation.abs_categoria === 'A'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : rotation.abs_categoria === 'B'
+                            ? 'border-sky-200 bg-sky-50 text-sky-700'
+                            : 'border-slate-200 bg-slate-50 text-slate-500'
+                      }`}
+                      title={`ABS ${rotation.abs_categoria} · Rotación ${rotation.rotacion}`}
+                    >
+                      ABS {rotation.abs_categoria} · {rotation.rotacion}
+                    </span>
+                  ) : (
+                    <span
+                      className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold text-slate-400"
+                      title="Este SKU no aparece aún en el catálogo ABS ROTACION"
+                    >
+                      Sin ABS aún
+                    </span>
                   )}
                   <span className="text-slate-500 truncate flex-1 min-w-0">{item.descripcion}</span>
                   <span className="text-sm font-black text-slate-800 tabular-nums shrink-0">
@@ -179,6 +210,7 @@ const WmsLocations = () => {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [reportItem, setReportItem] = useState(null);
   const [qualityLocations, setQualityLocations] = useState(() => new Set());
+  const [skuRotation, setSkuRotation] = useState(() => new Map());
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -217,6 +249,53 @@ const WmsLocations = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const codes = [
+      ...new Set(
+        Object.values(inventory)
+          .flat()
+          .map((item) => String(item.codigo || '').trim().toUpperCase())
+          .filter(Boolean)
+      )
+    ];
+
+    if (codes.length === 0) {
+      setSkuRotation(new Map());
+      return undefined;
+    }
+
+    const loadRotations = async () => {
+      const chunks = [];
+      for (let index = 0; index < codes.length; index += 500) {
+        chunks.push(codes.slice(index, index + 500));
+      }
+
+      const results = await Promise.all(
+        chunks.map((chunk) =>
+          supabase
+            .from('wms_sku_rotacion')
+            .select('codigo, abs_categoria, rotacion')
+            .in('codigo', chunk)
+        )
+      );
+
+      if (!active || results.some(({ error }) => error)) return;
+      setSkuRotation(
+        new Map(
+          results
+            .flatMap(({ data }) => data || [])
+            .map((row) => [String(row.codigo || '').trim().toUpperCase(), row])
+        )
+      );
+    };
+
+    loadRotations();
+    return () => {
+      active = false;
+    };
+  }, [inventory]);
 
   // Búsqueda INSTANTÁNEA: el inventario ya está en memoria, así que filtramos
   // en cada tecla sin debounce → escribir/borrar refleja al instante.
@@ -306,6 +385,11 @@ const WmsLocations = () => {
         qualityLocations.has(String(group.ubicacion || '').trim().toUpperCase())
       ),
     [filteredGroups, qualityLocations]
+  );
+
+  const rotationForCode = useCallback(
+    (codigo) => skuRotation.get(String(codigo || '').trim().toUpperCase()) || null,
+    [skuRotation]
   );
 
   const toggleExpand = useCallback((key) => {
@@ -522,6 +606,7 @@ const WmsLocations = () => {
                       isQualityLocation={qualityLocations.has(
                         String(group.ubicacion || '').trim().toUpperCase()
                       )}
+                      rotationForCode={rotationForCode}
                     />
                   </div>
                 );
