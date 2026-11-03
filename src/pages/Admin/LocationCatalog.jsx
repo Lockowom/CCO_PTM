@@ -7,6 +7,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
   ToggleLeft,
   ToggleRight,
   X
@@ -16,6 +17,24 @@ import { supabase } from '../../supabase';
 import { logUpload } from '../../utils/logUpload';
 
 const LOCATION_FORMAT = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/;
+
+const LOCATION_USE = {
+  GENERAL: {
+    label: 'General',
+    detail: 'Puede archivarse mediante limpieza operativa.',
+    tone: 'border-slate-200 bg-slate-100 text-slate-600'
+  },
+  CALIDAD: {
+    label: 'Calidad · protegida',
+    detail: 'No se archiva, retira, elimina ni mueve producto desde Ubicaciones.',
+    tone: 'border-violet-200 bg-violet-50 text-violet-700'
+  },
+  TRANSITORIO: {
+    label: 'Transitorio · protegido',
+    detail: 'No se incluye en el archivo masivo.',
+    tone: 'border-amber-200 bg-amber-50 text-amber-700'
+  }
+};
 
 const normalizeLocation = (value) =>
   String(value || '')
@@ -34,6 +53,7 @@ const formatDate = (value) =>
 function LocationFormModal({ item, onClose, onSaved }) {
   const [ubicacion, setUbicacion] = useState(item?.ubicacion || '');
   const [descripcion, setDescripcion] = useState(item?.descripcion || '');
+  const [tipoUso, setTipoUso] = useState(item?.tipo_uso || 'GENERAL');
   const [saving, setSaving] = useState(false);
   const isEditing = Boolean(item);
 
@@ -51,14 +71,14 @@ function LocationFormModal({ item, onClose, onSaved }) {
       if (isEditing) {
         result = await supabase
           .from('wms_ubicaciones_maestras')
-          .update({ descripcion: descripcion.trim() || null })
+          .update({ descripcion: descripcion.trim() || null, tipo_uso: tipoUso })
           .eq('id', item.id)
           .select('*')
           .single();
       } else {
         result = await supabase
           .from('wms_ubicaciones_maestras')
-          .insert({ ubicacion: normalized, descripcion: descripcion.trim() || null })
+          .insert({ ubicacion: normalized, descripcion: descripcion.trim() || null, tipo_uso: tipoUso })
           .select('*')
           .single();
       }
@@ -134,6 +154,22 @@ function LocationFormModal({ item, onClose, onSaved }) {
           className="mt-2 w-full resize-none rounded-xl border-2 border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
         />
 
+        <label className="mt-4 block text-[11px] font-black uppercase tracking-wider text-slate-500">
+          Uso de la ubicación
+        </label>
+        <select
+          value={tipoUso}
+          onChange={(event) => setTipoUso(event.target.value)}
+          className="mt-2 w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-blue-400"
+        >
+          {Object.entries(LOCATION_USE).map(([value, option]) => (
+            <option key={value} value={value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-slate-500">{LOCATION_USE[tipoUso].detail}</p>
+
         <div className="mt-5 flex gap-3">
           <button
             type="button"
@@ -171,7 +207,7 @@ export default function LocationCatalog({ onOpenRecords }) {
       const { data, error } = await supabase
         .from('wms_ubicaciones_maestras')
         .select(
-          'id, ubicacion, descripcion, activo, creado_por_nombre, creado_en, actualizado_por_nombre, actualizado_en, desactivado_por_nombre, desactivado_en'
+          'id, ubicacion, descripcion, tipo_uso, activo, creado_por_nombre, creado_en, actualizado_por_nombre, actualizado_en, desactivado_por_nombre, desactivado_en'
         )
         .order('ubicacion', { ascending: true })
         .limit(2000);
@@ -203,7 +239,7 @@ export default function LocationCatalog({ onOpenRecords }) {
       if (status === 'ACTIVAS' && !location.activo) return false;
       if (status === 'INACTIVAS' && location.activo) return false;
       if (!term) return true;
-      return [location.ubicacion, location.descripcion]
+      return [location.ubicacion, location.descripcion, LOCATION_USE[location.tipo_uso || 'GENERAL'].label]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term));
     });
@@ -337,6 +373,7 @@ export default function LocationCatalog({ onOpenRecords }) {
                 <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
                   <th className="px-4 py-3">Ubicación</th>
                   <th className="px-4 py-3">Descripción</th>
+                  <th className="px-4 py-3">Uso</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Última modificación</th>
                   <th className="px-4 py-3 text-right">Control</th>
@@ -345,13 +382,13 @@ export default function LocationCatalog({ onOpenRecords }) {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-16 text-center">
+                    <td colSpan={6} className="py-16 text-center">
                       <Loader2 className="mx-auto animate-spin text-blue-600" size={28} />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-16 text-center text-sm font-bold text-slate-400">
+                    <td colSpan={6} className="py-16 text-center text-sm font-bold text-slate-400">
                       No hay ubicaciones para este filtro.
                     </td>
                   </tr>
@@ -363,6 +400,17 @@ export default function LocationCatalog({ onOpenRecords }) {
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600">
                         {location.descripcion || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const usage = LOCATION_USE[location.tipo_uso || 'GENERAL'];
+                          return (
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black ${usage.tone}`}>
+                              {location.tipo_uso === 'GENERAL' ? <MapPin size={12} /> : <ShieldCheck size={12} />}
+                              {usage.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <span

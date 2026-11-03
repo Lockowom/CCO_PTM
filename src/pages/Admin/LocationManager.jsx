@@ -16,7 +16,8 @@ import {
   ChevronRight,
   ArrowUpDown,
   Loader2,
-  Upload
+  Upload,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { toast } from 'sonner';
@@ -83,6 +84,14 @@ const normalizeLoc = (loc) => {
     return `${rack}-${normPos}-${normLevel}`;
   }
   return cleaned;
+};
+
+const locationKey = (location) => String(location || '').trim().toUpperCase();
+
+const LOCATION_USE_META = {
+  GENERAL: { label: 'General', tone: 'border-slate-200 bg-slate-100 text-slate-600' },
+  CALIDAD: { label: 'Calidad protegida', tone: 'border-violet-200 bg-violet-50 text-violet-700' },
+  TRANSITORIO: { label: 'Transitorio protegido', tone: 'border-amber-200 bg-amber-50 text-amber-700' }
 };
 
 // La descripción visible viene siempre del maestro SKU cuando la fila histórica
@@ -462,6 +471,7 @@ export default function LocationManager() {
   const [bulkArchiveItems, setBulkArchiveItems] = useState(null);
   const [selectingAllPutaway, setSelectingAllPutaway] = useState(false);
   const [selectingAllWms, setSelectingAllWms] = useState(false);
+  const [specialLocationUses, setSpecialLocationUses] = useState(() => new Map());
   const [putawayStats, setPutawayStats] = useState({
     registros: 0,
     skus: 0,
@@ -474,6 +484,38 @@ export default function LocationManager() {
   const sourceTable = 'wms_ubicaciones';
 
   const RACKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+
+  const getLocationUse = useCallback(
+    (location) => specialLocationUses.get(locationKey(location)) || 'GENERAL',
+    [specialLocationUses]
+  );
+
+  const fetchSpecialLocationUses = useCallback(async () => {
+    const { data: rows, error } = await supabase
+      .from('wms_ubicaciones_maestras')
+      .select('ubicacion, tipo_uso')
+      .in('tipo_uso', ['CALIDAD', 'TRANSITORIO']);
+    if (error) {
+      console.error('No se pudieron cargar los usos especiales de ubicaciones:', error);
+      return;
+    }
+    setSpecialLocationUses(
+      new Map((rows || []).map((row) => [locationKey(row.ubicacion), row.tipo_uso]))
+    );
+  }, []);
+
+  useEffect(() => {
+    fetchSpecialLocationUses();
+    const channel = supabase
+      .channel('location-manager-special-uses')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wms_ubicaciones_maestras' },
+        fetchSpecialLocationUses
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [fetchSpecialLocationUses]);
 
   const applyLocationFilters = useCallback(
     (query) => {
@@ -664,6 +706,10 @@ export default function LocationManager() {
   };
 
   const togglePutawayItem = (item) => {
+    if (getLocationUse(item.ubicacion) === 'CALIDAD') {
+      toast.error('Ubicación de Calidad protegida: no se puede retirar producto.');
+      return;
+    }
     const key = putawaySelectionKey(item);
     setSelectedPutaway((previous) => {
       const exists = previous.some((selected) => putawaySelectionKey(selected) === key);
@@ -674,7 +720,9 @@ export default function LocationManager() {
   };
 
   const toggleVisiblePutawayItems = () => {
-    const visibleItems = uniquePutawayItems(data);
+    const visibleItems = uniquePutawayItems(
+      data.filter((item) => getLocationUse(item.ubicacion) !== 'CALIDAD')
+    );
     const selectedKeys = new Set(selectedPutaway.map(putawaySelectionKey));
     const allVisibleSelected = visibleItems.length > 0 && visibleItems.every((item) => selectedKeys.has(putawaySelectionKey(item)));
     setSelectedPutaway((previous) =>
@@ -695,8 +743,14 @@ export default function LocationManager() {
         allItems.push(...(rows || []));
         if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
       }
-      const items = uniquePutawayItems(allItems);
+      const qualityItems = allItems.filter((item) => getLocationUse(item.ubicacion) === 'CALIDAD');
+      const items = uniquePutawayItems(
+        allItems.filter((item) => getLocationUse(item.ubicacion) !== 'CALIDAD')
+      );
       setSelectedPutaway(items);
+      if (qualityItems.length) {
+        toast.info(`${qualityItems.length.toLocaleString('es-CL')} registro(s) de Calidad fueron protegidos.`);
+      }
       toast.success(`${items.length.toLocaleString('es-CL')} asociación(es) seleccionada(s)`);
     } catch (error) {
       toast.error(`No se pudieron seleccionar los resultados: ${error.message}`);
@@ -716,10 +770,20 @@ export default function LocationManager() {
         allItems.push(...(rows || []));
         if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
       }
-      const items = uniqueWmsItems(allItems);
+      const protectedItems = allItems.filter((item) => getLocationUse(item.ubicacion) !== 'GENERAL');
+      const items = uniqueWmsItems(
+        allItems.filter((item) => getLocationUse(item.ubicacion) === 'GENERAL')
+      );
+      if (!items.length && protectedItems.length) {
+        toast.info('Los resultados pertenecen a ubicaciones protegidas; no se archivará ninguno.');
+        return;
+      }
       if (!items.length) {
         toast.info('No hay registros WMS para archivar con el filtro actual');
         return;
+      }
+      if (protectedItems.length) {
+        toast.info(`${protectedItems.length.toLocaleString('es-CL')} registro(s) protegidos se excluyeron del archivo.`);
       }
       setBulkArchiveItems(items);
     } catch (error) {
@@ -730,7 +794,14 @@ export default function LocationManager() {
   };
 
   const handleBulkRetire = async () => {
-    const items = uniquePutawayItems(bulkRetireItems || []);
+    const requestedItems = uniquePutawayItems(bulkRetireItems || []);
+    const protectedItems = requestedItems.filter(
+      (item) => getLocationUse(item.ubicacion) === 'CALIDAD'
+    );
+    const items = requestedItems.filter((item) => getLocationUse(item.ubicacion) !== 'CALIDAD');
+    if (protectedItems.length) {
+      toast.info(`${protectedItems.length.toLocaleString('es-CL')} registro(s) de Calidad no se pueden retirar.`);
+    }
     if (!items.length) return;
     setSaving(true);
     try {
@@ -771,6 +842,8 @@ export default function LocationManager() {
       let archivados = 0;
       let omitidos = 0;
       let solicitudesDesvinculadas = 0;
+      let protegidasCalidad = 0;
+      let protegidasTransitorio = 0;
       for (const batch of chunk(items, BULK_RETIRE_CHUNK_SIZE)) {
         const { data: result, error } = await supabase.rpc('archivar_ubicaciones_wms', {
           p_ids: batch.map((item) => item.id),
@@ -780,6 +853,8 @@ export default function LocationManager() {
         archivados += Number(result?.archivados || 0);
         omitidos += Number(result?.omitidos || 0);
         solicitudesDesvinculadas += Number(result?.solicitudes_desvinculadas || 0);
+        protegidasCalidad += Number(result?.protegidas_calidad || 0);
+        protegidasTransitorio += Number(result?.protegidas_transitorio || 0);
       }
       await logUpload({
         modulo: 'Inventario WMS · archivo desde tabla',
@@ -791,7 +866,10 @@ export default function LocationManager() {
       const notice = solicitudesDesvinculadas
         ? ` Se conservó trazabilidad de ${solicitudesDesvinculadas} solicitud(es) previa(s).`
         : '';
-      toast.success(`${archivados.toLocaleString('es-CL')} registro(s) archivado(s).${notice}`);
+      const protectedNotice = protegidasCalidad || protegidasTransitorio
+        ? ` ${protegidasCalidad + protegidasTransitorio} registro(s) protegido(s) no se archivaron.`
+        : '';
+      toast.success(`${archivados.toLocaleString('es-CL')} registro(s) archivado(s).${protectedNotice}${notice}`);
       setBulkArchiveItems(null);
       fetchData();
     } catch (error) {
@@ -836,6 +914,7 @@ export default function LocationManager() {
       const ws = XLSX.utils.json_to_sheet(
         allRows.map((r) => ({
         Ubicación: r.ubicacion,
+        'Uso especial': LOCATION_USE_META[getLocationUse(r.ubicacion)].label,
         Código: r.codigo,
         Descripción: r.descripcion,
         ...(isPutaway ? {} : { Cantidad: r.cantidad }),
@@ -861,6 +940,12 @@ export default function LocationManager() {
   };
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const visibleSelectablePutaway = data.filter(
+    (row) => getLocationUse(row.ubicacion) !== 'CALIDAD'
+  );
+  const qualitySearchResults = search.trim()
+    ? data.filter((row) => getLocationUse(row.ubicacion) === 'CALIDAD')
+    : [];
 
   // ─── Render ─────────────────────────────────────────
   if (isCatalog) {
@@ -1062,6 +1147,22 @@ export default function LocationManager() {
         </div>
       </div>
 
+      {qualitySearchResults.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-violet-900">
+          <div className="mt-0.5 rounded-xl bg-violet-100 p-2 text-violet-700">
+            <ShieldCheck size={18} />
+          </div>
+          <div>
+            <strong className="block text-sm font-black">Ubicación de Calidad protegida</strong>
+            <p className="mt-0.5 text-xs leading-relaxed text-violet-800">
+              Esta búsqueda encontró {qualitySearchResults.length.toLocaleString('es-CL')} registro(s)
+              en Calidad ({[...new Set(qualitySearchResults.map((row) => row.ubicacion))].join(', ')}).
+              No se puede sacar, mover, retirar ni archivar producto desde estas ubicaciones.
+            </p>
+          </div>
+        </div>
+      )}
+
       {isPutaway && selectedPutaway.length > 0 && (
         <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -1111,9 +1212,9 @@ export default function LocationManager() {
                   <th className="w-11 px-3 py-3 text-center">
                     <input
                       type="checkbox"
-                      checked={data.length > 0 && data.every((row) => selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row)))}
+                      checked={visibleSelectablePutaway.length > 0 && visibleSelectablePutaway.every((row) => selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row)))}
                       onChange={toggleVisiblePutawayItems}
-                      aria-label="Seleccionar todos los registros visibles de Put Away"
+                      aria-label="Seleccionar todos los registros permitidos de Put Away"
                       className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                     />
                   </th>
@@ -1158,15 +1259,21 @@ export default function LocationManager() {
                   </td>
                 </tr>
               ) : (
-                data.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-slate-100 transition-colors ${
-                      isPutaway && selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
-                        ? 'bg-rose-50/70 hover:bg-rose-100/70'
-                        : 'hover:bg-blue-50/30'
-                    }`}
-                  >
+                data.map((row) => {
+                  const locationUse = getLocationUse(row.ubicacion);
+                  const isQualityLocation = locationUse === 'CALIDAD';
+                  const usageMeta = LOCATION_USE_META[locationUse];
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-b border-slate-100 transition-colors ${
+                        isQualityLocation
+                          ? 'bg-violet-50/60 hover:bg-violet-50'
+                          : isPutaway && selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
+                            ? 'bg-rose-50/70 hover:bg-rose-100/70'
+                            : 'hover:bg-blue-50/30'
+                      }`}
+                    >
                     {isPutaway && (
                       <td className="px-3 py-1 text-center">
                         <input
@@ -1174,17 +1281,34 @@ export default function LocationManager() {
                           checked={selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))}
                           onChange={() => togglePutawayItem(row)}
                           aria-label={`Seleccionar ${row.codigo || 'SKU'} en ${row.ubicacion || 'ubicación'}`}
-                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                          disabled={isQualityLocation}
+                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                         />
                       </td>
                     )}
                     <td className="px-3 py-1">
-                      <EditableCell
-                        value={row.ubicacion}
-                        field="ubicacion"
-                        rowId={row.id}
-                        onSave={handleInlineSave}
-                      />
+                      {isQualityLocation ? (
+                        <div className="flex flex-col gap-1 px-2 py-1">
+                          <span className="font-mono text-sm font-bold text-violet-900">{row.ubicacion}</span>
+                          <span className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black ${usageMeta.tone}`}>
+                            <ShieldCheck size={10} /> {usageMeta.label}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <EditableCell
+                            value={row.ubicacion}
+                            field="ubicacion"
+                            rowId={row.id}
+                            onSave={handleInlineSave}
+                          />
+                          {locationUse === 'TRANSITORIO' && (
+                            <span className={`ml-2 inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black ${usageMeta.tone}`}>
+                              <ShieldCheck size={10} /> {usageMeta.label}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-3 py-1">
                       <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
@@ -1230,22 +1354,25 @@ export default function LocationManager() {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => setMoveItem(row)}
-                          className="p-1.5 rounded-md hover:bg-blue-100 text-slate-400 hover:text-blue-600 transition-colors"
-                          title="Mover a otra ubicación"
+                          disabled={isQualityLocation}
+                          className="p-1.5 rounded-md text-slate-400 transition-colors hover:bg-blue-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                          title={isQualityLocation ? 'Calidad protegida: no se puede mover producto' : 'Mover a otra ubicación'}
                         >
                           <MoveRight size={15} />
                         </button>
                         <button
                           onClick={() => (isPutaway ? setBulkRetireItems([row]) : setBulkArchiveItems([row]))}
-                          className="p-1.5 rounded-md hover:bg-red-100 text-slate-400 hover:text-red-600 transition-colors"
-                          title={isPutaway ? 'Retirar de Put Away visual' : 'Archivar registro WMS'}
+                          disabled={isQualityLocation || (!isPutaway && locationUse === 'TRANSITORIO')}
+                          className="p-1.5 rounded-md text-slate-400 transition-colors hover:bg-red-100 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                          title={isQualityLocation ? 'Calidad protegida: no se puede sacar producto' : locationUse === 'TRANSITORIO' ? 'Transitorio protegido: no se puede archivar' : isPutaway ? 'Retirar de Put Away visual' : 'Archivar registro WMS'}
                         >
                           <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
