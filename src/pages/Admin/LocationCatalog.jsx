@@ -54,6 +54,7 @@ function LocationFormModal({ item, onClose, onSaved }) {
   const [ubicacion, setUbicacion] = useState(item?.ubicacion || '');
   const [descripcion, setDescripcion] = useState(item?.descripcion || '');
   const [tipoUso, setTipoUso] = useState(item?.tipo_uso || 'GENERAL');
+  const [esUbicacionAbs, setEsUbicacionAbs] = useState(Boolean(item?.es_ubicacion_abs));
   const [saving, setSaving] = useState(false);
   const isEditing = Boolean(item);
 
@@ -71,14 +72,23 @@ function LocationFormModal({ item, onClose, onSaved }) {
       if (isEditing) {
         result = await supabase
           .from('wms_ubicaciones_maestras')
-          .update({ descripcion: descripcion.trim() || null, tipo_uso: tipoUso })
+          .update({
+            descripcion: descripcion.trim() || null,
+            tipo_uso: tipoUso,
+            es_ubicacion_abs: esUbicacionAbs
+          })
           .eq('id', item.id)
           .select('*')
           .single();
       } else {
         result = await supabase
           .from('wms_ubicaciones_maestras')
-          .insert({ ubicacion: normalized, descripcion: descripcion.trim() || null, tipo_uso: tipoUso })
+          .insert({
+            ubicacion: normalized,
+            descripcion: descripcion.trim() || null,
+            tipo_uso: tipoUso,
+            es_ubicacion_abs: esUbicacionAbs
+          })
           .select('*')
           .single();
       }
@@ -170,6 +180,21 @@ function LocationFormModal({ item, onClose, onSaved }) {
         </select>
         <p className="mt-1 text-xs text-slate-500">{LOCATION_USE[tipoUso].detail}</p>
 
+        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+          <input
+            type="checkbox"
+            checked={esUbicacionAbs}
+            onChange={(event) => setEsUbicacionAbs(event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-sky-300 text-sky-600 focus:ring-sky-500"
+          />
+          <span>
+            <strong className="block font-black">Ubicación destinada a ABS</strong>
+            <span className="text-xs text-sky-700">
+              Reserva para asignación futura. No modifica Calidad, Transitorio, stock ni ERP.
+            </span>
+          </span>
+        </label>
+
         <div className="mt-5 flex gap-3">
           <button
             type="button"
@@ -207,7 +232,7 @@ export default function LocationCatalog({ onOpenRecords }) {
       const { data, error } = await supabase
         .from('wms_ubicaciones_maestras')
         .select(
-          'id, ubicacion, descripcion, tipo_uso, activo, creado_por_nombre, creado_en, actualizado_por_nombre, actualizado_en, desactivado_por_nombre, desactivado_en'
+          'id, ubicacion, descripcion, tipo_uso, es_ubicacion_abs, activo, creado_por_nombre, creado_en, actualizado_por_nombre, actualizado_en, desactivado_por_nombre, desactivado_en'
         )
         .order('ubicacion', { ascending: true })
         .limit(2000);
@@ -239,7 +264,12 @@ export default function LocationCatalog({ onOpenRecords }) {
       if (status === 'ACTIVAS' && !location.activo) return false;
       if (status === 'INACTIVAS' && location.activo) return false;
       if (!term) return true;
-      return [location.ubicacion, location.descripcion, LOCATION_USE[location.tipo_uso || 'GENERAL'].label]
+      return [
+        location.ubicacion,
+        location.descripcion,
+        LOCATION_USE[location.tipo_uso || 'GENERAL'].label,
+        location.es_ubicacion_abs ? 'ABS' : ''
+      ]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term));
     });
@@ -405,10 +435,17 @@ export default function LocationCatalog({ onOpenRecords }) {
                         {(() => {
                           const usage = LOCATION_USE[location.tipo_uso || 'GENERAL'];
                           return (
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black ${usage.tone}`}>
-                              {location.tipo_uso === 'GENERAL' ? <MapPin size={12} /> : <ShieldCheck size={12} />}
-                              {usage.label}
-                            </span>
+                            <>
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black ${usage.tone}`}>
+                                {location.tipo_uso === 'GENERAL' ? <MapPin size={12} /> : <ShieldCheck size={12} />}
+                                {usage.label}
+                              </span>
+                              {location.es_ubicacion_abs && (
+                                <span className="ml-1 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-black text-sky-700">
+                                  ABS
+                                </span>
+                              )}
+                            </>
                           );
                         })()}
                       </td>
