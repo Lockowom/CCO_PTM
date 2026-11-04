@@ -32,6 +32,14 @@ const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 1000;
 const BULK_RETIRE_CHUNK_SIZE = 500;
 
+// PostgREST puede responder 416 al pedir una página posterior a la última.
+// Para una lectura paginada masiva, esto equivale a haber llegado al final;
+// no debe impedir seleccionar ni exportar los registros que ya se obtuvieron.
+const isRangeExhausted = (error) =>
+  Number(error?.status) === 416 ||
+  error?.code === 'PGRST103' ||
+  /requested range not satisfiable/i.test(String(error?.message || ''));
+
 const putawaySelectionKey = (item) =>
   putawayRowKey(
     String(item?.ubicacion || '').trim().toUpperCase(),
@@ -535,6 +543,24 @@ export default function LocationManager() {
     [isPutaway, rackFilter, search, sortDir, sortField]
   );
 
+  const fetchAllFilteredRows = useCallback(
+    async (columns) => {
+      const allRows = [];
+      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+        const query = applyLocationFilters(supabase.from(sourceTable).select(columns));
+        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
+        if (error) {
+          if (isRangeExhausted(error)) break;
+          throw error;
+        }
+        allRows.push(...(rows || []));
+        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
+      }
+      return allRows;
+    },
+    [applyLocationFilters, sourceTable]
+  );
+
   // ─── Fetch Data (paginated + server-side search) ────
   const fetchData = useCallback(async () => {
     if (isCatalog) {
@@ -552,7 +578,15 @@ export default function LocationManager() {
       query = query.range(from, from + PAGE_SIZE - 1);
 
       const { data: rows, count, error } = await query;
-      if (error) throw error;
+      if (error) {
+        // Después de archivar una página completa, el offset anterior puede
+        // quedar fuera de rango. Volvemos al inicio sin mostrar un falso error.
+        if (isRangeExhausted(error) && page > 0) {
+          setPage(0);
+          return;
+        }
+        throw error;
+      }
 
       setData(await fillMissingDescriptionsFromMaster(rows || []));
       setTotalCount(count || 0);
@@ -735,14 +769,7 @@ export default function LocationManager() {
   const selectAllFilteredPutawayItems = async () => {
     setSelectingAllPutaway(true);
     try {
-      const allItems = [];
-      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
-        const query = applyLocationFilters(supabase.from(sourceTable).select('ubicacion, codigo'));
-        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
-        if (error) throw error;
-        allItems.push(...(rows || []));
-        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
-      }
+      const allItems = await fetchAllFilteredRows('ubicacion, codigo');
       const qualityItems = allItems.filter((item) => getLocationUse(item.ubicacion) === 'CALIDAD');
       const items = uniquePutawayItems(
         allItems.filter((item) => getLocationUse(item.ubicacion) !== 'CALIDAD')
@@ -762,14 +789,7 @@ export default function LocationManager() {
   const prepareWmsArchiveFiltered = async () => {
     setSelectingAllWms(true);
     try {
-      const allItems = [];
-      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
-        const query = applyLocationFilters(supabase.from(sourceTable).select('id, ubicacion, codigo'));
-        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
-        if (error) throw error;
-        allItems.push(...(rows || []));
-        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
-      }
+      const allItems = await fetchAllFilteredRows('id, ubicacion, codigo');
       const protectedItems = allItems.filter((item) => getLocationUse(item.ubicacion) !== 'GENERAL');
       const items = uniqueWmsItems(
         allItems.filter((item) => getLocationUse(item.ubicacion) === 'GENERAL')
@@ -825,7 +845,8 @@ export default function LocationManager() {
       toast.success(`${retirados.toLocaleString('es-CL')} asociación(es) retiradas visualmente.`);
       setBulkRetireItems(null);
       setSelectedPutaway([]);
-      fetchData();
+      if (page === 0) fetchData();
+      else setPage(0);
       fetchPutawayStats();
     } catch (error) {
       toast.error(error.message || 'No se pudo completar el retiro masivo. No se reintentó automáticamente.');
@@ -871,7 +892,8 @@ export default function LocationManager() {
         : '';
       toast.success(`${archivados.toLocaleString('es-CL')} registro(s) archivado(s).${protectedNotice}${notice}`);
       setBulkArchiveItems(null);
-      fetchData();
+      if (page === 0) fetchData();
+      else setPage(0);
     } catch (error) {
       toast.error(error.message || 'No se pudo completar el archivo masivo. No se reintentó automáticamente.');
     } finally {
@@ -896,15 +918,7 @@ export default function LocationManager() {
 
     setExporting(true);
     try {
-      const allRows = [];
-      for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
-        const query = applyLocationFilters(supabase.from(sourceTable).select('*'));
-        const { data: rows, error } = await query.range(from, from + EXPORT_PAGE_SIZE - 1);
-        if (error) throw error;
-
-        allRows.push(...(rows || []));
-        if (!rows || rows.length < EXPORT_PAGE_SIZE) break;
-      }
+      const allRows = await fetchAllFilteredRows('*');
 
       if (allRows.length === 0) {
         toast.info('No hay ubicaciones para exportar');
