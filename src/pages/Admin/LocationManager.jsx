@@ -475,6 +475,7 @@ export default function LocationManager() {
   const [exporting, setExporting] = useState(false);
   const [bulkImportMode, setBulkImportMode] = useState(null);
   const [selectedPutaway, setSelectedPutaway] = useState([]);
+  const [selectedWms, setSelectedWms] = useState([]);
   const [bulkRetireItems, setBulkRetireItems] = useState(null);
   const [bulkArchiveItems, setBulkArchiveItems] = useState(null);
   const [selectingAllPutaway, setSelectingAllPutaway] = useState(false);
@@ -766,6 +767,31 @@ export default function LocationManager() {
     );
   };
 
+  const toggleWmsItem = (item) => {
+    const locationUse = getLocationUse(item.ubicacion);
+    if (locationUse !== 'GENERAL') {
+      toast.error(`Ubicación ${LOCATION_USE_META[locationUse].label.toLowerCase()}: no se puede archivar producto.`);
+      return;
+    }
+    setSelectedWms((previous) => {
+      const exists = previous.some((selected) => selected.id === item.id);
+      return exists ? previous.filter((selected) => selected.id !== item.id) : uniqueWmsItems([...previous, item]);
+    });
+  };
+
+  const toggleVisibleWmsItems = () => {
+    const visibleItems = uniqueWmsItems(
+      data.filter((item) => getLocationUse(item.ubicacion) === 'GENERAL')
+    );
+    const selectedIds = new Set(selectedWms.map((item) => item.id));
+    const allVisibleSelected = visibleItems.length > 0 && visibleItems.every((item) => selectedIds.has(item.id));
+    setSelectedWms((previous) =>
+      allVisibleSelected
+        ? previous.filter((item) => !visibleItems.some((visible) => visible.id === item.id))
+        : uniqueWmsItems([...previous, ...visibleItems])
+    );
+  };
+
   const selectAllFilteredPutawayItems = async () => {
     setSelectingAllPutaway(true);
     try {
@@ -808,6 +834,26 @@ export default function LocationManager() {
       setBulkArchiveItems(items);
     } catch (error) {
       toast.error(`No se pudieron preparar los registros para archivo: ${error.message}`);
+    } finally {
+      setSelectingAllWms(false);
+    }
+  };
+
+  const selectAllFilteredWmsItems = async () => {
+    setSelectingAllWms(true);
+    try {
+      const allItems = await fetchAllFilteredRows('id, ubicacion, codigo');
+      const protectedItems = allItems.filter((item) => getLocationUse(item.ubicacion) !== 'GENERAL');
+      const items = uniqueWmsItems(
+        allItems.filter((item) => getLocationUse(item.ubicacion) === 'GENERAL')
+      );
+      setSelectedWms(items);
+      if (protectedItems.length) {
+        toast.info(`${protectedItems.length.toLocaleString('es-CL')} registro(s) protegido(s) se excluyeron de la selección.`);
+      }
+      toast.success(`${items.length.toLocaleString('es-CL')} registro(s) WMS seleccionado(s)`);
+    } catch (error) {
+      toast.error(`No se pudieron seleccionar los resultados: ${error.message}`);
     } finally {
       setSelectingAllWms(false);
     }
@@ -892,6 +938,7 @@ export default function LocationManager() {
         : '';
       toast.success(`${archivados.toLocaleString('es-CL')} registro(s) archivado(s).${protectedNotice}${notice}`);
       setBulkArchiveItems(null);
+      setSelectedWms([]);
       if (page === 0) fetchData();
       else setPage(0);
     } catch (error) {
@@ -957,6 +1004,10 @@ export default function LocationManager() {
   const visibleSelectablePutaway = data.filter(
     (row) => getLocationUse(row.ubicacion) !== 'CALIDAD'
   );
+  const visibleSelectableWms = data.filter(
+    (row) => getLocationUse(row.ubicacion) === 'GENERAL'
+  );
+  const tableColumnCount = isPutaway ? 7 : 8;
   const qualitySearchResults = search.trim()
     ? data.filter((row) => getLocationUse(row.ubicacion) === 'CALIDAD')
     : [];
@@ -1127,15 +1178,25 @@ export default function LocationManager() {
               </>
             )}
             {!isPutaway && (
-              <button
-                onClick={prepareWmsArchiveFiltered}
-                disabled={selectingAllWms || totalCount === 0}
-                className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
-                title="Archiva todos los resultados del filtro actual después de respaldarlos"
-              >
-                {selectingAllWms ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                Archivar filtrados
-              </button>
+              <>
+                <button
+                  onClick={selectAllFilteredWmsItems}
+                  disabled={selectingAllWms || totalCount === 0}
+                  className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-black text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="Selecciona todos los registros WMS permitidos del filtro actual"
+                >
+                  {selectingAllWms ? <Loader2 size={15} className="animate-spin" /> : <Package size={15} />}
+                  Seleccionar filtrados
+                </button>
+                <button
+                  onClick={prepareWmsArchiveFiltered}
+                  disabled={selectingAllWms || totalCount === 0}
+                  className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="Archiva todos los resultados del filtro actual después de respaldarlos"
+                >
+                  <Trash2 size={15} /> Archivar filtrados
+                </button>
+              </>
             )}
             <button
               onClick={fetchData}
@@ -1209,6 +1270,38 @@ export default function LocationManager() {
         </div>
       )}
 
+      {!isPutaway && selectedWms.length > 0 && (
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+              <Trash2 size={17} />
+            </div>
+            <div>
+              <strong className="block text-sm font-black text-amber-950">
+                {selectedWms.length.toLocaleString('es-CL')} registro(s) WMS seleccionado(s)
+              </strong>
+              <span className="text-xs text-amber-900">Se archivarán con respaldo y trazabilidad; no cambia cantidades, stock ni ERP.</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedWms([])}
+              disabled={saving}
+              className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+            >
+              Limpiar
+            </button>
+            <button
+              onClick={() => setBulkArchiveItems(selectedWms)}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700 disabled:opacity-50"
+            >
+              <Trash2 size={15} /> Archivar selección
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {/* Saving indicator */}
@@ -1222,17 +1315,26 @@ export default function LocationManager() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                {isPutaway && (
-                  <th className="w-11 px-3 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={visibleSelectablePutaway.length > 0 && visibleSelectablePutaway.every((row) => selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row)))}
-                      onChange={toggleVisiblePutawayItems}
-                      aria-label="Seleccionar todos los registros permitidos de Put Away"
-                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                    />
-                  </th>
-                )}
+                <th className="w-11 px-3 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={
+                      (isPutaway ? visibleSelectablePutaway : visibleSelectableWms).length > 0 &&
+                      (isPutaway ? visibleSelectablePutaway : visibleSelectableWms).every((row) =>
+                        isPutaway
+                          ? selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
+                          : selectedWms.some((item) => item.id === row.id)
+                      )
+                    }
+                    onChange={isPutaway ? toggleVisiblePutawayItems : toggleVisibleWmsItems}
+                    aria-label={
+                      isPutaway
+                        ? 'Seleccionar todos los registros permitidos de Put Away'
+                        : 'Seleccionar todos los registros WMS permitidos de esta página'
+                    }
+                    className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                  />
+                </th>
                 {[
                   { key: 'ubicacion', label: 'Ubicación', w: 'w-32' },
                   { key: 'codigo', label: 'Código', w: 'w-36' },
@@ -1260,14 +1362,14 @@ export default function LocationManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={tableColumnCount} className="text-center py-12">
                     <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">Cargando...</p>
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={tableColumnCount} className="text-center py-12">
                     <Package size={32} className="text-slate-200 mx-auto mb-2" />
                     <p className="text-sm text-slate-400">No se encontraron registros</p>
                   </td>
@@ -1285,21 +1387,25 @@ export default function LocationManager() {
                           ? 'bg-violet-50/60 hover:bg-violet-50'
                           : isPutaway && selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
                             ? 'bg-rose-50/70 hover:bg-rose-100/70'
+                            : !isPutaway && selectedWms.some((item) => item.id === row.id)
+                              ? 'bg-amber-50/70 hover:bg-amber-100/70'
                             : 'hover:bg-blue-50/30'
                       }`}
                     >
-                    {isPutaway && (
-                      <td className="px-3 py-1 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))}
-                          onChange={() => togglePutawayItem(row)}
-                          aria-label={`Seleccionar ${row.codigo || 'SKU'} en ${row.ubicacion || 'ubicación'}`}
-                          disabled={isQualityLocation}
-                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
-                        />
-                      </td>
-                    )}
+                    <td className="px-3 py-1 text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          isPutaway
+                            ? selectedPutaway.some((item) => putawaySelectionKey(item) === putawaySelectionKey(row))
+                            : selectedWms.some((item) => item.id === row.id)
+                        }
+                        onChange={() => (isPutaway ? togglePutawayItem(row) : toggleWmsItem(row))}
+                        aria-label={`Seleccionar ${row.codigo || 'SKU'} en ${row.ubicacion || 'ubicación'}`}
+                        disabled={isPutaway ? isQualityLocation : locationUse !== 'GENERAL'}
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-rose-600 focus:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </td>
                     <td className="px-3 py-1">
                       {isQualityLocation ? (
                         <div className="flex flex-col gap-1 px-2 py-1">
