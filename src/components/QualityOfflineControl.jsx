@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, CloudDownload, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { AlertTriangle, DownloadCloud, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import {
@@ -89,7 +89,7 @@ const QualityOfflineControl = ({ onSynced }) => {
           disabled={!online || working}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-black text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <CloudDownload size={13} /> Descargar tareas
+          <DownloadCloud size={13} /> Descargar tareas
         </button>
         <button
           onClick={sync}
