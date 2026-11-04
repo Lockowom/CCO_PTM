@@ -53,6 +53,10 @@ import { compressImage } from '../../lib/imageCompress';
 import { signedUrls, signedUrl } from '../../lib/storageUrl';
 import CameraCapture from '../../components/CameraCapture';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
+import {
+  isLocalQualityEvidencePath,
+  obtenerUrlEvidenciaCalidadOffline
+} from '../../services/qualityOfflineService';
 
 // Convierte una familia (RPC) en un "nivel" de checklist con sus criterios propios.
 const categoriaANivel = (c) => ({
@@ -190,14 +194,16 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
 
   const guardarAvance = async () => {
     try {
-      await guardar.mutateAsync({
+      const result = await guardar.mutateAsync({
         tareaId: tarea.id,
         checklist: checklistCompleto(),
         observaciones: obs,
         disposicion: disp,
         finalizar: false
       });
-      toast.success('Avance guardado');
+      if (result?.queued_offline)
+        toast.warning('Avance guardado offline. Se confirmará al sincronizar.');
+      else toast.success('Avance guardado');
     } catch (e) {
       toast.error(`No se pudo guardar: ${e.message}`);
     }
@@ -240,6 +246,10 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
         finalizar: true,
         resultado
       });
+      if (res?.queued_offline) {
+        toast.warning('Dictamen guardado offline. La certificación se confirmará al sincronizar.');
+        return;
+      }
       if (resultado === 'CONFORME') {
         toast.success(`Certificado automáticamente ${res?.folio || ''} — recepción CONFORME`);
         onBack();
@@ -292,14 +302,32 @@ const ChecklistForm = ({ tarea, onBack, canManage, onGenerarDanos }) => {
   const evidencias = extras.evidencias || [];
   useEffect(() => {
     let on = true;
-    signedUrls(
-      EVIDENCIAS_BUCKET,
-      evidencias.map((ev) => ev.path)
-    ).then((m) => {
-      if (on) setFotoUrls(m);
+    const localUrls = [];
+    const remotePaths = evidencias
+      .map((ev) => ev.path)
+      .filter((path) => !isLocalQualityEvidencePath(path));
+    Promise.all([
+      signedUrls(EVIDENCIAS_BUCKET, remotePaths),
+      Promise.all(
+        evidencias
+          .filter((ev) => isLocalQualityEvidencePath(ev.path))
+          .map(async (ev) => [ev.path, await obtenerUrlEvidenciaCalidadOffline(ev.path)])
+      )
+    ]).then(([remote, local]) => {
+      if (!on) {
+        local.forEach(([, url]) => {
+          if (url) URL.revokeObjectURL(url);
+        });
+        return;
+      }
+      local.forEach(([, url]) => {
+        if (url) localUrls.push(url);
+      });
+      setFotoUrls({ ...remote, ...Object.fromEntries(local.filter(([, url]) => url)) });
     });
     return () => {
       on = false;
+      localUrls.forEach((url) => URL.revokeObjectURL(url));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(evidencias.map((ev) => ev.path))]);

@@ -56,6 +56,10 @@ import { opciones as fetchPanelOptions } from '../Panel/ingresar/ingresarService
 import { compressImage } from '../../lib/imageCompress';
 import { signedUrl, signedUrls } from '../../lib/storageUrl';
 import CameraCapture from '../../components/CameraCapture';
+import {
+  isLocalQualityEvidencePath,
+  obtenerUrlEvidenciaCalidadOffline
+} from '../../services/qualityOfflineService';
 import { exportChecklistPDF, exportChecklistWord } from '../../lib/exportChecklistIngreso';
 
 // ── Modal: certificación de salida MANUAL (N.V. a mano + SKUs) ──────────────
@@ -786,14 +790,16 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
 
   const guardarAvance = async () => {
     try {
-      await guardar.mutateAsync({
+      const result = await guardar.mutateAsync({
         tareaId: tarea.id,
         checklist: checklistCompleto(),
         observaciones: obs,
         disposicion: disp,
         finalizar: false
       });
-      toast.success('Avance guardado');
+      if (result?.queued_offline)
+        toast.warning('Avance guardado offline. Se confirmará al sincronizar.');
+      else toast.success('Avance guardado');
     } catch (e) {
       toast.error(`No se pudo guardar: ${e.message}`);
     }
@@ -826,6 +832,10 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
         finalizar: true,
         resultado
       });
+      if (res?.queued_offline) {
+        toast.warning('Dictamen guardado offline. La certificación se confirmará al sincronizar.');
+        return;
+      }
       if (resultado === 'CONFORME') {
         toast.success(`Salida certificada ${res?.folio || ''}`);
         onBack();
@@ -847,14 +857,32 @@ const SalidaForm = ({ tarea, onBack, canManage }) => {
   const evidencias = extras.evidencias || [];
   useEffect(() => {
     let on = true;
-    signedUrls(
-      EVIDENCIAS_BUCKET,
-      evidencias.map((ev) => ev.path)
-    ).then((m) => {
-      if (on) setFotoUrls(m);
+    const localUrls = [];
+    const remotePaths = evidencias
+      .map((ev) => ev.path)
+      .filter((path) => !isLocalQualityEvidencePath(path));
+    Promise.all([
+      signedUrls(EVIDENCIAS_BUCKET, remotePaths),
+      Promise.all(
+        evidencias
+          .filter((ev) => isLocalQualityEvidencePath(ev.path))
+          .map(async (ev) => [ev.path, await obtenerUrlEvidenciaCalidadOffline(ev.path)])
+      )
+    ]).then(([remote, local]) => {
+      if (!on) {
+        local.forEach(([, url]) => {
+          if (url) URL.revokeObjectURL(url);
+        });
+        return;
+      }
+      local.forEach(([, url]) => {
+        if (url) localUrls.push(url);
+      });
+      setFotoUrls({ ...remote, ...Object.fromEntries(local.filter(([, url]) => url)) });
     });
     return () => {
       on = false;
+      localUrls.forEach((url) => URL.revokeObjectURL(url));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(evidencias.map((ev) => ev.path))]);

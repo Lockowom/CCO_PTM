@@ -3,6 +3,15 @@ import { supabase } from '../supabase';
 import { withTimeout } from '../lib/supabaseQuery';
 import { Logger } from '../lib/logger';
 import { useAuth } from '../context/AuthContext';
+import {
+  encolarChecklistCalidadOffline,
+  encolarComandoCalidadOffline,
+  eliminarEvidenciaCalidadOffline,
+  guardarEvidenciaCalidadOffline,
+  isQualityOffline,
+  listarTareasCalidadOffline,
+  obtenerTareaCalidadOffline
+} from './qualityOfflineService';
 
 // UUID con fallback: crypto.randomUUID no existe en orígenes no seguros / WebViews
 // viejos y lanzaría TypeError al construir el path de la evidencia.
@@ -269,6 +278,17 @@ export function useCrearInforme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ cabecera, items, asignacionId = null }) => {
+      if (isQualityOffline()) {
+        if (!asignacionId) {
+          throw new Error('Solo las tareas descargadas pueden finalizarse offline.');
+        }
+        return encolarComandoCalidadOffline({
+          hito: 'HITO_2',
+          tareaId: asignacionId,
+          accion: 'FINALIZAR',
+          payload: { cabecera: sanitizeInformeCabecera(cabecera), items }
+        });
+      }
       const rpcName = asignacionId
         ? 'crear_informe_monitoreo_asignacion'
         : 'crear_informe_monitoreo';
@@ -673,6 +693,7 @@ export function useTareasChecklist() {
     meta: { module: 'quality', action: 'calidad_tareas_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
       try {
+        if (isQualityOffline()) return listarTareasCalidadOffline('HITO_1');
         const { data, error } = await withTimeout(
           supabase
             .from('tms_calidad_tareas')
@@ -685,6 +706,7 @@ export function useTareasChecklist() {
         const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
         return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
       } catch (error) {
+        if (isQualityOffline()) return listarTareasCalidadOffline('HITO_1');
         if (isCalidadReadPermissionIssue(error)) {
           Logger.warn(error, {
             module: 'quality',
@@ -753,10 +775,13 @@ export function useAsignacionesCalidad() {
       table: 'tms_calidad_asignaciones'
     },
     queryFn: async () => {
+      if (isQualityOffline()) return listarTareasCalidadOffline('HITO_2');
       const { data, error } = await withTimeout(
         supabase
           .from('tms_calidad_asignaciones')
-          .select('*')
+          .select(
+            '*, informe:tms_monitoreo_informes(id, numero, fecha, estado, tipo_informe, analista_nombre, total_items)'
+          )
           .order('created_at', { ascending: false }),
         { ms: 12000, label: 'asignaciones de calidad' }
       );
@@ -812,6 +837,11 @@ function normalizeQualityTaskError(error) {
 }
 
 export async function tomarAsignacionCalidad(asignacionId) {
+  if (isQualityOffline()) {
+    const cached = await obtenerTareaCalidadOffline('HITO_2', asignacionId);
+    if (!cached) throw new Error('La tarea no fue descargada para uso offline.');
+    return { ...cached, offline: true, lock_owned: false };
+  }
   const { data, error } = await supabase.rpc('tomar_asignacion_calidad', {
     p_asignacion_id: asignacionId
   });
@@ -820,6 +850,14 @@ export async function tomarAsignacionCalidad(asignacionId) {
 }
 
 export async function guardarProgresoAsignacionCalidad(asignacionId, progressData) {
+  if (isQualityOffline()) {
+    return encolarComandoCalidadOffline({
+      hito: 'HITO_2',
+      tareaId: asignacionId,
+      accion: 'PROGRESO',
+      payload: { progress_data: progressData || {} }
+    });
+  }
   const { data, error } = await supabase.rpc('guardar_progreso_asignacion_calidad', {
     p_asignacion_id: asignacionId,
     p_progress_data: progressData || {}
@@ -1122,6 +1160,9 @@ export async function uploadEvidenciaSalida({ tareaId, tipo, blob }) {
   const MAX_BYTES = 7.5 * 1024 * 1024;
   if (blob?.size > MAX_BYTES)
     throw new Error('La foto pesa demasiado y no se pudo comprimir. Prueba con otra (JPG/PNG).');
+  if (isQualityOffline()) {
+    return guardarEvidenciaCalidadOffline({ hito: 'HITO_3', tareaId, tipo, blob });
+  }
   const mime = blob?.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
   const ext =
     {
@@ -1139,6 +1180,7 @@ export async function uploadEvidenciaSalida({ tareaId, tipo, blob }) {
   return path;
 }
 export async function deleteEvidenciaSalida(path) {
+  if (await eliminarEvidenciaCalidadOffline(path)) return;
   const { error } = await supabase.storage.from(EVIDENCIAS_BUCKET).remove([path]);
   if (error) throw error;
 }
@@ -1154,6 +1196,9 @@ export async function uploadEvidenciaIngreso({ tareaId, tipo, blob }) {
   const MAX_BYTES = 7.5 * 1024 * 1024;
   if (blob?.size > MAX_BYTES)
     throw new Error('La foto pesa demasiado y no se pudo comprimir. Prueba con otra (JPG/PNG).');
+  if (isQualityOffline()) {
+    return guardarEvidenciaCalidadOffline({ hito: 'HITO_1', tareaId, tipo, blob });
+  }
   const mime = blob?.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
   const ext =
     {
@@ -1186,6 +1231,7 @@ export function useTareasSalida() {
     meta: { module: 'quality', action: 'calidad_tareas_salida_query', table: 'tms_calidad_tareas' },
     queryFn: async () => {
       try {
+        if (isQualityOffline()) return listarTareasCalidadOffline('HITO_3');
         const { data, error } = await withTimeout(
           supabase
             .from('tms_calidad_tareas')
@@ -1198,6 +1244,7 @@ export function useTareasSalida() {
         const prio = { PENDIENTE: 0, EN_PROCESO: 1, NO_CONFORME: 2, CONFORME: 3 };
         return (data || []).sort((a, b) => (prio[a.estado] ?? 9) - (prio[b.estado] ?? 9));
       } catch (error) {
+        if (isQualityOffline()) return listarTareasCalidadOffline('HITO_3');
         if (isCalidadReadPermissionIssue(error)) {
           Logger.warn(error, {
             module: 'quality',
@@ -1551,6 +1598,16 @@ export function useGuardarChecklist() {
       resultado,
       disposicion
     }) => {
+      if (isQualityOffline()) {
+        return encolarChecklistCalidadOffline({
+          tareaId,
+          checklist,
+          observaciones,
+          finalizar,
+          resultado,
+          disposicion
+        });
+      }
       const { data, error } = await supabase.rpc('guardar_checklist_ingreso', {
         p_tarea_id: tareaId,
         p_checklist: checklist || {},

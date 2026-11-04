@@ -11,7 +11,11 @@ import {
   UserPlus,
   FileText,
   Ban,
-  ArrowRight
+  ArrowRight,
+  MapPin,
+  PackageSearch,
+  Layers3,
+  ClipboardCheck
 } from 'lucide-react';
 import {
   fetchCandidatos,
@@ -22,6 +26,14 @@ import {
   ESTADO_ASIGNACION_META
 } from '../../services/calidadService';
 import { useAuth } from '../../context/AuthContext';
+import {
+  assignmentItems,
+  assignmentLocations,
+  assignmentReference,
+  buildProductExplorerRows,
+  filterAndSortAssignments,
+  matchesProductQuery
+} from '../../domain/quality/assignmentExplorer';
 
 // ── Modal: Inventario arma la asignación (busca stock y elige SKUs) ─────────
 const AsignarModal = ({ onClose }) => {
@@ -277,63 +289,347 @@ const AsignarModal = ({ onClose }) => {
   );
 };
 
+const TaskCard = ({
+  assignment,
+  user,
+  isAdmin,
+  canAssign,
+  canManageQuality,
+  onAnular,
+  onEliminar,
+  onGenerarInforme,
+  onAbrirInforme,
+  focused
+}) => {
+  const meta = ESTADO_ASIGNACION_META[assignment.estado] || {};
+  const skus = assignmentItems(assignment);
+  const estancias = assignmentLocations(assignment);
+  const abierta = assignment.estado === 'PENDIENTE' || assignment.estado === 'EN_PROCESO';
+  const lockActive =
+    abierta &&
+    assignment.locked_by &&
+    assignment.locked_at &&
+    Date.now() - new Date(assignment.locked_at).getTime() < 15 * 60 * 1000;
+  const lockedByOther = lockActive && assignment.locked_by !== user?.id;
+  const progress =
+    assignment.estado === 'RESUELTA' ? 100 : assignment.estado === 'EN_PROCESO' ? 66 : 33;
+
+  return (
+    <article
+      className={`quality-mobile-card relative overflow-hidden rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[.99] ${focused ? 'ring-2 ring-emerald-400 ring-offset-2' : ''} ${assignment.estado === 'EN_PROCESO' ? 'border-blue-200' : abierta ? 'border-amber-200' : 'border-emerald-200'}`}
+    >
+      <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">
+        <div
+          className={`h-full transition-all ${assignment.estado === 'RESUELTA' ? 'bg-emerald-500' : assignment.estado === 'EN_PROCESO' ? 'bg-blue-500' : 'bg-amber-400'}`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest ${meta.cls}`}
+        >
+          {meta.label || assignment.estado}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {assignment.prioridad === 'URGENTE' && assignment.estado !== 'RESUELTA' && (
+            <span className="flex items-center gap-1 rounded-md border border-rose-200 bg-rose-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-rose-700">
+              <AlertTriangle size={11} /> Urgente
+            </span>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => onEliminar(assignment)}
+              title="Eliminar (admin)"
+              className="rounded-lg p-1.5 text-slate-300 hover:bg-rose-100 hover:text-rose-600"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="font-mono text-[11px] font-black tracking-wide text-slate-500">
+          {assignmentReference(assignment)}
+        </span>
+        <span className="text-[10px] font-bold text-slate-400">{progress}% del flujo</span>
+      </div>
+      <p className="text-sm font-black text-slate-800">
+        {skus.length} SKU(s) · {estancias.length} estancia(s)
+      </p>
+      <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+        {skus
+          .slice(0, 3)
+          .map((sku) => sku.producto || sku.codigo_producto)
+          .join(' · ')}
+        {skus.length > 3 ? '…' : ''}
+      </p>
+      {estancias.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {estancias.slice(0, 4).map((ubicacion) => (
+            <span
+              key={ubicacion}
+              className="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700"
+            >
+              <MapPin size={10} /> {ubicacion}
+            </span>
+          ))}
+          {estancias.length > 4 && (
+            <span className="px-1 py-1 text-[10px] font-bold text-slate-400">
+              +{estancias.length - 4}
+            </span>
+          )}
+        </div>
+      )}
+      {assignment.motivo && (
+        <p className="mt-2 text-xs italic text-slate-400">“{assignment.motivo}”</p>
+      )}
+      <p className="mt-2 text-[11px] text-slate-400">
+        {assignment.asignado_nombre ? `Por ${assignment.asignado_nombre}` : 'Inventario'} ·{' '}
+        {assignment.created_at ? new Date(assignment.created_at).toLocaleDateString('es-CL') : ''}
+      </p>
+      <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-50 p-1.5 text-center text-[9px] font-black uppercase tracking-wide">
+        <span className="rounded-lg bg-amber-100 px-1 py-1.5 text-amber-700">1 · Asignada</span>
+        <span
+          className={`rounded-lg px-1 py-1.5 ${progress >= 66 ? 'bg-blue-100 text-blue-700' : 'text-slate-300'}`}
+        >
+          2 · Revisión
+        </span>
+        <span
+          className={`rounded-lg px-1 py-1.5 ${progress === 100 ? 'bg-emerald-100 text-emerald-700' : 'text-slate-300'}`}
+        >
+          3 · Informe
+        </span>
+      </div>
+      {assignment.informe && (
+        <button
+          onClick={() => onAbrirInforme(assignment.informe.id)}
+          className="mt-2 flex w-full items-center gap-1.5 rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-2 text-left text-[11px] font-bold text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+        >
+          <FileText size={12} /> Informe {assignment.informe.numero || 'vinculado'} ·{' '}
+          {assignment.informe.estado || 'emitido'}
+        </button>
+      )}
+      {lockActive && (
+        <div
+          className={`mt-2 rounded-lg border px-2.5 py-2 text-[11px] font-bold ${lockedByOther ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}
+        >
+          🔒 {lockedByOther ? 'En proceso por' : 'Tarea tomada por'}{' '}
+          {assignment.locked_by_name || 'otro usuario'} desde las{' '}
+          {new Date(assignment.locked_at).toLocaleTimeString('es-CL', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </div>
+      )}
+      {abierta && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {canManageQuality && (
+            <button
+              onClick={() => onGenerarInforme(assignment)}
+              title={lockedByOther ? 'El sistema verificará el bloqueo antes de abrir' : ''}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black text-white ${lockedByOther ? 'bg-slate-500 hover:bg-slate-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+            >
+              <FileText size={14} /> Generar informe / dictamen <ArrowRight size={14} />
+            </button>
+          )}
+          {canAssign && (
+            <button
+              onClick={() => onAnular(assignment)}
+              title="Anular"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-black text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+            >
+              <Ban size={14} />
+            </button>
+          )}
+        </div>
+      )}
+      {assignment.estado === 'RESUELTA' && (
+        <p className="mt-3 flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+          <ClipboardCheck size={12} /> Resuelta
+          {assignment.resuelto_nombre ? ` por ${assignment.resuelto_nombre}` : ''}
+        </p>
+      )}
+    </article>
+  );
+};
+
+const ProductExplorer = ({ products, selectedKey, onSelect, onOpenTask, onAbrirInforme }) => {
+  const selected = products.find((product) => product.key === selectedKey) || products[0];
+  if (products.length === 0) {
+    return (
+      <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-bold text-slate-400">
+        No hay SKU, descripción, estancia o informe que coincida con la búsqueda.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,.85fr)]">
+      <div className="space-y-2">
+        {products.map((product) => (
+          <button
+            key={product.key}
+            onClick={() => onSelect(product.key)}
+            className={`w-full rounded-2xl border p-4 text-left transition ${selected?.key === product.key ? 'border-emerald-300 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-slate-50'}`}
+          >
+            <div className="flex gap-3">
+              <span className="mt-0.5 rounded-xl bg-slate-900 p-2 text-white">
+                <PackageSearch size={16} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block truncate text-sm text-slate-800">{product.codigo}</strong>
+                <span className="mt-0.5 block line-clamp-2 text-xs text-slate-500">
+                  {product.producto}
+                </span>
+                <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                  <span>{product.estancias.length} estancia(s)</span>
+                  <span>{product.tareas.length} tarea(s)</span>
+                  <span>{product.informes.length} informe(s)</span>
+                </span>
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+      {selected && (
+        <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">
+            Ficha de trazabilidad
+          </p>
+          <h4 className="mt-1 text-base font-black text-slate-800">{selected.codigo}</h4>
+          <p className="mt-0.5 text-sm text-slate-500">{selected.producto}</p>
+          <section className="mt-5">
+            <p className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+              <MapPin size={14} className="text-sky-600" /> Estancias ({selected.estancias.length})
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {selected.estancias.map((stay) => (
+                <span
+                  key={`${stay.ubicacion}|${stay.partida || ''}`}
+                  className="rounded-lg bg-sky-50 px-2 py-1 text-[11px] font-bold text-sky-700"
+                >
+                  {stay.ubicacion}
+                  {stay.partida ? ` · ${stay.partida}` : ''}
+                </span>
+              ))}
+            </div>
+          </section>
+          <section className="mt-5">
+            <p className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+              <Layers3 size={14} className="text-amber-600" /> Tareas vinculadas (
+              {selected.tareas.length})
+            </p>
+            <div className="mt-2 space-y-2">
+              {selected.tareas.map((task) => (
+                <button
+                  key={task.id}
+                  onClick={() => onOpenTask(task.id)}
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left hover:border-emerald-200 hover:bg-emerald-50"
+                >
+                  <span>
+                    <strong className="block font-mono text-[11px] text-slate-700">
+                      {assignmentReference(task)}
+                    </strong>
+                    <span className="text-[10px] text-slate-400">
+                      {ESTADO_ASIGNACION_META[task.estado]?.label || task.estado}
+                    </span>
+                  </span>
+                  <ArrowRight size={14} className="text-slate-400" />
+                </button>
+              ))}
+            </div>
+          </section>
+          <section className="mt-5">
+            <p className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+              <FileText size={14} className="text-emerald-600" /> Informes generados (
+              {selected.informes.length})
+            </p>
+            {selected.informes.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-400">
+                Aún no hay informe vinculado para este SKU.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {selected.informes.map((report) => (
+                  <button
+                    key={report.id}
+                    onClick={() => onAbrirInforme(report.id)}
+                    className="w-full rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-left hover:border-emerald-300 hover:bg-emerald-100"
+                  >
+                    <strong className="block text-xs text-emerald-800">
+                      {report.numero || 'Informe vinculado'}
+                    </strong>
+                    <span className="text-[10px] font-bold text-emerald-700">
+                      {report.estado || 'Emitido'}
+                      {report.fecha
+                        ? ` · ${new Date(report.fecha).toLocaleDateString('es-CL')}`
+                        : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        </aside>
+      )}
+    </div>
+  );
+};
+
 // ── Panel de asignaciones (cola de tareas del hito 2) ───────────────────────
-const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) => {
+const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme, onAbrirInforme }) => {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
   const { data: asignaciones = [], isLoading } = useAsignacionesCalidad();
   const anular = useAnularAsignacion();
   const eliminar = useEliminarAsignacionCalidad();
   const [modal, setModal] = useState(false);
-  const [filtro, setFiltro] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [estado, setEstado] = useState('TODAS');
+  const [vista, setVista] = useState('TAREAS');
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [tareaEnFoco, setTareaEnFoco] = useState(null);
 
-  const anularAsig = async (a) => {
+  const anularAsig = async (assignment) => {
     if (!confirm('¿Anular esta asignación? No se podrá revertir.')) return;
     try {
-      await anular.mutateAsync(a.id);
+      await anular.mutateAsync(assignment.id);
       toast.success('Asignación anulada');
-    } catch (e) {
-      toast.error(`No se pudo anular: ${e.message}`);
+    } catch (error) {
+      toast.error(`No se pudo anular: ${error.message}`);
     }
   };
-  const borrarAsig = async (a) => {
+  const borrarAsig = async (assignment) => {
     if (!confirm('¿Eliminar esta asignación definitivamente? Esta acción no se puede deshacer.'))
       return;
     try {
-      await eliminar.mutateAsync(a.id);
+      await eliminar.mutateAsync(assignment.id);
       toast.success('Asignación eliminada');
-    } catch (e) {
-      toast.error(`No se pudo eliminar: ${e.message}`);
+    } catch (error) {
+      toast.error(`No se pudo eliminar: ${error.message}`);
     }
   };
 
   const pendientes = asignaciones.filter(
-    (a) => a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO'
+    (assignment) => assignment.estado === 'PENDIENTE' || assignment.estado === 'EN_PROCESO'
   ).length;
-  const resueltas = asignaciones.filter((a) => a.estado === 'RESUELTA').length;
-  const visibles = useMemo(() => {
-    const term = filtro.trim().toLocaleLowerCase('es');
-    const priority = { EN_PROCESO: 0, PENDIENTE: 1, RESUELTA: 2, ANULADA: 3 };
-    return [...asignaciones]
-      .filter((a) => {
-        if (!term) return true;
-        const skus = Array.isArray(a.skus) ? a.skus : [];
-        return [
-          a.motivo,
-          a.asignado_nombre,
-          a.locked_by_name,
-          ...skus.map((s) => s.codigo_producto)
-        ]
-          .join(' ')
-          .toLocaleLowerCase('es')
-          .includes(term);
-      })
-      .sort(
-        (a, b) =>
-          (priority[a.estado] ?? 9) - (priority[b.estado] ?? 9) ||
-          new Date(b.created_at || 0) - new Date(a.created_at || 0)
-      );
-  }, [asignaciones, filtro]);
+  const resueltas = asignaciones.filter((assignment) => assignment.estado === 'RESUELTA').length;
+  const visibles = useMemo(
+    () => filterAndSortAssignments(asignaciones, { query: busqueda, state: estado }),
+    [asignaciones, busqueda, estado]
+  );
+  const products = useMemo(
+    () =>
+      buildProductExplorerRows(filterAndSortAssignments(asignaciones, { state: estado })).filter(
+        (product) => matchesProductQuery(product, busqueda)
+      ),
+    [asignaciones, busqueda, estado]
+  );
+
+  const abrirTarea = (taskId) => {
+    setVista('TAREAS');
+    setTareaEnFoco(taskId);
+  };
 
   return (
     <div className="mb-6 space-y-4 anim-fade-up">
@@ -344,11 +640,11 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
               <ClipboardList size={13} /> Hito 2 · Estancia
             </span>
             <h3 className="mt-3 text-xl font-black tracking-tight sm:text-2xl">
-              Trazabilidad de revisiones
+              Tareas, estancias e informes conectados
             </h3>
             <p className="mt-1 max-w-xl text-xs text-slate-300 sm:text-sm">
-              Cada tarjeta mantiene un identificador estable y muestra claramente si está asignada,
-              en proceso o con informe emitido.
+              Consulta una tarea completa o parte desde un SKU para ver todas sus estancias,
+              revisiones e informes sin duplicar el flujo operativo.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -371,29 +667,59 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
         </div>
       </section>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-emerald-400 focus-within:bg-white">
-          <Search size={16} className="shrink-0 text-slate-400" />
-          <input
-            value={filtro}
-            onChange={(event) => setFiltro(event.target.value)}
-            placeholder="Buscar SKU, motivo o responsable…"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-          />
-          {filtro && (
-            <button onClick={() => setFiltro('')}>
-              <X size={15} />
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-emerald-400 focus-within:bg-white">
+            <Search size={16} className="shrink-0 text-slate-400" />
+            <input
+              value={busqueda}
+              onChange={(event) => setBusqueda(event.target.value)}
+              placeholder="Buscar SKU, descripción, ubicación, tarea o informe…"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+            />
+            {busqueda && (
+              <button onClick={() => setBusqueda('')} title="Limpiar búsqueda">
+                <X size={15} />
+              </button>
+            )}
+          </label>
+          <select
+            value={estado}
+            onChange={(event) => setEstado(event.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-600 outline-none focus:border-emerald-400"
+          >
+            <option value="TODAS">Todos los estados</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="EN_PROCESO">En proceso</option>
+            <option value="RESUELTA">Resueltas</option>
+            <option value="ANULADA">Anuladas</option>
+          </select>
+          {canAssign && (
+            <button
+              onClick={() => setModal(true)}
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-black text-white hover:bg-slate-800"
+            >
+              <UserPlus size={16} /> Asignar SKUs a Calidad
             </button>
           )}
-        </label>
-        {canAssign && (
-          <button
-            onClick={() => setModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center gap-2 hover:bg-slate-800"
-          >
-            <UserPlus size={16} /> Asignar SKUs a Calidad
-          </button>
-        )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+          {[
+            ['TAREAS', ClipboardList, 'Bandeja por tarea'],
+            ['PRODUCTOS', PackageSearch, 'Consulta por SKU']
+          ].map(([id, Icon, label]) => (
+            <button
+              key={id}
+              onClick={() => setVista(id)}
+              className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black ${vista === id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            >
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+          <span className="self-center text-[11px] font-bold text-slate-400">
+            {vista === 'TAREAS' ? `${visibles.length} tarea(s)` : `${products.length} SKU(s)`}
+          </span>
+        </div>
       </div>
 
       {isLoading ? (
@@ -401,8 +727,8 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
           <Loader2 className="animate-spin text-emerald-500" size={26} />
         </div>
       ) : asignaciones.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-6 text-center">
-          <PackageCheck size={30} className="text-slate-200 mx-auto mb-2" />
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+          <PackageCheck size={30} className="mx-auto mb-2 text-slate-200" />
           <p className="text-sm font-bold text-slate-400">Sin revisiones asignadas</p>
           <p className="text-xs text-slate-300">
             {canAssign
@@ -410,141 +736,37 @@ const AsignacionesPanel = ({ canAssign, canManageQuality, onGenerarInforme }) =>
               : 'Inventario aún no ha asignado revisiones.'}
           </p>
         </div>
+      ) : vista === 'PRODUCTOS' ? (
+        <ProductExplorer
+          products={products}
+          selectedKey={productoSeleccionado}
+          onSelect={setProductoSeleccionado}
+          onOpenTask={abrirTarea}
+          onAbrirInforme={onAbrirInforme}
+        />
+      ) : visibles.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-bold text-slate-400">
+          No hay tarea que coincida con la búsqueda o el estado seleccionado.
+        </p>
       ) : (
         <div className="anim-stagger grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {visibles.map((a) => {
-            const meta = ESTADO_ASIGNACION_META[a.estado] || {};
-            const skus = Array.isArray(a.skus) ? a.skus : [];
-            const abierta = a.estado === 'PENDIENTE' || a.estado === 'EN_PROCESO';
-            const lockActive =
-              abierta &&
-              a.locked_by &&
-              a.locked_at &&
-              Date.now() - new Date(a.locked_at).getTime() < 15 * 60 * 1000;
-            const lockedByOther = lockActive && a.locked_by !== user?.id;
-            const progress = a.estado === 'RESUELTA' ? 100 : a.estado === 'EN_PROCESO' ? 66 : 33;
-            const correlativo = `H2-${String(a.id || '')
-              .slice(0, 8)
-              .toUpperCase()}`;
-            return (
-              <div
-                key={a.id}
-                className={`quality-mobile-card relative overflow-hidden rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[.99] ${a.estado === 'EN_PROCESO' ? 'border-blue-200' : abierta ? 'border-amber-200' : 'border-emerald-200'}`}
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">
-                  <div
-                    className={`h-full transition-all ${a.estado === 'RESUELTA' ? 'bg-emerald-500' : a.estado === 'EN_PROCESO' ? 'bg-blue-500' : 'bg-amber-400'}`}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span
-                    className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${meta.cls}`}
-                  >
-                    {meta.label || a.estado}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {a.prioridad === 'URGENTE' && a.estado !== 'RESUELTA' && (
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border bg-rose-100 text-rose-700 border-rose-200 flex items-center gap-1">
-                        <AlertTriangle size={11} /> Urgente
-                      </span>
-                    )}
-                    {isAdmin && (
-                      <button
-                        onClick={() => borrarAsig(a)}
-                        title="Eliminar (admin)"
-                        className="p-1.5 rounded-lg text-slate-300 hover:bg-rose-100 hover:text-rose-600"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] font-black tracking-wide text-slate-500">
-                    {correlativo}
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {progress}% del flujo
-                  </span>
-                </div>
-                <p className="text-sm font-black text-slate-800">{skus.length} SKU(s)</p>
-                <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
-                  {skus
-                    .slice(0, 3)
-                    .map((s) => s.codigo_producto)
-                    .join(', ')}
-                  {skus.length > 3 ? '…' : ''}
-                </p>
-                {a.motivo && <p className="text-xs text-slate-400 mt-1 italic">“{a.motivo}”</p>}
-                <p className="text-[11px] text-slate-400 mt-2">
-                  {a.asignado_nombre ? `Por ${a.asignado_nombre}` : 'Inventario'} ·{' '}
-                  {a.created_at ? new Date(a.created_at).toLocaleDateString('es-CL') : ''}
-                </p>
-                <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-50 p-1.5 text-center text-[9px] font-black uppercase tracking-wide">
-                  <span className="rounded-lg bg-amber-100 px-1 py-1.5 text-amber-700">
-                    1 · Asignada
-                  </span>
-                  <span
-                    className={`rounded-lg px-1 py-1.5 ${progress >= 66 ? 'bg-blue-100 text-blue-700' : 'text-slate-300'}`}
-                  >
-                    2 · Revisión
-                  </span>
-                  <span
-                    className={`rounded-lg px-1 py-1.5 ${progress === 100 ? 'bg-emerald-100 text-emerald-700' : 'text-slate-300'}`}
-                  >
-                    3 · Informe
-                  </span>
-                </div>
-                {lockActive && (
-                  <div
-                    className={`mt-2 rounded-lg border px-2.5 py-2 text-[11px] font-bold ${lockedByOther ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}
-                  >
-                    🔒 {lockedByOther ? 'En proceso por' : 'Tarea tomada por'}{' '}
-                    {a.locked_by_name || 'otro usuario'} desde las{' '}
-                    {new Date(a.locked_at).toLocaleTimeString('es-CL', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                )}
-
-                {abierta && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {canManageQuality && (
-                      <button
-                        onClick={() => onGenerarInforme(a)}
-                        title={
-                          lockedByOther ? 'El sistema verificará el bloqueo antes de abrir' : ''
-                        }
-                        className={`flex-1 px-3 py-2 rounded-xl text-white font-black text-xs flex items-center justify-center gap-1.5 ${lockedByOther ? 'bg-slate-500 hover:bg-slate-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-                      >
-                        <FileText size={14} /> Generar informe / dictamen <ArrowRight size={14} />
-                      </button>
-                    )}
-                    {canAssign && (
-                      <button
-                        onClick={() => anularAsig(a)}
-                        title="Anular"
-                        className="px-3 py-2 rounded-xl border border-slate-200 text-slate-500 font-black text-xs flex items-center gap-1.5 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
-                      >
-                        <Ban size={14} />
-                      </button>
-                    )}
-                  </div>
-                )}
-                {a.estado === 'RESUELTA' && (
-                  <p className="text-[11px] text-emerald-600 font-bold mt-3 flex items-center gap-1">
-                    <FileText size={12} /> Resuelta
-                    {a.resuelto_nombre ? ` por ${a.resuelto_nombre}` : ''}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+          {visibles.map((assignment) => (
+            <TaskCard
+              key={assignment.id}
+              assignment={assignment}
+              user={user}
+              isAdmin={isAdmin}
+              canAssign={canAssign}
+              canManageQuality={canManageQuality}
+              onAnular={anularAsig}
+              onEliminar={borrarAsig}
+              onGenerarInforme={onGenerarInforme}
+              onAbrirInforme={onAbrirInforme}
+              focused={tareaEnFoco === assignment.id}
+            />
+          ))}
         </div>
       )}
-
       {modal && <AsignarModal onClose={() => setModal(false)} />}
     </div>
   );

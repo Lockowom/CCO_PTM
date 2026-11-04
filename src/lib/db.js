@@ -37,3 +37,18 @@ db.version(5).stores({
   syncQueue:
     '++id, type, tableName, recordId, status, timestamp, retryCount, userId, idempotencyKey, module, action'
 });
+
+// Version 6 (QUALITY-OFFLINE-001) - almacén separado de Calidad. Nunca se
+// mezcla con la cola genérica de inventario para impedir que un borrador offline
+// pueda producir movimientos de stock o ejecuciones RPC ajenas al módulo.
+db.version(6).stores({
+  cachedLocations: 'id, name, type',
+  cachedProducts: 'sku, name, barcode',
+  syncQueue:
+    '++id, type, tableName, recordId, status, timestamp, retryCount, userId, idempotencyKey, module, action',
+  qualityOfflineTasks:
+    '++id, [userId+taskKey], userId, taskKey, hito, tareaId, cachedAt, sourceUpdatedAt',
+  qualityOfflineCommands:
+    '++id, [userId+idempotencyKey], userId, idempotencyKey, hito, tareaId, status, createdAt',
+  qualityOfflineEvidence: '++id, [userId+localId], userId, localId, tareaId, createdAt'
+});

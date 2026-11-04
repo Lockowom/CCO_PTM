@@ -65,6 +65,7 @@ import {
   liberarAsignacionCalidad
 } from '../../services/calidadService';
 import CalidadBadge from '../../components/ui/CalidadBadge';
+import QualityOfflineControl from '../../components/QualityOfflineControl';
 import PhotoUploader from '../../components/PhotoUploader';
 import ChecklistIngreso from './ChecklistIngreso';
 import AsignacionesPanel from './AsignacionesCalidad';
@@ -672,9 +673,13 @@ const InformeBuilder = ({ informe, prefillItems, asignacion, asignacionId, onCan
           asignacionId: estado === 'ENVIADO_CALIDAD' ? taskId : null
         });
         informeId = nuevo?.id || null;
-        toast.success(
-          estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado'
-        );
+        if (nuevo?.queued_offline) {
+          toast.info('Finalización guardada offline. Se confirmará al sincronizar.');
+        } else {
+          toast.success(
+            estado === 'ENVIADO_CALIDAD' ? 'Informe enviado a Calidad' : 'Borrador guardado'
+          );
+        }
 
         if (taskId && nuevo?.asignacion_estado === 'RESUELTA') {
           toast.success('Asignación de estancia resuelta');
@@ -2318,6 +2323,7 @@ function def_estado(dictamen) {
 // ── Página principal ────────────────────────────────────────────────────────
 const Monitoreo = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const qc = useQueryClient();
   const { hasPermission, user } = useAuth();
   const canCreate = hasPermission('manage_monitoreo') || hasPermission('manage_quality');
   const isAdmin = user?.rol === 'ADMIN' || user?.es_admin_delegado;
@@ -2486,6 +2492,19 @@ const Monitoreo = () => {
         )}
       </div>
 
+      {mode === 'list' && (
+        <div className="mb-4">
+          <QualityOfflineControl
+            onSynced={() => {
+              qc.invalidateQueries({ queryKey: ['calidad_tareas'] });
+              qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] });
+              qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] });
+              qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
+            }}
+          />
+        </div>
+      )}
+
       {/* Hitos del proceso de Calidad, en orden */}
       {mode === 'list' && (
         <div className="quality-hito-nav mb-5 grid grid-cols-3 gap-2 rounded-3xl border border-slate-200/80 bg-white/90 p-2 shadow-sm backdrop-blur sm:flex sm:flex-wrap">
@@ -2590,6 +2609,10 @@ const Monitoreo = () => {
           canAssign={canAssign}
           canManageQuality={canCreate}
           onGenerarInforme={generarInformeDesdeAsignacion}
+          onAbrirInforme={(informeId) => {
+            const informe = informes.find((item) => item.id === informeId);
+            if (informe) abrirInforme(informe);
+          }}
         />
       )}
 
