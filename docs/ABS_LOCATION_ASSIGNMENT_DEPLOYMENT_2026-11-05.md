@@ -57,6 +57,20 @@ crearon movimientos, eliminaciones ni traslados de prueba en producción.
 
 ## Pendiente deliberadamente
 
-La interfaz local que expone la última ubicación de un SKU ABS aún no se ha
-publicado. La publicación requiere su autorización separada de commit/push y
-deploy.
+## Publicación de interfaz
+
+- Commit publicado: `124d42080043a4e456266229f27fcc0b597a5aa7`
+- Servicio: `CCO_PTM` → `https://cco-ptm-b05m.onrender.com`
+- Deploy Render: `dep-dbm7a2nb9u1s738hg7tg`
+- Estado: `LIVE` (2026-11-05 12:23:51 UTC)
+
+La aplicación respondió `200` en `/` y `/queries/locations`. Los servicios
+`cco-ptm-internal-beta-web` y `cco-ptm-internal-beta` permanecieron en sus
+deploys anteriores, ambos con Auto Deploy desactivado.
+
+```ini
+PRODUCTION_DEPLOY = LIVE
+BETA_WEB_DEPLOY = 0
+BETA_STATIC_DEPLOY = 0
+ABS_UI_PUBLISHED_SAFE = 1
+```
