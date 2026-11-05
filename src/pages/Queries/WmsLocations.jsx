@@ -18,6 +18,12 @@ import { useCalidadFlags } from '../../hooks/useCalidadFlags';
 import CalidadBadge from '../../components/ui/CalidadBadge';
 import LocationReportModal from '../../components/locations/LocationReportModal';
 import { supabase } from '../../supabase';
+import {
+  absAssignmentCopy,
+  isAbsSkuSearch,
+  latestAbsAssignment,
+  normalizeAbsSku
+} from '../../lib/absAssignments';
 
 // Estimaciones iniciales; la altura real la mide el virtualizer (measureElement).
 const COLLAPSED_HEIGHT = 92;
@@ -211,6 +217,7 @@ const WmsLocations = () => {
   const [reportItem, setReportItem] = useState(null);
   const [qualityLocations, setQualityLocations] = useState(() => new Set());
   const [skuRotation, setSkuRotation] = useState(() => new Map());
+  const [absSearchResult, setAbsSearchResult] = useState({ rotation: null, assignment: null });
   const parentRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -296,6 +303,47 @@ const WmsLocations = () => {
       active = false;
     };
   }, [inventory]);
+
+  // Un SKU ABS puede no tener una fila vigente (por retiro, archivo o
+  // traslado). En ese caso consultamos su catálogo y la última asignación
+  // visual; no se alteran ubicaciones, cantidades ni stock.
+  useEffect(() => {
+    const codigo = normalizeAbsSku(search);
+    if (!isAbsSkuSearch(codigo)) {
+      setAbsSearchResult({ rotation: null, assignment: null });
+      return undefined;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      const [rotationResult, assignmentResult] = await Promise.all([
+        supabase
+          .from('wms_sku_rotacion')
+          .select('codigo, abs_categoria, rotacion')
+          .eq('codigo', codigo)
+          .maybeSingle(),
+        supabase
+          .from('wms_abs_asignaciones')
+          .select('ubicacion, es_ubicacion_abs, estado, asignada_en, cerrada_en, motivo_cierre')
+          .eq('codigo', codigo)
+          .order('asignada_en', { ascending: false })
+          .limit(1)
+      ]);
+
+      if (!active || rotationResult.error) return;
+      setAbsSearchResult({
+        rotation: rotationResult.data || null,
+        // Si la migración aún no está aplicada, el historial falla de forma
+        // segura y la consulta de ubicaciones sigue funcionando normalmente.
+        assignment: assignmentResult.error ? null : latestAbsAssignment(assignmentResult.data || [])
+      });
+    }, 180);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [search]);
 
   // Búsqueda INSTANTÁNEA: el inventario ya está en memoria, así que filtramos
   // en cada tecla sin debounce → escribir/borrar refleja al instante.
@@ -391,6 +439,24 @@ const WmsLocations = () => {
     (codigo) => skuRotation.get(String(codigo || '').trim().toUpperCase()) || null,
     [skuRotation]
   );
+
+  const hasCurrentSkuMatch = useMemo(() => {
+    const codigo = normalizeAbsSku(search);
+    if (!isAbsSkuSearch(codigo)) return false;
+    return filteredGroups.some((group) =>
+      group.matchingItems.some((item) => normalizeAbsSku(item.codigo) === codigo)
+    );
+  }, [filteredGroups, search]);
+
+  const absSearchCopy = useMemo(() => {
+    if (!absSearchResult.rotation || hasCurrentSkuMatch) return null;
+    return (
+      absAssignmentCopy(absSearchResult.assignment) || {
+        title: 'SKU ABS sin ubicación visual activa',
+        detail: 'La clasificación ABS se conserva y se mostrará al registrar nuevamente una ubicación.'
+      }
+    );
+  }, [absSearchResult, hasCurrentSkuMatch]);
 
   const toggleExpand = useCallback((key) => {
     setExpandedKeys((prev) => {
@@ -520,6 +586,18 @@ const WmsLocations = () => {
               <span>
                 Ubicación de Calidad protegida: no se puede sacar productos de ahí. Los resultados
                 identificados como Calidad permanecen resguardados.
+              </span>
+            </div>
+          )}
+
+          {absSearchCopy && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-left text-xs font-semibold text-sky-900">
+              <Package size={16} className="mt-0.5 shrink-0 text-sky-600" />
+              <span>
+                <strong>
+                  ABS {absSearchResult.rotation.abs_categoria} · {absSearchResult.rotation.rotacion}.
+                </strong>{' '}
+                {absSearchCopy.detail}
               </span>
             </div>
           )}
