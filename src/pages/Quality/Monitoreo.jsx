@@ -2501,6 +2501,12 @@ const Monitoreo = () => {
               qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] });
               qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
             }}
+            onConnected={() => {
+              qc.invalidateQueries({ queryKey: ['calidad_tareas'] });
+              qc.invalidateQueries({ queryKey: ['calidad_asignaciones'] });
+              qc.invalidateQueries({ queryKey: ['calidad_tareas_salida'] });
+              qc.invalidateQueries({ queryKey: ['monitoreo_informes'] });
+            }}
           />
         </div>
       )}

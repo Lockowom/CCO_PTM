@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, DownloadCloud, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
-import useOnlineStatus from '../hooks/useOnlineStatus';
+import useQualityConnectionStatus from '../hooks/useQualityConnectionStatus';
 import {
   descargarTareasCalidadOffline,
   estadoCalidadOffline,
@@ -10,10 +10,11 @@ import {
 
 const EMPTY_STATE = { tasks: 0, pending: 0, conflicts: 0, rejected: 0 };
 
-const QualityOfflineControl = ({ onSynced }) => {
-  const online = useOnlineStatus();
+const QualityOfflineControl = ({ onSynced, onConnected }) => {
+  const { online, checking, refresh: refreshConnection } = useQualityConnectionStatus();
   const [state, setState] = useState(EMPTY_STATE);
   const [working, setWorking] = useState(false);
+  const hadConnection = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -28,6 +29,11 @@ const QualityOfflineControl = ({ onSynced }) => {
     const timer = window.setInterval(refresh, 3000);
     return () => window.clearInterval(timer);
   }, [refresh, online]);
+
+  useEffect(() => {
+    if (online && !hadConnection.current) onConnected?.();
+    hadConnection.current = online;
+  }, [online, onConnected]);
 
   const download = async () => {
     try {
@@ -68,7 +74,7 @@ const QualityOfflineControl = ({ onSynced }) => {
         className={`inline-flex items-center gap-1.5 text-[11px] font-black ${online ? 'text-emerald-700' : 'text-amber-700'}`}
       >
         {online ? <Wifi size={14} /> : <WifiOff size={14} />}
-        {online ? 'Calidad conectada' : 'Calidad sin conexión'}
+        {checking ? 'Verificando conexión de Calidad' : online ? 'Calidad conectada' : 'Calidad sin conexión'}
       </span>
       <span className="text-[10px] font-bold text-slate-400">
         {state.tasks} tarea(s) descargada(s)
@@ -85,15 +91,18 @@ const QualityOfflineControl = ({ onSynced }) => {
       )}
       <span className="ml-auto flex gap-1.5">
         <button
-          onClick={download}
-          disabled={!online || working}
+          onClick={async () => {
+            const connected = await refreshConnection();
+            if (connected) await download();
+          }}
+          disabled={!online || checking || working}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-black text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <DownloadCloud size={13} /> Descargar tareas
         </button>
         <button
           onClick={sync}
-          disabled={!online || !state.pending || working}
+          disabled={!online || checking || !state.pending || working}
           className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[10px] font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <RefreshCw size={13} className={working ? 'animate-spin' : ''} /> Sincronizar

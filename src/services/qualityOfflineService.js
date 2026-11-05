@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
 import { getCurrentUserId } from '../lib/syncManager';
+import { withTimeout } from '../lib/supabaseQuery';
 import { supabase } from '../supabase';
 
 const HITO_KEYS = ['HITO_1', 'HITO_2', 'HITO_3'];
@@ -10,6 +11,14 @@ const taskKey = (hito, tareaId) => `${hito}:${tareaId}`;
 const now = () => new Date().toISOString();
 const randomId = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
 const LOCAL_EVIDENCE_PREFIX = 'quality-offline://';
+const CONNECTION_TIMEOUT_MS = 5000;
+
+// navigator.onLine solo informa el estado que Chrome atribuye al adaptador de
+// red. Puede quedar en false en un perfil afectado por VPN, extensiones o una
+// PWA vieja aunque Supabase sea alcanzable. Calidad mantiene este resultado
+// como señal inicial, pero valida el backend antes de asumir modo offline.
+let qualityConnectionStatus = null;
+let qualityConnectionProbe = null;
 
 const assertHito = (hito) => {
   if (!HITO_KEYS.includes(hito)) throw new Error('Hito offline de Calidad inválido');
@@ -21,7 +30,56 @@ const assertUser = async () => {
   return userId;
 };
 
-export const isQualityOffline = () => !isOnline();
+export const setQualityConnectionStatus = (status) => {
+  qualityConnectionStatus = typeof status === 'boolean' ? status : null;
+};
+
+export const getQualityConnectionStatus = () => qualityConnectionStatus;
+
+export const isQualityOffline = () =>
+  qualityConnectionStatus === false || (qualityConnectionStatus === null && !isOnline());
+
+const isNetworkFailure = (error) => {
+  if (!error) return false;
+  const message = String(error.message || error.details || '').toLowerCase();
+  return (
+    error.name === 'AbortError' ||
+    message.includes('failed to fetch') ||
+    message.includes('network request failed') ||
+    message.includes('networkerror') ||
+    message.includes('timeout') ||
+    message.includes('aborted')
+  );
+};
+
+/**
+ * Comprueba una ruta mínima, protegida por RLS y marcada NetworkOnly por la
+ * PWA. Una respuesta de permiso también demuestra que el backend respondió;
+ * solo un error de red o timeout activa el modo offline.
+ */
+export async function comprobarConexionCalidad() {
+  if (qualityConnectionProbe) return qualityConnectionProbe;
+
+  qualityConnectionProbe = (async () => {
+    try {
+      const { error } = await withTimeout(
+        supabase.from('app_runtime_control').select('id').eq('id', true).limit(1),
+        { ms: CONNECTION_TIMEOUT_MS, label: 'conexión de Calidad' }
+      );
+      const connected = !isNetworkFailure(error);
+      setQualityConnectionStatus(connected);
+      return connected;
+    } catch {
+      setQualityConnectionStatus(false);
+      return false;
+    } finally {
+      qualityConnectionProbe = null;
+    }
+  })();
+
+  return qualityConnectionProbe;
+}
+
 export const isLocalQualityEvidencePath = (path) =>
   String(path || '').startsWith(LOCAL_EVIDENCE_PREFIX);
 
