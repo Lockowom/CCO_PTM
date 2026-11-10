@@ -1,442 +1,57 @@
-// ── Inventario → Carteles de Bodega ─────────────────────────────────────────
-// Port del Excel "CARTELES PTM": imprime carteles de producto (código gigante +
-// descripción + código de barras CODE128) en tres formatos de página:
-// ÚNICO (1 por hoja) · DOBLE (2) · CUÁDRUPLE (4). La "tabla de códigos" (hoja
-// BD del Excel) ES la tabla maestra existente de CCO (tms_matriz_codigos): se
-// busca ahí y la descripción llega sola — se acabaron los VLOOKUP con #REF!.
+// Inventario → Carteles: consulta catálogo/trazabilidad; nunca modifica stock o ERP.
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Printer,
-  Search,
-  Plus,
-  Trash2,
-  Minus,
-  LayoutGrid,
-  Square,
-  Columns,
-  Eraser
-} from 'lucide-react';
+import { Columns, Eraser, LayoutGrid, Minus, Plus, Printer, Search, Square, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabase';
-// Generador CODE128 propio (src/lib/code128.js): en el Excel los códigos de
-// barra eran imágenes pegadas a mano; aquí se generan desde el código. El SVG
-// solo contiene <rect> calculados localmente (sin datos externos en el markup).
 import { code128Svg } from '../../lib/code128';
+import { fetchLotesSeries } from '../../services/calidadService';
 
-const FORMATOS = [
-  { id: 1, label: 'Único', desc: '1 por hoja', icon: Square },
-  { id: 2, label: 'Doble', desc: '2 por hoja', icon: Columns },
-  { id: 4, label: 'Cuádruple', desc: '4 por hoja', icon: LayoutGrid }
-];
+const FORMATS = [{ id: 1, label: 'Único', desc: '1 por hoja', icon: Square }, { id: 2, label: 'Doble', desc: '2 por hoja', icon: Columns }, { id: 4, label: 'Cuádruple', desc: '4 por hoja', icon: LayoutGrid }];
+const SIZES = { 1: { label: '22pt', desc: '34pt', bar: 120, pad: '18mm', logo: '20mm', code: '40mm', barcode: '32mm' }, 2: { label: '15pt', desc: '24pt', bar: 90, pad: '9mm', logo: '13mm', code: '24mm', barcode: '22mm' }, 4: { label: '10pt', desc: '15pt', bar: 64, pad: '5mm', logo: '9mm', code: '16mm', barcode: '16mm' } };
+const keyOf = (trace) => `${trace.tipo}:${trace.valor}`;
+const normalize = (row) => ({ tipo: row.tipo === 'S' ? 'S' : 'P', valor: String(row.valor || '').trim(), disponible: row.disponible == null ? null : Number(row.disponible), ubicacion: row.ubicacion || '', venc: row.venc || '', source: 'system' });
+const dateText = (value) => { if (!value) return ''; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? String(value) : new Intl.DateTimeFormat('es-CL', { month: '2-digit', year: 'numeric' }).format(date); };
+const descSize = (text, format) => format === 4 && String(text).length > 70 ? '10pt' : format === 4 ? '15pt' : format === 2 && String(text).length > 100 ? '15pt' : SIZES[format].desc;
 
-// Tamaños tipográficos por formato (herederos de los del Excel: 36/44 doble, 30/28 cuádruple).
-// Tamaños tipográficos por formato (herederos de los del Excel).
-// barMaxH limita el ALTO del código de barras: al llenar el 100% del ancho, en
-// las celdas anchas (Doble/Único) el barcode salía altísimo y empujaba el logo
-// fuera de la celda. El tope lo mantiene proporcionado.
-const SIZES = {
-  1: {
-    label: '22pt',
-    desc: '34pt',
-    barH: 120,
-    pad: '18mm',
-    logo: '20mm',
-    codeMax: '40mm',
-    barMaxH: '32mm'
-  },
-  2: {
-    label: '15pt',
-    desc: '24pt',
-    barH: 90,
-    pad: '9mm',
-    logo: '13mm',
-    codeMax: '24mm',
-    barMaxH: '22mm'
-  },
-  4: {
-    label: '11pt',
-    desc: '16pt',
-    barH: 64,
-    pad: '6mm',
-    logo: '9mm',
-    codeMax: '16mm',
-    barMaxH: '18mm'
-  }
-};
-
-// Código en UNA sola línea, siempre. En vez de un font-size fijo (que parte los
-// códigos largos en dos líneas), se dibuja como texto SVG que se escala al ancho
-// del contenedor: `textLength` fuerza a que ocupe todo el ancho sin cortar, y el
-// alto se limita con `maxHeight` para que los códigos cortos no queden gigantes.
 function CodigoFit({ text, maxHeight }) {
-  const t = String(text ?? '').trim();
-  const w = Math.max(1, t.length) * 0.62; // ancho de viewBox ≈ avance por carácter (monoespaciado)
-  return (
-    <svg
-      viewBox={`0 0 ${w} 1`}
-      width="100%"
-      preserveAspectRatio="xMidYMid meet"
-      style={{ display: 'block', width: '100%', height: 'auto', maxHeight }}
-    >
-      <text
-        x={w / 2}
-        y="0.74"
-        textAnchor="middle"
-        textLength={w * 0.98}
-        lengthAdjust="spacingAndGlyphs"
-        fontFamily="'Courier New', ui-monospace, monospace"
-        fontWeight="900"
-        fontSize="0.86"
-        fill="#000"
-      >
-        {t}
-      </text>
-    </svg>
-  );
+  const value = String(text ?? '').trim(), width = Math.max(1, value.length) * .62;
+  return <svg viewBox={`0 0 ${width} 1`} width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: 'block', width: '100%', height: 'auto', maxHeight }}><text x={width / 2} y=".74" textAnchor="middle" textLength={width * .98} lengthAdjust="spacingAndGlyphs" fontFamily="'Courier New', monospace" fontWeight="900" fontSize=".86">{value}</text></svg>;
 }
 
 export default function Carteles() {
-  const [q, setQ] = useState('');
-  const [resultados, setResultados] = useState([]);
-  const [buscando, setBuscando] = useState(false);
-  const [cola, setCola] = useState([]); // [{codigo, producto, um, copias}]
-  const [formato, setFormato] = useState(4);
-
-  // Búsqueda con debounce sobre la tabla maestra de códigos (tms_matriz_codigos).
+  const [query, setQuery] = useState(''), [results, setResults] = useState([]), [searching, setSearching] = useState(false), [searchError, setSearchError] = useState('');
+  const [queue, setQueue] = useState([]), [format, setFormat] = useState(4), [manualOpen, setManualOpen] = useState(false);
   useEffect(() => {
-    const term = q.trim();
-    if (term.length < 2) {
-      setResultados([]);
-      return;
-    }
-    setBuscando(true);
-    const t = setTimeout(async () => {
-      const pat = `%${term.replace(/[%_]/g, '')}%`;
-      const { data, error } = await supabase
-        .from('tms_matriz_codigos')
-        .select('codigo_producto, producto, unidad_medida')
-        .or(`codigo_producto.ilike.${pat},producto.ilike.${pat}`)
-        .order('codigo_producto')
-        .limit(30);
-      if (!error) setResultados(data || []);
-      setBuscando(false);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [q]);
-
-  const agregar = (r) => {
-    setCola((c) => {
-      if (c.some((x) => x.codigo === r.codigo_producto)) {
-        toast.info(`${r.codigo_producto} ya está en la cola`);
-        return c;
-      }
-      return [
-        ...c,
-        {
-          codigo: String(r.codigo_producto || '').trim(),
-          producto: r.producto || '',
-          um: r.unidad_medida || '',
-          copias: 1
-        }
-      ];
-    });
-  };
-  const agregarManual = () => {
-    const codigo = (window.prompt('Código del producto (no está en la tabla maestra):') || '')
-      .trim()
-      .toUpperCase();
-    if (!codigo) return;
-    const producto = (window.prompt('Descripción a imprimir:') || '').trim();
-    setCola((c) =>
-      c.some((x) => x.codigo === codigo) ? c : [...c, { codigo, producto, um: '', copias: 1 }]
-    );
-  };
-  const copias = (codigo, delta) =>
-    setCola((c) =>
-      c.map((x) =>
-        x.codigo === codigo ? { ...x, copias: Math.max(1, Math.min(99, x.copias + delta)) } : x
-      )
-    );
-  const quitar = (codigo) => setCola((c) => c.filter((x) => x.codigo !== codigo));
-
-  // Expandir copias y agrupar en páginas según el formato.
-  const paginas = useMemo(() => {
-    const items = cola.flatMap((x) => Array.from({ length: x.copias }, () => x));
-    const pags = [];
-    for (let i = 0; i < items.length; i += formato) pags.push(items.slice(i, i + formato));
-    return pags;
-  }, [cola, formato]);
-
-  const imprimir = () => {
-    if (!paginas.length) {
-      toast.error('Agrega al menos un producto a la cola');
-      return;
-    }
-    window.print();
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
-      {/* Estilos de impresión: solo se imprime el área de carteles, una página por grupo */}
-      <style>{`
-        @page { size: A4 portrait; margin: 8mm; }
-        @media print {
-          body * { visibility: hidden !important; }
-          #carteles-print, #carteles-print * { visibility: visible !important; }
-          /* Imprimir el logo/colores tal cual (no descartar fondos/tintas). */
-          #carteles-print, #carteles-print * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          #carteles-print { position: absolute; left: 0; top: 0; width: 100%; }
-          .cartel-page { page-break-after: always; height: 273mm; border: none !important; box-shadow: none !important; }
-          .cartel-cell { border: 1.2pt dashed #94a3b8 !important; }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="relative overflow-hidden bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200 shadow-sm px-5 sm:px-7 py-4 sm:py-5 flex flex-wrap items-center justify-between gap-4 print:hidden">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center text-orange-600 shrink-0">
-            <Printer size={22} />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Carteles de <span className="text-orange-600">Bodega</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Código + descripción + código de barras · conectado a la tabla maestra de códigos
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={imprimir}
-          disabled={!paginas.length}
-          className="px-5 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-700 disabled:opacity-40 inline-flex items-center gap-2"
-        >
-          <Printer size={17} /> Imprimir {paginas.length ? `(${paginas.length} pág.)` : ''}
-        </button>
-      </div>
-
-      <div className="grid lg:grid-cols-[380px_1fr] gap-4 print:block">
-        {/* Panel izquierdo: búsqueda + cola + formato */}
-        <div className="space-y-4 print:hidden">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-            <div className="font-black text-slate-900 text-sm">
-              1 · Buscar en la tabla de códigos
-            </div>
-            <div className="relative">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Código o descripción…"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm"
-              />
-            </div>
-            <div className="max-h-64 overflow-y-auto space-y-1">
-              {buscando && <div className="text-xs text-slate-400 py-2 text-center">Buscando…</div>}
-              {!buscando && q.trim().length >= 2 && !resultados.length && (
-                <div className="text-xs text-slate-400 py-2 text-center">
-                  Sin resultados en la tabla maestra.
-                </div>
-              )}
-              {resultados.map((r) => (
-                <button
-                  key={r.codigo_producto}
-                  onClick={() => agregar(r)}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-orange-50 border border-transparent hover:border-orange-200 group"
-                >
-                  <span className="font-mono font-bold text-slate-800 text-xs">
-                    {r.codigo_producto}
-                  </span>
-                  <span className="block text-[11px] text-slate-500 truncate">
-                    {r.producto || '—'}
-                  </span>
-                  <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] font-black text-orange-600">
-                    <Plus size={11} /> Agregar
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={agregarManual}
-              className="w-full px-3 py-2 rounded-xl border border-dashed border-slate-300 text-xs font-bold text-slate-500 hover:border-orange-400 hover:text-orange-600 inline-flex items-center justify-center gap-1.5"
-            >
-              <Plus size={13} /> Agregar código manual (no está en la tabla)
-            </button>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-            <div className="font-black text-slate-900 text-sm">2 · Formato de impresión</div>
-            <div className="grid grid-cols-3 gap-2">
-              {FORMATOS.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFormato(f.id)}
-                  className={`rounded-xl border p-3 text-center transition-all ${formato === f.id ? 'bg-orange-600 border-orange-600 text-white shadow-lg' : 'border-slate-200 text-slate-600 hover:border-orange-300'}`}
-                >
-                  <f.icon size={18} className="mx-auto mb-1" />
-                  <div className="text-xs font-black">{f.label}</div>
-                  <div
-                    className={`text-[10px] font-bold ${formato === f.id ? 'text-orange-100' : 'text-slate-400'}`}
-                  >
-                    {f.desc}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="font-black text-slate-900 text-sm">
-                3 · Cola de impresión ({cola.length})
-              </div>
-              {cola.length > 0 && (
-                <button
-                  onClick={() => setCola([])}
-                  className="text-[11px] font-black text-rose-500 hover:text-rose-700 inline-flex items-center gap-1"
-                >
-                  <Eraser size={12} /> Vaciar
-                </button>
-              )}
-            </div>
-            {!cola.length && (
-              <div className="text-xs text-slate-400 py-3 text-center">
-                Busca y agrega productos para armar los carteles.
-              </div>
-            )}
-            {cola.map((x) => (
-              <div
-                key={x.codigo}
-                className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="font-mono font-bold text-xs text-slate-800">{x.codigo}</div>
-                  <div className="text-[11px] text-slate-500 truncate">{x.producto || '—'}</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => copias(x.codigo, -1)}
-                    className="p-1 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50"
-                  >
-                    <Minus size={11} />
-                  </button>
-                  <span className="text-xs font-black w-6 text-center">{x.copias}</span>
-                  <button
-                    onClick={() => copias(x.codigo, 1)}
-                    className="p-1 rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50"
-                  >
-                    <Plus size={11} />
-                  </button>
-                </div>
-                <button
-                  onClick={() => quitar(x.codigo)}
-                  className="p-1.5 rounded-md text-rose-400 hover:bg-rose-50"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Vista previa / área de impresión */}
-        <div id="carteles-print" className="space-y-4">
-          {!paginas.length && (
-            <div className="bg-white rounded-2xl border border-dashed border-slate-300 text-slate-300 text-center py-24 font-bold print:hidden">
-              La vista previa de los carteles aparecerá aquí.
-            </div>
-          )}
-          {paginas.map((pag, i) => (
-            <Pagina key={i} items={pag} formato={formato} numero={i + 1} total={paginas.length} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+    const term = query.trim(); if (term.length < 2) { setResults([]); setSearching(false); setSearchError(''); return undefined; }
+    let alive = true; setSearching(true); setSearchError('');
+    const timer = setTimeout(async () => { const pat = `%${term.replace(/[%_]/g, '')}%`; const { data, error } = await supabase.from('tms_matriz_codigos').select('codigo_producto, producto, unidad_medida').or(`codigo_producto.ilike.${pat},producto.ilike.${pat}`).order('codigo_producto').limit(30); if (!alive) return; if (error) { setResults([]); setSearchError('No pudimos consultar la matriz de códigos.'); } else setResults(data || []); setSearching(false); }, 350);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [query]);
+  const add = (row) => { const codigo = String(row.codigo_producto || '').trim().toUpperCase(); if (!codigo) return; setQueue((items) => { if (items.some((item) => item.codigo === codigo)) { toast.info(`${codigo} ya está en la cola`); return items; } return [...items, { codigo, producto: row.producto || '', um: row.unidad_medida || '', copias: 1, trazabilidadModo: 'none', trazabilidad: [] }]; }); };
+  const update = (codigo, patch) => setQueue((items) => items.map((item) => item.codigo === codigo ? { ...item, ...patch } : item));
+  const copies = (codigo, delta) => setQueue((items) => items.map((item) => item.codigo === codigo ? { ...item, copias: Math.max(1, Math.min(99, item.copias + delta)) } : item));
+  const pages = useMemo(() => { const labels = queue.flatMap((item) => { const traces = item.trazabilidadModo !== 'none' && item.trazabilidad.length ? item.trazabilidad : [null]; return traces.flatMap((trace) => Array.from({ length: item.copias }, () => ({ ...item, trazabilidad: trace ? [trace] : [] }))); }); return Array.from({ length: Math.ceil(labels.length / format) }, (_, i) => labels.slice(i * format, (i + 1) * format)); }, [queue, format]);
+  return <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 text-slate-700">
+    <style>{`@page{size:A4 portrait;margin:8mm}@media print{*,*::before,*::after{box-sizing:border-box!important}body *{visibility:hidden!important}#carteles-print,#carteles-print *{visibility:visible!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}#carteles-print{position:absolute;left:0;top:0;width:194mm!important;margin:0!important;padding:0!important}#carteles-print>*+*{margin-top:0!important}.cartel-page{width:194mm!important;height:281mm!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;break-after:page;page-break-after:always}.cartel-page:last-child{break-after:auto;page-break-after:auto}.cartel-grid{width:100%!important;height:100%!important;min-height:0!important;gap:3mm!important}.cartel-cell{min-height:0!important;border:1.2pt dashed #94a3b8!important;overflow:hidden!important}.cartel-description-unavailable{visibility:hidden!important}}`}</style>
+    <header className="relative overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm px-5 sm:px-7 py-4 flex flex-wrap items-center justify-between gap-4 print:hidden"><div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500"/><div className="flex items-center gap-3"><div className="w-12 h-12 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center text-orange-600"><Printer size={22}/></div><div><h1 className="text-xl sm:text-3xl font-black text-slate-900">Carteles de <span className="text-orange-600">Bodega</span></h1><p className="text-xs sm:text-sm text-slate-500">Catálogo + trazabilidad consultada · sin movimientos de stock</p></div></div><button onClick={() => pages.length ? window.print() : toast.error('Agrega al menos un producto a la cola')} disabled={!pages.length} className="min-h-11 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm disabled:opacity-40 inline-flex items-center gap-2"><Printer size={17}/> Imprimir {pages.length ? `(${pages.length} pág.)` : ''}</button></header>
+    <div className="grid lg:grid-cols-[400px_1fr] gap-4 print:block"><div className="space-y-4 print:hidden"><section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3"><b className="text-sm text-slate-900">1 · Buscar en la tabla de códigos</b><div className="relative"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Código o descripción…" className="w-full min-h-11 pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm"/></div><div className="max-h-64 overflow-y-auto space-y-1" aria-live="polite">{searching && <div className="text-xs text-slate-400 py-2 text-center">Buscando…</div>}{searchError && <div className="text-xs text-rose-600 py-2 text-center">{searchError}<button onClick={() => setQuery((v) => `${v} `)} className="ml-2 underline font-bold">Reintentar</button></div>}{!searching && !searchError && query.trim().length >= 2 && !results.length && <div className="text-xs text-slate-400 py-2 text-center">Sin resultados en la tabla maestra.</div>}{results.map((row) => <button key={row.codigo_producto} onClick={() => add(row)} className="w-full text-left min-h-11 px-3 py-2 rounded-xl hover:bg-orange-50 border border-transparent hover:border-orange-200"><span className="font-mono font-bold text-slate-800 text-xs">{row.codigo_producto}</span><span className="block text-[11px] text-slate-500 truncate">{row.producto || 'Descripción no disponible'}</span></button>)}</div><button onClick={() => setManualOpen(true)} className="w-full min-h-11 px-3 py-2 rounded-xl border border-dashed border-slate-300 text-xs font-bold text-slate-500"><Plus size={13} className="inline"/> Agregar código manual (no validado)</button></section>
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3"><b className="text-sm text-slate-900">2 · Formato de impresión</b><div className="grid grid-cols-3 gap-2">{FORMATS.map((option) => <button key={option.id} onClick={() => setFormat(option.id)} className={`min-h-20 rounded-xl border p-3 text-center ${format === option.id ? 'bg-orange-600 border-orange-600 text-white' : 'border-slate-200 text-slate-600'}`}><option.icon size={18} className="mx-auto mb-1"/><div className="text-xs font-black">{option.label}</div><div className="text-[10px]">{option.desc}</div></button>)}</div></section>
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2"><div className="flex justify-between items-center"><b className="text-sm text-slate-900">3 · Cola de impresión ({queue.length})</b>{queue.length > 0 && <button onClick={() => setQueue([])} className="min-h-11 text-[11px] font-black text-rose-500"><Eraser size={12} className="inline"/> Vaciar</button>}</div>{!queue.length && <div className="text-xs text-slate-400 py-3 text-center">Busca y agrega productos para armar los carteles.</div>}{queue.map((item) => <QueueItem key={item.codigo} item={item} update={update} copies={copies} remove={(codigo) => setQueue((items) => items.filter((row) => row.codigo !== codigo))}/>)}</section></div>
+      <div id="carteles-print" className="space-y-4">{!pages.length && <div className="bg-white rounded-2xl border border-dashed border-slate-300 text-slate-300 text-center py-24 font-bold print:hidden">La vista previa de los carteles aparecerá aquí.</div>}{pages.map((page, i) => <Page key={i} items={page} format={format} number={i + 1} total={pages.length}/>)}</div></div>
+    {manualOpen && <ManualModal close={() => setManualOpen(false)} add={(row) => { add(row); setManualOpen(false); }}/>}</div>;
 }
 
-function Cartel({ item, formato }) {
-  const s = SIZES[formato];
-  const svg = code128Svg(item.codigo, { height: s.barH, cssHeight: s.barMaxH });
-  // Único (1 por hoja): centrado (se ve bien). Doble/Cuádruple: contenido anclado
-  // ARRIBA para que el logo nunca se recorte si el contenido roza el alto de la celda.
-  const alinear = formato === 1 ? 'justify-center' : 'justify-start';
-  return (
-    <div
-      className={`cartel-cell flex flex-col items-center ${alinear} text-center border border-dashed border-slate-300 rounded-lg overflow-hidden`}
-      style={{ padding: s.pad, breakInside: 'avoid' }}
-    >
-      <img
-        src="/logo-ptm.png"
-        alt="PTM Health Care"
-        className="object-contain mb-2"
-        style={{ height: s.logo, width: 'auto' }}
-      />
-      <div
-        className="font-black tracking-[0.25em] text-slate-500 uppercase"
-        style={{ fontSize: s.label }}
-      >
-        Código Producto
-      </div>
-      {/* Código en UNA sola línea, auto-escalado al ancho (corrección conservada). */}
-      <div className="w-full px-1">
-        <CodigoFit text={item.codigo} maxHeight={s.codeMax} />
-      </div>
-      <div className="font-black text-black leading-tight mt-1" style={{ fontSize: s.desc }}>
-        {item.producto || 'SI TE APARECE ESTO ES PORQUE NO ESTÁ EN LA TABLA DE CÓDIGOS'}
-      </div>
-      <div
-        className="font-black tracking-[0.25em] text-slate-500 uppercase mt-2"
-        style={{ fontSize: s.label }}
-      >
-        Código Barra
-      </div>
-      {/* Barcode legible: llena el ancho y nítido (corrección conservada). */}
-      {svg ? (
-        <div className="w-full mt-1 px-1" dangerouslySetInnerHTML={{ __html: svg }} />
-      ) : (
-        <div className="text-rose-500 text-xs font-bold mt-1">
-          Código no representable en CODE128
-        </div>
-      )}
-      <div className="font-mono font-bold text-black mt-0.5" style={{ fontSize: s.label }}>
-        {item.codigo}
-      </div>
-    </div>
-  );
-}
+function QueueItem({ item, update, copies, remove }) { const [open, setOpen] = useState(false); return <div className="rounded-xl border border-slate-100 px-3 py-3 space-y-2"><div className="flex items-center gap-2"><div className="min-w-0 flex-1"><div className="font-mono font-bold text-xs">{item.codigo}</div><div className="text-[11px] text-slate-500 truncate">{item.producto || 'Descripción no disponible'}</div></div><button aria-label={`Restar copias ${item.codigo}`} onClick={() => copies(item.codigo, -1)} className="min-w-9 min-h-9 border rounded"><Minus size={11} className="mx-auto"/></button><span className="text-xs font-black w-6 text-center">{item.copias}</span><button aria-label={`Sumar copias ${item.codigo}`} onClick={() => copies(item.codigo, 1)} className="min-w-9 min-h-9 border rounded"><Plus size={11} className="mx-auto"/></button><button aria-label={`Quitar ${item.codigo}`} onClick={() => remove(item.codigo)} className="min-w-9 min-h-9 text-rose-400"><Trash2 size={13} className="mx-auto"/></button></div><button onClick={() => setOpen(!open)} className="w-full min-h-10 px-2 rounded-lg bg-slate-50 text-left text-[11px] font-bold">Trazabilidad: {item.trazabilidad.length ? `${item.trazabilidad.length} seleccionada(s)` : 'sin lote/serie'}</button>{open && <Traceability item={item} change={(patch) => update(item.codigo, patch)}/>}</div>; }
 
-function Pagina({ items, formato, numero, total }) {
-  const grid =
-    formato === 1
-      ? 'grid-cols-1 grid-rows-1'
-      : formato === 2
-        ? 'grid-cols-1 grid-rows-2'
-        : 'grid-cols-2 grid-rows-2';
-  return (
-    <div
-      className="cartel-page bg-white rounded-2xl border border-slate-200 shadow-sm p-4"
-      style={{ minHeight: '273mm' }}
-    >
-      <div className={`grid ${grid} gap-3 h-full`} style={{ minHeight: '260mm' }}>
-        {items.map((it, i) => (
-          <Cartel key={`${it.codigo}-${i}`} item={it} formato={formato} />
-        ))}
-        {/* celdas vacías para completar la grilla (mantiene el tamaño de cada cartel) */}
-        {Array.from({ length: formato - items.length }, (_, i) => (
-          <div
-            key={`v-${i}`}
-            className="cartel-cell border border-dashed border-slate-200 rounded-lg"
-          />
-        ))}
-      </div>
-      <div className="text-right text-[10px] text-slate-300 font-bold pt-1 print:hidden">
-        Página {numero} / {total}
-      </div>
-    </div>
-  );
-}
+function Traceability({ item, change }) { const [mode, setMode] = useState(item.trazabilidadModo || 'none'), [query, setQuery] = useState(''), [onlyAvailable, setOnlyAvailable] = useState(true), [rows, setRows] = useState([]), [loading, setLoading] = useState(false), [error, setError] = useState(''), [type, setType] = useState('P'), [value, setValue] = useState('');
+  useEffect(() => { if (mode !== 'system') return undefined; let alive = true; const timer = setTimeout(async () => { setLoading(true); setError(''); try { const data = await fetchLotesSeries(item.codigo, query); if (alive) setRows(data.map(normalize)); } catch { if (alive) { setRows([]); setError('No pudimos consultar lotes y series. Reintenta.'); } } finally { if (alive) setLoading(false); } }, query ? 250 : 0); return () => { alive = false; clearTimeout(timer); }; }, [item.codigo, mode, query]);
+  const set = (next) => { setMode(next); change({ trazabilidadModo: next, trazabilidad: next === 'none' ? [] : item.trazabilidad }); };
+  const toggle = (trace) => { const found = item.trazabilidad.some((x) => keyOf(x) === keyOf(trace)); change({ trazabilidadModo: 'system', trazabilidad: found ? item.trazabilidad.filter((x) => keyOf(x) !== keyOf(trace)) : [...item.trazabilidad.filter((x) => x.source === 'system'), trace] }); };
+  const manual = () => { const text = value.trim(); if (!text) return; const trace = { tipo: type, valor: text, disponible: null, ubicacion: '', venc: '', source: 'manual' }; if (!item.trazabilidad.some((x) => keyOf(x) === keyOf(trace))) change({ trazabilidadModo: 'manual', trazabilidad: [...item.trazabilidad.filter((x) => x.source === 'manual'), trace] }); setValue(''); };
+  const shown = rows.filter((row) => !onlyAvailable || (row.disponible ?? 0) > 0);
+  return <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-3 space-y-3"><b className="block text-[10px] tracking-wider text-slate-500">TRAZABILIDAD · SOLO REFERENCIAL</b><div className="grid grid-cols-3 gap-1">{[['system','Sistema'],['manual','Manual'],['none','Sin lote/serie']].map(([id,label]) => <button key={id} onClick={() => set(id)} className={`min-h-10 rounded-lg text-[11px] font-black ${mode === id ? 'bg-orange-600 text-white' : 'bg-white border'}`}>{label}</button>)}</div>{mode === 'system' && <div className="space-y-2"><div className="flex gap-2"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filtrar lote o serie…" className="min-h-10 min-w-0 flex-1 px-2 rounded-lg border text-xs"/><label className="flex items-center text-[10px] font-bold whitespace-nowrap"><input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)}/> Solo disponibles</label></div>{loading && <div className="text-xs text-slate-400">Consultando trazabilidad…</div>}{error && <div className="text-xs text-rose-600">{error}</div>}{!loading && !error && !shown.length && <div className="text-xs text-slate-500">Sin lotes/series disponibles. Puedes agregar uno manual.</div>}<div className="max-h-48 overflow-y-auto space-y-1">{shown.map((trace) => <label key={keyOf(trace)} className="flex gap-2 p-2 rounded-lg bg-white border text-[11px]"><input aria-label={`Seleccionar ${trace.tipo === 'P' ? 'lote' : 'serie'} ${trace.valor}`} type="checkbox" checked={item.trazabilidad.some((x) => keyOf(x) === keyOf(trace))} onChange={() => toggle(trace)}/><span><b className="text-orange-700">{trace.tipo === 'P' ? 'LOTE' : 'SERIE'}</b> <b>{trace.valor}</b><span className="block text-slate-500">Disponible: {trace.disponible ?? '—'}{trace.ubicacion ? ` · ${trace.ubicacion}` : ''}{trace.venc ? ` · Vence: ${dateText(trace.venc)}` : ''}</span></span></label>)}</div></div>}{mode === 'manual' && <div><div className="grid grid-cols-[92px_1fr_auto] gap-2"><select aria-label="Tipo manual" value={type} onChange={(e) => setType(e.target.value)} className="min-h-10 rounded-lg border text-xs"><option value="P">LOTE</option><option value="S">SERIE</option></select><input aria-label="Valor manual" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Valor manual" className="min-h-10 min-w-0 px-2 rounded-lg border text-xs"/><button onClick={manual} className="min-h-10 px-3 rounded-lg bg-slate-800 text-white text-xs font-bold">Agregar</button></div><p className="text-[10px] text-slate-500 mt-2">MANUAL · solo se imprime; no crea lote, serie ni stock.</p></div>}{item.trazabilidad.length > 0 && <div className="flex flex-wrap gap-1">{item.trazabilidad.map((trace) => <button key={`${keyOf(trace)}-${trace.source}`} onClick={() => change({ trazabilidad: item.trazabilidad.filter((x) => !(keyOf(x) === keyOf(trace) && x.source === trace.source)) })} className="min-h-7 px-2 rounded-full bg-white border border-orange-200 text-[10px] font-bold text-orange-800">{trace.tipo === 'P' ? 'Lote' : 'Serie'} {trace.valor} <X size={11} className="inline"/></button>)}</div>}</div>; }
+
+function ManualModal({ close, add }) { const [codigo, setCodigo] = useState(''), [producto, setProducto] = useState(''); return <div className="fixed inset-0 z-[120] bg-slate-950/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" role="dialog" aria-modal="true" aria-labelledby="manual-sku-title" onMouseDown={close}><form onSubmit={(e) => { e.preventDefault(); const value = codigo.trim().toUpperCase(); if (value) add({ codigo_producto: value, producto: producto.trim(), unidad_medida: '' }); }} onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-white shadow-xl p-5 space-y-4"><div className="flex justify-between"><div><h2 id="manual-sku-title" className="font-black">Agregar código manual</h2><p className="text-xs text-slate-500">MANUAL / NO VALIDADO · no se escribe en el maestro.</p></div><button type="button" aria-label="Cerrar" onClick={close} className="min-w-11 min-h-11"><X className="mx-auto"/></button></div><label className="block text-xs font-bold">Código<input autoFocus required value={codigo} onChange={(e) => setCodigo(e.target.value)} className="mt-1 w-full min-h-11 px-3 rounded-xl border font-mono"/></label><label className="block text-xs font-bold">Descripción <span className="font-normal text-slate-400">(opcional)</span><input value={producto} onChange={(e) => setProducto(e.target.value)} className="mt-1 w-full min-h-11 px-3 rounded-xl border"/></label><div className="flex justify-end gap-2"><button type="button" onClick={close} className="min-h-11 px-4 font-bold">Cancelar</button><button className="min-h-11 px-4 rounded-xl bg-orange-600 text-white font-black">Agregar a cola</button></div></form></div>; }
+
+function Label({ item, format }) { const size = SIZES[format], trace = item.trazabilidad?.[0], svg = code128Svg(item.codigo, { height: size.bar, cssHeight: size.barcode }); return <div className={`cartel-cell flex flex-col items-center ${format === 1 ? 'justify-center' : 'justify-start'} text-center border border-dashed border-slate-300 rounded-lg min-h-0`} style={{ padding: size.pad, breakInside: 'avoid' }}><img src="/logo-ptm.png" alt="PTM Health Care" className="object-contain mb-1" style={{ height: size.logo }}/><div className="font-black tracking-[.25em] text-slate-500 uppercase" style={{ fontSize: size.label }}>Código Producto</div><div className="w-full px-1"><CodigoFit text={item.codigo} maxHeight={size.code}/></div>{item.producto ? <div className="font-black text-black leading-tight mt-1 break-words" style={{ fontSize: descSize(item.producto, format) }}>{item.producto}</div> : <div className="cartel-description-unavailable text-xs text-slate-400 mt-1">Descripción no disponible</div>}{trace && <div className="mt-1 w-full rounded border border-slate-200 bg-slate-50 px-1.5 py-1 text-left leading-tight"><b className="block text-slate-500 tracking-wider" style={{ fontSize: format === 4 ? '7pt' : size.label }}>{trace.tipo === 'P' ? 'LOTE' : 'SERIE'}{trace.source === 'manual' ? ' · MANUAL' : ''}</b><span className="block font-bold break-all" style={{ fontSize: format === 4 ? '10pt' : size.label }}>{trace.valor}</span>{(trace.ubicacion || trace.venc) && <span className="block text-slate-500 text-[7pt]">{trace.ubicacion}{trace.venc ? ` · Vence: ${dateText(trace.venc)}` : ''}</span>}</div>}<div className="font-black tracking-[.25em] text-slate-500 uppercase mt-2" style={{ fontSize: size.label }}>Código Barra</div>{svg ? <div className="w-full mt-1 px-1" dangerouslySetInnerHTML={{ __html: svg }}/> : <div className="text-rose-500 text-xs font-bold mt-1">Código no representable en CODE128</div>}<div className="font-mono font-bold text-black mt-.5" style={{ fontSize: size.label }}>{item.codigo}</div></div>; }
+function Page({ items, format, number, total }) { const grid = format === 1 ? 'grid-cols-1 grid-rows-1' : format === 2 ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'; return <div data-testid="cartel-page" className="cartel-page bg-white rounded-2xl border border-slate-200 shadow-sm p-4" style={{ minHeight: '281mm' }}><div data-testid={`cartel-grid-${format}`} className={`cartel-grid grid ${grid} h-full`} style={{ gridTemplateRows: `repeat(${format === 1 ? 1 : 2}, minmax(0,1fr))` }}>{items.map((item, i) => <Label key={`${item.codigo}-${keyOf(item.trazabilidad?.[0] || { tipo:'', valor:'' })}-${i}`} item={item} format={format}/>)}{Array.from({ length: format - items.length }, (_, i) => <div key={i} data-testid="cartel-empty-cell" className="cartel-cell border border-dashed border-slate-200 rounded-lg min-h-0"/>)}</div><div className="text-right text-[10px] text-slate-300 font-bold pt-1 print:hidden">Página {number} / {total}</div></div>; }
