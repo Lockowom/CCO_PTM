@@ -1093,3 +1093,47 @@ export default function Observability() {
                         Fingerprint
                       </span>
                       <span className="font-mono text-[12px] text-slate-700 break-all">
+                        {selectedLog.fingerprint || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 p-4">
+                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
+                    Payload
+                  </h4>
+                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
+                    {JSON.stringify(selectedLog.payload || {}, null, 2)}
+                  </pre>
+                </section>
+              </div>
+
+              <div className="space-y-4">
+                <section className="rounded-2xl border border-slate-200 p-4">
+                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
+                    Context
+                  </h4>
+                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
+                    {JSON.stringify(selectedLog.context || {}, null, 2)}
+                  </pre>
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 p-4">
+                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
+                    Stack / navegador
+                  </h4>
+                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
+                    {selectedLog.stack ||
+                      JSON.stringify(selectedLog.browser || {}, null, 2) ||
+                      'Sin stack registrado'}
+                  </pre>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
