@@ -5,6 +5,8 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 const MAX_QUEUE_SIZE = 100;
 const MAX_STRING_LEN = 4000;
 const DEFAULT_KIND = 'application';
+const PERFORMANCE_SAMPLE_RATE = 20;
+const SLOW_PERFORMANCE_THRESHOLD_MS = 3000;
 
 const loggerState = {
   sessionId: createId(),
@@ -12,6 +14,7 @@ const loggerState = {
   queue: [],
   flushing: false,
   handlersInstalled: false,
+  sampleCounters: new Map(),
   appContext: {
     appVersion: APP_VERSION,
     source: 'frontend'
@@ -147,10 +150,34 @@ function buildEvent(level, input, extra = {}) {
     handled: details.handled !== false,
     fingerprint: details.fingerprint || buildFingerprint(details),
     user: safeSerialize(loggerState.user || {}),
-    persist: details.persist ?? level !== 'info',
+    persistRequested: details.persist,
+    persist: false,
     rawError: error
   };
   return event;
+}
+
+function shouldPersistEvent(event) {
+  if (event.level === 'error' || event.level === 'warn') return true;
+  if (event.kind === 'audit') return true;
+  if (event.persistRequested === true) return true;
+  if (event.persistRequested === false) return false;
+
+  if (event.kind === 'performance') {
+    if (
+      Number.isFinite(event.durationMs) &&
+      event.durationMs >= SLOW_PERFORMANCE_THRESHOLD_MS
+    ) {
+      return true;
+    }
+    const key = `${event.sessionId}|${event.fingerprint}`;
+    const count = (loggerState.sampleCounters.get(key) || 0) + 1;
+    loggerState.sampleCounters.set(key, count);
+    return count % PERFORMANCE_SAMPLE_RATE === 0;
+  }
+
+  if (event.kind === 'realtime') return false;
+  return false;
 }
 
 function writeConsole(level, event) {
@@ -243,6 +270,7 @@ function captureToSentry(event) {
 
 function emit(level, input, extra = {}) {
   const event = buildEvent(level, input, extra);
+  event.persist = shouldPersistEvent(event);
   writeConsole(level, event);
   captureToSentry(event);
   enqueue(event);
@@ -264,6 +292,7 @@ export function setLoggerUserContext(user) {
 
 export function clearLoggerUserContext() {
   loggerState.user = null;
+  loggerState.sampleCounters.clear();
 }
 
 export function setLoggerAppContext(context = {}) {
@@ -328,7 +357,7 @@ export const Logger = {
     return emit('info', input, { ...extra, kind: 'audit', persist: true });
   },
   performance(input, extra) {
-    return emit('info', input, { ...extra, kind: 'performance', persist: true });
+    return emit('info', input, { ...extra, kind: 'performance' });
   },
   async time(label, fn, extra = {}) {
     const started = performance.now();
