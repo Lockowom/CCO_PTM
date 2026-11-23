@@ -1,0 +1,43 @@
+name: Observability Release Check
+
+on:
+  push:
+    branches:
+      - release/observability-20261122
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HUSKY: "0"
+      VITE_SUPABASE_URL: https://vtrtyzbgpsvqwbfoudaf.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-key
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Observability contract
+        run: npm test -- src/tests/observabilityContract.test.js
+
+      - name: Production build
+        run: npm run build
