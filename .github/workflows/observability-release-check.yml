@@ -1,6 +1,9 @@
 name: Observability Release Check
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - release/observability-20261122
