@@ -166,12 +166,39 @@ async function fetchObservabilitySnapshot({
 
   if (alertStatus !== 'all') alertsQuery.eq('status', alertStatus);
 
-  const [{ data, error, count }, errorRes, slowRes, warnRes, alertsRes] = await Promise.all([
+  const dailyMetricsQuery = supabase
+    .from('tms_observability_daily')
+    .select(
+      'day, module, action, app_version, sample_count, estimated_count, error_count, warning_count, avg_duration_ms, p50_duration_ms, p95_duration_ms, max_duration_ms, updated_at'
+    )
+    .gte('day', since.slice(0, 10))
+    .order('day', { ascending: false })
+    .limit(2000);
+
+  const retentionQuery = supabase
+    .from('system_logs_retention_runs')
+    .select(
+      'id, started_at, finished_at, deleted_performance, deleted_application, deleted_warning, deleted_error, deleted_audit, batches, status, detail'
+    )
+    .order('started_at', { ascending: false })
+    .limit(1);
+
+  const [
+    { data, error, count },
+    errorRes,
+    slowRes,
+    warnRes,
+    alertsRes,
+    dailyMetricsRes,
+    retentionRes
+  ] = await Promise.all([
     query,
     errorCountQuery,
     slowCountQuery,
     warnCountQuery,
-    alertsQuery
+    alertsQuery,
+    dailyMetricsQuery,
+    retentionQuery
   ]);
 
   if (error) throw error;
@@ -179,6 +206,8 @@ async function fetchObservabilitySnapshot({
   if (slowRes.error) throw slowRes.error;
   if (warnRes.error) throw warnRes.error;
   if (alertsRes.error) throw alertsRes.error;
+  if (dailyMetricsRes.error) throw dailyMetricsRes.error;
+  if (retentionRes.error) throw retentionRes.error;
 
   const logs = data || [];
   const alerts = alertsRes.data || [];
@@ -195,6 +224,35 @@ async function fetchObservabilitySnapshot({
     return Math.round(durations.reduce((acc, value) => acc + value, 0) / durations.length);
   })();
 
+  const dailyMetrics = dailyMetricsRes.data || [];
+  const aggregateSummary = dailyMetrics.reduce(
+    (acc, row) => {
+      acc.sampleCount += Number(row.sample_count) || 0;
+      acc.estimatedCount += Number(row.estimated_count) || 0;
+      acc.errorCount += Number(row.error_count) || 0;
+      acc.warningCount += Number(row.warning_count) || 0;
+      const p95 = Number(row.p95_duration_ms);
+      if (Number.isFinite(p95)) acc.maxP95 = Math.max(acc.maxP95 || 0, p95);
+      return acc;
+    },
+    { sampleCount: 0, estimatedCount: 0, errorCount: 0, warningCount: 0, maxP95: null }
+  );
+
+  const aggregatedActions = Array.from(
+    dailyMetrics.reduce((map, row) => {
+      const key = `${row.module || 'app'}.${row.action || 'unspecified'}`;
+      const current = map.get(key) || { key, estimated: 0, sampled: 0, p95: null };
+      current.estimated += Number(row.estimated_count) || 0;
+      current.sampled += Number(row.sample_count) || 0;
+      const p95 = Number(row.p95_duration_ms);
+      if (Number.isFinite(p95)) current.p95 = Math.max(current.p95 || 0, p95);
+      map.set(key, current);
+      return map;
+    }, new Map()).values()
+  )
+    .sort((a, b) => b.estimated - a.estimated)
+    .slice(0, 6);
+
   return {
     logs,
     totals: {
@@ -210,6 +268,9 @@ async function fetchObservabilitySnapshot({
       avgDuration
     },
     alerts,
+    aggregateSummary,
+    aggregatedActions,
+    lastRetention: retentionRes.data?.[0] || null,
     topFingerprints: extractTop(errorLogs, (item) => item.fingerprint || item.message, 6),
     topModules: extractTop(logs, (item) => item.module, 6),
     topActions: extractTop(
@@ -523,6 +584,40 @@ export default function Observability() {
               label="Usuarios afectados"
               value={data?.totals.usersAffected ?? (isLoading ? '…' : 0)}
               helper={`Promedio: ${fmtDuration(data?.totals.avgDuration)}`}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <StatCard
+              icon={<Activity size={20} />}
+              label="Muestra performance"
+              value={data?.aggregateSummary.sampleCount ?? (isLoading ? '…' : 0)}
+              tone="sky"
+              helper="Eventos rápidos muestreados 1/20"
+            />
+            <StatCard
+              icon={<Gauge size={20} />}
+              label="Volumen estimado"
+              value={data?.aggregateSummary.estimatedCount ?? (isLoading ? '…' : 0)}
+              tone="emerald"
+              helper="Estimación; no es conteo exacto"
+            />
+            <StatCard
+              icon={<Clock3 size={20} />}
+              label="P95 máx. agregado"
+              value={fmtDuration(data?.aggregateSummary.maxP95)}
+              tone="amber"
+              helper="Máximo P95 por acción/día en la ventana"
+            />
+            <StatCard
+              icon={<CheckCircle2 size={20} />}
+              label="Última retención"
+              value={data?.lastRetention?.status || 'Sin ejecución'}
+              helper={
+                data?.lastRetention?.started_at
+                  ? `${fmtAgo(data.lastRetention.started_at)} · ${Number(data.lastRetention.deleted_performance || 0) + Number(data.lastRetention.deleted_application || 0) + Number(data.lastRetention.deleted_warning || 0) + Number(data.lastRetention.deleted_error || 0) + Number(data.lastRetention.deleted_audit || 0)} eliminados`
+                  : 'Job programado; sin borrado inicial manual'
+              }
             />
           </div>
 
@@ -998,47 +1093,3 @@ export default function Observability() {
                         Fingerprint
                       </span>
                       <span className="font-mono text-[12px] text-slate-700 break-all">
-                        {selectedLog.fingerprint || '—'}
-                      </span>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rounded-2xl border border-slate-200 p-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
-                    Payload
-                  </h4>
-                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
-                    {JSON.stringify(selectedLog.payload || {}, null, 2)}
-                  </pre>
-                </section>
-              </div>
-
-              <div className="space-y-4">
-                <section className="rounded-2xl border border-slate-200 p-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
-                    Context
-                  </h4>
-                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
-                    {JSON.stringify(selectedLog.context || {}, null, 2)}
-                  </pre>
-                </section>
-
-                <section className="rounded-2xl border border-slate-200 p-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-wide text-slate-500 mb-3">
-                    Stack / navegador
-                  </h4>
-                  <pre className="text-[12px] leading-5 bg-slate-950 text-slate-100 rounded-2xl p-4 overflow-auto max-h-[260px]">
-                    {selectedLog.stack ||
-                      JSON.stringify(selectedLog.browser || {}, null, 2) ||
-                      'Sin stack registrado'}
-                  </pre>
-                </section>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

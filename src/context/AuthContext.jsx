@@ -9,7 +9,7 @@ import { withTimeout } from '../lib/supabaseQuery';
 import { toast } from 'sonner';
 import { clearLoggerUserContext, Logger, setLoggerUserContext } from '../lib/logger';
 import { db } from '../lib/db';
-import { runtimeContext } from '../services/iamService';
+import { invalidateRuntimeContextCache, runtimeContext } from '../services/iamService';
 import {
   buildRuntimeAccess,
   runtimeAllowsFunction,
@@ -154,6 +154,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshPermissions = useCallback(async () => {
     if (user?.rol) {
+      invalidateRuntimeContextCache();
       return await loadRoleConfig(user.rol);
     }
     return null;
@@ -189,6 +190,7 @@ export const AuthProvider = ({ children }) => {
           const changedRoleId = payload.new?.id || payload.old?.id;
 
           if (changedRoleId === user.rol || !changedRoleId) {
+            invalidateRuntimeContextCache();
             await loadRoleConfig(user.rol);
             window.location.replace('/');
           }
@@ -305,6 +307,8 @@ export const AuthProvider = ({ children }) => {
 
       // Cargar permisos antes de publicar el usuario autenticado. Así el router
       // nunca alcanza a evaluar una ruta con el usuario nuevo y permisos vacíos.
+      // Un cambio de identidad nunca puede reutilizar el runtime IAM del usuario anterior.
+      invalidateRuntimeContextCache();
       await loadRoleConfig(userData.rol);
       loadedEmailRef.current = (userData.email || '').toLowerCase();
       sessionStartRef.current = Date.now();

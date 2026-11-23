@@ -21,6 +21,7 @@ const fmt = (ts) => {
 
 const VIEWPORT_GAP = 12;
 const DESKTOP_PANEL_WIDTH = 384;
+const REFRESH_DEDUPE_MS = 5000;
 
 function NotificationBellView({
   variant = 'icon',
@@ -36,14 +37,21 @@ function NotificationBellView({
   const [panelPosition, setPanelPosition] = useState({ left: 0, top: VIEWPORT_GAP });
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
+  const lastRequestedAtRef = useRef(0);
   const isSidebar = variant === 'sidebar';
   const canOpenCenter = typeof canAccessRoute === 'function' && canAccessRoute('/admin/eventos');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ force = false } = {}) => {
     if (loading || !isAuthenticated || !user?.id) {
       setItems([]);
+      lastRequestedAtRef.current = 0;
       return;
     }
+
+    const now = Date.now();
+    if (!force && now - lastRequestedAtRef.current < REFRESH_DEDUPE_MS) return;
+    lastRequestedAtRef.current = now;
+
     try {
       setItems(await misNotificaciones());
     } catch (error) {

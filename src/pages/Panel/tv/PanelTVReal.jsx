@@ -9,6 +9,7 @@ import CountUp from './ui/CountUp';
 import { isFeatureFlagEnabled } from '../../../config/featureFlags';
 
 const REFRESH_MS = 30_000;
+const REALTIME_POLL_SUPPRESS_MS = 60_000;
 const ROTATE_MS = 8_000;
 const PAUSE_AFTER_CLICK_MS = 15_000;
 
@@ -149,6 +150,9 @@ export default function TVDashboard() {
   const [clock, setClock] = useState(() => new Date());
   const pauseUntilRef = useRef(0);
   const rotateIdxRef = useRef(0);
+  const inFlightLoadRef = useRef(null);
+  const lastLoadAtRef = useRef(0);
+  const pollSuppressedUntilRef = useRef(0);
 
   const handleManualSel = useCallback((estado) => {
     setSel((s) => {
@@ -162,35 +166,66 @@ export default function TVDashboard() {
     });
   }, []);
 
-  const loadData = useCallback(async () => {
-    try {
-      const d = await fetchTVEstados();
-      setData(d);
-      setError(null);
-      setLastUpdate(
-        new Date().toLocaleTimeString('es-CL', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })
-      );
-    } catch (e) {
-      Logger.error(e, {
-        module: 'panel',
-        screen: 'PanelTV',
-        action: 'fetch_tv_estados',
-        message: 'Fallo la carga de estados para Modo TV'
-      });
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
+  const loadData = useCallback(async (reason = 'manual') => {
+    if (reason === 'poll') {
+      if (typeof document !== 'undefined' && document.hidden) return null;
+      if (Date.now() < pollSuppressedUntilRef.current) return null;
     }
+    if (inFlightLoadRef.current) return inFlightLoadRef.current;
+
+    const run = (async () => {
+      try {
+        const d = await fetchTVEstados();
+        lastLoadAtRef.current = Date.now();
+        setData(d);
+        setError(null);
+        setLastUpdate(
+          new Date().toLocaleTimeString('es-CL', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })
+        );
+        return d;
+      } catch (e) {
+        Logger.error(e, {
+          module: 'panel',
+          screen: 'PanelTV',
+          action: 'fetch_tv_estados',
+          message: 'Fallo la carga de estados para Modo TV',
+          context: { reason }
+        });
+        setError(e instanceof Error ? e.message : String(e));
+        return null;
+      } finally {
+        setLoading(false);
+        inFlightLoadRef.current = null;
+      }
+    })();
+
+    inFlightLoadRef.current = run;
+    return run;
   }, []);
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, REFRESH_MS);
-    return () => clearInterval(interval);
+    void loadData('initial');
+    const interval = setInterval(() => {
+      void loadData('poll');
+    }, REFRESH_MS);
+    const onVisibility = () => {
+      if (
+        typeof document !== 'undefined' &&
+        !document.hidden &&
+        Date.now() - lastLoadAtRef.current >= REFRESH_MS
+      ) {
+        void loadData('visibility');
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [loadData]);
 
   useEffect(() => {
@@ -198,23 +233,28 @@ export default function TVDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Realtime SIEMPRE: recarga en vivo ante cualquier cambio en operaciones
-  // (además del poll de respaldo) y al finalizar sync/import.
+  // Realtime es la fuente primaria de frescura. El polling queda como respaldo y
+  // se suprime temporalmente después de un evento para evitar consultas duplicadas.
   useEffect(() => {
     let t;
+    const scheduleRealtimeRefresh = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        pollSuppressedUntilRef.current = Date.now() + REALTIME_POLL_SUPPRESS_MS;
+        void loadData('realtime');
+      }, 1200);
+    };
     const ch = supabase
       .channel('panel_tv_rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tms_operaciones' }, () => {
-        clearTimeout(t);
-        t = setTimeout(loadData, 1200);
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tms_operaciones' },
+        scheduleRealtimeRefresh
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tms_operaciones_sync' },
-        () => {
-          clearTimeout(t);
-          t = setTimeout(loadData, 1200);
-        }
+        scheduleRealtimeRefresh
       )
       .subscribe();
     return () => {
