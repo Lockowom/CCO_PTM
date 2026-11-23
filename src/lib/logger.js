@@ -160,16 +160,19 @@ function buildEvent(level, input, extra = {}) {
 function shouldPersistEvent(event) {
   if (event.level === 'error' || event.level === 'warn') return true;
   if (event.kind === 'audit') return true;
+
+  if (
+    event.kind === 'performance' &&
+    Number.isFinite(event.durationMs) &&
+    event.durationMs >= SLOW_PERFORMANCE_THRESHOLD_MS
+  ) {
+    return true;
+  }
+
   if (event.persistRequested === true) return true;
   if (event.persistRequested === false) return false;
 
   if (event.kind === 'performance') {
-    if (
-      Number.isFinite(event.durationMs) &&
-      event.durationMs >= SLOW_PERFORMANCE_THRESHOLD_MS
-    ) {
-      return true;
-    }
     const key = `${event.sessionId}|${event.fingerprint}`;
     const count = (loggerState.sampleCounters.get(key) || 0) + 1;
     loggerState.sampleCounters.set(key, count);
@@ -378,14 +381,3 @@ export const Logger = {
       Logger.error(error, {
         module: extra.module,
         screen: extra.screen,
-        action: extra.action || label,
-        message: extra.errorMessage || `Fallo en ${label}`,
-        durationMs: performance.now() - started,
-        status: 'error',
-        payload: extra.payload,
-        context: extra.context
-      });
-      throw error;
-    }
-  }
-};
