@@ -381,3 +381,14 @@ export const Logger = {
       Logger.error(error, {
         module: extra.module,
         screen: extra.screen,
+        action: extra.action || label,
+        message: extra.errorMessage || `Fallo en ${label}`,
+        durationMs: performance.now() - started,
+        status: 'error',
+        payload: extra.payload,
+        context: extra.context
+      });
+      throw error;
+    }
+  }
+};
