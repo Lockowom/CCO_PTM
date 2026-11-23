@@ -398,3 +398,159 @@ export default function TVDashboard() {
                   {clock.toLocaleDateString('es-CL', {
                     weekday: 'short',
                     day: '2-digit',
+                    month: 'short'
+                  })}
+                </p>
+              </div>
+            )}
+            <button
+              onClick={() => handleManualSel(sel === 'URGENTES' ? null : 'URGENTES')}
+              className={`flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all ${urgentes.length > 0 ? 'bg-red-500/15 border-glow-red' : 'bg-gray-800/40 border-2 border-gray-700/50'} ${sel === 'URGENTES' ? 'ring-2 ring-red-400' : ''}`}
+            >
+              <span className="text-2xl">🚨</span>
+              <div className="text-left">
+                <CountUp
+                  end={urgentes.length}
+                  className={`text-3xl font-black tabular-nums leading-none ${urgentes.length > 0 ? 'text-red-400' : 'text-gray-500'}`}
+                />
+                <p className="text-gray-400 text-[10px] font-medium">Urgentes</p>
+              </div>
+            </button>
+            <div className="text-right">
+              <CountUp
+                end={total}
+                className="text-5xl font-black tabular-nums text-orange-400 leading-none"
+              />
+              <p className="text-gray-500 text-xs font-medium mt-0.5">NV activas</p>
+            </div>
+            <div className="flex flex-col items-end gap-1 border-l border-gray-800 pl-5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-gray-300 text-xs font-semibold">EN VIVO</span>
+              </div>
+              <span
+                className={`text-[11px] font-medium ${autoRotate ? 'text-orange-400' : 'text-gray-600'}`}
+              >
+                {autoRotate ? '▶ Auto-rotación' : '⏸ Pausado'}
+              </span>
+              <span className="text-gray-600 text-[10px] font-mono">{lastUpdate}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Cuerpo: barras (izq) + detalle (der) */}
+        <div className="flex-1 flex gap-5 min-h-0 overflow-hidden">
+          {/* Estados — barras horizontales */}
+          <div
+            className={`flex flex-col justify-center transition-all ${sel ? 'w-[45%]' : 'w-full'}`}
+            style={{ gap: `${Math.min(14, Math.max(6, Math.floor(70 / numEstados)))}px` }}
+          >
+            {estados.map((e) => {
+              const pct = maxCantidad > 0 ? (e.cantidad / maxCantidad) * 100 : 0;
+              const color = COLORES[e.estado] || '#6b7280';
+              const icon = ICONOS[e.estado] || '●';
+              const pctTotal = total > 0 ? ((e.cantidad / total) * 100).toFixed(0) : '0';
+              const nUrg = e.nvs.filter((n) => n.urgente).length;
+              const activo = sel === e.estado;
+              const barH = Math.min(60, Math.max(36, Math.floor(520 / numEstados)));
+              return (
+                <button
+                  key={e.estado}
+                  onClick={() => handleManualSel(sel === e.estado ? null : e.estado)}
+                  className={`flex items-center gap-4 text-left rounded-xl transition-all shrink-0 px-3 py-1 ${activo ? 'bg-white/[0.06] ring-2 ring-white/20 scale-[1.01]' : 'hover:bg-white/[0.03]'}`}
+                >
+                  <div className="flex items-center gap-2 w-36 shrink-0 justify-end">
+                    <span className="text-lg">{icon}</span>
+                    <span className="text-gray-200 text-sm font-semibold text-right truncate">
+                      {e.estado}
+                    </span>
+                  </div>
+                  <div
+                    className="flex-1 bg-gray-800/40 rounded-lg overflow-hidden relative"
+                    style={{ height: barH }}
+                  >
+                    <div
+                      className="h-full rounded-lg transition-all duration-1000 ease-out flex items-center justify-between px-4"
+                      style={{
+                        width: `${Math.max(pct, 5)}%`,
+                        background: `linear-gradient(90deg, ${color}, ${color}cc)`
+                      }}
+                    >
+                      <CountUp
+                        end={e.cantidad}
+                        className="text-xl font-black text-white drop-shadow-lg tabular-nums"
+                      />
+                    </div>
+                    {nUrg > 0 && (
+                      <span className="absolute right-12 top-1/2 -translate-y-1/2 text-[10px] text-red-400 font-bold flex items-center gap-0.5 animate-pulse">
+                        🚨 {nUrg}
+                      </span>
+                    )}
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold tabular-nums">
+                      {pctTotal}%
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+            {estados.length === 0 && (
+              <p className="text-gray-600 text-2xl text-center">Sin NVs activas</p>
+            )}
+          </div>
+
+          {/* Panel de detalle — NVs del estado seleccionado */}
+          {sel && (
+            <div className="w-[55%] bg-[#111118] rounded-2xl border border-gray-800/60 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-800/60 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full" style={{ background: detalleColor }} />
+                  <h2 className="text-xl font-bold">
+                    {sel === 'URGENTES' ? '🚨 NVs Urgentes' : `${ICONOS[sel] || ''} ${sel}`}
+                  </h2>
+                  <span className="text-gray-500 text-base font-medium">({detalleNvs.length})</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {sel !== 'URGENTES' && (
+                    <span className="text-gray-500 text-xs">
+                      {sel === ESTADOS.EN_RUTA
+                        ? 'Destacado: transportista'
+                        : sel === ESTADOS.ENTREGADO
+                          ? 'Destacado: fecha entrega'
+                          : sel === ESTADOS.SHIPPING
+                            ? 'Días desde aprobación'
+                            : sel === ESTADOS.EN_PROCESO
+                              ? 'Días desde aprobación'
+                              : ''}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleManualSel(null)}
+                    className="text-gray-500 hover:text-white text-2xl leading-none px-2 transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                {detalleNvs.length === 0 ? (
+                  <p className="text-gray-600 text-center py-8">Sin NVs</p>
+                ) : (
+                  detalleNvs.map((n, i) => (
+                    <div
+                      key={`${n.canal}-${n.nv}-${i}`}
+                      className="anim-list-item"
+                      style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
+                    >
+                      <NvCard n={n} estado={detalleEstado} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
