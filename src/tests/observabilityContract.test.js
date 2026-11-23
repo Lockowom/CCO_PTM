@@ -2,8 +2,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 // ── PR-008 B5 · Contrato Logging V2 + Observability Engine ──────────────────
 // Logger (src/lib/logger.js): eventos normalizados, cola (máx 100), persistencia
-// vía RPC log_client_event (snake_case), audit/performance con persist=true,
-// correlationId/sessionId estables, captura a Sentry solo para error.
+// vía RPC log_client_event (snake_case), audit/error/warn completos y performance
+// rápida muestreada 1/20; lenta (>=3s) completa. Sentry recibe solo errores.
 // Engine (src/engines/observability): traceAsyncOperation / measureSyncOperation
 // registran performance ok/error y relanzan errores.
 
@@ -92,16 +92,42 @@ describe('PR-008 B5 · Logger V2 (eventos)', () => {
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
   });
 
-  it('performance fuerza kind=performance y persist=true con durationMs', async () => {
+  it('performance rápida aplica sampling determinístico 1/20', async () => {
+    let lastEvent;
+    for (let i = 0; i < 20; i += 1) {
+      lastEvent = Logger.performance({
+        module: 'test',
+        action: 'query',
+        message: 'kpis',
+        durationMs: 1234
+      });
+    }
+    expect(lastEvent.kind).toBe('performance');
+    expect(lastEvent.persist).toBe(true);
+    expect(lastEvent.durationMs).toBe(1234);
+    await flush();
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('performance lenta persiste siempre aunque no alcance la muestra', async () => {
     const event = Logger.performance({
       module: 'test',
-      action: 'query',
-      message: 'kpis',
-      durationMs: 1234
+      action: 'slow_query',
+      message: 'consulta lenta',
+      durationMs: 3000
     });
-    expect(event.kind).toBe('performance');
     expect(event.persist).toBe(true);
-    expect(event.durationMs).toBe(1234);
+    await flush();
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('warning real persiste siempre', async () => {
+    const event = Logger.warn({
+      module: 'test',
+      action: 'degraded',
+      message: 'degradado'
+    });
+    expect(event.persist).toBe(true);
     await flush();
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
   });
@@ -113,12 +139,15 @@ describe('PR-008 B5 · Logger V2 (eventos)', () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it('Logger.time: éxito → performance status ok y devuelve el resultado', async () => {
-    const result = await Logger.time('cargar', async () => ({ lista: [1, 2, 3] }), {
-      module: 'test',
-      screen: 's',
-      message: 'cargar lista'
-    });
+  it('Logger.time: éxito mide siempre y persiste según sampling', async () => {
+    let result;
+    for (let i = 0; i < 20; i += 1) {
+      result = await Logger.time('cargar', async () => ({ lista: [1, 2, 3] }), {
+        module: 'test',
+        screen: 's',
+        message: 'cargar lista'
+      });
+    }
     expect(result.lista).toHaveLength(3);
     await flush();
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
@@ -161,18 +190,21 @@ describe('PR-008 B5 · Observability Engine', () => {
 
   afterEach(() => clearLoggerUserContext());
 
-  it('traceAsyncOperation envuelve Logger.time: ok + performance registrada', async () => {
-    const value = await traceAsyncOperation('op-async', async () => 42, {
-      module: 'infra',
-      action: 'rpc'
-    });
+  it('traceAsyncOperation envuelve Logger.time y respeta sampling', async () => {
+    let value;
+    for (let i = 0; i < 20; i += 1) {
+      value = await traceAsyncOperation('op-async', async () => 42, {
+        module: 'infra',
+        action: 'rpc'
+      });
+    }
     expect(value).toBe(42);
     await flush();
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
     expect(mocks.rpc.mock.calls[0][1].p_event).toMatchObject({
       kind: 'performance',
       status: 'ok',
-      action: 'rpc' // meta.action tiene precedencia sobre el label
+      action: 'rpc'
     });
   });
 
@@ -190,8 +222,11 @@ describe('PR-008 B5 · Observability Engine', () => {
     });
   });
 
-  it('measureSyncOperation mide síncronos: ok + performance', async () => {
-    const value = measureSyncOperation('op-sync', () => 'hecho', { module: 'm' });
+  it('measureSyncOperation mide síncronos y respeta sampling', async () => {
+    let value;
+    for (let i = 0; i < 20; i += 1) {
+      value = measureSyncOperation('op-sync', () => 'hecho', { module: 'm' });
+    }
     expect(value).toBe('hecho');
     await flush();
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
