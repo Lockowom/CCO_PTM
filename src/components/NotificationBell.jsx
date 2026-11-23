@@ -21,6 +21,7 @@ const fmt = (ts) => {
 
 const VIEWPORT_GAP = 12;
 const DESKTOP_PANEL_WIDTH = 384;
+const REFRESH_DEDUPE_MS = 5000;
 
 function NotificationBellView({
   variant = 'icon',
@@ -36,14 +37,21 @@ function NotificationBellView({
   const [panelPosition, setPanelPosition] = useState({ left: 0, top: VIEWPORT_GAP });
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
+  const lastRequestedAtRef = useRef(0);
   const isSidebar = variant === 'sidebar';
   const canOpenCenter = typeof canAccessRoute === 'function' && canAccessRoute('/admin/eventos');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ force = false } = {}) => {
     if (loading || !isAuthenticated || !user?.id) {
       setItems([]);
+      lastRequestedAtRef.current = 0;
       return;
     }
+
+    const now = Date.now();
+    if (!force && now - lastRequestedAtRef.current < REFRESH_DEDUPE_MS) return;
+    lastRequestedAtRef.current = now;
+
     try {
       setItems(await misNotificaciones());
     } catch (error) {
@@ -218,118 +226,3 @@ function NotificationBellView({
             <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-500">
               <CheckCheck size={24} />
             </span>
-            <p className="mt-3 text-sm font-black text-slate-700">Sin pendientes nuevas</p>
-            <p className="mt-1 text-xs text-slate-400">Te avisaremos cuando llegue una tarea.</p>
-          </div>
-        ) : (
-          <div className="max-h-[calc(min(78dvh,42rem)-10.5rem)] space-y-2 overflow-y-auto bg-slate-50/70 p-2.5 sm:max-h-80">
-            {items.map((notificacion) => (
-              <article
-                key={notificacion.id}
-                onClick={() => abrir(notificacion)}
-                className={`flex min-h-20 items-start gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-emerald-200 hover:shadow-md active:scale-[.99] ${notificacion.payload?.route ? 'cursor-pointer' : ''}`}
-              >
-                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500">
-                  <Bell size={15} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-black leading-tight text-slate-800">
-                    {notificacion.titulo}
-                  </div>
-                  <div className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-slate-500">
-                    {notificacion.mensaje}
-                  </div>
-                  <div className="mt-1.5 text-[10px] font-bold text-slate-400">
-                    {fmt(notificacion.creado_en)}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    leer(notificacion.id);
-                  }}
-                  title="Marcar leída"
-                  aria-label={`Marcar leída: ${notificacion.titulo}`}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-300 hover:bg-emerald-50 hover:text-emerald-500"
-                >
-                  <Check size={15} />
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
-
-        {canOpenCenter && (
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              nav('/admin/eventos');
-            }}
-            className="flex min-h-12 w-full items-center justify-center gap-2 border-t border-slate-100 px-4 text-[12px] font-black text-slate-600 hover:bg-slate-50"
-          >
-            Ver centro completo <ArrowRight size={14} />
-          </button>
-        )}
-      </section>
-    </>
-  ) : null;
-
-  return (
-    <div className={`${isSidebar ? 'w-full' : 'relative'} ${className}`}>
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-label={`Notificaciones${items.length ? `, ${items.length} pendientes` : ''}`}
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((current) => !current);
-          if (!open) load();
-        }}
-        title={collapsed || !isSidebar ? 'Notificaciones' : undefined}
-        className={`relative flex items-center rounded-xl border border-transparent text-[var(--text-muted)] transition-colors hover:border-[var(--sidebar-border)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)] active:scale-[.98] ${
-          isSidebar
-            ? collapsed
-              ? 'mx-auto min-h-10 w-11 justify-center'
-              : 'min-h-10 w-full gap-2.5 px-2.5'
-            : 'min-h-11 min-w-11 justify-center rounded-2xl hover:border-slate-200 hover:bg-slate-50'
-        }`}
-      >
-        <Bell size={18} className="shrink-0" />
-        {isSidebar && !collapsed && (
-          <span className="min-w-0 flex-1 text-left text-[11px] font-bold">Notificaciones</span>
-        )}
-        {items.length > 0 && (
-          <span
-            className={`${isSidebar && !collapsed ? 'static' : 'absolute right-0 top-0'} grid h-4 min-w-4 place-items-center rounded-full bg-orange-500 px-1 text-[9px] font-black text-white ring-2 ring-white`}
-            aria-label={`${items.length} notificaciones pendientes`}
-          >
-            {items.length > 9 ? '9+' : items.length}
-          </span>
-        )}
-      </button>
-
-      {open && (isSidebar ? createPortal(panel, document.body) : panel)}
-    </div>
-  );
-}
-
-const NotificationBellFromContext = (props) => {
-  const authState = useAuth();
-  return (
-    <NotificationBellView
-      {...props}
-      canAccessRoute={props.canAccessRoute || authState.canAccessRoute}
-      authState={authState}
-    />
-  );
-};
-
-export default function NotificationBell(props) {
-  return props.authState ? (
-    <NotificationBellView {...props} />
-  ) : (
-    <NotificationBellFromContext {...props} />
-  );
-}
