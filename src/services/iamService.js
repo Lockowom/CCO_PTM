@@ -6,6 +6,13 @@
 // ============================================================================
 import { rpcCommand, rpcQuery } from '../core/infrastructure/supabase/rpcClient';
 
+const RUNTIME_CONTEXT_CACHE_TTL_MS = 60 * 1000;
+let runtimeContextCache = { ts: 0, data: null, promise: null };
+
+export function invalidateRuntimeContextCache() {
+  runtimeContextCache = { ts: 0, data: null, promise: null };
+}
+
 // Catálogos para la UI (usuarios, roles, centros de costo).
 export async function catalogoScope() {
   const data = await rpcQuery(
@@ -424,13 +431,36 @@ export const deleteOverride = (uid, surfaceType, surfaceId) =>
   );
 
 // ── IAM 2.0 runtime — migración 20260820185353 ─────────────────────────────
-export async function runtimeContext() {
-  const data = await rpcQuery(
-    'iam_runtime_context',
-    {},
-    { module: 'iam', action: 'runtime_context' }
-  );
-  return data || { mode: 'SHADOW', permission_version: 1, overrides: [] };
+export async function runtimeContext({ force = false } = {}) {
+  const now = Date.now();
+  if (
+    !force &&
+    runtimeContextCache.data &&
+    now - runtimeContextCache.ts < RUNTIME_CONTEXT_CACHE_TTL_MS
+  ) {
+    return runtimeContextCache.data;
+  }
+  if (!force && runtimeContextCache.promise) {
+    return runtimeContextCache.promise;
+  }
+
+  const run = async () => {
+    const data = await rpcQuery(
+      'iam_runtime_context',
+      {},
+      { module: 'iam', action: 'runtime_context' }
+    );
+    const value = data || { mode: 'SHADOW', permission_version: 1, overrides: [] };
+    runtimeContextCache = { ts: Date.now(), data: value, promise: null };
+    return value;
+  };
+
+  const promise = run().catch((error) => {
+    runtimeContextCache = { ts: 0, data: null, promise: null };
+    throw error;
+  });
+  runtimeContextCache = { ...runtimeContextCache, promise };
+  return promise;
 }
 
 export async function listarModosEnforcement() {
